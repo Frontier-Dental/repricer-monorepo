@@ -1,0 +1,13 @@
+{
+  "trailingComma": "all",
+  "tabWidth": 2,
+  "plugins": ["prettier-plugin-sql", "prettier-plugin-ejs"],
+  "overrides": [
+    {
+      "files": "*.sql",
+      "options": {
+        "language": "mysql"
+      }
+    }
+  ]
+}

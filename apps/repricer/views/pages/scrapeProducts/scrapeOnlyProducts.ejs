@@ -1,0 +1,520 @@
+<%- include('../header') %>
+    <%- include('../left-sidebar') %>
+
+        <% let pgno=pageNumber + 1; let upVal=0, lowVal=0 ; const pages=new Array(totalPages).fill(null).map((v, i)=> i)
+            if (pageNumber <= 2) { upVal=0; lowVal=5 } else if (pageNumber>= (totalPages - 3)) {
+                upVal = totalPages - 5; lowVal = totalPages
+                } else {
+                upVal = pageNumber - 2; lowVal = pageNumber + 3
+                }
+                %>
+
+                <div class="page p1">
+                    <div class="container-fluid container-product">
+                        <div class="d-flex justify-content-between">
+                            <div class="no-btn">
+                                <div class="product-view">
+                                    <h1 class="commanHeading">Products</h1><span>( <%= (pageNumber * pageSize) + 1 %> -
+                                            <%= Math.min((pageNumber * pageSize) + pageSize,totalDocs) %> / <%=
+                                                    totalDocs %> )</span>
+                                </div>
+                                <form method="GET" id="" action="show_products" class="">
+                                    <div class="row">
+                                        <div class="col form-group mx-sm-3 mb-2  ">
+                                            <input type="text" class="form-control" id="tags" name="tags"
+                                                value="<%= tags %>" placeholder="Search">
+                                            <button type="submit" name="search" value="true"
+                                                class="btn btn-primary mb-2 mr-2 nf-1">
+                                                <i class="fa-solid fa-magnifying-glass"></i>
+                                            </button>
+                                            <% if (tags !='' ) { %>
+                                                <a href="/scrape/show_products" class="close-btn ">
+                                                    <i class="fa-solid fa-xmark"></i>
+                                                </a>
+                                                <% } %>
+                                        </div>
+                                    </div>
+                                </form>
+                                <div
+                                    class="card border-0 flex-column justify-content-between track-ccard-b bg-transparent">
+                                    <div md="" class="mt-4 text-center">
+
+
+                                        <nav aria-label="" class="">
+                                            <ul class="pagination  justify-content-center">
+                                                <li class="page-item p-2">
+                                                    <a href="/scrape/show_products?pgno=1&tags=<%= tags %>"><button
+                                                            class="btn tracknumlisting-pagination-button">&laquo;</button></a>
+                                                </li>
+                                                <li class="page-item p-2">
+                                                    <a
+                                                        href="/scrape/show_products?pgno=<%= Math.max(1, pageNumber-1) %>&tags=<%= tags %>"><button
+                                                            class="btn tracknumlisting-pagination-button">Previous</button></a>
+                                                </li>
+
+                                                <% const startPage=Math.max(1, pageNumber - 5); const
+                                                    endPage=Math.min(totalPages/100, pageNumber + 4); %>
+
+                                                    <!-- Page Number Links -->
+                                                    <% for(let i=startPage; i <=endPage; i++) { %>
+                                                        <li class="page-item p-2">
+                                                            <a
+                                                                href="/scrape/show_products?pgno=<%= i %>&tags=<%= tags %>">
+                                                                <button
+                                                                    class="btn tracknumlisting-pagination-button <%= i === pageNumber ? 'active' : '' %>">
+                                                                    <%= i %>
+                                                                </button>
+                                                            </a>
+                                                        </li>
+                                                        <% } %>
+
+                                                            <li class="page-item p-2">
+                                                                <a
+                                                                    href="/scrape/show_products?pgno=<%= Math.min(totalPages, Number(pageNumber) + 1) %>&tags=<%= tags %>"><button
+                                                                        class="btn tracknumlisting-pagination-button">Next</button></a>
+                                                            </li>
+                                                            <li class="page-item p-2">
+                                                                <a
+                                                                    href="/scrape/show_products?pgno=<%= totalPages %>&tags=<%= tags %>"><button
+                                                                        class="btn tracknumlisting-pagination-button">&raquo;</button></a>
+                                                            </li>
+                                            </ul>
+                                        </nav>
+
+
+
+
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex btns-ht">
+                                <button type="button" class="btn btn-primary mx-1" data-toggle="modal"
+                                    data-target="#addModal">
+                                    Add Item</button>
+                                <button type="button" class="btn btn-primary mx-1" data-toggle="modal"
+                                    data-target="#exampleModal">
+                                    Import Excel
+                                </button>
+
+                                <% if(items && items.length !=0){ %>
+                                    <form method="POST" id="download" action="download">
+                                        <button type="submit" class="btn btn-primary mx-1">
+                                            Export List</button>
+                                    </form>
+                                    <% } %>
+                                        &nbsp;
+
+                            </div>
+
+                        </div>
+
+                        <form method="post" autocomplete="off" id="add_scrape_excel">
+                            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+                                aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">
+                                                Select Excel File
+                                            </h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <input type="file" id="input" name="input" />
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                Close
+                                            </button>
+                                            <button type="submit" class="btn btn-primary addScrapeExcel">
+                                                Update
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <form method="post" autocomplete="off" id="add_scrape_item">
+                            <div class="modal fade" id="addModal" tabindex="-1" role="dialog"
+                                aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="addModal">
+                                                Add Item
+                                            </h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="mpid" class="font-weight-bold">Enter MPID</label>
+                                            <input type="number" class="form-control" name="mpid" placeholder="MPID" />
+                                        </div>
+
+                                        <div class="form-group col-md-6">
+                                            <label for="net32_url" class="font-weight-bold">Enter Net32 Url</label>
+                                            <input type="url" class="form-control" name="net32_url"
+                                                placeholder="Net32 Url" />
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <div class="px-2 pb-3 d-flex align-items-center">
+                                                <div>
+                                                    <label for="" class="font-weight-bold">Active - Repricer</label>
+                                                    <label class="switch">
+                                                        <input type="checkbox" name="activated">
+                                                        <span class="slider"></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <div class="px-2 pb-3 d-flex align-items-center">
+                                                <div>
+                                                    <label for="" class="font-weight-bold">is Badge Item?</label>
+                                                    <label class="switch">
+                                                        <input type="checkbox" name="is_badge_item">
+                                                        <span class="slider"></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="cronName" class="font-weight-bold">Cron Name</label>
+                                            <select class="form-select form-control" name="scrape_cron"
+                                                id="add-cronname" aria-label="Default select example"
+                                                style="width:auto">
+                                                <% itemsScrape.forEach(function (list) { %>
+                                                    <option value=<%=list.CronId %> data-cronname="<%= list.CronName %>
+                                                            "> <%= list.CronName %>
+                                                    </option>
+                                                    <%})%>
+                                            </select>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                Close
+                                            </button>
+                                            <button type="submit" class="btn btn-primary addScrapeItem">
+                                                Save
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <form method="post" autocomplete="off" id="edit_scrape_item">
+                            <div class="modal fade" id="editModal" tabindex="-1" role="dialog"
+                                aria-labelledby="editModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editModal">
+                                                Edit Item
+                                            </h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="edit-mpId" class="font-weight-bold">Enter MPID</label>
+                                            <input type="number" class="form-control" name="mpId" id="edit-mpId"
+                                                placeholder="MPID" />
+                                        </div>
+
+                                        <div class="form-group col-md-6">
+                                            <label for="edit-net32url" class="font-weight-bold">Enter Net32 Url</label>
+                                            <input type="url" class="form-control" name="net32_url" id="edit-net32url"
+                                                placeholder="Net32 Url" />
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <div class="px-2 pb-3 d-flex align-items-center">
+                                                <div>
+                                                    <label for="" class="font-weight-bold">Active - Repricer</label>
+                                                    <label class="switch">
+                                                        <input type="checkbox" name="activated" id="edit-active">
+                                                        <span class="slider"></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <div class="px-2 pb-3 d-flex align-items-center">
+                                                <div>
+                                                    <label for="" class="font-weight-bold">Is Badge Item?</label>
+                                                    <label class="switch">
+                                                        <input type="checkbox" name="is_badge_item" id="edit-badge">
+                                                        <span class="slider"></span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="cronName" class="font-weight-bold">Cron Name</label>
+                                            <select class="form-select form-control" name="scrape_cron"
+                                                id="edit-cronname" aria-label="Default select example"
+                                                style="width:auto">
+                                                <% itemsScrape.forEach(function (list) { %>
+                                                    <option value=<%=list.CronId %> data-cronname="<%= list.CronName %>"
+                                                            > <%= list.CronName %>
+                                                    </option>
+                                                    <%})%>
+                                            </select>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                Close
+                                            </button>
+                                            <button type="submit" class="btn btn-primary editScrapeItem">
+                                                Save
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div class="card mt-4">
+                            <h4 style="color: red;"> &nbsp;&nbsp;This page is to be decommissioned soon as the feature
+                                is merged with Active product List</h4>
+
+                            <br /><br />
+                            <% if(items.length===0) { %>
+                                <div class="m-2">No items found !</div>
+                                <% } else { %>
+                                    <div class="body table-responsive">
+                                        <table id="example" class="table table-striped table-bordered"
+                                            style="width: auto;">
+                                            <thead class="table-primary">
+                                                <tr>
+                                                    <th class="t-head"></th>
+                                                    <th class="t-head">MPID</th>
+                                                    <th class="t-head">Active Status</th>
+                                                    <th class="t-head">Net32 Url</th>
+                                                    <th class="t-head">Linked Cron Name</th>
+                                                    <th class="t-head">Is Badge Item?</th>
+                                                    <th class="t-head">Last Updated By</th>
+                                                    <th class="t-head">Last Updated At</th>
+                                                    <th class="t-head">Last Scraped At</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% let i=(pageNumber * pageSize) + 1 ; items.forEach(function(item) { %>
+                                                    <tr style="height:50 px; width:auto;">
+                                                        <td>
+                                                            <a href="" data-toggle="modal" data-target="#editModal"
+                                                                onclick="openEditModal(this)"
+                                                                data-mpId="<%= item.MpId %>"
+                                                                data-active="<%= item.IsActive ==1 %>"
+                                                                data-isBadge="<%= item.IsBadgeItem==1 %>"
+                                                                data-net32url="<%= item.Net32Url %>"
+                                                                data-cronname="<%= item.LinkedCronId %>"><i
+                                                                    class="ti-pencil-alt"></i></a>
+                                                            &nbsp;<br>
+                                                            <a onclick="deleteItem('<%= item.MpId %>')"><i
+                                                                    class="ti-trash"></i></a>
+                                                        </td>
+                                                        <td>
+                                                            <%= item.MpId %>
+                                                        </td>
+                                                        <td>
+                                                            <label class="switch">
+                                                                <input type="checkbox" name="is_active"
+                                                                    <%=item.IsActive==1 ? 'checked' : '' %>
+                                                                disabled></input>
+                                                                <span class="slider"></span>
+                                                            </label>
+                                                        </td>
+                                                        <td>
+                                                            <a href="<%= item.Net32Url %>" target="_blank">
+                                                                <%= item.Net32Url %>
+                                                            </a>
+                                                        </td>
+                                                        <td>
+                                                            <%= item.LinkedCronName %>
+                                                        </td>
+                                                        <td>
+                                                            <label class="switch">
+                                                                <input type="checkbox" name="is_badge"
+                                                                    <%=item.IsBadgeItem==1 ? 'checked' : '' %>
+                                                                disabled></input>
+                                                                <span class="slider"></span>
+                                                            </label>
+                                                        </td>
+                                                        <td>
+                                                            <%= item.LastUpdatedBy %>
+                                                        </td>
+                                                        <td>
+                                                            <%= item.LastUpdatedAt %>
+                                                        </td>
+                                                        <td>
+                                                            <%= item.LastScrapedDate %>
+                                                        </td>
+                                                    </tr>
+                                                    <% }); %>
+                                            </tbody>
+                                        </table>
+                                        <% } %>
+                                    </div>
+
+
+
+                        </div>
+                    </div>
+                </div>
+
+                <%- include("../footer"); %>
+                    <style>
+                        /* Basic Rules */
+                        .switch input {
+                            display: none;
+                        }
+
+                        .switch {
+                            display: inline-block;
+                            width: 52px;
+                            height: 22px;
+                            margin: 8px;
+                            transform: translateY(50%);
+                            position: relative;
+                        }
+
+                        /* Style Wired */
+                        .slider {
+                            position: absolute;
+                            top: 0;
+                            bottom: 0;
+                            left: 0;
+                            right: 0;
+                            border-radius: 30px;
+                            box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+                            cursor: pointer;
+                            border: 4px solid transparent;
+                            overflow: hidden;
+                            transition: 0.4s;
+                        }
+
+                        .slider:before {
+                            position: absolute;
+                            content: "";
+                            width: 100%;
+                            height: 100%;
+                            background: #777;
+                            border-radius: 30px;
+                            transform: translateX(-30px);
+                            transition: 0.4s;
+                        }
+
+                        input:checked+.slider:before {
+                            transform: translateX(30px);
+                            background: limeGreen;
+                        }
+
+                        input:checked+.slider {
+                            box-shadow: 0 0 0 2px limeGreen, 0 0 2px limeGreen;
+                        }
+
+                        /* Style Flat */
+                        .switch.flat .slider {
+                            box-shadow: none;
+                        }
+
+                        .switch.flat .slider:before {
+                            background: #fff;
+                        }
+
+                        .switch.flat input:checked+.slider:before {
+                            background: white;
+                        }
+
+                        .switch.flat input:checked+.slider {
+                            background: limeGreen;
+                        }
+
+                        .t-head {
+                            position: sticky;
+                            top: 0px;
+                            left: 0px;
+                            z-index: 9;
+                            background-color: #c3dfff;
+                        }
+
+                        .table-responsive {
+                            max-height: 800px;
+                            margin: 20px;
+                            padding: 0 !important;
+                            margin-top: -30px;
+                        }
+
+                        .btn.btn-success.mb-2.mr-2.active-btn {
+                            padding: 2px 5px !important;
+                        }
+
+                        .col {
+                            padding: 0px;
+                            display: flex;
+                        }
+
+                        .product-view {
+                            display: flex;
+                            font-size: 13px;
+                            padding-right: 10px;
+                        }
+
+                        .product-view span {
+                            padding-top: 8px;
+                            font-size: 12px;
+                        }
+
+                        .form-control {
+                            border-radius: .215rem 0 0 .215rem !important;
+                            width: 140px;
+                            padding-left: 6px !important;
+                            height: 32px !important;
+                        }
+
+                        .mr-1 {
+                            margin-left: .2rem !important;
+                            margin-right: .2rem !important;
+                        }
+
+                        .btn {
+                            padding: 5px 4px;
+                            font-size: 11px;
+                        }
+
+                        .mt-4 {
+                            margin-top: 0px !important
+                        }
+
+                        .table thead th {
+                            vertical-align: unset;
+                            font-size: 12px;
+                        }
+
+                        .table th,
+                        .table td {
+                            padding: .4rem;
+                        }
+
+                        .tr-row,
+                        .fr-row,
+                        .fir-row,
+                        .top-row,
+                        .mvp-row {
+                            height: 75px !important;
+                            display: inline-block;
+                            font-size: 12px;
+                        }
+
+                        .mx-1 {
+                            margin-right: 0px !important;
+                        }
+                    </style>
+
+
+                    <script src="/javascripts/dashboard.js"></script>

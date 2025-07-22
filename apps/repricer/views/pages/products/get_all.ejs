@@ -1,0 +1,1251 @@
+<%- include('../header') %>
+    <%- include('../left-sidebar') %>
+
+        <% let pgno=pageNumber + 1; let upVal=0, lowVal=0 ; const pages=new Array(totalPages).fill(null).map((v, i)=> i)
+            if (pageNumber <= 2) { upVal=0; lowVal=5 } else if (pageNumber>= (totalPages - 3)) {
+                upVal = totalPages - 5; lowVal = totalPages
+                } else {
+                upVal = pageNumber - 2; lowVal = pageNumber + 3
+                }
+                %>
+
+                <div class="page p1">
+                    <div class="container-fluid container-product">  
+                        <div class="d-flex justify-content-between">
+                            <div class="no-btn">
+                            <div class="product-view">
+                                <h1 class="commanHeading">Products</h1><span>( <%= (pageNumber * pageSize) + 1 %> - <%= Math.min((pageNumber * pageSize) +
+                                    pageSize,totalDocs) %> / <%= totalDocs %> )</span>
+                            </div>
+                            <form method="GET" id="" action="show_all" class="">
+                                <div class="row">
+                                    <div class="col form-group mx-sm-3 mb-2  ">
+                                        <input type="text" class="form-control" id="tags" name="tags"
+                                            value="<%= tags %>" placeholder="Search">
+                                        <button type="submit" name="search" value="true"
+                                            class="btn btn-primary mb-2 mr-2 nf-1">
+                                            <i class="fa-solid fa-magnifying-glass"></i>
+                                        </button>
+                                        <% if (tags !='' ) { %>
+                                            <a href="/productV2/show_all" class="close-btn ">
+                                                <i class="fa-solid fa-xmark"></i>
+                                             </a>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </form>
+                              <!-- pagination-->  
+                              <div
+                              class="card border-0 flex-column justify-content-between track-ccard-b bg-transparent">
+                              <div md="" class="mt-4 text-center">
+                                  <nav aria-label="" class="">
+                                      <ul class="pagination  justify-content-center">
+                                          <li class="page-item ">
+                                              <a href="/productV2/show_all?pgno=1&tags=<%= tags %>"><button
+                                                      class="btn tracknumlisting-pagination-button">&laquo;</button></a>
+                                          </li>
+                                          <li class="page-item ">
+                                              <a
+                                                  href="/productV2/show_all?pgno=<%= Math.max(1, pageNumber) %>&tags=<%= tags %>"><button
+                                                      class="btn tracknumlisting-pagination-button">Previous</button></a>
+                                          </li>
+                                          <% pages.slice(upVal, lowVal).map(pg=> {
+                                              let active = (pg === pageNumber) ? '-active' : ''
+                                              %>
+                                              <li class="page-item ">
+                                                  <a
+                                                      href="/productV2/show_all?pgno=<%= (pg + 1) %>&tags=<%= tags %>"><button
+                                                          class="btn tracknumlisting-pagination-button <%- active %>">
+                                                          <%= (pg + 1) %>
+                                                      </button></a>
+  
+                                              </li>
+  
+                                              <% }) %>
+                                                  <li class="page-item ">
+                                                      <a
+                                                          href="/productV2/show_all?pgno=<%= Math.min(totalPages, Number(pageNumber) + 2) %>&tags=<%= tags %>"><button
+                                                              class="btn tracknumlisting-pagination-button">Next</button></a>
+                                                  </li>
+                                                  <li class="page-item">
+                                                      <a
+                                                          href="/productV2/show_all?pgno=<%= totalPages %>&tags=<%= tags %>"><button
+                                                              class="btn tracknumlisting-pagination-button">&raquo;</button></a>
+                                                  </li>
+                                      </ul>
+                                  </nav>
+                              </div>
+                          </div>
+                            </div>
+                            <div class="d-flex btns-ht">
+                                <% if (tags==='' ) { %>
+                                    <!-- <a href="/masteritem/runAllCron" class="btn btn-success mx-1">-->
+                                        <!-- <i class="fa-solid fa-play"></i>  -->
+                                    <!--  Run Cron</a> -->
+                                    <% } else { %>
+                                        <div id="hdnProductManualRun">
+                                            <% items.forEach(item=> { %>
+                                            <input type="hidden" class="form-control" id="mpIds" name="mpIds" value="<%= item.mpid %>" />
+                                            <% }); %>
+                                        </div>
+                                        <button type="submit" class="btn btn-warning text-white mx-1" onClick="runManualScrape(false, false)">Manual Scrape</button>
+                                        <button type="submit" class="btn btn-success text-white mx-1" onClick="runUpdateToMax()">Update to Max</button>
+                                        <% } %>
+                                            <!-- <a href="/masteritem/resetCron" class="btn btn-dark mx-1">-->
+                                                <!-- <i class="fa-solid fa-arrow-rotate-right"></i>  -->
+                                                <!-- Reset</a> -->
+                                            <!-- <a href="/productV2/add" class="btn btn-primary mx-1">
+                                                <i class="fa-solid fa-plus"></i> 
+                                                Add Item
+                                            </a> -->
+
+                                            <button type="button" class="btn btn-primary mx-1" data-toggle="modal"
+                                                data-target="#exampleModal">
+                                                <!-- <i class="fa-solid fa-file-arrow-up"></i> -->
+                                                Import Excel
+                                            </button>
+
+                                            <% if(items && items.length !=0){ %>
+                                                <form method="POST" id="download_excel" action="download_excel">
+                                                    <button type="submit" class="btn btn-primary mx-1">
+                                                        <!-- <i class="fa-solid fa-file-arrow-down"></i> -->
+                                                        Export List</button>
+                                                </form>
+                                                <% } %>
+                                                    &nbsp;
+                                                    <!-- <a onClick="deleteAll();" class="btn btn-danger mx-1 ti-trash" >&nbsp;Delete All</a> -->
+                                                    <!--<a onClick="deleteAll();" class="btn btn-danger text-white "
+                                                        role="button"> -->
+                                                        <!-- <i class="fa-solid fa-trash"></i> -->
+                                                        <!--  Delete All</a>-->
+                                                        <button type="submit" class="btn btn-danger text-white mx-1" onClick="runManualSyncForAll()">Sync All</button>
+                                                        <button type="submit" class="btn btn-primary text-white mx-1" onClick="removeFrom422ForAll()">Remove All from 422</button>
+                            </div>
+                          
+                        </div>
+
+                        <form method="post" autocomplete="off" id="add_item_excel">
+                            <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+                                aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">
+                                                Select Excel File
+                                            </h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <input type="file" id="input" name="input" />
+                                        </div>
+                                        <div class="modal-footer">
+                                            <a href="/sample.xlsx" class="btn btn-primary">
+                                                Sample Download
+                                            </a>
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                Close
+                                            </button>
+                                            <button type="submit" class="btn btn-primary addItemExcel">
+                                                Update
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div class="card mt-4">
+                         
+                            <% if(items.length===0) { %>
+                                <div class="m-2">No items found !</div>
+                                <% } else { %>
+                                    <div class="body table-responsive">
+                                        <table id="example" class="table table-striped table-bordered"
+                                            style="width: auto;">
+                                            <thead class="table-primary">
+                                                <tr>
+                                                    <th class="t-head"></th>
+                                                    <th class="t-head">Channel Name</th>
+                                                    <th class="t-head">Active - Repricer</th>
+                                                    <th class="t-head">Data - Scrape</th>
+                                                    <th class="t-head">MPID</th>
+                                                    <th class="t-head">Channel ID</th>
+                                                    <th class="t-head">Cron Name</th>
+                                                    <th class="t-head">Slow Cron Name</th>
+                                                    <th class="t-head">Last Cron run at</th>
+                                                    <th class="t-head">Last run cron-type</th>
+                                                    <th class="t-head">Last updated at</th>
+                                                    <th class="t-head">Last updated cron-type</th>
+                                                    <th class="t-head">Last Reprice Comment</th>
+                                                    <th class="t-head">Last Suggested Price</th>
+                                                    <th class="t-head">Lowest Vendor Price</th>
+                                                    <th class="t-head">Unit Price</th>
+                                                    <th class="t-head">Floor Price</th>
+                                                    <th class="t-head">Max Price</th>
+                                                    <th class="t-head">NC</th>
+                                                    <th class="t-head long-txt">Suppress Price Break if Qty 1 not updated</th>
+                                                    <th class="t-head long-txt">Apply Buy Box</th>
+                                                    <th class="t-head long-txt">Apply NC For Buy Box</th>
+                                                    <th class="t-head">Triggered By Vendor</th>
+                                                    
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% 
+                                                let i = (pageNumber * pageSize) + 1 ; 
+                                                items.forEach(function(item) { %>
+                                                    <tr style="height:50 px; width:auto;">
+                                                        <td>
+                                                            <a href="/productV2/editItem/<%= item.mpid %>"><i
+                                                                    class="ti-pencil-alt"></i></a>
+                                                            &nbsp;<br>
+                                                            <a onclick="removeItem('<%= item.mpid%>');"><i
+                                                                    class="ti-trash"></i></a>&nbsp;<br>
+                                                                    <a href="<%= item.net32Url %>" target="_blank"><i class="ti-world"></i></a>
+                                                                &nbsp;<br>
+                                                                <a onclick="syncProductItem('<%= item.mpid%>');"><i class="fas fa-sync-alt" style="cursor: pointer;color: red;"></i></a>
+                                                                &nbsp;<br>
+                                                                <a onclick="removeFrom422ById('<%= item.mpid%>');"><i class="fas fa-bell" style="cursor: pointer;color: red;"></i></a>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.channelName %>
+                                                                        <% } %></span>
+                                                                            <hr>
+                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br>
+                                                                                    <%= item.frontier.channelName %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                           <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.channelName
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="fir-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.channelName %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="top-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.channelName %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                           
+                                                                                                            
+                                                        </td>
+                                                          <td>
+                                                            <span class="tr-row">
+                                                           
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= (item.tradent.activated).toString().slice(0,1).toUpperCase() %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br>
+                                                                                    <%= (item.frontier.activated).toString().slice(0,1).toUpperCase() %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                           <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= (item.mvp.activated).toString().slice(0,1).toUpperCase()
+                                                                                                        %>
+                                                                                                        <% } %></span>   
+                                                                                                                                                                                                    <hr>
+                                                                                                                                                                                                    <span class="mvp-row">
+                                                                                                                                                                                                        <% if(item.firstDent==null){ %>
+                                                                                                                                                                                                            <b>FIR:</b> <br>N/A
+                                                                                                                                                                                                            <% } else { %>
+                                                                                                                                                                                                                <b>FIR:</b><br>
+                                                                                                                                                                                                                <%= (item.firstDent.activated).toString().slice(0,1).toUpperCase() %>
+                                                                                                                                                                                                                    <% } %></span>
+                                                                                               
+                                                                                                                                                                                        <hr>
+                                                                                                                                                                                        <span class="mvp-row">
+                                                                                                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                                                                                                <% } else { %>
+                                                                                                                                                                                                    <b>TOP:</b><br>
+                                                                                                                                                                                                    <%= (item.topDent.activated).toString().slice(0,1).toUpperCase() %>
+                                                                                                                                                                                                        <% } %>
+                                                                                                                                                                                        </span>                                                                                                                 </span>
+                                                                                                        <br>
+                                                                                                        <!-- <a class="btn btn-success mb-2 mr-2 active-btn" style="float: right;color: antiquewhite;" title="Activate All"> 
+                                                                                                            <i onClick="activateProductForAll('<%= item.mpid%> ')" class="fa-solid fa-floppy-disk"></i>
+                                                                                                        </a> -->
+                                                                                                        <div class="act-deact-btn">
+                                                                                                            <a class="btn btn-success mb-2 active-btn ac-d-btn" style="float: right;color: antiquewhite;" title="Activate All" onClick="activateProductForAll('<%= item.mpid%> ')"> A
+                                                                                                            </a>
+                                                                                                            <a class="btn btn-danger mb-2 active-btn ac-d-btn" style="float: right;color: antiquewhite;" title="Deactivate All" onClick="deActivateProductForAll('<%= item.mpid%> ')"> DE
+                                                                                                            </a>
+                                                                                                        </div>                
+                                                        </td>
+                                                                                                                <td>
+                                                                                                                    <span class="tr-row">
+                                                                                                                        <% if (item.isScrapeOnlyActive!=null){ %>
+                                                                                                                            <%= (item.isScrapeOnlyActive).toString().slice(0,1).toUpperCase() %>
+                                                                                                                                <% } else { %>
+                                                                                                                                    N/A
+                                                                                                                                    <% } %>
+                                                                                                                                    <br><br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br><br><br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br><br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br><br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br><br>
+                                                                                                                                    <br>
+                                                                                                                                    
+                                                                                                                                    <div class="act-deact-btn" style="margin-top: 3px;">
+                                                                                                                                        <a class="btn btn-success mb-2 active-btn ac-d-btn" style="float: right;color: antiquewhite;" title="Activate Data-Scrape"
+                                                                                                                                            onClick="activateDataScrape('<%= item.mpid%> ')"> A
+                                                                                                                                        </a>
+                                                                                                                                        <a class="btn btn-danger mb-2 active-btn ac-d-btn" style="float: right;color: antiquewhite;" title="Deactivate Data-Scrape"
+                                                                                                                                            onClick="deActivateDataScrape('<%= item.mpid%> ')"> DE
+                                                                                                                                        </a>
+                                                                                                                                    </div>
+                                                                                                                </td>
+                                                        <td>
+                                                            <%= item.mpid %>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row tr-cwid">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.channelId %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                                <span class="fr-row tr-cwid">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br>
+                                                                                    <%= item.frontier.channelId %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                           <span class="mvp-row tr-cwid">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.channelId
+                                                                                                        %>
+                                                                                                        <% } %></span><hr>
+                                                                                                        <span class="fir-row tr-cwid">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.channelId %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="top-row tr-cwid">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.channelId %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+                                                        <td>
+                                                            <%= item.cronName %>
+                                                        </td>
+                                                        <td>
+                                                            <%= item.slowCronName %>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row tr-wid">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.lastCronTime  %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                            <span class="fr-row tr-wid">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br> 
+                                                                                    <%= item.frontier.lastCronTime  %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                            <span class="mvp-row tr-wid">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.lastCronTime
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="fir-row tr-wid">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.lastCronTime %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="top-row tr-wid">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.lastCronTime %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row tr-wid">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.lastCronRun %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                            <span class="fr-row tr-wid">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br>
+                                                                                    <%= item.frontier.lastCronRun %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                            <span class="mvp-row tr-wid">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.lastCronRun
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="fir-row tr-wid">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.lastCronRun %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="top-row tr-wid">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.lastCronRun %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row tr-wid">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.lastUpdateTime %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                            <span class="fr-row tr-wid">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br>
+                                                                                    <%= item.frontier.lastUpdateTime %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                            <span class="mvp-row tr-wid">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.lastUpdateTime
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="fir-row tr-wid">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.lastUpdateTime %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="top-row tr-wid">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.lastUpdateTime %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.lastUpdatedBy %>
+                                                                        <% } %></span>
+                                                                             <hr>              
+                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br>
+                                                                                    <%= item.frontier.lastUpdatedBy %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                            <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.lastUpdatedBy
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="fir-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.lastUpdatedBy %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="top-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.lastUpdatedBy %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+                                                        <td style="font-size: 10px;">
+                                                            <span class="tr-row ">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %><span class="tr-mwid">
+                                                                    <b>TRA:</b><br>
+                                                                        <%= item.tradent.last_cron_message %>
+                                                                        <% } %></span></span>
+                                                                             <hr>
+                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <span class="tr-mwid">
+                                                                                    <b>FRO:</b><br>
+                                                                                        <%= item.frontier.last_cron_message
+                                                                                        %>
+                                                                                        <% } %></span></span>
+                                                                                            <hr>
+                                                                                           <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %> <span class="tr-mwid">
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.last_cron_message
+                                                                                                        %>
+                                                                                                        <% } %></span></span>
+                                                                                                        <hr>
+                                                                                                        <span class="fir-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %> <span class="tr-mwid">
+                                                                                                                        <b>FIR:</b><br>
+                                                                                                                        <%= item.firstDent.last_cron_message %>
+                                                                                                                            <% } %>
+                                                                                                                    </span>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="top-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %> <span class="tr-mwid">
+                                                                                                                        <b>TOP:</b><br>
+                                                                                                                        <%= item.topDent.last_cron_message %>
+                                                                                                                            <% } %>
+                                                                                                                    </span>
+                                                                                                        </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row tr-cwid">
+                                                                <% if(item.tradent==null){ %>
+                                                                    <b>TRA:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>TRA: </b><br>
+                                                                        <%= item.tradent.lastSuggestedPrice %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="fr-row tr-cwid">
+                                                                <% if(item.frontier==null){ %>
+                                                                    <b>FRO:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>FRO: </b><br>
+                                                                        <%= item.frontier.lastSuggestedPrice %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="mvp-row tr-cwid">
+                                                                <% if(item.mvp==null){ %>
+                                                                    <b>MVP:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>MVP:</b><br>
+                                                                        <%= item.mvp.lastSuggestedPrice %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="mvp-row tr-cwid">
+                                                                <% if(item.firstDent==null){ %>
+                                                                    <b>FIR:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>FIR:</b><br>
+                                                                        <%= item.firstDent.lastSuggestedPrice %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="mvp-row tr-cwid">
+                                                                <% if(item.topDent==null){ %>
+                                                                    <b>TOP:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>TOP:</b><br>
+                                                                        <%= item.topDent.lastSuggestedPrice %>
+                                                                            <% } %>
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.lowest_vendor_price ? (item.tradent.lowest_vendor_price).toString().replace(/ \//g,",") : item.tradent.lowest_vendor_price %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br>
+                                                                                    <%= item.frontier.lowest_vendor_price ? (item.frontier.lowest_vendor_price).toString().replace(/ \//g,",") : item.frontier.lowest_vendor_price
+                                                                                        %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                            <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.lowest_vendor_price ? (item.mvp.lowest_vendor_price).toString().replace(/ \//g,",") : item.mvp.lowest_vendor_price
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="fir-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.lowest_vendor_price ? (item.firstDent.lowest_vendor_price).toString().replace(/ \//g,",") :
+                                                                                                                        item.firstDent.lowest_vendor_price %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="top-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.lowest_vendor_price ? (item.topDent.lowest_vendor_price).toString().replace(/ \//g,",") :
+                                                                                                                        item.topDent.lowest_vendor_price %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.unitPrice %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br>
+                                                                                    <%= item.frontier.unitPrice %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                           <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.unitPrice
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="fir-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.unitPrice %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="top-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.unitPrice %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.floorPrice %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br>
+                                                                                    <%= item.frontier.floorPrice %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                           <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.floorPrice
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="mvp-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.floorPrice %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="mvp-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.floorPrice %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.maxPrice %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b >FRO: </b><br>
+                                                                                    <%= item.frontier.maxPrice %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                           <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.maxPrice
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="mvp-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.maxPrice %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="mvp-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.maxPrice %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:  </b>
+                                                                   <span  title = "<%= item.tradent.is_nc_needed.toString().toUpperCase() %>">
+                                                                     <%= (item.tradent.is_nc_needed).toString().slice(0,1).toUpperCase() %> </span>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                                            
+                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b >FRO: </b><br>
+                                                                                    <span title ="<%= item.frontier.is_nc_needed.toString().toUpperCase() %>">
+                                                                                   <%= (item.frontier.is_nc_needed).toString().slice(0,1).toUpperCase() %></span>
+                                                                                        <% } %>  </span>
+                                                                                            <hr>
+                                                                                           
+                                                                                            <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <span title = "<%= item.mvp.is_nc_needed.toString().toUpperCase() %>">
+                                                                                                        <%= (item.mvp.is_nc_needed).toString().slice(0,1).toUpperCase()
+                                                                                                        %> </span>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        
+                                                                                                        <span class="mvp-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <span title="<%= item.firstDent.is_nc_needed.toString().toUpperCase() %>">
+                                                                                                                        <%= (item.firstDent.is_nc_needed).toString().slice(0,1).toUpperCase() %>
+                                                                                                                    </span>
+                                                                                                                    <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        
+                                                                                                        <span class="mvp-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <span title="<%= item.topDent.is_nc_needed.toString().toUpperCase() %>">
+                                                                                                                        <%= (item.topDent.is_nc_needed).toString().slice(0,1).toUpperCase() %>
+                                                                                                                    </span>
+                                                                                                                    <% } %>
+                                                                                                        </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row tr-cwid">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:  </b><br>
+                                                                     <%= item.tradent.suppressPriceBreakForOne==true ? "On": "Off" %>
+                                                                        <% } %> </span>
+                                                                             <hr>
+                                                                            <span class="fr-row tr-cwid">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b >FRO: </b><br>
+                                                                                   <%= item.frontier.suppressPriceBreakForOne==true ? "On": "Off" %>
+                                                                                        <% } %> </span>
+                                                                                            <hr>
+                                                                                           <span class="mvp-row tr-cwid">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                        <%= item.mvp.suppressPriceBreakForOne==true ? "On": "Off"
+                                                                                                        %> 
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="mvp-row tr-cwid">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.suppressPriceBreakForOne==true ? "On" : "Off" %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="mvp-row tr-cwid">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.suppressPriceBreakForOne==true ? "On" : "Off" %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row tr-cwid">
+                                                                <% if(item.tradent==null){ %>
+                                                                    <b>TRA:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>TRA: </b><br>
+                                                                        <%= item.tradent.applyBuyBoxLogic==true ? "On" : "Off" %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="fr-row tr-cwid">
+                                                                <% if(item.frontier==null){ %>
+                                                                    <b>FRO:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>FRO: </b><br>
+                                                                        <%= item.frontier.applyBuyBoxLogic==true ? "On" : "Off" %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="mvp-row tr-cwid">
+                                                                <% if(item.mvp==null){ %>
+                                                                    <b>MVP:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>MVP:</b><br>
+                                                                        <%= item.mvp.applyBuyBoxLogic==true ? "On" : "Off" %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="mvp-row tr-cwid">
+                                                                <% if(item.firstDent==null){ %>
+                                                                    <b>FIR:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>FIR:</b><br>
+                                                                        <%= item.firstDent.applyBuyBoxLogic==true ? "On" : "Off" %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="mvp-row tr-cwid">
+                                                                <% if(item.topDent==null){ %>
+                                                                    <b>TOP:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>TOP:</b><br>
+                                                                        <%= item.topDent.applyBuyBoxLogic==true ? "On" : "Off" %>
+                                                                            <% } %>
+                                                            </span>
+                                                        </td>
+
+                                                        <td>
+                                                            <span class="tr-row tr-cwid">
+                                                                <% if(item.tradent==null){ %>
+                                                                    <b>TRA:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>TRA: </b><br>
+                                                                        <%= item.tradent.applyNcForBuyBox==true ? "On" : "Off" %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="fr-row tr-cwid">
+                                                                <% if(item.frontier==null){ %>
+                                                                    <b>FRO:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>FRO: </b><br>
+                                                                        <%= item.frontier.applyNcForBuyBox==true ? "On" : "Off" %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="mvp-row tr-cwid">
+                                                                <% if(item.mvp==null){ %>
+                                                                    <b>MVP:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>MVP:</b><br>
+                                                                        <%= item.mvp.applyNcForBuyBox==true ? "On" : "Off" %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="mvp-row tr-cwid">
+                                                                <% if(item.firstDent==null){ %>
+                                                                    <b>FIR:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>FIR:</b><br>
+                                                                        <%= item.firstDent.applyNcForBuyBox==true ? "On" : "Off" %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="mvp-row tr-cwid">
+                                                                <% if(item.topDent==null){ %>
+                                                                    <b>TOP:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>TOP:</b><br>
+                                                                        <%= item.topDent.applyNcForBuyBox==true ? "On" : "Off" %>
+                                                                            <% } %>
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="tr-row tr-cwid">
+                                                                <% if(item.tradent==null){ %>
+                                                                    <b>TRA:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>TRA: </b><br>
+                                                                        <%= item.tradent.triggeredByVendor %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="fr-row tr-cwid">
+                                                                <% if(item.frontier==null){ %>
+                                                                    <b>FRO:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>FRO: </b><br>
+                                                                        <%= item.frontier.triggeredByVendor %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="mvp-row tr-cwid">
+                                                                <% if(item.mvp==null){ %>
+                                                                    <b>MVP:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>MVP:</b><br>
+                                                                        <%= item.mvp.triggeredByVendor%>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="mvp-row tr-cwid">
+                                                                <% if(item.firstDent==null){ %>
+                                                                    <b>FIR:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>FIR:</b><br>
+                                                                        <%= item.firstDent.triggeredByVendor %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="mvp-row tr-cwid">
+                                                                <% if(item.topDent==null){ %>
+                                                                    <b>TOP:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>TOP:</b><br>
+                                                                        <%= item.topDent.triggeredByVendor %>
+                                                                            <% } %>
+                                                            </span>
+                                                        </td>
+                                                        
+                                                    </tr>
+                                                    <% }); %>
+                                            </tbody>
+                                        </table>
+                                        <% } %>
+                                    </div>
+
+                                    
+
+                        </div>
+                    </div>
+                </div>
+
+                <%- include("../footer"); %>
+                    <style>
+                        /* Basic Rules */
+                        .switch input {
+                            display: none;
+                        }
+
+                        .switch {
+                            display: inline-block;
+                            width: 52px;
+                            height: 22px;
+                            margin: 8px;
+                            transform: translateY(50%);
+                            position: relative;
+                        }
+
+                        /* Style Wired */
+                        .slider {
+                            position: absolute;
+                            top: 0;
+                            bottom: 0;
+                            left: 0;
+                            right: 0;
+                            border-radius: 30px;
+                            box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+                            cursor: pointer;
+                            border: 4px solid transparent;
+                            overflow: hidden;
+                            transition: 0.4s;
+                        }
+
+                        .slider:before {
+                            position: absolute;
+                            content: "";
+                            width: 100%;
+                            height: 100%;
+                            background: #777;
+                            border-radius: 30px;
+                            transform: translateX(-30px);
+                            transition: 0.4s;
+                        }
+
+                        input:checked+.slider:before {
+                            transform: translateX(30px);
+                            background: limeGreen;
+                        }
+
+                        input:checked+.slider {
+                            box-shadow: 0 0 0 2px limeGreen, 0 0 2px limeGreen;
+                        }
+
+                        /* Style Flat */
+                        .switch.flat .slider {
+                            box-shadow: none;
+                        }
+
+                        .switch.flat .slider:before {
+                            background: #fff;
+                        }
+
+                        .switch.flat input:checked+.slider:before {
+                            background: white;
+                        }
+
+                        .switch.flat input:checked+.slider {
+                            background: limeGreen;
+                        }
+
+                        .t-head {
+                            position: sticky;
+                            top: 0px;
+                            left: 0px;
+                            z-index: 9;
+                            background-color: #c3dfff;
+                        }
+
+                        .table-responsive {
+                            max-height: 800px;
+                            margin: 20px;
+                            padding: 0 !important;
+                            margin-top: -30px;
+                        }
+                        .btn.btn-success.mb-2.mr-2.active-btn {
+                            padding: 2px 5px !important;
+                        }
+                        .col{
+                            padding: 0px;
+                            display: flex;
+                        }
+                        .product-view{
+                            display: flex; 
+                            font-size: 13px;
+                            padding-right: 10px;
+                        }
+                        .product-view span{ 
+                            padding-top: 8px;
+                            font-size: 12px;
+                        }
+                        .form-control{
+                            border-radius: .215rem 0 0 .215rem !important;
+                            width: 140px;
+                            padding-left: 6px !important;
+                            height: 32px !important;
+                        }
+                        .mr-1{
+                            margin-left: .2rem !important;
+                            margin-right: .2rem !important;
+                        }
+                        .btn{
+                            padding: 5px 4px;
+                            font-size: 11px;
+                        }
+                        .mt-4{
+                            margin-top: 0px !important
+                        }
+                        .table thead th {
+                            vertical-align: unset;
+                            font-size: 12px;
+                        }
+                        .table th, .table td {
+                            padding: .4rem;
+                        }
+                        .tr-row ,.fr-row, .mvp-row,.fir-row,.top-row{
+                            height: 75px !important;
+                            display: inline-block;
+                            font-size: 12px;
+                        }
+                        .mx-1 {
+                            margin-right: 0px !important;
+                        }
+                    </style>
+
+<script>
+    let menuicon = document.querySelector(".menuicn");
+
+    let page = document.querySelector(".page");
+    let nav = document.querySelector(".left_sidebar");
+     $(document).ready(function() {
+        nav.classList.toggle("navclose");
+        page.classList.toggle("page-toggle");
+     }); 
+     if(menuicon){
+    menuicon.addEventListener("click", () => {
+        nav.classList.toggle("navclose");
+        page.classList.toggle("page-toggle");
+    })
+}
+</script>
+ 

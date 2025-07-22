@@ -1,0 +1,235 @@
+<div class="card">
+  <div class="card-body">
+    <% if(model.firstDentDetails!=null){ %>
+      <form method="post" autocomplete="off" id="update_product_form_firstDent">
+        <input type="hidden" value="FirstDent" name="vendors" />
+        <input type="hidden" value="<%= model.mpId %>" name="mpid" />
+        <div class="row no-gutters">
+          <div class="form-group col-3">
+            <label for="channel_name" class="font-weight-bold">
+              Channel Name <span style="color: red;font-weight: bold;">*</span>
+            </label>
+            <input type="text" class="form-control" value="<%= model.firstDentDetails.channelName %>"
+              name="channel_name" placeholder="Channel Name" />
+          </div>
+          <div class="form-group col-3">
+            <label for="executionPriority" class="font-weight-bold">Execution Priority
+              :</label>
+            <br>
+            <select class="form-select form-control" name="executionPriority" aria-label="Default select example">
+              <option <%=model.firstDentDetails.executionPriority==1 ? "selected" : "" %> value=1>1</option>
+              <option <%=model.firstDentDetails.executionPriority==2 ? "selected" : "" %> value=2>2</option>
+              <option <%=model.firstDentDetails.executionPriority==3 ? "selected" : "" %> value=3>3</option>
+              <option <%=model.firstDentDetails.executionPriority==4 ? "selected" : "" %> value=4>4</option>
+              <option <%=model.firstDentDetails.executionPriority==5 ? "selected" : "" %> value=5>5</option>
+            </select>
+          </div>
+          <div class="form-group col-3">
+            <label for="percentageIncrease" class="font-weight-bold">Reprice Up %</label>
+            <input type="number" class="form-control" value="<%= model.firstDentDetails.percentageIncrease %>"
+              name="percentageIncrease" placeholder="Reprice Up %" min="0" max="100" />
+          </div>
+          <div class="form-group col-3" name="divBadgePercentage">
+            <label for="badgePercentage" class="font-weight-bold">Reprice UP Badge Percentage %</label>
+            <input type="number" class="form-control" value="<%= model.firstDentDetails.badgePercentage %>"
+              name="badgePercentage" placeholder="Badge Percentage (%)" min="0" max="100" />
+          </div>
+        </div>
+        <div class="row no-gutters">
+          <div class="form-group col-3">
+            <label for="sisterVendorId" class="font-weight-bold">Sister Vendor Id (Separated by
+              [;])</label>
+            <input type="text" class="form-control" value="<%= model.firstDentDetails.sisterVendorId %>"
+              name="sisterVendorId" placeholder="Sister Vendor Id" />
+          </div>
+          <div class="form-group col-3">
+            <label for="inactiveVendorId" class="font-weight-bold">Inactive Vendor Id (Separated by
+              [;])</label>
+            <input type="text" class="form-control" value="<%= model.firstDentDetails.inactiveVendorId %>"
+              name="inactiveVendorId" placeholder="Inactive Vendor Id" />
+          </div>
+          <div class="form-group col-3">
+            <label for="override_bulk_rule_select" class="font-weight-bold">Override Bulk Update (Up/Down)
+              :</label>
+            <select class="form-select form-control" name="override_bulk_rule_select"
+              aria-label="Default select example">
+              <option <%=model.firstDentDetails.override_bulk_rule==-1 ? "selected" : "" %> value=-1>-- Please Select --
+              </option>
+              <option <%=model.firstDentDetails.override_bulk_rule==0 ? "selected" : "" %> value=0>Only Up</option>
+              <option <%=model.firstDentDetails.override_bulk_rule==1 ? "selected" : "" %> value=1>Only Down</option>
+              <option <%=model.firstDentDetails.override_bulk_rule==2 ? "selected" : "" %> value=2>Both</option>
+            </select>
+          </div>
+          <div class="form-group col-3">
+            <label for="handling_time_filter" class="font-weight-bold">Handling Time Group :</label>
+            <select class="form-select form-control" name="handling_time_filter" aria-label="Default select example"
+              onchange="enablePercentageData(this)">
+              <option <%=model.firstDentDetails.handlingTimeFilter=='ALL' ? "selected" : "" %> value='ALL'>All</option>
+              <option <%=model.firstDentDetails.handlingTimeFilter=='FAST_SHIPPING' ? "selected" : "" %>
+                value='FAST_SHIPPING'>1-2 days (Fast Shipping)</option>
+              <option <%=model.firstDentDetails.handlingTimeFilter=='STOCKED' ? "selected" : "" %> value='STOCKED'>1-5
+                days (Stocked)</option>
+              <option <%=model.firstDentDetails.handlingTimeFilter=='LONG_HANDLING' ? "selected" : "" %>
+                value='LONG_HANDLING'>6+ days (Long Handling)</option>
+            </select>
+          </div>
+        </div>
+        <div class="row no-gutters">
+          <div class="form-group col-3">
+            <label for="excludedVendors" class="font-weight-bold">Exclude Vendor(s) (Separated by
+              [;])</label>
+            <input type="text" class="form-control" value="<%= model.firstDentDetails.excludedVendors %>"
+              name="excludedVendors" placeholder="Excluded Vendor Ids" />
+          </div>
+          <div class="form-group col-3">
+            <label for="inventoryThreshold" class="font-weight-bold">Inventory Competition Threshold</label>
+            <input type="number" class="form-control" value="<%= model.firstDentDetails.inventoryThreshold %>"
+              name="inventoryThreshold" placeholder="Inventory Competition Threshold" min="0" max="100" />
+          </div>
+          <div class="form-group col-3">
+            <label for="percentageDown" class="font-weight-bold">Reprice Down %</label>
+            <input type="number" class="form-control" value="<%= model.firstDentDetails.percentageDown %>"
+              name="percentageDown" placeholder="Reprice Down %" min="0" max="1" />
+          </div>
+          <div class="form-group col-3">
+            <label for="badgePercentageDown" class="font-weight-bold">Reprice Down Badge %</label>
+            <input type="number" class="form-control" value="<%= model.firstDentDetails.badgePercentageDown %>"
+              name="badgePercentageDown" placeholder="Reprice Down Badge %" min="0" max="1" step="0.001" />
+          </div>
+          <div class="form-group col-3">
+            <label for="ownVendorThreshold" class="font-weight-bold">Own Vendor Threshold</label>
+            <input type="number" class="form-control" value="<%= model.firstDentDetails.ownVendorThreshold %>"
+              name="ownVendorThreshold" placeholder="Own Vendor Threshold" min="1" step="1" />
+          </div>
+        </div>
+        <div class="row no-gutters">
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="Scrape_on_off" <%=model.firstDentDetails.scrapeOn==true ? 'checked' : '' %>
+              />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">
+              Reprice - Scrape <span style="color: red;font-weight: bold;">*</span>
+            </label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="Reprice_on_off" <%=model.firstDentDetails.allowReprice==true ? 'checked' : ''
+                %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Reprice</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="suppressPriceBreak" <%=model.firstDentDetails.suppressPriceBreak==true
+                ? 'checked' : '' %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Suppress Price Break</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="competeAll" <%=model.firstDentDetails.competeAll==true ? 'checked' : '' %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Compete with all vendors</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="compareWithQ1" <%=model.firstDentDetails.compareWithQ1==true ? 'checked' : ''
+                %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Q2 compete with Q1</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="applyBuyBox" <%=model.firstDentDetails.applyBuyBoxLogic==true ? 'checked'
+                : '' %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Apply Buy Box</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="applyNcForBuyBox" <%=model.firstDentDetails.applyNcForBuyBox==true
+                ? 'checked' : '' %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Apply NC For Buy Box</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="includeInactiveVendors"
+                <%=model.firstDentDetails.includeInactiveVendors==true ? 'checked' : '' %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Include Inactive Vendors (On/Off)</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="override_bulk_update" <%=model.firstDentDetails.override_bulk_update==true
+                ? 'checked' : '' %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Override Bulk Update (On/Off)</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="suppressPriceBreakForOne"
+                <%=model.firstDentDetails.suppressPriceBreakForOne==true ? 'checked' : '' %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Suppress Price Break if Qty 1 not
+              updated</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="beatQPrice" <%=model.firstDentDetails.beatQPrice==true ? 'checked' : '' %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Compete On Price Breaks Only</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="keepPosition" <%=model.firstDentDetails.keepPosition==true ? 'checked' : ''
+                %>
+              />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Keep Position</label>
+          </div>
+        </div>
+        <div class="row no-gutters">
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="competeWithNext" <%=model.firstDentDetails.competeWithNext==true ? 'checked'
+                : '' %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">
+              Floor-Compete With Next <span style="color: red;font-weight: bold;">*</span>
+            </label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="ignorePhantomQBreak" <%=model.firstDentDetails.ignorePhantomQBreak==true ? 'checked' : ''
+                %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">
+              Ignore Phantom Q Break <span style="color: red;font-weight: bold;">*</span>
+            </label>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-success mx-1" style="float: right;color: antiquewhite;">
+          Save Changes
+        </button>
+      </form>
+      <% } else { %>
+        <h5 id="show_text_firstDent">No Data</h5>
+        <% } %>
+  </div>
+</div>

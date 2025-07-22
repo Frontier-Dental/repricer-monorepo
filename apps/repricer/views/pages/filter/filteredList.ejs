@@ -1,0 +1,379 @@
+<%- include('../header') %>
+    <%- include('../left-sidebar') %>
+        <form method="post" autocomplete="off" id="form_cron_filter">
+            <div class="page">
+                <div class="container-fluid">
+                    <div class="d-flex justify-content-between">
+                        <h1 class="commanHeading">Configure Slow Cron Group <b>
+                            </b></h1>
+                        <div class="d-flex">
+                            <a onClick="edit()" class="btn btn-primary mx-1" name="btnEdit" style="color: white;"><i
+                                    class="fa-sharp fa-solid fa-pen"></i>
+                                &nbsp;Edit</a>
+                            <a onClick="cancel()" class="btn btn-danger mx-1 d-none" name="btnCancel"
+                                style="color: white;"><i class="fa fa-times"></i>
+                                &nbsp;Cancel</a>
+                            <a onClick="saveSlowCron()" class="btn btn-success mx-1 disabled" name="btnSave"
+                                aria-disabled="true" style="color: white;"><i class="fa-sharp fa-solid fa-house"></i>
+                                &nbsp;Save</a>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="card">
+                        <div class="body table-responsive">
+                            <table id="example" class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th style="display: none;">Cron Id</th>
+                                        <th style="width: 120px;">Cron Name</th>
+                                        <th style="width: 135px;">Cron Unit</th>
+                                        <th style="width: 100px;">Cron Interval</th>
+                                        <th style="width: 100px;">Cron Offset</th>
+                                        <th>Default Proxy Provider</th>
+                                        <th>Alternate Provider List</th>
+                                        <th>Net32 Secret Key</th>
+                                        <th>Last Modified By</th>
+                                        <th>Last Modified On</th>
+                                        <th style="width: 170px;">Last On Time</th>
+                                        <th style="text-align: center;">Cron On/Off</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if(slowCronData.length===0) { %>
+                                        <p>No items found !</p>
+                                        <% } else {let i=1 ; slowCronData.forEach(function(item){ %>
+                                            <tr
+                                                class="<%=item.ThresholdReached==true ? 'threshold':(item.CloseToThresholdReached==true?'closeThreshold':"")%>">
+                                                <td style="display: none;">
+                                                    <input type="text" class="form-control" value="<%= item.CronId %>"
+                                                        name="s_cron_id_<%= item.CronId %>" placeholder="Cron Id"
+                                                        readonly />
+                                                    <input type="hidden" class="form-control" value="<%= item.CronId %>"
+                                                        name="s_cron_id_hdn_<%= item.CronId %>" />
+                                                </td>
+                                                <td>
+                                                    <input type="text" class="form-control" value="<%= item.CronName %>"
+                                                        name="s_cron_name_<%= item.CronId %>" placeholder="Cron Name"
+                                                        readonly />
+                                                </td>
+                                                <td>
+                                                    <select class="form-select form-control"
+                                                        name="s_cron_time_unit_<%= item.CronId %>"
+                                                        aria-label="Default select example" disabled>
+                                                        <option <%=item.CronTimeUnit=="sec" ? "selected" : "" %>
+                                                            value="sec">Seconds</option>
+                                                        <option <%=item.CronTimeUnit=="min" ? "selected" : "" %>
+                                                            value="min">Minutes</option>
+                                                        <option <%=item.CronTimeUnit=="hours" ? "selected" : "" %>
+                                                            value="hours">Hours</option>
+                                                        <option <%=item.CronTimeUnit=="days" ? "selected" : "" %>
+                                                            value="days">Days</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control"
+                                                        value="<%= item.CronTime %>"
+                                                        name="s_cron_time_<%= item.CronId %>" placeholder="Cron Time"
+                                                        readonly />
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control"
+                                                        value="<%= item.Offset || 0 %>" min="0"
+                                                        name="s_offset_<%= item.CronId %>" placeholder="Offset"
+                                                        readonly />
+                                                </td>
+                                                <td>
+                                                    <select class="form-select form-control"
+                                                        name="s_proxy_provider_<%= item.CronId %>"
+                                                        aria-label="Default select example" disabled>
+                                                        <% configItems.forEach(function(configItem) { %>
+                                                            <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider == item.ProxyProvider ? "selected" : "" %>>
+                                                                <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
+                                                            </option>
+                                                        <% }); %>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <select class="form-select form-control" name="proxy_provider_1"
+                                                        aria-label="Default select example" disabled>
+                                                        <% configItems.forEach(function(configItem) { %>
+                                                            <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider == item.ProxyProvider_1 ? "selected" : "" %>>
+                                                                <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
+                                                            </option>
+                                                        <% }); %>
+                                                    </select>
+                                                    <br />
+                                                    <select class="form-select form-control" name="proxy_provider_2"
+                                                        aria-label="Default select example" disabled>
+                                                        <% configItems.forEach(function(configItem) { %>
+                                                            <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider == item.ProxyProvider_2 ? "selected" : "" %>>
+                                                                <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
+                                                            </option>
+                                                        <% }); %>
+                                                    </select>
+                                                    <br />
+                                                    <select class="form-select form-control" name="proxy_provider_3"
+                                                        aria-label="Default select example" disabled>
+                                                        <% configItems.forEach(function(configItem) { %>
+                                                            <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider == item.ProxyProvider_3 ? "selected" : "" %>>
+                                                                <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
+                                                            </option>
+                                                        <% }); %>
+                                                    </select>
+                                                    <br />
+                                                    <!-- <select class="form-select form-control" name="proxy_provider_4"
+                                                        aria-label="Default select example" disabled>
+                                                        <option <%=item.ProxyProvider_4==0 ? "selected" : "" %>
+                                                            value=0>ScrapingBee - Non-JS Rendering</option>
+                                                        <option <%=item.ProxyProvider_4==2 ? "selected" : "" %>
+                                                            value=2>Bright Data</option>
+                                                        <option <%=item.ProxyProvider_4==3 ? "selected" : "" %>
+                                                            value=3>SmartProxy - Web</option>
+                                                        <option <%=item.ProxyProvider_4==5 ? "selected" : "" %>
+                                                            value=5>ScrapingBee - JS Rendering</option>
+                                                    </select> -->
+                                                </td>
+                                                <!-- <td>
+                                                    <select class="form-select form-control"
+                                                        name="s_ip_type_<%=item.CronId %>"
+                                                        aria-label="Default select example" disabled
+                                                        onchange="enableIp(this,'<%= item.CronId %>')">
+                                                        <option <%=item.IpType==0 ? "selected" : "" %>
+                                                            value=0>Fixed</option>
+                                                        <option <%=(item.IpType==1 || item.IpType==3) ? "selected" : ""
+                                                            %>
+                                                            value=1>Rotating-Axios</option>
+                                                        <option <%=item.IpType==2 ? "selected" : "" %>
+                                                            value=2>Rotating-HTTP</option>
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <input type="text" class="form-control" value="<%= item.FixedIp %>"
+                                                        name="s_fixed_ip_<%=item.CronId %>" placeholder="IP" readonly />
+                                                </td> -->
+                                                <td>
+                                                    TRADENT : <input type="text" class="form-control"
+                                                        value="<%= item.SecretKey[0].secretKey %>"
+                                                        name="s_secret_key_tradent_<%= item.CronId %>"
+                                                        placeholder="Secret Key" readonly />
+                                                    FRONTIER : <input type="text" class="form-control"
+                                                        value="<%= item.SecretKey[1].secretKey %>"
+                                                        name="s_secret_key_frontier_<%= item.CronId %>"
+                                                        placeholder="Secret Key" readonly />
+                                                    MVP : <input type="text" class="form-control"
+                                                        value="<%= item.SecretKey[2].secretKey %>"
+                                                        name="s_secret_key_mvp_<%= item.CronId %>"
+                                                        placeholder="Secret Key" readonly />
+                                                    TOPDENT : <input type="text" class="form-control"
+                                                        value="<%= item.SecretKey[3].secretKey %>"
+                                                        name="s_secret_key_topdent_<%= item.CronId %>"
+                                                        placeholder="Secret Key" readonly />
+                                                    FIRSTDENT : <input type="text" class="form-control"
+                                                        value="<%= item.SecretKey[4].secretKey %>"
+                                                        name="s_secret_key_firstdent_<%= item.CronId %>"
+                                                        placeholder="Secret Key" readonly />
+                                                </td>
+                                                <td style=" word-wrap: break-word">
+                                                    <%= item.lastUpdatedBy %>
+                                                </td>
+                                                <td style=" word-wrap: break-word">
+                                                    <%= item.lastUpdatedOn %>
+                                                </td>
+                                                <td style=" word-wrap: break-word">
+                                                    <%= item.UpdatedTime %>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <% if(item.CronStatus==true) { %>
+                                                        <button type="button"
+                                                            onclick="switchOffCron('<%= item.CronId %>')"
+                                                            class="btn btn-success" style="width:70px;">ON</button>
+                                                        <% }else{ %>
+                                                            <button type="button"
+                                                                onclick="switchOnCron('<%= item.CronId %>')"
+                                                                class="btn btn-danger" style="width:70px;">OFF</button>
+                                                            <% } %>
+                                                </td>
+                                            </tr>
+                                            <% }); } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <h1 class="commanHeading">Configure Filter Cron Group <b>
+                            </b></h1>
+                    </div>
+                    <hr>
+                    <div class="card">
+                        <div class="body table-responsive">
+                            <table id="example" class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th style="display: none;">Cron Id</th>
+                                        <th>Filter Cron Name</th>
+                                        <th>Linked Slow Cron Name</th>
+                                        <th>Cron Execution Expression</th>
+                                        <th>Filter Products That Have not Changed for (X) Hours</th>
+                                        <th>Last Modified By</th>
+                                        <th>Last Modified On</th>
+                                        <th style="text-align: center;">Cron Start/Stop</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if(filterCronData.length===0) { %>
+                                        <p>No items found !</p>
+                                        <% } else {let i=1 ; filterCronData.forEach(function(item){ %>
+                                            <tr>
+                                                <td style="display: none;">
+                                                    <input type="text" class="form-control" value="<%= item.cronId %>"
+                                                        name="cron_id" placeholder="Cron Id" readonly />
+                                                    <input type="hidden" class="form-control" value="<%= item.cronId %>"
+                                                        name="cron_id_hdn" />
+                                                </td>
+                                                <td>
+                                                    <input type="text" class="form-control" value="<%= item.cronName %>"
+                                                        name="cron_name" placeholder="Cron Name" readonly />
+                                                </td>
+                                                <td>
+                                                    <select class="form-select form-control"
+                                                        name="s_linked_cron_<%= item.cronId %>"
+                                                        aria-label="Default select example">
+                                                        <option <%=item.linkedCronName=="SCG-1" ? "selected" : "" %>
+                                                            value="SCG-1">SCG-1</option>
+                                                        <option <%=item.linkedCronName=="SCG-2" ? "selected" : "" %>
+                                                            value="SCG-2">SCG-2</option>
+                                                        <option <%=item.linkedCronName=="SCG-3" ? "selected" : "" %>
+                                                            value="SCG-3">SCG-3</option>
+                                                    </select><br />
+                                                    <button type="button"
+                                                        onclick="changeLinkedCronDetails('<%= item.cronId %>')"
+                                                        class="btn btn-primary" style="width:70px;">Save</button>
+                                                </td>
+                                                <td>
+                                                    <input type="text" class="form-control"
+                                                        value="<%= item.cronExpression %>"
+                                                        name="cron_expression_<%= item.cronId %>"
+                                                        placeholder="Cron Expression" /> <br />
+                                                    <button type="button"
+                                                        onclick="changeCronExpression('<%= item.cronId %>')"
+                                                        class="btn btn-primary"
+                                                        style="width:70px;">Save</button>&nbsp;&nbsp;&nbsp;&nbsp;<a
+                                                        href="<%= item.expressionUrl %>" style="float: right;"
+                                                        target="_blank" class="fa-sharp fa-solid fa-info-circle"></a>
+                                                </td>
+                                                <td>
+                                                    <input type="text" class="form-control"
+                                                        value="<%= item.filterValue %>"
+                                                        name="cron_filter_value_<%= item.cronId %>"
+                                                        placeholder="Filter Value (Days)" /><br />
+                                                    <button type="button"
+                                                        onclick="changeCronFilterValue('<%= item.cronId %>')"
+                                                        class="btn btn-primary" style="width:70px;">Save</button>
+                                                </td>
+                                                <td style="width:max-content">
+                                                    <%= item.lastUpdatedBy %>
+                                                </td>
+                                                <td style="width:max-content">
+                                                    <%= item.lastUpdatedOn %>
+                                                </td>
+                                                <td style="text-align: center;">
+                                                    <% if(item.status=="true" ) { %>
+                                                        <button type="button"
+                                                            onclick="switchOffCron('<%= item.cronId %>')"
+                                                            class="btn btn-danger" style="width:70px;">STOP</button>
+                                                        <% }else{ %>
+                                                            <button type="button"
+                                                                onclick="switchOnCron('<%= item.cronId %>')"
+                                                                class="btn btn-success"
+                                                                style="width:70px;">START</button>
+                                                            <% } %>
+                                                </td>
+                                            </tr>
+                                            <% }); } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+        <%- include("../footer"); %>
+            <style>
+                /* Basic Rules */
+                .switch input {
+                    display: none;
+                }
+
+                .switch {
+                    display: inline-block;
+                    width: 52px;
+                    height: 22px;
+                    margin: 8px;
+                    transform: translateY(50%);
+                    position: relative;
+                }
+
+                /* Style Wired */
+                .slider {
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    border-radius: 30px;
+                    box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+                    cursor: pointer;
+                    border: 4px solid transparent;
+                    overflow: hidden;
+                    transition: 0.4s;
+                }
+
+                .slider:before {
+                    position: absolute;
+                    content: "";
+                    width: 100%;
+                    height: 100%;
+                    background: #777;
+                    border-radius: 30px;
+                    transform: translateX(-30px);
+                    transition: 0.4s;
+                }
+
+                input:checked+.slider:before {
+                    transform: translateX(30px);
+                    background: limeGreen;
+                }
+
+                input:checked+.slider {
+                    box-shadow: 0 0 0 2px limeGreen, 0 0 2px limeGreen;
+                }
+
+                /* Style Flat */
+                .switch.flat .slider {
+                    box-shadow: none;
+                }
+
+                .switch.flat .slider:before {
+                    background: #fff;
+                }
+
+                .switch.flat input:checked+.slider:before {
+                    background: white;
+                }
+
+                .switch.flat input:checked+.slider {
+                    background: limeGreen;
+                }
+
+                .threshold {
+                    background-color: #FAC2B9 !important;
+                }
+
+                .closeThreshold {
+                    background-color: #ffe066 !important;
+                }
+            </style>
+            <script src="/javascripts/filterCronSettings.js"></script>
+            <script src="/javascripts/slowCronSettings.js"></script>
+            <script src="/javascripts/dashboard.js"></script>

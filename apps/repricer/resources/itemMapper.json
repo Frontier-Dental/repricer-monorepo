@@ -1,0 +1,98 @@
+[
+  {
+    "field": "activated",
+    "key": "activated"
+  },
+  {
+    "field": "channelId",
+    "key": "channelId"
+  },
+  {
+    "field": "allowReprice",
+    "key": "allowReprice"
+  },
+  {
+    "field": "unitPrice",
+    "key": "unitPrice"
+  },
+  {
+    "field": "focusId",
+    "key": "focusId"
+  },
+  {
+    "field": "floorPrice",
+    "key": "floorPrice"
+  },
+  {
+    "field": "maxPrice",
+    "key": "maxPrice"
+  },
+  {
+    "field": "cronName",
+    "key": "cronName"
+  },
+  {
+    "field": "is_nc_needed",
+    "key": "is_nc_needed"
+  },
+  {
+    "field": "badge_indicator",
+    "key": "badge_indicator"
+  },
+  {
+    "field": "executionPriority",
+    "key": "executionPriority"
+  },
+  {
+    "field": "productName",
+    "key": "productName"
+  },
+  {
+    "field": "scrapeOn",
+    "key": "scrapeOn"
+  },
+  {
+    "field": "allowReprice",
+    "key": "allowReprice"
+  },
+  {
+    "field": "badgePercentage",
+    "key": "badgePercentage"
+  },
+  {
+    "field": "last_cron_time",
+    "key": "last_cron_time"
+  },
+  {
+    "field": "last_update_time",
+    "key": "last_update_time"
+  },
+  {
+    "field": "next_cron_time",
+    "key": "next_cron_time"
+  },
+  {
+    "field": "last_cron_message",
+    "key": "last_cron_message"
+  },
+  {
+    "field": "lastSuggestedPrice",
+    "key": "lastSuggestedPrice"
+  },
+  {
+    "field": "compareWithQ1",
+    "key": "compareWithQ1"
+  },
+  {
+    "field": "abortDeactivatingQPriceBreak",
+    "key": "abortDeactivatingQPriceBreak"
+  },
+  {
+    "field": "lastCronRun",
+    "key": "lastCronRun"
+  },
+  {
+    "field": "lastUpdatedBy",
+    "key": "lastUpdatedBy"
+  }
+]

@@ -1,0 +1,273 @@
+<div class="card">
+  <div class="card-body">
+    <form method="post" autocomplete="off" id="add_item_form_frontier">
+      <input type="hidden" value="Frontier" name="frontier_vendors" />
+      <div class="row no-gutters">
+        <div class="form-group col-3">
+          <label for="frontier_channel_name" class="font-weight-bold">
+            Channel Name <span style="color: red; font-weight: bold">*</span>
+          </label>
+          <input
+            type="text"
+            class="form-control"
+            value=""
+            name="frontier_channel_name"
+            placeholder="Channel Name"
+          />
+        </div>
+        <div class="form-group col-3">
+          <label for="frontier_executionPriority" class="font-weight-bold"
+            >Execution Priority :</label
+          >
+          <br />
+          <select
+            class="form-select form-control"
+            name="frontier_executionPriority"
+            aria-label="Default select example"
+          >
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+        <div class="form-group col-3">
+          <label for="frontier_percentageIncrease" class="font-weight-bold"
+            >Reprice Up %</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            value=""
+            name="frontier_percentageIncrease"
+            placeholder="Reprice Up %"
+            min="0"
+            max="100"
+          />
+        </div>
+        <div class="form-group col-3" name="divBadgePercentage">
+          <label for="frontier_badgePercentage" class="font-weight-bold"
+            >Reprice UP Badge Percentage %</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            value=""
+            name="frontier_badgePercentage"
+            placeholder="Badge Percentage (%)"
+            min="0"
+            max="100"
+          />
+        </div>
+      </div>
+      <div class="row no-gutters">
+        <div class="form-group col-3">
+          <label for="frontier_sisterVendorId" class="font-weight-bold"
+            >Sister Vendor Id (Separated by [;])</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            value=""
+            name="frontier_sisterVendorId"
+            placeholder="Sister Vendor Id"
+          />
+        </div>
+        <div class="form-group col-3">
+          <label for="frontier_inactiveVendorId" class="font-weight-bold"
+            >Inactive Vendor Id (Separated by [;])</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            value=""
+            name="frontier_inactiveVendorId"
+            placeholder="Inactive Vendor Id"
+          />
+        </div>
+        <div class="form-group col-3">
+          <label for="frontier_override_bulk_rule" class="font-weight-bold"
+            >Override Bulk Update (Up/Down) :</label
+          >
+          <select
+            class="form-select form-control"
+            name="frontier_override_bulk_rule_select"
+            aria-label="Default select example"
+          >
+            <option value="-1">-- Please Select --</option>
+            <option value="0">Only Up</option>
+            <option value="1">Only Down</option>
+            <option value="2">Both</option>
+          </select>
+        </div>
+        <div class="form-group col-3">
+          <label for="frontier_handling_time_filter" class="font-weight-bold"
+            >Handling Time Group :</label
+          >
+          <select
+            class="form-select form-control"
+            name="frontier_handling_time_filter"
+            aria-label="Default select example"
+            onchange="enablePercentageData(this)"
+          >
+            <option value="ALL">All</option>
+            <option value="FAST_SHIPPING">1-2 days (Fast Shipping)</option>
+            <option value="STOCKED">1-5 days (Stocked)</option>
+            <option value="LONG_HANDLING">6+ days (Long Handling)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row no-gutters">
+        <div class="form-group col-3">
+          <label for="frontier_excludedVendors" class="font-weight-bold"
+            >Excluded Vendor(s) (Separated by [;])</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            name="frontier_excludedVendors"
+            placeholder="Excluded Vendor Ids"
+          />
+        </div>
+        <div class="form-group col-3">
+          <label for="frontier_inventoryThreshold" class="font-weight-bold"
+            >Inventory Competition Threshold</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            name="frontier_inventoryThreshold"
+            placeholder="Inventory Competition Threshold"
+            min="0"
+            max="100"
+          />
+        </div>
+      </div>
+      <div class="row no-gutters">
+        <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_Scrape_on_off" />
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold">
+            Reprice - Scrape
+            <span style="color: red; font-weight: bold">*</span>
+          </label>
+          <!-- <h6 class="mb-0 mt-3" class="font-weight-bold">Override Existing</h6> -->
+        </div>
+        <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_Reprice_on_off" />
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold">Reprice</label>
+        </div>
+        <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_suppressPriceBreak" />
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold">Suppress Price Break</label>
+        </div>
+        <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_competeAll" />
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold"
+            >Compete with all vendors</label
+          >
+        </div>
+        <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_compareWithQ1" />
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold">Q2 compete with Q1</label>
+        </div>
+        <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_applyBuyBox" />
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold">Apply Buy Box</label>
+        </div>
+        <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_applyNcForBuyBox" />
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold">Apply NC For Buy Box</label>
+        </div>
+        <!-- <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_isScrapeOnlyActivated">
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold">Data - Scrape</label>
+        </div> -->
+        <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_includeInactiveVendors" />
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold"
+            >Include Inactive Vendors (On/Off)</label
+          >
+        </div>
+        <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_override_bulk_update" />
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold"
+            >Override Bulk Update (On/Off)</label
+          >
+        </div>
+        <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_suppressPriceBreakForOne" />
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold"
+            >Suppress Price Break if Qty 1 not updated</label
+          >
+        </div>
+        <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_beatQPrice" />
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold"
+            >Compete On Price Breaks Only</label
+          >
+        </div>
+        <!-- <div class="form-group col-3">
+          <label class="switch">
+            <input type="checkbox" name="frontier_isBadgeItem">
+            <span class="slider"></span>
+          </label>
+          <label for="" class="font-weight-bold">Is Badge Item?</label>
+        </div> -->
+      </div>
+    </form>
+    <h5 id="show_text_frontier">No Data</h5>
+  </div>
+</div>
+<script>
+  document.getElementById("show_text_frontier").style.display = "none";
+  document.getElementById("checkData_frontier").onclick = function () {
+    if (this.checked) {
+      document.getElementById("add_item_form_frontier").style.display = "none";
+      document.getElementById("frontier_data").style.display = "none";
+      document.getElementById("show_text_frontier").style.display = "block";
+    } else {
+      document
+        .getElementById("add_item_form_frontier")
+        .removeAttribute("style");
+      document.getElementById("frontier_data").removeAttribute("style");
+      document.getElementById("show_text_frontier").style.display = "none";
+    }
+  };
+</script>

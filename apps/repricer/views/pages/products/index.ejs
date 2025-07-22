@@ -1,0 +1,754 @@
+<%- include('../header') %>
+  <%- include('../left-sidebar') %>
+    <style>
+      /* Basic Rules */
+      .switch input {
+        display: none;
+      }
+
+      .switch {
+        display: inline-block;
+        width: 52px;
+        height: 22px;
+        /* margin: 8px; */
+        transform: translateY(50%);
+        position: relative;
+      }
+
+      /* Style Wired */
+      .slider {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-radius: 30px;
+        box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+        cursor: pointer;
+        border: 4px solid transparent;
+        overflow: hidden;
+        transition: .4s;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        width: 100%;
+        height: 100%;
+        background: #777;
+        border-radius: 30px;
+        transform: translateX(-30px);
+        transition: .4s;
+      }
+
+      input:checked+.slider:before {
+        transform: translateX(30px);
+        background: limeGreen;
+      }
+
+      input:checked+.slider {
+        box-shadow: 0 0 0 2px limeGreen, 0 0 2px limeGreen;
+      }
+
+      /* Style Flat */
+      .switch.flat .slider {
+        box-shadow: none;
+      }
+
+      .switch.flat .slider:before {
+        background: #FFF;
+      }
+
+      .switch.flat input:checked+.slider:before {
+        background: white;
+      }
+
+      .switch.flat input:checked+.slider {
+        background: limeGreen;
+      }
+
+      .accordion {
+        cursor: pointer;
+        font-size: 18px;
+        color: #444;
+        border: none;
+        outline: none;
+        text-align: left;
+        background-color: #f1f1f1;
+        padding: 10px 15px;
+        width: 100%;
+        position: relative;
+      }
+
+      .accordion:after {
+        content: "+";
+        font-size: 16px;
+        color: #333;
+        position: absolute;
+        right: 10px;
+        top: 90%;
+        transform: translateY(-50%);
+        transition: transform 0.3s ease;
+      }
+
+      .accordion.active:after {
+        transform: translateY(-50%) rotate(180deg);
+      }
+
+      .active,
+      .accordion:hover {
+        background-color: #ccc;
+      }
+
+      .active:after {
+        content: "\2212";
+      }
+
+      .panel {
+        padding: 0 18px;
+        background-color: white;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+      }
+
+      .card-body {
+        padding: 0.5rem 1.25rem !important;
+      }
+
+      .form-group {
+        margin-bottom: 0.50rem;
+      }
+
+      .no-gutters>.col,
+      .no-gutters>[class*="col-"] {
+        padding-right: 5px;
+        padding-left: 0;
+      }
+    </style>
+
+    <body>
+      <div class="page">
+        <div class="container-fluid">
+          <h3>Product Details for : <%= model.mpId %>
+              <!-- <a onClick="saveProductConfiguration('<%= JSON.stringify(model)%>')"
+                                class="btn btn-success mx-1" name="btn_submit_on_all"
+                                style="float: right;color: antiquewhite;"><i
+                                    class="fa-solid fa-floppy-disk"></i>&nbsp;Save All Changes</a> -->
+              <div id="hdnProductManualRun">
+                <input type="hidden" class="form-control" id="mpIds" name="mpIds" value="<%= model.mpId %>" />
+              </div>
+              <a onClick="activateProductForAll('<%= model.mpId%>')" class="btn btn-success mb-2 mr-2"
+                style="float: right;color: antiquewhite;"><i class="fa-solid fa-floppy-disk"></i>
+                Activate For All</a>
+              <a onClick="cancelProductEdit()" class="btn btn-danger mb-2 mr-2"
+                style="float: right;color: antiquewhite;"><i class="fa-solid fa-xmark"></i>
+                Cancel</a>
+              <a onClick="runManualScrape(true, false)" class="btn btn-warning mb-2 mr-2"
+                style="float: right;color: antiquewhite;"><i class="fa-solid fa-pen-nib"></i>
+                Manual Scrape (Old)</a>
+                <a onClick="runManualScrape(true, true)" class="btn btn-dark mb-2 mr-2"
+                style="float: right;color: antiquewhite;"><i class="fa-solid fa-pen-nib"></i>
+                Manual Scrape (New Algorithm)</a>
+              <a onClick="removeFrom422()" class="btn btn-primary mb-2 mr-2"
+                style="float: right;color: antiquewhite;"><i class="fa-solid fa-bell"></i>
+                Remove From 422</a>
+          </h3>
+          <br /></br>
+          <hr>
+          <div class="row no-gutters">
+            <div class="col-md-3 form-group">
+              <label for="mpid" class="font-weight-bold">
+                MPID<span style="color: red;font-weight: bold;">*</span>
+              </label>
+              <input disabled type="text" class="form-control" name="mpid" placeholder="MPID"
+                value="<%=model.mpId %>" />
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="net32_url" class="font-weight-bold">
+                Net32 Url<span style="color: red;font-weight: bold;">*</span>
+              </label>
+              <input type="text" class="form-control" name="net32_url" placeholder="Net32 Url"
+                value="<%= model.net32url %>" />
+            </div>
+            <div class="col-md-3 form-group">
+              <label for="cronName" class="font-weight-bold">
+                Cron Name<span style="color: red;font-weight: bold;">*</span>
+              </label>
+              <select class="form-select form-control" name="cronGroup" aria-label="Default select example">
+                <% model.cronSettings.forEach(function (list) { %>
+                  <option value=<%=list.CronId %>
+                    <%=list.CronId==model.cronId ? "selected" : "" %>> <%= list.CronName %>
+                  </option>
+                  <%})%>
+              </select>
+            </div>
+            <div class="col-md-3 form-group">
+              <label for="slowCronName" class="font-weight-bold">Slow Cron Name </label>
+              <select class="form-select form-control" name="slowCronGroup" aria-label="Default select example"
+                disabled>
+                <option value=""></option>
+                <% model.cronSettings.forEach(function (list) { %>
+                  <option value=<%=list.CronId %>
+                    <%=list.CronId==model.slowCronId ? "selected" : "" %> > <%= list.CronName %>
+                  </option>
+                  <%})%>
+              </select>
+            </div>
+            <div class="col-md-3 form-group">
+              <label for="scrapeOnlyCron" class="font-weight-bold">
+                Scrape Only Cron Name<span style="color: red;font-weight: bold;">*</span>
+              </label>
+              <select class="form-select form-control" name="scrapeOnlyCron" aria-label="Default select example">
+                <% model.scrapeOnlyCrons.forEach(function (list) { %>
+                  <option value=<%=list.CronId %>
+                    <%=list.CronId==model.scrapeOnlyCronId ? "selected" : "" %> > <%= list.CronName %>
+                  </option>
+                  <%})%>
+              </select>
+            </div>
+            <div class="col-md-3 form-group">
+              <div class="pt-3 px-2 align-items-center">
+                <label class="switch">
+                  <input type="checkbox" name="isScrapeOnlyActivated" <%=model.isScrapeOnlyActivated=='true' ||
+                    model.isScrapeOnlyActivated===true ? 'checked' : '' %>>
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">Data - Scrape</label>
+              </div>
+            </div>
+            <div class="col-md-3 form-group">
+              <div class="pt-3 px-2 align-items-center">
+                <label class="switch">
+                  <input type="checkbox" name="isBadgeItem" <%=model.isBadgeItem=='true' || model.isBadgeItem===true
+                    ? 'checked' : '' %>>
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">Is Badge Item?</label>
+              </div>
+            </div>
+            <div class="col-md-10 form-group"></div>
+            <div class="col-md-2 form-group"><a onClick="saveRootDetails('<%= model.mpId%> ')"
+                class="btn btn-primary mb-2 mr-2" style="float: right;color: antiquewhite;"><i
+                  class="fa-solid fa-floppy-disk"></i>
+                Save Details</a></div>
+          </div>
+
+
+
+          <!-- Tradent Details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">TRADENT DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <% if(model.tradentDetails==null) { %>
+                  <label for="" class="no-data-check">No Data</label>
+                  <label class="switch">
+                    <input type="checkbox" name="insertNullData" id="checkData_tradent" checked disabled />
+                    <span class="slider"></span>
+                  </label>
+                  <% } else { %>
+                    <a onClick="saveBranches('<%= model.mpId%> ')" class="btn btn-primary mb-2 mr-2"
+                      style="float: right;color: antiquewhite;"><i class="fa-solid fa-floppy-disk"></i>
+                      Save</a>
+                    <% } %>
+              </div>
+            </div>
+            <% if(model.tradentDetails) { %>
+              <div class="row no-gutters" id="tradent_data">
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="tradent_activated" <%=model.tradentDetails.activated=='true' ||
+                      model.tradentDetails.activated===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="tradent_activated" class="font-weight-bold">Active - Repricer</label>
+                </div>
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="tradent_is_nc_needed" <%=model.tradentDetails.is_nc_needed=='true' ||
+                      model.tradentDetails.is_nc_needed===true ? 'checked' : '' %>>
+                    <span class="slider"></span>
+                  </label>
+                  <label for="tradent_is_nc_needed" class="font-weight-bold">
+                    NC (On/Off) <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                </div>
+                <div class="col-md-6"></div>
+                <div class="col">
+                  <label for="tradent_channel_Id" class="font-weight-bold">
+                    Channel ID <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="text" class="form-control" value="<%= model.tradentDetails.channelId %>"
+                    name="tradent_channel_Id" placeholder="Channel ID" />
+                </div>
+                <div class="col-3">
+                  <label for="tradent_badgeIndicator" class="font-weight-bold">Badge Indicator</label>
+                  <select class="form-select form-control" name="tradent_badgeIndicator"
+                    aria-label="Default select example" onchange="enablePercentageData(this)">
+                    <option <%=model.tradentDetails.badgeIndicator=='ALL_ZERO' ? "selected" : "" %>
+                      value='ALL_ZERO'>Compete all - Regular</option>
+                    <option <%=model.tradentDetails.badgeIndicator=='ALL_PERCENTAGE' ? "selected" : "" %>
+                      value='ALL_PERCENTAGE'>Compete with all - Percentage</option>
+                    <option <%=model.tradentDetails.badgeIndicator=='BADGE_ONLY' ? "selected" : "" %>
+                      value='BADGE_ONLY'>Compete with Authorized Distributors only</option>
+                    <option <%=model.tradentDetails.badgeIndicator=='NON_BADGE_ONLY' ? "selected" : "" %>
+                      value='NON_BADGE_ONLY'>Compete with Non-Authorized Distributors only</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="tradent_repricingRule" class="font-weight-bold">Up/Down</label>
+                  <select class="form-select form-control" name="tradent_reprice_rule_select"
+                    aria-label="Default select example">
+                    <option <%=model.tradentDetails.repricingRule==-1 ? "selected" : "" %> value=-1>-- Please Select --
+                    </option>
+                    <option <%=model.tradentDetails.repricingRule==0 ? "selected" : "" %> value=0>Only Up</option>
+                    <option <%=model.tradentDetails.repricingRule==1 ? "selected" : "" %> value=1>Only Down</option>
+                    <option <%=model.tradentDetails.repricingRule==2 ? "selected" : "" %> value=2>Both</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="tradent_floor_price" class="font-weight-bold">
+                    Floor Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" value="<%= model.tradentDetails.floorPrice %>"
+                    name="tradent_floor_price" placeholder="Floor Price" />
+                </div>
+                <div class="col">
+                  <label for="tradent_max_price" class="font-weight-bold">Max Price</label>
+                  <input type="number" class="form-control" value="<%= model.tradentDetails.maxPrice %>"
+                    name="tradent_max_price" placeholder="Max Price" />
+                </div>
+                <div class="col">
+                  <label for="tradent_unit_price" class="font-weight-bold">
+                    Unit Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" name="tradent_unit_price" placeholder="Unit Price"
+                    value="<%= model.tradentDetails.unitPrice %>" />
+                </div>
+              </div>
+              <% } %>
+          </div>
+          <div class="panel">
+            <%- include('partials/tradent.ejs') %>
+          </div>
+          <!-- Tradent Details end -->
+          <!-- Frontier details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">FRONTIER DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <% if (model.frontierDetails==null) { %>
+                  <label for="" class="no-data-check">No Data</label>
+                  <label class="switch">
+                    <input type="checkbox" name="insertNullData" id="checkData_frontier" checked disabled />
+                    <span class="slider"></span>
+                  </label>
+                  <% } else { %>
+                    <a onClick="saveBranches('<%= model.mpId%> ')" class="btn btn-primary mb-2 mr-2"
+                      style="float: right;color: antiquewhite;"><i class="fa-solid fa-floppy-disk"></i>
+                      Save</a>
+                    <% } %>
+              </div>
+            </div>
+            <% if (model.frontierDetails) { %>
+              <div class="row no-gutters" id="frontier_data">
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="frontier_activated" <%=model.frontierDetails.activated=='true' ||
+                      model.frontierDetails.activated===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="" class="font-weight-bold">Active - Repricer</label>
+                </div>
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="frontier_is_nc_needed" <%=model.frontierDetails.is_nc_needed=='true' ||
+                      model.frontierDetails.is_nc_needed===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="" class="font-weight-bold">
+                    NC (On/Off) <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                </div>
+                <div class="col-md-6"></div>
+                <div class="col">
+                  <label for="frontier_channel_Id" class="font-weight-bold">
+                    Channel ID <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="text" class="form-control" value="<%= model.frontierDetails.channelId %>"
+                    name="frontier_channel_Id" placeholder="Channel ID" />
+                </div>
+                <div class="col-3">
+                  <label for="frontier_badgeIndicator" class="font-weight-bold">Badge Indicator</label>
+                  <select class="form-select form-control" name="frontier_badgeIndicator"
+                    aria-label="Default select example" onchange="enablePercentageData(this)">
+                    <option <%=model.frontierDetails.badgeIndicator=='ALL_ZERO' ? "selected" : "" %>
+                      value='ALL_ZERO'>Compete all - Regular</option>
+                    <option <%=model.frontierDetails.badgeIndicator=='ALL_PERCENTAGE' ? "selected" : "" %>
+                      value='ALL_PERCENTAGE'>Compete with all - Percentage</option>
+                    <option <%=model.frontierDetails.badgeIndicator=='BADGE_ONLY' ? "selected" : "" %>
+                      value='BADGE_ONLY'>Compete with Authorized Distributors only</option>
+                    <option <%=model.frontierDetails.badgeIndicator=='NON_BADGE_ONLY' ? "selected" : "" %>
+                      value='NON_BADGE_ONLY'>Compete with Non-Authorized Distributors only</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="frontier_repricingRule" class="font-weight-bold">Up/Down</label>
+                  <select class="form-select form-control" name="frontier_reprice_rule_select"
+                    aria-label="Default select example">
+                    <option <%=model.frontierDetails.repricingRule==-1 ? "selected" : "" %> value=-1>-- Please Select --
+                    </option>
+                    <option <%=model.frontierDetails.repricingRule==0 ? "selected" : "" %> value=0>Only Up</option>
+                    <option <%=model.frontierDetails.repricingRule==1 ? "selected" : "" %> value=1>Only Down</option>
+                    <option <%=model.frontierDetails.repricingRule==2 ? "selected" : "" %> value=2>Both</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="frontier_floor_price" class="font-weight-bold">
+                    Floor Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" value="<%= model.frontierDetails.floorPrice %>"
+                    name="frontier_floor_price" placeholder="Floor Price" />
+                </div>
+                <div class="col">
+                  <label for="frontier_max_price" class="font-weight-bold">Max Price</label>
+                  <input type="number" class="form-control" value="<%= model.frontierDetails.maxPrice %>"
+                    name="frontier_max_price" placeholder="Max Price" />
+                </div>
+                <div class="col">
+                  <label for="frontier_unit_price" class="font-weight-bold">
+                    Unit Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" name="frontier_unit_price" placeholder="Unit Price"
+                    value="<%= model.frontierDetails.unitPrice %>" />
+                </div>
+              </div>
+              <% } %>
+          </div>
+          <div class="panel">
+            <%- include('partials/frontier.ejs') %>
+          </div>
+          <!-- Frontier details end -->
+          <!-- MVP details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">MVP DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <% if (model.mvpDetails==null) { %>
+                  <label for="" class="no-data-check">No Data</label>
+                  <label class="switch">
+                    <input type="checkbox" name="insertNullData" id="checkData_mvp" checked disabled />
+                    <span class="slider"></span>
+                  </label>
+                  <% } else { %>
+                    <a onClick="saveBranches('<%= model.mpId%> ')" class="btn btn-primary mb-2 mr-2"
+                      style="float: right;color: antiquewhite;"><i class="fa-solid fa-floppy-disk"></i>
+                      Save</a>
+                    <% } %>
+              </div>
+            </div>
+            <% if (model.mvpDetails) { %>
+              <div class="row no-gutters" id="mvp_data">
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="mvp_activated" <%=model.mvpDetails.activated=='true' ||
+                      model.mvpDetails.activated===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="" class="font-weight-bold">Active - Repricer</label>
+                </div>
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="mvp_is_nc_needed" <%=model.mvpDetails.is_nc_needed=='true' ||
+                      model.mvpDetails.is_nc_needed===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="" class="font-weight-bold">
+                    NC (On/Off) <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                </div>
+                <div class="col-md-6"></div>
+                <div class="col">
+                  <label for="mvp_channel_Id" class="font-weight-bold">
+                    Channel ID <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="text" class="form-control" value="<%= model.mvpDetails.channelId %>"
+                    name="mvp_channel_Id" placeholder="Channel ID" />
+                </div>
+                <div class="col-3">
+                  <label for="mvp_badgeIndicator" class="font-weight-bold">Badge Indicator</label>
+                  <select class="form-select form-control" name="mvp_badgeIndicator" aria-label="Default select example"
+                    onchange="enablePercentageData(this)">
+                    <option <%=model.mvpDetails.badgeIndicator=='ALL_ZERO' ? "selected" : "" %> value='ALL_ZERO'>Compete
+                      all - Regular</option>
+                    <option <%=model.mvpDetails.badgeIndicator=='ALL_PERCENTAGE' ? "selected" : "" %>
+                      value='ALL_PERCENTAGE'>Compete with all - Percentage</option>
+                    <option <%=model.mvpDetails.badgeIndicator=='BADGE_ONLY' ? "selected" : "" %>
+                      value='BADGE_ONLY'>Compete with Authorized Distributors only</option>
+                    <option <%=model.mvpDetails.badgeIndicator=='NON_BADGE_ONLY' ? "selected" : "" %>
+                      value='NON_BADGE_ONLY'>Compete with Non-Authorized Distributors only</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="mvp_repricingRule" class="font-weight-bold">Up/Down</label>
+                  <select class="form-select form-control" name="mvp_reprice_rule_select"
+                    aria-label="Default select example">
+                    <option <%=model.mvpDetails.repricingRule==-1 ? "selected" : "" %> value=-1>-- Please Select --
+                    </option>
+                    <option <%=model.mvpDetails.repricingRule==0 ? "selected" : "" %> value=0>Only Up</option>
+                    <option <%=model.mvpDetails.repricingRule==1 ? "selected" : "" %> value=1>Only Down</option>
+                    <option <%=model.mvpDetails.repricingRule==2 ? "selected" : "" %> value=2>Both</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="mvp_floor_price" class="font-weight-bold">
+                    Floor Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" value="<%= model.mvpDetails.floorPrice %>"
+                    name="mvp_floor_price" placeholder="Floor Price" />
+                </div>
+                <div class="col">
+                  <label for="mvp_max_price" class="font-weight-bold">Max Price</label>
+                  <input type="number" class="form-control" value="<%= model.mvpDetails.maxPrice %>"
+                    name="mvp_max_price" placeholder="Max Price" />
+                </div>
+                <div class="col">
+                  <label for="mvp_unit_price" class="font-weight-bold">
+                    Unit Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" name="mvp_unit_price" placeholder="Unit Price"
+                    value="<%= model.mvpDetails.unitPrice %>" />
+                </div>
+              </div>
+              <% } %>
+          </div>
+          <div class="panel">
+            <%- include('partials/mvp.ejs') %>
+          </div>
+          <!-- MVP details end -->
+          <!-- FirstDent details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">FIRSTDENT DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <% if (model.firstDentDetails==null) { %>
+                  <label for="" class="no-data-check">No Data</label>
+                  <label class="switch">
+                    <input type="checkbox" name="insertNullData" id="checkData_firstdent" checked disabled />
+                    <span class="slider"></span>
+                  </label>
+                  <% } else { %>
+                    <a onClick="saveBranches('<%= model.mpId%> ')" class="btn btn-primary mb-2 mr-2"
+                      style="float: right;color: antiquewhite;"><i class="fa-solid fa-floppy-disk"></i>
+                      Save</a>
+                    <% } %>
+              </div>
+            </div>
+            <% if (model.firstDentDetails) { %>
+              <div class="row no-gutters" id="firstDent_data">
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="firstDent_activated" <%=model.firstDentDetails.activated=='true' ||
+                      model.firstDentDetails.activated===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="" class="font-weight-bold">Active - Repricer</label>
+                </div>
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="firstDent_is_nc_needed" <%=model.firstDentDetails.is_nc_needed=='true'
+                      || model.firstDentDetails.is_nc_needed===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="" class="font-weight-bold">
+                    NC (On/Off) <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                </div>
+                <div class="col-md-6"></div>
+                <div class="col">
+                  <label for="firstDent_channel_Id" class="font-weight-bold">
+                    Channel ID <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="text" class="form-control" value="<%= model.firstDentDetails.channelId %>"
+                    name="firstDent_channel_Id" placeholder="Channel ID" />
+                </div>
+                <div class="col-3">
+                  <label for="firstDent_badgeIndicator" class="font-weight-bold">Badge Indicator</label>
+                  <select class="form-select form-control" name="firstDent_badgeIndicator"
+                    aria-label="Default select example" onchange="enablePercentageData(this)">
+                    <option <%=model.firstDentDetails.badgeIndicator=='ALL_ZERO' ? "selected" : "" %>
+                      value='ALL_ZERO'>Compete all - Regular</option>
+                    <option <%=model.firstDentDetails.badgeIndicator=='ALL_PERCENTAGE' ? "selected" : "" %>
+                      value='ALL_PERCENTAGE'>Compete with all - Percentage</option>
+                    <option <%=model.firstDentDetails.badgeIndicator=='BADGE_ONLY' ? "selected" : "" %>
+                      value='BADGE_ONLY'>Compete with Authorized Distributors only</option>
+                    <option <%=model.firstDentDetails.badgeIndicator=='NON_BADGE_ONLY' ? "selected" : "" %>
+                      value='NON_BADGE_ONLY'>Compete with Non-Authorized Distributors only</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="firstDent_repricingRule" class="font-weight-bold">Up/Down</label>
+                  <select class="form-select form-control" name="firstDent_reprice_rule_select"
+                    aria-label="Default select example">
+                    <option <%=model.firstDentDetails.repricingRule==-1 ? "selected" : "" %> value=-1>-- Please Select
+                      --</option>
+                    <option <%=model.firstDentDetails.repricingRule==0 ? "selected" : "" %> value=0>Only Up</option>
+                    <option <%=model.firstDentDetails.repricingRule==1 ? "selected" : "" %> value=1>Only Down</option>
+                    <option <%=model.firstDentDetails.repricingRule==2 ? "selected" : "" %> value=2>Both</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="firstDent_floor_price" class="font-weight-bold">
+                    Floor Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" value="<%= model.firstDentDetails.floorPrice %>"
+                    name="firstDent_floor_price" placeholder="Floor Price" />
+                </div>
+                <div class="col">
+                  <label for="firstDent_max_price" class="font-weight-bold">Max Price</label>
+                  <input type="number" class="form-control" value="<%= model.firstDentDetails.maxPrice %>"
+                    name="firstDent_max_price" placeholder="Max Price" />
+                </div>
+                <div class="col">
+                  <label for="firstDent_unit_price" class="font-weight-bold">
+                    Unit Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" name="firstDent_unit_price" placeholder="Unit Price"
+                    value="<%= model.firstDentDetails.unitPrice %>" />
+                </div>
+              </div>
+              <% } %>
+          </div>
+          <div class="panel">
+            <%- include('partials/firstdent.ejs') %>
+          </div>
+          <!-- FirstDent details end -->
+          <!-- Topdent details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">TOPDENT DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <% if (model.topDentDetails==null) { %>
+                  <label for="" class="no-data-check">No Data</label>
+                  <label class="switch">
+                    <input type="checkbox" name="insertNullData" id="checkData_topdent" checked disabled />
+                    <span class="slider"></span>
+                  </label>
+                  <% } else { %>
+                    <a onClick="saveBranches('<%= model.mpId%> ')" class="btn btn-primary mb-2 mr-2"
+                      style="float: right;color: antiquewhite;"><i class="fa-solid fa-floppy-disk"></i>
+                      Save</a>
+                    <% } %>
+              </div>
+            </div>
+            <% if (model.topDentDetails) { %>
+              <div class="row no-gutters" id="topDent_data">
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="topDent_activated" <%=model.topDentDetails.activated=='true' ||
+                      model.topDentDetails.activated===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="" class="font-weight-bold">Active - Repricer</label>
+                </div>
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="topDent_is_nc_needed" <%=model.topDentDetails.is_nc_needed=='true' ||
+                      model.topDentDetails.is_nc_needed===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="" class="font-weight-bold">
+                    NC (On/Off) <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                </div>
+                <div class="col-md-6"></div>
+                <div class="col">
+                  <label for="topDent_channel_Id" class="font-weight-bold">
+                    Channel ID <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="text" class="form-control" value="<%= model.topDentDetails.channelId %>"
+                    name="topDent_channel_Id" placeholder="Channel ID" />
+                </div>
+                <div class="col-3">
+                  <label for="topDent_badgeIndicator" class="font-weight-bold">Badge Indicator</label>
+                  <select class="form-select form-control" name="topDent_badgeIndicator"
+                    aria-label="Default select example" onchange="enablePercentageData(this)">
+                    <option <%=model.topDentDetails.badgeIndicator=='ALL_ZERO' ? "selected" : "" %>
+                      value='ALL_ZERO'>Compete all - Regular</option>
+                    <option <%=model.topDentDetails.badgeIndicator=='ALL_PERCENTAGE' ? "selected" : "" %>
+                      value='ALL_PERCENTAGE'>Compete with all - Percentage</option>
+                    <option <%=model.topDentDetails.badgeIndicator=='BADGE_ONLY' ? "selected" : "" %>
+                      value='BADGE_ONLY'>Compete with Authorized Distributors only</option>
+                    <option <%=model.topDentDetails.badgeIndicator=='NON_BADGE_ONLY' ? "selected" : "" %>
+                      value='NON_BADGE_ONLY'>Compete with Non-Authorized Distributors only</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="topDent_repricingRule" class="font-weight-bold">Up/Down</label>
+                  <select class="form-select form-control" name="topDent_reprice_rule_select"
+                    aria-label="Default select example">
+                    <option <%=model.topDentDetails.repricingRule==-1 ? "selected" : "" %> value=-1>-- Please Select --
+                    </option>
+                    <option <%=model.topDentDetails.repricingRule==0 ? "selected" : "" %> value=0>Only Up</option>
+                    <option <%=model.topDentDetails.repricingRule==1 ? "selected" : "" %> value=1>Only Down</option>
+                    <option <%=model.topDentDetails.repricingRule==2 ? "selected" : "" %> value=2>Both</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="topDent_floor_price" class="font-weight-bold">
+                    Floor Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" value="<%= model.topDentDetails.floorPrice %>"
+                    name="topDent_floor_price" placeholder="Floor Price" />
+                </div>
+                <div class="col">
+                  <label for="topDent_max_price" class="font-weight-bold">Max Price</label>
+                  <input type="number" class="form-control" value="<%= model.topDentDetails.maxPrice %>"
+                    name="topDent_max_price" placeholder="Max Price" />
+                </div>
+                <div class="col">
+                  <label for="topDent_unit_price" class="font-weight-bold">
+                    Unit Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" name="topDent_unit_price" placeholder="Unit Price"
+                    value="<%= model.topDentDetails.unitPrice %>" />
+                </div>
+              </div>
+              <% } %>
+          </div>
+          <div class="panel">
+            <%- include('partials/topdent.ejs') %>
+          </div>
+          <!-- Topdent details end -->
+        </div>
+      </div>
+    </body>
+
+    <%- include("../footer"); %>
+      <script>
+        var acc = document.getElementsByClassName("accordion");
+        var i;
+
+        for (i = 0; i < acc.length; i++) {
+          acc[i].addEventListener("click", function () {
+            this.classList.toggle("active");
+            var panel = this.nextElementSibling;
+            if (panel.style.maxHeight) {
+              panel.style.maxHeight = null;
+            } else {
+              panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+          });
+        }
+      </script>

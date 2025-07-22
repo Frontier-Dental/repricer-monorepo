@@ -1,0 +1,373 @@
+<%- include('./header') %>
+    <%- include('./left-sidebar') %>
+        <form method="post" autocomplete="off" id="form_app_logs" onsubmit="return false;">
+            <div class="page">
+                <div class="container-fluid">
+                    <div class="d-flex justify-content-between">
+                        <h1 class="commanHeading">App Logs<b>
+                            </b></h1>
+                        <div class="d-flex">
+                           
+                            <button type="button" id="btnExportLogs" class="btn btn-success mx-1"  style="color: white;" >
+                                <i class="fa fa-file-excel-o"></i>&nbsp;Export</button>
+                           
+                            <a  class="btn btn-danger mx-1" name="btnEdit" style="color: white;" 
+                            data-toggle="modal" data-target="#myModal"><i
+                                    class="fa fa-history"></i>
+                                &nbsp;Archive Logs</a>
+
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="card">
+                        <% if (errors.length > 0) { %>
+                            <ul style="color: red;">
+                                <% errors.forEach(function(error) { %>
+                                    <li><%= error %></li>
+                                <% }); %>
+                            </ul>
+                        <% } %>
+
+                        <div class="body table-responsive">
+                            <table>
+                               
+                                <tr>
+                                    <td>Start Date</td>
+                                    <td>End Date</td>
+                                    <td>Level</td>
+                                    <td>Page Size</td>
+                                    <td>Keyword</td>
+                                </tr>
+                                
+                                <tr>
+                                    <td>
+                                        <input id="startDate" placeholder="start date" type="datetime-local" value="<%= params.startDate %>" class="form-select form-control">
+                                    </td>
+                                    <td>
+                                        <input id="endDate" placeholder="end date" type="datetime-local" value="<%= params.endDate %>" class="form-select form-control">
+                                    </td>
+                                    <td>
+                                        <select id="logLevel" class="form-select form-control">
+                                            <option value="error"<%= params.logLevel=='error'?'selected':'' %>>error</option>
+                                            <option value="info"<%= params.logLevel=='info'?'selected':'' %>>info</option>
+                                            <option value="warn"<%= params.logLevel=='warn'?'selected':'' %>>warning</option>
+                                            <option value="ALL"<%= params.logLevel=='ALL'?'selected':'' %>>ALL</option>
+                                            
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select id="pageSize" class="form-select form-control">
+                                            <option value="10" <%= params.pageSize=='10'?'selected':'' %>>10</option>
+                                            <option value="50" <%= params.pageSize=='50'?'selected':'' %>>50</option>
+                                            <option value="100" <%= params.pageSize=='100'?'selected':'' %>>100</option>
+                                            <option value="500" <%= params.pageSize=='500'?'selected':'' %>>500</option>
+                                            <option value="1000" <%= params.pageSize=='1000'?'selected':'' %>>1000</option>
+                                            <option value="10000" <%= params.pageSize=='10000'?'selected':'' %>>10000</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-select form-control" id="keyWord" value="<%= params.keyWord %>" >
+                                    </td>
+                                   
+                                    <td>
+                                        <input type="button" id="btnSearchLogs"  value="search" placeholder="end date" class="form-control">
+                                    </td>
+                                  
+                                </tr>
+                            </table><br>
+                            
+                            <table  id="appLogsTable" class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 10px;">#</th>
+                                        <th style="width: 90px;">Date</th>
+                                        <th style="width: 120px;">Message</th>
+                                        <th style="width: 90px;">ScrapeTime</th>
+                                        <th style="width: 40px;">E. level</th>
+                                        <th style="width: 40px;">Module</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (Array.isArray(logs)) { %>
+                                    <% if(logs.length===0) { %>
+                                        <p>No items found !</p>
+                                    <% } else { logs.forEach(function(item,i){ %>
+                                        <tr>
+                                            <td><%= i+1 %></td>
+                                            
+                                            <td><%= item.dateTime %></td>
+                                           
+                                            <td>
+                                                <span class="short-content"><%= item.message.substring(0, 200) %></span>
+                                                <span class="hidden-content"><%= item.message %></span>
+                                                <% if (item.message.length>200) { %>
+                                                <span class="read-more-link" onclick="toggleContent(this)">Read More</span>
+                                                <% } %>
+                                            </td>
+                                            <td><%= item.timeTaken %></td>
+                                            <td><%= item.level %></td>
+                                            <td><%= item.module %></td>
+                                        </tr>
+                                    <% }); } } %>
+                                </tbody>
+                            </table>
+                        
+                        
+                         <!-- Pagination controls -->
+
+                            <div class="card border-0 flex-column justify-content-between track-ccard-b bg-transparent">
+                                <div md="" class="mt-4 text-center">
+                                    <nav aria-label="" class="">
+                                        <ul class="pagination  justify-content-center">
+                                            <li class="page-item">
+                                                <a href="?startDate=<%= params.startDate %>&endDate=<%= params.endDate %>&logLevel=<%= params.logLevel %>&page=1%>&pageSize=<%= params.pageSize %>&keyWord=<%= params.keyWord %>">
+                                                    <button type="button" class="btn tracknumlisting-pagination-button"> &laquo;</button>
+                                                </a>
+                                            </li>
+                                            <li class="page-item">
+                                              <a href="?startDate=<%= params.startDate %>&endDate=<%= params.endDate %>&logLevel=<%= params.logLevel %><%= pagination.currentPage > 1 ? `&page=${pagination.currentPage - 1}` : '#' %>&pageSize=<%= params.pageSize %>&keyWord=<%= params.keyWord %>">
+                                                <button type="button" class="btn tracknumlisting-pagination-button"> Previous</button>
+                                             </a>
+                                            </li>
+                                            <% if (pagination.currentPage > 3) { %>
+                                              <li class="page-item"><a href="?startDate=<%= params.startDate %>&endDate=<%= params.endDate %>&logLevel=<%= params.logLevel %>&page=1&pageSize=<%= params.pageSize %>&keyWord=<%= params.keyWord %>">
+                                                <button type="button" class="btn tracknumlisting-pagination-button"> 1</button>
+                                              </a></li>
+                                              <li class="page-item"><a href="#">
+                                                <button type="button" class="btn tracknumlisting-pagination-button">...</button>
+                                              </a></li>
+                                            <% } %>
+                                            <% for (let i = Math.max(1, pagination.currentPage - 2); i <= Math.min(pagination.totalPages, pagination.currentPage + 2); i++) { %>
+                                              <li class="page-item <%= i === pagination.currentPage ? 'active' : '' %>">
+                                                  <a href="?startDate=<%= params.startDate %>&endDate=<%= params.endDate %>&logLevel=<%= params.logLevel %>&page=<%= i %>&pageSize=<%= params.pageSize %>&keyWord=<%= params.keyWord %>">
+                                                    <button type="button" class="btn tracknumlisting-pagination-button"><%= i %></button>
+                                                </a>
+                                              </li>
+                                            <% } %>
+                                             <% if (pagination.currentPage < pagination.totalPages - 2) { %>
+                                              <li class="page-item"><a href="#">
+                                                <button type="button" class="btn tracknumlisting-pagination-button">...</button>
+                                              </a></li>
+                                              <li class="page-item">
+                                                  <a href="?startDate=<%= params.startDate %>&endDate=<%= params.endDate %>&logLevel=<%= params.logLevel %>&page=<%= pagination.totalPages %>&pageSize=<%= params.pageSize %>&keyWord=<%= params.keyWord %>">
+                                                    <button type="button" class="btn tracknumlisting-pagination-button"> <%= pagination.totalPages %></button>
+                                                </a>
+                                              </li>
+                                            <% } %>
+                                            <li class="page-item">
+                                              <a href="?startDate=<%= params.startDate %>&endDate=<%= params.endDate %>&logLevel=<%= params.logLevel %><%= pagination.currentPage < pagination.totalPages ? `&page=${pagination.currentPage + 1}` : '#' %>&pageSize=<%= params.pageSize %>&keyWord=<%= params.keyWord %>">
+                                                <button type="button" class="btn tracknumlisting-pagination-button">Next</button>
+                                            </a>
+                                            </li>
+                                            <li class="page-item">
+                                                <a href="?startDate=<%= params.startDate %>&endDate=<%= params.endDate %>&logLevel=<%= params.logLevel %>&page=<%= pagination.totalPages %>&pageSize=<%= params.pageSize %>&keyWord=<%= params.keyWord %>">
+                                                    <button type="button" class="btn tracknumlisting-pagination-button"> &raquo;</button>
+                                                </a>
+                                              </li>
+                                          </ul>
+                                    </nav>
+                                </div>
+                            </div>
+
+                                              
+                           
+                         <!-- Pagination controls -->
+
+
+                     
+                    
+                    </div>
+                </div>
+                
+            </div>
+        </form>
+
+        <!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+       
+        <div class="modal-body"><br>
+            <br>
+            
+            <h5>Are you sure to clear the logs ?</h5>
+          
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" onclick="clearLogs()" class="btn btn-default" >Yes</button>
+            
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+<%- include("./footer"); %>
+<style>
+    .main_content .page .scontainer {
+        padding: 20px;
+    }
+
+    /* Basic Rules */
+    .switch input {
+        display: none;
+    }
+
+    .switch {
+        display: inline-block;
+        width: 52px;
+        height: 22px;
+        margin: 8px;
+        transform: translateY(50%);
+        position: relative;
+    }
+
+    /* Style Wired */
+    .slider {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-radius: 30px;
+        box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+        cursor: pointer;
+        border: 4px solid transparent;
+        overflow: hidden;
+        transition: 0.4s;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        width: 100%;
+        height: 100%;
+        background: #777;
+        border-radius: 30px;
+        transform: translateX(-30px);
+        transition: 0.4s;
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(30px);
+        background: limeGreen;
+    }
+
+    input:checked+.slider {
+        box-shadow: 0 0 0 2px limeGreen, 0 0 2px limeGreen;
+    }
+
+    /* Style Flat */
+    .switch.flat .slider {
+        box-shadow: none;
+    }
+
+    .switch.flat .slider:before {
+        background: #fff;
+    }
+
+    .switch.flat input:checked+.slider:before {
+        background: white;
+    }
+
+    .switch.flat input:checked+.slider {
+        background: limeGreen;
+    }
+    .hidden-content {
+        display: none;
+    }
+    .read-more-link {
+        color: blue;
+        cursor: pointer;
+    }
+
+    /* .pagination-container {
+        width: 100%;
+        max-width: 600px; 
+        margin: 0 auto;
+        overflow: hidden;
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: center;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .page-item {
+        margin: 5px;
+    }
+
+    .page-item a {
+        display: block;
+        padding: 8px 16px;
+        text-decoration: none;
+        color: #007bff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    */
+    .page-item a:hover {
+        background-color: #ddd;
+    }
+
+    .page-item.active a {
+        background-color: #007bff;
+        color: white;
+        border: 1px solid #007bff;
+    }
+
+    /* Hide all page items initially */
+    /* .page-item {
+        display: none;
+    }  */
+
+    /* Show the first few and last few page items */
+    .page-item:nth-child(-n+5),
+    .page-item:nth-last-child(-n+5),
+    .page-item:nth-child(1),
+    .page-item:nth-last-child(1),
+    .page-item.active {
+    display: block;
+    }
+
+    /* Special case for ellipsis */
+    .page-item:nth-child(6),
+    .page-item:nth-last-child(6) {
+    display: block;
+}
+</style>
+<script>
+    function clearLogs(element) {
+     
+        const CURL = window.location.protocol + '//' + window.location.host + "/clear-logs";
+        window.location.href = CURL; 
+      
+    }
+ 
+    function toggleContent(element) {
+        const hiddenContent = element.previousElementSibling;
+        const shortContent = hiddenContent.previousElementSibling;
+        const isHidden = hiddenContent.style.display === 'none';
+        hiddenContent.style.display = isHidden ? 'inline' : 'none';
+        shortContent.style.display = isHidden ? 'none' : 'inline';
+        element.innerText = isHidden ? 'Read Less' : 'Read More';
+    }
+    $('#btnSearchLogs').click(function() {
+        const CURL = window.location.protocol + '//' + window.location.host + window.location.pathname;
+        const params = "?startDate="+$('#startDate').val()+"&endDate="+$('#endDate').val()+"&logLevel="+$("#logLevel").val()+"&keyWord="+$("#keyWord").val()+"&pageSize="+$("#pageSize").val()
+        window.location.href = CURL+params;  // Replace with your desired URL
+    });
+
+    $('#btnExportLogs').click(function() {
+        const currentPage = '<%= pagination.currentPage %>';
+        const CURL = window.location.protocol + '//' + window.location.host + "/export-logs";
+        const params = "?startDate="+$('#startDate').val()+"&endDate="+$('#endDate').val()+"&logLevel="+$("#logLevel").val()+"&page="+currentPage+"&keyWord="+$("#keyWord").val()+"&pageSize="+$("#pageSize").val()
+        window.location.href = CURL+params;  // Replace with your desired URL
+    });
+</script>

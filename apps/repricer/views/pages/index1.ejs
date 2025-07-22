@@ -1,0 +1,100 @@
+<head>
+  <title>Login Page</title>
+  <!--Made with love by Mutiullah Samim -->
+  <link rel="icon" href="/favicon.png" type="image/x-icon" />
+
+  <!--Bootsrap 4 CDN-->
+  <link
+    rel="stylesheet"
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+    integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+    crossorigin="anonymous"
+  />
+  <link rel="stylesheet" href="/vendor/themify-icons/themify-icons.css" />
+  <link rel="stylesheet" href="/vendor/fontawesome/css/font-awesome.min.css" />
+  <link rel="stylesheet" href="/vendor/chartist/css/chartist.min.css" />
+  <!-- <link rel="stylesheet" href="/vendor/chartist-plugin-tooltip/chartist-plugin-tooltip.css"> -->
+  <link rel="stylesheet" href="/vendor/charts-c3/plugin.css" />
+  <link rel="stylesheet" href="/vendor/morrisjs/morris.css" />
+  <link
+    rel="stylesheet"
+    href="/vendor/jvectormap/jquery-jvectormap-2.0.3.css"
+  />
+  <link rel="stylesheet" href="/vendor/fullcalendar/fullcalendar.min.css" />
+  <link
+    rel="stylesheet"
+    href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css"
+  />
+  <link rel="stylesheet" href="/stylesheets/main.css" type="text/css" />
+  <link rel="stylesheet" href="/stylesheets/jquery.toast.css" type="text/css" />
+  <link rel="stylesheet" href="/stylesheets/font-awesome.min.css" />
+  <link rel="stylesheet" href="/stylesheets/style.css" />
+  <link href="/stylesheets/bootstrap.min.css" rel="stylesheet" />
+  <!--Fontawesome CDN-->
+  <link
+    rel="stylesheet"
+    href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"
+    integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU"
+    crossorigin="anonymous"
+  />
+
+  <!--Custom styles-->
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="d-flex justify-content-center h-100">
+      <div class="card">
+        <div class="card-header">
+          <h3>Sign In</h3>
+        </div>
+        <div class="card-body">
+          <form id="sign_in_form" method="post" autocomplete="off">
+            <div class="input-group form-group">
+              <!-- userName -->
+              <div class="input-group-prepend">
+                <span class="input-group-text"
+                  ><i class="fas fa-user"></i
+                ></span>
+              </div>
+              <input
+                type="text"
+                class="form-control"
+                name="login_id"
+                id="login_id"
+                placeholder="username"
+              />
+            </div>
+            <div class="input-group form-group">
+              <!-- userPassword -->
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="fas fa-key"></i></span>
+              </div>
+              <input
+                type="password"
+                name="password"
+                id="password"
+                class="form-control"
+                placeholder="password"
+              />
+            </div>
+            <div class="form-group">
+              <button
+                type="submit"
+                class="btn float-right login_btn signInButton"
+              >
+                Login
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- /////// -->
+
+  <script src="/javascripts/login-signup.js"></script>
+  <script src="/javascripts/jquery.validate.min.js"></script>
+  <script src="/javascripts/jquery.toast.js"></script>
+  <script src="/javascripts/custom-script.js"></script>
+</body>

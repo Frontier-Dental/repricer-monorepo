@@ -1,0 +1,231 @@
+<%- include('../header') %>
+    <%- include('../left-sidebar') %>
+
+        <div class="page">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between">
+                    <h1 class="commanHeading">Detailed Log view for <b style="color: blue;"> <%= items.logData._id %> : KeyRef - <%= items.logData.keyGen %> (Time : <%= items.logTime%>)
+                        </b></h1>
+                    <div class="">
+                        <!-- <a class="btn btn-primary m-1" onClick="updateAllPrice('<%= items.index%>');"><i
+                                class="fa-solid fa-file-arrow-up"></i> Update All</a> -->
+                        <a class="btn btn-primary m-1" href="/dashboard/export_data/<%= items.logData._id %>"><i
+                                class="fa-solid fa-file-arrow-down"></i> Export</a>
+                        <button class="btn btn-primary m-1" onclick="history.back()"><i
+                                class="fa-solid fa-arrow-left"></i> Go Back</button>
+                    </div>
+                </div>
+                <hr>
+                <div class="card">
+                    <div class="body table-responsive">
+                        <table id="example" class="table table-striped table-bordered" style="width: 100%">
+                            <thead>
+                                <tr>
+                                    <th>Sl. No.</th>
+                                    <th>Product Name</th>
+                                    <th>MPID</th>
+                                    <th>Vendor Name</th>
+                                    <th>Vendor Product ID</th>
+                                    <th>Channel ID</th>
+                                    <th>Existing Price</th>
+                                    <th>Suggested Price</th>
+                                    <th>Comments</th>
+                                    <th>Price Updated</th>
+                                    <th>Response Json</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if(items && items.logData && items.logData.logs && items.logData.logs.length>0){
+                                    items.logData.logs.forEach(function(vendorLog,i){vendorLog.forEach(function(item,idx){ %>
+
+                                    <% let mulPB=false;let mulPbReprice=true;if (item.logs && item.logs.repriceData &&
+                                        item.logs.repriceData.hasOwnProperty("isMultiplePriceBreakAvailable"))
+                                        {if(item.logs.repriceData.isMultiplePriceBreakAvailable===true) {mulPB=true;let
+                                        noUpdatePrice=item.logs.repriceData.listOfRepriceDetails.filter(x=> x.newPrice
+                                        != "N/A" && x.isRepriced==false);if
+                                        (noUpdatePrice.length>0){mulPbReprice=false;}}else if
+                                        (item.logs.repriceData.repriceDetails &&
+                                        item.logs.repriceData.repriceDetails.isRepriced == false &&
+                                        item.logs.repriceData.repriceDetails.newPrice != "N/A"){mulPbReprice = false;}}
+                                        %>
+                                        <% if(item.logs && item.logs.repriceData){ %>
+                                            <tr>
+                                                <td>
+                                                    <%= i+1 %>
+                                                </td>
+                                                <td>
+                                                    <%= item.logs.repriceData.productName %>
+                                                </td>
+                                                <td>
+                                                    <%= item.logs.mpId %>
+                                                </td>
+                                                <td>
+                                                    <%= item.vendor %>
+                                                </td>
+                                                <td>
+                                                    <%= item.logs.repriceData.vendorProductId %>
+                                                </td>
+                                                <td>
+                                                    <%= item.logs.repriceData.vendorProductCode %>
+                                                </td>
+                                                <td>
+                                                    <% if (mulPB===false && item.logs.repriceData &&
+                                                        item.logs.repriceData.repriceDetails) { %>
+                                                        <span>
+                                                            <%= item.logs.repriceData.repriceDetails.oldPrice %>
+                                                        </span>
+                                                        <% } else { item.logs.repriceData.listOfRepriceDetails.forEach(
+                                                            function(priceBreak) { %>
+                                                            <span>
+                                                                <%= priceBreak.minQty %> @ <%= priceBreak.oldPrice %>
+                                                            </span><br>
+                                                            <% }); } %>
+                                                </td>
+                                                <td>
+                                                    <% if (mulPB===false && item.logs.repriceData &&
+                                                        item.logs.repriceData.repriceDetails) { %>
+                                                        <% if(item.logs.repriceData.repriceDetails.goToPrice){ %>
+                                                            <span>
+                                                                <%= item.logs.repriceData.repriceDetails.goToPrice %>
+                                                            </span>
+                                                            <% }else{%>
+                                                                <span>
+                                                                    <%= item.logs.repriceData.repriceDetails.newPrice %>
+                                                                </span>
+                                                                <% } } else {
+                                                                    item.logs.repriceData.listOfRepriceDetails.forEach(
+                                                                    function(priceBreak) { if(priceBreak.goToPrice){%>
+                                                                    <span>
+                                                                        <%= priceBreak.minQty %> @ <%=
+                                                                                priceBreak.goToPrice %>
+                                                                    </span><br>
+                                                                    <% }else{%>
+                                                                        <span>
+                                                                            <%= priceBreak.minQty %> @ <%=
+                                                                                    priceBreak.newPrice %>
+                                                                        </span><br>
+                                                                        <% }}); } %>
+                                                </td>
+                                                <td>
+                                                    <% if (mulPB===false && item.logs.repriceData &&
+                                                        item.logs.repriceData.repriceDetails) { %>
+                                                        <span style="color: darkgreen;">
+                                                            <%= item.logs.repriceData.repriceDetails.explained %>
+                                                        </span>
+                                                        <% } else { item.logs.repriceData.listOfRepriceDetails.forEach(
+                                                            function(priceBreak) { %>
+                                                            <span style="color: darkgreen;">
+                                                                <%= priceBreak.minQty %> - @: <%= priceBreak.explained
+                                                                        %>
+                                                            </span><br>
+                                                            <% }); } %>
+                                                </td>
+                                                <td>
+                                                    <label class="switch">
+                                                        <input type="checkbox" name="Scrape_on_off" disabled
+                                                            <%=item.priceUpdated==true ? 'checked' : '' %> >
+                                                        <span class="slider"></span>
+                                                    </label>
+                                                </td>
+                                                <td>
+                                                    <a
+                                                        href="/dashboard/get_raw_json/<%=item.logs.mpId%>/<%= items.logData._id %>/<%= item.vendor %>" target="_blank"><i
+                                                            class="ti-pencil-alt"></i></a>
+                                                </td>
+                                                <td>
+                                                    <% if ((item.logs.repriceData.repriceDetails &&
+                                                        (item.logs.repriceData.repriceDetails.newPrice=="N/A" ||
+                                                        item.logs.repriceData.repriceDetails.newPrice==item.logs.repriceData.repriceDetails.oldPrice))
+                                                        || item.priceUpdated==true || mulPbReprice==true){ %>
+                                                        <a><i class="ti-arrow-up">&nbsp;Update</i></a>
+                                                        <%}else{%>
+                                                            <a
+                                                                onclick="updatePriceForProduct('<%=item.logs.mpId%>','<%= items.logData._id %>');"><i
+                                                                    class="ti-arrow-up"
+                                                                    style="cursor:pointer;color:blue">&nbsp;Update</i></a>
+                                                            <%}%>
+                                                </td>
+
+                                            </tr>
+                                            <%}}); }); } %>
+
+                                                <!-- <input type="text" id="tableName" value="rate_chart"
+                                  style="display: none;" />
+                              <input type="text" id="fieldItem" value="rate_chart_id"
+                                style="display: none;" /> -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <%- include("../footer"); %>
+            <style>
+                /* Basic Rules */
+                .switch input {
+                    display: none;
+                }
+
+                .switch {
+                    display: inline-block;
+                    width: 52px;
+                    height: 22px;
+                    margin: 8px;
+                    transform: translateY(50%);
+                    position: relative;
+                }
+
+                /* Style Wired */
+                .slider {
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    border-radius: 30px;
+                    box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+                    cursor: pointer;
+                    border: 4px solid transparent;
+                    overflow: hidden;
+                    transition: 0.4s;
+                }
+
+                .slider:before {
+                    position: absolute;
+                    content: "";
+                    width: 100%;
+                    height: 100%;
+                    background: #777;
+                    border-radius: 30px;
+                    transform: translateX(-30px);
+                    transition: 0.4s;
+                }
+
+                input:checked+.slider:before {
+                    transform: translateX(30px);
+                    background: limeGreen;
+                }
+
+                input:checked+.slider {
+                    box-shadow: 0 0 0 2px limeGreen, 0 0 2px limeGreen;
+                }
+
+                /* Style Flat */
+                .switch.flat .slider {
+                    box-shadow: none;
+                }
+
+                .switch.flat .slider:before {
+                    background: #fff;
+                }
+
+                .switch.flat input:checked+.slider:before {
+                    background: white;
+                }
+
+                .switch.flat input:checked+.slider {
+                    background: limeGreen;
+                }
+            </style>

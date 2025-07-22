@@ -1,0 +1,488 @@
+<%- include('../header') %>
+    <%- include('../left-sidebar') %>
+
+<%
+    let pgno = pageNumber + 1
+    let upVal = 0, lowVal = 0
+    const pages = new Array(totalPages).fill(null).map((v, i) => i)
+    if (pageNumber <= 2) {
+      upVal = 0; lowVal = 5
+    } else if (pageNumber >= (totalPages - 3)) {
+      upVal = totalPages - 5; lowVal = totalPages
+    } else {
+      upVal = pageNumber - 2; lowVal = pageNumber + 3
+    }
+%>
+        <div class="page">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between">
+                    <h1 class="commanHeading">Tasks</h1><br>
+                    <div>( <%= (pageNumber * pageSize) + 1 %> - <%= Math.min((pageNumber * pageSize) + pageSize,totalDocs) %> / <%= totalDocs %> )</div>
+                    <div class="d-flex">
+                        <!-- <% if(items && items.length !=0){ %>
+                            <form method="POST" id="download_excel" action="download_excel">
+                                <button type="submit" class="btn btn-primary">Export List</button>
+                            </form>
+                            <% } %>
+                                <a href="/masteritem/add" class="btn btn-primary mx-3">Add Item</a>
+
+                                <button type="button" class="btn btn-primary" data-toggle="modal"
+                                    data-target="#exampleModal">
+                                    Import Excel
+                                </button> -->
+                    </div>
+                </div>
+
+                <!-- Is this needed here? -->
+                <form method="post" autocomplete="off" id="add_item_excel">
+                    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+                        aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exampleModalLabel">
+                                        Select Excel File
+                                    </h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <input type="file" id="input" name="input" />
+                                </div>
+
+                                <div class="px-2 pb-3 d-flex align-items-center">
+                                    <div>
+                                        <label class="switch">
+                                            <input type="checkbox" name="switch_on" />
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <h4 class="mb-0 mt-3">Override Existing</h4>
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <a href="/sample.xlsx" class="btn btn-primary">
+                                        Sample Download
+                                    </a>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                        Close
+                                    </button>
+                                    <button type="submit" class="btn btn-primary addItemExcel">
+                                        Update
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+<div class="card">
+    <div class="body table-responsive">
+        <h3>Last <b>Regular (In-Progress)</b> Cron Status:</h3>
+        <hr>
+        <table id="example" class="table table-striped table-bordered" style="width: 100%">
+            
+                                    <thead>
+                                        <tr>
+                                            <th>Sl No.</th>
+                                            <th>Date Time</th>
+                                            <th>Object Id</th>
+                                            <th>Cron Group</th>
+                                            <th>Eligible Products</th>
+                                            <th>Products Completed</th>
+                                            <th>Cron Status</th>
+                                        </tr>
+                                    </thead>
+                                    <% if(cronStatus && cronStatus.length==0) { %>
+                                        <h5 style="color: brown;">No Pending Cron found.</h5>
+
+                                    <% } else if(cronStatus.length>0){ cronStatus.forEach(function(cron,idx){ 
+
+                                    %>
+                                    <tbody>
+                                        <td><%= idx+1 %></td>
+                                        <td>
+                                            <%= cron.cronTime %>
+                                        </td>
+                                        <td>
+                                            <%= cron.keyGenId %>
+                                        </td>
+                                        <td>
+                                            <%= cron.cronName %>
+                                        </td>
+                                        <td>
+                                            <%= cron.maximumProductCount %>
+                                        </td>
+                                        <td>
+                                            <%= cron.productsCount %>
+                                        </td>
+                                        <td>
+                                            <% if(cron.status=="Complete"){ %>
+                                            <span style="color:green;"><b>
+                                                    <%=cron.status %>
+                                                </b></span>
+                                                <% }else{%>
+                                            <span style="color:orangered;"><b>
+                                                    <%= cron.status %>
+                                                </b></span>
+                                                <%}%>
+                                        </td>
+                                    </tbody>
+                                    <%});}%>
+        </table>
+    </div>
+</div>
+                <div class="card">
+                    <form method="get" action="/dashboard" class="mx-5 mt-3">
+                    <div class="form-row">
+                      <!-- <div class="form-group col-md-4 mb-2">
+                        <label for="fromDate" class="">From Date</label>
+                        <input type="date" class="form-control" id="fromDate" name="fromDate" value="<%= date.fromDate %>">
+                      </div> -->
+                      <!-- <div className="small text-muted mb-1">Reference</div> -->
+                      <!-- <div class="form-group col-md-4 mx-sm-3 mb-2">
+                        <label for="toDate" class="">To Date</label>
+                        <input type="date" class="form-control" id="toDate" name="toDate" value="<%= date.toDate %>">
+                      </div>
+                      <!-- <div className="small text-muted mb-1">Reference</div>
+                      <div class="form-group col-md-1 mx-sm-3 mb-2">
+                        <label for="" class=""></label></br>
+                        <button type="submit" class="btn btn-primary mb-2">Get Logs</button>
+                      </div> -->
+                      <% if (date.fromDate != '' && date.toDate != '') { 
+                        var ids = []
+                        if(items){ items.forEach(function(item,idx){
+                            ids.push(item.index)
+                        })}
+                      %> 
+                      <div class="form-group col-md-1 mx-sm-3 mb-2">
+                        <label for="" class=""></label></br>
+                        <!-- <a class="btn btn-warning mb-2" href="/dashboard/export_bulk_data/<%= JSON.stringify(ids) %>/<%= date.fromDate %>/<%= date.toDate %>"><i
+                                class="fa-solid fa-file-arrow-down"></i> Export (Alpha)</a> -->
+                        <a class="btn btn-warning mb-2" href="/dashboard/export_bulk_data/<%= date.fromDate %>/<%= date.toDate %>"><i
+                                class="fa-solid fa-file-arrow-down"></i> Export (Alpha)</a>
+                      </div>
+                      <% } %>  
+                    </div>
+                    </form>
+
+                    <div class="body table-responsive">
+                        <table id="example" class="table table-striped table-bordered" style="width: 100%">
+                            <thead>
+                                <tr>
+                                    <!-- <th>Serial Number #</th> -->
+                                    <th class="t-head">Date Time</th>
+                                    <th class="t-head">Cron Completion Time</th>
+                                    <th class="t-head">
+                                        <div class="dropdown">
+                                          <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <%= (group === '') ? 'All' : group %>
+                                          </button>
+                                          <div class="dropdown-menu font-weight-normal" style="overflow-y: auto;height: 400px;" aria-labelledby="dropdownMenuButton">
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-1" class="px-4 py-1 d-block">Cron-1</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-2" class="px-4 py-1 d-block">Cron-2</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-3" class="px-4 py-1 d-block">Cron-3</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-4" class="px-4 py-1 d-block">Cron-4</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-5" class="px-4 py-1 d-block">Cron-5</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-6" class="px-4 py-1 d-block">Cron-6</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-7" class="px-4 py-1 d-block">Cron-7</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-8" class="px-4 py-1 d-block">Cron-8</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-9" class="px-4 py-1 d-block">Cron-9</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-10" class="px-4 py-1 d-block">Cron-10</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-11" class="px-4 py-1 d-block">Cron-11</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-12" class="px-4 py-1 d-block">Cron-12</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-13" class="px-4 py-1 d-block">Cron-13</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-14" class="px-4 py-1 d-block">Cron-14</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-15" class="px-4 py-1 d-block">Cron-15</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-16" class="px-4 py-1 d-block">Cron-16</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-17" class="px-4 py-1 d-block">Cron-17</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-18" class="px-4 py-1 d-block">Cron-18</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-19" class="px-4 py-1 d-block">Cron-19</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-20" class="px-4 py-1 d-block">Cron-20</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-21" class="px-4 py-1 d-block">Cron-21</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-22" class="px-4 py-1 d-block">Cron-22</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-23" class="px-4 py-1 d-block">Cron-23</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-24" class="px-4 py-1 d-block">Cron-24</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-25" class="px-4 py-1 d-block">Cron-25</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-26" class="px-4 py-1 d-block">Cron-26</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-27" class="px-4 py-1 d-block">Cron-27</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-28" class="px-4 py-1 d-block">Cron-28</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-29" class="px-4 py-1 d-block">Cron-29</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=Cron-30" class="px-4 py-1 d-block">Cron-30</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=SCG-1" class="px-4 py-1 d-block">SCG-1</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=SCG-2" class="px-4 py-1 d-block">SCG-2</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=SCG-3" class="px-4 py-1 d-block">SCG-3</a>
+                                            <a href="/dashboard?pgno=1&type=<%= type %>&group=" class="px-4 py-1 d-block">All</a>
+                                          </div>
+                                        </div>
+                                    </th>
+                                    <th class="t-head">Object Id</th>
+                                    <% 
+                                        var totalLogs = 0
+                                        if(items){ items.forEach(function(item,idx){
+                                            totalLogs += item.productCount
+                                        })}
+                                    %>
+                                    <th class="t-head">Active Items</th>
+                                    <th class="t-head">Eligible Count</th>
+                                    <th class="t-head">Scraped-Success</th>
+                                    <th class="t-head">Scraped-Failed</th>
+                                    <th class="t-head">Repriced-Success</th>
+                                    <th class="t-head">Repriced-422</th>
+                                    <th class="t-head">Repriced-Other Errors</th>
+                                    <th class="t-head">
+                                        <div class="dropdown">
+                                          <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <%= (type === '') ? 'All' : type %>
+                                          </button>
+                                          <div class="dropdown-menu font-weight-normal" aria-labelledby="dropdownMenuButton">
+                                            <a href="/dashboard?pgno=1&type=Regular&group=<%= group %>" class="px-4 py-1 d-block">Regular</a>
+                                            <a href="/dashboard?pgno=1&type=SLOWCRON&group=<%= group %>" class="px-4 py-1 d-block">SlowCron</a>
+                                            <a href="/dashboard?pgno=1&type=Manual&group=<%= group %>" class="px-4 py-1 d-block">Manual</a>
+                                            <a href="/dashboard?pgno=1&type=422Error&group=<%= group %>" class="px-4 py-1 d-block">422Error</a>
+                                            <a href="/dashboard?pgno=1&type=Override&group=<%= group %>" class="px-4 py-1 d-block">Override</a>
+                                            <a href="/dashboard?pgno=1&type=FeedRun&group=<%= group %>" class="px-4 py-1 d-block">FeedRun</a>
+                                            <a href="/dashboard?pgno=1&type=All&group=<%= group %>" class="px-4 py-1 d-block">All</a>
+                                          </div>
+                                        </div>
+                                    </th>
+                                    <th class="t-head">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if(items){ items.forEach(function(item,idx){ %>
+                                    <tr>
+                                        <!-- <td>
+                                            <%= idx+1 %>
+                                        </td> -->
+                                        <td>
+                                            <%= item.logTime %> 
+                                        </td>
+                                        <td>
+                                            <%= item.completionTime %>
+                                        </td>
+                                        <td>
+                                            <%= item.cronName %>
+                                        </td>
+                                        <td>
+                                            <%= item.logData._id %> ( <%= item.keyRef %> )
+                                        </td>
+                                        <td>
+                                            <%= item.totalActiveCount %>
+                                        </td>
+                                        <td>
+                                            <%= item.productCount %>
+                                        </td>
+                                        <td>
+                                            <%= item.successScrapeCount %>
+                                        </td>
+                                        <td>
+                                            <%= item.failureScrapeCount %>
+                                        </td>
+                                        <td>
+                                            <%= item.repricedProductCount %>
+                                        </td>
+                                        <td>
+                                           <%= item.repriceFailure422Count %>
+                                        </td>
+                                        <td>
+                                            <%= item.repriceFailureOtherCount %>
+                                        </td>
+                                        <td>
+                                            <% if (item.logData.type=="FEED_RUN") { %>
+                                                <span class="badge badge-primary">
+                                                    <%= item.logData.type %>
+                                                </span>
+                                            <% }else if (item.logData.type) { %>
+                                            <span class="badge badge-warning"><%= item.logData.type %></span>
+                                            <% } else { %>
+                                            <span class="badge badge-success">Regular</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <a href="/dashboard/get_logs_details/<%= item.logData._id %>"><i
+                                                    class="ti-arrow-circle-right"></i></a>
+                                        </td>
+                                    </tr>
+                                    <% }); } %>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- pagination -->
+                    <div class="card border-0 flex-column justify-content-between p-2 track-ccard-b bg-transparent">
+                      <div md="" class="col mt-4 text-center">
+                        <nav aria-label="" class="">
+                          <ul class="pagination  justify-content-center">
+                            <li class="page-item p-2">
+                              <a href="/dashboard?pgno=1&type=<%= type %>&group=<%= group %>&fromDate=<%= date.fromDate %>&toDate=<%= date.toDate %>"><button class="btn tracknumlisting-pagination-button" >&laquo;</button></a>
+                            </li>
+                            <li class="page-item p-2">
+                              <a href="/dashboard?pgno=<%= Math.max(1, pageNumber) %>&type=<%= type %>&group=<%= group %>&fromDate=<%= date.fromDate %>&toDate=<%= date.toDate %>"><button class="btn tracknumlisting-pagination-button" >Previous</button></a>
+                            </li>
+                            <% pages.slice(upVal, lowVal).map(pg => {
+                              let active = (pg === pageNumber) ? '-active' : ''
+                              %>
+                                <li class="page-item p-2">
+                                  <a href="/dashboard?pgno=<%= (pg + 1) %>&type=<%= type %>&group=<%= group %>&fromDate=<%= date.fromDate %>&toDate=<%= date.toDate %>"><button class="btn tracknumlisting-pagination-button <%- active %>" >
+                                    <%= (pg + 1) %>
+                                  </button></a>
+                                </li>
+                              
+                            <% }) %>
+                            <li class="page-item p-2">
+                              <a href="/dashboard?pgno=<%= Math.min(totalPages, Number(pageNumber) + 2) %>&type=<%= type %>&group=<%= group %>&fromDate=<%= date.fromDate %>&toDate=<%= date.toDate %>"><button class="btn tracknumlisting-pagination-button" >Next</button></a>
+                            </li>
+                            <li class="page-item p-2">
+                              <a href="/dashboard?pgno=<%= totalPages %>&type=<%= type %>&group=<%= group %>&fromDate=<%= date.fromDate %>&toDate=<%= date.toDate %>"><button class="btn tracknumlisting-pagination-button" >&raquo;</button></a>
+                            </li>
+                          </ul>
+                        </nav>
+                      </div>
+                    </div>
+                    
+                </div>
+                <div class="container-fluid" id="Cron-422CronDiv">
+                <div class="d-flex justify-content-between">
+                    <h1 class="commanHeading">Filter Cron Logs : &nbsp; <input type="number" style="width: 100px;" id="txtFilterLogCount" value="10" onfocusout="getFilterCronLogs()"/> Logs</h1>
+                </div>
+                <div class="card">
+                    <div class="body table-responsive" id="filterCronLogs">
+                        <table id="example" class="table table-striped table-bordered" style="width: 100%">
+                            <thead>
+                                <th class="t-head">
+                                   Start Time 
+                                </th>
+                                <th class="t-head">
+                                    End Time
+                                </th>
+                                <th class="t-head">
+                                    Cron Name
+                                </th>
+                                <th class="t-head">
+                                    Cron Run Id
+                                </th>
+                                <th class="t-head">
+                                    Filter Date
+                                </th>
+                                <th class="t-head">
+                                    No. Of Products
+                                </th>
+                                <th class="t-head">
+                                    Action
+                                </th>
+                            </thead>
+                            <tbody>
+                                <% if(filterLogs){ filterLogs.forEach(function(item,idx){ %>
+                                    <tr>
+                                        <td><%= item.startTime %></td>
+                                        <td><%= item.endTime %></td>
+                                        <td><%= item.cronName %></td>
+                                        <td><%= item._id %></td>
+                                        <td><%= item.filterDate %></td>
+                                        <td><%= item.countOfProducts %></td>
+                                        <td><a href="/filter/export_log/<%=item.cronKey%>">Export</a></td>
+                                    </tr>
+                                    <% }); } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <%- include("../footer"); %>
+            <style>
+                /* Basic Rules */
+                .switch input {
+                    display: none;
+                }
+
+                .switch {
+                    display: inline-block;
+                    width: 52px;
+                    height: 22px;
+                    margin: 8px;
+                    transform: translateY(50%);
+                    position: relative;
+                }
+
+                /* Style Wired */
+                .slider {
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    border-radius: 30px;
+                    box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+                    cursor: pointer;
+                    border: 4px solid transparent;
+                    overflow: hidden;
+                    transition: 0.4s;
+                }
+
+                .slider:before {
+                    position: absolute;
+                    content: "";
+                    width: 100%;
+                    height: 100%;
+                    background: #777;
+                    border-radius: 30px;
+                    transform: translateX(-30px);
+                    transition: 0.4s;
+                }
+
+                input:checked+.slider:before {
+                    transform: translateX(30px);
+                    background: limeGreen;
+                }
+
+                input:checked+.slider {
+                    box-shadow: 0 0 0 2px limeGreen, 0 0 2px limeGreen;
+                }
+
+                /* Style Flat */
+                .switch.flat .slider {
+                    box-shadow: none;
+                }
+
+                .switch.flat .slider:before {
+                    background: #fff;
+                }
+
+                .switch.flat input:checked+.slider:before {
+                    background: white;
+                }
+
+                .switch.flat input:checked+.slider {
+                    background: limeGreen;
+                }
+                .t-head {
+                    position: sticky;
+                    top: 0px;
+                    left: 0px;
+                    z-index: 9;
+                    background-color: #fff;
+                    }
+                .table-responsive{
+                    max-height: 700px;
+                    margin: 15px;
+                    padding: 0 !important;
+                }
+            </style>
+            <script src="/javascripts/dashboard.js"></script>
+            <script>
+                // function refresh() {
+                //     // make Ajax call here, inside the callback call:
+                //     window.location.reload(true);
+                //     setTimeout(refresh, 60000);
+                //     // ...
+                // }
+
+                // // initial call, or just call refresh directly
+                // setTimeout(refresh, 60000);
+            </script>

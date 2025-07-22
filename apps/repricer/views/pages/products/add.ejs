@@ -1,0 +1,627 @@
+<%- include('../header') %>
+  <%- include('../left-sidebar') %>
+    <style>
+      /* Basic Rules */
+      .switch input {
+        display: none;
+      }
+      .switch {
+        display: inline-block;
+        width: 52px;
+        height: 22px;
+        /* margin: 8px; */
+        transform: translateY(50%);
+        position: relative;
+      }
+      /* Style Wired */
+      .slider {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-radius: 30px;
+        box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+        cursor: pointer;
+        border: 4px solid transparent;
+        overflow: hidden;
+        transition: .4s;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        width: 100%;
+        height: 100%;
+        background: #777;
+        border-radius: 30px;
+        transform: translateX(-30px);
+        transition: .4s;
+      }
+      input:checked+.slider:before {
+        transform: translateX(30px);
+        background: limeGreen;
+      }
+      input:checked+.slider {
+        box-shadow: 0 0 0 2px limeGreen, 0 0 2px limeGreen;
+      }
+      /* Style Flat */
+      .switch.flat .slider {
+        box-shadow: none;
+      }
+      .switch.flat .slider:before {
+        background: #FFF;
+      }
+      .switch.flat input:checked+.slider:before {
+        background: white;
+      }
+      .switch.flat input:checked+.slider {
+        background: limeGreen;
+      }
+      .accordion {
+        cursor: pointer;
+        font-size: 18px;
+        color: #444;
+        border: none;
+        outline: none;
+        text-align: left;
+        background-color: #f1f1f1;
+        padding: 10px 15px;
+        width: 100%;
+        position: relative;
+      }
+      .accordion:after {
+        content: "+";
+        font-size: 16px;
+        color: #333;
+        position: absolute;
+        right: 10px;
+        top: 90%;
+        transform: translateY(-50%);
+        transition: transform 0.3s ease;
+      }
+      .accordion.active:after {
+        transform: translateY(-50%) rotate(180deg);
+      }
+      .active,
+      .accordion:hover {
+        background-color: #ccc;
+      }
+      .active:after {
+        content: "\2212";
+      }
+      .panel {
+        padding: 0 18px;
+        background-color: white;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+      }
+      .card-body {
+        padding: 0.5rem 1.25rem !important;
+      }
+      .form-group {
+        margin-bottom: 0.50rem;
+      }
+      .no-gutters>.col,
+      .no-gutters>[class*="col-"] {
+        padding-right: 5px;
+        padding-left: 0;
+      }
+    </style>
+    <body>
+      <div class="page">
+        <div class="container-fluid">
+          <!-- <form method="post" autocomplete="off" > -->
+          <h3>Add Item Details
+            <button type="button" id="add_product_form_all" class="btn btn-success mx-1"
+              style="float: right;color: antiquewhite;">
+              Add Product
+            </button>
+            <a href="/productV2/show_all" class="btn btn-danger mb-2 mr-2" style="float: right;color: antiquewhite;"><i
+                class="fa-solid fa-xmark"></i>
+              Cancel</a>
+          </h3>
+          <hr>
+          <div class="row no-gutters">
+            <div class="col-md-3 form-group">
+              <label for="mpid" class="font-weight-bold">
+                MPID<span style="color: red;font-weight: bold;">*</span>
+              </label>
+              <input type="text" class="form-control" name="mpid" placeholder="MPID" value="" />
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="net32_url" class="font-weight-bold">
+                Net32 Url<span style="color: red;font-weight: bold;">*</span>
+              </label>
+              <input type="text" class="form-control" name="net32_url" placeholder="Net32 Url" value="" />
+            </div>
+            <div class="col-md-3 form-group">
+              <label for="cronName" class="font-weight-bold">
+                Cron Name<span style="color: red;font-weight: bold;">*</span>
+              </label>
+              <select class="form-select form-control" name="cronGroup" aria-label="Default select example">
+                <% model.cronSettings.forEach(function (list) { %>
+                  <option value=<%=list.CronId %>> <%= list.CronName %>
+                  </option>
+                  <%})%>
+              </select>
+            </div>
+            <div class="col-md-3 form-group">
+              <label for="slowCronName" class="font-weight-bold">Slow Cron Name </label>
+              <select class="form-select form-control" name="slowCronGroup" aria-label="Default select example"
+                disabled>
+                <option value=""></option>
+                <% model.slowCrons.forEach(function (list) { %>
+                  <option value=<%=list.CronId %>> <%= list.CronName %>
+                  </option>
+                  <%})%>
+              </select>
+            </div>
+            <div class="col-md-3 form-group">
+              <label for="scrapeOnlyCron" class="font-weight-bold">
+                Scrape Only Cron Name<span style="color: red;font-weight: bold;">*</span>
+              </label>
+              <select class="form-select form-control" name="scrapeOnlyCron" aria-label="Default select example">
+                <% model.scrapeOnlyCrons.forEach(function (list) { %>
+                  <option value=<%=list.CronId %>> <%= list.CronName %>
+                  </option>
+                  <%})%>
+              </select>
+            </div>
+            <div class="col-md-3 form-group">
+              <div class="pt-3 px-2 align-items-center">
+                <label class="switch">
+                  <input type="checkbox" name="isScrapeOnlyActivated">
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">Data - Scrape</label>
+              </div>
+            </div>
+            <div class="col-md-3 form-group">
+              <div class="pt-3 px-2 align-items-center">
+              <label class="switch">
+                <input type="checkbox" name="isBadgeItem">
+                <span class="slider"></span>
+              </label>
+              <label for="" class="font-weight-bold">Is Badge Item?</label>
+            </div>
+            </div>
+          </div>
+          <!-- <hr> -->
+          <!-- Tradent Details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">TRADENT DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <label for="" class="no-data-check">No Data</label>
+                <label class="switch">
+                  <input type="checkbox" name="insertNullData" id="checkData_tradent">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="row no-gutters" id="tradent_data">
+              <div class="col-md-3">
+                <label class="switch">
+                  <input type="checkbox" name="tradent_activated">
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">Active - Repricer</label>
+              </div>
+              <div class="col-md-3">
+                <label class="switch">
+                  <input type="checkbox" name="tradent_is_nc_needed">
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">
+                  NC (On/Off) <span style="color: red;font-weight: bold;">*</span>
+                </label>
+              </div>
+              <div class="col-md-6"></div>
+              <div class="col">
+                <label for="tradent_channel_Id" class="font-weight-bold">
+                  Channel ID <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="text" class="form-control" value="" name="tradent_channel_Id" placeholder="Channel ID" />
+              </div>
+              <div class="col-3">
+                <label for="tradent_badgeIndicator" class="font-weight-bold">Badge Indicator</label>
+                <select class="form-select form-control" name="tradent_badgeIndicator"
+                  aria-label="Default select example" onchange="enablePercentageData(this)">
+                  <option value='ALL_ZERO'>Compete all - Regular</option>
+                  <option value='ALL_PERCENTAGE'>Compete with all - Percentage</option>
+                  <option value='BADGE_ONLY'>Compete with Authorized Distributors only</option>
+                  <option value='NON_BADGE_ONLY'>Compete with Non-Authorized Distributors only</option>
+                </select>
+              </div>
+              <div class="col">
+                <label for="tradent_repricingRule" class="font-weight-bold">Up/Down</label>
+                <select class="form-select form-control" name="tradent_reprice_rule_select"
+                  aria-label="Default select example">
+                  <option value=-1>-- Please Select --</option>
+                  <option value=0>Only Up</option>
+                  <option value=1>Only Down</option>
+                  <option value=2>Both</option>
+                </select>
+              </div>
+              <div class="col">
+                <label for="tradent_floor_price" class="font-weight-bold">
+                  Floor Price <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="number" class="form-control" value="" name="tradent_floor_price"
+                  placeholder="Floor Price" />
+              </div>
+              <div class="col">
+                <label for="tradent_max_price" class="font-weight-bold">Max Price</label>
+                <input type="number" class="form-control" value="" name="tradent_max_price" placeholder="Max Price" />
+              </div>
+              <div class="col">
+                <label for="tradent_unit_price" class="font-weight-bold">
+                  Unit Price <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="number" class="form-control" name="tradent_unit_price" placeholder="Unit Price" value="" />
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <%- include('add-partials/addtradent.ejs') %>
+          </div>
+          <!-- Tradent Details end -->
+          <!-- Frontier details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">FRONTIER DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <label for="" class="no-data-check">No Data</label>
+                <label class="switch">
+                  <input type="checkbox" name="insertNullData" id="checkData_frontier">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="row no-gutters" id="frontier_data">
+              <div class="col-md-3">
+                <label class="switch">
+                  <input type="checkbox" name="frontier_activated">
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">Active - Repricer</label>
+              </div>
+              <div class="col-md-3">
+                <label class="switch">
+                  <input type="checkbox" name="frontier_is_nc_needed">
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">
+                  NC (On/Off) <span style="color: red;font-weight: bold;">*</span>
+                </label>
+              </div>
+              <div class="col-md-6"></div>
+              <div class="col">
+                <label for="frontier_channel_Id" class="font-weight-bold">
+                  Channel ID <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="text" class="form-control" value="" name="frontier_channel_Id" placeholder="Channel ID" />
+              </div>
+              <div class="col-3">
+                <label for="frontier_badgeIndicator" class="font-weight-bold">Badge Indicator</label>
+                <select class="form-select form-control" name="frontier_badgeIndicator"
+                  aria-label="Default select example" onchange="enablePercentageData(this)">
+                  <option value='ALL_ZERO'>Compete all - Regular</option>
+                  <option value='ALL_PERCENTAGE'>Compete with all - Percentage</option>
+                  <option value='BADGE_ONLY'>Compete with Authorized Distributors only</option>
+                  <option value='NON_BADGE_ONLY'>Compete with Non-Authorized Distributors only</option>
+                </select>
+              </div>
+              <div class="col">
+                <label for="frontier_repricingRule" class="font-weight-bold">Up/Down</label>
+                <select class="form-select form-control" name="frontier_reprice_rule_select"
+                  aria-label="Default select example">
+                  <option value=-1>-- Please Select --</option>
+                  <option value=0>Only Up</option>
+                  <option value=1>Only Down</option>
+                  <option value=2>Both</option>
+                </select>
+              </div>
+              <div class="col">
+                <label for="frontier_floor_price" class="font-weight-bold">
+                  Floor Price <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="number" class="form-control" value="" name="frontier_floor_price"
+                  placeholder="Floor Price" />
+              </div>
+              <div class="col">
+                <label for="frontier_max_price" class="font-weight-bold">Max Price</label>
+                <input type="number" class="form-control" value="" name="frontier_max_price" placeholder="Max Price" />
+              </div>
+              <div class="col">
+                <label for="frontier_unit_price" class="font-weight-bold">
+                  Unit Price <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="number" class="form-control" name="frontier_unit_price" placeholder="Unit Price"
+                  value="" />
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <%- include('add-partials/addfrontier.ejs') %>
+          </div>
+          <!-- Frontier details end -->
+          <!-- MVP details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">MVP DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <label for="" class="no-data-check">No Data</label>
+                <label class="switch">
+                  <input type="checkbox" name="insertNullData" id="checkData_mvp">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="row no-gutters" id="mvp_data">
+              <div class="col-md-3">
+
+                <label class="switch">
+                  <input type="checkbox" name="mvp_activated">
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">Active - Repricer</label>
+              </div>
+              <div class="col-md-3">
+
+                <label class="switch">
+                  <input type="checkbox" name="mvp_is_nc_needed">
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">
+                  NC (On/Off) <span style="color: red;font-weight: bold;">*</span>
+                </label>
+              </div>
+              <div class="col-md-6"></div>
+              <div class="col">
+                <label for="mvp_channel_Id" class="font-weight-bold">
+                  Channel ID <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="text" class="form-control" value="" name="mvp_channel_Id" placeholder="Channel ID" />
+              </div>
+              <div class="col-3">
+                <label for="mvp_badgeIndicator" class="font-weight-bold">Badge Indicator</label>
+                <select class="form-select form-control" name="mvp_badgeIndicator" aria-label="Default select example"
+                  onchange="enablePercentageData(this)">
+                  <option value='ALL_ZERO'>Compete all - Regular</option>
+                  <option value='ALL_PERCENTAGE'>Compete with all - Percentage</option>
+                  <option value='BADGE_ONLY'>Compete with Authorized Distributors only</option>
+                  <option value='NON_BADGE_ONLY'>Compete with Non-Authorized Distributors only</option>
+                </select>
+              </div>
+              <div class="col">
+                <label for="mvp_repricingRule" class="font-weight-bold">Up/Down</label>
+                <select class="form-select form-control" name="mvp_reprice_rule_select"
+                  aria-label="Default select example">
+                  <option value=-1>-- Please Select --</option>
+                  <option value=0>Only Up</option>
+                  <option value=1>Only Down</option>
+                  <option value=2>Both</option>
+                </select>
+              </div>
+              <div class="col">
+                <label for="mvp_floor_price" class="font-weight-bold">
+                  Floor Price <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="number" class="form-control" value="" name="mvp_floor_price" placeholder="Floor Price" />
+              </div>
+              <div class="col">
+                <label for="mvp_max_price" class="font-weight-bold">Max Price</label>
+                <input type="number" class="form-control" value="" name="mvp_max_price" placeholder="Max Price" />
+              </div>
+              <div class="col">
+                <label for="mvp_unit_price" class="font-weight-bold">
+                  Unit Price <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="number" class="form-control" name="mvp_unit_price" placeholder="Unit Price" value="" />
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <%- include('add-partials/addmvp.ejs') %>
+          </div>
+          <!-- MVP details end -->
+          <!-- FirstDent details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">FIRSTDENT DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <label for="" class="no-data-check">No Data</label>
+                <label class="switch">
+                  <input type="checkbox" name="insertNullData" id="checkData_firstdent">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="row no-gutters" id="firstdent_data">
+              <div class="col-md-3">
+                <label class="switch">
+                  <input type="checkbox" name="firstdent_activated">
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">Active - Repricer</label>
+              </div>
+              <div class="col-md-3">
+                <label class="switch">
+                  <input type="checkbox" name="firstdent_is_nc_needed">
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">
+                  NC (On/Off) <span style="color: red;font-weight: bold;">*</span>
+                </label>
+              </div>
+              <div class="col-md-6"></div>
+              <div class="col">
+                <label for="firstdent_channel_Id" class="font-weight-bold">
+                  Channel ID <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="text" class="form-control" value="" name="firstdent_channel_Id" placeholder="Channel ID" />
+              </div>
+              <div class="col-3">
+                <label for="firstdent_badgeIndicator" class="font-weight-bold">Badge Indicator</label>
+                <select class="form-select form-control" name="firstdent_badgeIndicator"
+                  aria-label="Default select example" onchange="enablePercentageData(this)">
+                  <option value='ALL_ZERO'>Compete all - Regular</option>
+                  <option value='ALL_PERCENTAGE'>Compete with all - Percentage</option>
+                  <option value='BADGE_ONLY'>Compete with Authorized Distributors only</option>
+                  <option value='NON_BADGE_ONLY'>Compete with Non-Authorized Distributors only</option>
+                </select>
+              </div>
+              <div class="col">
+                <label for="firstdent_repricingRule" class="font-weight-bold">Up/Down</label>
+                <select class="form-select form-control" name="firstdent_reprice_rule_select"
+                  aria-label="Default select example">
+                  <option value=-1>-- Please Select --</option>
+                  <option value=0>Only Up</option>
+                  <option value=1>Only Down</option>
+                  <option value=2>Both</option>
+                </select>
+              </div>
+              <div class="col">
+                <label for="firstdent_floor_price" class="font-weight-bold">
+                  Floor Price <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="number" class="form-control" value="" name="firstdent_floor_price"
+                  placeholder="Floor Price" />
+              </div>
+              <div class="col">
+                <label for="firstdent_max_price" class="font-weight-bold">Max Price</label>
+                <input type="number" class="form-control" value="" name="firstdent_max_price" placeholder="Max Price" />
+              </div>
+              <div class="col">
+                <label for="firstdent_unit_price" class="font-weight-bold">
+                  Unit Price <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="number" class="form-control" name="firstdent_unit_price" placeholder="Unit Price"
+                  value="" />
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <%- include('add-partials/addfirstdent.ejs') %>
+          </div>
+          <!-- FirstDent details end -->
+          <!-- Topdent details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">TOPDENT DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <label for="" class="no-data-check">No Data</label>
+                <label class="switch">
+                  <input type="checkbox" name="insertNullData" id="checkData_topdent">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="row no-gutters" id="topdent_data">
+              <div class="col-md-3">
+                <label class="switch">
+                  <input type="checkbox" name="topdent_activated">
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">Active - Repricer</label>
+              </div>
+              <div class="col-md-3">
+                <label class="switch">
+                  <input type="checkbox" name="topdent_is_nc_needed">
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">
+                  NC (On/Off) <span style="color: red;font-weight: bold;">*</span>
+                </label>
+              </div>
+              <div class="col-md-6"></div>
+              <div class="col">
+                <label for="topdent_channel_Id" class="font-weight-bold">
+                  Channel ID <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="text" class="form-control" value="" name="topdent_channel_Id" placeholder="Channel ID" />
+              </div>
+              <div class="col-3">
+                <label for="topdent_badgeIndicator" class="font-weight-bold">Badge Indicator</label>
+                <select class="form-select form-control" name="topdent_badgeIndicator"
+                  aria-label="Default select example" onchange="enablePercentageData(this)">
+                  <option value='ALL_ZERO'>Compete all - Regular</option>
+                  <option value='ALL_PERCENTAGE'>Compete with all - Percentage</option>
+                  <option value='BADGE_ONLY'>Compete with Authorized Distributors only</option>
+                  <option value='NON_BADGE_ONLY'>Compete with Non-Authorized Distributors only</option>
+                </select>
+              </div>
+              <div class="col">
+                <label for="topdent_repricingRule" class="font-weight-bold">Up/Down</label>
+                <select class="form-select form-control" name="topdent_reprice_rule_select"
+                  aria-label="Default select example">
+                  <option value=-1>-- Please Select --</option>
+                  <option value=0>Only Up</option>
+                  <option value=1>Only Down</option>
+                  <option value=2>Both</option>
+                </select>
+              </div>
+              <div class="col">
+                <label for="topdent_floor_price" class="font-weight-bold">
+                  Floor Price <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="number" class="form-control" value="" name="topdent_floor_price"
+                  placeholder="Floor Price" />
+              </div>
+              <div class="col">
+                <label for="topdent_max_price" class="font-weight-bold">Max Price</label>
+                <input type="number" class="form-control" value="" name="topdent_max_price" placeholder="Max Price" />
+              </div>
+              <div class="col">
+                <label for="topdent_unit_price" class="font-weight-bold">
+                  Unit Price <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="number" class="form-control" name="topdent_unit_price" placeholder="Unit Price" value="" />
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <%- include('add-partials/addtopdent.ejs') %>
+          </div>
+          <!-- </form> -->
+          <h3>
+            <button type="button" id="add_product_form_all" class="btn btn-success mx-1 mt-3 mb-3"
+              style="float: right;color: antiquewhite;">
+              Add Product
+            </button>
+            <a href="/productV2/show_all" class="btn btn-danger mt-3 mb-3 mr-2"
+              style="float: right;color: antiquewhite;"><i class="fa-solid fa-xmark"></i>
+              Cancel</a>
+          </h3>
+        </div>
+      </div>
+    </body>
+    <%- include("../footer"); %>
+      <script src="/javascripts/add-product.js"></script>
+      <script>
+        var acc = document.getElementsByClassName("accordion");
+        var i;
+        for (i = 0; i < acc.length; i++) {
+          acc[i].addEventListener("click", function () {
+            this.classList.toggle("active");
+            var panel = this.nextElementSibling;
+            if (panel.style.maxHeight) {
+              panel.style.maxHeight = null;
+            } else {
+              panel.style.maxHeight = panel.scrollHeight + "px";
+            }
+          });
+        }
+      </script>

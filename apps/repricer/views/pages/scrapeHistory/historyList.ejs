@@ -1,0 +1,156 @@
+<%- include('../header') %>
+    <%- include('../left-sidebar') %>
+
+        <div class="page">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between">
+                    <h1 class="commanHeading">Detailed Scraped list
+                        </b></h1>
+                </div>
+                <hr>
+                <form method="post" autocomplete="off" id="show_scrape_data">
+                    <div class="modal fade" id="showModal" tabindex="-1" role="dialog"
+                        aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="edit-title">
+                                        
+                                    </h5>
+                                    <div class="modal-view">
+                                        <pre id="edit-data"></pre>   
+                                    </div>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div class="card">
+                    <div class="body table-responsive">
+                        <table id="example" class="table table-striped table-bordered" style="width: 100%">
+                            <thead>
+                                <tr>
+                                    <th>Sl. No.</th>
+                                    <th>MPID</th>
+                                    <th>Cron Name</th>
+                                    <th>Last Updated On</th>
+                                    <th>Vendors Name</th>
+                                    <th>Preview</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+      
+                                <% if(items){ items.forEach(function(item, idx){ %>
+                                    <tr>
+                                      <td>
+                                        <%= idx + 1 %>
+                                      </td>
+                                      <td>
+                                        <%= item.productId %>
+                                      </td>
+                                      <td>
+                                        <%= item.scrapeCronName %>
+                                      </td>
+                                      <td>
+                                        <%= item.lastUpdateTime %>
+                                      </td>
+                                      <td>
+                                        <% item.vendors.forEach(function(vendor) { %>
+                                            <%= vendor %><br>
+                                          <% }); %>
+                                      </td>
+                                      <td style="text-align: center">
+                                        <% item.logs.forEach(function(vendor,i) { %>
+                                        <a href=""  data-toggle="modal"
+                                            data-target="#showModal"  onclick="showScrapeData(this)" data-vdata="<%= JSON.stringify(item.logs[i], null, 2)   %>" data-vendorId = "<%= vendor.vendorId %>"  ><i class="ti-eye"></i></a>
+                                        <br>
+                                        <% }); %>  
+                                    </td>
+                                    </tr>
+                                  <% }) } %>
+
+                                               
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <%- include("../footer"); %>
+            <style>
+                /* Basic Rules */
+                .switch input {
+                    display: none;
+                }
+
+                .switch {
+                    display: inline-block;
+                    width: 52px;
+                    height: 22px;
+                    margin: 8px;
+                    transform: translateY(50%);
+                    position: relative;
+                }
+
+                /* Style Wired */
+                .slider {
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    border-radius: 30px;
+                    box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+                    cursor: pointer;
+                    border: 4px solid transparent;
+                    overflow: hidden;
+                    transition: 0.4s;
+                }
+
+                .slider:before {
+                    position: absolute;
+                    content: "";
+                    width: 100%;
+                    height: 100%;
+                    background: #777;
+                    border-radius: 30px;
+                    transform: translateX(-30px);
+                    transition: 0.4s;
+                }
+
+                input:checked+.slider:before {
+                    transform: translateX(30px);
+                    background: limeGreen;
+                }
+
+                input:checked+.slider {
+                    box-shadow: 0 0 0 2px limeGreen, 0 0 2px limeGreen;
+                }
+
+                /* Style Flat */
+                .switch.flat .slider {
+                    box-shadow: none;
+                }
+
+                .switch.flat .slider:before {
+                    background: #fff;
+                }
+
+                .switch.flat input:checked+.slider:before {
+                    background: white;
+                }
+
+                .switch.flat input:checked+.slider {
+                    background: limeGreen;
+                }
+                .modal-view {
+                    width: 90%;
+                    height: 600px;
+                    overflow: auto;
+                    scrollbar-width: none;
+                }
+            </style>

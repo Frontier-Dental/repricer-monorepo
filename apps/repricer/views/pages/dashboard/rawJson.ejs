@@ -1,0 +1,137 @@
+<%- include('../header') %>
+    <%- include('../left-sidebar') %>
+
+        <div class="page">
+            <div class="container-fluid">
+                <form method="post" autocomplete="off" id="cron_log_form1">
+                    <% if(item.isUpdateRedirect && item.isUpdateRedirect==true){ %>
+                        <h1 class="commanHeading">Product Successfully Updated for Product : <b><%= item.productId %></b>.</h1>
+                    <% } else { %>
+                    <h1 class="commanHeading">See your cron logs here....</h1>
+                    <% } %>
+                    <div class="card">
+                        <div class="body">
+                            <input type="text" class="form-control" name="id" value="<%= item.productId %>" hidden />
+                            <div class="row clearfix">
+
+                                <!-- /////////// -->
+
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="form-group col-md-7">
+                                            <label for="raw_json">Cron log for the Time Stamp <b>
+                                                    <%= item.logs.scrapedOn %>
+                                                </b> for MPID : <b>
+                                                    <%= item.productId %>
+                                                </b></label>
+                                            <div></div>
+                                            <textarea class="form-control overflow-auto" cols=50 rows=20 name="raw_json"
+                                                placeholder="Cron Log"
+                                                disabled><%= JSON.stringify(item,undefined,4) %></textarea>
+                                        </div>
+                                    </div>
+                                    <% if(item.priceUpdateResponse !=null){ %>
+                                    <div class="row">
+                                        <div class="form-group col-md-7">
+                                            <label for="raw_json">Price Update Response for the Time Stamp <b>
+                                                    <%= item.priceUpdatedOn %>
+                                                </b> for MPID : <b>
+                                                    <%= item.productId %>
+                                                </b></label>
+                                            <div></div>
+                                            <textarea class="form-control overflow-auto" cols=50 rows=20 name="raw_json" placeholder="Price update response"
+                                                disabled><%= JSON.stringify(item.priceUpdateResponse,undefined,4) %></textarea>
+                                        </div>
+                                    </div>
+                                    <%}%>
+                                </div>
+
+                                <!-- /////////// -->
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <!-- <button type="submit"
+                                class=" px-5 py-3 btn btn-primary btn-lg updateItemButton">Download</button> -->
+                            <!-- <a href="/dashboard/download_json" class="px-5 py-3 btn btn-primary ti-download">&nbsp;Download</a>
+                            <a href="/dashboard/get_logs_details/<%= item.parentIndex %>" class=" px-5 py-3 btn btn-danger">Cancel</a> -->
+                            <!-- <a href="/dashboard/download_json"
+                                class="px-5 py-3 btn btn-primary ti-download">&nbsp;Download</a> -->
+                            <a class="btn btn-primary m-1" href="/dashboard/download_json"><i
+                                class="fa-solid fa-download"></i> Download</a>
+                            <button class="btn btn-primary m-1" onclick="history.back()"><i
+                                class="fa-solid fa-arrow-left"></i> Go Back</button>
+                        </div>
+                </form>
+            </div>
+        </div>
+
+
+        <%- include("../footer"); %>
+
+            <style>
+                /* Basic Rules */
+                .switch input {
+                    display: none;
+                }
+
+                .switch {
+                    display: inline-block;
+                    width: 52px;
+                    height: 22px;
+                    margin: 8px;
+                    transform: translateY(50%);
+                    position: relative;
+                }
+
+                /* Style Wired */
+                .slider {
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    border-radius: 30px;
+                    box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+                    cursor: pointer;
+                    border: 4px solid transparent;
+                    overflow: hidden;
+                    transition: .4s;
+                }
+
+                .slider:before {
+                    position: absolute;
+                    content: "";
+                    width: 100%;
+                    height: 100%;
+                    background: #777;
+                    border-radius: 30px;
+                    transform: translateX(-30px);
+                    transition: .4s;
+                }
+
+                input:checked+.slider:before {
+                    transform: translateX(30px);
+                    background: limeGreen;
+                }
+
+                input:checked+.slider {
+                    box-shadow: 0 0 0 2px limeGreen, 0 0 2px limeGreen;
+                }
+
+                /* Style Flat */
+                .switch.flat .slider {
+                    box-shadow: none;
+                }
+
+                .switch.flat .slider:before {
+                    background: #FFF;
+                }
+
+                .switch.flat input:checked+.slider:before {
+                    background: white;
+                }
+
+                .switch.flat input:checked+.slider {
+                    background: limeGreen;
+                }
+            </style>

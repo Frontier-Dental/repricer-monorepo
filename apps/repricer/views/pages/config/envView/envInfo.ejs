@@ -1,0 +1,240 @@
+<div class="d-flex justify-content-between">
+    <h1 class="commanHeading"><b>Configure Global Variables :</b></h1>
+</div>
+<div class="card">
+    <div class="body table-responsive">
+        <table class="table table-striped table-bordered" style="width:100%">
+            <tbody>
+                <!-- <tr>
+                    <td style="font-weight: bold;">Enter Own Vendor Id : </td>
+                    <td><input type="text" class="form-control" placeholder="Enter own Vendor Id" minlength="5"
+                            maxlength="5" id="txtOwnVendorId" value="<%= config.envInfo.ownVendorId %>"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Enter Sister Vendor Id (Separated by Semi-colon [;]) : </td>
+                    <td><input type="text" class="form-control" id="txtSisterVendorId"
+                            value="<%= config.envInfo.excludedSisterVendors %>"
+                            placeholder="Enter multiple sister vendor id"></td>
+                </tr> -->
+                <tr>
+                    <td style="font-weight: bold;">Enter Global Delay (in Seconds) : </td>
+                    <td><input type="text" class="form-control" placeholder="Enter own Vendor Id" id="txtGlobalDelay"
+                            value="<%= config.envInfo.delay %>"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Enter Source for Repricer : </td>
+                    <td><select class="form-control" id="ddl_source_type_repricer" aria-label="Default select example">
+                            <option <%=config.envInfo.source=='API' ? "selected" : "" %>
+                                value='API'>Net32 Api</option>
+                            <option <%=config.envInfo.source=='FEED' ? "selected" : "" %>
+                                value='FEED'>Feed Json</option>
+                            <option <%=config.envInfo.source=='CMS' ? "selected" : "" %>
+                                value='CMS'>Managed Mongo Service</option>
+                        </select></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Override Repricer Rule for All : </td>
+                    <td><select class="form-control" id="ddl_override_all_repricer" aria-label="Default select example">
+                            <option <%=config.envInfo.override_all=='true' ? "selected" : "" %>
+                                value='true'>True</option>
+                            <option <%=config.envInfo.override_all=='false' ? "selected" : "" %>
+                                value='false'>False</option>
+                        </select></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Override Execution Priority Settings for All : </td>
+                    <td><select class="form-control" id="ddl_override_exec_priority_repricer"
+                            aria-label="Default select example">
+                            <option <%=config.envInfo.override_execution_priority_details.override_priority=='true'
+                                ? "selected" : "" %>
+                                value='true'>True</option>
+                            <option <%=config.envInfo.override_execution_priority_details.override_priority=='false'
+                                ? "selected" : "" %>
+                                value='false'>False</option>
+                        </select></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Execution Priority Settings (Vendors): </td>
+                    <td>
+                        <table class="table table-striped table-bordered">
+                            <tbody>
+                                <tr>
+                                    <td style="font-weight: bold;">Tradent Execution Priority : </td>
+                                    <td>
+                                        <select class="form-control" id="ddl_exec_priority_tradent"
+                                            aria-label="Default select example">
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.tradent_priority=="1"
+                                                ? "selected" : "" %>
+                                                value="1">1</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.tradent_priority=="2"
+                                                ? "selected" : "" %>
+                                                value="2">2</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.tradent_priority=="3"
+                                                ? "selected" : "" %>
+                                                value="3">3</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.tradent_priority=="4"
+                                                ? "selected" : "" %>
+                                                value="4">4</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.tradent_priority=="5"
+                                                ? "selected" : "" %>
+                                                value="5">5</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: bold;">Frontier Execution Priority : </td>
+                                    <td>
+                                        <select class="form-control" id="ddl_exec_priority_frontier"
+                                            aria-label="Default select example">
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.frontier_priority=="1"
+                                                ? "selected" : "" %>
+                                                value="1">1</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.frontier_priority=="2"
+                                                ? "selected" : "" %>
+                                                value="2">2</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.frontier_priority=="3"
+                                                ? "selected" : "" %>
+                                                value="3">3</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.frontier_priority=="4"
+                                                ? "selected" : "" %>
+                                                value="4">4</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.frontier_priority=="5"
+                                                ? "selected" : "" %>
+                                                value="5">5</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: bold;">MVP Execution Priority : </td>
+                                    <td>
+                                        <select class="form-control" id="ddl_exec_priority_mvp"
+                                            aria-label="Default select example">
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.mvp_priority=="1"
+                                                ? "selected" : "" %>
+                                                value="1">1</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.mvp_priority=="2"
+                                                ? "selected" : "" %>
+                                                value="2">2</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.mvp_priority=="3"
+                                                ? "selected" : "" %>
+                                                value="3">3</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.mvp_priority=="4"
+                                                ? "selected" : "" %>
+                                                value="4">4</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.mvp_priority=="5"
+                                                ? "selected" : "" %>
+                                                value="5">5</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: bold;">TopDent Execution Priority : </td>
+                                    <td>
+                                        <select class="form-control" id="ddl_exec_priority_top"
+                                            aria-label="Default select example">
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.topDent_priority=="1"
+                                                ? "selected" : "" %>
+                                                value="1">1</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.topDent_priority=="2"
+                                                ? "selected" : "" %>
+                                                value="2">2</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.topDent_priority=="3"
+                                                ? "selected" : "" %>
+                                                value="3">3</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.topDent_priority=="4"
+                                                ? "selected" : "" %>
+                                                value="4">4</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.topDent_priority=="5"
+                                                ? "selected" : "" %>
+                                                value="5">5</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: bold;">FirstDent Execution Priority : </td>
+                                    <td>
+                                        <select class="form-control" id="ddl_exec_priority_fir"
+                                            aria-label="Default select example">
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.firstDent_priority=="1"
+                                                ? "selected" : "" %>
+                                                value="1">1</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.firstDent_priority=="2"
+                                                ? "selected" : "" %>
+                                                value="2">2</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.firstDent_priority=="3"
+                                                ? "selected" : "" %>
+                                                value="3">3</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.firstDent_priority=="4"
+                                                ? "selected" : "" %>
+                                                value="4">4</option>
+                                            <option
+                                                <%=config.envInfo.override_execution_priority_details.priority_settings.firstDent_priority=="5"
+                                                ? "selected" : "" %>
+                                                value="5">5</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Express Cron Overlap Threshold (in Minutes) : </td>
+                    <td><input type="text" class="form-control" placeholder="Express Cron Overlap Threshold" id="txtOverlapThreshold"
+                            value="<%= config.envInfo.expressCronOverlapThreshold %>"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Express Cron Batch Size : </td>
+                    <td><input type="text" class="form-control" placeholder="Express Cron Batch Size" id="txtCronBatchSize"
+                            value="<%= config.envInfo.expressCronBatchSize %>"></td>
+                </tr>
+                <tr>
+                    <td style="font-weight: bold;">Express Cron Instance Limit : </td>
+                    <td><input type="text" class="form-control" placeholder="Express Cron Instance Count" id="txtExpressInstanceCount"
+                            value="<%= config.envInfo.expressCronInstanceLimit %>"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <span style="font-weight: bold;">Last Modified By :</span>
+                        <span>
+                            <%= config.envInfo.lastUpdatedBy %>
+                        </span>
+                    </td>
+                    <td>
+                        <span style="font-weight: bold;">Last Modified At :</span>
+                        <span>
+                            <%= config.envInfo.lastUpdatedOn %>
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <a onClick="saveEnvConfigurations()" class="btn btn-success mx-1" name="btn_submit_on_all"
+            style="float: right;color: antiquewhite;"><i class="fa-solid fa-floppy-disk"></i>
+            &nbsp;Save</a>
+    </div>
+</div>

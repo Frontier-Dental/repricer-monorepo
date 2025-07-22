@@ -1,0 +1,51 @@
+<br /><br />
+<div class="d-flex justify-content-between">
+  <h1 class="commanHeading">
+    IP Status For The Current Cron Settings :<b> </b>
+  </h1>
+</div>
+<hr />
+<div class="body table-responsive">
+  <% if (model.length !=0) { %>
+  <table class="table table-striped table-bordered">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">IP</th>
+        <th scope="col">Port</th>
+        <th scope="col">Status</th>
+        <th scope="col">Ping Response</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% model.reverse().map((ipData, index)=> { %>
+      <tr>
+        <th scope="row"><%= index+1 %></th>
+        <td>
+          <%= ipData.ip %>
+        </td>
+        <td>
+          <%= ipData.port %>
+        </td>
+        <td>
+          <% if(ipData.ipStatus=="GREEN" ) { %>
+          <button type="button" class="btn btn-success" style="width: 100px">
+            GREEN
+          </button>
+          <% }else{ %>
+          <button type="button" class="btn btn-danger" style="width: 100px">
+            RED
+          </button>
+          <% } %>
+        </td>
+        <td>
+          <%= ipData.pingResponse %>
+        </td>
+      </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } else { %>
+  <p>No IPs found.</p>
+  <% } %>
+</div>
