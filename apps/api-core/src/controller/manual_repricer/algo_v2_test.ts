@@ -12,13 +12,14 @@ import { repriceProduct } from "../../utility/reprice_algo/algo_v1";
 import { FrontierProduct } from "../../types/frontier";
 import createError from "http-errors";
 import {
+  SimplifiedNet32Product,
   VendorIdLookup,
   VendorNameLookup,
 } from "../../utility/reprice_algo/v2/types";
 import { RepriceModel } from "../../model/repriceModel";
 
 export async function v2AlgoTest(
-  req: Request<{ mpid: string }, any, any, any>,
+  req: Request<{ mpid: string }, { products: Net32Product[] }, any, any>,
   res: Response,
 ): Promise<void> {
   const errors = validationResult(req);
@@ -35,7 +36,8 @@ export async function v2AlgoTest(
     res.status(StatusCodes.BAD_REQUEST).json("No product found");
     return;
   }
-  const net32Products = await getNet32Products(mpid, prod);
+  const net32Products: Net32Product[] =
+    req.body.products || (await getNet32Products(mpid, prod));
   const prioritySequence = getPrioritySequence();
   const internalProducts = getInternalProducts(prod, prioritySequence);
 
@@ -60,7 +62,7 @@ export async function v2AlgoTest(
   }
   const v2Response = repriceProductV2(
     mpid,
-    net32Products,
+    net32Products as SimplifiedNet32Product[],
     internalProducts,
     results,
   );

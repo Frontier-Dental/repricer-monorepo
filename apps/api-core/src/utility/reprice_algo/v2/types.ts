@@ -1,11 +1,22 @@
 import { Net32PriceBreak } from "../../../types/net32";
 
-export interface PriceCombinationWithRanks {
+export interface PriceSolutionWithRanks {
   vendorPrices: { vendorId: number; price: number }[];
-  buyBoxRankShipping: number;
-  buyBoxRankNonShipping: number;
-  averagePrice: number;
+  combination: SimplifiedNet32ProductFreeShippingAlgo[];
   totalRank: number;
+  buyBoxRankFreeShipping: number;
+  buyBoxRankIncludingShipping: number;
+}
+
+export interface AggregatePriceSolution {
+  vendorPrices: {
+    vendorId: number;
+    price: number;
+  }[];
+  consideredConfigurations: number;
+  solutions: PriceSolutionWithRanks;
+  totalRank: number;
+  averagePrice: number;
 }
 
 export interface SimplifiedNet32Product {
@@ -17,7 +28,12 @@ export interface SimplifiedNet32Product {
   badgeId: number;
   badgeName: string | null;
   priceBreaks: Net32PriceBreak[];
-  freeShippingGap?: number;
+  freeShippingGap: number;
+}
+
+export interface SimplifiedNet32ProductFreeShippingAlgo
+  extends SimplifiedNet32Product {
+  freeShipping: boolean;
 }
 
 export interface InternalProduct {
@@ -45,7 +61,7 @@ export interface ExistingAnalytics {
 }
 
 export interface PriceSolutions {
-  [quantity: number]: PriceCombinationWithRanks[];
+  [quantity: number]: AggregatePriceSolution[];
 }
 
 export enum VendorName {

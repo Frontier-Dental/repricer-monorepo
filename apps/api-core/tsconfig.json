@@ -8,7 +8,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true,
-    "lib": ["es2021", "dom"],
+    "lib": ["es2024", "dom"],
     "resolveJsonModule": true
   },
   "include": ["src/**/*"],

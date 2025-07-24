@@ -5,6 +5,7 @@ import {
   ExistingAnalytics,
   PriceSolutions,
   VendorNameLookup,
+  AggregatePriceSolution,
 } from "./types";
 import { getShippingBucket, getTotalCost, hasBadge } from "./v2";
 import * as fs from "fs";
@@ -14,8 +15,6 @@ export function writeRepriceHtmlReport(
   mpid: string,
   internalProducts: InternalProduct[],
   net32Products: SimplifiedNet32Product[],
-  existingProductRankings: ExistingAnalytics,
-  ownVendorIds: number[],
   priceSolutions: PriceSolutions,
   oldModelSolutions?: RepriceModel[],
 ) {
@@ -42,57 +41,12 @@ export function writeRepriceHtmlReport(
     );
 
     // --- Before tables for each quantity ---
-    let beforeSections = "";
-    for (const quantity of Object.keys(existingProductRankings)) {
+    let newAlgoSections = "";
+    for (const quantity of Object.keys(priceSolutions)) {
       const q = Number(quantity);
-      const {
-        beforeShippingLadder: shipping,
-        beforeNonShippingLadder: nonShipping,
-        beforeOwnShippingRank: ownShippingRank,
-        beforeOwnNonShippingRank: ownNonShippingRank,
-        beforeOwnAveragePrice,
-        afterShippingLadder,
-        afterNonShippingLadder,
-        afterOwnShippingRank,
-        afterOwnNonShippingRank,
-        afterOwnAveragePrice,
-      } = existingProductRankings[q];
-      beforeSections += `<h2>Quantity: ${q}</h2>`;
-      beforeSections += `<div style="margin-bottom: 4px;"><b>Legend:</b> <span style="background: #ffff99; padding: 2px 6px;">Highlighted</span> = Own Vendor, <span title='Badge'>🏅</span> = Vendor has badge</div>`;
-      beforeSections += `<h3>Before (Quantity: ${q})</h3>`;
-      beforeSections +=
-        `<b>Shipping</b>` + buildProductTable(shipping, q, ownVendorIds);
-      beforeSections += `<p><b>Own Shipping Rank:</b> ${ownShippingRank === Infinity ? "Not in top ranks" : ownShippingRank}</p>`;
-      beforeSections +=
-        `<b>Non-Shipping</b>` + buildProductTable(nonShipping, q, ownVendorIds);
-      beforeSections += `<p><b>Own Non-Shipping Rank:</b> ${ownNonShippingRank === Infinity ? "Not in top ranks" : ownNonShippingRank}</p>`;
-      beforeSections += `<p><b>Own Average Price:</b> $${beforeOwnAveragePrice.toFixed(2)}</p>`;
-      beforeSections +=
+      newAlgoSections += `<h2>Quantity: ${q}</h2>`;
+      newAlgoSections +=
         `<b>Price Solutions</b>` + buildPriceSolutionsTable(priceSolutions, q);
-      // Only show after tables if there is at least one price solution
-      const hasSolutions = priceSolutions[q] && priceSolutions[q].length > 0;
-      if (!hasSolutions) {
-        beforeSections += `<div><i>No solutions exist for this quantity.</i></div>`;
-      } else {
-        beforeSections += `<h3>After (Quantity: ${q})</h3>`;
-        if (afterShippingLadder) {
-          beforeSections +=
-            `<b>Shipping</b>` +
-            buildProductTable(afterShippingLadder, q, ownVendorIds);
-        } else {
-          beforeSections += `<b>Shipping</b> <i>No data</i>`;
-        }
-        beforeSections += `<p><b>Own Shipping Rank:</b> ${afterOwnShippingRank === undefined ? "N/A" : afterOwnShippingRank === Infinity ? "Not in top ranks" : afterOwnShippingRank}</p>`;
-        if (afterNonShippingLadder) {
-          beforeSections +=
-            `<b>Non-Shipping</b>` +
-            buildProductTable(afterNonShippingLadder, q, ownVendorIds);
-        } else {
-          beforeSections += `<b>Non-Shipping</b> <i>No data</i>`;
-        }
-        beforeSections += `<p><b>Own Non-Shipping Rank:</b> ${afterOwnNonShippingRank === undefined ? "N/A" : afterOwnNonShippingRank === Infinity ? "Not in top ranks" : afterOwnNonShippingRank}</p>`;
-        beforeSections += `<p><b>Own Average Price:</b> ${afterOwnAveragePrice === undefined ? "N/A" : "$" + afterOwnAveragePrice.toFixed(2)}</p>`;
-      }
     }
 
     const htmlContent = `<!DOCTYPE html>
@@ -112,7 +66,8 @@ export function writeRepriceHtmlReport(
     ${net32url ? `<a href="${net32url}" target="_blank">${net32url}</a><br/><br/>` : ""}
     <h2>Internal Products</h2>
     ${internalProductsTable}
-    ${beforeSections}
+    <h2>New Algorithm</h2>
+        ${newAlgoSections}
     <h2>net32Products (JSON)</h2>
     <pre>${JSON.stringify(net32Products, null, 2)}</pre>
     <hr style="margin:40px 0;border:3px solid #333;">
@@ -198,7 +153,7 @@ function buildPriceSolutionsTable(
   let header =
     "<tr>" +
     allVendorIds.map((id) => `<th>${VendorNameLookup[id]}</th>`).join("") +
-    "<th>buyBoxRankShipping</th><th>buyBoxRankNonShipping</th><th>averagePrice</th><th>totalRank</th></tr>";
+    "<th>buyBoxRankIncludingShipping</th><th>buyBoxRankFreeShipping</th><th>averagePrice</th><th>totalRank</th></tr>";
   let rows = solutions
     .map((sol, idx) => {
       const rowStyle = idx === 0 ? ' style="background: #b3e6b3;"' : "";
@@ -210,7 +165,7 @@ function buildPriceSolutionsTable(
               `<td>${sol.vendorPrices.find((vp) => vp.vendorId === id)?.price !== undefined ? sol.vendorPrices.find((vp) => vp.vendorId === id)?.price : ""}</td>`,
           )
           .join("") +
-        `<td>${sol.buyBoxRankShipping}</td><td>${sol.buyBoxRankNonShipping}</td><td>${sol.averagePrice.toFixed(2)}</td><td>${sol.totalRank}</td>` +
+        `<td>${sol.solutions.buyBoxRankIncludingShipping}</td><td>${sol.solutions.buyBoxRankFreeShipping}</td><td>${sol.averagePrice.toFixed(2)}</td><td>${sol.totalRank}</td>` +
         "</tr>"
       );
     })

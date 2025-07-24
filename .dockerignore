@@ -1,0 +1,11 @@
+apps/repricer/.cursor
+apps/repricer/.turbo
+apps/repricer/node_modules
+apps/repricer/.env
+apps/repricer/MYSQL
+apps/api-core/.cursor
+apps/api-core/.turbo
+apps/api-core/html
+apps/api-core/logs
+apps/api-core/node_modules
+apps/api-core/.env

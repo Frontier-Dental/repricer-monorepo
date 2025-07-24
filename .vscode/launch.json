@@ -9,7 +9,8 @@
       "type": "node",
       "request": "launch",
       "runtimeArgs": ["-r", "ts-node/register"],
-      "args": ["${workspaceFolder}/src/main.ts"]
+      "args": ["${workspaceFolder}/apps/api-core/src/main.ts"],
+      "cwd": "${workspaceFolder}/apps/api-core"
     },
     {
       "type": "node",

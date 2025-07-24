@@ -6,9 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server",
-    "start": "nodemon server",
+    "start": "node server.js",
     "lint:ejs": "ejslint views/pages/itemmaster/list.ejs",
-    "prepare": "husky",
     "format": "prettier --write \"**/*.{js,json,css,sql}\""
   },
   "author": "Repricer",
@@ -53,8 +52,6 @@
     "winston": "^3.13.0"
   },
   "devDependencies": {
-    "husky": "^9.1.7",
-    "lint-staged": "^16.1.2",
     "morgan": "^1.10.0",
     "prettier": "^3.6.2",
     "prettier-plugin-ejs": "^1.0.3",
