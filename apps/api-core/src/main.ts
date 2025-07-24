@@ -60,6 +60,11 @@ nodeApp.use(proxySwitchController);
 nodeApp.use(appLogController);
 nodeApp.use(scrapeCronController);
 
+// Health check endpoint
+nodeApp.get("/health", (req: Request, res: Response) => {
+  res.status(StatusCodes.OK).json({ status: "ok" });
+});
+
 /**** GET API COLLECTIONS ****/
 nodeApp.get("/api/GetStatus", async (req: Request, res: Response) => {
   res.status(StatusCodes.OK).json(`Application server running on post ${port}`);

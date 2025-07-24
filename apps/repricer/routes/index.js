@@ -20,8 +20,6 @@ const appLogController = require("../controllers/appLogController.js");
 const scrapeController = require("../controllers/scrapeController.js");
 const scrapeLogsController = require("../controllers/scrapeLogsController.js");
 
-const multer = require("multer");
-
 const router = Express.Router();
 
 router.get("/", indexController.index);
