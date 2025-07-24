@@ -8,6 +8,7 @@ import * as mongoHelper from "../../utility/mongo/mongoHelper";
 import { CacheKeyName } from "../../resources/cacheKeyName";
 import { IsChunkNeeded, startAllCronAsIs, stopAllMainCrons } from "./shared";
 import * as repriceBase from "../../utility/repriceBase";
+import { applicationConfig } from "../../utility/config";
 
 export async function startOverrideHandler(
   req: Request,
@@ -24,7 +25,7 @@ export async function startOverrideHandler(
   //Clear CRON_SETTINGS_LIST Cache
   cacheHelper.DeleteCacheByKey(CacheKeyName.CRON_SETTINGS_LIST);
   //Wait for 15seconds for all Running Cron to Stop
-  await delay(parseInt(process.env.OVERRIDE_DELAY!));
+  await delay(applicationConfig.OVERRIDE_DELAY);
   //Call stopAllCronV3()
   stopAllMainCrons();
   // Get List of Products with override_bulk_update == true
@@ -44,7 +45,7 @@ export async function startOverrideHandler(
     if (isChunkNeeded) {
       let chunkedList = _.chunk(
         listOfOverrideProducts,
-        parseInt(process.env.BATCH_SIZE!),
+        applicationConfig.BATCH_SIZE,
       );
       for (let chunk of chunkedList) {
         await repriceBase.Execute(keyGen, chunk, new Date(), null, true);

@@ -10,6 +10,7 @@ import { GetInfo } from "../model/globalParam";
 import { RepriceModel } from "../model/repriceModel";
 import { FrontierProduct } from "../types/frontier";
 import { Net32PriceBreak, Net32Product } from "../types/net32";
+import { applicationConfig } from "./config";
 
 export async function FilterProducts(filterCronDetails: any) {
   const filterDuration = parseInt(filterCronDetails.filterValue);
@@ -45,7 +46,7 @@ export async function FilterProducts(filterCronDetails: any) {
         getLastUpdateTime(product),
       );
       // Set CronId to Slow Cron Group & update the Parent Cron Details
-      if (JSON.parse(process.env.ENABLE_SLOW_CRON_FEATURE!) == true) {
+      if (applicationConfig.ENABLE_SLOW_CRON_FEATURE) {
         product.tradentDetails = {};
         product.tradentDetails.slowCronId = filterCronDetails.linkedCronId;
         product.tradentDetails.slowCronName = filterCronDetails.linkedCronName;
@@ -256,7 +257,7 @@ export async function VerifyFloorWithSister(
   sourceId: string,
 ): Promise<any> {
   let aboveFloorVendors: any[] = [];
-  const processOffset = parseFloat(process.env.OFFSET!);
+  const processOffset = applicationConfig.OFFSET;
   const floorPrice = productItem.floorPrice
     ? parseFloat(productItem.floorPrice)
     : 0;

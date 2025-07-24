@@ -954,13 +954,11 @@
       function (e, t) {
         t &&
           t.tooltip &&
-          e
-            .attr({ title: t.tooltip })
-            .tooltip({
-              container: "body",
-              trigger: "hover",
-              placement: "bottom",
-            });
+          e.attr({ title: t.tooltip }).tooltip({
+            container: "body",
+            trigger: "hover",
+            placement: "bottom",
+          });
       },
     ),
     dropdown = renderer.create('<div class="dropdown-menu">', function (e, t) {
@@ -1034,13 +1032,11 @@
           n.push('<div class="note-color-row">' + s.join("") + "</div>");
         }
         (e.html(n.join("")),
-          e
-            .find(".note-color-btn")
-            .tooltip({
-              container: "body",
-              trigger: "hover",
-              placement: "bottom",
-            }));
+          e.find(".note-color-btn").tooltip({
+            container: "body",
+            trigger: "hover",
+            placement: "bottom",
+          }));
       },
     ),
     dialog = renderer.create(

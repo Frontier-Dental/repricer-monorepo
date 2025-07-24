@@ -8,6 +8,7 @@ import { HistoryModel } from "../model/SqlModels/historyModel";
 import * as mySqlHelper from "./mySqlHelper";
 import { RepriceData, RepriceModel } from "../model/repriceModel";
 import { Net32PriceBreak, Net32Product } from "../types/net32";
+import { applicationConfig } from "./config";
 
 export async function Execute(
   mpId: number | string,
@@ -45,7 +46,7 @@ export async function Execute(
     historicalLogs.SetHistoricalPrice(priceHistory);
   }
   //writeFileToJson(historicalLogs, mpId);
-  if (JSON.parse(process.env.WRITE_HISTORY_SQL!) == true) {
+  if (applicationConfig.WRITE_HISTORY_SQL) {
     return writeFileToSql(historicalLogs, mpId);
   }
 }

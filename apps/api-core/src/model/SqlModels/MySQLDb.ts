@@ -1,14 +1,15 @@
 import { Knex, knex } from "knex";
+import { applicationConfig } from "../../utility/config";
 
 let knexInstance: Knex | null = null;
 
 export function getKnexInstance(): Knex {
   if (
-    !process.env.SQL_HOSTNAME ||
-    !process.env.SQL_PORT ||
-    !process.env.SQL_USERNAME ||
-    !process.env.SQL_PASSWORD ||
-    !process.env.SQL_DATABASE
+    !applicationConfig.SQL_HOSTNAME ||
+    !applicationConfig.SQL_PORT ||
+    !applicationConfig.SQL_USERNAME ||
+    !applicationConfig.SQL_PASSWORD ||
+    !applicationConfig.SQL_DATABASE
   ) {
     throw new Error(
       "SQL_HOSTNAME, SQL_PORT, SQL_USERNAME, SQL_PASSWORD, and SQL_DATABASE must be set",
@@ -20,11 +21,11 @@ export function getKnexInstance(): Knex {
     knexInstance = knex({
       client: "mysql2",
       connection: {
-        host: process.env.SQL_HOSTNAME,
-        port: parseInt(process.env.SQL_PORT!),
-        user: process.env.SQL_USERNAME,
-        password: process.env.SQL_PASSWORD,
-        database: process.env.SQL_DATABASE,
+        host: applicationConfig.SQL_HOSTNAME,
+        port: applicationConfig.SQL_PORT,
+        user: applicationConfig.SQL_USERNAME,
+        password: applicationConfig.SQL_PASSWORD,
+        database: applicationConfig.SQL_DATABASE,
       },
       pool: { min: 0 },
     });

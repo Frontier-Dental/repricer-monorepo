@@ -1,6 +1,7 @@
 import * as dbHelper from "./mongo/dbHelper";
 import * as axiosHelper from "./axiosHelper";
 import _ from "lodash";
+import { applicationConfig } from "./config";
 
 interface ProxyFailureDetails {
   proxyProvider: number;
@@ -113,7 +114,7 @@ export const SwitchProxy = async (): Promise<void> => {
           if (payloadForProxyChange && payloadForProxyChange.length > 0) {
             await axiosHelper.postAsync(
               payloadForProxyChange,
-              process.env.PROXY_SWITCH_EMAIL_NOTIFIER!,
+              applicationConfig.PROXY_SWITCH_EMAIL_NOTIFIER!,
             );
           }
 
@@ -123,7 +124,7 @@ export const SwitchProxy = async (): Promise<void> => {
           ) {
             await axiosHelper.postAsync(
               payloadForThresholdReached,
-              process.env.PROXY_SWITCH_EMAIL_THRESHOLD_NOTIFIER!,
+              applicationConfig.PROXY_SWITCH_EMAIL_THRESHOLD_NOTIFIER!,
             );
           }
 
@@ -200,7 +201,7 @@ async function updateProxyForCron(
       payloadForEmail = cronInfo;
     }
 
-    await axiosHelper.native_get(process.env.REPRICER_UI_CACHE_CLEAR!);
+    await axiosHelper.native_get(applicationConfig.REPRICER_UI_CACHE_CLEAR!);
   }
 
   return payloadForEmail;
@@ -211,7 +212,7 @@ async function ResetCounterForProvider(
   userId: string,
   isForceReset: boolean,
 ): Promise<void> {
-  const proxySwitchTimer = parseInt(process.env.PROXYSWITCH_TIMER!);
+  const proxySwitchTimer = applicationConfig.PROXYSWITCH_TIMER;
 
   if (isForceReset == true) {
     console.log(

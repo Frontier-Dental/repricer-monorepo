@@ -12,6 +12,7 @@ import { getContextCronId } from "./shared";
 import { proceedNext } from "./shared";
 import { AxiosResponse } from "axios";
 import { ProductDetailsListItem } from "../../utility/mySqlMapper";
+import { applicationConfig } from "../../utility/config";
 
 export async function manualUpdate(
   req: Request<{ id: string }, any, any, { isV2Algorithm: string }>,
@@ -32,7 +33,10 @@ export async function manualUpdate(
   }
   const contextCronId = getContextCronId(prod);
   let productLogs = [];
-  const searchRequest = process.env.GET_SEARCH_RESULTS!.replace("{mpId}", mpid);
+  const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace(
+    "{mpId}",
+    mpid,
+  );
   const cronSetting = _.first(
     await dbHelper.GetCronSettingsDetailsById(contextCronId),
   );

@@ -4,6 +4,7 @@ import * as dbHelper from "../mongo/dbHelper";
 import { Net32PriceBreak, Net32Product } from "../../types/net32";
 import { FrontierProduct } from "../../types/frontier";
 import { RepriceData, RepriceModel } from "../../model/repriceModel";
+import { applicationConfig } from "../config";
 
 export function isPriceUpdateRequired(
   repriceResult: RepriceModel,
@@ -41,8 +42,7 @@ export async function getSamePriceBreakDetails(
   priceBreak: Net32PriceBreak,
   productItem: FrontierProduct,
 ) {
-  if (JSON.parse(process.env.FLAG_MULTI_PRICE_UPDATE!) == false)
-    return outputList;
+  if (applicationConfig.FLAG_MULTI_PRICE_UPDATE === false) return outputList;
   if (outputList.length == 1) return outputList;
   let result: Net32Product[] = [];
   for (let out of outputList) {

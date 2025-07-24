@@ -9,6 +9,7 @@ import {
   updateCronBasedDetails,
   updateLowestVendor,
 } from "./shared";
+import { applicationConfig } from "../../utility/config";
 
 export async function updateProductManualHandler(
   req: Request,
@@ -45,7 +46,7 @@ export async function updateProductManualHandler(
         );
         await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
         console.log({
-          message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+          message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(priceUpdatedItem),
         });
       } else {

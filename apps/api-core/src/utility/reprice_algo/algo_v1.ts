@@ -26,6 +26,7 @@ import _ from "lodash";
 import { RepriceAsyncResponse } from "../../model/RepriceAsyncResponse";
 import { apiMapping } from "../../resources/apiMapping";
 import { PriceList, UpdateRequest } from "../../model/updateRequest";
+import { applicationConfig } from "../config";
 
 export async function repriceProduct(
   mpid: string,
@@ -57,9 +58,7 @@ export async function repriceProduct(
   }
 
   // Do MultiPrice Reprice  - Compete with other vendors
-  const flagMultiPriceUpdate: boolean = JSON.parse(
-    process.env.FLAG_MULTI_PRICE_UPDATE!,
-  );
+  const flagMultiPriceUpdate = applicationConfig.FLAG_MULTI_PRICE_UPDATE;
 
   if (flagMultiPriceUpdate === true) {
     const distinctPriceBreaks =
@@ -372,7 +371,7 @@ export async function repriceProduct(
     productItem.allowReprice,
   );
 
-  const isDev = JSON.parse(process.env.IS_DEV!);
+  const isDev = applicationConfig.IS_DEV;
   // const repriceNeeded = false;
   if (!repriceNeeded) {
     return {

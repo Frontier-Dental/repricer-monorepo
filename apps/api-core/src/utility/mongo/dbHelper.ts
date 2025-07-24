@@ -6,6 +6,7 @@ import { ErrorItem } from "../../types/ErrorItem";
 import { GlobalConfig } from "../../types/GlobalConfig";
 import { getMongoDb } from "./index";
 import { CronSettingsDetail, ScrapeCronDetail } from "./types";
+import { applicationConfig } from "../config";
 
 export async function UpdateProxyPriority(payload: {
   CronId: string;
@@ -18,7 +19,7 @@ export async function UpdateProxyPriority(payload: {
     },
   };
   return dbo
-    .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME!)
     .updateOne({ CronId: payload.CronId }, updateValue);
 }
 
@@ -29,7 +30,7 @@ export async function GetProxySwitchCronDetails(ignoreCache = false) {
   } else {
     const dbo = await getMongoDb();
     const mongoResult = await dbo
-      .collection(process.env.PROXY_SWITCHER_CRON_COLLECTION_NAME!)
+      .collection(applicationConfig.PROXY_SWITCHER_CRON_COLLECTION_NAME!)
       .find()
       .toArray();
     cacheHelper.Set(cacheKey, mongoResult);
@@ -43,7 +44,7 @@ export async function GetAllProxyProvider(current_proxy_priority: any) {
   };
   const dbo = await getMongoDb();
   return dbo
-    .collection(process.env.IP_CONFIG!)
+    .collection(applicationConfig.IP_CONFIG)
     .find(query)
     .sort({ proxyPriority: 1 })
     .toArray();
@@ -59,7 +60,7 @@ export async function GetProxyConfigByPriority(proxyPriority: any) {
     };
     const dbo = await getMongoDb();
     const result = await dbo
-      .collection(process.env.IP_CONFIG!)
+      .collection(applicationConfig.IP_CONFIG)
       .find(query)
       .toArray();
     cacheHelper.Set(cacheKey, result);
@@ -118,7 +119,7 @@ export async function GetActiveProductList(cronId: any, isSlowCron = false) {
 
   const dbo = await getMongoDb();
   return dbo
-    .collection(process.env.MANAGED_MONGO_PRODUCT_COLLECTION!)
+    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
     .find(query)
     .toArray();
 }
@@ -130,7 +131,9 @@ export async function GetGlobalConfig() {
     mongoResult = await cacheHelper.Get(globalCacheKey);
   } else {
     const dbo = await getMongoDb();
-    mongoResult = await dbo.collection(process.env.ENV_SETTINGS!).findOne();
+    mongoResult = await dbo
+      .collection(applicationConfig.ENV_SETTINGS)
+      .findOne();
     cacheHelper.Set(globalCacheKey, mongoResult);
   }
   if (!mongoResult) {
@@ -146,7 +149,7 @@ export async function GetCronSettingsListFresh(): Promise<
   let mongoResult;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .find()
     .toArray();
   cacheHelper.Set(cronSettingCacheKey, mongoResult);
@@ -157,7 +160,7 @@ export async function InitCronStatusAsync(payload: any) {
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.CRON_STATUS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
     .insertOne(payload);
   if (mongoResult && mongoResult.insertedId) {
     mongoResult = mongoResult.insertedId.toString();
@@ -169,7 +172,7 @@ export async function UpdateCronStatusAsync(payload: any) {
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.CRON_STATUS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
     .findOneAndUpdate(
       {
         $and: [{ cronTime: payload.cronTime }, { keyGenId: payload.keyGenId }],
@@ -195,7 +198,7 @@ export async function GetDelay() {
   } else {
     const dbo = await getMongoDb();
     const dbResponse = await dbo
-      .collection(process.env.ENV_SETTINGS!)
+      .collection(applicationConfig.ENV_SETTINGS)
       .findOne();
     if (dbResponse && dbResponse.delay) {
       mongoResult = parseInt(dbResponse.delay);
@@ -214,18 +217,18 @@ export async function GetCronSettingsDetailsByName(
   };
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .find(query)
     .toArray();
   if (mongoResult && mongoResult.length == 0) {
     mongoResult = await dbo
-      .collection(process.env.SLOW_CRON_GROUP_COLLECTION_NAME!)
+      .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME)
       .find(query)
       .toArray();
   }
   if (mongoResult && mongoResult.length == 0) {
     mongoResult = await dbo
-      .collection(process.env.SCRAPE_CRON_NAME!)
+      .collection(applicationConfig.SCRAPE_CRON_NAME)
       .find(query)
       .toArray();
   }
@@ -236,7 +239,7 @@ export async function PushLogsAsync(payload: any) {
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.SCRAPE_LOGS_COLLECTION_NAME!)
+    .collection(applicationConfig.SCRAPE_LOGS_COLLECTION_NAME)
     .insertOne(payload);
   if (mongoResult && mongoResult.insertedId) {
     mongoResult = mongoResult.insertedId.toString();
@@ -349,7 +352,7 @@ export async function UpdateProductAsync(
     }
   }
   mongoResult = await dbo
-    .collection(process.env.MANAGED_MONGO_PRODUCT_COLLECTION!)
+    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
     .findOneAndUpdate(
       { mpId: payload.mpid },
       {
@@ -367,7 +370,7 @@ export async function GetCronSettingsList(): Promise<CronSettingsDetail[]> {
   } else {
     const dbo = await getMongoDb();
     mongoResult = await dbo
-      .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+      .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
       .find()
       .toArray();
     cacheHelper.Set(cronSettingCacheKey, mongoResult);
@@ -383,12 +386,12 @@ export async function GetCronSettingsDetailsById(
   };
   const dbo = await getMongoDb();
   let mongoResult = await dbo
-    .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .find(query)
     .toArray();
   if (!mongoResult || mongoResult.length == 0) {
     mongoResult = await dbo
-      .collection(process.env.SLOW_CRON_GROUP_COLLECTION_NAME!)
+      .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME)
       .find(query)
       .toArray();
   }
@@ -398,17 +401,17 @@ export async function GetCronSettingsDetailsById(
 export async function GetProxyConfigByProviderId(providerId: any) {
   var result = null;
   const cacheKey = `${CacheKeyName.PROXY_CONFIG_BY_PROVIDER_ID}_${providerId}`;
-  if (
-    cacheHelper.Has(cacheKey) &&
-    JSON.parse(process.env.IGNORE_CACHE || "false") === false
-  ) {
+  if (cacheHelper.Has(cacheKey) && applicationConfig.IGNORE_CACHE === false) {
     result = cacheHelper.Get(cacheKey);
   } else {
     const query = {
       proxyProvider: providerId,
     };
     const dbo = await getMongoDb();
-    result = await dbo.collection(process.env.IP_CONFIG!).find(query).toArray();
+    result = await dbo
+      .collection(applicationConfig.IP_CONFIG)
+      .find(query)
+      .toArray();
     cacheHelper.Set(cacheKey, result);
   }
   return result;
@@ -418,7 +421,7 @@ export async function ResetPendingCronLogs() {
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.CRON_STATUS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
     .updateMany({}, { $set: { status: "Complete" } });
   return mongoResult;
 }
@@ -427,13 +430,13 @@ export async function UpsertErrorItemLog(payload: any) {
   let mongoResult = null;
   const dbo = await getMongoDb();
   const existingItem = await dbo
-    .collection(process.env.ERROR_ITEM_COLLECTION!)
+    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
     .findOne({
       $and: [{ mpId: payload.mpId }, { vendorName: payload.vendorName }],
     });
   if (existingItem) {
     mongoResult = await dbo
-      .collection(process.env.ERROR_ITEM_COLLECTION!)
+      .collection(applicationConfig.ERROR_ITEM_COLLECTION)
       .findOneAndUpdate(
         {
           $and: [{ mpId: payload.mpId }, { vendorName: payload.vendorName }],
@@ -449,7 +452,7 @@ export async function UpsertErrorItemLog(payload: any) {
       );
   } else {
     mongoResult = await dbo
-      .collection(process.env.ERROR_ITEM_COLLECTION!)
+      .collection(applicationConfig.ERROR_ITEM_COLLECTION)
       .insertOne(payload);
   }
   return mongoResult;
@@ -477,7 +480,7 @@ export async function FindErrorItemByIdAndStatus(
   };
 
   result = await dbo
-    .collection(process.env.ERROR_ITEM_COLLECTION!)
+    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
     .countDocuments(query);
   return result;
 }
@@ -486,7 +489,7 @@ export async function FindProductById(mpid: any) {
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.MANAGED_MONGO_PRODUCT_COLLECTION!)
+    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
     .findOne({ mpId: mpid });
   return mongoResult;
 }
@@ -498,7 +501,7 @@ export async function UpdateCronDetailsByCronId(
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .findOneAndUpdate(
       { CronId: cronId },
       {
@@ -541,7 +544,7 @@ export async function GetListOfOverrideProducts() {
   };
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.GET_PRICE_LIST_COLLECTION_NAME!)
+    .collection(applicationConfig.GET_PRICE_LIST_COLLECTION_NAME)
     .find(query)
     .toArray();
   return mongoResult;
@@ -551,7 +554,7 @@ export async function ExecuteProductQuery(query: any) {
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.MANAGED_MONGO_PRODUCT_COLLECTION!)
+    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
     .find(query)
     .toArray();
   return mongoResult;
@@ -561,7 +564,7 @@ export async function ExecuteProductUpdate(mpid: any, setVal: any) {
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.MANAGED_MONGO_PRODUCT_COLLECTION!)
+    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
     .findOneAndUpdate(
       { mpId: mpid },
       {
@@ -594,7 +597,7 @@ export async function GetEligibleContextErrorItems(
   };
   const dbo = await getMongoDb();
   result = await dbo
-    .collection(process.env.ERROR_ITEM_COLLECTION!)
+    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
     .find(query)
     .toArray();
   return result as ErrorItem[];
@@ -608,7 +611,7 @@ export async function GetFilterCronDetails(ignoreCache = false) {
   } else {
     const dbo = await getMongoDb();
     mongoResult = await dbo
-      .collection(process.env.FILTER_CRON_COLLECTION_NAME!)
+      .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME)
       .find()
       .sort({ _id: 1 })
       .toArray();
@@ -621,7 +624,7 @@ export async function GetFilterCronDetailsByName(_cronName: any) {
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.FILTER_CRON_COLLECTION_NAME!)
+    .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME)
     .findOne({ cronName: _cronName });
   return mongoResult;
 }
@@ -630,7 +633,7 @@ export async function GetProductListByQuery(query: any) {
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.MANAGED_MONGO_PRODUCT_COLLECTION!)
+    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
     .find(query)
     .toArray();
   return mongoResult;
@@ -640,7 +643,7 @@ export async function SaveFilterCronLogs(payload: any) {
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.FILTER_CRON_LOGS!)
+    .collection(applicationConfig.FILTER_CRON_LOGS)
     .insertOne(payload);
   return mongoResult;
 }
@@ -666,7 +669,7 @@ export async function UpdateCronForProductAsync(payload: any) {
     setVal["isSlowActivated"] = payload.isSlowActivated;
   }
   mongoResult = await dbo
-    .collection(process.env.MANAGED_MONGO_PRODUCT_COLLECTION!)
+    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
     .findOneAndUpdate(
       { mpId: payload.mpId },
       {
@@ -684,7 +687,7 @@ export async function GetSlowCronDetails(ignoreCache = false) {
   } else {
     const dbo = await getMongoDb();
     mongoResult = await dbo
-      .collection(process.env.SLOW_CRON_GROUP_COLLECTION_NAME!)
+      .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME)
       .find()
       .sort({ _id: 1 })
       .toArray();
@@ -699,11 +702,11 @@ export async function GetLinkedCronSettingsByProviderId(
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .find({ ProxyProvider: proxyProviderId })
     .toArray();
   let slowCronDetails = await dbo
-    .collection(process.env.SLOW_CRON_GROUP_COLLECTION_NAME!)
+    .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME)
     .find({ ProxyProvider: proxyProviderId })
     .toArray();
   mongoResult = _.concat(mongoResult, slowCronDetails);
@@ -717,7 +720,7 @@ export async function UpdateProxyDetailsByCronId(
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .findOneAndUpdate(
       { CronId: cronId },
       {
@@ -732,7 +735,7 @@ export async function UpdateProxyDetailsByCronId(
       },
     );
   mongoResult = await dbo
-    .collection(process.env.SLOW_CRON_GROUP_COLLECTION_NAME!)
+    .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME)
     .findOneAndUpdate(
       { CronId: cronId },
       {
@@ -757,63 +760,72 @@ export async function GetProxyFailureDetailsByProxyProviderId(
   let mongoResult = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PROXY_FAILURE_COLLECTION!)
+    .collection(applicationConfig.PROXY_FAILURE_COLLECTION)
     .findOne({ proxyProvider: proxyProvId });
   return mongoResult;
 }
 
 export async function ResetProxyFailureDetails(proxyProvId: any, userId: any) {
   const dbo = await getMongoDb();
-  return dbo.collection(process.env.PROXY_FAILURE_COLLECTION!).findOneAndUpdate(
-    { proxyProvider: proxyProvId },
-    {
-      $set: {
-        lastResetTime: new Date(),
-        initTime: new Date("01-01-1900"),
-        failureCount: 0,
-        AuditInfo: {
-          UpdatedBy: userId,
-          UpdatedOn: new Date(),
+  return dbo
+    .collection(applicationConfig.PROXY_FAILURE_COLLECTION)
+    .findOneAndUpdate(
+      { proxyProvider: proxyProvId },
+      {
+        $set: {
+          lastResetTime: new Date(),
+          initTime: new Date("01-01-1900"),
+          failureCount: 0,
+          AuditInfo: {
+            UpdatedBy: userId,
+            UpdatedOn: new Date(),
+          },
         },
       },
-    },
-  );
+    );
 }
 
 export async function InitProxyFailureDetails(proxyProvId: any, count: any) {
   const dbo = await getMongoDb();
-  return dbo.collection(process.env.PROXY_FAILURE_COLLECTION!).findOneAndUpdate(
-    { proxyProvider: proxyProvId },
-    {
-      $set: {
-        initTime: new Date(),
-        failureCount: count,
+  return dbo
+    .collection(applicationConfig.PROXY_FAILURE_COLLECTION)
+    .findOneAndUpdate(
+      { proxyProvider: proxyProvId },
+      {
+        $set: {
+          initTime: new Date(),
+          failureCount: count,
+        },
       },
-    },
-  );
+    );
 }
 
 export async function UpdateProxyFailureDetails(proxyProvId: any, count: any) {
   const dbo = await getMongoDb();
-  return dbo.collection(process.env.PROXY_FAILURE_COLLECTION!).findOneAndUpdate(
-    { proxyProvider: proxyProvId },
-    {
-      $set: {
-        failureCount: count,
+  return dbo
+    .collection(applicationConfig.PROXY_FAILURE_COLLECTION)
+    .findOneAndUpdate(
+      { proxyProvider: proxyProvId },
+      {
+        $set: {
+          failureCount: count,
+        },
       },
-    },
-  );
+    );
 }
 
 export async function GetProxyFailureDetails() {
   const dbo = await getMongoDb();
-  return dbo.collection(process.env.PROXY_FAILURE_COLLECTION!).find().toArray();
+  return dbo
+    .collection(applicationConfig.PROXY_FAILURE_COLLECTION)
+    .find()
+    .toArray();
 }
 
 export async function Push422LogsAsync(payload: any) {
   const dbo = await getMongoDb();
   const mongoResult = await dbo
-    .collection(process.env.ERROR_422_CRON_LOGS!)
+    .collection(applicationConfig.ERROR_422_CRON_LOGS)
     .insertOne(payload);
   return mongoResult && mongoResult.insertedId
     ? mongoResult.insertedId.toString()
@@ -826,7 +838,7 @@ export async function GetScrapeProductList(cronId: any, _isActive: any) {
     $and: [{ isActive: _isActive }, { linkedCronId: cronId }],
   };
   const mongoResult = await dbo
-    .collection(process.env.SCRAPE_ITEMS_COLLECTION_NAME!)
+    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION_NAME)
     .find(query)
     .sort({ _id: 1 })
     .toArray();
@@ -843,7 +855,7 @@ export async function GetScrapeCronDetails(
   } else {
     const dbo = await getMongoDb();
     mongoResult = await dbo
-      .collection(process.env.SCRAPE_CRON_NAME!)
+      .collection(applicationConfig.SCRAPE_CRON_NAME)
       .find()
       .sort({ _id: 1 })
       .toArray();
@@ -855,21 +867,21 @@ export async function GetScrapeCronDetails(
 export async function InsertScrapeProduct(payload: any) {
   const dbo = await getMongoDb();
   return dbo
-    .collection(process.env.SCRAPE_PRODUCTS_COLLECTION_NAME!)
+    .collection(applicationConfig.SCRAPE_PRODUCTS_COLLECTION_NAME)
     .insertOne(payload);
 }
 
 export async function PushLogs(payload: any) {
   const dbo = await getMongoDb();
   return dbo
-    .collection(process.env.SCRAPE_PRODUCTS_LOGS_COLLECTION_NAME!)
+    .collection(applicationConfig.SCRAPE_PRODUCTS_LOGS_COLLECTION_NAME)
     .insertOne(payload);
 }
 
 export async function UpdateScrapeProducts(mpId: any) {
   const dbo = await getMongoDb();
   return dbo
-    .collection(process.env.SCRAPE_ITEMS_COLLECTION_NAME!)
+    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION_NAME)
     .findOneAndUpdate(
       { mpId: mpId },
       {

@@ -11,6 +11,7 @@ import * as _ from "lodash";
 import { CacheKeyName } from "../../resources/cacheKeyName";
 import * as cacheHelper from "../../utility/cacheHelper";
 import { VendorName } from "../../utility/reprice_algo/v2/types";
+import { applicationConfig } from "../../utility/config";
 
 const mainCrons: Record<string, ScheduledTask> = {};
 let error422Cron: ScheduledTask | null = null;
@@ -25,7 +26,7 @@ export function stopAllMainCrons() {
 
 export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
   const _422CronSetting = cronSettings.find(
-    (x) => x.CronName == process.env.CRON_NAME_422,
+    (x) => x.CronName == applicationConfig.CRON_NAME_422,
   );
   if (!_422CronSetting) {
     throw new Error("422 Cron setting not found");
@@ -57,11 +58,16 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
     const thresholdValue =
       envVariables != null && envVariables.expressCronOverlapThreshold != null
         ? envVariables.expressCronOverlapThreshold
-        : process.env._422_CACHE_VALID_PERIOD;
+        : applicationConfig._422_CACHE_VALID_PERIOD;
     console.log(
       `Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date()}`,
     );
-    if (parseFloat(thresholdValue!) < differenceInMinutes) return false;
+    if (
+      typeof thresholdValue === "string"
+        ? parseFloat(thresholdValue!)
+        : thresholdValue < differenceInMinutes
+    )
+      return false;
     else return true;
   }
   return false;
@@ -244,7 +250,7 @@ async function runCoreCronLogic(cronSettingsResponse: any) {
     if (isChunkNeeded) {
       let chunkedList = _.chunk(
         eligibleProductList,
-        parseInt(process.env.BATCH_SIZE!),
+        applicationConfig.BATCH_SIZE,
       );
       for (let chunk of chunkedList) {
         await repriceBase.Execute(
@@ -286,7 +292,7 @@ export async function IsChunkNeeded(list: any, envVariables: any, type: any) {
         return list.length > parseInt(envVariables.expressCronBatchSize);
       }
     default:
-      return list.length > parseInt(process.env.BATCH_SIZE!);
+      return list.length > applicationConfig.BATCH_SIZE;
   }
 }
 

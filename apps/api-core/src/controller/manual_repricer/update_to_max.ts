@@ -9,6 +9,7 @@ import * as sqlHelper from "../../utility/mySqlHelper";
 import * as feedHelper from "../../utility/feedHelper";
 import { getContextCronId } from "./shared";
 import { proceedNext } from "./shared";
+import { applicationConfig } from "../../utility/config";
 
 export async function updateToMax(
   req: Request<{ id: string }, any, any>,
@@ -24,7 +25,10 @@ export async function updateToMax(
   const contextCronId = getContextCronId(prod);
   let productLogs = [];
   let net32resp = null;
-  const searchRequest = process.env.GET_SEARCH_RESULTS!.replace("{mpId}", mpid);
+  const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace(
+    "{mpId}",
+    mpid,
+  );
   const cronSetting = _.first(
     await dbHelper.GetCronSettingsDetailsById(contextCronId),
   );
@@ -48,7 +52,10 @@ export async function updateToMax(
     true,
   );
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
-  const postUrl = process.env.UPDATE_TO_MAX_OWN_URL!.replace("{mpId}", mpid);
+  const postUrl = applicationConfig.UPDATE_TO_MAX_OWN_URL.replace(
+    "{mpId}",
+    mpid,
+  );
   if (prioritySequence && prioritySequence.length > 0) {
     const cronIdForScraping =
       isSlowCronRun == true

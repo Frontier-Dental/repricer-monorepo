@@ -4,6 +4,7 @@ import * as formatWrapper from "../format-wrapper";
 import { logger } from "../winstonLogger";
 import xml2js from "xml2js";
 import fetch from "node-fetch";
+import { applicationConfig } from "../config";
 
 interface ProxyDetailsResponse {
   hostUrl: string;
@@ -82,9 +83,7 @@ async function handleResponse(
   renderJs: boolean,
   timeTaken: string,
 ): Promise<any> {
-  const formatResponse = JSON.parse(
-    process.env.FORMAT_RESPONSE_CUSTOM || "false",
-  );
+  const formatResponse = applicationConfig.FORMAT_RESPONSE_CUSTOM;
   console.log(
     `SCRAPE COMPLETED : ${scrappingLog} : ${url} || TimeTaken  :  ${timeTaken} seconds || ${seqString}`,
   );
@@ -154,10 +153,7 @@ async function handleRetry(
   );
   const retryEligible = await retryCondition(error);
 
-  if (
-    retryCount < parseInt(process.env.NO_OF_RETRIES || "0") &&
-    retryEligible
-  ) {
+  if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible) {
     console.log(`REPRICER CORE : ERROR (WITH RETRY) : ${error} `);
     console.log(
       `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
@@ -173,7 +169,7 @@ async function handleRetry(
       message: `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
     });
 
-    await delay(parseInt(process.env.RETRY_INTERVAL || "1000"));
+    await delay(applicationConfig.RETRY_INTERVAL);
     return await fetchData(
       url,
       proxyDetailsResponse,

@@ -2,10 +2,11 @@ import { createLogger, format, transports, Logger } from "winston";
 import * as fs from "fs";
 import * as path from "path";
 import dotenv from "dotenv";
+import { applicationConfig } from "./config";
 dotenv.config();
 
 const { combine, timestamp, json } = format;
-const LogFilePath: string = process.env.APP_LOG_PATH || "app.log";
+const LogFilePath: string = applicationConfig.APP_LOG_PATH;
 
 export const rotateLogFiles = (
   logger: Logger,

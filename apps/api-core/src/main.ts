@@ -17,6 +17,7 @@ import { searchController } from "./controller/search";
 import { errorMiddleware } from "./utility/error_middleware";
 import { manualRepriceController } from "./controller/manual_repricer";
 import { mainCronController } from "./controller/main_cron";
+import { applicationConfig, validateConfig } from "./utility/config";
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
@@ -44,8 +45,9 @@ nodeApp.use(
   }),
 );
 require("dotenv").config();
-const port = process.env.PORT ? Number(process.env.PORT) : 3001;
-process.env.TZ = "Canada/Eastern";
+validateConfig();
+
+const port = applicationConfig.PORT;
 nodeApp.use(searchController);
 nodeApp.use(mainCronController);
 nodeApp.use(cacheController);
@@ -73,14 +75,14 @@ nodeApp.use(errorMiddleware);
 
 nodeApp.listen(port, () => {
   console.log(`Application server running on post ${port} at ${new Date()}`);
-  if (process.env.START_CRONS) {
-    axiosHelper.native_get(process.env.CRON_RUN_ALL_URL!);
-    axiosHelper.native_get(process.env.CRON_RUN_422_URL!);
-    axiosHelper.native_get(process.env.FILTER_CRON_RUN_URL!);
-    axiosHelper.native_get(process.env.SLOW_CRON_RUN_URL!);
-    axiosHelper.native_get(process.env.PROXYSWITCH_CRON_RUN_URL!);
-    axiosHelper.native_get(process.env.PROXYSWITCH_RESET_CRON_RUN_URL!);
-    axiosHelper.native_get(process.env.SCRAPE_ONLY_CRON_RUN_URL!);
+  if (applicationConfig.START_CRONS) {
+    axiosHelper.native_get(applicationConfig.CRON_RUN_ALL_URL!);
+    axiosHelper.native_get(applicationConfig.CRON_RUN_422_URL!);
+    axiosHelper.native_get(applicationConfig.FILTER_CRON_RUN_URL!);
+    axiosHelper.native_get(applicationConfig.SLOW_CRON_RUN_URL!);
+    axiosHelper.native_get(applicationConfig.PROXYSWITCH_CRON_RUN_URL!);
+    axiosHelper.native_get(applicationConfig.PROXYSWITCH_RESET_CRON_RUN_URL!);
+    axiosHelper.native_get(applicationConfig.SCRAPE_ONLY_CRON_RUN_URL!);
   }
   if (!fs.existsSync("./activeProducts.json")) {
     fs.writeFileSync("./activeProducts.json", JSON.stringify([]));

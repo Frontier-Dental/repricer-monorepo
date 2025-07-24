@@ -11,6 +11,8 @@ import * as HistoryHelper from "../utility/historyHelper";
 import * as mongoHelper from "../utility/mongo/mongoHelper";
 import * as Rule from "../utility/repriceRuleHelper";
 import * as responseUtility from "../utility/responseUtility";
+import { applicationConfig } from "../utility/config";
+import { apiMapping } from "../resources/apiMapping";
 
 export const feedController = express.Router();
 const ControllerName = "FEED";
@@ -66,7 +68,7 @@ feedController.post(
             const floorPrice = productDetails.floorPrice
               ? productDetails.floorPrice
               : 0;
-            const processOffset = parseFloat(process.env.OFFSET!);
+            const processOffset = applicationConfig.OFFSET;
             const offsetPrice = currentDetailsFromFeed.price - processOffset;
             if (offsetPrice < floorPrice) {
               repriceModel.generateRepriceData(
@@ -159,9 +161,12 @@ feedController.post(
           1,
           undefined,
         );
+        const priceUpdateUrl = apiMapping.find(
+          (x) => x.vendor === repriceModel.vendorName.toUpperCase(),
+        )?.priceUpdateUrl;
         priceUpdatedResponse = await axiosHelper.postAsync(
           priceUpdatedRequest,
-          process.env.PRICE_UPDATE_URL!,
+          priceUpdateUrl!,
         );
         if (priceUpdatedResponse.data) {
           if (

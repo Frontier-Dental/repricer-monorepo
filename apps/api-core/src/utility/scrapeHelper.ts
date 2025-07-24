@@ -8,6 +8,7 @@ import { RunInfo } from "../model/SqlModels/RunInfo";
 import { ProductInfo } from "../model/SqlModels/ProductInfo";
 import { PriceBreakInfo } from "../model/SqlModels/PriceBreakInfo";
 import { RunCompletionStatus } from "../model/SqlModels/RunCompletionStatus";
+import { applicationConfig } from "./config";
 
 export async function Execute(
   productList: any[],
@@ -47,14 +48,14 @@ async function executeScrapeLogic(
     0,
     0,
   );
-  const ownVendorListEnv = process.env.OWN_VENDOR_LIST || "";
+  const ownVendorListEnv = applicationConfig.OWN_VENDOR_LIST || "";
   const onwVendorList = ownVendorListEnv.split(";");
   const runInfoResult = await mySqlHelper.InsertRunInfo(runInfo);
   if (runInfoResult && (runInfoResult as any).insertId) {
     for (let prod of productList) {
       console.log(`SCRAPE-ONLY : Scraping started for ${prod.MpId}`);
       const scrapeStartTime = new Date();
-      const getSearchResultsEnv = process.env.GET_SEARCH_RESULTS || "";
+      const getSearchResultsEnv = applicationConfig.GET_SEARCH_RESULTS || "";
       const searchRequest = getSearchResultsEnv.replace("{mpId}", prod.MpId);
       const net32resp = await axiosHelper.getAsyncProxy(
         searchRequest,

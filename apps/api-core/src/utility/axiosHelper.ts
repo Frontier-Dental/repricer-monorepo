@@ -13,6 +13,7 @@ import * as ProxyHelper from "./proxyHelper";
 import * as mongoHelper from "./mongo/mongoHelper";
 import { apiMapping } from "../resources/apiMapping";
 import { CronSettings } from "../types/CronSettings";
+import { applicationConfig } from "./config";
 
 export async function postAsync(payload: any, _url: string) {
   const config = {
@@ -38,7 +39,7 @@ export async function getAsync(
   const slowCronDetails = await dbHelper.GetSlowCronDetails();
   cronDetails = _.concat(cronDetails, slowCronDetails);
   const cronName = cronDetails.find((x) => x.CronId == cronId)?.CronName;
-  if (process.env.IS_DEBUG && JSON.parse(process.env.IS_DEBUG) == true) {
+  if (applicationConfig.IS_DEBUG) {
     return getMorphedResponse();
   }
   const proxyDetailsResponse = await ProxyHelper.GetProxyDetailsById(cronId);
@@ -231,7 +232,7 @@ export async function GetSisterVendorItemDetails(
 export async function runFeedCron(): Promise<void> {
   const config = {
     method: "get",
-    url: process.env.CRON_RUN_FEED_URL,
+    url: applicationConfig.CRON_RUN_FEED_URL,
   };
   await axios(config);
 }
@@ -252,7 +253,7 @@ export async function getProduct(_url: string): Promise<any> {
 export async function runProductCron(): Promise<any> {
   var config = {
     method: "get",
-    url: process.env.CRON_RUN_PRODUCT_URL,
+    url: applicationConfig.CRON_RUN_PRODUCT_URL,
   };
   return axios(config);
 }
@@ -294,7 +295,7 @@ export async function fetchGetAsync(proxy: any, _url: string): Promise<any> {
 
 function getMorphedResponse(): Promise<any> {
   let response: any = {};
-  const filePath = process.env.FILE_PATH;
+  const filePath = applicationConfig.FILE_PATH;
   if (filePath) {
     const fileResponse = fs.readFileSync(filePath, "utf8");
     const jsonData = JSON.parse(fileResponse);

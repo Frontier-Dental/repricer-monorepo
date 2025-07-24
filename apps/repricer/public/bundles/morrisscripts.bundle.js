@@ -2714,16 +2714,14 @@
                 s = this.matrix ? pt(s, this.matrix) : s;
                 for (var o = 1; o < i + 1; o++)
                   n.push(
-                    r
-                      .path(s)
-                      .attr({
-                        stroke: e.color,
-                        fill: e.fill ? e.color : "none",
-                        "stroke-linejoin": "round",
-                        "stroke-linecap": "round",
-                        "stroke-width": +((e.width / i) * o).toFixed(3),
-                        opacity: +(e.opacity / i).toFixed(3),
-                      }),
+                    r.path(s).attr({
+                      stroke: e.color,
+                      fill: e.fill ? e.color : "none",
+                      "stroke-linejoin": "round",
+                      "stroke-linecap": "round",
+                      "stroke-width": +((e.width / i) * o).toFixed(3),
+                      opacity: +(e.opacity / i).toFixed(3),
+                    }),
                   );
                 return n.insertBefore(this).translate(e.offsetx, e.offsety);
               }));

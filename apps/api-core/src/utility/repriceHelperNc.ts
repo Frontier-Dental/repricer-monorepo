@@ -7,6 +7,7 @@ import * as badgeHelper from "../utility/badgeHelper";
 import * as filterMapper from "../utility/filterMapper";
 import { Net32PriceBreak, Net32Product } from "../types/net32";
 import { FrontierProduct } from "../types/frontier";
+import { applicationConfig } from "./config";
 
 export async function Reprice(
   refProduct: Net32Product,
@@ -38,7 +39,7 @@ export async function Reprice(
     ? parseFloat(productItem.floorPrice)
     : 0;
   let lowestPrice = 0;
-  const processOffset = parseFloat(process.env.OFFSET!);
+  const processOffset = parseFloat(applicationConfig.OFFSET!);
   let excludedVendors =
     productItem.competeAll === true ? [] : $.EXCLUDED_VENDOR_ID.split(";");
   const allowCompeteWithNextForFloor = productItem.competeWithNext;
@@ -595,7 +596,7 @@ export async function RepriceIndividualPriceBreak(
     priceBreak,
   );
   const existingPrice = unitPrice + standardShippingPrice;
-  const processOffset = parseFloat(process.env.OFFSET!);
+  const processOffset = applicationConfig.OFFSET;
   let repriceModel = new RepriceModel(
     sourceId,
     refProduct,
@@ -1400,7 +1401,7 @@ async function getSetPrice(
 }
 
 async function IsTie(sortedPayload: Net32Product[], _minQty: number) {
-  if (JSON.parse(process.env.IGNORE_TIE!) === true) {
+  if (applicationConfig.IGNORE_TIE) {
     return false;
   }
   const firstItem = _.first(sortedPayload);

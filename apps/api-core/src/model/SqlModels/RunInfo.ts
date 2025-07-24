@@ -1,4 +1,5 @@
 import moment from "moment";
+import { applicationConfig } from "../../utility/config";
 
 export class RunInfo {
   CronName: any;
@@ -46,12 +47,12 @@ export class RunInfo {
     this.RunEndTime = new Date();
   }
   GetSuccessCountQuery(runInfoId: any) {
-    return `UPDATE ${process.env.SQL_RUNINFO} SET ScrapedSuccessCount=${this.ScrapedSuccessCount} WHERE Id=${runInfoId}`;
+    return `UPDATE ${applicationConfig.SQL_RUNINFO} SET ScrapedSuccessCount=${this.ScrapedSuccessCount} WHERE Id=${runInfoId}`;
   }
   GetFailureCountQuery(runInfoId: any) {
-    return `UPDATE ${process.env.SQL_RUNINFO} SET ScrapedFailureCount=${this.ScrapedFailureCount} WHERE Id=${runInfoId}`;
+    return `UPDATE ${applicationConfig.SQL_RUNINFO} SET ScrapedFailureCount=${this.ScrapedFailureCount} WHERE Id=${runInfoId}`;
   }
   GetRunEndTimeQuery(runInfoId: any) {
-    return `UPDATE ${process.env.SQL_RUNINFO} SET RunEndTime='${moment(this.RunEndTime).format("DD-MM-YYYY HH:mm:ss")}' WHERE Id=${runInfoId}`;
+    return `UPDATE ${applicationConfig.SQL_RUNINFO} SET RunEndTime='${moment(this.RunEndTime).format("DD-MM-YYYY HH:mm:ss")}' WHERE Id=${runInfoId}`;
   }
 }

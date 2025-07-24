@@ -6,6 +6,7 @@ import * as globalParam from "../model/globalParam";
 import { RepriceModel } from "../model/repriceModel";
 import { Net32Product } from "../types/net32";
 import { FrontierProduct } from "../types/frontier";
+import { applicationConfig } from "./config";
 
 export function ApplyRule(
   repriceResult: RepriceModel,
@@ -684,7 +685,7 @@ export async function ApplySisterComparisonCheck(
           if (sisterVendorSimilarPrice.length > 0) {
             let suggestedPrice = (
               parseFloat($.newPrice as unknown as string) -
-              parseFloat(process.env.OFFSET!)
+              applicationConfig.OFFSET
             ).toFixed(2);
             for (var i = 0; i < sisterVendorResults.length; i++) {
               const sisterVendorWithSuggestedPrice = sisterVendorResults.find(
@@ -706,7 +707,7 @@ export async function ApplySisterComparisonCheck(
                     sisterVendorWithSuggestedPrice.priceBreaks!.find(
                       (pb) => pb.minQty == 1 && pb.active == true,
                     )!.unitPrice as unknown as string,
-                  ) - parseFloat(process.env.OFFSET!)
+                  ) - applicationConfig.OFFSET
                 ).toFixed(2);
               } else break;
             }
@@ -738,7 +739,7 @@ export async function ApplySisterComparisonCheck(
       if (sisterVendorSimilarPrice.length > 0) {
         let suggestedPrice = (
           parseFloat($eval.repriceDetails.newPrice as unknown as string) -
-          parseFloat(process.env.OFFSET!)
+          applicationConfig.OFFSET
         ).toFixed(2);
         for (var i = 0; i < sisterVendorResults.length; i++) {
           const sisterVendorWithSuggestedPrice = sisterVendorResults.find(
@@ -760,7 +761,7 @@ export async function ApplySisterComparisonCheck(
                 sisterVendorWithSuggestedPrice.priceBreaks!.find(
                   (pb) => pb.minQty == 1 && pb.active == true,
                 )!.unitPrice as unknown as string,
-              ) - parseFloat(process.env.OFFSET!)
+              ) - applicationConfig.OFFSET
             ).toFixed(2);
           } else break;
         }

@@ -4,6 +4,7 @@ import moment from "moment";
 import { FullProductDetailsV2 } from "../types/FullProductDetailsV2";
 import { GetTriggeredByValue, MapProductDetailsList } from "./mySqlMapper";
 import { HistoryModel } from "../model/SqlModels/historyModel";
+import { applicationConfig } from "./config";
 
 // Define types for the function parameters where possible
 interface RunInfo {
@@ -119,7 +120,9 @@ export async function InsertRunInfo(runInfo: RunInfo) {
     ScrapedSuccessCount: runInfo.ScrapedSuccessCount,
     ScrapedFailureCount: runInfo.ScrapedFailureCount,
   };
-  const insertResult = await knex(process.env.SQL_RUNINFO!).insert(insertObj);
+  const insertResult = await knex(applicationConfig.SQL_RUNINFO!).insert(
+    insertObj,
+  );
   return insertResult;
 }
 
@@ -162,7 +165,7 @@ export async function InsertProductInfo(
     StartTime: productInfo.StartTime,
     EndTime: productInfo.EndTime,
   };
-  const insertResult = await knex(process.env.SQL_PRODUCTINFO!).insert(
+  const insertResult = await knex(applicationConfig.SQL_PRODUCTINFO!).insert(
     insertObj,
   );
   return insertResult;
@@ -178,7 +181,7 @@ export async function InsertPriceBreakInfo(priceBreakInfo: PriceBreakInfo) {
     PromoAddlDescr: priceBreakInfo.PromoAddlDescr,
     IsActive: priceBreakInfo.IsActive,
   };
-  const insertResult = await knex(process.env.SQL_PRICEBREAKINFO!).insert(
+  const insertResult = await knex(applicationConfig.SQL_PRICEBREAKINFO!).insert(
     insertObj,
   );
   return insertResult;
@@ -191,15 +194,15 @@ export async function InsertRunCompletionStatus(statusInfo: StatusInfo) {
     RunType: statusInfo.RunType,
     IsCompleted: statusInfo.IsCompleted,
   };
-  const insertResult = await knex(process.env.SQL_RUNCOMPLETIONSTATUS!).insert(
-    insertObj,
-  );
+  const insertResult = await knex(
+    applicationConfig.SQL_RUNCOMPLETIONSTATUS!,
+  ).insert(insertObj);
   return insertResult;
 }
 
 export async function UpdateRunCompletionStatus(statusInfo: StatusInfo) {
   const knex = getKnexInstance();
-  const updateResult = await knex(process.env.SQL_RUNCOMPLETIONSTATUS!)
+  const updateResult = await knex(applicationConfig.SQL_RUNCOMPLETIONSTATUS!)
     .update({ IsCompleted: statusInfo.IsCompleted })
     .where("KeyGenId", statusInfo.KeyGenId);
   return updateResult;
@@ -208,14 +211,14 @@ export async function UpdateRunCompletionStatus(statusInfo: StatusInfo) {
 export async function GetEligibleScrapeProductList(cronId: string) {
   // Stored procedure, must use raw
   const knex = getKnexInstance();
-  const queryToCall = `CALL ${process.env.SQL_GET_SCRAPE_PRODUCTS_BY_CRON}(?)`;
+  const queryToCall = `CALL ${applicationConfig.SQL_GET_SCRAPE_PRODUCTS_BY_CRON}(?)`;
   const productList = await knex.raw(queryToCall, [cronId]);
   return (productList as any)?.[0]?.[0];
 }
 
 export async function UpdateLastScrapeInfo(mpid: string, time: string) {
   const knex = getKnexInstance();
-  const updateResult = await knex(process.env.SQL_SCRAPE_PRODUCT_LIST!)
+  const updateResult = await knex(applicationConfig.SQL_SCRAPE_PRODUCT_LIST!)
     .update({ LastScrapedDate: time })
     .where("MpId", mpid);
   return updateResult;
@@ -227,7 +230,7 @@ export async function GetScrapeProductDetailsByIdAndCron(
 ) {
   // Stored procedure, must use raw
   const knex = getKnexInstance();
-  const queryToCall = `CALL ${process.env.SQL_GET_PRODUCT_BYID_CRON}(?,?)`;
+  const queryToCall = `CALL ${applicationConfig.SQL_GET_PRODUCT_BYID_CRON}(?,?)`;
   const productList = await knex.raw(queryToCall, [cronId, productId]);
   return (productList as any)?.[0]?.[0];
 }
@@ -238,9 +241,9 @@ export async function GetActiveProductListByCronId(
 ) {
   // Stored procedure, must use raw
   const knex = getKnexInstance();
-  let queryToCall = `CALL ${process.env.SQL_SP_GET_REGULAR_CRON_PRODUCTS_BY_CRON}(?)`;
+  let queryToCall = `CALL ${applicationConfig.SQL_SP_GET_REGULAR_CRON_PRODUCTS_BY_CRON}(?)`;
   if (isSlowCron == true) {
-    queryToCall = `CALL ${process.env.SQL_SP_GET_SLOW_CRON_PRODUCTS_BY_CRON}(?)`;
+    queryToCall = `CALL ${applicationConfig.SQL_SP_GET_SLOW_CRON_PRODUCTS_BY_CRON}(?)`;
   }
   const [rows] = await knex.raw(queryToCall, [cronId]);
   const productList = (rows as any)[0];
@@ -250,7 +253,7 @@ export async function GetActiveProductListByCronId(
 export async function GetItemListById(mpId: string | number) {
   // Stored procedure, must use raw
   const knex = getKnexInstance();
-  const queryToCall = `CALL ${process.env.SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID}(?)`;
+  const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID}(?)`;
   const [rows] = await knex.raw(queryToCall, [parseInt(mpId as string)]);
   const productList = (rows as any)[0] as FullProductDetailsV2[];
   return _.first(MapProductDetailsList(productList));
@@ -265,19 +268,19 @@ export async function UpdateProductAsync(
   let contextTableName: string | null = null;
   switch (contextVendor) {
     case "TRADENT":
-      contextTableName = process.env.SQL_TRADENT_DETAILS!;
+      contextTableName = applicationConfig.SQL_TRADENT_DETAILS!;
       break;
     case "FRONTIER":
-      contextTableName = process.env.SQL_FRONTIER_DETAILS!;
+      contextTableName = applicationConfig.SQL_FRONTIER_DETAILS!;
       break;
     case "MVP":
-      contextTableName = process.env.SQL_MVP_DETAILS!;
+      contextTableName = applicationConfig.SQL_MVP_DETAILS!;
       break;
     case "TOPDENT":
-      contextTableName = process.env.SQL_TOPDENT_DETAILS!;
+      contextTableName = applicationConfig.SQL_TOPDENT_DETAILS!;
       break;
     case "FIRSTDENT":
-      contextTableName = process.env.SQL_FIRSTDENT_DETAILS!;
+      contextTableName = applicationConfig.SQL_FIRSTDENT_DETAILS!;
       break;
     default:
       break;
@@ -315,7 +318,7 @@ export async function UpdateCronForProductAsync(
   const knex = getKnexInstance();
   const slowCronId = await getContextItemByKey(payload, "slowCronId");
   const slowCronName = await getContextItemByKey(payload, "slowCronName");
-  const updateResult = await knex(process.env.SQL_SCRAPE_PRODUCT_LIST!)
+  const updateResult = await knex(applicationConfig.SQL_SCRAPE_PRODUCT_LIST!)
     .update({
       SlowCronId: slowCronId,
       SlowCronName: slowCronName,
@@ -329,7 +332,7 @@ export async function GetFilterEligibleProductsList(filterDate: Date | string) {
   // Stored procedure, must use raw
   const knex = getKnexInstance();
   const parameter = moment(filterDate).format("YYYY-MM-DD HH:mm:ss");
-  const queryToCall = `CALL ${process.env.SQL_SP_FILTER_ELIGIBLE_PRODUCT}(?)`;
+  const queryToCall = `CALL ${applicationConfig.SQL_SP_FILTER_ELIGIBLE_PRODUCT}(?)`;
   const [rows] = await knex.raw(queryToCall, [parameter]);
   const productList = (rows as any)[0];
   return productList;
@@ -344,9 +347,9 @@ export async function InsertHistoricalApiResponse(
     RefTime: refTime,
     ApiResponse: JSON.stringify(jsonData),
   };
-  const insertResult = await knex(process.env.SQL_HISTORY_API_RESPONSE!).insert(
-    insertObj,
-  );
+  const insertResult = await knex(
+    applicationConfig.SQL_HISTORY_API_RESPONSE!,
+  ).insert(insertObj);
   return (insertResult as any)?.[0]?.insertId;
 }
 
@@ -369,7 +372,9 @@ export async function InsertHistory(history: HistoryModel, refTime: Date) {
     LinkedApiResponse: history.LinkedApiResponse,
     ContextCronName: history.ContextCronName,
   };
-  const insertResult = await knex(process.env.SQL_HISTORY!).insert(insertObj);
+  const insertResult = await knex(applicationConfig.SQL_HISTORY!).insert(
+    insertObj,
+  );
   return insertResult[0];
 }
 
@@ -382,19 +387,19 @@ export async function UpdateTriggeredByVendor(
   let contextTableName: string | null = null;
   switch (contextVendor) {
     case "TRADENT":
-      contextTableName = process.env.SQL_TRADENT_DETAILS!;
+      contextTableName = applicationConfig.SQL_TRADENT_DETAILS!;
       break;
     case "FRONTIER":
-      contextTableName = process.env.SQL_FRONTIER_DETAILS!;
+      contextTableName = applicationConfig.SQL_FRONTIER_DETAILS!;
       break;
     case "MVP":
-      contextTableName = process.env.SQL_MVP_DETAILS!;
+      contextTableName = applicationConfig.SQL_MVP_DETAILS!;
       break;
     case "TOPDENT":
-      contextTableName = process.env.SQL_TOPDENT_DETAILS!;
+      contextTableName = applicationConfig.SQL_TOPDENT_DETAILS!;
       break;
     case "FIRSTDENT":
-      contextTableName = process.env.SQL_FIRSTDENT_DETAILS!;
+      contextTableName = applicationConfig.SQL_FIRSTDENT_DETAILS!;
       break;
     default:
       break;
@@ -411,7 +416,7 @@ export async function UpdateHistoryWithMessage(
   history: string,
 ) {
   const knex = getKnexInstance();
-  const updateResult = await knex(process.env.SQL_HISTORY!)
+  const updateResult = await knex(applicationConfig.SQL_HISTORY!)
     .update({ RepriceComment: history })
     .where("Id", identifier);
   return updateResult;

@@ -16,6 +16,7 @@ import { AxiosResponse } from "axios";
 import { repriceProduct } from "./reprice_algo/algo_v1";
 import { FrontierProduct } from "../types/frontier";
 import { RepriceAsyncResponse } from "../model/RepriceAsyncResponse";
+import { applicationConfig } from "./config";
 
 export async function Execute(
   keyGen: string,
@@ -72,7 +73,7 @@ export async function Execute(
     const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
     let productLogs = [];
     let net32resp = null;
-    const searchRequest = process.env.GET_SEARCH_RESULTS!.replace(
+    const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace(
       "{mpId}",
       prod.mpId,
     );
@@ -161,7 +162,7 @@ export async function RepriceErrorItem(
   );
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
   if (prioritySequence && prioritySequence.length > 0) {
-    const searchRequest = process.env.GET_SEARCH_RESULTS!.replace(
+    const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace(
       "{mpId}",
       details.mpId,
     );
@@ -179,7 +180,7 @@ export async function RepriceErrorItem(
         prod.last_cron_time = new Date();
         let isPriceUpdated = false;
         if (prod.scrapeOn == true && prod.activated == true) {
-          const postUrl = process.env.REPRICE_OWN_URL!.replace(
+          const postUrl = applicationConfig.REPRICE_OWN_URL.replace(
             "{mpId}",
             prod.mpid,
           );
@@ -192,7 +193,7 @@ export async function RepriceErrorItem(
           });
           prod.last_attempted_time = new Date();
           prod.lastCronRun = `Cron-422`;
-          tempProd.cronName = process.env.CRON_NAME_422;
+          tempProd.cronName = applicationConfig.CRON_NAME_422;
           tempProd.contextVendor = contextVendor;
           tempProd.contextCronName = `ExpressCron`;
           let data: any = {};
@@ -249,12 +250,12 @@ export async function RepriceErrorItem(
                   );
                   dbHelper.UpsertErrorItemLog(priceUpdatedItem);
                   console.log({
-                    message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+                    message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                     obj: JSON.stringify(priceUpdatedItem),
                   });
                   logger.info({
                     module: "REPRICE",
-                    message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+                    message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                   });
                 } else {
                   prod.next_cron_time = null;
@@ -288,7 +289,7 @@ export async function RepriceErrorItem(
                 );
                 dbHelper.UpsertErrorItemLog(errorItem);
                 console.log({
-                  message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+                  message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                   obj: JSON.stringify(errorItem),
                 });
                 cronLogs.logs.push([
@@ -302,7 +303,7 @@ export async function RepriceErrorItem(
                 ]);
                 logger.info({
                   module: "REPRICE",
-                  message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+                  message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                 });
               } else {
                 prod.next_cron_time = null;
@@ -405,7 +406,7 @@ export async function RepriceErrorItem(
       }
     }
   }
-  if (JSON.parse(process.env.ENABLE_SLOW_CRON_FEATURE!) == true) {
+  if (applicationConfig.ENABLE_SLOW_CRON_FEATURE) {
     let productUpdateNeeded = false;
     if (details.tradentDetails) {
       details.tradentDetails.slowCronId = null;
@@ -582,7 +583,7 @@ export async function UpdateToMax(
           );
           await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
           console.log({
-            message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+            message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
             obj: JSON.stringify(priceUpdatedItem),
           });
         } else {
@@ -604,7 +605,7 @@ export async function UpdateToMax(
         );
         await dbHelper.UpsertErrorItemLog(errorItem);
         console.log({
-          message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+          message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(errorItem),
         });
         cronLogs.push({
@@ -744,12 +745,12 @@ async function repriceSingleVendor(
         );
         await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
         console.log({
-          message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+          message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(priceUpdatedItem),
         });
         logger.info({
           module: "REPRICE",
-          message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+          message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
         });
       } else {
         prod.next_cron_time = null;
@@ -770,7 +771,7 @@ async function repriceSingleVendor(
       );
       await dbHelper.UpsertErrorItemLog(errorItem);
       console.log({
-        message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+        message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
         obj: JSON.stringify(errorItem),
       });
       cronLogs.push({
@@ -782,7 +783,7 @@ async function repriceSingleVendor(
       });
       logger.info({
         module: "REPRICE",
-        message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+        message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
       });
     }
   } else {

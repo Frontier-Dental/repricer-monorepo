@@ -9,6 +9,7 @@ import * as historyHelper from "../utility/historyHelper";
 import * as debugProxyHelper from "../utility/debugProxyHelper";
 import * as mySqlHelper from "../utility/mySqlHelper";
 import * as uuid from "uuid";
+import { applicationConfig } from "../utility/config";
 
 export const debugController = express.Router();
 
@@ -74,7 +75,7 @@ debugController.get(
   async (req: Request, res: Response) => {
     const mpid = req.params.key;
     const cronId = req.params.cronId;
-    const url = process.env.GET_SEARCH_RESULTS!.replace("{mpId}", mpid);
+    const url = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", mpid);
     console.log(`Calling debug/fetch-data for MPID : ${mpid} || URL : ${url}`);
     var axiosResponse = await axiosHelper.getAsync(url, cronId, null);
     res.status(_codes.StatusCodes.OK).send(axiosResponse.data);
@@ -179,7 +180,7 @@ debugController.get(
     let counter = 1;
     if (listOfActiveProducts && listOfActiveProducts.length > 0) {
       for (const prod of listOfActiveProducts) {
-        const url = process.env.GET_SEARCH_RESULTS!.replace(
+        const url = applicationConfig.GET_SEARCH_RESULTS.replace(
           "{mpId}",
           prod.mpId,
         );
@@ -261,7 +262,7 @@ debugController.get(
       proxyProviderDetailsResponse,
       proxyParam,
     );
-    const url = process.env.GET_SEARCH_RESULTS!.replace("{mpId}", mpid);
+    const url = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", mpid);
     console.log(`Calling debug/get-data for MPID : ${mpid} || URL : ${url}`);
     if (!proxyProviderDetails || proxyProviderDetails.length == 0) {
       proxyProviderDetails = [{ proxyProvider: proxyProvId }];

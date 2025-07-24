@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import { applicationConfig } from "../config";
 
 // --- Types generated from OpenAPI ---
 
@@ -100,10 +101,10 @@ function createNet32Api(
   axiosConfig?: AxiosRequestConfig,
 ): AxiosInstance {
   // Proxy config from environment variables
-  const proxyHost = process.env.NET32_PROXY_HOST;
-  const proxyPort = process.env.NET32_PROXY_PORT;
-  const proxyUsername = process.env.NET32_PROXY_USERNAME;
-  const proxyPassword = process.env.NET32_PROXY_PASSWORD;
+  const proxyHost = applicationConfig.NET32_PROXY_HOST;
+  const proxyPort = applicationConfig.NET32_PROXY_PORT;
+  const proxyUsername = applicationConfig.NET32_PROXY_USERNAME;
+  const proxyPassword = applicationConfig.NET32_PROXY_PASSWORD;
 
   const anyProxyVarSet =
     proxyHost || proxyPort || proxyUsername || proxyPassword;

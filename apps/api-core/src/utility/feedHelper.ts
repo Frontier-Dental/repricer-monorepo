@@ -2,9 +2,10 @@ import fs from "fs";
 import _ from "lodash";
 import * as dbHelper from "./mongo/dbHelper";
 import { ProductDetailsListItem } from "./mySqlMapper";
+import { applicationConfig } from "./config";
 
 export async function GetContextDetails(mpid: string): Promise<any> {
-  const feedPath = `${process.env.FEED_FILE_PATH}${process.env.FEED_FILE_NAME}`;
+  const feedPath = `${applicationConfig.FEED_FILE_PATH}${applicationConfig.FEED_FILE_NAME}`;
   const net32Data = fs.readFileSync(feedPath, "utf8");
   const jsonData = JSON.parse(net32Data);
   const itemData = jsonData.find((x: any) => x.mpid == mpid);
@@ -119,7 +120,7 @@ async function getSkipReprice(
     if (
       !prod.last_cron_time ||
       prod.last_cron_time == null ||
-      (process.env.IS_DEBUG != null && JSON.parse(process.env.IS_DEBUG) == true)
+      applicationConfig.IS_DEBUG
     ) {
       return false;
     } else if (prod.requestIntervalUnit) {

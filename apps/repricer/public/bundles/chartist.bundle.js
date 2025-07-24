@@ -2121,14 +2121,10 @@
                           (o.y1 = Math.min(Math.max(o.y1, b.y2), b.y1)),
                           (o.y2 = Math.min(Math.max(o.y2, b.y2), b.y1)));
                         var s = k.getMetaData(l, e);
-                        ((n = c
-                          .elem("line", o, f.classNames.bar)
-                          .attr({
-                            "ct:value": [t.x, t.y]
-                              .filter(k.isNumeric)
-                              .join(","),
-                            "ct:meta": k.serialize(s),
-                          })),
+                        ((n = c.elem("line", o, f.classNames.bar).attr({
+                          "ct:value": [t.x, t.y].filter(k.isNumeric).join(","),
+                          "ct:meta": k.serialize(s),
+                        })),
                           this.eventEmitter.emit(
                             "draw",
                             k.extend(

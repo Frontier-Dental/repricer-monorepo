@@ -18,6 +18,7 @@ import {
   getSecretKey,
   isPriceUpdateRequired,
 } from "../../utility/reprice_algo/shared";
+import { applicationConfig } from "../../utility/config";
 
 export async function repriceProductToMax(
   req: Request,
@@ -114,7 +115,7 @@ export async function repriceProductToMax(
       1,
       productItem.cronName,
     );
-    const isDev = JSON.parse(process.env.IS_DEV!);
+    const isDev = applicationConfig.IS_DEV;
     if (isDev == false) {
       priceUpdatedResponse = await axiosHelper.postAsync(
         priceUpdatedRequest,

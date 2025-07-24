@@ -4,6 +4,7 @@ import * as responseUtility from "./responseUtility";
 import { GlobalConfig } from "../types/GlobalConfig";
 import { ErrorItem } from "../types/ErrorItem";
 import { ProductDetailsListItem } from "./mySqlMapper";
+import { applicationConfig } from "./config";
 
 export async function GetProductItemListQuery(): Promise<{
   idRef: string;
@@ -37,7 +38,7 @@ export async function GetPrioritySequence(
       globalConfig!.override_execution_priority_details!.priority_settings,
     );
   }
-  for (let pty = 1; pty <= parseInt(process.env.VENDOR_COUNT || "0"); pty++) {
+  for (let pty = 1; pty <= applicationConfig.VENDOR_COUNT; pty++) {
     const vendors = [
       { details: productDetails.tradentDetails, obj: _tradent },
       { details: productDetails.frontierDetails, obj: _frontier },

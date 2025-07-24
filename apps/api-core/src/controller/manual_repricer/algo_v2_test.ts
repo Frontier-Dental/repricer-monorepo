@@ -17,6 +17,7 @@ import {
   VendorNameLookup,
 } from "../../utility/reprice_algo/v2/types";
 import { RepriceModel } from "../../model/repriceModel";
+import { applicationConfig } from "../../utility/config";
 
 export async function v2AlgoTest(
   req: Request<{ mpid: string }, { products: Net32Product[] }, any, any>,
@@ -72,7 +73,10 @@ export async function v2AlgoTest(
 
 async function getNet32Products(mpId: string, prod: ProductDetailsListItem) {
   const cronId = getCronId(prod);
-  const searchRequest = process.env.GET_SEARCH_RESULTS!.replace("{mpId}", mpId);
+  const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace(
+    "{mpId}",
+    mpId,
+  );
   const net32resp: AxiosResponse<Net32Product[]> = await axiosHelper.getAsync(
     searchRequest,
     cronId,

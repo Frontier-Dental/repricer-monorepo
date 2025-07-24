@@ -6,6 +6,7 @@ import * as proxyHelper from "../utility/proxyHelper";
 import * as axiosHelper from "../utility/axiosHelper";
 import xml2js from "xml2js";
 import * as formatWrapper from "../utility/format-wrapper";
+import { applicationConfig } from "./config";
 
 export async function GetData(
   _url: string,
@@ -21,10 +22,10 @@ export async function GetData(
         qs: {
           api_key: proxyProviderDetails.userName,
           url: _url,
-          wait: process.env.SCRAPINGBEE_WAIT_VALUE,
+          wait: applicationConfig.SCRAPINGBEE_WAIT_VALUE,
           render_js: "false",
         },
-        timeout: parseInt(process.env.SCRAPINGBEE_TIMEOUT_VALUE!),
+        timeout: applicationConfig.SCRAPINGBEE_TIMEOUT_VALUE,
       };
       inputRequest = options;
       const response = await requestPromise(options);
@@ -109,9 +110,9 @@ export async function GetData(
         qs: {
           api_key: proxyProviderDetails.userName,
           url: _url,
-          wait: process.env.SCRAPINGBEE_WAIT_VALUE,
+          wait: applicationConfig.SCRAPINGBEE_WAIT_VALUE,
         },
-        timeout: parseInt(process.env.SCRAPINGBEE_TIMEOUT_VALUE!),
+        timeout: applicationConfig.SCRAPINGBEE_TIMEOUT_VALUE,
       };
       inputRequest = tempOptions;
       const resultResponse = await requestPromise(tempOptions);

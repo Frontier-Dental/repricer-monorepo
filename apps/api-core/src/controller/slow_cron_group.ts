@@ -8,6 +8,7 @@ import * as keyGenHelper from "../utility/keyGenHelper";
 import * as mySqlHelper from "../utility/mySqlHelper";
 import * as _codes from "http-status-codes";
 import * as repriceBase from "../utility/repriceBase";
+import { applicationConfig } from "../utility/config";
 
 //FilterCron Variables
 let _SCG1Cron: any = null;
@@ -222,7 +223,7 @@ async function runCoreCronLogic(cronSettingsResponse: any) {
     if (isChunkNeeded == true) {
       let chunkedList = _.chunk(
         eligibleProductList,
-        parseInt(process.env.BATCH_SIZE!),
+        applicationConfig.BATCH_SIZE,
       );
       for (let chunk of chunkedList) {
         await repriceBase.Execute(
@@ -263,7 +264,7 @@ async function getSlowCronEligibleProductsV3(cronId: any) {
 }
 
 async function IsChunkNeeded(list: any[]) {
-  return list.length > parseInt(process.env.BATCH_SIZE!);
+  return list.length > applicationConfig.BATCH_SIZE;
 }
 
 async function toggleCronStatus(cronObject: any, status: any, cronName: any) {

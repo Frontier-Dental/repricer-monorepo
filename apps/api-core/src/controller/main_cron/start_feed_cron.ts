@@ -15,6 +15,7 @@ import * as mongoHelper from "../../utility/mongo/mongoHelper";
 import CronStatusModel from "../../model/cronStatusModel";
 import { ErrorItemModel } from "../../model/errorItemModel";
 import * as axiosHelper from "../../utility/axiosHelper";
+import { applicationConfig } from "../../utility/config";
 
 let feedCron: ScheduledTask | null = null;
 
@@ -22,9 +23,11 @@ export async function startFeedCronHandler(
   req: Request,
   res: Response,
 ): Promise<any> {
-  console.log(`Started Feed Cron with details ${process.env.FEED_CRON_EXP}`);
+  console.log(
+    `Started Feed Cron with details ${applicationConfig.FEED_CRON_EXP}`,
+  );
   feedCron = schedule(
-    process.env.FEED_CRON_EXP!,
+    applicationConfig.FEED_CRON_EXP,
     async () => {
       const eligibleProductList = await getFeedEligibleList();
       console.log(
@@ -42,7 +45,7 @@ export async function startFeedCronHandler(
       if (isChunkNeeded) {
         let chunkedList = _.chunk(
           eligibleProductList,
-          parseInt(process.env.BATCH_SIZE!),
+          applicationConfig.BATCH_SIZE,
         );
         for (let chunk of chunkedList) {
           await repriceFeed(keyGen, chunk, new Date());
@@ -95,7 +98,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
     if (prod.scrapeOn == true) {
       _contextCronStatus.SetProductCount(cronProdCounter);
       mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
-      const postUrl = process.env.FEED_REPRICER_OWN_URL!.replace(
+      const postUrl = applicationConfig.FEED_REPRICER_OWN_URL.replace(
         "{mpId}",
         prod.mpid,
       );
@@ -137,7 +140,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
               );
               await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
               console.log({
-                message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+                message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                 obj: JSON.stringify(priceUpdatedItem),
               });
             } else {
@@ -158,7 +161,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
             );
             await mongoHelper.UpsertErrorItemLog(errorItem);
             console.log({
-              message: `${prod.mpid} moved to ${process.env.CRON_NAME_422}`,
+              message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
               obj: JSON.stringify(errorItem),
             });
             cronLogs.logs.push({

@@ -58,28 +58,22 @@ $(function () {
     .find(".date")
     .inputmask("dd/mm/yyyy", { placeholder: "__/__/____" });
   //Time
-  $demoMaskedInput
-    .find(".time12")
-    .inputmask("hh:mm t", {
-      placeholder: "__:__ _m",
-      alias: "time12",
-      hourFormat: "12",
-    });
-  $demoMaskedInput
-    .find(".time24")
-    .inputmask("hh:mm", {
-      placeholder: "__:__ _m",
-      alias: "time24",
-      hourFormat: "24",
-    });
+  $demoMaskedInput.find(".time12").inputmask("hh:mm t", {
+    placeholder: "__:__ _m",
+    alias: "time12",
+    hourFormat: "12",
+  });
+  $demoMaskedInput.find(".time24").inputmask("hh:mm", {
+    placeholder: "__:__ _m",
+    alias: "time24",
+    hourFormat: "24",
+  });
   //Date Time
-  $demoMaskedInput
-    .find(".datetime")
-    .inputmask("d/m/y h:s", {
-      placeholder: "__/__/____ __:__",
-      alias: "datetime",
-      hourFormat: "24",
-    });
+  $demoMaskedInput.find(".datetime").inputmask("d/m/y h:s", {
+    placeholder: "__/__/____ __:__",
+    alias: "datetime",
+    hourFormat: "24",
+  });
   //Mobile Phone Number
   $demoMaskedInput
     .find(".mobile-phone-number")

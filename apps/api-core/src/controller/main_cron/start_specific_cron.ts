@@ -10,6 +10,7 @@ import {
   logBlankCronDetailsV3,
   runCoreCronLogicFor422,
 } from "./shared";
+import { applicationConfig } from "../../utility/config";
 
 export async function startSpecificCronHandler(
   req: Request,
@@ -45,7 +46,7 @@ async function runCoreCronLogic(cronSettingsResponse: any) {
     if (isChunkNeeded) {
       let chunkedList = _.chunk(
         eligibleProductList,
-        parseInt(process.env.BATCH_SIZE!),
+        applicationConfig.BATCH_SIZE,
       );
       for (let chunk of chunkedList) {
         await repriceBase.Execute(

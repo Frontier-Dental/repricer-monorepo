@@ -6,6 +6,7 @@ import * as uuid from "uuid";
 import { apiMapping } from "../resources/apiMapping";
 import * as axiosHelper from "../utility/axiosHelper";
 import * as mongoHelper from "../utility/mongo/mongoHelper";
+import { applicationConfig } from "../utility/config";
 
 export const masterDataController = express.Router();
 
@@ -51,7 +52,7 @@ masterDataController.get(
 
 async function fetchAndLoad(mpid: string) {
   const aggregatorResponse = await axiosHelper.fetch_product_data(
-    process.env.GET_SEARCH_RESULTS!.replace("{mpId}", mpid),
+    applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", mpid),
   );
   if (
     aggregatorResponse &&

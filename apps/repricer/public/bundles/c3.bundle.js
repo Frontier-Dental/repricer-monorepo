@@ -10322,20 +10322,17 @@
         if (ya < 0) {
           var r = k(t);
           if (r.scrollX || r.scrollY) {
-            var a = (n = qr
-              .select("body")
-              .append("svg")
-              .style(
-                {
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  margin: 0,
-                  padding: 0,
-                  border: "none",
-                },
-                "important",
-              ))[0][0].getScreenCTM();
+            var a = (n = qr.select("body").append("svg").style(
+              {
+                position: "absolute",
+                top: 0,
+                left: 0,
+                margin: 0,
+                padding: 0,
+                border: "none",
+              },
+              "important",
+            ))[0][0].getScreenCTM();
             ((ya = !(a.f || a.e)), n.remove());
           }
         }

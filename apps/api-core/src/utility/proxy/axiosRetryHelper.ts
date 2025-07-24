@@ -6,12 +6,13 @@ import { logger } from "../winstonLogger";
 import xml2js from "xml2js";
 import * as proxySwitchHelper from "../proxySwitchHelper";
 import * as formatWrapper from "../format-wrapper";
+import { applicationConfig } from "../config";
 
 axiosRetry(axios, {
-  retries: Number(process.env.NO_OF_RETRIES), // number of retries
+  retries: applicationConfig.NO_OF_RETRIES, // number of retries
   retryDelay: (retryCount: number) => {
     console.log(`retry attempt : ${retryCount} at ${new Date()}`);
-    return retryCount * Number(process.env.RETRY_INTERVAL); // time interval between retries
+    return retryCount * applicationConfig.RETRY_INTERVAL; // time interval between retries
   },
   retryCondition: (error: any) => {
     console.log(`REPRICER CORE : ERROR (WITH RETRY) : ${error} `);
@@ -31,7 +32,7 @@ export async function getScrappingResponse(
   retryCount = 0,
 ): Promise<any> {
   try {
-    const formatResponse = JSON.parse(process.env.FORMAT_RESPONSE_CUSTOM!);
+    const formatResponse = applicationConfig.FORMAT_RESPONSE_CUSTOM;
     console.log(
       `SCRAPE STARTED : SmartProxy - Web : ${_url} || ${seqString} || ${new Date()}`,
     );
@@ -128,10 +129,7 @@ export async function getScrappingResponse(
       parseInt(proxyDetailsResponse.proxyProvider),
     );
     const retryEligible = await retryConditionForAxios(error);
-    if (
-      retryCount < parseInt(process.env.NO_OF_RETRIES!) &&
-      retryEligible == true
-    ) {
+    if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible == true) {
       console.log(`REPRICER CORE : ERROR (WITH RETRY) : ${error} `);
       console.log(
         `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
@@ -144,7 +142,7 @@ export async function getScrappingResponse(
         module: "SCRAPE",
         message: `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
       });
-      await delay(parseInt(process.env.RETRY_INTERVAL!));
+      await delay(applicationConfig.RETRY_INTERVAL);
       return await getScrappingResponse(
         _url,
         proxyDetailsResponse,
@@ -168,7 +166,7 @@ export async function getScrapingBeeResponse(
   retryCount = 0,
 ): Promise<any> {
   try {
-    const formatResponse = JSON.parse(process.env.FORMAT_RESPONSE_CUSTOM!);
+    const formatResponse = applicationConfig.FORMAT_RESPONSE_CUSTOM;
     const scrappingLog =
       renderJs == false ? "ScrapingBee - NonJs" : "ScrapingBee - Js";
     console.log(
@@ -184,9 +182,9 @@ export async function getScrapingBeeResponse(
       qs: {
         api_key: proxyDetailsResponse.userName,
         url: _url,
-        wait: process.env.SCRAPINGBEE_WAIT_VALUE,
+        wait: applicationConfig.SCRAPINGBEE_WAIT_VALUE,
       },
-      timeout: parseInt(process.env.SCRAPINGBEE_TIMEOUT_VALUE!),
+      timeout: applicationConfig.SCRAPINGBEE_TIMEOUT_VALUE,
       headers: {
         "Content-Type": "application/json",
       },
@@ -248,10 +246,7 @@ export async function getScrapingBeeResponse(
       parseInt(proxyDetailsResponse.proxyProvider),
     );
     const retryEligible = await retryCondition(error);
-    if (
-      retryCount < parseInt(process.env.NO_OF_RETRIES!) &&
-      retryEligible == true
-    ) {
+    if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible == true) {
       console.log(`REPRICER CORE : ERROR (WITH RETRY) : ${error} `);
       console.log(
         `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
@@ -264,7 +259,7 @@ export async function getScrapingBeeResponse(
         module: "SCRAPE",
         message: `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
       });
-      await delay(parseInt(process.env.RETRY_INTERVAL!));
+      await delay(applicationConfig.RETRY_INTERVAL);
       return await getScrapingBeeResponse(
         _url,
         proxyDetailsResponse,
