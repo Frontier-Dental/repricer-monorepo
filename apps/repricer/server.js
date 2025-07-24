@@ -6,7 +6,6 @@ const { connectDB } = require("./config/db");
 const cookieParser = require("cookie-parser");
 var MemoryStore = require("memorystore")(session);
 const { notFound, errorHandler } = require("./middleware/errorMiddleware.js");
-const morgan = require("morgan");
 const bodyParser = require("body-parser");
 
 //const DATABASE_URL = "mongodb://localhost:27017";
@@ -23,9 +22,6 @@ app.use(
     parameterLimit: 10000000,
   }),
 );
-if (process.env.NODE_ENV === "development") {
-  app.use(morgan("dev"));
-}
 
 process.env.TZ = "Canada/Eastern";
 
