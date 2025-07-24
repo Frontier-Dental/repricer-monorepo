@@ -39,7 +39,7 @@ export async function Reprice(
     ? parseFloat(productItem.floorPrice)
     : 0;
   let lowestPrice = 0;
-  const processOffset = parseFloat(applicationConfig.OFFSET!);
+  const processOffset = applicationConfig.OFFSET;
   let excludedVendors =
     productItem.competeAll === true ? [] : $.EXCLUDED_VENDOR_ID.split(";");
   const allowCompeteWithNextForFloor = productItem.competeWithNext;
@@ -1111,11 +1111,11 @@ export async function RepriceIndividualPriceBreak(
             ) {
               nextIndex++;
             } else if (
-              (await filterMapper.IsVendorFloorPrice(
+              filterMapper.IsVendorFloorPrice(
                 sortedPayload[i].priceBreaks,
                 priceBreak.minQty,
                 floorPrice,
-              )) == true
+              ) == true
             ) {
               nextIndex++;
             } else {
@@ -1153,7 +1153,7 @@ export async function RepriceIndividualPriceBreak(
                 );
                 repriceModel.repriceDetails!.isRepriced = true;
                 repriceModel.repriceDetails!.explained =
-                  await filterMapper.AppendPriceFactorTag(
+                  filterMapper.AppendPriceFactorTag(
                     RepriceRenewedMessageEnum.PRICE_UP_SECOND_FLOOR_HIT,
                     contextPriceResult.Type,
                   );
@@ -1189,11 +1189,11 @@ export async function RepriceIndividualPriceBreak(
             ) {
               nextIndex++;
             } else if (
-              (await filterMapper.IsVendorFloorPrice(
+              filterMapper.IsVendorFloorPrice(
                 sortedPayload[i].priceBreaks,
                 priceBreak.minQty,
                 floorPrice,
-              )) == true
+              ) == true
             ) {
               nextIndex++;
             } else {
