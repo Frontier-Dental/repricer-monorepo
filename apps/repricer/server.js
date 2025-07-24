@@ -58,6 +58,11 @@ app.use(
   }),
 );
 
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+
 app.use("/", indexRouter);
 
 app.use("/public/images", express.static("./public/images"));

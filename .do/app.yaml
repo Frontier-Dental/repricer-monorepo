@@ -3,15 +3,16 @@ name: repricer
 region: nyc
 services:
   - name: web
-    git:
-      repo_clone_url: https://github.com/mrwillis/repricer-monorepo.git
+    github:
+      repo: mrwillis/repricer-monorepo
       branch: main
+      deploy_on_push: true
     dockerfile_path: ./apps/repricer/Dockerfile
     run_command: npm start
     http_port: 3000
     instance_count: 1
     instance_size_slug: basic-xxs
-    source_dir: /apps/repricer
+    source_dir: apps/repricer
     health_check:
       http_path: /health
 
@@ -20,11 +21,10 @@ services:
     internal_ports:
       - 3001
     run_command: npm start
-    git:
-      repo_clone_url: https://github.com/mrwillis/repricer-monorepo.git
+    github:
+      repo: mrwillis/repricer-monorepo
       branch: main
+      deploy_on_push: true
     instance_count: 1
     instance_size_slug: basic-xxs
-    source_dir: /apps/api-core
-    health_check:
-      http_path: /api/GetStatus
+    source_dir: apps/api-core

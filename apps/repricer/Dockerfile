@@ -5,13 +5,13 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Copy app-specific package.json
-COPY apps/repricer/package.json ./package.json
+COPY package.json ./package.json
 
 # Install dependencies
 RUN npm install --omit=dev
 
 # Copy source code
-COPY apps/repricer/ ./
+COPY . ./
 
 # Expose port 3000
 EXPOSE 3000

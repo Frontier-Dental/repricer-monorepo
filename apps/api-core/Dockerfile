@@ -5,13 +5,13 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Copy app-specific package.json
-COPY apps/api-core/package.json ./package.json
+COPY package.json ./package.json
 
 # Install dependencies (including dev dependencies for TypeScript build)
 RUN npm install
 
 # Copy source code
-COPY apps/api-core/ ./
+COPY . ./
 
 # Build TypeScript code
 RUN npm run build
