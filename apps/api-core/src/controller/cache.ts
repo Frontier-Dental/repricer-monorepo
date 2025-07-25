@@ -1,6 +1,6 @@
 import _ from "lodash";
 import * as _codes from "http-status-codes";
-import * as cacheHelper from "../utility/cacheHelper";
+import * as cacheHelper from "../utility/cache-helper";
 import express, { Request, Response } from "express";
 
 export const cacheController = express.Router();

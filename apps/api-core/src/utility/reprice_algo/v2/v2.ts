@@ -1,7 +1,7 @@
 import { Decimal } from "decimal.js";
-import { RepriceModel } from "../../../model/repriceModel";
+import { RepriceModel } from "../../../model/reprice-model";
 import { Net32PriceBreak } from "../../../types/net32";
-import { writeRepriceHtmlReport } from "./html_builder";
+import { writeRepriceHtmlReport } from "./html-builder";
 import {
   InternalProduct,
   SimplifiedNet32Product,

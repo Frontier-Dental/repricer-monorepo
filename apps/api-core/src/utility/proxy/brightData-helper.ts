@@ -1,7 +1,7 @@
 import puppeteer from "puppeteer-core";
 import requestPromise from "request-promise";
-import * as proxySwitchHelper from "../proxySwitchHelper";
-import { logger } from "../winstonLogger";
+import * as proxySwitchHelper from "../proxy-switch-helper";
+import { logger } from "../winston-logger";
 
 function parseHrtimeToSeconds(hrtime: [number, number]): string {
   var seconds = (hrtime[0] + hrtime[1] / 1e9).toFixed(3);

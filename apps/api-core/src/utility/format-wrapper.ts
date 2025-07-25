@@ -1,5 +1,5 @@
 import _ from "lodash";
-import * as globalParam from "../model/globalParam";
+import * as globalParam from "../model/global-param";
 import { Net32Product } from "../types/net32";
 import { FrontierProduct } from "../types/frontier";
 

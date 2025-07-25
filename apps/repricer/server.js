@@ -1,11 +1,11 @@
 const path = require("path");
 const express = require("express");
 const session = require("express-session");
-const { connectDB } = require("./config/db");
+const { connectDB } = require("./src/config/db.js");
 
 const cookieParser = require("cookie-parser");
 var MemoryStore = require("memorystore")(session);
-const { notFound, errorHandler } = require("./middleware/errorMiddleware.js");
+const { notFound, errorHandler } = require("./src/middleware/errors.js");
 const bodyParser = require("body-parser");
 
 //const DATABASE_URL = "mongodb://localhost:27017";
@@ -30,7 +30,7 @@ process.env.TZ = "Canada/Eastern";
 app.set("view engine", "ejs");
 app.set("views", "views");
 //include routes variables
-const indexRouter = require("./routes/index");
+const indexRouter = require("./src/routes/index");
 
 app.use(
   express.urlencoded({

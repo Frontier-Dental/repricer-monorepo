@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import moment from "moment";
-import { logger, rotateLogFiles } from "../utility/winstonLogger";
+import { logger, rotateLogFiles } from "../utility/winston-logger";
 
 export const appLogController = express.Router();
 

@@ -1,5 +1,5 @@
 import express from "express";
-import { repriceProductToMax } from "./reprice_product_to_max";
+import { repriceProductToMax } from "./reprice-product-to-max";
 
 export const searchController = express.Router();
 

@@ -4,19 +4,19 @@ import fs from "fs";
 import { StatusCodes } from "http-status-codes";
 import { cacheController } from "./controller/cache";
 import { feedController } from "./controller/feed";
-import { dataController } from "./controller/product_data";
-import { masterDataController } from "./controller/master_data";
+import { dataController } from "./controller/product-data";
+import { masterDataController } from "./controller/master-data";
 import { debugController } from "./controller/debug";
-import { filterCronController } from "./controller/filter_cron";
-import { slowCronController } from "./controller/slow_cron_group";
-import * as axiosHelper from "./utility/axiosHelper";
-import { proxySwitchController } from "./controller/proxy_switch";
+import { filterCronController } from "./controller/filter-cron";
+import { slowCronController } from "./controller/slow-cron-group";
+import * as axiosHelper from "./utility/axios-helper";
+import { proxySwitchController } from "./controller/proxy-switch";
 import { appLogController } from "./controller/app_log";
 import { scrapeCronController } from "./controller/scrape_cron";
 import { searchController } from "./controller/search";
-import { errorMiddleware } from "./utility/error_middleware";
-import { manualRepriceController } from "./controller/manual_repricer";
-import { mainCronController } from "./controller/main_cron";
+import { errorMiddleware } from "./utility/error-middleware";
+import { manualRepriceController } from "./controller/manual-repricer";
+import { mainCronController } from "./controller/main-cron";
 import { applicationConfig, validateConfig } from "./utility/config";
 
 process.on("uncaughtException", (err) => {

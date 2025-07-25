@@ -1,6 +1,6 @@
 import { ScheduledTask } from "node-cron";
-import * as mySqlHelper from "../../utility/mySqlHelper";
-import * as scrapeHelper from "../../utility/scrapeHelper";
+import * as mySqlHelper from "../../utility/mysql-helper";
+import * as scrapeHelper from "../../utility/scrape-helper";
 
 export const scrapeCrons: Record<string, ScheduledTask> = {};
 

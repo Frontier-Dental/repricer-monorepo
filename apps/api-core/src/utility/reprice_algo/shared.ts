@@ -1,9 +1,9 @@
 import _ from "lodash";
-import * as globalParam from "../../model/globalParam";
-import * as dbHelper from "../mongo/dbHelper";
+import * as globalParam from "../../model/global-param";
+import * as dbHelper from "../mongo/db-helper";
 import { Net32PriceBreak, Net32Product } from "../../types/net32";
 import { FrontierProduct } from "../../types/frontier";
-import { RepriceData, RepriceModel } from "../../model/repriceModel";
+import { RepriceData, RepriceModel } from "../../model/reprice-model";
 import { applicationConfig } from "../config";
 
 export function isPriceUpdateRequired(
