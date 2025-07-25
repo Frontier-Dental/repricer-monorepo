@@ -403,4 +403,5 @@ router.post(
   "/debug/live/delete_live_history",
   debugController.DeleteProdHistory,
 );
-module.exports = router;
+
+export default router;
