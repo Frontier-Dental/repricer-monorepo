@@ -19,8 +19,8 @@ RUN npm run build
 # Remove dev dependencies to reduce image size
 RUN npm prune --production
 
-# Expose port 3001
-EXPOSE 3001
+# Expose port 5001
+EXPOSE 5001
 
 # Set environment variables
 ENV NODE_ENV=production
