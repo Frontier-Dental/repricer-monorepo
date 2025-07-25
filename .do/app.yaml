@@ -21,6 +21,39 @@ services:
     internal_ports:
       - 3001
     run_command: npm start
+    envs:
+      - key: API_KEY_SCRAPPING_BEE
+        value: PLEASE_CHANGE_ME_IN_THE_UI
+        scope: RUN_TIME
+        encrypted: true
+      - key: MANAGED_MONGO_URL
+        value: PLEASE_CHANGE_ME_IN_THE_UI
+        scope: RUN_TIME
+        encrypted: true
+      - key: SQL_HOSTNAME
+        value: PLEASE_CHANGE_ME_IN_THE_UI
+        scope: RUN_TIME
+        encrypted: true
+      - key: SQL_USERNAME
+        value: PLEASE_CHANGE_ME_IN_THE_UI
+        scope: RUN_TIME
+        encrypted: true
+      - key: SQL_PASSWORD
+        value: PLEASE_CHANGE_ME_IN_THE_UI
+        scope: RUN_TIME
+        encrypted: true
+      - key: SQL_DATABASE
+        value: PLEASE_CHANGE_ME_IN_THE_UI
+        scope: RUN_TIME
+        encrypted: true
+      - key: SQL_PORT
+        value: PLEASE_CHANGE_ME_IN_THE_UI
+        scope: RUN_TIME
+        encrypted: true
+      - key: NODE_ENV
+        value: production
+        scope: RUN_TIME
+        encrypted: false
     github:
       repo: mrwillis/repricer-monorepo
       branch: main
