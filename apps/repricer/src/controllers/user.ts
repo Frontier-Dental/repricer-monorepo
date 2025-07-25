@@ -2,9 +2,10 @@ import { Request, Response } from "express";
 import passwordGenerator from "generate-password";
 import * as httpMiddleware from "../middleware/http-wrappers";
 import * as mongoMiddleware from "../middleware/mongo";
+import { applicationConfig } from "../utility/config";
 
 export async function index(req: Request, res: Response) {
-  const isDowntimeOn = JSON.parse(process.env.DOWNTIME_ON!);
+  const isDowntimeOn = applicationConfig.DOWNTIME_ON;
   if (isDowntimeOn == true) {
     return res.render("pages/downtime.ejs", {});
   } else {
@@ -100,7 +101,7 @@ export async function add_user(req: Request, res: Response) {
       };
       await mongoMiddleware.InsertUserLogin(userInfo);
       httpMiddleware.native_post(
-        process.env.USER_CREATION_EMAIL_TRIGGER_URL,
+        applicationConfig.USER_CREATION_EMAIL_TRIGGER_URL,
         userInfo,
       );
       result.push({

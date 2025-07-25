@@ -10,14 +10,15 @@ import * as historyExportMiddleware from "../middleware/history-export";
 import * as mongoMiddleware from "../middleware/mongo";
 import ExportModel from "../models/export-model";
 import * as SessionHelper from "../utility/session-helper";
+import { applicationConfig } from "../utility/config";
 
 export async function getHistory(req: Request, res: Response) {
   const maxProductsCount = 65; //await Item.countDocuments({ activated: true });
   let viewObject: any = {};
   viewObject.maxCount = Math.ceil(
-    maxProductsCount / parseInt(process.env.HISTORY_LIMIT!),
+    maxProductsCount / applicationConfig.HISTORY_LIMIT,
   );
-  viewObject.batchLimit = process.env.HISTORY_LIMIT;
+  viewObject.batchLimit = applicationConfig.HISTORY_LIMIT;
   viewObject.totalCount = maxProductsCount;
   res.render("pages/history/index", {
     model: viewObject,

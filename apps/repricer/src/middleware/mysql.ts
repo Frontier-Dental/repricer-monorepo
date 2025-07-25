@@ -1,5 +1,6 @@
 import SqlConnectionPool from "../models/sql-models/mysql-db";
 import * as SqlMapper from "../utility/mapper/mysql-mapper";
+import { applicationConfig } from "../utility/config";
 
 export const GetLatestRunInfo = async (
   noOfRecords: any,
@@ -9,7 +10,7 @@ export const GetLatestRunInfo = async (
   let runInfoDetails: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GETRUN_INFO}(?,?,?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_GETRUN_INFO}(?,?,?)`;
     runInfoDetails = await db.query(queryToCall, [
       noOfRecords,
       startDateTime,
@@ -32,7 +33,7 @@ export const GetLatestRunInfoForCron = async (
   let runInfoDetails: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GETRUN_INFO_BY_CRON}(?,?,?,?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_GETRUN_INFO_BY_CRON}(?,?,?,?)`;
     runInfoDetails = await db.query(queryToCall, [
       noOfRecords,
       startDateTime,
@@ -65,7 +66,7 @@ export const GetScrapeProductList = async (pageNumber: any, pageSize: any) => {
   let scrapeProductList: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GET_SCRAPEPRODUCT_DETAILS}(?,?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_SCRAPEPRODUCT_DETAILS}(?,?)`;
     scrapeProductList = await db.query(queryToCall, [pageNumber, pageSize]);
   } catch (exception) {
     console.log(`Exception while GetScrapeProductList : ${exception}`);
@@ -83,7 +84,7 @@ export const GetScrapeProductListByFilter = async (
   let scrapeProductList: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GET_SCRAPEPRODUCT_DETAILS_FILTER}(?,?, ?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_SCRAPEPRODUCT_DETAILS_FILTER}(?,?, ?)`;
     scrapeProductList = await db.query(queryToCall, [
       pageSize,
       filterText,
@@ -101,7 +102,7 @@ export const GetAllScrapeProductDetails = async () => {
   let scrapeProductList: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GET_ALL_SCRAPEPRODUCT_DETAILS}()`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_ALL_SCRAPEPRODUCT_DETAILS}()`;
     scrapeProductList = await db.query(queryToCall);
   } catch (exception) {
     console.log(`Exception while GetAllScrapeProductDetails : ${exception}`);
@@ -115,7 +116,7 @@ export const UpsertProductDetails = async (payload: any) => {
   let upsertResult: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_UPSERT_PRODUCT_DETAILS}(?,?,?,?,?,?,?,?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILS}(?,?,?,?,?,?,?,?)`;
     upsertResult = await db.query(queryToCall, [
       payload.mpId,
       payload.isActive,
@@ -138,7 +139,7 @@ export const DeleteScrapeProductById = async (mpId: any) => {
   let noOfRecords: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `delete from  ${process.env.SQL_SCRAPEPRODUCTLIST} where MpId=${mpId}`;
+    const queryToCall = `delete from  ${applicationConfig.SQL_SCRAPEPRODUCTLIST} where MpId=${mpId}`;
     noOfRecords = await db.execute(queryToCall);
   } catch (exception) {
     console.log(`Exception while GetNumberOfScrapeProducts : ${exception}`);
@@ -152,7 +153,7 @@ export const GetLastScrapeDetailsById = async (mpId: any) => {
   let scrapeDetails: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GETLASTSCRAPEDETAILSBYID}(?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_GETLASTSCRAPEDETAILSBYID}(?)`;
     scrapeDetails = await db.query(queryToCall, [mpId]);
   } catch (exception) {
     console.log(`Exception while GetLastScrapeDetailsById : ${exception}`);
@@ -168,19 +169,19 @@ export const UpsertVendorData = async (payload: any, vendorName: any) => {
   let contextSpName: any = null;
   switch (vendorName) {
     case "TRADENT":
-      contextSpName = process.env.SQL_SP_UPSERT_TRADENT;
+      contextSpName = applicationConfig.SQL_SP_UPSERT_TRADENT;
       break;
     case "FRONTIER":
-      contextSpName = process.env.SQL_SP_UPSERT_FRONTIER;
+      contextSpName = applicationConfig.SQL_SP_UPSERT_FRONTIER;
       break;
     case "MVP":
-      contextSpName = process.env.SQL_SP_UPSERT_MVP;
+      contextSpName = applicationConfig.SQL_SP_UPSERT_MVP;
       break;
     case "TOPDENT":
-      contextSpName = process.env.SQL_SP_UPSERT_TOPDENT;
+      contextSpName = applicationConfig.SQL_SP_UPSERT_TOPDENT;
       break;
     case "FIRSTDENT":
-      contextSpName = process.env.SQL_SP_UPSERT_FIRSTDENT;
+      contextSpName = applicationConfig.SQL_SP_UPSERT_FIRSTDENT;
       break;
     default:
       break;
@@ -287,7 +288,7 @@ export const UpsertProductDetailsV2 = async (payload: any) => {
   let upsertResult: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
     upsertResult = await db.query(queryToCall, [
       payload.MpId,
       payload.IsActive,
@@ -321,7 +322,7 @@ export const GetCompleteProductDetails = async () => {
   let scrapeDetails: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GET_ALL_PRODUCT_DETAILS}()`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_ALL_PRODUCT_DETAILS}()`;
     const [rows] = await db.query(queryToCall);
     if (rows != null && (rows as any)[0] != null) {
       scrapeDetails = (rows as any)[0];
@@ -359,7 +360,7 @@ export const GetAllRepriceEligibleProductByFilter = async (
   let scrapeDetails: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GET_PRODUCT_LIST_BY_FILTERV2}(?,?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_PRODUCT_LIST_BY_FILTERV2}(?,?)`;
     const [rows] = await db.query(queryToCall, [pageNumber, pageSize]);
     if (rows != null && (rows as any)[0] != null) {
       scrapeDetails = (rows as any)[0];
@@ -378,7 +379,7 @@ export const GetAllRepriceEligibleProductByTag = async (filterTag: any) => {
   let scrapeDetails: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GET_PRODUCT_LIST_BY_TAGV2}(?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_PRODUCT_LIST_BY_TAGV2}(?)`;
     const [rows] = await db.query(queryToCall, [filterTag]);
     if (rows != null && (rows as any)[0] != null) {
       scrapeDetails = (rows as any)[0];
@@ -398,7 +399,7 @@ export const GetFullProductDetailsById = async (mpid: any) => {
   let scrapeDetails: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID}(?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID}(?)`;
     const [rows] = await db.query(queryToCall, [mpid]);
     if (rows != null && (rows as any)[0] != null) {
       scrapeDetails = (rows as any)[0];
@@ -417,19 +418,19 @@ export const UpdateVendorData = async (payload: any, vendorName: any) => {
   let contextSpName: any = null;
   switch (vendorName) {
     case "TRADENT":
-      contextSpName = process.env.SQL_SP_UPDATE_TRADENT;
+      contextSpName = applicationConfig.SQL_SP_UPDATE_TRADENT;
       break;
     case "FRONTIER":
-      contextSpName = process.env.SQL_SP_UPDATE_FRONTIER;
+      contextSpName = applicationConfig.SQL_SP_UPDATE_FRONTIER;
       break;
     case "MVP":
-      contextSpName = process.env.SQL_SP_UPDATE_MVP;
+      contextSpName = applicationConfig.SQL_SP_UPDATE_MVP;
       break;
     case "FIRSTDENT":
-      contextSpName = process.env.SQL_SP_UPDATE_FIRSTDENT;
+      contextSpName = applicationConfig.SQL_SP_UPDATE_FIRSTDENT;
       break;
     case "TOPDENT":
-      contextSpName = process.env.SQL_SP_UPDATE_TOPDENT;
+      contextSpName = applicationConfig.SQL_SP_UPDATE_TOPDENT;
       break;
     default:
       break;
@@ -571,7 +572,7 @@ export const UpdateProductV2 = async (
 ) => {
   let noOfRecords: any = null;
   const db = await SqlConnectionPool.getConnection();
-  let tableName = process.env.SQL_SCRAPEPRODUCTLIST;
+  let tableName = applicationConfig.SQL_SCRAPEPRODUCTLIST;
   try {
     const queryToCall = `update ${tableName} set RegularCronName=?,RegularCronId=?,SlowCronName=?,SlowCronId=?,LinkedTradentDetailsInfo=?,LinkedFrontiersDetailsInfo=?,LinkedMvpDetailsInfo=?,IsSlowActivated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [
@@ -641,7 +642,7 @@ export const MapVendorToRoot = async (data: any) => {
     let noOfRecords: any = null;
     const db = await SqlConnectionPool.getConnection();
     try {
-      let queryToCall = `UPDATE ${process.env.SQL_SCRAPEPRODUCTLIST} SET `;
+      let queryToCall = `UPDATE ${applicationConfig.SQL_SCRAPEPRODUCTLIST} SET `;
       queryToCall += `LinkedTradentDetailsInfo = ?, `;
       queryToCall += `LinkedFrontiersDetailsInfo = ?, `;
       queryToCall += `LinkedMvpDetailsInfo = ?, `;
@@ -676,7 +677,7 @@ export const ToggleDataScrapeForId = async (
   let noOfRecords: any = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    let queryToCall = `update ${process.env.SQL_SCRAPEPRODUCTLIST} set IsActive=?,LastUpdatedBy=?,LastUpdatedAt=? where MpId=?`;
+    let queryToCall = `update ${applicationConfig.SQL_SCRAPEPRODUCTLIST} set IsActive=?,LastUpdatedBy=?,LastUpdatedAt=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [
       status,
       auditInfo.UpdatedBy,

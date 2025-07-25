@@ -10,6 +10,7 @@ import scheduleConstants from "../models/schedule-constants";
 import badgeResx from "../../resources/badgeIndicatorMapping.json";
 import handlingTimeGroupResx from "../../resources/HandlingTimeFilterMapping.json";
 import * as SessionHelper from "../utility/session-helper";
+import { applicationConfig } from "../utility/config";
 const _constants = new scheduleConstants();
 
 export const getMasterItemController = async (req: Request, res: Response) => {
@@ -38,10 +39,10 @@ export const getMasterItemController = async (req: Request, res: Response) => {
     pageNumber = 0,
     totalDocs = 0,
     totalPages = 0;
-  pageSize = parseInt(process.env.CRON_PAGESIZE!);
+  pageSize = applicationConfig.CRON_PAGESIZE;
   pageNumber = pgNo || 0;
   totalDocs = await Item.countDocuments(query);
-  totalPages = Math.ceil(totalDocs / pageSize);
+  totalPages = Math.ceil(totalDocs / applicationConfig.CRON_PAGESIZE);
 
   let masterItems = await Item.find(query)
     .skip(pageNumber * pageSize)
@@ -482,7 +483,7 @@ export async function addExcelData(req: Request, res: Response) {
   for (let k = 0; k < parseInt(input.count); k++) {
     //let key = `data[${k}][]`;
     var row = input.data[k];
-    if (JSON.parse(process.env.USE_MYSQL!) == true) {
+    if (applicationConfig.USE_MYSQL) {
       let $item: any = {
         channelName: row[0],
         activated: row[1] != null ? JSON.parse(row[1]) : true,
@@ -683,7 +684,7 @@ export async function addExcelData(req: Request, res: Response) {
     }
     //Align Cron Details
     await mapperHelper.AlignProducts(itemData, combinedArray, slowCronIds);
-    if (JSON.parse(process.env.USE_MYSQL!) == true) {
+    if (applicationConfig.USE_MYSQL) {
       await mapperHelper.UpsertProductDetailsInSql(itemData, pId, req);
     } else {
       await mongoMiddleware.InsertOrUpdateProductWithCronName(itemData, req);

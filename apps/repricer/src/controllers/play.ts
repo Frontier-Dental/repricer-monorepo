@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as httpMiddleware from "../middleware/http-wrappers";
+import { applicationConfig } from "../utility/config";
 
 export async function onInit(req: Request, res: Response) {
   res.render("pages/play/index", {
@@ -11,7 +12,7 @@ export async function onInit(req: Request, res: Response) {
 export async function ScrapeProduct(req: Request, res: Response) {
   const mpId = req.params.mpid;
   const proxyProvId = req.params.proxyProviderId;
-  const requestUrl = `${process.env.GET_DATA_URL}/${mpId}/${proxyProvId}`;
+  const requestUrl = `${applicationConfig.GET_DATA_URL}/${mpId}/${proxyProvId}`;
   let startTime = process.hrtime();
   const axiosResponse = await httpMiddleware.native_get(requestUrl);
   const timeTaken = parseHrtimeToSeconds(process.hrtime(startTime));

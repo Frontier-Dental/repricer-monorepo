@@ -3,6 +3,7 @@ import _ from "lodash";
 import * as cacheHelper from "../utility/cache-helper";
 import cacheKeyEnum from "../../resources/cacheKeyName.json";
 import * as SessionHelper from "../utility/session-helper";
+import { applicationConfig } from "../utility/config";
 
 // --- MongoDB Singleton Helper ---
 let mongoClient: MongoClient | null = null;
@@ -10,9 +11,9 @@ let mongoDb: Db | null = null;
 
 async function getMongoDb() {
   if (!mongoClient) {
-    mongoClient = new MongoClient(process.env.MANAGED_MONGO_URL!);
+    mongoClient = new MongoClient(applicationConfig.MANAGED_MONGO_URL);
     await mongoClient.connect();
-    mongoDb = mongoClient.db(process.env.GET_REPRICER_DBNAME!);
+    mongoDb = mongoClient.db(applicationConfig.GET_REPRICER_DBNAME);
   }
   return mongoDb!;
 }
@@ -71,25 +72,25 @@ export const GetCronLogsV2 = async (
     totalPages = 0;
 
   const dbo = await getMongoDb();
-  pageSize = parseInt(pgLimit as any) || parseInt(process.env.CRON_PAGESIZE!);
+  pageSize = parseInt(pgLimit as any) || applicationConfig.CRON_PAGESIZE;
   pageNumber = parseInt(pgNo as any) || 0;
 
   if (type && type == "422Error") {
     totalDocs = await dbo
-      .collection(process.env.ERROR_422_CRON_LOGS!)
+      .collection(applicationConfig.ERROR_422_CRON_LOGS)
       .countDocuments({ cronId: "DUMMY-422-Error" });
   } else if (type && type == "All") {
     totalDocs = await dbo
-      .collection(process.env.ERROR_422_CRON_LOGS!)
+      .collection(applicationConfig.ERROR_422_CRON_LOGS)
       .countDocuments({ cronId: "DUMMY-422-Error" });
     totalDocs =
       totalDocs +
       (await dbo
-        .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+        .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
         .estimatedDocumentCount());
   } else {
     totalDocs = await dbo
-      .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+      .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
       .estimatedDocumentCount();
   }
   totalPages = Math.ceil(totalDocs / pageSize);
@@ -102,7 +103,7 @@ export const GetCronLogsV2 = async (
   ];
   if (type && type != "422Error" && type != "ALL_EXCEPT_422") {
     mongoResult = await dbo
-      .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+      .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
       .aggregate(pipeline)
       .toArray();
   } else {
@@ -124,7 +125,7 @@ export const GetCronLogsV2 = async (
       };
     }
     const _errorCronLogs = await dbo
-      .collection(process.env.ERROR_422_CRON_LOGS!)
+      .collection(applicationConfig.ERROR_422_CRON_LOGS)
       .find(queryForFilter)
       .sort({ time: -1 })
       .skip(pageNumber * pageSize)
@@ -144,7 +145,7 @@ export const GetCronLogsV2 = async (
       };
     }
     mongoResult = await dbo
-      .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+      .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
       .find(queryToSearch)
       .sort({ time: -1 })
       .skip(pageNumber * pageSize)
@@ -206,16 +207,16 @@ export const GetCronLogs = async (
 
   const dbo = await getMongoDb();
 
-  pageSize = parseInt(process.env.CRON_PAGESIZE!);
+  pageSize = applicationConfig.CRON_PAGESIZE;
   pageNumber = pgNo || 0;
   totalDocs = await dbo
-    .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
     .countDocuments(query);
   totalPages = Math.ceil(totalDocs / pageSize);
-  // mongoResult = await dbo.collection(process.env.GET_CRON_LOGS_COLLECTION_NAME).find(query).sort({ $natural: -1 }).skip(pageNumber * pageSize).limit(pageSize).toArray();
+  // mongoResult = await dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME).find(query).sort({ $natural: -1 }).skip(pageNumber * pageSize).limit(pageSize).toArray();
   if (pgNo !== undefined) {
     mongoResult = await dbo
-      .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+      .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
       .find(query)
       .sort({ $natural: -1 })
       .skip(pageNumber * pageSize)
@@ -223,7 +224,7 @@ export const GetCronLogs = async (
       .toArray();
   } else {
     mongoResult = await dbo
-      .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+      .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
       .find(query)
       .sort({ $natural: -1 })
       .toArray();
@@ -235,7 +236,7 @@ export const GetUserLogin = async (query: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.USERS_COLLECTION!)
+    .collection(applicationConfig.USERS_COLLECTION)
     .findOne(query);
   return mongoResult;
 };
@@ -246,7 +247,7 @@ export const GetItemList = async (mpId: string) => {
 
   const query = { mpid: mpId };
   mongoResult = await dbo
-    .collection(process.env.ITEMS_COLLECTION_NAME!)
+    .collection(applicationConfig.ITEMS_COLLECTION_NAME)
     .find(query)
     .toArray();
   return mongoResult;
@@ -256,7 +257,7 @@ export const UpdateCronLogPostPriceUpdate = async (req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
     .findOneAndUpdate(
       { _id: req._id },
       {
@@ -273,12 +274,12 @@ export const GetLogsById = async (id: string) => {
   const dbo = await getMongoDb();
   const query = { _id: new ObjectId(id) };
   mongoResult = await dbo
-    .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
     .find(query)
     .toArray();
   if (mongoResult && mongoResult.length == 0) {
     mongoResult = await dbo
-      .collection(process.env.ERROR_422_CRON_LOGS!)
+      .collection(applicationConfig.ERROR_422_CRON_LOGS)
       .find(query)
       .toArray();
   }
@@ -291,7 +292,7 @@ export const FindOneProductModel = async (query: any) => {
 
   // Fetch the document that matches the provided query
   product = await dbo
-    .collection(process.env.PRODUCT_COLLECTION!)
+    .collection(applicationConfig.PRODUCT_COLLECTION)
     .findOne(query);
 
   return product;
@@ -302,7 +303,7 @@ export const GetLatestCronStatus = async () => {
   const dbo = await getMongoDb();
   const query: any = { status: "In-Progress" };
   mongoResult = await dbo
-    .collection(process.env.CRON_STATUS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
     .find(query)
     .sort({ _id: -1 })
     .toArray();
@@ -313,7 +314,7 @@ export const PushManualCronLogAsync = async (payload: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
     .insertOne(payload);
   return mongoResult;
 };
@@ -327,7 +328,7 @@ export const GetCronSettingsList = async () => {
     mongoResult = await cacheHelper.Get(cacheKey);
   } else {
     mongoResult = await dbo
-      .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+      .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
       .find()
       .toArray();
     cacheHelper.Set(cacheKey, mongoResult);
@@ -340,7 +341,7 @@ export const UpdateCronSettingsList = async (payload: any, req: any) => {
   const dbo = await getMongoDb();
   for (const element of payload) {
     mongoResult = await dbo
-      .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+      .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
       .findOneAndUpdate(
         { CronId: element.CronId },
         {
@@ -368,7 +369,7 @@ export const InsertCronSettings = async (payload: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .insertOne(payload);
   cacheHelper.DeleteCacheByKey(cacheKeyEnum.PRIMARY_CRON_SETTINGS_LIST);
   return mongoResult;
@@ -382,7 +383,7 @@ export const ToggleCronStatus = async (
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .findOneAndUpdate(
       { CronId: cronId },
       {
@@ -402,7 +403,7 @@ export const PurgeCronBasedOnId = async (cronId: string) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
     .deleteMany({ cronId: cronId });
   return mongoResult;
 };
@@ -411,7 +412,7 @@ export const PurgeCronBasedOnDate = async (dateString: string) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
     .deleteMany({
       time: {
         $lte: new Date(dateString),
@@ -424,7 +425,7 @@ export const deleteById = async (Id: string) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PRODUCT_COLLECTION!)
+    .collection(applicationConfig.PRODUCT_COLLECTION)
     .deleteOne({ mpId: Id });
   return mongoResult;
 };
@@ -481,7 +482,7 @@ export const Get422ProductCountByType = async (_type: any) => {
     ],
   };
   mongoResult = await dbo
-    .collection(process.env.ERROR_ITEM_COLLECTION!)
+    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
     .countDocuments(query);
   return mongoResult;
 };
@@ -497,7 +498,7 @@ export const GetContextErrorItemsCount = async (_activeStatus: any) => {
     active: _activeStatus,
   };
   result = await dbo
-    .collection(process.env.ERROR_ITEM_COLLECTION!)
+    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
     .countDocuments(query);
   return result;
 };
@@ -508,7 +509,7 @@ export const GetConfigurations = async (activeOnly = true) => {
 
   const query = activeOnly ? { active: true } : {};
   mongoResult = await dbo
-    .collection(process.env.IP_CONFIG!)
+    .collection(applicationConfig.IP_CONFIG)
     .find(query)
     .toArray();
 
@@ -519,20 +520,22 @@ export const UpdateConfiguration = async (payload: any, req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   for (const element of payload) {
-    mongoResult = await dbo.collection(process.env.IP_CONFIG!).findOneAndUpdate(
-      { proxyProvider: element.proxyProvider, ipType: element.ipType },
-      {
-        $set: {
-          userName: element.userName,
-          password: element.password,
-          hostUrl: element.hostUrl,
-          port: parseInt(element.port),
-          active: element.active,
-          //"proxyPriority": parseInt(element.proxyPriority),
-          AuditInfo: await SessionHelper.GetAuditInfo(req),
+    mongoResult = await dbo
+      .collection(applicationConfig.IP_CONFIG)
+      .findOneAndUpdate(
+        { proxyProvider: element.proxyProvider, ipType: element.ipType },
+        {
+          $set: {
+            userName: element.userName,
+            password: element.password,
+            hostUrl: element.hostUrl,
+            port: parseInt(element.port),
+            active: element.active,
+            //"proxyPriority": parseInt(element.proxyPriority),
+            AuditInfo: await SessionHelper.GetAuditInfo(req),
+          },
         },
-      },
-    );
+      );
     cacheHelper.DeleteExternalCache(
       `${cacheKeyEnum.EXTERNAL_PROXY_CONFIG_BY_PROVIDER_ID}_${parseInt(element.proxyProvider)}`,
     );
@@ -544,7 +547,7 @@ export const GetHistoryDetailsForId = async (_mpId: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.HISTORY_DB!)
+    .collection(applicationConfig.HISTORY_DB)
     .findOne({ mpId: parseInt(_mpId) });
   return mongoResult;
 };
@@ -564,15 +567,15 @@ export const GetHistoryDetailsForDateRange = async (
     ],
   };
   const totalDocCount = await dbo
-    .collection(process.env.HISTORY_DB!)
+    .collection(applicationConfig.HISTORY_DB)
     .countDocuments();
 
   mongoResult = await dbo
-    .collection(process.env.HISTORY_DB!)
+    .collection(applicationConfig.HISTORY_DB)
     .find(query)
     .sort({ $natural: -1 })
-    .skip((parseInt(counter) - 1) * parseInt(process.env.HISTORY_LIMIT!))
-    .limit(parseInt(process.env.HISTORY_LIMIT!))
+    .skip((parseInt(counter) - 1) * applicationConfig.HISTORY_LIMIT)
+    .limit(applicationConfig.HISTORY_LIMIT)
     .toArray();
   for (let doc of mongoResult) {
     if (doc.historicalLogs) {
@@ -600,7 +603,9 @@ export const GetHistoryDetailsForIdByDate = async (
       { "historicalLogs.refTime": { $lte: new Date(endDate) } },
     ],
   };
-  mongoResult = await dbo.collection(process.env.HISTORY_DB!).findOne(query);
+  mongoResult = await dbo
+    .collection(applicationConfig.HISTORY_DB)
+    .findOne(query);
   if (mongoResult && mongoResult.historicalLogs) {
     mongoResult.historicalLogs = await FilterHistoryData(
       mongoResult.historicalLogs,
@@ -614,7 +619,9 @@ export const GetHistoryDetailsForIdByDate = async (
 export const GetTotalHistoryCount = async () => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo.collection(process.env.HISTORY_DB!).countDocuments();
+  mongoResult = await dbo
+    .collection(applicationConfig.HISTORY_DB)
+    .countDocuments();
   return mongoResult;
 };
 
@@ -622,7 +629,7 @@ export const InitExportStatus = async (payload: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.EXPORT_STATUS!)
+    .collection(applicationConfig.EXPORT_STATUS)
     .insertOne(payload);
   return mongoResult;
 };
@@ -631,7 +638,7 @@ export const UpdateExportStatusV2 = async (payload: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.EXPORT_STATUS!)
+    .collection(applicationConfig.EXPORT_STATUS)
     .findOneAndUpdate(
       { fileName: payload.fileName },
       {
@@ -648,7 +655,7 @@ export const GetExportFileStatus = async (_fileName: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.EXPORT_STATUS!)
+    .collection(applicationConfig.EXPORT_STATUS)
     .findOne({ fileName: _fileName });
   return mongoResult;
 };
@@ -657,7 +664,7 @@ export const GetExportFileNamesByStatus = async (_fileStatus: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.EXPORT_STATUS!)
+    .collection(applicationConfig.EXPORT_STATUS!)
     .find({ status: _fileStatus })
     .toArray();
   return mongoResult;
@@ -677,7 +684,7 @@ export const Get422ProductDetailsByType = async (_type: any) => {
     ],
   };
   mongoResult = await dbo
-    .collection(process.env.ERROR_ITEM_COLLECTION!)
+    .collection(applicationConfig.ERROR_ITEM_COLLECTION!)
     .find(query)
     .toArray();
   return mongoResult;
@@ -687,7 +694,7 @@ export const GetEnvValueByKey = async (keyName: any) => {
   let mongoResult: any = null;
   let evalValue = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo.collection(process.env.ENV_SETTINGS!).findOne();
+  mongoResult = await dbo.collection(applicationConfig.ENV_SETTINGS!).findOne();
   if (mongoResult) {
     switch (keyName) {
       case "SOURCE":
@@ -719,13 +726,13 @@ export const InsertOrUpdateProduct = async (payload: any, req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PRODUCT_COLLECTION!)
+    .collection(applicationConfig.PRODUCT_COLLECTION!)
     .findOne({ mpId: payload.mpId });
   if (mongoResult) {
     if (payload.tradentDetails) {
       payload.tradentDetails.AuditInfo = await SessionHelper.GetAuditInfo(req);
       mongoResult = await dbo
-        .collection(process.env.PRODUCT_COLLECTION!)
+        .collection(applicationConfig.PRODUCT_COLLECTION!)
         .findOneAndUpdate(
           { mpId: payload.mpId },
           {
@@ -738,7 +745,7 @@ export const InsertOrUpdateProduct = async (payload: any, req: any) => {
     if (payload.frontierDetails) {
       payload.frontierDetails.AuditInfo = await SessionHelper.GetAuditInfo(req);
       mongoResult = await dbo
-        .collection(process.env.PRODUCT_COLLECTION!)
+        .collection(applicationConfig.PRODUCT_COLLECTION!)
         .findOneAndUpdate(
           { mpId: payload.mpId },
           {
@@ -752,7 +759,7 @@ export const InsertOrUpdateProduct = async (payload: any, req: any) => {
     if (payload.mvpDetails) {
       payload.mvpDetails.AuditInfo = await SessionHelper.GetAuditInfo(req);
       mongoResult = await dbo
-        .collection(process.env.PRODUCT_COLLECTION!)
+        .collection(applicationConfig.PRODUCT_COLLECTION!)
         .findOneAndUpdate(
           { mpId: payload.mpId },
           {
@@ -764,7 +771,7 @@ export const InsertOrUpdateProduct = async (payload: any, req: any) => {
     }
   } else {
     mongoResult = await dbo
-      .collection(process.env.PRODUCT_COLLECTION!)
+      .collection(applicationConfig.PRODUCT_COLLECTION!)
       .insertOne(payload);
   }
   return mongoResult;
@@ -774,7 +781,7 @@ export const GetAllProductDetails = async () => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PRODUCT_COLLECTION!)
+    .collection(applicationConfig.PRODUCT_COLLECTION!)
     .find()
     .sort({ _id: -1 })
     .toArray();
@@ -789,7 +796,7 @@ export const GetAllProductDetailsV2 = async (
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PRODUCT_COLLECTION!)
+    .collection(applicationConfig.PRODUCT_COLLECTION!)
     .find(query)
     .skip(pageNumber * pageSize)
     .sort({ _id: -1 })
@@ -802,7 +809,7 @@ export const GetProductCount = async (query: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PRODUCT_COLLECTION!)
+    .collection(applicationConfig.PRODUCT_COLLECTION!)
     .countDocuments(query);
   return mongoResult;
 };
@@ -811,7 +818,7 @@ export const FindProductById = async (mpid: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PRODUCT_COLLECTION!)
+    .collection(applicationConfig.PRODUCT_COLLECTION!)
     .find({ mpId: mpid })
     .toArray();
   return mongoResult;
@@ -824,7 +831,7 @@ export const InsertOrUpdateProductWithCronName = async (
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   let productDetails = await dbo
-    .collection(process.env.PRODUCT_COLLECTION!)
+    .collection(applicationConfig.PRODUCT_COLLECTION!)
     .findOne({ mpId: payload.mpId });
   const contextCronName = await getContextDetails(payload, "cronName");
   const contextCronId = await getContextDetails(payload, "cronId");
@@ -836,7 +843,7 @@ export const InsertOrUpdateProductWithCronName = async (
       _tradentUpdated = true;
       payload.tradentDetails.AuditInfo = await SessionHelper.GetAuditInfo(req);
       mongoResult = await dbo
-        .collection(process.env.PRODUCT_COLLECTION!)
+        .collection(applicationConfig.PRODUCT_COLLECTION!)
         .findOneAndUpdate(
           { mpId: payload.mpId },
           {
@@ -852,7 +859,7 @@ export const InsertOrUpdateProductWithCronName = async (
       _frontUpdated = true;
       payload.frontierDetails.AuditInfo = await SessionHelper.GetAuditInfo(req);
       mongoResult = await dbo
-        .collection(process.env.PRODUCT_COLLECTION!)
+        .collection(applicationConfig.PRODUCT_COLLECTION!)
         .findOneAndUpdate(
           { mpId: payload.mpId },
           {
@@ -870,7 +877,7 @@ export const InsertOrUpdateProductWithCronName = async (
       _mvpDetails = true;
       payload.mvpDetails.AuditInfo = await SessionHelper.GetAuditInfo(req);
       mongoResult = await dbo
-        .collection(process.env.PRODUCT_COLLECTION!)
+        .collection(applicationConfig.PRODUCT_COLLECTION!)
         .findOneAndUpdate(
           { mpId: payload.mpId },
           {
@@ -884,7 +891,7 @@ export const InsertOrUpdateProductWithCronName = async (
 
     // Update Cron If Present *** no longer needed as Crons are aligned with DB details before only
     // if (_tradentUpdated == false && productDetails.tradentDetails) {
-    //     mongoResult = await dbo.collection(process.env.PRODUCT_COLLECTION).findOneAndUpdate(
+    //     mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION).findOneAndUpdate(
     //         { mpId: payload.mpId },
     //         {
     //             $set:
@@ -896,7 +903,7 @@ export const InsertOrUpdateProductWithCronName = async (
     //         });
     // }
     // if (_frontUpdated == false && productDetails.frontierDetails) {
-    //     mongoResult = await dbo.collection(process.env.PRODUCT_COLLECTION).findOneAndUpdate(
+    //     mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION).findOneAndUpdate(
     //         { mpId: payload.mpId },
     //         {
     //             $set:
@@ -908,7 +915,7 @@ export const InsertOrUpdateProductWithCronName = async (
     //         });
     // }
     // if (_mvpDetails == false && productDetails.mvpDetails) {
-    //     mongoResult = await dbo.collection(process.env.PRODUCT_COLLECTION).findOneAndUpdate(
+    //     mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION).findOneAndUpdate(
     //         { mpId: payload.mpId },
     //         {
     //             $set:
@@ -921,7 +928,7 @@ export const InsertOrUpdateProductWithCronName = async (
     // }
   } else {
     mongoResult = await dbo
-      .collection(process.env.PRODUCT_COLLECTION!)
+      .collection(applicationConfig.PRODUCT_COLLECTION!)
       .insertOne(payload);
   }
   return mongoResult;
@@ -956,41 +963,48 @@ export const ActivateProductModel = async (mpid: any, req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PRODUCT_COLLECTION!)
+    .collection(applicationConfig.PRODUCT_COLLECTION!)
     .findOne({ mpId: mpid });
   if (mongoResult) {
     if (mongoResult.tradentDetails) {
-      await dbo.collection(process.env.PRODUCT_COLLECTION!).findOneAndUpdate(
-        { mpId: mpid },
-        {
-          $set: {
-            "tradentDetails.activated": true,
-            "tradentDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+      await dbo
+        .collection(applicationConfig.PRODUCT_COLLECTION!)
+        .findOneAndUpdate(
+          { mpId: mpid },
+          {
+            $set: {
+              "tradentDetails.activated": true,
+              "tradentDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+            },
           },
-        },
-      );
+        );
     }
     if (mongoResult.frontierDetails) {
-      await dbo.collection(process.env.PRODUCT_COLLECTION!).findOneAndUpdate(
-        { mpId: mpid },
-        {
-          $set: {
-            "frontierDetails.activated": true,
-            "frontierDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+      await dbo
+        .collection(applicationConfig.PRODUCT_COLLECTION!)
+        .findOneAndUpdate(
+          { mpId: mpid },
+          {
+            $set: {
+              "frontierDetails.activated": true,
+              "frontierDetails.AuditInfo":
+                await SessionHelper.GetAuditInfo(req),
+            },
           },
-        },
-      );
+        );
     }
     if (mongoResult.mvpDetails) {
-      await dbo.collection(process.env.PRODUCT_COLLECTION!).findOneAndUpdate(
-        { mpId: mpid },
-        {
-          $set: {
-            "mvpDetails.activated": true,
-            "mvpDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+      await dbo
+        .collection(applicationConfig.PRODUCT_COLLECTION!)
+        .findOneAndUpdate(
+          { mpId: mpid },
+          {
+            $set: {
+              "mvpDetails.activated": true,
+              "mvpDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+            },
           },
-        },
-      );
+        );
     }
   }
   return mongoResult;
@@ -1000,41 +1014,48 @@ export const DeactivateProductModel = async (mpid: any, req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PRODUCT_COLLECTION!)
+    .collection(applicationConfig.PRODUCT_COLLECTION!)
     .findOne({ mpId: mpid });
   if (mongoResult) {
     if (mongoResult.tradentDetails) {
-      await dbo.collection(process.env.PRODUCT_COLLECTION!).findOneAndUpdate(
-        { mpId: mpid },
-        {
-          $set: {
-            "tradentDetails.activated": false,
-            "tradentDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+      await dbo
+        .collection(applicationConfig.PRODUCT_COLLECTION!)
+        .findOneAndUpdate(
+          { mpId: mpid },
+          {
+            $set: {
+              "tradentDetails.activated": false,
+              "tradentDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+            },
           },
-        },
-      );
+        );
     }
     if (mongoResult.frontierDetails) {
-      await dbo.collection(process.env.PRODUCT_COLLECTION!).findOneAndUpdate(
-        { mpId: mpid },
-        {
-          $set: {
-            "frontierDetails.activated": false,
-            "frontierDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+      await dbo
+        .collection(applicationConfig.PRODUCT_COLLECTION!)
+        .findOneAndUpdate(
+          { mpId: mpid },
+          {
+            $set: {
+              "frontierDetails.activated": false,
+              "frontierDetails.AuditInfo":
+                await SessionHelper.GetAuditInfo(req),
+            },
           },
-        },
-      );
+        );
     }
     if (mongoResult.mvpDetails) {
-      await dbo.collection(process.env.PRODUCT_COLLECTION!).findOneAndUpdate(
-        { mpId: mpid },
-        {
-          $set: {
-            "mvpDetails.activated": false,
-            "mvpDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+      await dbo
+        .collection(applicationConfig.PRODUCT_COLLECTION!)
+        .findOneAndUpdate(
+          { mpId: mpid },
+          {
+            $set: {
+              "mvpDetails.activated": false,
+              "mvpDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+            },
           },
-        },
-      );
+        );
     }
   }
   return mongoResult;
@@ -1042,7 +1063,9 @@ export const DeactivateProductModel = async (mpid: any, req: any) => {
 export const GetDefaultUserLogin = async () => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo.collection(process.env.USERS_COLLECTION!).findOne({});
+  mongoResult = await dbo
+    .collection(applicationConfig.USERS_COLLECTION!)
+    .findOne({});
   return mongoResult;
 };
 
@@ -1055,37 +1078,43 @@ export const UpdateExecutionPriority = async (
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   if (id == 0) {
-    await dbo.collection(process.env.PRODUCT_COLLECTION!).findOneAndUpdate(
-      { mpId: mpid },
-      {
-        $set: {
-          "tradentDetails.executionPriority": value,
-          "tradentDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+    await dbo
+      .collection(applicationConfig.PRODUCT_COLLECTION!)
+      .findOneAndUpdate(
+        { mpId: mpid },
+        {
+          $set: {
+            "tradentDetails.executionPriority": value,
+            "tradentDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+          },
         },
-      },
-    );
+      );
   }
   if (id == 1) {
-    await dbo.collection(process.env.PRODUCT_COLLECTION!).findOneAndUpdate(
-      { mpId: mpid },
-      {
-        $set: {
-          "frontierDetails.executionPriority": value,
-          "frontierDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+    await dbo
+      .collection(applicationConfig.PRODUCT_COLLECTION!)
+      .findOneAndUpdate(
+        { mpId: mpid },
+        {
+          $set: {
+            "frontierDetails.executionPriority": value,
+            "frontierDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+          },
         },
-      },
-    );
+      );
   }
   if (id == 2) {
-    await dbo.collection(process.env.PRODUCT_COLLECTION!).findOneAndUpdate(
-      { mpId: mpid },
-      {
-        $set: {
-          "mvpDetails.executionPriority": value,
-          "mvpDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+    await dbo
+      .collection(applicationConfig.PRODUCT_COLLECTION!)
+      .findOneAndUpdate(
+        { mpId: mpid },
+        {
+          $set: {
+            "mvpDetails.executionPriority": value,
+            "mvpDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
+          },
         },
-      },
-    );
+      );
   }
   return mongoResult;
 };
@@ -1093,7 +1122,7 @@ export const UpdateExecutionPriority = async (
 export async function GetEnvSettings() {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo.collection(process.env.ENV_SETTINGS!).findOne();
+  mongoResult = await dbo.collection(applicationConfig.ENV_SETTINGS!).findOne();
   return mongoResult;
 }
 
@@ -1101,7 +1130,7 @@ export const UpsertEnvSettings = async (payload: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.ENV_SETTINGS!)
+    .collection(applicationConfig.ENV_SETTINGS!)
     .findOneAndUpdate({}, payload);
   cacheHelper.DeleteExternalCache(cacheKeyEnum.EXTERNAL_GLOBAL_INFO);
   cacheHelper.DeleteExternalCache(cacheKeyEnum.EXTERNAL_ENV_DELAY);
@@ -1112,7 +1141,7 @@ export const GetLogsBasedOnQuery = async (query: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.GET_CRON_LOGS_COLLECTION_NAME!)
+    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME!)
     .find(query)
     .toArray();
   return mongoResult;
@@ -1126,7 +1155,7 @@ export const GetFilteredCrons = async () => {
     mongoResult = await cacheHelper.Get(cacheKey);
   } else {
     mongoResult = await dbo
-      .collection(process.env.FILTER_CRON_COLLECTION_NAME!)
+      .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME!)
       .find()
       .toArray();
     cacheHelper.Set(cacheKey, mongoResult);
@@ -1138,7 +1167,7 @@ export const UpdateFilterCronDetails = async (cronId: any, payload: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.FILTER_CRON_COLLECTION_NAME!)
+    .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME!)
     .findOneAndUpdate({ cronId: cronId }, payload);
   cacheHelper.DeleteCacheByKey(cacheKeyEnum.FILTER_CRON_SETTINGS_LIST);
   cacheHelper.DeleteExternalCache(cacheKeyEnum.EXTERNAL_FILTER_CRON_DETAILS);
@@ -1149,7 +1178,7 @@ export const UpdateSlowCronDetails = async (cronId: any, payload: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.SLOW_CRON_GROUP_COLLECTION_NAME!)
+    .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME!)
     .findOneAndUpdate({ CronId: cronId }, payload);
   cacheHelper.DeleteCacheByKey(cacheKeyEnum.SLOW_CRON_SETTINGS_LIST);
   cacheHelper.DeleteExternalCache(cacheKeyEnum.EXTERNAL_SLOW_CRON_DETAILS);
@@ -1165,7 +1194,7 @@ export const GetSlowCronDetails = async () => {
     mongoResult = await cacheHelper.Get(cacheKey);
   } else {
     mongoResult = await dbo
-      .collection(process.env.SLOW_CRON_GROUP_COLLECTION_NAME!)
+      .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME!)
       .find()
       .toArray();
     cacheHelper.Set(cacheKey, mongoResult);
@@ -1179,7 +1208,7 @@ export const updateSlowCron = async (payload: any, req: any) => {
 
   for (const element of payload) {
     mongoResult = await dbo
-      .collection(process.env.SLOW_CRON_GROUP_COLLECTION_NAME!)
+      .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME!)
       .findOneAndUpdate(
         { CronId: element.CronId },
         {
@@ -1205,7 +1234,7 @@ export const GetFilterCronLogsByLimit = async (_limit: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.FILTER_CRON_LOGS!)
+    .collection(applicationConfig.FILTER_CRON_LOGS!)
     .find()
     .limit(_limit)
     .sort({ $natural: -1 })
@@ -1217,7 +1246,7 @@ export const GetFilterCronLogByKey = async (key: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.FILTER_CRON_LOGS!)
+    .collection(applicationConfig.FILTER_CRON_LOGS!)
     .findOne({ cronKey: key });
   return mongoResult;
 };
@@ -1226,7 +1255,7 @@ export const GetProductListByQuery = async (query: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PRODUCT_COLLECTION!)
+    .collection(applicationConfig.PRODUCT_COLLECTION!)
     .find(query)
     .toArray();
   return mongoResult;
@@ -1236,7 +1265,7 @@ export const InsertOrUpdateProductWithQuery = async (mpid: any, query: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PRODUCT_COLLECTION!)
+    .collection(applicationConfig.PRODUCT_COLLECTION!)
     .findOneAndUpdate({ mpId: mpid }, query);
   return mongoResult;
 };
@@ -1245,7 +1274,7 @@ export const GetProxyFailureDetails = async () => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PROXY_FAILURE_COLLECTION!)
+    .collection(applicationConfig.PROXY_FAILURE_COLLECTION!)
     .find()
     .toArray();
   return mongoResult;
@@ -1255,7 +1284,7 @@ export const InsertUserLogin = async (userDetails: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.USERS_COLLECTION!)
+    .collection(applicationConfig.USERS_COLLECTION!)
     .insertOne(userDetails);
   return mongoResult;
 };
@@ -1264,7 +1293,7 @@ export const UpdateUserPassword = async (_userName: any, newPassword: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.USERS_COLLECTION!)
+    .collection(applicationConfig.USERS_COLLECTION!)
     .findOneAndUpdate(
       { userName: _userName },
       { $set: { userPassword: newPassword } },
@@ -1279,7 +1308,7 @@ export const UpdateProxyProviderThresholdValue = async (
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.PROXY_FAILURE_COLLECTION!)
+    .collection(applicationConfig.PROXY_FAILURE_COLLECTION!)
     .findOneAndUpdate(
       { proxyProvider: parseInt(payload.proxyProvider) },
       {
@@ -1296,7 +1325,7 @@ export const InsertOrUpdateScrapeOnlyProduct = async (payload: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.SCRAPE_ITEMS_COLLECTION!)
+    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
     .insertOne(payload);
   return mongoResult;
 };
@@ -1310,7 +1339,7 @@ export const GetScrapeCrons = async () => {
   } else {
     const dbo = await getMongoDb();
     mongoResult = await dbo
-      .collection(process.env.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
+      .collection(applicationConfig.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
       .find()
       .toArray();
     cacheHelper.Set(cacheKey, mongoResult);
@@ -1322,7 +1351,7 @@ export const UpdateScrapeCronDetails = async (cronId: any, payload: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
+    .collection(applicationConfig.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
     .findOneAndUpdate({ CronId: cronId }, payload);
   cacheHelper.DeleteCacheByKey(cacheKeyEnum.SCRAPE_CRON_SETTINGS_LIST);
   return mongoResult;
@@ -1334,7 +1363,7 @@ export const updateScrapeCron = async (payload: any, req: any) => {
 
   for (const element of payload) {
     mongoResult = await dbo
-      .collection(process.env.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
+      .collection(applicationConfig.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
       .findOneAndUpdate(
         { CronId: element.CronId },
         {
@@ -1363,7 +1392,7 @@ export const GetScrapeProducts = async (
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.SCRAPE_ITEMS_COLLECTION!)
+    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
     .find(query)
     .skip(pageNumber * pageSize)
     .sort({ _id: -1 })
@@ -1376,7 +1405,7 @@ export const GetScrapeProductCount = async (query: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.SCRAPE_ITEMS_COLLECTION!)
+    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
     .countDocuments(query);
   return mongoResult;
 };
@@ -1385,7 +1414,7 @@ export const deleteScrapeProductById = async (Id: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.SCRAPE_ITEMS_COLLECTION!)
+    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
     .deleteOne({ mpId: Id });
   return mongoResult;
 };
@@ -1394,7 +1423,7 @@ export const GetAllScrapeProductDetails = async () => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.SCRAPE_ITEMS_COLLECTION!)
+    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
     .find()
     .sort({ _id: -1 })
     .toArray();
@@ -1405,11 +1434,11 @@ export const InsertOrUpdateScrapeProduct = async (payload: any, req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   let existResult = await dbo
-    .collection(process.env.SCRAPE_ITEMS_COLLECTION!)
+    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
     .findOne({ mpId: payload.mpId });
   if (existResult) {
     mongoResult = await dbo
-      .collection(process.env.SCRAPE_ITEMS_COLLECTION!)
+      .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
       .findOneAndUpdate(
         { mpId: payload.mpId },
         {
@@ -1425,7 +1454,7 @@ export const InsertOrUpdateScrapeProduct = async (payload: any, req: any) => {
   } else {
     payload.AuditInfo = await SessionHelper.GetAuditInfo(req);
     mongoResult = await dbo
-      .collection(process.env.SCRAPE_ITEMS_COLLECTION!)
+      .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
       .insertOne(payload);
   }
 
@@ -1436,7 +1465,7 @@ export const GetScrapeLogs = async (pageNumber: any, pageSize: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.SCRAPE_LOGS_COLLECTION!)
+    .collection(applicationConfig.SCRAPE_LOGS_COLLECTION!)
     .find()
     .skip(pageNumber * pageSize)
     .sort({ _id: -1 })
@@ -1449,7 +1478,7 @@ export const GetScrapeLogsCount = async () => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.SCRAPE_LOGS_COLLECTION!)
+    .collection(applicationConfig.SCRAPE_LOGS_COLLECTION!)
     .countDocuments();
   return mongoResult;
 };
@@ -1458,7 +1487,7 @@ export const FindScrapeProductById = async (mpid: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.SCRAPE_ITEMS_COLLECTION!)
+    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
     .find({ mpId: mpid })
     .toArray();
   return mongoResult;
@@ -1468,7 +1497,7 @@ export const GetScrapeLogsList = async (id: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.SCRAPE_LOGS_COLLECTION!)
+    .collection(applicationConfig.SCRAPE_LOGS_COLLECTION!)
     .find({ _id: new ObjectId(id) })
     .toArray();
   return mongoResult;
@@ -1478,7 +1507,7 @@ export const IgnoreCronStatusLog = async (_cronId: any, _keygen: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
-    .collection(process.env.CRON_STATUS_COLLECTION_NAME!)
+    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME!)
     .findOneAndUpdate(
       { $and: [{ keyGenId: _keygen }, { cronId: _cronId }] },
       {
@@ -1507,11 +1536,11 @@ export const Update422StatusById = async (_mpId: any, isBulk: any) => {
   const dbo = await getMongoDb();
   if (isBulk == false) {
     mongoResult = await dbo
-      .collection(process.env.ERROR_ITEM_COLLECTION!)
+      .collection(applicationConfig.ERROR_ITEM_COLLECTION!)
       .updateMany({ mpId: _mpId }, { $set: { active: false } });
   } else {
     mongoResult = await dbo
-      .collection(process.env.ERROR_ITEM_COLLECTION!)
+      .collection(applicationConfig.ERROR_ITEM_COLLECTION!)
       .updateMany({}, { $set: { active: false } });
   }
 
@@ -1531,7 +1560,7 @@ export const GetCronsByProxyProvider = async (proxyProviderId: any) => {
 
   const [regularCrons, slowCrons, scrapeCrons] = await Promise.all([
     dbo
-      .collection(process.env.CRON_SETTINGS_COLLECTION_NAME!)
+      .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME!)
       .find({
         $or: [
           { ProxyProvider: providerId },
@@ -1541,7 +1570,7 @@ export const GetCronsByProxyProvider = async (proxyProviderId: any) => {
       .toArray(),
 
     dbo
-      .collection(process.env.SLOW_CRON_GROUP_COLLECTION_NAME!)
+      .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME!)
       .find({
         $or: [
           { ProxyProvider: providerId },
@@ -1551,7 +1580,7 @@ export const GetCronsByProxyProvider = async (proxyProviderId: any) => {
       .toArray(),
 
     dbo
-      .collection(process.env.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
+      .collection(applicationConfig.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
       .find({
         $or: [
           { ProxyProvider: providerId },

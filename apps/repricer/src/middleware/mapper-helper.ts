@@ -7,6 +7,7 @@ import LatestScrapeInfo from "../models/api-response/latest-scrape-info";
 import * as mySqlUtility from "./mysql";
 import MySqlProduct from "../models/sql-models/mysql-product";
 import * as SessionHelper from "../utility/session-helper";
+import { applicationConfig } from "../utility/config";
 
 export const MapV2 = async (productDetails: any) => {
   let $eval: any[] = [];
@@ -376,8 +377,8 @@ export const AlignCronName = async (productList: any) => {
 
 export const MapScrapedFailedResults = async (cronLogs: any) => {
   let result: any[] = [];
-  const error_one = process.env.ERROR_ONE;
-  const error_two = process.env.ERROR_TWO;
+  const error_one = applicationConfig.ERROR_ONE;
+  const error_two = applicationConfig.ERROR_TWO;
   try {
     for (const $ of cronLogs) {
       if ($.logs && $.logs.length > 0) {

@@ -7,7 +7,7 @@ import { lstatSync, readdirSync } from "fs";
 import ExportModel from "../models/export-model";
 import path from "path";
 import * as httpMiddleware from "./http-wrappers";
-
+import { applicationConfig } from "../utility/config";
 export async function FindAllDownloads() {
   return fs
     .readdirSync("./exports", { withFileTypes: true })
@@ -32,9 +32,12 @@ export async function ExportAndSaveById(
   //console.log(`rootDirectory || ${rootDirectory}`);
   const rootPath = rootDirectory.substring(
     0,
-    rootDirectory.lastIndexOf(process.env.FILE_DELIMITER!),
+    rootDirectory.lastIndexOf(applicationConfig.FILE_DELIMITER!),
   );
-  const historyBasePath = path.join(rootPath, process.env.HISTORY_BASE_PATH!);
+  const historyBasePath = path.join(
+    rootPath,
+    applicationConfig.HISTORY_BASE_PATH!,
+  );
   const contextDirectory = path.join(historyBasePath, `/${mpid}/`);
   let contextSubFolders: any[] = [];
   console.log(
@@ -46,8 +49,8 @@ export async function ExportAndSaveById(
     if (listOfSubDirectories.length > 0) {
       for (const dir of listOfSubDirectories) {
         const dateFieldStr = dir.substring(
-          dir.lastIndexOf(process.env.FILE_DELIMITER!) + 1,
-          dir.length,
+          dir.lastIndexOf(applicationConfig.FILE_DELIMITER!) + 1,
+          dir.lastIndexOf(applicationConfig.FILE_DELIMITER!) + 1,
         );
         const dateField = new Date(dateFieldStr).setHours(0, 0, 0, 0);
         if (dateField >= startDate && dateField <= endDate) {
@@ -106,9 +109,12 @@ export async function ExportAndSave(
   //console.log(`rootDirectory || ${rootDirectory}`);
   const rootPath = rootDirectory.substring(
     0,
-    rootDirectory.lastIndexOf(process.env.FILE_DELIMITER!),
+    rootDirectory.lastIndexOf(applicationConfig.FILE_DELIMITER!),
   );
-  const historyBasePath = path.join(rootPath, process.env.HISTORY_BASE_PATH!);
+  const historyBasePath = path.join(
+    rootPath,
+    applicationConfig.HISTORY_BASE_PATH!,
+  );
   const listOfSubDirectories = getDirectories(historyBasePath);
   const noOfDaysToRecord =
     getMomentDate(new Date(endDate)).diff(
@@ -156,7 +162,7 @@ export async function ExportAndSaveByIdV2(
   auditInfo: any,
 ) {
   //Prepare History Export Url & payload
-  const historyExportUrl = process.env.HISTORY_EXPORT_URL_BY_ID!.replace(
+  const historyExportUrl = applicationConfig.HISTORY_EXPORT_URL_BY_ID.replace(
     "{productId}",
     parseInt(mpid as any) as never,
   );
@@ -174,7 +180,7 @@ export async function ExportAndSaveV2(
   historyFileName: any,
   auditInfo: any,
 ) {
-  const historyExportUrl = process.env.HISTORY_EXPORT_URL_FOR_ALL;
+  const historyExportUrl = applicationConfig.HISTORY_EXPORT_URL_FOR_ALL;
   const requestPayload = {
     startDate: moment(startDate).format("YYYY-MM-DD HH:mm:ss"),
     endDate: moment(endDate).format("YYYY-MM-DD HH:mm:ss"),
@@ -274,7 +280,7 @@ async function SaveAllHistoryByDate(
 ) {
   const chunkOfData = _.chunk(
     listOfSubDirectories,
-    parseInt(process.env.HISTORY_LIMIT!) as never,
+    applicationConfig.HISTORY_LIMIT,
   );
   for (const chunk of chunkOfData) {
     let listOfRecords: any = [];
@@ -287,7 +293,7 @@ async function SaveAllHistoryByDate(
         if (isDirectory(folderPath)) {
           const allFiles = getAllFileNames(folderPath);
           const mpid = dir.substr(
-            dir.lastIndexOf(process.env.FILE_DELIMITER!) + 1,
+            dir.lastIndexOf(applicationConfig.FILE_DELIMITER!) + 1,
             dir.length,
           );
           console.log(`Found ${allFiles.length} history for MPID : ${mpid}`);

@@ -1,10 +1,11 @@
 import DataBase from "mysql2";
+import { applicationConfig } from "../../utility/config";
 export default DataBase.createPool({
-  host: process.env.SQL_HOSTNAME,
-  port: parseInt(process.env.SQL_PORT!),
-  user: process.env.SQL_USERNAME,
-  password: process.env.SQL_PASSWORD,
-  database: process.env.SQL_DATABASE,
+  host: applicationConfig.SQL_HOSTNAME,
+  port: applicationConfig.SQL_PORT,
+  user: applicationConfig.SQL_USERNAME,
+  password: applicationConfig.SQL_PASSWORD,
+  database: applicationConfig.SQL_DATABASE,
   waitForConnections: true,
   connectionLimit: 100,
   maxIdle: 10,

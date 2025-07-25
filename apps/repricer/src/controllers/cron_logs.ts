@@ -14,6 +14,7 @@ import UpdateRequest from "../models/update-request";
 import { Request, Response } from "express";
 import * as ftpMiddleware from "../middleware/ftp";
 import * as scrapeOnlyMiddleware from "../middleware/scrapeoonly";
+import { applicationConfig } from "../utility/config";
 
 let _contextLog: any = null;
 
@@ -108,7 +109,7 @@ export async function getCronLogs(req: Request, res: Response) {
     });
   }
   let filterCronLogs = await mongoMiddleware.GetFilterCronLogsByLimit(
-    parseInt(process.env.FILTER_CRON_LOGS_LIMIT as string),
+    applicationConfig.FILTER_CRON_LOGS_LIMIT,
   );
   const filterCronDetails = await mongoMiddleware.GetFilteredCrons();
   _.forEach(filterCronLogs, (x: any) => {
@@ -1128,7 +1129,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   }
   // filterCronLogs
   let filterCronLogs = await mongoMiddleware.GetFilterCronLogsByLimit(
-    parseInt(process.env.FILTER_CRON_LOGS_LIMIT as any),
+    applicationConfig.FILTER_CRON_LOGS_LIMIT,
   );
   const filterCronDetails = await mongoMiddleware.GetFilteredCrons();
   _.forEach(filterCronLogs, (x: any) => {

@@ -3,6 +3,7 @@ import * as mongoMiddleware from "./mongo";
 import * as httpHelper from "./http-wrappers";
 import apiMapping from "../../resources/apiMapping.json";
 import ProductModel from "../models/product";
+import { applicationConfig } from "../utility/config";
 
 export async function LoadProducts(listOfProducts: any) {
   for (const prod of listOfProducts) {
@@ -26,7 +27,7 @@ export async function LoadProducts(listOfProducts: any) {
             _.unset(productDetails, "_id");
             productDetails.executionPriority = 1;
             productDetails.activated = JSON.parse(
-              process.env.DEFAULT_PRODUCT_STATUS!,
+              applicationConfig.DEFAULT_PRODUCT_STATUS!,
             );
             productDetails.last_cron_time = null;
             productDetails.last_update_time = null;
@@ -60,7 +61,7 @@ export async function LoadProducts(listOfProducts: any) {
             _.unset(productDetails, "_id");
             productDetails.executionPriority = 2;
             productDetails.activated = JSON.parse(
-              process.env.DEFAULT_PRODUCT_STATUS!,
+              applicationConfig.DEFAULT_PRODUCT_STATUS!,
             );
             productDetails.last_cron_time = null;
             productDetails.last_update_time = null;
@@ -94,7 +95,7 @@ export async function LoadProducts(listOfProducts: any) {
             _.unset(productDetails, "_id");
             productDetails.executionPriority = 3;
             productDetails.activated = JSON.parse(
-              process.env.DEFAULT_PRODUCT_STATUS!,
+              applicationConfig.DEFAULT_PRODUCT_STATUS!,
             );
             productDetails.last_cron_time = null;
             productDetails.last_update_time = null;

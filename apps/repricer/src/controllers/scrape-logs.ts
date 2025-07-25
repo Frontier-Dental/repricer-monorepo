@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import _ from "lodash";
 import * as mongoMiddleware from "../middleware/mongo";
+import { applicationConfig } from "../utility/config";
 
 export async function showLogHistory(req: Request, res: Response) {
   let pgNo = 0;
@@ -11,7 +12,7 @@ export async function showLogHistory(req: Request, res: Response) {
     pageNumber = 0,
     totalDocs = 0,
     totalPages = 0;
-  pageSize = parseInt(process.env.CRON_PAGESIZE!);
+  pageSize = applicationConfig.CRON_PAGESIZE;
   pageNumber = pgNo || 0;
   totalDocs = await mongoMiddleware.GetScrapeLogsCount();
   totalPages = Math.ceil(totalDocs / pageSize);
@@ -41,7 +42,7 @@ export async function logsHistoryList(req: Request, res: Response) {
     pageNumber = 0,
     totalDocs = 0,
     totalPages = 0;
-  pageSize = parseInt(process.env.CRON_PAGESIZE!);
+  pageSize = applicationConfig.CRON_PAGESIZE;
   pageNumber = pgNo || 0;
   let scrapeLogsDetails = await mongoMiddleware.GetScrapeLogsList(id);
   totalDocs = (_.first(scrapeLogsDetails) as any).scrapeData.length;

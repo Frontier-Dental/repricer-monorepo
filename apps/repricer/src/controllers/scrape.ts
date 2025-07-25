@@ -9,6 +9,7 @@ import * as sqlMiddleware from "../middleware/mysql";
 import cronSettings from "../models/cron-settings";
 import cronMapping from "../../resources/cronMapping.json";
 import * as SessionHelper from "../utility/session-helper";
+import { applicationConfig } from "../utility/config";
 
 export const GetScrapeCron = async (req: Request, res: Response) => {
   let scrapeCronDetails = await mongoMiddleware.GetScrapeCrons();
@@ -235,8 +236,8 @@ export const GetScrapeProducts = async (req: Request, res: Response) => {
     pageNumber = 0,
     totalDocs = 0,
     totalPages = 0;
-  pageSize = parseInt(process.env.CRON_PAGESIZE!);
-  pageNumber = pgNo || 1; // calculation managed by mysql
+  pageSize = applicationConfig.CRON_PAGESIZE;
+  pageNumber = pgNo || 1;
 
   let scrapeProductsDetails: any[] = [];
 

@@ -1,11 +1,12 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
+import { applicationConfig } from "../utility/config";
 
 axiosRetry(axios, {
-  retries: process.env.NO_OF_RETRIES as any, // number of retries
+  retries: applicationConfig.NO_OF_RETRIES as any, // number of retries
   retryDelay: (retryCount) => {
     console.log(`retry attempt : ${retryCount} at ${new Date()}`);
-    return retryCount * (process.env.RETRY_INTERVAL as any); // time interval between retries
+    return retryCount * (applicationConfig.RETRY_INTERVAL as any); // time interval between retries
   },
   retryCondition: (error) => {
     console.log(`REPRICER UI : ERROR (WITH RETRY) : ${error} `);
@@ -21,7 +22,7 @@ axiosRetry(axios, {
 export async function updatePrice(request: any) {
   var config = {
     method: "post",
-    url: process.env.UPDATE_PRICE_URL,
+    url: applicationConfig.UPDATE_PRICE_URL,
     headers: {
       "Subscription-Key": request.secretKey,
       "Content-Type": "application/json",
@@ -38,7 +39,7 @@ export const runCron = async () => {
   try {
     const config = {
       method: "get",
-      url: process.env.CRON_RUN_ALL_URL,
+      url: applicationConfig.CRON_RUN_ALL_URL,
     };
     return await axios(config);
   } catch (exception) {
@@ -64,7 +65,7 @@ export async function runManualCron(mpId: any, itemDetails: any, source: any) {
 export async function startCron(payload: any) {
   const config = {
     method: "post",
-    url: process.env.CRON_START_URL,
+    url: applicationConfig.CRON_START_URL,
     headers: {
       "Content-Type": "application/json",
       "User-Agent":
@@ -78,7 +79,7 @@ export async function startCron(payload: any) {
 export async function stopCron(payload: any) {
   const config = {
     method: "post",
-    url: process.env.CRON_STOP_URL,
+    url: applicationConfig.CRON_STOP_URL,
     headers: {
       "Content-Type": "application/json",
       "User-Agent":
@@ -92,7 +93,7 @@ export async function stopCron(payload: any) {
 export async function recreateCron(cronDetails: any) {
   const config = {
     method: "post",
-    url: process.env.RECREATE_CRON_URL,
+    url: applicationConfig.RECREATE_CRON_URL,
     headers: {
       "Content-Type": "application/json",
       "User-Agent":
@@ -106,7 +107,7 @@ export async function recreateCron(cronDetails: any) {
 export async function updateProductManual(mpId: any, payload: any) {
   const config = {
     method: "post",
-    url: process.env.MANUAL_PROD_UPDATE + mpId,
+    url: applicationConfig.MANUAL_PROD_UPDATE + mpId,
     headers: {
       "Content-Type": "application/json",
       "User-Agent":
@@ -120,7 +121,7 @@ export async function updateProductManual(mpId: any, payload: any) {
 export async function stopAllCron() {
   const config = {
     method: "get",
-    url: process.env.STOP_ALL_CRON,
+    url: applicationConfig.STOP_ALL_CRON,
   };
   return await axios(config);
 }
@@ -128,7 +129,7 @@ export async function stopAllCron() {
 export async function StartOverride() {
   const config = {
     method: "get",
-    url: process.env.START_OVERRIDE_URL,
+    url: applicationConfig.START_OVERRIDE_URL,
   };
   return await axios(config);
 }
@@ -144,7 +145,7 @@ export async function native_get(_url: any) {
 export async function toggleFilterCron(payload: any) {
   const config = {
     method: "post",
-    url: process.env.FILTER_CRON_TOGGLE_STATUS,
+    url: applicationConfig.FILTER_CRON_TOGGLE_STATUS,
     headers: {
       "Content-Type": "application/json",
       "User-Agent":
@@ -158,7 +159,7 @@ export async function toggleFilterCron(payload: any) {
 export async function toggleScrapeCron(payload: any) {
   const config = {
     method: "post",
-    url: process.env.SCRAPE_CRON_TOGGLE_STATUS,
+    url: applicationConfig.SCRAPE_CRON_TOGGLE_STATUS,
     headers: {
       "Content-Type": "application/json",
       "User-Agent":
@@ -172,7 +173,7 @@ export async function toggleScrapeCron(payload: any) {
 export async function toggleSlowCron(payload: any) {
   const config = {
     method: "post",
-    url: process.env.SLOW_CRON_TOGGLE_STATUS,
+    url: applicationConfig.SLOW_CRON_TOGGLE_STATUS,
     headers: {
       "Content-Type": "application/json",
       "User-Agent":
@@ -186,7 +187,7 @@ export async function toggleSlowCron(payload: any) {
 export async function recreateFilterCron(payload: any) {
   const config = {
     method: "post",
-    url: process.env.FILTER_CRON_RECREATE,
+    url: applicationConfig.FILTER_CRON_RECREATE,
     headers: {
       "Content-Type": "application/json",
       "User-Agent":
@@ -214,7 +215,7 @@ export async function native_post(_url: any, payload: any) {
 export async function recreateSlowCron(payload: any) {
   const config = {
     method: "post",
-    url: process.env.SLOW_CRON_RECREATE,
+    url: applicationConfig.SLOW_CRON_RECREATE,
     headers: {
       "Content-Type": "application/json",
       "User-Agent":
@@ -228,7 +229,7 @@ export async function recreateSlowCron(payload: any) {
 export async function recreateScrapeCron(payload: any) {
   const config = {
     method: "post",
-    url: process.env.SCRAPE_CRON_RECREATE,
+    url: applicationConfig.SCRAPE_CRON_RECREATE,
     headers: {
       "Content-Type": "application/json",
       "User-Agent":
@@ -251,7 +252,7 @@ export async function native_get_V2(_url: any, _headers: any) {
 async function getManualCronUrl(mpid: any, source: any) {
   const baseUri =
     source == "FEED"
-      ? process.env.FEED_REPRICER_OWN_URL
-      : process.env.REPRICE_OWN_URL;
+      ? applicationConfig.FEED_REPRICER_OWN_URL
+      : applicationConfig.REPRICE_OWN_URL;
   return `${baseUri}${mpid}`;
 }

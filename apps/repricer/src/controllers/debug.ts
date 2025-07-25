@@ -7,6 +7,7 @@ import moment from "moment";
 import * as httpMiddleware from "../middleware/http-wrappers";
 import * as mongoMiddleware from "../middleware/mongo";
 import * as mySqlMiddleware from "../middleware/mysql";
+import { applicationConfig } from "../utility/config";
 
 export async function ResetSlowCronUpdate(req: Request, res: Response) {
   const query = {
@@ -122,7 +123,7 @@ export async function CorrectSlowCronDetails(req: Request, res: Response) {
 export async function ScrapeProduct(req: Request, res: Response) {
   const mpId = req.params.mpid;
   const proxyProvId = req.params.proxyProviderId;
-  const requestUrl = `${process.env.GET_DATA_URL}/${mpId}/${proxyProvId}`;
+  const requestUrl = `${applicationConfig.GET_DATA_URL}/${mpId}/${proxyProvId}`;
   const axiosResponse = await httpMiddleware.native_get(requestUrl);
   return res.json(axiosResponse!.data);
 }

@@ -2,13 +2,14 @@ import axios from "axios";
 import excelJs from "exceljs";
 import dotenv from "dotenv";
 import { Request, Response } from "express";
+import { applicationConfig } from "../utility/config";
 dotenv.config();
 
 // export logs in excel
 export async function excelExport(req: Request, res: Response) {
   const workbook = new excelJs.Workbook();
   try {
-    let url = process.env.APP_LOG_PATH;
+    let url = applicationConfig.APP_LOG_PATH;
 
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
@@ -69,7 +70,7 @@ export async function excelExport(req: Request, res: Response) {
 // archive logs
 export async function clearLogs(req: Request, res: Response) {
   try {
-    const url = process.env.CLEAR_LOG_PATH;
+    const url = applicationConfig.CLEAR_LOG_PATH;
     console.log(url);
 
     let logsData = await axios.get(url as any).catch((error) => {
@@ -86,7 +87,7 @@ export async function clearLogs(req: Request, res: Response) {
 export async function GetAppLogs(req: Request, res: Response) {
   const today: any = new Date();
   let validationErrors: any[] = [];
-  let url = process.env.APP_LOG_PATH;
+  let url = applicationConfig.APP_LOG_PATH;
 
   const startDate = req.query.startDate;
   const endDate = req.query.endDate;

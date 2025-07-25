@@ -11,6 +11,7 @@ import apiMapping from "../../resources/apiMapping.json";
 import badgeResx from "../../resources/badgeIndicatorMapping.json";
 import handlingTimeGroupResx from "../../resources/HandlingTimeFilterMapping.json";
 import * as SessionHelper from "../utility/session-helper";
+import { applicationConfig } from "../utility/config";
 
 export const showAllProducts = async (req: Request, res: Response) => {
   let pgNo = 0;
@@ -28,9 +29,9 @@ export const showAllProducts = async (req: Request, res: Response) => {
     pageNumber = 0,
     totalDocs = 0,
     totalPages = 0;
-  pageSize = parseInt(process.env.CRON_PAGESIZE!);
+  pageSize = applicationConfig.CRON_PAGESIZE;
   pageNumber = pgNo || 0;
-  totalDocs = await mySqlHelper.GetNumberOfRepriceEligibleProductCount(); //await mongoMiddleware.GetProductCount(query);
+  totalDocs = await mySqlHelper.GetNumberOfRepriceEligibleProductCount();
   totalPages = Math.ceil(totalDocs / pageSize);
   let masterItems: any[] = [];
   if (tags && tags != "") {
@@ -353,7 +354,7 @@ export const runManualCron = async (req: Request, res: Response) => {
   let failedIds: any[] = [];
   if (selectedProducts && selectedProducts.length > 0) {
     for (const prod of selectedProducts) {
-      const manualRepriceUrl = `${process.env.MANUAL_REPRICER_URL}/${prod.trim()}${isV2Algorithm === "true" ? "?isV2Algorithm=true" : "?isV2Algorithm=false"}`;
+      const manualRepriceUrl = `${applicationConfig.MANUAL_REPRICER_URL}/${prod.trim()}${isV2Algorithm === "true" ? "?isV2Algorithm=true" : "?isV2Algorithm=false"}`;
       console.log("manualRepriceUrl", manualRepriceUrl);
       const repriceResult = await httpHelper.native_get(manualRepriceUrl);
       if (
@@ -393,7 +394,7 @@ export const syncProductDetails = async (req: Request, res: Response) => {
     "topDentDetails",
     "firstDentDetails",
   ];
-  const productDetailsUrl = process.env.PROD_SYNC_URL!.replace(
+  const productDetailsUrl = applicationConfig.PROD_SYNC_URL!.replace(
     "{productId}",
     idx,
   );
@@ -437,7 +438,7 @@ export const syncProductDetails = async (req: Request, res: Response) => {
 };
 
 export const runManualSyncOfProducts = async (req: Request, res: Response) => {
-  httpHelper.native_get(process.env.MANUAL_PRODUCT_SYNC_PROCESS);
+  httpHelper.native_get(applicationConfig.MANUAL_PRODUCT_SYNC_PROCESS);
   return res.json({
     status: true,
     message: `Manual Product Details Sync has been started. Please wait for 15 minutes for the sync to be completed and retry after getting a confirmation email.`,
@@ -506,7 +507,7 @@ export const saveRootDetails = async (req: Request, res: Response) => {
   const scrapeOnlyCronName = scrapeOnlyCronSettingsDetails.find(
     (x: any) => x.CronId == rootDetailsForPayload.scrapeOnlyCron,
   ).CronName;
-  const query = `UPDATE ${process.env.SQL_SCRAPEPRODUCTLIST} SET Net32Url=?,RegularCronId=?,RegularCronName=?,LinkedCronId=?,LinkedCronName=?,IsBadgeItem=?,IsActive=? WHERE MpId=?`;
+  const query = `UPDATE ${applicationConfig.SQL_SCRAPEPRODUCTLIST} SET Net32Url=?,RegularCronId=?,RegularCronName=?,LinkedCronId=?,LinkedCronName=?,IsBadgeItem=?,IsActive=? WHERE MpId=?`;
   const params = [
     rootDetailsForPayload.net32Url,
     rootDetailsForPayload.cronGroup,
@@ -718,7 +719,7 @@ export const updateToMax = async (req: Request, res: Response) => {
   let failedIds: any[] = [];
   if (selectedProducts && selectedProducts.length > 0) {
     for (const prod of selectedProducts) {
-      const updateToMaxResponse = `${process.env.MAX_UPDATE_REPRICER_URL}/${prod.trim()}`;
+      const updateToMaxResponse = `${applicationConfig.MAX_UPDATE_REPRICER_URL}/${prod.trim()}`;
       const repriceResult = await httpHelper.native_get(updateToMaxResponse);
       if (
         repriceResult &&

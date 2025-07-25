@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from "express";
+import { applicationConfig } from "../utility/config";
 
 export default (req: Request, res: Response, next: NextFunction) => {
   const stored_session = (req as any).session;
   const users_id = (stored_session as any).users_id;
-  const isDowntimeOn = JSON.parse(process.env.DOWNTIME_ON!);
-  if (isDowntimeOn == true) {
+  const isDowntimeOn = applicationConfig.DOWNTIME_ON;
+  if (isDowntimeOn) {
     res.redirect("/");
   } else {
     if (!users_id) {

@@ -7,7 +7,10 @@ import bodyParser from "body-parser";
 import indexRouter from "./routes";
 import { Request, Response } from "express";
 import { errorMiddleware } from "./utility/error-middleware";
+import { applicationConfig, validateConfig } from "./utility/config";
+
 require("dotenv").config();
+validateConfig();
 
 const app = express();
 app.use(bodyParser.json({ limit: "500mb" }));
@@ -57,7 +60,7 @@ app.use("/public/images", express.static("./public/images"));
 
 app.use(errorMiddleware);
 
-const PORT = process.env.PORT || 3000;
+const PORT = applicationConfig.PORT || 3000;
 app.listen(PORT, () =>
   console.log(
     `Server running in production mode on port ${PORT} at ${new Date()}`,

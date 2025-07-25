@@ -3,6 +3,7 @@ import moment from "moment";
 import * as httpMiddleware from "../middleware/http-wrappers";
 import * as mongoMiddleware from "../middleware/mongo";
 import * as SessionHelper from "../utility/session-helper";
+import { applicationConfig } from "../utility/config";
 
 export async function GetInprogressCron(req: Request, res: Response) {
   const cronSettings = await mongoMiddleware.GetCronSettingsList();
@@ -43,7 +44,7 @@ export async function Get422ProductDetails(req: Request, res: Response) {
 }
 
 export async function GetProductsBelowFloor(req: Request, res: Response) {
-  httpMiddleware.native_get(process.env.GET_422_BELOW_PRODUCTS);
+  httpMiddleware.native_get(applicationConfig.GET_422_BELOW_PRODUCTS);
   return res.json({
     status: true,
     data: `Job Started at ${new Date()}`,

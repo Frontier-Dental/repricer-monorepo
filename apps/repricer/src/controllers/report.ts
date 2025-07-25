@@ -2,6 +2,7 @@ import excelJs from "exceljs";
 import { Request, Response } from "express";
 import * as mapperHelper from "../middleware/mapper-helper";
 import * as mongoHelper from "../middleware/mongo";
+import { applicationConfig } from "../utility/config";
 
 export const GetFailedRepriceDetails = async (req: Request, res: Response) => {
   const failedResults = await getScrapedFailureReport();
@@ -47,8 +48,8 @@ async function getScrapedFailureReport() {
 }
 
 async function getQuery() {
-  const error_one = process.env.ERROR_ONE;
-  const error_two = process.env.ERROR_TWO;
+  const error_one = applicationConfig.ERROR_ONE;
+  const error_two = applicationConfig.ERROR_TWO;
   let finalQuery = {
     $or: [
       {
