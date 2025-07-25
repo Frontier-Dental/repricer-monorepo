@@ -3,7 +3,6 @@ import { z } from "zod";
 export const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   NODE_ENV: z.string().default("development"),
-  DATABASE_URL: z.string(),
   GET_REPRICER_DBNAME: z.string().default("repricer"),
   GET_CRON_LOGS_COLLECTION_NAME: z.string().default("cronLogs"),
   ITEMS_COLLECTION_NAME: z.string().default("items"),
@@ -28,7 +27,6 @@ export const envSchema = z.object({
   RECREATE_CRON_URL: z
     .string()
     .default("http://localhost:5001/schedule/RecreateCron"),
-  API_KEY_SCRAPPING_BEE: z.string(),
   NO_OF_RETRIES: z.coerce.number().default(4),
   RETRY_INTERVAL: z.coerce.number().default(4000),
   ERROR_ITEM_COLLECTION: z.string().default("errorItems"),

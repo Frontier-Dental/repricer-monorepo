@@ -80,7 +80,6 @@ const envSchema = z.object({
   NET32_PROXY_USERNAME: z.string().optional(),
   NET32_PROXY_PASSWORD: z.string().optional(),
   ROTATING_PROXY_URL: z.string().default("gate.smartproxy.com"),
-  API_KEY_SCRAPPING_BEE: z.string(),
   // Cron/URLs
   START_CRONS: z.string().optional(),
   CRON_RUN_ALL_URL: z
