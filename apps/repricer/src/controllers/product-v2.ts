@@ -13,7 +13,7 @@ import handlingTimeGroupResx from "../../resources/HandlingTimeFilterMapping.jso
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
 
-export const showAllProducts = async (req: Request, res: Response) => {
+export async function showAllProducts(req: Request, res: Response) {
   let pgNo = 0;
   let query = {};
   let tags = "";
@@ -65,9 +65,9 @@ export const showAllProducts = async (req: Request, res: Response) => {
     groupName: "Products",
     userRole: (req as any).session.users_id.userRole,
   });
-};
+}
 
-export const collateProducts = async (req: Request, res: Response) => {
+export async function collateProducts(req: Request, res: Response) {
   const _urlForActiveTradentProducts = apiMapping.find(
     (x) => x.vendorId == "17357",
   )!.activeListUrl;
@@ -85,9 +85,9 @@ export const collateProducts = async (req: Request, res: Response) => {
     status: true,
     message: `Products collating started at ${new Date()}`,
   });
-};
+}
 
-export const editItemView = async (req: Request, res: Response) => {
+export async function editItemView(req: Request, res: Response) {
   const mpid = req.params.mpid;
   let productDetails = await mySqlHelper.GetFullProductDetailsById(mpid); // await mongoMiddleware.FindProductById(mpid);
   let cronSettingsResponse = await mongoMiddleware.GetCronSettingsList();
@@ -104,9 +104,9 @@ export const editItemView = async (req: Request, res: Response) => {
     groupName: "Products",
     userRole: (req as any).session.users_id.userRole,
   });
-};
+}
 
-export const updateProductDetails = async (req: Request, res: Response) => {
+export async function updateProductDetails(req: Request, res: Response) {
   var details = req.body;
   //const scrapeOnlyCronSettings = await mongoMiddleware.GetScrapeCrons();
   let cronSettingsResponse = await mongoMiddleware.GetCronSettingsList();
@@ -214,18 +214,18 @@ export const updateProductDetails = async (req: Request, res: Response) => {
     status: true,
     message: `Products updated successfully!`,
   });
-};
+}
 
-export const collateProductsForId = async (req: Request, res: Response) => {
+export async function collateProductsForId(req: Request, res: Response) {
   const mpid = req.params.id;
   await productHelper.LoadProducts([mpid.trim()]);
   return res.json({
     status: true,
     message: `Products collating & loaded for MPID : ${mpid} at ${new Date()}`,
   });
-};
+}
 
-export const addItems = async (req: Request, res: Response) => {
+export async function addItems(req: Request, res: Response) {
   let productDetails: any = {
     tradentDetails: null,
     frontierDetails: null,
@@ -248,9 +248,9 @@ export const addItems = async (req: Request, res: Response) => {
     groupName: "item",
     userRole: (req as any).session.users_id.userRole,
   });
-};
+}
 
-export const addItemToDatabase = async (req: Request, res: Response) => {
+export async function addItemToDatabase(req: Request, res: Response) {
   var details = req.body;
   let productDetails: any = {};
   const scrapeOnlyCronSettings = await mongoMiddleware.GetScrapeCrons();
@@ -343,9 +343,9 @@ export const addItemToDatabase = async (req: Request, res: Response) => {
     status: true,
     message: `Products added successfully!`,
   });
-};
+}
 
-export const runManualCron = async (req: Request, res: Response) => {
+export async function runManualReprice(req: Request, res: Response) {
   const selectedProducts = Array.isArray(req.body.mpIds)
     ? req.body.mpIds
     : [req.body.mpIds];
@@ -355,7 +355,6 @@ export const runManualCron = async (req: Request, res: Response) => {
   if (selectedProducts && selectedProducts.length > 0) {
     for (const prod of selectedProducts) {
       const manualRepriceUrl = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.MANUAL_REPRICER_ENDPOINT}/${prod.trim()}${isV2Algorithm === "true" ? "?isV2Algorithm=true" : "?isV2Algorithm=false"}`;
-      console.log("manualRepriceUrl", manualRepriceUrl);
       const repriceResult = await httpHelper.native_get(manualRepriceUrl);
       if (
         repriceResult &&
@@ -383,9 +382,9 @@ export const runManualCron = async (req: Request, res: Response) => {
       status: true,
       message: `Manual Scrape Done Successfully!`,
     });
-};
+}
 
-export const syncProductDetails = async (req: Request, res: Response) => {
+export async function syncProductDetails(req: Request, res: Response) {
   const idx = req.params.id.trim();
   const vendorIdentifier = [
     "tradentDetails",
@@ -435,17 +434,17 @@ export const syncProductDetails = async (req: Request, res: Response) => {
     status: true,
     message: `Product ${idx} synced successfully!`,
   });
-};
+}
 
-export const runManualSyncOfProducts = async (req: Request, res: Response) => {
+export async function runManualSyncOfProducts(req: Request, res: Response) {
   httpHelper.native_get(applicationConfig.MANUAL_PRODUCT_SYNC_PROCESS);
   return res.json({
     status: true,
     message: `Manual Product Details Sync has been started. Please wait for 15 minutes for the sync to be completed and retry after getting a confirmation email.`,
   });
-};
+}
 
-export const removeFrom422 = async (req: Request, res: Response) => {
+export async function removeFrom422(req: Request, res: Response) {
   const selectedProducts = Array.isArray(req.body.mpIds)
     ? req.body.mpIds
     : [req.body.mpIds];
@@ -460,17 +459,17 @@ export const removeFrom422 = async (req: Request, res: Response) => {
       message: `Successfully removed ${selectedProducts[0]} from 422.`,
     });
   }
-};
+}
 
-export const removeFrom422ForAll = async (req: Request, res: Response) => {
+export async function removeFrom422ForAll(req: Request, res: Response) {
   await mongoMiddleware.Update422StatusById(null, true);
   return res.json({
     status: true,
     message: `Successfully removed all products from 422.`,
   });
-};
+}
 
-export const toggleDataScrape = async (req: Request, res: Response) => {
+export async function toggleDataScrape(req: Request, res: Response) {
   if (req.body.mpid) {
     const AuditInfo = await SessionHelper.GetAuditInfo(req);
     let activatedResponse = await mySqlHelper.ToggleDataScrapeForId(
@@ -492,9 +491,9 @@ export const toggleDataScrape = async (req: Request, res: Response) => {
       message: "MpId is Missing",
     });
   }
-};
+}
 
-export const saveRootDetails = async (req: Request, res: Response) => {
+export async function saveRootDetails(req: Request, res: Response) {
   const { mpid, rootDetailsForPayload } = req.body;
   const mpidTrimmed = mpid.trim();
 
@@ -523,9 +522,9 @@ export const saveRootDetails = async (req: Request, res: Response) => {
     status: true,
     message: `${mpidTrimmed} saved successfully.`,
   });
-};
+}
 
-export const activateProductForAll = async (req: Request, res: Response) => {
+export async function activateProductForAll(req: Request, res: Response) {
   if (req.body.mpid) {
     let activatedResponse = await mySqlHelper.ChangeProductActivation(
       parseInt(req.body.mpid.trim()),
@@ -543,9 +542,9 @@ export const activateProductForAll = async (req: Request, res: Response) => {
       message: "MpId is Missing",
     });
   }
-};
+}
 
-export const deActivateProductForAll = async (req: Request, res: Response) => {
+export async function deActivateProductForAll(req: Request, res: Response) {
   if (req.body.mpid) {
     const removeItems = await mySqlHelper.ChangeProductActivation(
       parseInt(req.body.mpid.trim()),
@@ -563,9 +562,9 @@ export const deActivateProductForAll = async (req: Request, res: Response) => {
       message: "MpId is Missing",
     });
   }
-};
+}
 
-export const saveBranches = async (req: Request, res: Response) => {
+export async function saveBranches(req: Request, res: Response) {
   const mpidTrimmed = req.body.mpid.trim();
   const {
     mpid,
@@ -710,9 +709,9 @@ export const saveBranches = async (req: Request, res: Response) => {
     status: true,
     message: `${mpidTrimmed} branches saved successfully.`,
   });
-};
+}
 
-export const updateToMax = async (req: Request, res: Response) => {
+export async function updateToMax(req: Request, res: Response) {
   const selectedProducts = Array.isArray(req.body.mpIds)
     ? req.body.mpIds
     : [req.body.mpIds];
@@ -747,10 +746,10 @@ export const updateToMax = async (req: Request, res: Response) => {
       status: true,
       message: `Update to Max Done Successfully!`,
     });
-};
+}
 
 /****** PRIVATE FUNCTIONS ******/
-export const exportItems = async (req: Request, res: Response) => {
+export async function exportItems(req: Request, res: Response) {
   //let ItemCollection = await mongoMiddleware.GetAllProductDetails();
   let ItemCollection = await mySqlHelper.GetCompleteProductDetails();
   const AllItems: any[] = [];
@@ -939,7 +938,7 @@ export const exportItems = async (req: Request, res: Response) => {
   return workbook.xlsx.write(res).then(function () {
     res.status(200).end();
   });
-};
+}
 
 function parseBadgeIndicator(stringValue: any, evalType: any) {
   if (_.isEqual(evalType, "KEY")) {
@@ -963,25 +962,3 @@ async function spliceResult(
   const splicesResult = _.chunk(arrayResult, pageSize);
   return splicesResult[pageNo];
 }
-
-module.exports = {
-  showAllProducts,
-  collateProducts,
-  editItemView,
-  updateProductDetails,
-  addItems,
-  addItemToDatabase,
-  exportItems,
-  activateProductForAll,
-  deActivateProductForAll,
-  collateProductsForId,
-  runManualCron,
-  toggleDataScrape,
-  saveBranches,
-  syncProductDetails,
-  saveRootDetails,
-  runManualSyncOfProducts,
-  removeFrom422,
-  removeFrom422ForAll,
-  updateToMax,
-};

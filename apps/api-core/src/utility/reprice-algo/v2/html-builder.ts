@@ -153,7 +153,7 @@ function buildPriceSolutionsTable(
   let header =
     "<tr>" +
     allVendorIds.map((id) => `<th>${VendorNameLookup[id]}</th>`).join("") +
-    "<th>buyBoxRankIncludingShipping</th><th>buyBoxRankFreeShipping</th><th>averagePrice</th><th>totalRank</th></tr>";
+    "<th>averagePrice</th><th>totalRank</th><th>consideredConfigurations</th></tr>";
   let rows = solutions
     .map((sol, idx) => {
       const rowStyle = idx === 0 ? ' style="background: #b3e6b3;"' : "";
@@ -165,7 +165,7 @@ function buildPriceSolutionsTable(
               `<td>${sol.vendorPrices.find((vp) => vp.vendorId === id)?.price !== undefined ? sol.vendorPrices.find((vp) => vp.vendorId === id)?.price : ""}</td>`,
           )
           .join("") +
-        `<td>${sol.solutions.buyBoxRankIncludingShipping}</td><td>${sol.solutions.buyBoxRankFreeShipping}</td><td>${sol.averagePrice.toFixed(2)}</td><td>${sol.totalRank}</td>` +
+        `<td>${sol.averagePrice.toFixed(2)}</td><td>${sol.totalRank}</td><td>${sol.consideredConfigurations}</td>` +
         "</tr>"
       );
     })

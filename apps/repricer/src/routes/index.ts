@@ -56,7 +56,7 @@ router.get("/masteritem/runAllCron", Auth, productController.runAllCron);
 router.post(
   "/productV2/runManualCron",
   Auth,
-  productV2Controller.runManualCron,
+  productV2Controller.runManualReprice,
 );
 router.get("/masteritem/resetCron", Auth, productController.resetCron);
 router.get("/masteritem/delete_all", Auth, productController.deleteAll);
