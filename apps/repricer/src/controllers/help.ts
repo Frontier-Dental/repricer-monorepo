@@ -84,6 +84,7 @@ export async function doIpHealthCheck(req: Request, res: Response) {
           check.ipHealth = `Red`;
         }
       } catch (ex) {
+        console.log(ex);
         check.net32ReturnStatusCode = 9999;
         check.ipHealth = `Red`;
       }
@@ -283,17 +284,13 @@ export async function alignExecutionPriority(req: Request, res: Response) {
 async function ping(hostname: any, port: any) {
   let check: any = null;
   let pingResponse: any = null;
-  try {
+  pingResponse = await execPing(hostname);
+  check = await getCheck(pingResponse, hostname, port);
+  if (check && check.ipStatus == "RED") {
+    // Retry 1 time after 1 second after failure
+    await delay(1000);
     pingResponse = await execPing(hostname);
     check = await getCheck(pingResponse, hostname, port);
-    if (check && check.ipStatus == "RED") {
-      // Retry 1 time after 1 second after failure
-      await delay(1000);
-      pingResponse = await execPing(hostname);
-      check = await getCheck(pingResponse, hostname, port);
-    }
-  } catch (err) {
-    pingResponse = err;
   }
   return check;
 }

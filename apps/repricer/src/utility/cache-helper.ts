@@ -1,5 +1,6 @@
 import nodeCache from "node-cache";
 import axios from "axios";
+import { applicationConfig } from "./config";
 
 const repricerCache = new nodeCache({ stdTTL: 0 });
 
@@ -36,7 +37,7 @@ export function FlushCache() {
 }
 
 export async function DeleteExternalCache(key: string) {
-  const deleteCacheUrl = `http://localhost:5001/cache/flush/${key}`;
+  const deleteCacheUrl = `${applicationConfig.REPRICER_API_BASE_URL}/cache/flush/${key}`;
   const config = {
     method: "get",
     url: deleteCacheUrl,

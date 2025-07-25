@@ -1,6 +1,7 @@
 import axios from "axios";
 import * as cacheHelper from "../utility/cache-helper";
 import { Request, Response } from "express";
+import { applicationConfig } from "../utility/config";
 
 export async function get_all_cache(req: Request, res: Response): Promise<any> {
   const cacheResponse: any = await GetAllCacheItems();
@@ -15,7 +16,7 @@ export async function get_cache_item(
   res: Response,
 ): Promise<any> {
   const _key = req.params.key;
-  const getCacheItemUrl = `http://localhost:5001/cache/getCache/${_key}`;
+  const getCacheItemUrl = `${applicationConfig.REPRICER_API_BASE_URL}/cache/getCache/${_key}`;
   const config = {
     method: "get",
     url: getCacheItemUrl,
@@ -32,7 +33,7 @@ export async function delete_cache_item(
   res: Response,
 ): Promise<any> {
   const _key = req.params.key;
-  const deleteCacheUrl = `http://localhost:5001/cache/flush/${_key}`;
+  const deleteCacheUrl = `${applicationConfig.REPRICER_API_BASE_URL}/cache/flush/${_key}`;
   const config = {
     method: "get",
     url: deleteCacheUrl,
@@ -48,7 +49,7 @@ export async function flush_all_cache(
   req: Request,
   res: Response,
 ): Promise<any> {
-  const flushAllCacheUrl = `http://localhost:5001/cache/flush`;
+  const flushAllCacheUrl = `${applicationConfig.REPRICER_API_BASE_URL}/cache/flush`;
   const config = {
     method: "get",
     url: flushAllCacheUrl,
@@ -61,7 +62,7 @@ export async function flush_all_cache(
 }
 
 export async function GetAllCacheItems(): Promise<any> {
-  const getAllCacheUrl = `http://localhost:5001/cache/getall/`;
+  const getAllCacheUrl = `${applicationConfig.REPRICER_API_BASE_URL}/cache/getall/`;
   const config = {
     method: "get",
     url: getAllCacheUrl,

@@ -26,24 +26,21 @@ export async function getCronLogs(req: Request, res: Response) {
     toDate: "",
   };
 
-  if (req.query.hasOwnProperty("pgno")) {
+  if (req.query.pgno) {
     pgNo = (req.query.pgno as any) - 1;
   }
-  if (
-    req.query.hasOwnProperty("fromDate") &&
-    req.query.hasOwnProperty("toDate")
-  ) {
+  if (req.query.fromDate && req.query.toDate) {
     date.fromDate = req.query.fromDate;
     date.toDate = req.query.toDate;
   }
-  const type = req.query.hasOwnProperty("type") ? req.query.type : "";
+  const type = req.query.type ? req.query.type : "";
 
   let group = "";
   let cronId = "";
   let cronSettings = await mongoMiddleware.GetCronSettingsList();
   const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
   cronSettings = _.concat(cronSettings, slowCronSettings);
-  if (req.query.hasOwnProperty("group")) {
+  if (req.query.group) {
     if (req.query.group != "") {
       group = req.query.group as string;
       cronId = cronSettings.find((x: any) => x.CronName == group).CronId;
@@ -69,28 +66,22 @@ export async function getCronLogs(req: Request, res: Response) {
         }
       });
       if (!existingModel) {
-        try {
-          let _$cronLog: any = new CronLogs(log, idx++);
-          _$cronLog.repricedProductCount = await getRepricerCount(log);
-          _$cronLog.successScrapeCount = await getScrapeCountByFlag(log, 1); // SUCCESS:1
-          _$cronLog.failureScrapeCount = await getScrapeCountByFlag(log, 0); // FAILURE:0
-          _$cronLog.repriceFailure422Count = await getRepriceFailureByType(
-            log,
-            1,
-          ); //422-Error:1
-          _$cronLog.repriceFailureOtherCount = await getRepriceFailureByType(
-            log,
-            0,
-          ); //Any Other Error:0
-          _$cronLog.cronName = cronSettings.find(
-            (t: any) => t.CronId == log.cronId,
-          ).CronName;
-          logViewModel.unshift(_$cronLog);
-        } catch (ex: any) {
-          console.log(
-            `Error while Mapping cron log ${log._id.toString()} with error ${ex.message}`,
-          );
-        }
+        let _$cronLog: any = new CronLogs(log, idx++);
+        _$cronLog.repricedProductCount = await getRepricerCount(log);
+        _$cronLog.successScrapeCount = await getScrapeCountByFlag(log, 1); // SUCCESS:1
+        _$cronLog.failureScrapeCount = await getScrapeCountByFlag(log, 0); // FAILURE:0
+        _$cronLog.repriceFailure422Count = await getRepriceFailureByType(
+          log,
+          1,
+        ); //422-Error:1
+        _$cronLog.repriceFailureOtherCount = await getRepriceFailureByType(
+          log,
+          0,
+        ); //Any Other Error:0
+        _$cronLog.cronName = cronSettings.find(
+          (t: any) => t.CronId == log.cronId,
+        ).CronName;
+        logViewModel.unshift(_$cronLog);
       }
     }
   }
@@ -540,7 +531,7 @@ async function getExcelItemCollection(cronObject: any, errorRows = 0) {
                   row.logs.repriceData.listOfRepriceDetails,
                 )
               : "N/A";
-        _contextRow.isPriceUpdated = row.hasOwnProperty("priceUpdated")
+        _contextRow.isPriceUpdated = row.priceUpdated
           ? row.priceUpdated
           : "FALSE";
         _contextRow.comments =
@@ -913,7 +904,7 @@ async function getExcelItemCollectionV2(cronObject: any, errorRows = 0) {
                       vRow.logs.repriceData.listOfRepriceDetails,
                     )
                   : "N/A";
-            _contextRow.isPriceUpdated = vRow.hasOwnProperty("priceUpdated")
+            _contextRow.isPriceUpdated = vRow.priceUpdated
               ? vRow.priceUpdated
               : "FALSE";
             _contextRow.comments =
@@ -988,7 +979,7 @@ export async function getCurrentTasks(req: Request, res: Response) {
 }
 
 export async function getCronHistoryLogs(req: Request, res: Response) {
-  let logViewModel: any = {};
+  let logViewModel: any = [];
   let pgNo = 0;
   let pgLimit = 10; // item per page - default
   let totalRecords = 25; // used for limit in db Query - default
@@ -1005,12 +996,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
     toDate: "",
   };
 
-  if (
-    req.query.hasOwnProperty("fromDate") &&
-    req.query.fromDate &&
-    req.query.hasOwnProperty("toDate") &&
-    req.query.toDate
-  ) {
+  if (req.query.fromDate && req.query.toDate) {
     date.fromDate = new Date(req.query.fromDate as any);
     date.toDate = new Date(req.query.toDate as any);
   } else {
@@ -1018,24 +1004,24 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
     date.toDate = endOfToday;
   }
 
-  if (req.query.hasOwnProperty("pgno")) {
+  if (req.query.pgno) {
     pgNo = (req.query.pgno as any) - 1 || 0;
     if (pgNo < 0) {
       pgNo = 0;
     }
   }
 
-  if (req.query.hasOwnProperty("pageSize")) {
+  if (req.query.pageSize) {
     pgLimit = (req.query.pageSize as any) || 25;
   }
 
   // total records - query from DB
-  if (req.query.hasOwnProperty("totalRecords")) {
+  if (req.query.totalRecords) {
     totalRecords = (req.query.totalRecords as any) || 25;
     pgLimit = totalRecords; //temp
   }
 
-  const type = req.query.hasOwnProperty("cronType")
+  const type = req.query.cronType
     ? (req.query.cronType as any)
     : "ALL_EXCEPT_422";
 
@@ -1063,7 +1049,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
     });
   }
 
-  if (req.query.hasOwnProperty("cronId")) {
+  if (req.query.cronId) {
     if (req.query.cronId != "" && req.query.cronId != "ALL") {
       cronId = req.query.cronId as any;
     }
@@ -1188,51 +1174,47 @@ async function getLogAnalysis(logList: any) {
     failure422Count: 0,
     failureOtherCount: 0,
   };
-  try {
-    if (logList) {
-      for (const vendorLogs of logList.logs) {
-        if (vendorLogs.length > 0) {
-          for (const x of vendorLogs) {
-            if (
-              x.logs &&
-              !_.includes(uniqueSuccessProductArray, x.productId) &&
-              (x.logs.repriceData || x.logs.listOfRepriceDetails)
-            ) {
-              logAnalysisInfo.successCount++;
-              uniqueSuccessProductArray.push(x.productId);
-            }
-            if (
-              x.logs &&
-              !_.includes(uniqueFailureProductArray, x.productId) &&
-              !x.logs.repriceData &&
-              !x.logs.listOfRepriceDetails
-            ) {
-              logAnalysisInfo.failureCount++;
-              uniqueFailureProductArray.push(x.productId);
-            }
-            if (
-              x.priceUpdateResponse &&
-              x.priceUpdateResponse.message &&
-              JSON.stringify(x.priceUpdateResponse.message).indexOf(
-                "ERROR:422",
-              ) >= 0
-            ) {
-              logAnalysisInfo.failure422Count++;
-            }
-            if (
-              x.priceUpdateResponse &&
-              x.priceUpdateResponse.message &&
-              x.priceUpdateResponse.message.statusCode &&
-              x.priceUpdateResponse.message.statusCode != 200
-            ) {
-              logAnalysisInfo.failureOtherCount++;
-            }
+  if (logList) {
+    for (const vendorLogs of logList.logs) {
+      if (vendorLogs.length > 0) {
+        for (const x of vendorLogs) {
+          if (
+            x.logs &&
+            !_.includes(uniqueSuccessProductArray, x.productId) &&
+            (x.logs.repriceData || x.logs.listOfRepriceDetails)
+          ) {
+            logAnalysisInfo.successCount++;
+            uniqueSuccessProductArray.push(x.productId);
+          }
+          if (
+            x.logs &&
+            !_.includes(uniqueFailureProductArray, x.productId) &&
+            !x.logs.repriceData &&
+            !x.logs.listOfRepriceDetails
+          ) {
+            logAnalysisInfo.failureCount++;
+            uniqueFailureProductArray.push(x.productId);
+          }
+          if (
+            x.priceUpdateResponse &&
+            x.priceUpdateResponse.message &&
+            JSON.stringify(x.priceUpdateResponse.message).indexOf(
+              "ERROR:422",
+            ) >= 0
+          ) {
+            logAnalysisInfo.failure422Count++;
+          }
+          if (
+            x.priceUpdateResponse &&
+            x.priceUpdateResponse.message &&
+            x.priceUpdateResponse.message.statusCode &&
+            x.priceUpdateResponse.message.statusCode != 200
+          ) {
+            logAnalysisInfo.failureOtherCount++;
           }
         }
       }
     }
-  } catch (ex) {
-    console.log(ex);
   }
   return logAnalysisInfo;
 }

@@ -17,12 +17,12 @@ export const showAllProducts = async (req: Request, res: Response) => {
   let pgNo = 0;
   let query = {};
   let tags = "";
-  if (req.query.hasOwnProperty("tags")) {
+  if (req.query.tags) {
     tags = req.query.tags as string;
     // val = new RegExp(tags, 'i');
     // query['$or'] = [{ "mpId": val }, { "tradentDetails.channelName": val }, { "tradentDetails.focusId": val }, { "tradentDetails.channelId": val }, { "frontierDetails.channelName": val }, { "frontierDetails.focusId": val }, { "frontierDetails.channelId": val }, { "mvpDetails.channelName": val }, { "mvpDetails.focusId": val }, { "mvpDetails.channelId": val }];
   }
-  if (req.query.hasOwnProperty("pgno")) {
+  if (req.query.pgno) {
     pgNo = (req.query.pgno as any) - 1;
   }
   let pageSize = 0,
@@ -354,7 +354,7 @@ export const runManualCron = async (req: Request, res: Response) => {
   let failedIds: any[] = [];
   if (selectedProducts && selectedProducts.length > 0) {
     for (const prod of selectedProducts) {
-      const manualRepriceUrl = `${applicationConfig.MANUAL_REPRICER_URL}/${prod.trim()}${isV2Algorithm === "true" ? "?isV2Algorithm=true" : "?isV2Algorithm=false"}`;
+      const manualRepriceUrl = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.MANUAL_REPRICER_ENDPOINT}/${prod.trim()}${isV2Algorithm === "true" ? "?isV2Algorithm=true" : "?isV2Algorithm=false"}`;
       console.log("manualRepriceUrl", manualRepriceUrl);
       const repriceResult = await httpHelper.native_get(manualRepriceUrl);
       if (
@@ -719,7 +719,7 @@ export const updateToMax = async (req: Request, res: Response) => {
   let failedIds: any[] = [];
   if (selectedProducts && selectedProducts.length > 0) {
     for (const prod of selectedProducts) {
-      const updateToMaxResponse = `${applicationConfig.MAX_UPDATE_REPRICER_URL}/${prod.trim()}`;
+      const updateToMaxResponse = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.MAX_UPDATE_REPRICER_ENDPOINT}/${prod.trim()}`;
       const repriceResult = await httpHelper.native_get(updateToMaxResponse);
       if (
         repriceResult &&

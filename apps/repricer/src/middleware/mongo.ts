@@ -937,7 +937,7 @@ export const InsertOrUpdateProductWithCronName = async (
 const setSelectiveDetails = (details: any, prefix: any) => {
   let setObj: any = {};
   for (const key in details) {
-    if (details.hasOwnProperty(key)) {
+    if (details[key]) {
       setObj[`${prefix}.${key}`] = details[key];
     }
   }

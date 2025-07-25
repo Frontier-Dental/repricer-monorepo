@@ -379,33 +379,27 @@ export const MapScrapedFailedResults = async (cronLogs: any) => {
   let result: any[] = [];
   const error_one = applicationConfig.ERROR_ONE;
   const error_two = applicationConfig.ERROR_TWO;
-  try {
-    for (const $ of cronLogs) {
-      if ($.logs && $.logs.length > 0) {
-        for (const $l of $.logs) {
-          if ($l.length > 0) {
-            _.forEach($l, (x) => {
-              if (x.logs && x.logs.length > 0) {
-                if (x.logs == error_one || x.logs == error_two) {
-                  const report = new FailedReport(
-                    x.productId,
-                    x.vendor,
-                    x.logs,
-                    $.cronId,
-                    moment(new Date($.time)).format("DD-MM-YY HH:mm:ss") as any,
-                  );
-                  result.push(report as never);
-                }
+  for (const $ of cronLogs) {
+    if ($.logs && $.logs.length > 0) {
+      for (const $l of $.logs) {
+        if ($l.length > 0) {
+          _.forEach($l, (x) => {
+            if (x.logs && x.logs.length > 0) {
+              if (x.logs == error_one || x.logs == error_two) {
+                const report = new FailedReport(
+                  x.productId,
+                  x.vendor,
+                  x.logs,
+                  $.cronId,
+                  moment(new Date($.time)).format("DD-MM-YY HH:mm:ss") as any,
+                );
+                result.push(report as never);
               }
-            });
-          }
+            }
+          });
         }
       }
     }
-  } catch (exception) {
-    console.log(
-      `Exception while mapping Failed Scraped Response : ${exception}`,
-    );
   }
   return result;
 };
@@ -781,7 +775,7 @@ function parseBadgeIndicator(stringValue: any, evalType: any) {
 function removeBackslashes(obj: any) {
   if (obj && typeof obj === "object") {
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (obj[key]) {
         if (typeof obj[key] === "string") {
           obj[key] = obj[key].replace(/\\/g, "");
         } else if (typeof obj[key] === "object") {

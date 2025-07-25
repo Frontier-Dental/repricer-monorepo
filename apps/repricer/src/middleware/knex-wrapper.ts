@@ -1,5 +1,5 @@
 import { Knex, knex } from "knex";
-import { applicationConfig } from "../../utility/config";
+import { applicationConfig } from "../utility/config";
 
 let knexInstance: Knex | null = null;
 

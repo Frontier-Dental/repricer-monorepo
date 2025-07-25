@@ -249,24 +249,18 @@ export async function ExportLogDetails(req: Request, res: Response) {
   ).cronName;
   if (cronLogDetails && cronLogDetails.cronItem) {
     _.forEach(cronLogDetails.cronItem, (x) => {
-      try {
-        x.filterDate = moment(cronLogDetails.filterDate).format(
-          "DD-MM-YY HH:mm:ss",
-        );
-        x.startTime = moment(cronLogDetails.startTime).format(
-          "DD-MM-YY HH:mm:ss",
-        );
-        x.cronKey = cronKey;
-        x.sourceCronName = x.sourceCronId
-          ? regularCronDetails.find((c: any) => c.CronId == x.sourceCronId)
-              .CronName
-          : null;
-        x.contextCronName = contextCronName;
-      } catch (ex: any) {
-        console.log(
-          `Error while mapping ${x.productId} || Error : ${ex.message as any}`,
-        );
-      }
+      x.filterDate = moment(cronLogDetails.filterDate).format(
+        "DD-MM-YY HH:mm:ss",
+      );
+      x.startTime = moment(cronLogDetails.startTime).format(
+        "DD-MM-YY HH:mm:ss",
+      );
+      x.cronKey = cronKey;
+      x.sourceCronName = x.sourceCronId
+        ? regularCronDetails.find((c: any) => c.CronId == x.sourceCronId)
+            .CronName
+        : null;
+      x.contextCronName = contextCronName;
     });
   }
   const workbook = new excelJs.Workbook();

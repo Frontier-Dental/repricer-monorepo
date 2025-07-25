@@ -12,7 +12,7 @@ export async function onInit(req: Request, res: Response) {
 export async function ScrapeProduct(req: Request, res: Response) {
   const mpId = req.params.mpid;
   const proxyProvId = req.params.proxyProviderId;
-  const requestUrl = `${applicationConfig.GET_DATA_URL}/${mpId}/${proxyProvId}`;
+  const requestUrl = `${applicationConfig.GET_DATA_URL_ENDPOINT}/${mpId}/${proxyProvId}`;
   let startTime = process.hrtime();
   const axiosResponse = await httpMiddleware.native_get(requestUrl);
   const timeTaken = parseHrtimeToSeconds(process.hrtime(startTime));

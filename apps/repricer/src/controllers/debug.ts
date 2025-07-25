@@ -123,7 +123,7 @@ export async function CorrectSlowCronDetails(req: Request, res: Response) {
 export async function ScrapeProduct(req: Request, res: Response) {
   const mpId = req.params.mpid;
   const proxyProvId = req.params.proxyProviderId;
-  const requestUrl = `${applicationConfig.GET_DATA_URL}/${mpId}/${proxyProvId}`;
+  const requestUrl = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.GET_DATA_URL_ENDPOINT}/${mpId}/${proxyProvId}`;
   const axiosResponse = await httpMiddleware.native_get(requestUrl);
   return res.json(axiosResponse!.data);
 }

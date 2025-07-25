@@ -44,7 +44,10 @@ export async function Get422ProductDetails(req: Request, res: Response) {
 }
 
 export async function GetProductsBelowFloor(req: Request, res: Response) {
-  httpMiddleware.native_get(applicationConfig.GET_422_BELOW_PRODUCTS);
+  httpMiddleware.native_get(
+    applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.GET_422_BELOW_PRODUCTS_ENDPOINT,
+  );
   return res.json({
     status: true,
     data: `Job Started at ${new Date()}`,

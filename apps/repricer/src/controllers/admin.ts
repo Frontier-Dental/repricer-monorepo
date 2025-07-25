@@ -66,7 +66,7 @@ export async function purgeBasedOnDate(req: Request, res: Response) {
 
 export async function runSpecificCron(req: Request, res: Response) {
   const cronName = req.params.cronName;
-  const serviceUrl = `${applicationConfig.RUN_SPECIFIC_CRON}/${cronName}`;
+  const serviceUrl = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.RUN_SPECIFIC_CRON_ENDPOINT}/${cronName}`;
   const auditInfo = await SessionHelper.GetAuditInfo(req);
   console.log(
     `MANUAL_CRON_RUN : Specific Cron run by ${auditInfo.UpdatedBy} on ${auditInfo.UpdatedOn} for Cron : ${cronName}`,
@@ -93,7 +93,7 @@ export async function UpdateProxyProviderThresholdValue(
 export async function ResetProxyProvider(req: Request, res: Response) {
   const proxyProvider = parseInt(req.params.proxyProviderId);
   const auditInfo = await SessionHelper.GetAuditInfo(req);
-  const resetUrl = `${applicationConfig.PROXY_PROVIDER_RESET_URL}/${proxyProvider}/${auditInfo.UpdatedBy}`;
+  const resetUrl = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.PROXY_PROVIDER_RESET_URL_ENDPOINT}/${proxyProvider}/${auditInfo.UpdatedBy}`;
   await httpHelper.native_get(resetUrl);
   return res.json({
     status: true,

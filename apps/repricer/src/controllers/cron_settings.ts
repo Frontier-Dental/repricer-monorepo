@@ -117,7 +117,7 @@ export async function updateCronSettings(req: Request, res: Response) {
   var listOfUpdates: any[] = [];
   var listOfUpdatedCronKey: any[] = [];
   for (const $cr in payload.cron_id_hdn as any) {
-    var offset = cronSettingsResponse[$cr as any].hasOwnProperty("Offset")
+    var offset = cronSettingsResponse[$cr as any].Offset
       ? cronSettingsResponse[$cr as any].Offset
       : 0;
     const ipType = payload[`ip_type_${payload.cron_id_hdn[$cr]}`]

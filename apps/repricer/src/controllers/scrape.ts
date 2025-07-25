@@ -85,7 +85,7 @@ export const UpdateScrapeCronExp = async (req: Request, res: Response) => {
   const normalizedRequestPayload = await normalizePayload(requestedPayload);
 
   for (const en in normalizedRequestPayload.cron_id_hdn) {
-    var offset = scrapeCronDetails[en].hasOwnProperty("Offset")
+    var offset = scrapeCronDetails[en].Offset
       ? scrapeCronDetails[en].Offset
       : 0;
     const proxyProvider = normalizedRequestPayload.scr_proxy_provider[en]
@@ -223,12 +223,12 @@ export const GetScrapeProducts = async (req: Request, res: Response) => {
   let pgNo = 0;
   let incomingFilter: any = null;
   let tags = "";
-  if (req.query.hasOwnProperty("tags")) {
+  if (req.query.tags) {
     incomingFilter = `${req.query.tags as string}`;
     // incomingFilter = `%${req.query.tags}%`;
     tags = req.query.tags as string;
   }
-  if (req.query.hasOwnProperty("pgno")) {
+  if (req.query.pgno) {
     pgNo = req.query.pgno as any;
   }
 
@@ -312,43 +312,34 @@ export const importItems = async (req: Request, res: Response) => {
   let input = req.body;
   const auditInfo = await SessionHelper.GetAuditInfo(req);
   const scrapeCron = await mongoMiddleware.GetScrapeCrons();
-  try {
-    let items: any[] = [];
-    for (let k = 0; k < parseInt(input.count) - 1; k++) {
-      var row = input.data[k];
-      let $item = {
-        isActive: row[0] ? JSON.parse(row[0]) : true,
-        mpId: parseInt(row[1]),
-        net32Url: row[2] ? row[2] : "N/A",
-        linkedCron: row[3].trim(),
-        linkedCronId: row[3]
-          ? scrapeCron.find((x: any) => x.CronName == row[3].trim()).CronId
-          : "",
-        lastUpdatedBy: auditInfo.UpdatedBy,
-        lastUpdatedOn: moment(auditInfo.UpdatedOn).format(
-          "YYYY-MM-DD HH:mm:ss",
-        ),
-        isBadgeItem: row[8] ? JSON.parse(row[8]) : false,
-      };
-      items.push($item as never);
-    }
-    for (const item of items as any) {
-      if ((item as any).mpId != "") {
-        console.log(`EXCEL-IMPORT : Inserting ${(item as any).mpId} to mySQL`);
-        await sqlMiddleware.UpsertProductDetails(item);
-      }
-    }
-    return res.json({
-      status: true,
-      message: `Item Chart added successfully. Count : ${input.count}`,
-    });
-  } catch (exception) {
-    console.log(exception);
-    return res.json({
-      status: false,
-      message: JSON.stringify(exception),
-    });
+
+  let items: any[] = [];
+  for (let k = 0; k < parseInt(input.count) - 1; k++) {
+    var row = input.data[k];
+    let $item = {
+      isActive: row[0] ? JSON.parse(row[0]) : true,
+      mpId: parseInt(row[1]),
+      net32Url: row[2] ? row[2] : "N/A",
+      linkedCron: row[3].trim(),
+      linkedCronId: row[3]
+        ? scrapeCron.find((x: any) => x.CronName == row[3].trim()).CronId
+        : "",
+      lastUpdatedBy: auditInfo.UpdatedBy,
+      lastUpdatedOn: moment(auditInfo.UpdatedOn).format("YYYY-MM-DD HH:mm:ss"),
+      isBadgeItem: row[8] ? JSON.parse(row[8]) : false,
+    };
+    items.push($item as never);
   }
+  for (const item of items as any) {
+    if ((item as any).mpId != "") {
+      console.log(`EXCEL-IMPORT : Inserting ${(item as any).mpId} to mySQL`);
+      await sqlMiddleware.UpsertProductDetails(item);
+    }
+  }
+  return res.json({
+    status: true,
+    message: `Item Chart added successfully. Count : ${input.count}`,
+  });
 };
 
 export const addItems = async (req: Request, res: Response) => {

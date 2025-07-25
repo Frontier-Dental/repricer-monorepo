@@ -6,50 +6,45 @@ import { applicationConfig } from "../utility/config";
 // export logs in excel
 export async function excelExport(req: Request, res: Response) {
   const workbook = new excelJs.Workbook();
-  try {
-    let url = applicationConfig.APP_LOG_PATH;
+  let url = applicationConfig.APP_LOG_PATH_ENDPOINT;
 
-    const startDate = req.query.startDate;
-    const endDate = req.query.endDate;
-    const logLevel = req.query.logLevel;
-    const page = parseInt(req.query.page as any) || 1;
-    const keyWord = req.query.keyWord;
-    const pageSize = parseInt(req.query.pageSize as any) || 50;
+  const startDate = req.query.startDate;
+  const endDate = req.query.endDate;
+  const logLevel = req.query.logLevel;
+  const page = parseInt(req.query.page as any) || 1;
+  const keyWord = req.query.keyWord;
+  const pageSize = parseInt(req.query.pageSize as any) || 50;
 
-    const today = new Date();
+  const today = new Date();
 
-    const params: any = {
-      startDate:
-        startDate == undefined ? today.toISOString().slice(0, 10) : startDate,
-      endDate:
-        endDate == undefined ? today.toISOString().slice(0, 10) : endDate,
-      logLevel: logLevel,
-      page: page,
-      keyWord: keyWord,
-      pageSize: pageSize,
-    };
+  const params: any = {
+    startDate:
+      startDate == undefined ? today.toISOString().slice(0, 10) : startDate,
+    endDate: endDate == undefined ? today.toISOString().slice(0, 10) : endDate,
+    logLevel: logLevel,
+    page: page,
+    keyWord: keyWord,
+    pageSize: pageSize,
+  };
 
-    let appLogs: any = [];
-    appLogs = await axios.get(url as any, { params }).catch((error) => {
-      console.log(error);
-    });
-    appLogs = appLogs.data;
-    let paginate = await paginateData(appLogs, page, pageSize);
-    let logsData = paginate.data;
-
-    const worksheet = workbook.addWorksheet("appLogs");
-
-    worksheet.columns = [
-      { header: "Level", key: "level", width: 10 },
-      { header: "Date", key: "dateTime", width: 20 },
-      { header: "Message", key: "message", width: 20 },
-      { header: "Scrape Time", key: "timeTaken", width: 10 },
-      { header: "Module", key: "module", width: 10 },
-    ];
-    worksheet.addRows(logsData);
-  } catch (error) {
+  let appLogs: any = [];
+  appLogs = await axios.get(url as any, { params }).catch((error) => {
     console.log(error);
-  }
+  });
+  appLogs = appLogs.data;
+  let paginate = await paginateData(appLogs, page, pageSize);
+  let logsData = paginate.data;
+
+  const worksheet = workbook.addWorksheet("appLogs");
+
+  worksheet.columns = [
+    { header: "Level", key: "level", width: 10 },
+    { header: "Date", key: "dateTime", width: 20 },
+    { header: "Message", key: "message", width: 20 },
+    { header: "Scrape Time", key: "timeTaken", width: 10 },
+    { header: "Module", key: "module", width: 10 },
+  ];
+  worksheet.addRows(logsData);
 
   res.setHeader(
     "Content-Type",
@@ -67,16 +62,14 @@ export async function excelExport(req: Request, res: Response) {
 
 // archive logs
 export async function clearLogs(req: Request, res: Response) {
-  try {
-    const url = applicationConfig.CLEAR_LOG_PATH;
-    console.log(url);
+  const url =
+    applicationConfig.REPRICER_API_BASE_URL +
+    applicationConfig.CLEAR_LOG_PATH_ENDPOINT;
+  console.log(url);
 
-    let logsData = await axios.get(url as any).catch((error) => {
-      console.log(error);
-    });
-  } catch (exception) {
-    console.log("APPLOG", exception);
-  }
+  await axios.get(url as any).catch((error) => {
+    console.log(error);
+  });
 
   res.redirect("/logs");
 }
@@ -85,7 +78,9 @@ export async function clearLogs(req: Request, res: Response) {
 export async function GetAppLogs(req: Request, res: Response) {
   const today: any = new Date();
   let validationErrors: any[] = [];
-  let url = applicationConfig.APP_LOG_PATH;
+  let url =
+    applicationConfig.REPRICER_API_BASE_URL +
+    applicationConfig.APP_LOG_PATH_ENDPOINT;
 
   const startDate = req.query.startDate;
   const endDate = req.query.endDate;
@@ -113,29 +108,25 @@ export async function GetAppLogs(req: Request, res: Response) {
   let appLogs: any = [];
   let paginatedLogsData: any = [];
   let logsPagination: any = {};
-  try {
-    if (load_data != false) {
-      if (validationErrors.length < 1) {
-        appLogs = await axios.get(url as any, { params }).catch((error) => {
-          console.log(error);
-        });
-        appLogs = appLogs.data;
-      }
-
-      let paginate = await paginateData(appLogs, page, pageSize);
-
-      paginatedLogsData = paginate.data;
-      logsPagination = {
-        currentPage: paginate.currentPage,
-        totalPages: paginate.totalPages,
-        hasNextPage: paginate.currentPage < paginate.totalPages,
-        hasPrevPage: paginate.currentPage > 1,
-        nextPage: paginate.currentPage + 1,
-        prevPage: paginate.currentPage - 1,
-      };
+  if (load_data != false) {
+    if (validationErrors.length < 1) {
+      appLogs = await axios.get(url as any, { params }).catch((error) => {
+        console.log(error);
+      });
+      appLogs = appLogs.data;
     }
-  } catch (exception) {
-    console.log(exception);
+
+    let paginate = await paginateData(appLogs, page, pageSize);
+
+    paginatedLogsData = paginate.data;
+    logsPagination = {
+      currentPage: paginate.currentPage,
+      totalPages: paginate.totalPages,
+      hasNextPage: paginate.currentPage < paginate.totalPages,
+      hasPrevPage: paginate.currentPage > 1,
+      nextPage: paginate.currentPage + 1,
+      prevPage: paginate.currentPage - 1,
+    };
   }
 
   res.render("pages/appLogs", {

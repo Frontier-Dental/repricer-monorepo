@@ -5,7 +5,7 @@ import { applicationConfig } from "../utility/config";
 
 export async function showLogHistory(req: Request, res: Response) {
   let pgNo = 0;
-  if (req.query.hasOwnProperty("pgno")) {
+  if (req.query.pgno) {
     pgNo = (req.query.pgno as any) - 1;
   }
   let pageSize = 0,
@@ -35,7 +35,7 @@ export async function showLogHistory(req: Request, res: Response) {
 export async function logsHistoryList(req: Request, res: Response) {
   const id = req.params.id;
   let pgNo = 0;
-  if (req.query.hasOwnProperty("pgno")) {
+  if (req.query.pgno) {
     pgNo = (req.query.pgno as any) - 1;
   }
   let pageSize = 0,

@@ -7,95 +7,77 @@ export const envSchema = z.object({
   GET_CRON_LOGS_COLLECTION_NAME: z.string().default("cronLogs"),
   ITEMS_COLLECTION_NAME: z.string().default("items"),
   CRON_PAGESIZE: z.coerce.number().default(10),
-  CRON_RUN_ALL_URL: z
-    .string()
-    .default("http://localhost:5001/schedule/StartCronV3"),
-  UPDATE_PRICE_URL: z
+  CRON_RUN_ALL_ENDPOINT: z.string().default("/schedule/StartCronV3"),
+  NET32_UPDATE_PRICE_URL: z
     .string()
     .default("https://api.net32.com/products/offers/update"),
   SUBSCRIPTION_KEY: z.string().default(""),
   CRON_STATUS_COLLECTION_NAME: z.string().default("cronStatusLogs"),
   FILTER_CRON_COLLECTION_NAME: z.string().default("filterCronSettings"),
-  REPRICE_OWN_URL: z
-    .string()
-    .default("http://localhost:5001/search/RepriceProduct/"),
+  REPRICE_OWN_ENDPOINT: z.string().default("/search/RepriceProduct/"),
   CRON_SETTINGS_COLLECTION_NAME: z.string().default("cronSettings"),
-  CRON_START_URL: z
-    .string()
-    .default("http://localhost:5001/schedule/StartCron"),
-  CRON_STOP_URL: z.string().default("http://localhost:5001/schedule/StopCron"),
-  RECREATE_CRON_URL: z
-    .string()
-    .default("http://localhost:5001/schedule/RecreateCron"),
+  CRON_START_ENDPOINT: z.string().default("/schedule/StartCron"),
+  CRON_STOP_ENDPOINT: z.string().default("/schedule/StopCron"),
+  RECREATE_CRON_ENDPOINT: z.string().default("/schedule/RecreateCron"),
   NO_OF_RETRIES: z.coerce.number().default(4),
   RETRY_INTERVAL: z.coerce.number().default(4000),
   ERROR_ITEM_COLLECTION: z.string().default("errorItems"),
-  MANUAL_PROD_UPDATE: z
-    .string()
-    .default("http://localhost:5001/product/updateManualProd/"),
+  MANUAL_PROD_UPDATE_ENDPOINT: z.string().default("/product/updateManualProd/"),
   IP_CONFIG: z.string().default("ipConfig"),
   HISTORY_DB: z.string().default("historyData"),
   ENV_SETTINGS: z.string().default("envsettings"),
   HISTORY_LIMIT: z.coerce.number().default(50),
-  STOP_ALL_CRON: z.string().default("http://localhost:5001/schedule/StopAll"),
+  STOP_ALL_CRON_ENDPOINT: z.string().default("1/schedule/StopAll"),
   EXPORT_STATUS: z.string().default("exportStatus"),
-  START_OVERRIDE_URL: z
-    .string()
-    .default("http://localhost:5001/schedule/startOverride"),
+  START_OVERRIDE_URL_ENDPOINT: z.string().default("/schedule/startOverride"),
   HISTORY_BASE_PATH: z.string().default("/repricer-api-core/history/"),
   FILE_DELIMITER: z.string().default("/"),
-  FEED_REPRICER_OWN_URL: z
-    .string()
-    .default("http://localhost:5001/feed/RepriceProduct/"),
+  FEED_REPRICER_ENDPOINT: z.string().default("/feed/RepriceProduct/"),
   PRODUCT_COLLECTION: z.string().default("products"),
   MANAGED_MONGO_URL: z.string(),
   DATA_SOURCE: z.string().default("CMS"),
   USERS_COLLECTION: z.string().default("users"),
   DEFAULT_PRODUCT_STATUS: z.string().default("true"),
-  MANUAL_REPRICER_URL: z
+  MANUAL_REPRICER_ENDPOINT: z.string().default("/repricer/ManualUpdate"),
+  RUN_SPECIFIC_CRON_ENDPOINT: z
     .string()
-    .default("http://localhost:5001/repricer/ManualUpdate"),
-  RUN_SPECIFIC_CRON: z
-    .string()
-    .default("http://localhost:5001/schedule/start_specific_cron"),
+    .default("/schedule/start_specific_cron"),
   ERROR_ONE: z.string().default("Error: Invalid response found in Net32 Api"),
   ERROR_TWO: z.string().default("Error: Could not find own vendor Id"),
   SLOW_CRON_GROUP_COLLECTION_NAME: z.string().default("slowCronSettings"),
   FILTER_CRON_LOGS: z.string().default("filterCronLogs"),
   FILTER_CRON_LOGS_LIMIT: z.coerce.number().default(10),
-  FILTER_CRON_TOGGLE_STATUS: z
+  FILTER_CRON_TOGGLE_STATUS_ENDPOINT: z
     .string()
-    .default("http://localhost:5001/filter/toggleCronStatus"),
-  FILTER_CRON_RECREATE: z
+    .default("/filter/toggleCronStatus"),
+  FILTER_CRON_RECREATE_ENDPOINT: z
     .string()
-    .default("http://localhost:5001/filter/RecreateFilterCron"),
+    .default("/filter/RecreateFilterCron"),
   GET_INPROGRESS_CRON: z
     .string()
     .default("http://localhost:3000/monitor/GetProducts"),
   GET_PRODUCTS_COUNT: z
     .string()
     .default("http://localhost:3000/monitor/GetInprogressCron"),
-  GET_422_BELOW_PRODUCTS: z
+  GET_422_BELOW_PRODUCTS_ENDPOINT: z
     .string()
-    .default(
-      "http://localhost:5001/debug/filterProductsWithFloor/6e2fe8965f5040748912bb90080a2de5",
-    ),
-  SLOW_CRON_TOGGLE_STATUS: z
+    .default("/debug/filterProductsWithFloor/6e2fe8965f5040748912bb90080a2de5"),
+  SLOW_CRON_TOGGLE_STATUS_ENDPOINT: z
     .string()
-    .default("http://localhost:5001/slow_cron/toggleCronStatus"),
-  SLOW_CRON_RECREATE: z
+    .default("/slow_cron/toggleCronStatus"),
+  SLOW_CRON_RECREATE_ENDPOINT: z
     .string()
-    .default("http://localhost:5001/slow_cron/RecreateSlowCron"),
-  GET_DATA_URL: z.string().default("http://localhost:5001/debug/get-data"),
+    .default("/slow_cron/RecreateSlowCron"),
+  GET_DATA_URL_ENDPOINT: z.string().default("/debug/get-data"),
   PROXY_FAILURE_COLLECTION: z.string().default("proxyFailureDetails"),
   USER_CREATION_EMAIL_TRIGGER_URL: z
     .string()
     .default("http://localhost:5421/notify/user_creation_email"),
-  PROXY_PROVIDER_RESET_URL: z
+  PROXY_PROVIDER_RESET_URL_ENDPOINT: z
     .string()
-    .default("http://localhost:5001/proxy_provider/reset_counter"),
-  APP_LOG_PATH: z.string().default("http://localhost:5001/app/logs"),
-  CLEAR_LOG_PATH: z.string().default("http://localhost:5001/app/clear-logs"),
+    .default("/proxy_provider/reset_counter"),
+  APP_LOG_PATH_ENDPOINT: z.string().default("/app/logs"),
+  CLEAR_LOG_PATH_ENDPOINT: z.string().default("/app/clear-logs"),
   SCRAPE_ITEMS_COLLECTION: z.string().default("scrapeItems"),
   ERROR_422_CRON_LOGS: z.string().default("422cronLogs"),
   SCRAPE_CRON_SETTINGS_COLLECTION_NAME: z
@@ -103,12 +85,12 @@ export const envSchema = z.object({
     .default("scrapeCronSettings"),
   SCRAPE_PRODUCTS_COLLECTION: z.string().default("scrapeProducts"),
   SCRAPE_LOGS_COLLECTION: z.string().default("scrapeCronLogs"),
-  SCRAPE_CRON_TOGGLE_STATUS: z
+  SCRAPE_CRON_TOGGLE_STATUS_ENDPOINT: z
     .string()
-    .default("http://localhost:5001/scrape/toggleCronStatus"),
-  SCRAPE_CRON_RECREATE: z
+    .default("/scrape/toggleCronStatus"),
+  SCRAPE_CRON_RECREATE_ENDPOINT: z
     .string()
-    .default("http://localhost:5001/scrape/RecreateScrapeCron"),
+    .default("/scrape/RecreateScrapeCron"),
   SQL_HOSTNAME: z.string(),
   SQL_USERNAME: z.string(),
   SQL_PASSWORD: z.string(),
@@ -197,10 +179,9 @@ export const envSchema = z.object({
   MANUAL_PRODUCT_SYNC_PROCESS: z
     .string()
     .default("http://localhost:5421/schedule/on-demand/mysql-sync"),
-  MAX_UPDATE_REPRICER_URL: z
-    .string()
-    .default("http://localhost:5001/repricer/UpdateToMax"),
+  MAX_UPDATE_REPRICER_ENDPOINT: z.string().default("/repricer/UpdateToMax"),
   SESSION_SECRET: z.string(),
+  REPRICER_API_BASE_URL: z.string().default("http://localhost:5001"),
 });
 
 export function validateConfig() {

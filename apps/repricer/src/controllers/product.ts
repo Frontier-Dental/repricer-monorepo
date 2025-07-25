@@ -16,7 +16,7 @@ const _constants = new scheduleConstants();
 export const getMasterItemController = async (req: Request, res: Response) => {
   let query: any = {};
   let tags = "";
-  if (req.query.hasOwnProperty("tags")) {
+  if (req.query.tags) {
     tags = req.query.tags as string;
     let val = new RegExp(tags, "i");
     let tagsArr = (req.query.tags as string).split(" ");
@@ -32,7 +32,7 @@ export const getMasterItemController = async (req: Request, res: Response) => {
   }
 
   let pgNo = 0;
-  if (req.query.hasOwnProperty("pgno")) {
+  if (req.query.pgno) {
     pgNo = (req.query.pgno as any) - 1;
   }
   let pageSize = 0,
