@@ -18,38 +18,34 @@ export function writeRepriceHtmlReport(
   priceSolutions: PriceSolutions,
   oldModelSolutions?: RepriceModel[],
 ) {
-  try {
-    const htmlDir = path.resolve(process.cwd(), "html");
-    if (!fs.existsSync(htmlDir)) {
-      fs.mkdirSync(htmlDir);
-    }
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[:.]/g, "-")
-      .slice(0, -5);
-    const htmlFile = path.join(
-      htmlDir,
-      `repriceProductV3_${mpid}_${timestamp}.html`,
-    );
-    // Get net32url from the first internalProduct, if present
-    const net32url = internalProducts[0]?.net32url;
+  const htmlDir = path.resolve(process.cwd(), "html");
+  if (!fs.existsSync(htmlDir)) {
+    fs.mkdirSync(htmlDir);
+  }
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
+  const htmlFile = path.join(
+    htmlDir,
+    `repriceProductV3_${mpid}_${timestamp}.html`,
+  );
+  // Get net32url from the first internalProduct, if present
+  const net32url = internalProducts[0]?.net32url;
 
-    // Build internal products table
-    const internalProductsTable = buildInternalProductsTable(
-      internalProducts,
-      net32Products,
-    );
+  // Build internal products table
+  const internalProductsTable = buildInternalProductsTable(
+    internalProducts,
+    net32Products,
+  );
 
-    // --- Before tables for each quantity ---
-    let newAlgoSections = "";
-    for (const quantity of Object.keys(priceSolutions)) {
-      const q = Number(quantity);
-      newAlgoSections += `<h2>Quantity: ${q}</h2>`;
-      newAlgoSections +=
-        `<b>Price Solutions</b>` + buildPriceSolutionsTable(priceSolutions, q);
-    }
+  // --- Before tables for each quantity ---
+  let newAlgoSections = "";
+  for (const quantity of Object.keys(priceSolutions)) {
+    const q = Number(quantity);
+    newAlgoSections += `<h2>Quantity: ${q}</h2>`;
+    newAlgoSections +=
+      `<b>Price Solutions</b>` + buildPriceSolutionsTable(priceSolutions, q);
+  }
 
-    const htmlContent = `<!DOCTYPE html>
+  const htmlContent = `<!DOCTYPE html>
   <html lang="en">
   <head>
     <meta charset="UTF-8">
@@ -74,10 +70,8 @@ export function writeRepriceHtmlReport(
     ${oldModelSolutions && oldModelSolutions.length > 0 ? buildOldAlgorithmSection(oldModelSolutions) : ""}
   </body>
   </html>`;
-    fs.writeFileSync(htmlFile, htmlContent, "utf8");
-  } catch (err) {
-    console.error("Failed to write HTML output:", err);
-  }
+  fs.writeFileSync(htmlFile, htmlContent, "utf8");
+  return htmlContent;
 }
 
 export function buildInternalProductsTable(
@@ -177,7 +171,15 @@ function buildOldAlgorithmSection(oldModelSolutions: RepriceModel[]) {
   let section = "<h2>Old Algorithm</h2>";
   for (const model of oldModelSolutions) {
     section += `<h3>${model.vendorName}</h3>`;
-    section += buildOldAlgorithmTable(model.listOfRepriceDetails);
+    if (model.listOfRepriceDetails.length > 0) {
+      section += buildOldAlgorithmTable(model.listOfRepriceDetails);
+    } else if (model.repriceDetails) {
+      section += buildOldAlgorithmTable([
+        { ...model.repriceDetails, minQty: 1 },
+      ]);
+    } else {
+      throw new Error("No details available.");
+    }
   }
   return section;
 }

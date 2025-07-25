@@ -1382,6 +1382,40 @@ function saveRootDetails(mpid) {
   });
 }
 
+
+function simulateManualReprice() {
+  const hiddenInputs = document.querySelectorAll('input[type="hidden"]');
+  const payLoadForManualUpdate = [];
+  hiddenInputs.forEach((input) => {
+    if (input.id == "mpIds") {
+      payLoadForManualUpdate.push(input.value.trim());
+    }
+  });
+  if (payLoadForManualUpdate.length > 0) {
+    const firstMpId = payLoadForManualUpdate[0];
+    $.ajax({
+      type: "GET",
+      url: `/productV2/simulateManualReprice/${firstMpId}`,
+      cache: false,
+      beforeSend: function () {
+        showLoadingToast("Please Wait");
+      },
+      success: function (html) {
+        // Create a new window/tab to display the HTML
+        const newWindow = window.open('', '_blank');
+        newWindow.document.write(html);
+        newWindow.document.close();
+        showSuccessToast("Simulation report opened in new window");
+      },
+      error: function () {
+        showErrorToast("Something went wrong. Please try again");
+      },
+    });
+  } else {
+    showErrorToast("No Product Selected for simulation...");
+  }
+}
+
 function runManualScrape(isProductPage, isV2Algorithm) {
   console.log("In run manual scrape", isProductPage, isV2Algorithm);
   const hiddenInputs = document.querySelectorAll('input[type="hidden"]');

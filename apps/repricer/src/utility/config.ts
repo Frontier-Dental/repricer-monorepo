@@ -38,6 +38,7 @@ export const envSchema = z.object({
   DATA_SOURCE: z.string().default("CMS"),
   USERS_COLLECTION: z.string().default("users"),
   DEFAULT_PRODUCT_STATUS: z.string().default("true"),
+  SIMULATE_REPRICER_ENDPOINT: z.string().default("/repricer/V2AlgoTest"),
   MANUAL_REPRICER_ENDPOINT: z.string().default("/repricer/ManualUpdate"),
   RUN_SPECIFIC_CRON_ENDPOINT: z
     .string()
@@ -181,7 +182,7 @@ export const envSchema = z.object({
     .default("http://localhost:5421/schedule/on-demand/mysql-sync"),
   MAX_UPDATE_REPRICER_ENDPOINT: z.string().default("/repricer/UpdateToMax"),
   SESSION_SECRET: z.string(),
-  REPRICER_API_BASE_URL: z.string().default("http://localhost:5001"),
+  REPRICER_API_BASE_URL: z.string().default("http://127.0.0.1:5001"),
 });
 
 export function validateConfig() {

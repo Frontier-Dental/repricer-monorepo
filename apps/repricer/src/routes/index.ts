@@ -58,6 +58,11 @@ router.post(
   Auth,
   productV2Controller.runManualReprice,
 );
+router.get(
+  "/productV2/simulateManualReprice/:id",
+  // Auth,
+  productV2Controller.simulateManualReprice,
+);
 router.get("/masteritem/resetCron", Auth, productController.resetCron);
 router.get("/masteritem/delete_all", Auth, productController.deleteAll);
 router.get("/dashboard/download_json", Auth, cronLogsController.downloadLog);

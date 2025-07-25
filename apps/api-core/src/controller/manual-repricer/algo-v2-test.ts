@@ -61,14 +61,14 @@ export async function v2AlgoTest(
       results.push(result.cronResponse.repriceData);
     }
   }
-  const v2Response = repriceProductV2(
+  const { v2Response: v2Data, html } = repriceProductV2(
     mpid,
     net32Products as SimplifiedNet32Product[],
     internalProducts,
     results,
   );
 
-  res.status(StatusCodes.OK).json(v2Response);
+  res.status(StatusCodes.OK).json({ ...v2Data, html });
 }
 
 async function getNet32Products(mpId: string, prod: ProductDetailsListItem) {

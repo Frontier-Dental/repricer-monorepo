@@ -337,13 +337,15 @@ export function repriceProductV2(
   // // TODO: Compute a final solution encompassing all quantity breaks
   // // then compare with existing and execute change on net32 if necessary
 
-  writeRepriceHtmlReport(
+  const html = writeRepriceHtmlReport(
     mpid,
     internalProducts,
     rawNet32Products,
     priceSolutions,
     oldModelSolutions,
   );
+  // Return both the v2Response (current return value) and the HTML
+  return { v2Response: { priceSolutions, existingProductRankings }, html };
 }
 
 function insertPriceSolution(

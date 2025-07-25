@@ -12,6 +12,7 @@ import badgeResx from "../../resources/badgeIndicatorMapping.json";
 import handlingTimeGroupResx from "../../resources/HandlingTimeFilterMapping.json";
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
+import axios from "axios";
 
 export async function showAllProducts(req: Request, res: Response) {
   let pgNo = 0;
@@ -343,6 +344,24 @@ export async function addItemToDatabase(req: Request, res: Response) {
     status: true,
     message: `Products added successfully!`,
   });
+}
+
+export async function simulateManualReprice(req: Request, res: Response) {
+  const mpid = req.params.id;
+  const manualRepriceUrl = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.SIMULATE_REPRICER_ENDPOINT}/${mpid.trim()}`;
+  const repriceResult = await axios.post(manualRepriceUrl);
+
+  // Extract HTML from the response
+  const html = repriceResult.data.html;
+
+  if (html) {
+    // Set content type to HTML and send the HTML directly
+    res.setHeader("Content-Type", "text/html");
+    return res.send(html);
+  } else {
+    // Fallback to JSON if no HTML is available
+    return res.json(repriceResult.data);
+  }
 }
 
 export async function runManualReprice(req: Request, res: Response) {
