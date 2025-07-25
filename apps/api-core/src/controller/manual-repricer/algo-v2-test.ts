@@ -6,16 +6,16 @@ import { Net32Product } from "../../types/net32";
 import * as sqlHelper from "../../utility/mysql-helper";
 import { ProductDetailsListItem } from "../../utility/mySql-mapper";
 import * as axiosHelper from "../../utility/axios-helper";
-import { repriceProductV2 } from "../../utility/reprice_algo/v2/v2";
+import { repriceProductV2 } from "../../utility/reprice-algo/v2/v2";
 import { AxiosResponse } from "axios";
-import { repriceProduct } from "../../utility/reprice_algo/algo-v1";
+import { repriceProduct } from "../../utility/reprice-algo/algo-v1";
 import { FrontierProduct } from "../../types/frontier";
 import createError from "http-errors";
 import {
   SimplifiedNet32Product,
   VendorIdLookup,
   VendorNameLookup,
-} from "../../utility/reprice_algo/v2/types";
+} from "../../utility/reprice-algo/v2/types";
 import { RepriceModel } from "../../model/reprice-model";
 import { applicationConfig } from "../../utility/config";
 

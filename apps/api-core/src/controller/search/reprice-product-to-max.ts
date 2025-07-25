@@ -17,7 +17,7 @@ import {
   getPriceStepValue,
   getSecretKey,
   isPriceUpdateRequired,
-} from "../../utility/reprice_algo/shared";
+} from "../../utility/reprice-algo/shared";
 import { applicationConfig } from "../../utility/config";
 
 export async function repriceProductToMax(

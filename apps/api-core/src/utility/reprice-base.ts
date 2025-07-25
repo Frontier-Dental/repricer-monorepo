@@ -13,7 +13,7 @@ import { ProductDetailsListItem } from "./mySql-mapper";
 import { CronSettings } from "../types/cron-settings";
 import { RepriceProductHttpResponse } from "../types/reprice-product-http-response";
 import { AxiosResponse } from "axios";
-import { repriceProduct } from "./reprice_algo/algo-v1";
+import { repriceProduct } from "./reprice-algo/algo-v1";
 import { FrontierProduct } from "../types/frontier";
 import { RepriceAsyncResponse } from "../model/reprice-async-response";
 import { applicationConfig } from "./config";
