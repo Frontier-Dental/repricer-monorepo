@@ -9,7 +9,7 @@ import { applicationConfig } from "./config";
 import * as dbHelper from "./mongo/db-helper";
 import * as mongoHelper from "./mongo/mongo-helper";
 import * as axiosRetryHelper from "./proxy/axios-retry-helper";
-import * as brightDataHelper from "./proxy/brightdata-helper";
+import * as brightDataHelper from "./proxy/bright-data-helper";
 import * as scrapflyHelper from "./proxy/scrapfly-helper";
 import * as ProxyHelper from "./proxy-helper";
 import * as responseUtility from "./response-utility";

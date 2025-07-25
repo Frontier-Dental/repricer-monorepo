@@ -1,7 +1,7 @@
 import axios from "axios";
 import _ from "lodash";
 import requestPromise from "request-promise";
-import * as brightDataHelper from "./proxy/brightdata-helper";
+import * as brightDataHelper from "./proxy/bright-data-helper";
 import * as proxyHelper from "./proxy-helper";
 import * as axiosHelper from "./axios-helper";
 import xml2js from "xml2js";
