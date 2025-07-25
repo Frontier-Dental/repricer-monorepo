@@ -9,7 +9,6 @@ import { Request, Response } from "express";
 import { errorMiddleware } from "./utility/error-middleware";
 import { applicationConfig, validateConfig } from "./utility/config";
 
-require("dotenv").config();
 validateConfig();
 
 const app = express();

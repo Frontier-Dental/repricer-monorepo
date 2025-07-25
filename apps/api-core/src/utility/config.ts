@@ -66,14 +66,39 @@ const envSchema = z.object({
   // App
   PORT: z.coerce.number().default(5001),
   OFFSET: z.coerce.number().default(0.01),
-  IGNORE_TIE: z.coerce.boolean().default(false),
-  WRITE_HISTORY_SQL: z.coerce.boolean().default(true),
+  IGNORE_TIE: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(false),
+  WRITE_HISTORY_SQL: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
   APP_LOG_PATH: z.string().default("logs/app.log"),
-  IS_DEBUG: z.coerce.boolean().default(false),
+  IS_DEBUG: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(false),
   FILE_PATH: z.string().default("../test"),
   DEFAULT_DELAY: z.coerce.number().default(1500),
-  FLAG_MULTI_PRICE_UPDATE: z.coerce.boolean().default(true),
-  FORMAT_RESPONSE_CUSTOM: z.coerce.boolean().default(true),
+  FLAG_MULTI_PRICE_UPDATE: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
+  FORMAT_RESPONSE_CUSTOM: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
   // Proxy/Net32
   NET32_PROXY_HOST: z.string().optional(),
   NET32_PROXY_PORT: z.string().optional(),
@@ -152,8 +177,18 @@ const envSchema = z.object({
   COLLATE_DATA_URL: z
     .string()
     .default("http://localhost:5001/data/collate_feed"),
-  IS_SCRAPER: z.coerce.boolean().default(true),
-  IGNORE_CACHE: z.coerce.boolean().default(true),
+  IS_SCRAPER: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
+  IGNORE_CACHE: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
   NO_OF_RETRIES: z.coerce.number().default(4),
   RETRY_INTERVAL: z.coerce.number().default(4000),
   _422_CACHE_VALID_PERIOD: z.coerce.number().default(120),
@@ -167,9 +202,19 @@ const envSchema = z.object({
   SCRAPINGBEE_WAIT_VALUE: z.coerce.number().default(1500),
   SCRAPFLY_TIMEOUT_VALUE: z.coerce.number().default(15000),
   SCRAPFLY_WAIT_VALUE: z.coerce.number().default(1500),
-  IS_DEV: z.coerce.boolean().default(true),
+  IS_DEV: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
   NODE_ENV: z.string().default("development"),
-  ENABLE_SLOW_CRON_FEATURE: z.coerce.boolean().default(true),
+  ENABLE_SLOW_CRON_FEATURE: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
 });
 
 export function validateConfig() {

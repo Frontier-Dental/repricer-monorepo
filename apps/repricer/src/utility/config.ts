@@ -1,4 +1,6 @@
+import path from "path";
 import { z } from "zod";
+import { config } from "dotenv";
 
 export const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
@@ -147,14 +149,24 @@ export const envSchema = z.object({
   SQL_SP_GET_PRODUCT_LIST_BY_TAG: z
     .string()
     .default("sp_GetFullProductDetailsListByTag"),
-  USE_MYSQL: z.coerce.boolean().default(true),
+  USE_MYSQL: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
   SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID: z
     .string()
     .default("sp_GetFullProductDetailsByIdV2"),
   SQL_SP_UPDATE_TRADENT: z.string().default("sp_UpdateTradentDetailsById"),
   SQL_SP_UPDATE_FRONTIER: z.string().default("sp_UpdateFrontierDetailsById"),
   SQL_SP_UPDATE_MVP: z.string().default("sp_UpdateMvpDetailsById"),
-  DOWNTIME_ON: z.coerce.boolean().default(false),
+  DOWNTIME_ON: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(false),
   SQL_SP_UPDATE_FIRSTDENT: z.string().default("sp_UpdateFirstDentDetailsById"),
   SQL_SP_UPDATE_TOPDENT: z.string().default("sp_UpdateTopDentDetailsById"),
   SQL_SP_UPSERT_TOPDENT: z.string().default("sp_UpsertTopDentDetails"),
