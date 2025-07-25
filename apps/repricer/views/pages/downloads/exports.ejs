@@ -5,15 +5,13 @@
   <div class="page">
     <div class="container-fluid">
       <div class="d-flex justify-content-between">
-        <% if (files.length > 0) { %> <% // Helper functions for date parsing
-        and formatting function parseDate(dateString) { const [day, month, year,
-        hour, minute, second] = dateString.split(/[-\s:]+/); const fullYear =
-        `20${year}`; return new
+        <% if (files.length > 0) { %> <% function parseDate(dateString) { const
+        [day, month, year, hour, minute, second] = dateString.split(/[-\s:]+/);
+        const fullYear = `20${year}`; return new
         Date(`${fullYear}-${month}-${day}T${hour}:${minute}:${second}`); }
         function formatDate(dateString) { const date = parseDate(dateString);
         return isNaN(date.getTime()) ? "Invalid Date" : date.toLocaleString(); }
-        // Sort files by 'updatedOn' date in descending order files.sort((a, b)
-        => parseDate(b.updatedOn) - parseDate(a.updatedOn)); %>
+        files.sort((a, b) => parseDate(b.updatedOn) - parseDate(a.updatedOn)); %>
         <table class="table table-striped table-bordered">
           <thead>
             <tr>

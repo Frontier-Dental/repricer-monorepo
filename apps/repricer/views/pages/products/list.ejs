@@ -2,7 +2,7 @@
 <%- include('../left-sidebar') %>
 
 <% let pgno=pageNumber + 1; let upVal=0, lowVal=0 ; const pages=new
-Array(totalPages).fill(null).map((v, i)=> i) if (pageNumber <= 2) { upVal=0;
+Array(totalPages).fill(null).map((v, i)=> i); if (pageNumber <= 2) { upVal=0;
 lowVal=5 } else if (pageNumber>= (totalPages - 3)) { upVal = totalPages - 5;
 lowVal = totalPages } else { upVal = pageNumber - 2; lowVal = pageNumber + 3 }
 %>
