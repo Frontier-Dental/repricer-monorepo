@@ -1,9 +1,7 @@
 import axios from "axios";
 import excelJs from "exceljs";
-import dotenv from "dotenv";
 import { Request, Response } from "express";
 import { applicationConfig } from "../utility/config";
-dotenv.config();
 
 // export logs in excel
 export async function excelExport(req: Request, res: Response) {

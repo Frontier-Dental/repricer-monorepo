@@ -1,6 +1,4 @@
-import path from "path";
 import { z } from "zod";
-import { config } from "dotenv";
 
 export const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
@@ -202,6 +200,7 @@ export const envSchema = z.object({
   MAX_UPDATE_REPRICER_URL: z
     .string()
     .default("http://localhost:5001/repricer/UpdateToMax"),
+  SESSION_SECRET: z.string(),
 });
 
 export function validateConfig() {

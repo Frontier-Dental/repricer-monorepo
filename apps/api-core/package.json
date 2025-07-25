@@ -4,7 +4,7 @@
   "description": "",
   "main": "./dist/main.js",
   "scripts": {
-    "dev": "ts-node-dev --poll --respawn --transpile-only src/main.ts",
+    "dev": "ts-node-dev -r dotenv/config --respawn --transpile-only src/main.ts",
     "start": "node dist/main.js",
     "format": "prettier --write \"src/**/*.{js,ts}\"",
     "build": "tsc",

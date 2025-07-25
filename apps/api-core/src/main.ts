@@ -44,7 +44,6 @@ nodeApp.use(
     level: 9,
   }),
 );
-require("dotenv").config();
 validateConfig();
 
 const port = applicationConfig.PORT;

@@ -31,8 +31,8 @@ app.use(
 );
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, "public")));
-app.use("/logo", express.static(path.join(__dirname, "/uploads/excel")));
+app.use(express.static(path.join(__dirname, "..", "public")));
+app.use("/logo", express.static(path.join(__dirname, "..", "/uploads/excel")));
 
 app.use(cookieParser("secret"));
 
@@ -40,7 +40,7 @@ const MemoryStore = memorystore(session);
 
 app.use(
   session({
-    secret: "secret",
+    secret: applicationConfig.SESSION_SECRET,
     resave: true,
     saveUninitialized: false,
     store: new MemoryStore({
@@ -60,8 +60,9 @@ app.use("/public/images", express.static("./public/images"));
 app.use(errorMiddleware);
 
 const PORT = applicationConfig.PORT || 3000;
-app.listen(PORT, () =>
+app.listen(PORT, () => {
+  console.log(path.join(__dirname, "public"));
   console.log(
     `Server running in production mode on port ${PORT} at ${new Date()}`,
-  ),
-);
+  );
+});
