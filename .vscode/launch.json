@@ -10,7 +10,17 @@
       "request": "launch",
       "runtimeArgs": ["-r", "ts-node/register"],
       "args": ["${workspaceFolder}/apps/api-core/src/main.ts"],
-      "cwd": "${workspaceFolder}/apps/api-core"
+      "cwd": "${workspaceFolder}/apps/api-core",
+      "envFile": "${workspaceFolder}/apps/api-core/.env"
+    },
+    {
+      "name": "Debug Web App",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["${workspaceFolder}/apps/repricer/src/server.ts"],
+      "cwd": "${workspaceFolder}/apps/repricer",
+      "envFile": "${workspaceFolder}/apps/repricer/.env"
     },
     {
       "type": "node",
