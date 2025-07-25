@@ -1,17 +1,13 @@
-const path = require("path");
-const express = require("express");
-const session = require("express-session");
-const { connectDB } = require("./src/config/db.js");
+import path from "path";
+import express from "express";
+import session from "express-session";
 
-const cookieParser = require("cookie-parser");
-var MemoryStore = require("memorystore")(session);
-const { notFound, errorHandler } = require("./src/middleware/errors.js");
-const bodyParser = require("body-parser");
+import cookieParser from "cookie-parser";
+import memorystore from "memorystore";
+import bodyParser from "body-parser";
 
 //const DATABASE_URL = "mongodb://localhost:27017";
 require("dotenv").config();
-//connect to DATABASE
-connectDB(process.env.DATABASE_URL);
 
 const app = express();
 app.use(bodyParser.json({ limit: "500mb" }));
@@ -43,6 +39,9 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/logo", express.static(path.join(__dirname, "/uploads/excel")));
 // const secret = process.env.SECRET;
 app.use(cookieParser("secret"));
+
+const MemoryStore = memorystore(session);
+
 app.use(
   session({
     secret: "secret",
@@ -64,8 +63,7 @@ app.use("/", indexRouter);
 app.use("/public/images", express.static("./public/images"));
 
 const PORT = process.env.PORT || 3000;
-app.listen(
-  PORT,
+app.listen(PORT, () =>
   console.log(
     `Server running in production mode on port ${PORT} at ${new Date()}`,
   ),

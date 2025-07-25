@@ -360,7 +360,7 @@ export const AlignCronName = async (productList: any) => {
           const contextCronName = (_.last(listOfRelatedProducts) as any)
             .cronName;
           const contextCronId = (_.last(listOfRelatedProducts) as any).cronId;
-          _.forEach(listOfRelatedProducts, (p) => {
+          _.forEach(listOfRelatedProducts, (p: any) => {
             p.cronName = contextCronName;
             p.cronId = contextCronId;
           });
