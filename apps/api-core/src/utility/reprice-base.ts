@@ -33,7 +33,7 @@ export async function Execute(
     totalCount: productList.length,
   };
   const isOverrideRun = false;
-  if (isSlowCronRun == true) {
+  if (isSlowCronRun) {
     cronLogs.type = "SLOWCRON";
     cronLogs.cronId = cronSetting.CronId;
   }
@@ -52,7 +52,7 @@ export async function Execute(
   let repricedProductCount = 0;
   for (let prod of productList) {
     //Set cronSetting if it is Null
-    if (cronSetting == null) {
+    if (!cronSetting) {
       cronSetting = _.first(
         await dbHelper.GetCronSettingsDetailsByName(prod.cronName),
       );
@@ -61,7 +61,7 @@ export async function Execute(
     if (!isOverrideRun) {
       isProceed = await proceedWithExecution(cronSetting.CronId);
     }
-    if (isProceed == false) break;
+    if (!isProceed) break;
 
     _contextCronStatus.SetProductCount(cronProdCounter);
     dbHelper.UpdateCronStatusAsync(_contextCronStatus);
@@ -78,22 +78,21 @@ export async function Execute(
       prod.mpId,
     );
     if (prioritySequence && prioritySequence.length > 0) {
-      const cronIdForScraping =
-        isSlowCronRun == true
-          ? prod[prioritySequence[0].value].slowCronId
-          : prod[prioritySequence[0].value].cronId;
+      const cronIdForScraping = isSlowCronRun
+        ? prod[prioritySequence[0].value].slowCronId
+        : prod[prioritySequence[0].value].cronId;
       net32resp = await axiosHelper.getAsync(
         searchRequest,
         cronIdForScraping,
         seqString,
       );
       for (let idx = 0; idx < prioritySequence.length; idx++) {
-        const proceedNextVendor = await proceedNext(
+        const proceedNextVendor = proceedNext(
           prod,
           prioritySequence[idx].value,
         );
         const isVendorActivated = prod[prioritySequence[idx].value].activated;
-        if (proceedNextVendor == true && isVendorActivated == true) {
+        if (proceedNextVendor && isVendorActivated) {
           let repriceResponse = await repriceWrapper(
             net32resp,
             prod,
@@ -104,14 +103,14 @@ export async function Execute(
             idx,
           );
           eligibleCount++;
-          if (repriceResponse && repriceResponse != null) {
+          if (repriceResponse) {
             productLogs = repriceResponse.cronLogs;
             prod[prioritySequence[idx].value] = repriceResponse.prod;
-            if (repriceResponse.isPriceUpdated == true) {
+            if (repriceResponse.isPriceUpdated) {
               repricedProductCount++;
             }
 
-            if (repriceResponse.skipNextVendor == true) {
+            if (repriceResponse.skipNextVendor) {
               break;
             }
           }
@@ -965,7 +964,7 @@ async function getProductDetailsByVendor(details: any, contextVendor: string) {
   }
 }
 
-async function proceedNext(prod: any, key: string) {
+function proceedNext(prod: any, key: string) {
   return (
     prod[key] && prod[key].scrapeOn == true && prod[key].skipReprice == false
   );

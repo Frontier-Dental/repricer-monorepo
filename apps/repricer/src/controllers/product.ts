@@ -11,7 +11,7 @@ import badgeResx from "../../resources/badgeIndicatorMapping.json";
 import handlingTimeGroupResx from "../../resources/HandlingTimeFilterMapping.json";
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
-const _constants = new scheduleConstants();
+import { authMiddleware } from "../middleware/is-auth";
 
 export const getMasterItemController = async (req: Request, res: Response) => {
   let query: any = {};

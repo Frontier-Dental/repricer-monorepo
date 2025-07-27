@@ -261,7 +261,7 @@ async function runCoreCronLogic(cronSettingsResponse: any) {
         );
       }
     } else
-      repriceBase.Execute(
+      await repriceBase.Execute(
         keyGen,
         eligibleProductList,
         initTime,

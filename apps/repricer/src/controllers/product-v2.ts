@@ -38,7 +38,7 @@ export async function showAllProducts(req: Request, res: Response) {
   if (tags && tags != "") {
     masterItems = await mySqlHelper.GetAllRepriceEligibleProductByTag(tags);
     totalDocs = masterItems.length;
-    masterItems = await spliceResult(masterItems, pageNumber, pageSize);
+    masterItems = spliceResult(masterItems, pageNumber, pageSize);
   } else {
     masterItems = await mySqlHelper.GetAllRepriceEligibleProductByFilter(
       pageNumber,
@@ -54,7 +54,7 @@ export async function showAllProducts(req: Request, res: Response) {
       //prod = await mapper.MapCronName(prod, cronSettings);
     }
   }
-  const productDetailsViewModel = await mapper.MapV2(masterItems);
+  const productDetailsViewModel = mapper.MapV2(masterItems);
 
   res.render("pages/products/get_all", {
     items: productDetailsViewModel,
@@ -973,11 +973,7 @@ function parseBadgeIndicator(stringValue: any, evalType: any) {
   }
 }
 
-async function spliceResult(
-  arrayResult: any[],
-  pageNo: number,
-  pageSize: number,
-) {
+function spliceResult(arrayResult: any[], pageNo: number, pageSize: number) {
   const splicesResult = _.chunk(arrayResult, pageSize);
   return splicesResult[pageNo];
 }

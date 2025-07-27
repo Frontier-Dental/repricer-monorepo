@@ -9,7 +9,7 @@ import MySqlProduct from "../models/sql-models/mysql-product";
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
 
-export const MapV2 = async (productDetails: any) => {
+export function MapV2(productDetails: any) {
   let $eval: any[] = [];
   _.forEach(productDetails, (p) => {
     let item: any = {};
@@ -107,7 +107,7 @@ export const MapV2 = async (productDetails: any) => {
     $eval.push(item as never);
   });
   return $eval;
-};
+}
 
 export const MapBadgeIndicator = async (product: any) => {
   if (product.tradentDetails) {

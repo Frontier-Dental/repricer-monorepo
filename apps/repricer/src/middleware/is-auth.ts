@@ -1,7 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { applicationConfig } from "../utility/config";
 
-export default (req: Request, res: Response, next: NextFunction) => {
+export function authMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   const stored_session = (req as any).session;
   const users_id = (stored_session as any).users_id;
   const isDowntimeOn = applicationConfig.DOWNTIME_ON;
@@ -17,4 +21,4 @@ export default (req: Request, res: Response, next: NextFunction) => {
       next();
     }
   }
-};
+}

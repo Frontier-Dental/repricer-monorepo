@@ -258,13 +258,21 @@ export async function GetCompleteProductDetails() {
 }
 
 export async function GetNumberOfRepriceEligibleProductCount() {
-  let noOfRecords: any = null;
-  const db = await SqlConnectionPool.getConnection();
-  const queryToCall = `SELECT 
-    (select count(*) from table_scrapeProductList) - 
-    (select count(*) from table_scrapeProductList where LinkedTradentDetailsInfo is null and LinkedFrontiersDetailsInfo is null and LinkedMvpDetailsInfo is null and LinkedTopDentDetailsInfo is null and LinkedFirstDentDetailsInfo is null) AS result`;
-  noOfRecords = await db.execute(queryToCall);
-  return noOfRecords[0][0]["result"];
+  const db = getKnexInstance();
+  const totalCount = await db("table_scrapeProductList")
+    .count("* as count")
+    .first();
+  const nullCount = await db("table_scrapeProductList")
+    .count("* as count")
+    .whereNull("LinkedTradentDetailsInfo")
+    .whereNull("LinkedFrontiersDetailsInfo")
+    .whereNull("LinkedMvpDetailsInfo")
+    .whereNull("LinkedTopDentDetailsInfo")
+    .whereNull("LinkedFirstDentDetailsInfo")
+    .first();
+
+  const result = (totalCount?.count as number) - (nullCount?.count as number);
+  return result;
 }
 
 export async function GetAllRepriceEligibleProductByFilter(
