@@ -31,7 +31,11 @@ export function getPriceSolutionStringRepresentation(
 ) {
   return Object.keys(priceSolution)
     .map((quantity) => {
-      return `${quantity}: ${JSON.stringify(priceSolution[quantity as any][0].vendorPrices)}`;
+      if (priceSolution[quantity as any][0].vendorPrices) {
+        return `${quantity}: ${JSON.stringify(priceSolution[quantity as any][0].vendorPrices)}`;
+      } else {
+        return `${quantity}: No price solutions found.`;
+      }
     })
     .join("\n");
 }
