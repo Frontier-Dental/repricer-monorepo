@@ -1,12 +1,12 @@
 import _ from "lodash";
-import { RepriceMessageEnum } from "../model/reprice-message";
-import { RepriceRenewedMessageEnum } from "../model/reprice-renewed-message";
-import * as filterMapper from "./filter-mapper";
-import * as globalParam from "../model/global-param";
-import { RepriceModel } from "../model/reprice-model";
-import { Net32Product } from "../types/net32";
-import { FrontierProduct } from "../types/frontier";
-import { applicationConfig } from "./config";
+import { RepriceMessageEnum } from "../../../model/reprice-message";
+import { RepriceRenewedMessageEnum } from "../../../model/reprice-renewed-message";
+import * as filterMapper from "../../filter-mapper";
+import * as globalParam from "../../../model/global-param";
+import { RepriceModel } from "../../../model/reprice-model";
+import { Net32Product } from "../../../types/net32";
+import { FrontierProduct } from "../../../types/frontier";
+import { applicationConfig } from "../../config";
 
 export function ApplyRule(
   repriceResult: RepriceModel,

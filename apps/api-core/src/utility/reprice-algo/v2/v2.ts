@@ -1,7 +1,6 @@
 import { Decimal } from "decimal.js";
 import { RepriceModel } from "../../../model/reprice-model";
 import { Net32PriceBreak } from "../../../types/net32";
-import { writeRepriceHtmlReport } from "./html-builder";
 import {
   InternalProduct,
   SimplifiedNet32Product,
@@ -11,57 +10,26 @@ import {
   SimplifiedNet32ProductFreeShippingAlgo,
   AggregatePriceSolution,
 } from "./types";
-
-function getUniqueQuantityBreaks(net32Products: SimplifiedNet32Product[]) {
-  const quantityBreaks = new Set<number>();
-  for (const product of net32Products) {
-    for (const breakInfo of product.priceBreaks) {
-      quantityBreaks.add(breakInfo.minQty);
-    }
-  }
-  return Array.from(quantityBreaks).sort((a, b) => a - b);
-}
-
-function findHighestQuantitySuchThatAllFreeShipping(
-  rawNet32Products: SimplifiedNet32Product[],
-) {
-  // The idea here is we find the lowest quantity at which everyone is free shipping, which will
-  // end up being the max
-  let lowestOrganicQuantity = 1;
-  for (const product of rawNet32Products.filter(
-    (p) => p.freeShippingGap !== 0,
-  )) {
-    const breakOne = product.priceBreaks.find((pb) => pb.minQty === 1);
-    if (!breakOne) {
-      throw new Error(
-        `No price break found for quantity 1 for product ${product.vendorId}`,
-      );
-    }
-    const threshold = breakOne.unitPrice + product.freeShippingGap;
-    const lowestQuantity = Math.ceil(threshold / breakOne.unitPrice);
-    if (lowestQuantity > lowestOrganicQuantity) {
-      lowestOrganicQuantity = lowestQuantity;
-    }
-  }
-  return lowestOrganicQuantity;
-}
+import { createHtmlFileContent } from "./html-builder";
 
 export function repriceProductV2(
-  mpid: string,
   rawNet32Products: SimplifiedNet32Product[],
-  internalProducts: InternalProduct[],
-  oldModelSolutions?: RepriceModel[],
+  availableInternalProducts: InternalProduct[],
+  ownVendorIds: number[],
 ) {
   // 1. Quantity breaks that competitors have (compete)
   // 2. Quantity breaks that we have but competitors don't (remove these quantity breaks)
 
   // Get all quantity breaks that competitors have (exclude our own vendors)
-  const ownVendorIds = internalProducts.map((vp) => vp.ownVendorId);
   const competitorProducts = rawNet32Products
     .filter((p) => !ownVendorIds.includes(p.vendorId))
     .filter((p) => p.inStock);
-  const ourVendorsProducts = rawNet32Products
+  // All products that we have available to use to make changes.
+  const ourAvailableVendorProducts = rawNet32Products
     .filter((p) => ownVendorIds.includes(p.vendorId))
+    .filter((p) =>
+      availableInternalProducts.find((vp) => vp.ownVendorId === p.vendorId),
+    )
     .filter((p) => p.inStock);
 
   const competitorQuantityBreaks = getUniqueQuantityBreaks(competitorProducts);
@@ -75,7 +43,7 @@ export function repriceProductV2(
   const allProducts = rawNet32Products.filter((p) => p.inStock);
 
   // Iterate over all non-empty combinations of ownVendorsPresent
-  const ownVendorSubsets = getAllNonEmptySubsets(ourVendorsProducts);
+  const ownVendorSubsets = getAllNonEmptySubsets(ourAvailableVendorProducts);
 
   let existingProductRankings: ExistingAnalytics = {};
   let priceSolutions: PriceSolutions = {};
@@ -115,7 +83,7 @@ export function repriceProductV2(
         for (const ownVendor of vendorSubset) {
           // Here we compute two, if we have free shipping or not.
           const bestPriceToCompeteWithShipping = getBestCompetitivePrice(
-            internalProducts.find(
+            availableInternalProducts.find(
               (vp) => vp.ownVendorId === ownVendor.vendorId,
             )!,
             ownVendor,
@@ -124,7 +92,7 @@ export function repriceProductV2(
             true,
           );
           const bestPriceToCompeteFreeShipping = getBestCompetitivePrice(
-            internalProducts.find(
+            availableInternalProducts.find(
               (vp) => vp.ownVendorId === ownVendor.vendorId,
             )!,
             ownVendor,
@@ -237,7 +205,7 @@ export function repriceProductV2(
         // 3. Sort by sum of vendor priorities (lower is better)
         const getPrioritySum = (combo: typeof a) => {
           return Object.keys(combo.vendorPrices).reduce((sum, vendorId) => {
-            const found = internalProducts.find(
+            const found = availableInternalProducts.find(
               (v) => v.ownVendorId === parseInt(vendorId),
             );
             return sum + (found ? found.priority : 9999);
@@ -337,15 +305,13 @@ export function repriceProductV2(
   // // TODO: Compute a final solution encompassing all quantity breaks
   // // then compare with existing and execute change on net32 if necessary
 
-  const html = writeRepriceHtmlReport(
-    mpid,
-    internalProducts,
+  const html = createHtmlFileContent(
+    availableInternalProducts,
     rawNet32Products,
     priceSolutions,
-    oldModelSolutions,
   );
   // Return both the v2Response (current return value) and the HTML
-  return { v2Response: { priceSolutions, existingProductRankings }, html };
+  return { priceSolutions, html };
 }
 
 function insertPriceSolution(
@@ -916,6 +882,40 @@ export function getTotalCost(
   } else {
     return totalCostPreShipping;
   }
+}
+
+function getUniqueQuantityBreaks(net32Products: SimplifiedNet32Product[]) {
+  const quantityBreaks = new Set<number>();
+  for (const product of net32Products) {
+    for (const breakInfo of product.priceBreaks) {
+      quantityBreaks.add(breakInfo.minQty);
+    }
+  }
+  return Array.from(quantityBreaks).sort((a, b) => a - b);
+}
+
+function findHighestQuantitySuchThatAllFreeShipping(
+  rawNet32Products: SimplifiedNet32Product[],
+) {
+  // The idea here is we find the lowest quantity at which everyone is free shipping, which will
+  // end up being the max
+  let lowestOrganicQuantity = 1;
+  for (const product of rawNet32Products.filter(
+    (p) => p.freeShippingGap !== 0,
+  )) {
+    const breakOne = product.priceBreaks.find((pb) => pb.minQty === 1);
+    if (!breakOne) {
+      throw new Error(
+        `No price break found for quantity 1 for product ${product.vendorId}`,
+      );
+    }
+    const threshold = breakOne.unitPrice + product.freeShippingGap;
+    const lowestQuantity = Math.ceil(threshold / breakOne.unitPrice);
+    if (lowestQuantity > lowestOrganicQuantity) {
+      lowestOrganicQuantity = lowestQuantity;
+    }
+  }
+  return lowestOrganicQuantity;
 }
 
 function solveUnitPriceForTotalCost(

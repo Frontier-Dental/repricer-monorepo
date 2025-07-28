@@ -3,8 +3,8 @@ import { CronSettingsDetail } from "../../utility/mongo/types";
 import * as responseUtility from "../../utility/response-utility";
 import * as keyGenHelper from "../../utility/key-gen-helper";
 import * as dbHelper from "../../utility/mongo/db-helper";
-import * as repriceBase from "../../utility/reprice-base";
-import * as mySqlHelper from "../../utility/mysql-helper";
+import * as repriceBase from "../../utility/reprice-algo/reprice-base";
+import * as mySqlHelper from "../../utility/mysql/mysql-helper";
 import * as feedHelper from "../../utility/feed-helper";
 import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import * as _ from "lodash";
@@ -232,7 +232,9 @@ export function setCronAndStart(
   }
 }
 
-async function runCoreCronLogic(cronSettingsResponse: any) {
+export async function runCoreCronLogic(
+  cronSettingsResponse: CronSettingsDetail,
+) {
   const initTime = new Date();
   const eligibleProductList = await getCronEligibleProductsV3(
     cronSettingsResponse.CronId,

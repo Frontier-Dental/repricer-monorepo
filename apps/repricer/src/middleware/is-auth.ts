@@ -12,7 +12,9 @@ export function authMiddleware(
   if (isDowntimeOn) {
     res.redirect("/");
   } else {
-    if (!users_id) {
+    if (applicationConfig.AUTHENTICATION_DISABLED) {
+      next();
+    } else if (!users_id) {
       res.redirect("/");
     } else {
       console.log(

@@ -2,7 +2,7 @@ import _ from "lodash";
 import uuid from "uuid";
 import moment from "moment";
 import * as axiosHelper from "./axios-helper";
-import * as mySqlHelper from "./mysql-helper";
+import * as mySqlHelper from "./mysql/mysql-helper";
 import { Generate } from "./key-gen-helper";
 import { RunInfo } from "../model/sql-models/run-info";
 import { ProductInfo } from "../model/sql-models/product-info";

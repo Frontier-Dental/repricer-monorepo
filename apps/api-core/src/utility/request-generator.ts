@@ -3,8 +3,9 @@ import * as dbHelper from "./mongo/db-helper";
 import * as responseUtility from "./response-utility";
 import { GlobalConfig } from "../types/global-config";
 import { ErrorItem } from "../types/error-item";
-import { ProductDetailsListItem } from "./mySql-mapper";
+import { ProductDetailsListItem } from "./mysql/mySql-mapper";
 import { applicationConfig } from "./config";
+import { VendorName } from "./reprice-algo/v2/types";
 
 export async function GetProductItemListQuery(): Promise<{
   idRef: string;
@@ -21,19 +22,19 @@ export async function GetPrioritySequence(
   contextErrorDetails: ErrorItem[] | null,
   includeErrorItems: boolean,
 ) {
-  const _tradent = { name: "TRADENT", value: "tradentDetails" };
-  const _frontier = { name: "FRONTIER", value: "frontierDetails" };
-  const _mvp = { name: "MVP", value: "mvpDetails" };
-  const _topDent = { name: "TOPDENT", value: "topDentDetails" };
-  const _firstDent = { name: "FIRSTDENT", value: "firstDentDetails" };
+  const _tradent = { name: VendorName.TRADENT, value: "tradentDetails" };
+  const _frontier = { name: VendorName.FRONTIER, value: "frontierDetails" };
+  const _mvp = { name: VendorName.MVP, value: "mvpDetails" };
+  const _topDent = { name: VendorName.TOPDENT, value: "topDentDetails" };
+  const _firstDent = { name: VendorName.FIRSTDENT, value: "firstDentDetails" };
   let prioritySequence = [];
   const globalConfig = await dbHelper.GetGlobalConfig();
   const isOverrideEnabled = IsOverrideExecutionPriorityEnabled(globalConfig!);
   let productDetails = _.cloneDeep(productInfo);
 
   // Override Execution Priority List in case of Override Set to true
-  if (isOverrideEnabled == true) {
-    productDetails = await responseUtility.MapOverrideExecutionPriority(
+  if (isOverrideEnabled) {
+    productDetails = responseUtility.MapOverrideExecutionPriority(
       productDetails,
       globalConfig!.override_execution_priority_details!.priority_settings,
     );
@@ -49,7 +50,7 @@ export async function GetPrioritySequence(
     for (const vendor of vendors) {
       if (
         vendor.details &&
-        vendor.details.activated == true &&
+        vendor.details.activated &&
         vendor.details.executionPriority === pty &&
         proceedNext(productDetails, vendor.obj.value)
       ) {

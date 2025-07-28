@@ -8,6 +8,7 @@ import indexRouter from "./routes";
 import { Request, Response } from "express";
 import { errorMiddleware } from "./utility/error-middleware";
 import { applicationConfig, validateConfig } from "./utility/config";
+import morgan from "morgan";
 
 validateConfig();
 
@@ -33,6 +34,7 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, "..", "public")));
 app.use("/logo", express.static(path.join(__dirname, "..", "/uploads/excel")));
+app.use(morgan("combined"));
 
 app.use(cookieParser("secret"));
 
@@ -61,8 +63,7 @@ app.use(errorMiddleware);
 
 const PORT = applicationConfig.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(path.join(__dirname, "public"));
   console.log(
-    `Server running in production mode on port ${PORT} at ${new Date()}`,
+    `Server running with node environment ${process.env.NODE_ENV} on port ${PORT} at ${new Date()}`,
   );
 });

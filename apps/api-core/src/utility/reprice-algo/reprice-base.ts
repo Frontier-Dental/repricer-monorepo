@@ -1,28 +1,30 @@
 import fs from "fs";
 import _ from "lodash";
-import * as axiosHelper from "./axios-helper";
-import { CronStatusModel } from "../model/cron-status";
-import * as dbHelper from "./mongo/db-helper";
+import * as axiosHelper from "../axios-helper";
+import { CronStatusModel } from "../../model/cron-status";
+import * as mongoHelper from "../mongo/db-helper";
 import * as _codes from "http-status-codes";
-import * as requestGenerator from "./request-generator";
-import { logger } from "./winston-logger";
-import * as sqlHelper from "./mysql-helper";
-import { ErrorItemModel } from "../model/error-item";
-import { Net32Response } from "../types/net32";
-import { ProductDetailsListItem } from "./mySql-mapper";
-import { CronSettings } from "../types/cron-settings";
-import { RepriceProductHttpResponse } from "../types/reprice-product-http-response";
+import * as requestGenerator from "../request-generator";
+import { logger } from "../winston-logger";
+import * as sqlHelper from "../mysql/mysql-helper";
+import { ErrorItemModel } from "../../model/error-item";
+import { Net32Response } from "../../types/net32";
+import { ProductDetailsListItem } from "../mysql/mySql-mapper";
+import { CronSettings } from "../../types/cron-settings";
+import { RepriceProductHttpResponse } from "../../types/reprice-product-http-response";
 import { AxiosResponse } from "axios";
-import { repriceProduct } from "./reprice-algo/algo-v1";
-import { FrontierProduct } from "../types/frontier";
-import { RepriceAsyncResponse } from "../model/reprice-async-response";
-import { applicationConfig } from "./config";
+import { repriceProduct } from "./v1/algo-v1";
+import { FrontierProduct } from "../../types/frontier";
+import { RepriceAsyncResponse } from "../../model/reprice-async-response";
+import { applicationConfig } from "../config";
+import { CronSettingsDetail } from "../mongo/types";
+import { VendorName } from "./v2/types";
 
 export async function Execute(
   keyGen: string,
   productList: any[],
   cronInitTime: any,
-  cronSetting: any = null,
+  cronSetting: any,
   isSlowCronRun: boolean = false,
 ) {
   let cronLogs: any = {
@@ -54,7 +56,7 @@ export async function Execute(
     //Set cronSetting if it is Null
     if (!cronSetting) {
       cronSetting = _.first(
-        await dbHelper.GetCronSettingsDetailsByName(prod.cronName),
+        await mongoHelper.GetCronSettingsDetailsByName(prod.cronName),
       );
     }
     let isProceed = true;
@@ -64,7 +66,7 @@ export async function Execute(
     if (!isProceed) break;
 
     _contextCronStatus.SetProductCount(cronProdCounter);
-    dbHelper.UpdateCronStatusAsync(_contextCronStatus);
+    mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
     const prioritySequence = await requestGenerator.GetPrioritySequence(
       prod,
       null,
@@ -127,14 +129,14 @@ export async function Execute(
   cronLogs.completionTime = new Date();
   cronLogs.EligibleCount = eligibleCount;
   cronLogs.RepricedProductCount = repricedProductCount;
-  const logInDb = await dbHelper.PushLogsAsync(cronLogs);
+  const logInDb = await mongoHelper.PushLogsAsync(cronLogs);
   if (logInDb) {
     console.log(
       `Successfully logged Cron Logs in DB at ${cronLogs.time} || Id : ${logInDb}`,
     );
   }
   _contextCronStatus.SetStatus("Complete");
-  await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
+  await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
 }
 
 export async function RepriceErrorItem(
@@ -149,7 +151,7 @@ export async function RepriceErrorItem(
     cronId: cronSetting.CronId,
     type: "422Error",
   };
-  const contextErrorDetails = await dbHelper.GetEligibleContextErrorItems(
+  const contextErrorDetails = await mongoHelper.GetEligibleContextErrorItems(
     true,
     details.mpId,
     _contextVendor,
@@ -235,10 +237,7 @@ export async function RepriceErrorItem(
                 prod.lastUpdatedBy = `Cron-422`;
                 isPriceUpdatedForVendor = true;
                 if (prod.wait_update_period == true) {
-                  prod.next_cron_time = await calculateNextCronTime(
-                    new Date(),
-                    12,
-                  );
+                  prod.next_cron_time = calculateNextCronTime(new Date(), 12);
                   const priceUpdatedItem = new ErrorItemModel(
                     prod.mpid,
                     prod.next_cron_time,
@@ -247,7 +246,7 @@ export async function RepriceErrorItem(
                     "PRICE_UPDATE",
                     contextVendor,
                   );
-                  dbHelper.UpsertErrorItemLog(priceUpdatedItem);
+                  mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
                   console.log({
                     message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                     obj: JSON.stringify(priceUpdatedItem),
@@ -266,7 +265,7 @@ export async function RepriceErrorItem(
                     "IGNORE",
                     contextVendor,
                   );
-                  dbHelper.UpsertErrorItemLog(priceUpdatedItem);
+                  mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
                   console.log(`GHOST : ${prod.mpid} - ${contextVendor}`);
                 }
               } else if (
@@ -286,7 +285,7 @@ export async function RepriceErrorItem(
                   "422_ERROR",
                   contextVendor,
                 );
-                dbHelper.UpsertErrorItemLog(errorItem);
+                mongoHelper.UpsertErrorItemLog(errorItem);
                 console.log({
                   message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                   obj: JSON.stringify(errorItem),
@@ -314,7 +313,7 @@ export async function RepriceErrorItem(
                   "IGNORE",
                   contextVendor,
                 );
-                dbHelper.UpsertErrorItemLog(priceUpdatedItem);
+                await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
                 console.log(
                   `ERROR WHILE PRICE UPDATE : ${prod.mpid} - ${contextVendor}`,
                 );
@@ -329,7 +328,7 @@ export async function RepriceErrorItem(
                 `IGNORE`,
                 contextVendor,
               );
-              await dbHelper.UpsertErrorItemLog(errorItem);
+              await mongoHelper.UpsertErrorItemLog(errorItem);
               cronLogs.logs.push([
                 {
                   productId: prod.mpid,
@@ -348,7 +347,7 @@ export async function RepriceErrorItem(
               `IGNORE`,
               contextVendor,
             );
-            await dbHelper.UpsertErrorItemLog(errorItem);
+            await mongoHelper.UpsertErrorItemLog(errorItem);
             cronLogs.logs.push([
               {
                 productId: prod.mpid,
@@ -377,8 +376,8 @@ export async function RepriceErrorItem(
               `History Updated for ${prod.mpid} with Identifier : ${repriceResult.data.historyIdentifier} and Message : ${prod.last_cron_message}`,
             );
           }
-          prod = await updateLowestVendor(repriceResult as any, prod);
-          prod = await updateCronBasedDetails(repriceResult, prod, false);
+          prod = updateLowestVendor(repriceResult as any, prod);
+          prod = updateCronBasedDetails(repriceResult, prod, false);
           await sqlHelper.UpdateProductAsync(
             prod,
             isPriceUpdated,
@@ -395,7 +394,7 @@ export async function RepriceErrorItem(
             "IGNORE",
             contextVendor,
           );
-          await dbHelper.UpsertErrorItemLog(errorItem);
+          await mongoHelper.UpsertErrorItemLog(errorItem);
           await sqlHelper.UpdateProductAsync(
             prod,
             isPriceUpdated,
@@ -455,7 +454,7 @@ export async function CheckReprice(
   keyGen: string,
   contextVendor: string,
 ) {
-  return await repriceSingleVendor(
+  return repriceSingleVendor(
     net32resp,
     prod,
     cronSetting,
@@ -514,15 +513,15 @@ export async function RepriceErrorItemV2(
       }
     }
     _contextCronStatus.SetProductCount(cronProdCounter);
-    await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
+    await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
     cronProdCounter++;
   }
   if (cronLogs.logs && cronLogs.logs.length > 0) {
     cronLogs.completionTime = new Date();
-    await dbHelper.Push422LogsAsync(cronLogs);
+    await mongoHelper.Push422LogsAsync(cronLogs);
   }
   _contextCronStatus.SetStatus("Complete");
-  await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
+  await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
   await cleanActiveProductList(keyGen);
 }
 
@@ -580,7 +579,7 @@ export async function UpdateToMax(
             "PRICE_UPDATE",
             contextVendor,
           );
-          await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
+          await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
           console.log({
             message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
             obj: JSON.stringify(priceUpdatedItem),
@@ -602,7 +601,7 @@ export async function UpdateToMax(
           "422_ERROR",
           contextVendor,
         );
-        await dbHelper.UpsertErrorItemLog(errorItem);
+        await mongoHelper.UpsertErrorItemLog(errorItem);
         console.log({
           message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(errorItem),
@@ -654,12 +653,12 @@ export async function UpdateToMax(
 }
 
 async function initCronStatus(_contextCronStatus: any) {
-  await dbHelper.InitCronStatusAsync(_contextCronStatus);
+  await mongoHelper.InitCronStatusAsync(_contextCronStatus);
 }
 
 async function proceedWithExecution(cronId: string) {
-  let cronSettingDetails = await dbHelper.GetCronSettingsList();
-  const slowCronDetails = await dbHelper.GetSlowCronDetails();
+  let cronSettingDetails = await mongoHelper.GetCronSettingsList();
+  const slowCronDetails = await mongoHelper.GetSlowCronDetails();
   cronSettingDetails = _.concat(cronSettingDetails, slowCronDetails);
   if (cronSettingDetails) {
     const contextCron = cronSettingDetails.find((x: any) => x.CronId == cronId);
@@ -675,7 +674,6 @@ async function repriceSingleVendor(
   keyGen: string,
   contextVendor: string,
   isManualRun = false,
-  isV2Algorithm = false,
 ) {
   const cronLogs: any[] = [];
   let isPriceUpdated = false;
@@ -689,7 +687,7 @@ async function repriceSingleVendor(
   });
   prod.secretKey = cronSetting.SecretKey;
   prod.last_attempted_time = new Date();
-  prod.lastCronRun = isManualRun == true ? "Manual" : `${cronSetting.CronName}`;
+  prod.lastCronRun = isManualRun ? "Manual" : `${cronSetting.CronName}`;
   prod.last_cron_time = new Date();
   prod.cronName = cronSetting.CronName;
   prod.contextCronName = cronSetting.CronName;
@@ -742,7 +740,7 @@ async function repriceSingleVendor(
           "PRICE_UPDATE",
           contextVendor,
         );
-        await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
+        await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
         console.log({
           message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(priceUpdatedItem),
@@ -768,7 +766,7 @@ async function repriceSingleVendor(
         "422_ERROR",
         contextVendor,
       );
-      await dbHelper.UpsertErrorItemLog(errorItem);
+      await mongoHelper.UpsertErrorItemLog(errorItem);
       console.log({
         message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
         obj: JSON.stringify(errorItem),
@@ -828,7 +826,7 @@ async function repriceSingleVendor(
   };
 }
 
-async function getLastCronMessage(
+function getLastCronMessage(
   repriceResult:
     | {
         cronResponse: RepriceAsyncResponse;
@@ -861,7 +859,7 @@ async function getLastCronMessage(
   return resultStr;
 }
 
-async function updateLowestVendor(
+function updateLowestVendor(
   repriceResult: {
     cronResponse: RepriceAsyncResponse;
     priceUpdateResponse: any;
@@ -902,7 +900,7 @@ async function getNextCronTime(priceUpdateResponse: any) {
   } else return await calculateNextCronTime(new Date(), 12);
 }
 
-async function updateCronBasedDetails(
+function updateCronBasedDetails(
   repriceResult: any,
   prod: any,
   isPriceUpdated: boolean,
@@ -942,24 +940,24 @@ async function updateCronBasedDetails(
   return prod;
 }
 
-async function calculateNextCronTime(currentTime: Date, hoursToAdd: number) {
+function calculateNextCronTime(currentTime: Date, hoursToAdd: number) {
   return new Date(currentTime.setHours(currentTime.getHours() + hoursToAdd));
 }
 
-async function getProductDetailsByVendor(details: any, contextVendor: string) {
-  if (contextVendor == "TRADENT") {
+function getProductDetailsByVendor(details: any, contextVendor: string) {
+  if (contextVendor === VendorName.TRADENT) {
     return details.tradentDetails;
   }
-  if (contextVendor == "FRONTIER") {
+  if (contextVendor === VendorName.FRONTIER) {
     return details.frontierDetails;
   }
-  if (contextVendor == "MVP") {
+  if (contextVendor === VendorName.MVP) {
     return details.mvpDetails;
   }
-  if (contextVendor == "TOPDENT") {
+  if (contextVendor === VendorName.TOPDENT) {
     return details.topDentDetails;
   }
-  if (contextVendor == "FIRSTDENT") {
+  if (contextVendor === VendorName.FIRSTDENT) {
     return details.firstDentDetails;
   }
 }
@@ -979,7 +977,6 @@ export async function repriceWrapper(
   prioritySequence: { name: string; value: string }[],
   idx: number,
   isManualRun = false,
-  isV2Algorithm = false,
 ) {
   return repriceSingleVendor(
     net32resp,
@@ -989,15 +986,11 @@ export async function repriceWrapper(
     keyGen,
     prioritySequence[idx].name,
     isManualRun,
-    isV2Algorithm,
   );
 }
 
 async function alignErrorItems(details: any, _contextVendor: string) {
-  const productDetails = await getProductDetailsByVendor(
-    details,
-    _contextVendor,
-  );
+  const productDetails = getProductDetailsByVendor(details, _contextVendor);
   if (
     (productDetails && productDetails.activated == false) ||
     !productDetails ||
@@ -1011,11 +1004,11 @@ async function alignErrorItems(details: any, _contextVendor: string) {
       "IGNORE",
       _contextVendor,
     );
-    await dbHelper.UpsertErrorItemLog(errorItem);
+    await mongoHelper.UpsertErrorItemLog(errorItem);
   }
 }
 
-async function filterDeltaProducts(productList: any[], keygen: string) {
+function filterDeltaProducts(productList: any[], keygen: string) {
   let finalList = productList;
   if (!productList || productList == null || productList.length == 0)
     return productList;
@@ -1055,7 +1048,7 @@ async function filterDeltaProducts(productList: any[], keygen: string) {
   }
 }
 
-async function cleanActiveProductList(keyGen: string) {
+function cleanActiveProductList(keyGen: string) {
   const filePath = "./activeProducts.json";
   let details = fs.readFileSync(filePath, "utf8");
   let fileContent = JSON.parse(details);
@@ -1069,7 +1062,7 @@ async function cleanActiveProductList(keyGen: string) {
   }
 }
 
-async function scanDeltaListOfProducts(productList: any[], deltaList: any[]) {
+function scanDeltaListOfProducts(productList: any[], deltaList: any[]) {
   var filterDeltaProducts: any[] = [];
   if (deltaList == null || deltaList.length == 0) return productList;
   _.forEach(productList, (p) => {

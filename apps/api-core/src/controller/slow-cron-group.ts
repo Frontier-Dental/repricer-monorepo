@@ -5,10 +5,11 @@ import * as dbHelper from "../utility/mongo/db-helper";
 import * as responseUtility from "../utility/response-utility";
 import * as feedHelper from "../utility/feed-helper";
 import * as keyGenHelper from "../utility/key-gen-helper";
-import * as mySqlHelper from "../utility/mysql-helper";
+import * as mySqlHelper from "../utility/mysql/mysql-helper";
 import * as _codes from "http-status-codes";
-import * as repriceBase from "../utility/reprice-base";
+import * as repriceBase from "../utility/reprice-algo/reprice-base";
 import { applicationConfig } from "../utility/config";
+import { runCoreCronLogic } from "./main-cron/shared";
 
 //FilterCron Variables
 let _SCG1Cron: any = null;
@@ -208,64 +209,6 @@ slowCronController.get(
       .send(`Executed ${cronName} at ${new Date()}.`);
   },
 );
-
-async function runCoreCronLogic(cronSettingsResponse: any) {
-  const initTime = new Date();
-  const eligibleProductList = await getSlowCronEligibleProductsV3(
-    cronSettingsResponse.CronId,
-  );
-  if (eligibleProductList && eligibleProductList.length > 0) {
-    const keyGen = keyGenHelper.Generate();
-    console.log(
-      `${cronSettingsResponse.CronName} running on ${initTime} with Eligible Product count : ${eligibleProductList.length}  || Key : ${keyGen}`,
-    );
-    const isChunkNeeded = await IsChunkNeeded(eligibleProductList);
-    if (isChunkNeeded == true) {
-      let chunkedList = _.chunk(
-        eligibleProductList,
-        applicationConfig.BATCH_SIZE,
-      );
-      for (let chunk of chunkedList) {
-        await repriceBase.Execute(
-          keyGen,
-          chunk,
-          new Date(),
-          cronSettingsResponse,
-          true,
-        );
-      }
-    } else
-      repriceBase.Execute(
-        keyGen,
-        eligibleProductList,
-        initTime,
-        cronSettingsResponse,
-        true,
-      );
-  } else {
-    console.log(
-      `No eligible products found for ${cronSettingsResponse.CronName} at ${new Date()}`,
-    );
-  }
-}
-
-async function getSlowCronEligibleProductsV3(cronId: any) {
-  let eligibleProductList: any[] = [];
-  eligibleProductList = await mySqlHelper.GetActiveProductListByCronId(
-    cronId,
-    true,
-  ); //await dbHelper.GetActiveProductList(cronId, true);
-  eligibleProductList = await feedHelper.FilterEligibleProducts(
-    eligibleProductList,
-    cronId,
-    true,
-  );
-  return eligibleProductList;
-}
-
-async function IsChunkNeeded(list: any[]) {
-  return list.length > applicationConfig.BATCH_SIZE;
-}
 
 async function toggleCronStatus(cronObject: any, status: any, cronName: any) {
   switch (parseInt(status)) {

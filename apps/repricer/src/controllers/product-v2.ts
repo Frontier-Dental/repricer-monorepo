@@ -16,13 +16,6 @@ import axios from "axios";
 
 export async function showAllProducts(req: Request, res: Response) {
   let pgNo = 0;
-  let query = {};
-  let tags = "";
-  if (req.query.tags) {
-    tags = req.query.tags as string;
-    // val = new RegExp(tags, 'i');
-    // query['$or'] = [{ "mpId": val }, { "tradentDetails.channelName": val }, { "tradentDetails.focusId": val }, { "tradentDetails.channelId": val }, { "frontierDetails.channelName": val }, { "frontierDetails.focusId": val }, { "frontierDetails.channelId": val }, { "mvpDetails.channelName": val }, { "mvpDetails.focusId": val }, { "mvpDetails.channelId": val }];
-  }
   if (req.query.pgno) {
     pgNo = (req.query.pgno as any) - 1;
   }
@@ -35,8 +28,10 @@ export async function showAllProducts(req: Request, res: Response) {
   totalDocs = await mySqlHelper.GetNumberOfRepriceEligibleProductCount();
   totalPages = Math.ceil(totalDocs / pageSize);
   let masterItems: any[] = [];
-  if (tags && tags != "") {
-    masterItems = await mySqlHelper.GetAllRepriceEligibleProductByTag(tags);
+  if (req.query.tags) {
+    masterItems = await mySqlHelper.GetAllRepriceEligibleProductByTag(
+      req.query.tags,
+    );
     totalDocs = masterItems.length;
     masterItems = spliceResult(masterItems, pageNumber, pageSize);
   } else {
@@ -50,7 +45,7 @@ export async function showAllProducts(req: Request, res: Response) {
   //cronSettings = _.concat(cronSettings, slowCronSettings);
   if (masterItems && masterItems.length > 0) {
     for (let prod of masterItems) {
-      prod = await mapper.MapBadgeIndicator(prod);
+      prod = mapper.MapBadgeIndicator(prod);
       //prod = await mapper.MapCronName(prod, cronSettings);
     }
   }
@@ -62,9 +57,9 @@ export async function showAllProducts(req: Request, res: Response) {
     pageSize,
     totalDocs,
     totalPages,
-    tags,
+    tags: req.query.tags || "",
     groupName: "Products",
-    userRole: (req as any).session.users_id.userRole,
+    userRole: (req as any).session.users_id?.userRole,
   });
 }
 

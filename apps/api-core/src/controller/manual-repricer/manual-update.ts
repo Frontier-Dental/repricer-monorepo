@@ -3,26 +3,32 @@ import * as _codes from "http-status-codes";
 import _ from "lodash";
 import * as axiosHelper from "../../utility/axios-helper";
 import * as dbHelper from "../../utility/mongo/db-helper";
-import * as repriceBase from "../../utility/reprice-base";
+import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import * as requestGenerator from "../../utility/request-generator";
-import * as sqlHelper from "../../utility/mysql-helper";
+import * as sqlHelper from "../../utility/mysql/mysql-helper";
 import * as feedHelper from "../../utility/feed-helper";
 import { Net32Product, Net32Response } from "../../types/net32";
 import { getContextCronId } from "./shared";
 import { proceedNext } from "./shared";
 import { AxiosResponse } from "axios";
-import { ProductDetailsListItem } from "../../utility/mySql-mapper";
+import { ProductDetailsListItem } from "../../utility/mysql/mySql-mapper";
 import { applicationConfig } from "../../utility/config";
+import { VendorId } from "../../utility/reprice-algo/v2/types";
+import { repriceProductV2 } from "../../utility/reprice-algo/v2/v2";
+import {
+  getInternalProducts,
+  getAllOwnVendorIds,
+  getAllOwnVendorNames,
+  getPriceSolutionStringRepresentation,
+} from "../../utility/reprice-algo/v2/utility";
+import { insertV2AlgoExecution } from "../../utility/mysql/v2-algo-execution";
 
 export async function manualUpdate(
   req: Request<{ id: string }, any, any, { isV2Algorithm: string }>,
   res: Response,
 ): Promise<any> {
   const mpid = req.params.id;
-  const isV2Algorithm = req.query.isV2Algorithm === "true" ? true : false;
-  console.log(
-    `Running Manual Reprice for ${mpid} at ${new Date()}. Using new algorithm: ${isV2Algorithm}`,
-  );
+  console.log(`Running Manual Reprice for ${mpid} at ${new Date()}`);
   const keyGen = "N/A";
   const isOverrideRun = false;
   let prod: ProductDetailsListItem | undefined =
@@ -70,6 +76,23 @@ export async function manualUpdate(
       cronIdForScraping,
       seqString,
     );
+    const v2AlgoResult = repriceProductV2(
+      net32resp.data.map((p) => ({
+        ...p,
+        vendorId: parseInt(p.vendorId as string),
+      })),
+      getInternalProducts(prod, prioritySequence),
+      getAllOwnVendorIds(),
+    );
+    await insertV2AlgoExecution({
+      scrape_product_id: prod.productIdentifier,
+      time: new Date(),
+      chain_of_thought_html: Buffer.from(v2AlgoResult.html),
+      comment: getPriceSolutionStringRepresentation(
+        v2AlgoResult.priceSolutions,
+      ),
+    });
+    console.log("V2 Algo Executed and Inserted");
     for (let idx = 0; idx < prioritySequence.length; idx++) {
       const proceedNextVendor = proceedNext(prod!, prioritySequence[idx].value);
       const isVendorActivated = (prod as any)[prioritySequence[idx].value]
@@ -84,7 +107,6 @@ export async function manualUpdate(
           prioritySequence,
           idx,
           true,
-          isV2Algorithm,
         );
         //eligibleCount++;
         if (repriceResponse) {

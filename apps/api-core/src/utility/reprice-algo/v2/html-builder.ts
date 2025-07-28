@@ -11,22 +11,20 @@ import { getShippingBucket, getTotalCost, hasBadge } from "./v2";
 import * as fs from "fs";
 import * as path from "path";
 
-export function writeRepriceHtmlReport(
-  mpid: string,
+export function createHtmlFileContent(
   internalProducts: InternalProduct[],
   net32Products: SimplifiedNet32Product[],
   priceSolutions: PriceSolutions,
-  oldModelSolutions?: RepriceModel[],
 ) {
   const htmlDir = path.resolve(process.cwd(), "html");
   if (!fs.existsSync(htmlDir)) {
     fs.mkdirSync(htmlDir);
   }
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
-  const htmlFile = path.join(
-    htmlDir,
-    `repriceProductV3_${mpid}_${timestamp}.html`,
-  );
+  // const htmlFile = path.join(
+  //   htmlDir,
+  //   `repriceProductV3_${mpid}_${timestamp}.html`,
+  // );
   // Get net32url from the first internalProduct, if present
   const net32url = internalProducts[0]?.net32url;
 
@@ -66,11 +64,9 @@ export function writeRepriceHtmlReport(
         ${newAlgoSections}
     <h2>net32Products (JSON)</h2>
     <pre>${JSON.stringify(net32Products, null, 2)}</pre>
-    <hr style="margin:40px 0;border:3px solid #333;">
-    ${oldModelSolutions && oldModelSolutions.length > 0 ? buildOldAlgorithmSection(oldModelSolutions) : ""}
   </body>
   </html>`;
-  fs.writeFileSync(htmlFile, htmlContent, "utf8");
+  // fs.writeFileSync(htmlFile, htmlContent, "utf8");
   return htmlContent;
 }
 

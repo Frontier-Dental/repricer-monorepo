@@ -1,5 +1,5 @@
 import OwnVendorProductDetails from "../../model/user-models/custom-product";
-import { ProductDetailsListItem } from "../../utility/mySql-mapper";
+import { ProductDetailsListItem } from "../../utility/mysql/mySql-mapper";
 
 export function getContextCronId(productDetails: any): string {
   if (productDetails.tradentDetails)

@@ -9,9 +9,8 @@ import MySqlProduct from "../models/sql-models/mysql-product";
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
 
-export function MapV2(productDetails: any) {
-  let $eval: any[] = [];
-  _.forEach(productDetails, (p) => {
+export function MapV2(productDetails: any[]) {
+  return productDetails.map((p) => {
     let item: any = {};
     item.mpid = p.mpId;
     item.tradent = p.tradentDetails;
@@ -100,13 +99,8 @@ export function MapV2(productDetails: any) {
         : item.firstDent.last_attempted_time;
       item.firstDent.tags = removeBackslashes(item.firstDent.tags);
     }
-
-    // _.forEach(itemMapper, i => {
-    //     item[i.field] = getMappedDetails(p, i.field);
-    // });
-    $eval.push(item as never);
+    return item;
   });
-  return $eval;
 }
 
 export const MapBadgeIndicator = async (product: any) => {

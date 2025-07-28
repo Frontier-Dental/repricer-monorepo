@@ -10,14 +10,14 @@ import * as axiosHelper from "../../utility/axios-helper";
 import * as dbHelper from "../../utility/mongo/db-helper";
 import * as formatter from "../../utility/format-wrapper";
 import * as HistoryHelper from "../../utility/history-helper";
-import * as repriceHelper from "../../utility/reprice-helper";
+import * as repriceHelper from "../../utility/reprice-algo/v1/reprice-helper";
 import * as responseUtility from "../../utility/response-utility";
 import {
   delay,
   getPriceStepValue,
   getSecretKey,
   isPriceUpdateRequired,
-} from "../../utility/reprice-algo/shared";
+} from "../../utility/reprice-algo/v1/shared";
 import { applicationConfig } from "../../utility/config";
 
 export async function repriceProductToMax(

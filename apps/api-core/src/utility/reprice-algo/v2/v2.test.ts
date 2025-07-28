@@ -78,7 +78,7 @@ describe("repriceProductV3 basic", () => {
       },
     ];
     expect(() => {
-      repriceProductV2("123", net32Products, internalProducts);
+      repriceProductV2(net32Products, internalProducts, [1, 2]);
     }).not.toThrow();
   });
 });

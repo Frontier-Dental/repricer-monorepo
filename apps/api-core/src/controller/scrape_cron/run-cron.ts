@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import * as dbHelper from "../../utility/mongo/db-helper";
 import { scrapeProductList } from "./shared";
 import * as _codes from "http-status-codes";
-import * as mySqlHelper from "../../utility/mysql-helper";
+import * as mySqlHelper from "../../utility/mysql/mysql-helper";
 import * as scrapeHelper from "../../utility/scrape-helper";
 import { ScrapeCronDetail } from "../../utility/mongo/types";
 

@@ -183,6 +183,12 @@ export const envSchema = z.object({
   MAX_UPDATE_REPRICER_ENDPOINT: z.string().default("/repricer/UpdateToMax"),
   SESSION_SECRET: z.string(),
   REPRICER_API_BASE_URL: z.string().default("http://127.0.0.1:5001"),
+  AUTHENTICATION_DISABLED: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(false),
 });
 
 export function validateConfig() {

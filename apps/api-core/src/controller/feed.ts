@@ -9,7 +9,7 @@ import * as axiosHelper from "../utility/axios-helper";
 import * as feedHelper from "../utility/feed-helper";
 import * as HistoryHelper from "../utility/history-helper";
 import * as mongoHelper from "../utility/mongo/mongo-helper";
-import * as Rule from "../utility/repricer-rule-helper";
+import * as Rule from "../utility/reprice-algo/v1/repricer-rule-helper";
 import * as responseUtility from "../utility/response-utility";
 import { applicationConfig } from "../utility/config";
 import { apiMapping } from "../resources/api-mapping";

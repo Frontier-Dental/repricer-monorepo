@@ -113,10 +113,10 @@ export async function GetLastExistingPrice(
   return price;
 }
 
-export async function MapOverrideExecutionPriority(
+export function MapOverrideExecutionPriority(
   productDetails: any,
   priorityList: any,
-): Promise<any> {
+) {
   if (productDetails.tradentDetails) {
     productDetails.tradentDetails.executionPriority = parseInt(
       priorityList.tradent_priority,

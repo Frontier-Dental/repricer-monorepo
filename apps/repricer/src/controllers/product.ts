@@ -2,16 +2,14 @@ import excelJs from "exceljs";
 import { Request, Response } from "express";
 import _ from "lodash";
 import moment from "moment";
+import badgeResx from "../../resources/badgeIndicatorMapping.json";
+import handlingTimeGroupResx from "../../resources/HandlingTimeFilterMapping.json";
 import * as httpMiddleware from "../middleware/http-wrappers";
 import * as mapperHelper from "../middleware/mapper-helper";
 import * as mongoMiddleware from "../middleware/mongo";
 import Item from "../models/item";
-import scheduleConstants from "../models/schedule-constants";
-import badgeResx from "../../resources/badgeIndicatorMapping.json";
-import handlingTimeGroupResx from "../../resources/HandlingTimeFilterMapping.json";
-import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
-import { authMiddleware } from "../middleware/is-auth";
+import * as SessionHelper from "../utility/session-helper";
 
 export const getMasterItemController = async (req: Request, res: Response) => {
   let query: any = {};

@@ -18,6 +18,7 @@ import { errorMiddleware } from "./utility/error-middleware";
 import { manualRepriceController } from "./controller/manual-repricer";
 import { mainCronController } from "./controller/main-cron";
 import { applicationConfig, validateConfig } from "./utility/config";
+import morgan from "morgan";
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
@@ -32,6 +33,7 @@ process.on("unhandledRejection", (reason) => {
 const nodeApp: Express = express();
 nodeApp.use(urlencoded({ extended: true, limit: "200kb" }));
 nodeApp.use(json({ limit: "200kb" }));
+nodeApp.use(morgan("combined"));
 nodeApp.use(
   compression({
     filter: (req: Request, res: Response) => {

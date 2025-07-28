@@ -7,7 +7,7 @@ import * as keyGenHelper from "../../utility/key-gen-helper";
 import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import { CacheKeyName } from "../../resources/cache-key-name";
 import { IsChunkNeeded, startAllCronAsIs, stopAllMainCrons } from "./shared";
-import * as repriceBase from "../../utility/reprice-base";
+import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import { applicationConfig } from "../../utility/config";
 
 export async function startOverrideHandler(

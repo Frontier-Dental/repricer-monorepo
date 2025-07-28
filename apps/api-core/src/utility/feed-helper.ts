@@ -1,7 +1,7 @@
 import fs from "fs";
 import _ from "lodash";
 import * as dbHelper from "./mongo/db-helper";
-import { ProductDetailsListItem } from "./mySql-mapper";
+import { ProductDetailsListItem } from "./mysql/mySql-mapper";
 import { applicationConfig } from "./config";
 
 export async function GetContextDetails(mpid: string): Promise<any> {

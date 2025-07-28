@@ -13,7 +13,7 @@ import Exports from "../models/exports";
 import UpdateRequest from "../models/update-request";
 import { Request, Response } from "express";
 import * as ftpMiddleware from "../middleware/ftp";
-import * as scrapeOnlyMiddleware from "../middleware/scrapeoonly";
+import * as scrapeOnlyMiddleware from "../middleware/scrape-only";
 import { applicationConfig } from "../utility/config";
 
 let _contextLog: any = null;

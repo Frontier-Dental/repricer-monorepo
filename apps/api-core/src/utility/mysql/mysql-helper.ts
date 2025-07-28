@@ -1,110 +1,19 @@
 import _ from "lodash";
-import { getKnexInstance } from "../model/sql-models/knex-wrapper";
+import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
 import moment from "moment";
-import { FullProductDetailsV2 } from "../types/full-product-details-v2";
+import { FullProductDetailsV2 } from "../../types/full-product-details-v2";
 import { GetTriggeredByValue, MapProductDetailsList } from "./mySql-mapper";
-import { HistoryModel } from "../model/sql-models/history";
-import { applicationConfig } from "./config";
-
-// Define types for the function parameters where possible
-interface RunInfo {
-  CronName: string;
-  CronId: string;
-  RunStartTime: Date | string;
-  RunId: string;
-  KeyGenId: string;
-  RunType: string;
-  ProductCount: number;
-  EligibleCount: number;
-  ScrapedSuccessCount: number;
-  ScrapedFailureCount: number;
-}
-
-interface ProductInfo {
-  LinkedCronInfo: number;
-  Mpid: string;
-  VendorProductId: string;
-  VendorProductCode: string;
-  VendorName: string;
-  VendorRegion: string;
-  InStock: number;
-  StandardShipping: number;
-  StandardShippingStatus: string;
-  FreeShippingGap: number;
-  ShippingTime: number;
-  IsFulfillmentPolicyStock: number;
-  IsBackordered: number;
-  BadgeId: number;
-  BadgeName: string;
-  ArrivalBusinessDays: number;
-  ItemRank: number;
-  IsOwnVendor: number;
-  VendorId: string;
-  HeavyShippingStatus: string;
-  HeavyShipping: number;
-  Inventory: number;
-  ArrivalDate: string;
-  IsLowestTotalPrice: string;
-  StartTime: string;
-  EndTime: string;
-}
-
-interface PriceBreakInfo {
-  LinkedProductInfo: number;
-  PMID: number;
-  MinQty: number;
-  UnitPrice: number;
-  PromoAddlDescr: string;
-  IsActive: number;
-}
-
-interface StatusInfo {
-  KeyGenId: string;
-  RunType: string;
-  IsCompleted: number;
-}
-
-interface UpdateProductPayload {
-  lastCronRun: string;
-  last_cron_message: string;
-  lastUpdatedBy: string;
-  lowest_vendor: string;
-  lowest_vendor_price: string;
-  lastExistingPrice: string;
-  lastSuggestedPrice: string;
-  last_cron_time: string;
-  last_attempted_time: string;
-  next_cron_time: string;
-  last_update_time?: string;
-  mpid: string | number;
-}
-
-interface UpdateCronForProductPayload {
-  slowCronId?: string;
-  slowCronName?: string;
-  isSlowActivated: number;
-  mpId: string | number;
-  tradentDetails?: Record<string, any>;
-  frontierDetails?: Record<string, any>;
-  mvpDetails?: Record<string, any>;
-}
-
-interface History {
-  MpId: string | number;
-  ChannelName: string;
-  ExistingPrice: number;
-  MinQty: number;
-  Position: number;
-  LowestVendor: string;
-  LowestPrice: number;
-  SuggestedPrice: number;
-  RepriceComment: string;
-  MaxVendor: string;
-  MaxVendorPrice: number;
-  OtherVendorList: string;
-  LinkedApiResponse: number;
-  ContextCronName: string;
-}
+import { HistoryModel } from "../../model/sql-models/history";
+import { applicationConfig } from "../config";
+import { VendorName } from "../reprice-algo/v2/types";
+import {
+  PriceBreakInfo,
+  ProductInfo,
+  RunInfo,
+  StatusInfo,
+  UpdateCronForProductPayload,
+  UpdateProductPayload,
+} from "./types";
 
 export async function InsertRunInfo(runInfo: RunInfo) {
   const knex = getKnexInstance();
@@ -267,19 +176,19 @@ export async function UpdateProductAsync(
   const knex = getKnexInstance();
   let contextTableName: string | null = null;
   switch (contextVendor) {
-    case "TRADENT":
+    case VendorName.TRADENT:
       contextTableName = applicationConfig.SQL_TRADENT_DETAILS!;
       break;
-    case "FRONTIER":
+    case VendorName.FRONTIER:
       contextTableName = applicationConfig.SQL_FRONTIER_DETAILS!;
       break;
-    case "MVP":
+    case VendorName.MVP:
       contextTableName = applicationConfig.SQL_MVP_DETAILS!;
       break;
-    case "TOPDENT":
+    case VendorName.TOPDENT:
       contextTableName = applicationConfig.SQL_TOPDENT_DETAILS!;
       break;
-    case "FIRSTDENT":
+    case VendorName.FIRSTDENT:
       contextTableName = applicationConfig.SQL_FIRSTDENT_DETAILS!;
       break;
     default:
@@ -386,19 +295,19 @@ export async function UpdateTriggeredByVendor(
   const knex = getKnexInstance();
   let contextTableName: string | null = null;
   switch (contextVendor) {
-    case "TRADENT":
+    case VendorName.TRADENT:
       contextTableName = applicationConfig.SQL_TRADENT_DETAILS!;
       break;
-    case "FRONTIER":
+    case VendorName.FRONTIER:
       contextTableName = applicationConfig.SQL_FRONTIER_DETAILS!;
       break;
-    case "MVP":
+    case VendorName.MVP:
       contextTableName = applicationConfig.SQL_MVP_DETAILS!;
       break;
-    case "TOPDENT":
+    case VendorName.TOPDENT:
       contextTableName = applicationConfig.SQL_TOPDENT_DETAILS!;
       break;
-    case "FIRSTDENT":
+    case VendorName.FIRSTDENT:
       contextTableName = applicationConfig.SQL_FIRSTDENT_DETAILS!;
       break;
     default:

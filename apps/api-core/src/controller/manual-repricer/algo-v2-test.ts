@@ -1,23 +1,27 @@
+import { AxiosResponse } from "axios";
 import { Request, Response } from "express";
 import { validationResult } from "express-validator";
-import { StatusCodes } from "http-status-codes";
-import { Vendor, VendorId } from "../../model/reprice_result";
-import { Net32Product } from "../../types/net32";
-import * as sqlHelper from "../../utility/mysql-helper";
-import { ProductDetailsListItem } from "../../utility/mySql-mapper";
-import * as axiosHelper from "../../utility/axios-helper";
-import { repriceProductV2 } from "../../utility/reprice-algo/v2/v2";
-import { AxiosResponse } from "axios";
-import { repriceProduct } from "../../utility/reprice-algo/algo-v1";
-import { FrontierProduct } from "../../types/frontier";
 import createError from "http-errors";
+import { StatusCodes } from "http-status-codes";
+import { RepriceModel } from "../../model/reprice-model";
+import { FrontierProduct } from "../../types/frontier";
+import { Net32Product } from "../../types/net32";
+import * as axiosHelper from "../../utility/axios-helper";
+import { applicationConfig } from "../../utility/config";
+import * as sqlHelper from "../../utility/mysql/mysql-helper";
+import { ProductDetailsListItem } from "../../utility/mysql/mySql-mapper";
+import { repriceProduct } from "../../utility/reprice-algo/v1/algo-v1";
 import {
   SimplifiedNet32Product,
+  VendorId,
   VendorIdLookup,
-  VendorNameLookup,
+  VendorName,
 } from "../../utility/reprice-algo/v2/types";
-import { RepriceModel } from "../../model/reprice-model";
-import { applicationConfig } from "../../utility/config";
+import { repriceProductV2 } from "../../utility/reprice-algo/v2/v2";
+import {
+  getInternalProducts,
+  getAllOwnVendorNames,
+} from "../../utility/reprice-algo/v2/utility";
 
 export async function v2AlgoTest(
   req: Request<{ mpid: string }, { products: Net32Product[] }, any, any>,
@@ -39,7 +43,7 @@ export async function v2AlgoTest(
   }
   const net32Products: Net32Product[] =
     req.body.products || (await getNet32Products(mpid, prod));
-  const prioritySequence = getPrioritySequence();
+  const prioritySequence = getAllOwnVendorNames();
   const internalProducts = getInternalProducts(prod, prioritySequence);
 
   const prioritySequenceFiltered = prioritySequence.filter((x) =>
@@ -61,14 +65,19 @@ export async function v2AlgoTest(
       results.push(result.cronResponse.repriceData);
     }
   }
-  const { v2Response: v2Data, html } = repriceProductV2(
-    mpid,
+  const { priceSolutions, html } = repriceProductV2(
     net32Products as SimplifiedNet32Product[],
     internalProducts,
-    results,
+    [
+      VendorId.FRONTIER,
+      VendorId.MVP,
+      VendorId.TRADENT,
+      VendorId.TOPDENT,
+      VendorId.FIRSTDENT,
+    ],
   );
 
-  res.status(StatusCodes.OK).json({ ...v2Data, html });
+  res.status(StatusCodes.OK).json({ priceSolutions, html });
 }
 
 async function getNet32Products(mpId: string, prod: ProductDetailsListItem) {
@@ -95,95 +104,4 @@ function getCronId(prod: ProductDetailsListItem) {
   if (prod.topDentDetails) return prod.topDentDetails.cronId;
   if (prod.firstDentDetails) return prod.firstDentDetails.cronId;
   throw new Error("No cronId found");
-}
-
-function getPrioritySequence() {
-  return [
-    { name: Vendor.TRADENT },
-    { name: Vendor.FRONTIER },
-    { name: Vendor.MVP },
-    { name: Vendor.TOPDENT },
-    { name: Vendor.FIRSTDENT },
-  ];
-}
-
-function getInternalProducts(
-  prod: ProductDetailsListItem,
-  prioritySequence: { name: string }[],
-) {
-  return prioritySequence
-    .map((x, i) => {
-      switch (x.name) {
-        case Vendor.FRONTIER:
-          return {
-            ...prod.frontierDetails,
-            ownVendorId: VendorId.FRONTIER,
-            ownVendorName: Vendor.FRONTIER,
-            floorPrice: prod.frontierDetails?.floorPrice
-              ? parseFloat(prod.frontierDetails.floorPrice as unknown as string)
-              : 0,
-            maxPrice: prod.frontierDetails?.maxPrice
-              ? parseFloat(prod.frontierDetails.maxPrice as unknown as string)
-              : Infinity,
-            priority: i,
-          };
-        case Vendor.MVP:
-          return {
-            ...prod.mvpDetails,
-            ownVendorId: VendorId.MVP,
-            ownVendorName: Vendor.MVP,
-            floorPrice: prod.mvpDetails?.floorPrice
-              ? parseFloat(prod.mvpDetails.floorPrice as unknown as string)
-              : 0,
-            maxPrice: prod.mvpDetails?.maxPrice
-              ? parseFloat(prod.mvpDetails.maxPrice as unknown as string)
-              : Infinity,
-            priority: i,
-          };
-        case Vendor.TRADENT:
-          return {
-            ...prod.tradentDetails,
-            ownVendorId: VendorId.TRADENT,
-            ownVendorName: Vendor.TRADENT,
-            floorPrice: prod.tradentDetails?.floorPrice
-              ? parseFloat(prod.tradentDetails.floorPrice as unknown as string)
-              : 0,
-            maxPrice: prod.tradentDetails?.maxPrice
-              ? parseFloat(prod.tradentDetails.maxPrice as unknown as string)
-              : Infinity,
-            priority: i,
-          };
-        case Vendor.FIRSTDENT:
-          return {
-            ...prod.firstDentDetails,
-            ownVendorId: VendorId.FIRSTDENT,
-            ownVendorName: Vendor.FIRSTDENT,
-            floorPrice: prod.firstDentDetails?.floorPrice
-              ? parseFloat(
-                  prod.firstDentDetails.floorPrice as unknown as string,
-                )
-              : 0,
-            maxPrice: prod.firstDentDetails?.maxPrice
-              ? parseFloat(prod.firstDentDetails.maxPrice as unknown as string)
-              : Infinity,
-            priority: i,
-          };
-        case Vendor.TOPDENT:
-          return {
-            ...prod.topDentDetails,
-            ownVendorId: VendorId.TOPDENT,
-            ownVendorName: Vendor.TOPDENT,
-            floorPrice: prod.topDentDetails?.floorPrice
-              ? parseFloat(prod.topDentDetails.floorPrice as unknown as string)
-              : 0,
-            maxPrice: prod.topDentDetails?.maxPrice
-              ? parseFloat(prod.topDentDetails.maxPrice as unknown as string)
-              : Infinity,
-            priority: i,
-          };
-        default:
-          throw new Error(`Unknown vendor: ${x.name}`);
-      }
-    })
-    .filter((x) => x !== null && x.activated);
 }

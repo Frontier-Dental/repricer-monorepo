@@ -5,7 +5,7 @@ import uuid from "uuid";
 import { HistoricalLogs, HistoricalPrice } from "../model/history";
 import * as globalParam from "../model/global-param";
 import { HistoryModel } from "../model/sql-models/history";
-import * as mySqlHelper from "./mysql-helper";
+import * as mySqlHelper from "./mysql/mysql-helper";
 import { RepriceData, RepriceModel } from "../model/reprice-model";
 import { Net32PriceBreak, Net32Product } from "../types/net32";
 import { applicationConfig } from "./config";

@@ -1,5 +1,21 @@
+import _ from "lodash";
+import { RepriceAsyncResponse } from "../../../model/reprice-async-response";
+import { RepriceMessageEnum } from "../../../model/reprice-message";
+import { RepriceModel } from "../../../model/reprice-model";
+import { PriceList, UpdateRequest } from "../../../model/update-request";
+import { apiMapping } from "../../../resources/api-mapping";
+import { FrontierProduct } from "../../../types/frontier";
+import { Net32PriceBreak, Net32Product } from "../../../types/net32";
+import * as axiosHelper from "../../axios-helper";
+import { applicationConfig } from "../../config";
+import * as formatter from "../../format-wrapper";
+import * as HistoryHelper from "../../history-helper";
+import * as mySqlHelper from "../../mysql/mysql-helper";
+import * as repriceHelper from "./reprice-helper";
+import * as repriceHelperNc from "./reprice-helper-nc";
+import * as Rule from "./repricer-rule-helper";
+import * as responseUtility from "../../response-utility";
 import {
-  delay,
   getIsFloorReached,
   getPriceStepValue,
   getSamePriceBreakDetails,
@@ -9,24 +25,6 @@ import {
   MinQtyPricePresent,
   notQ2VsQ1,
 } from "./shared";
-import { RepriceModel } from "../../model/reprice-model";
-import { FrontierProduct } from "../../types/frontier";
-import { Net32PriceBreak, Net32Product } from "../../types/net32";
-import * as dbHelper from "../mongo/db-helper";
-import * as formatter from "../format-wrapper";
-import * as responseUtility from "../response-utility";
-import * as repriceHelper from "../reprice-helper";
-import * as repriceHelperNc from "../reprice-helper-nc";
-import * as axiosHelper from "../axios-helper";
-import * as HistoryHelper from "../history-helper";
-import * as mySqlHelper from "../mysql-helper";
-import * as Rule from "../repricer-rule-helper";
-import { RepriceMessageEnum } from "../../model/reprice-message";
-import _ from "lodash";
-import { RepriceAsyncResponse } from "../../model/reprice-async-response";
-import { apiMapping } from "../../resources/api-mapping";
-import { PriceList, UpdateRequest } from "../../model/update-request";
-import { applicationConfig } from "../config";
 
 export async function repriceProduct(
   mpid: string,
@@ -90,7 +88,7 @@ export async function repriceProduct(
     });
   }
 
-  if (productItem && ownProduct && ownProduct.inStock == true) {
+  if (productItem && ownProduct && ownProduct.inStock) {
     if (
       ownProduct.priceBreaks &&
       (ownProduct.priceBreaks.length === 1 ||
@@ -179,7 +177,7 @@ export async function repriceProduct(
   let isNcForBuyBoxApplied = false;
 
   //Apply NC Buy Box
-  if (productItem.applyNcForBuyBox && productItem.applyNcForBuyBox === true) {
+  if (productItem.applyNcForBuyBox) {
     if (
       repriceResult!.listOfRepriceDetails &&
       repriceResult!.listOfRepriceDetails.length > 0

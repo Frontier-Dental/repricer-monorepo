@@ -1,7 +1,7 @@
 import _ from "lodash";
 import moment from "moment";
 import * as dbHelper from "./mongo/db-helper";
-import * as sqlHelper from "./mysql-helper";
+import * as sqlHelper from "./mysql/mysql-helper";
 import { FilterCronLog } from "../model/filter-cron-log";
 import { Generate } from "./key-gen-helper";
 import { RepriceRenewedMessageEnum } from "../model/reprice-renewed-message";
