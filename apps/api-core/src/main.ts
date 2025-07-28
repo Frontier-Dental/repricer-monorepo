@@ -38,8 +38,12 @@ process.on("unhandledRejection", (reason) => {
   // Optionally: process.exit(1);
 });
 
+validateConfig();
+
 const nodeApp: Express = express();
-nodeApp.use(morgan("combined"));
+if (applicationConfig.REQUEST_LOGGING) {
+  nodeApp.use(morgan("combined"));
+}
 nodeApp.use(urlencoded({ extended: true, limit: "200kb" }));
 nodeApp.use(json({ limit: "200kb" }));
 nodeApp.use(
@@ -54,8 +58,6 @@ nodeApp.use(
     level: 9,
   }),
 );
-validateConfig();
-
 const port = applicationConfig.PORT;
 nodeApp.use(searchController);
 nodeApp.use(mainCronController);

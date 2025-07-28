@@ -21,7 +21,9 @@ process.on("unhandledRejection", (reason) => {
 });
 
 const app = express();
-app.use(morgan("combined"));
+if (applicationConfig.REQUEST_LOGGING) {
+  app.use(morgan("combined"));
+}
 app.use(bodyParser.json({ limit: "500mb" }));
 app.use(
   bodyParser.urlencoded({

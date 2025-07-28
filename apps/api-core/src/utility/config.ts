@@ -194,6 +194,12 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
+  REQUEST_LOGGING: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(false),
 });
 
 export function validateConfig() {
