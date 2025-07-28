@@ -1417,7 +1417,6 @@ function simulateManualReprice() {
 }
 
 function runManualScrape(isProductPage, isV2Algorithm) {
-  console.log("In run manual scrape", isProductPage, isV2Algorithm);
   const hiddenInputs = document.querySelectorAll('input[type="hidden"]');
   const payLoadForManualUpdate = [];
   hiddenInputs.forEach((input) => {
@@ -1429,7 +1428,7 @@ function runManualScrape(isProductPage, isV2Algorithm) {
     $.ajax({
       type: "POST",
       url: "/productV2/runManualCron",
-      data: { mpIds: payLoadForManualUpdate, isV2Algorithm: isV2Algorithm },
+      data: { mpIds: payLoadForManualUpdate},
       dataType: "json",
       cache: false,
       beforeSend: function () {

@@ -363,12 +363,10 @@ export async function runManualReprice(req: Request, res: Response) {
   const selectedProducts = Array.isArray(req.body.mpIds)
     ? req.body.mpIds
     : [req.body.mpIds];
-  const isV2Algorithm = req.body.isV2Algorithm;
-  console.log("isV2Algorithm", isV2Algorithm);
   let failedIds: any[] = [];
   if (selectedProducts && selectedProducts.length > 0) {
     for (const prod of selectedProducts) {
-      const manualRepriceUrl = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.MANUAL_REPRICER_ENDPOINT}/${prod.trim()}${isV2Algorithm === "true" ? "?isV2Algorithm=true" : "?isV2Algorithm=false"}`;
+      const manualRepriceUrl = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.MANUAL_REPRICER_ENDPOINT}/${prod.trim()}`;
       const repriceResult = await httpHelper.native_get(manualRepriceUrl);
       if (
         repriceResult &&
