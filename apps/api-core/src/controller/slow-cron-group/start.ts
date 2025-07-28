@@ -25,14 +25,10 @@ export async function startSlowCronLogic() {
         const jobName = `_SCG${i + 1}Cron`;
         const cronName = getCronNameByJobName(jobName);
 
-        const cronExpression = await responseUtility.GetCronGeneric(
+        const cronExpression = responseUtility.GetCronGeneric(
           cronDetail.CronTimeUnit,
           cronDetail.CronTime,
           cronDetail.Offset,
-        );
-
-        console.log(
-          `Initializing ${cronDetail.CronName} with Expression ${cronExpression} at ${new Date()}`,
         );
 
         slowCrons[cronName] = cron.schedule(
@@ -42,6 +38,11 @@ export async function startSlowCronLogic() {
           },
           { scheduled: JSON.parse(cronDetail.CronStatus) },
         );
+        if (JSON.parse(cronDetail.CronStatus)) {
+          console.log(
+            `Started ${cronDetail.CronName} at ${new Date()} with expression ${cronExpression}`,
+          );
+        }
       }
     }
   }

@@ -78,7 +78,6 @@ export function GetCronGeneric(
     default:
       break;
   }
-  console.log(genericValue);
   return genericValue;
 }
 

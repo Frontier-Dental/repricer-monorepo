@@ -44,6 +44,9 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
     },
     { scheduled: _422CronSetting.CronStatus ? true : false },
   );
+  if (_422CronSetting.CronStatus) {
+    console.log("Started 422 cron.");
+  }
 }
 
 async function IsCacheValid(cacheKey: any, sysTime: any) {
@@ -217,18 +220,22 @@ export function setCronAndStart(
     cronSetting.CronTime,
     parseInt(cronSetting.Offset),
   );
-  mainCrons[cronName] = schedule(cronString, async () => {
-    await runCoreCronLogic(cronSetting);
-  });
+  mainCrons[cronName] = schedule(
+    cronString,
+    async () => {
+      await runCoreCronLogic(cronSetting);
+    },
+    { scheduled: cronSetting.CronStatus ? true : false },
+  );
   if (cronSetting.CronStatus) {
-    mainCrons[cronName].start();
+    console.log(`Started cron ${cronName}`);
   }
 }
 
 export async function runCoreCronLogic(
   cronSettingsResponse: CronSettingsDetail,
 ) {
-  console.log("Running cron. Details: ", cronSettingsResponse);
+  console.log(`Running cron execution for ${cronSettingsResponse.CronName}`);
   const initTime = new Date();
   const eligibleProductList = await getCronEligibleProductsV3(
     cronSettingsResponse.CronId,
@@ -269,6 +276,7 @@ export async function runCoreCronLogic(
       `No eligible products found for ${cronSettingsResponse.CronName} at ${new Date()}`,
     );
   }
+  console.log(`Completed cron execution for ${cronSettingsResponse.CronName}`);
 }
 
 export async function logBlankCronDetailsV3(cronId: any) {

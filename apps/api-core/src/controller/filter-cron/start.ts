@@ -23,8 +23,10 @@ export async function startFilterCronLogic() {
       },
       { scheduled: JSON.parse(cronDetails.status) },
     );
-    console.log(
-      `Started ${cronDetails.cronName} at ${new Date()} with expression ${cronDetails.cronExpression}`,
-    );
+    if (JSON.parse(cronDetails.status)) {
+      console.log(
+        `Started ${cronDetails.cronName} at ${new Date()} with expression ${cronDetails.cronExpression}`,
+      );
+    }
   }
 }

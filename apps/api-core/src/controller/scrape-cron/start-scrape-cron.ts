@@ -16,16 +16,7 @@ export async function startScrapeCron(
 export async function startScrapeCronLogic() {
   const scrapeCronDetails = await dbHelper.GetScrapeCronDetails();
   if (scrapeCronDetails && scrapeCronDetails.length > 0) {
-    for (var i = 0; i < scrapeCronDetails.length; i++) {
-      const cronExpression = responseUtility.GetCronGeneric(
-        scrapeCronDetails[i].CronTimeUnit,
-        scrapeCronDetails[i].CronTime,
-        parseInt(scrapeCronDetails[i].Offset),
-      );
-      console.log(
-        `Initializing ${scrapeCronDetails[i].CronName} with Expression ${cronExpression} at ${new Date()}`,
-      );
-    }
+    for (var i = 0; i < scrapeCronDetails.length; i++) {}
     if (scrapeCronDetails[i]) {
       scrapeCrons[scrapeCronDetails[i].CronName] = cron.schedule(
         responseUtility.GetCronGeneric(
@@ -38,6 +29,9 @@ export async function startScrapeCronLogic() {
         },
         { scheduled: JSON.parse(scrapeCronDetails[i].status) },
       );
+      if (JSON.parse(scrapeCronDetails[i].status)) {
+        console.log(`Started ${scrapeCronDetails[i].CronName}`);
+      }
     }
   }
 }
