@@ -1,4 +1,4 @@
-import { authMiddleware } from "../middleware/is-auth";
+import { authMiddleware } from "../middleware/auth-middleware";
 import * as cronLogsController from "../controllers/cron_logs";
 
 import express from "express";
@@ -6,48 +6,39 @@ import express from "express";
 export const cronLogsRouter = express.Router();
 cronLogsRouter.use(authMiddleware);
 
-cronLogsRouter.get("/dashboard/download_json", cronLogsController.downloadLog);
-cronLogsRouter.get("/dashboard", cronLogsController.getCronLogs);
+cronLogsRouter.get("/download_json", cronLogsController.downloadLog);
+cronLogsRouter.get("/", cronLogsController.getCronLogs);
+cronLogsRouter.get("/get_logs_details/:id", cronLogsController.getLogsDetails);
 cronLogsRouter.get(
-  "/dashboard/get_logs_details/:id",
-  cronLogsController.getLogsDetails,
-);
-cronLogsRouter.get(
-  "/dashboard/get_raw_json/:mpId/:idx/:vendor",
+  "/get_raw_json/:mpId/:idx/:vendor",
   cronLogsController.getRawJson,
 );
-cronLogsRouter.get(
-  "/dashboard/update_price/:mpId/:idx",
-  cronLogsController.updatePrice,
-);
+cronLogsRouter.get("/update_price/:mpId/:idx", cronLogsController.updatePrice);
 
-cronLogsRouter.get("/dashboard/update_all/:idx", cronLogsController.updateAll);
+cronLogsRouter.get("/update_all/:idx", cronLogsController.updateAll);
+cronLogsRouter.get("/export_data/:idx", cronLogsController.exportDataV2);
 cronLogsRouter.get(
-  "/dashboard/export_data/:idx",
-  cronLogsController.exportDataV2,
-);
-cronLogsRouter.get(
-  "/dashboard/export_bulk_data/:from/:to",
+  "/export_bulk_data/:from/:to",
   cronLogsController.exportBulkData,
 );
 cronLogsRouter.get(
   "/downloads/list_downloads",
   cronLogsController.listDownloads,
 );
-cronLogsRouter.get("/download_file/:file", cronLogsController.downloadFile);
-cronLogsRouter.get("/delete_file/:id/:file", cronLogsController.deleteFile);
+// cronLogsRouter.get("/download_file/:file", cronLogsController.downloadFile);
+// cronLogsRouter.get("/delete_file/:id/:file", cronLogsController.deleteFile);
 cronLogsRouter.post(
-  "/dashboard/updatePriceAsync",
+  "/updatePriceAsync",
   cronLogsController.updatePriceExternal,
 );
 cronLogsRouter.get(
-  "/dashboard/get_filter_logs/:noOfLogs",
+  "/get_filter_logs/:noOfLogs",
   cronLogsController.getFilterCronLogsByLimit,
 );
-cronLogsRouter.get("/currentTasks", cronLogsController.getCurrentTasks);
+// cronLogsRouter.get("/currentTasks", cronLogsController.getCurrentTasks);
 cronLogsRouter.get("/cronHistory", cronLogsController.getCronHistoryLogs);
 
-cronLogsRouter.post(
-  "/cronHistory/get_cron_details",
-  cronLogsController.getCustomCronDetails,
-);
+// cronLogsRouter.post(
+//   "/cronHistory/get_cron_details",
+//   cronLogsController.getCustomCronDetails,
+// );

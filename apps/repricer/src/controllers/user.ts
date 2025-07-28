@@ -4,9 +4,9 @@ import * as httpMiddleware from "../middleware/http-wrappers";
 import * as mongoMiddleware from "../middleware/mongo";
 import { applicationConfig } from "../utility/config";
 
-export async function index(req: Request, res: Response) {
+export async function homePageHandler(req: Request, res: Response) {
   const isDowntimeOn = applicationConfig.DOWNTIME_ON;
-  if (isDowntimeOn == true) {
+  if (isDowntimeOn) {
     return res.render("pages/downtime.ejs", {});
   } else {
     const stored_session: any = (req as any).session;
@@ -19,7 +19,7 @@ export async function index(req: Request, res: Response) {
   }
 }
 
-export async function login_post(req: Request, res: Response) {
+export async function loginUser(req: Request, res: Response) {
   const userName = req.body.userName;
   const userPassword = req.body.userPassword;
   const result = await mongoMiddleware.GetUserLogin({ userName: userName });

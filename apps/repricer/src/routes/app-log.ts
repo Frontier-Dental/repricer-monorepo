@@ -1,6 +1,6 @@
 import express from "express";
 import * as appLogController from "../controllers/app-log";
-import { authMiddleware } from "../middleware/is-auth";
+import { authMiddleware } from "../middleware/auth-middleware";
 
 export const appLogRouter = express.Router();
 

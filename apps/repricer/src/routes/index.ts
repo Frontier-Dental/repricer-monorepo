@@ -22,24 +22,24 @@ import { userRouter } from "./user";
 
 const router = Express.Router();
 
-router.use(productV2Router);
-router.use(productRouter);
-router.use(cronLogsRouter);
 router.use(userRouter);
-router.use(helpRouter);
-router.use(scrapeRouter);
-router.use(cronSettingsRouter);
-router.use(adminRouter);
-router.use(configRouter);
-router.use(historyRouter);
-router.use(cacheRouter);
-router.use(debugRouter);
-router.use(reportRouter);
-router.use(playRouter);
-router.use(cronFilterRouter);
-router.use(monitorRouter);
-router.use(appLogRouter);
-router.use(scrapeLogsRouter);
+router.use("/productV2", productV2Router);
+router.use("/masteritem", productRouter);
+router.use("/dashboard", cronLogsRouter);
+router.use("/help", helpRouter);
+router.use("/scrape", scrapeRouter);
+router.use("/cronSettings", cronSettingsRouter);
+router.use("/admin", adminRouter);
+router.use("/config", configRouter);
+router.use("/history", historyRouter);
+router.use("/cache", cacheRouter);
+router.use("/debug", debugRouter);
+router.use("/report", reportRouter);
+router.use("/play", playRouter);
+router.use("/filter", cronFilterRouter);
+router.use("/monitor", monitorRouter);
+router.use("/app-log", appLogRouter);
+router.use("/scrape", scrapeLogsRouter);
 
 router.post(
   "/masteritem/sync_excel_data",

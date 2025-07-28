@@ -4,7 +4,7 @@
       <li
         class="<%=groupName == 'admin' ? 'active' : ''%> mt-2 <%= userRole=='User' ? '' : 'd-none' %>"
       >
-        <a href="/adminControl">
+        <a href="/admin">
           <span class="fa-sharp fa-solid fa-user"></span>
           <span>&nbsp;Admin</span>
         </a>
@@ -38,7 +38,7 @@
       <li
         class="<%=groupName == 'cronHistory' ? 'active' : ''%> mt-2 <%= userRole=='User' ? '' : 'd-none' %>"
       >
-        <a href="/cronHistory" class="">
+        <a href="/dashboard/cronHistory" class="">
           <span class="fa-sharp fa-solid fa-bars-progress"></span>
           <span>&nbsp;Tasks</span>
         </a>
@@ -82,7 +82,7 @@
       <li
         class="<%=groupName == 'config' ? 'active' : ''%> mt-2 <%= userRole=='User' ? '' : 'd-none' %>"
       >
-        <a href="/configuration">
+        <a href="/config">
           <span class="fa-sharp fa-solid fa-wrench"></span>
           <span>&nbsp;Global Configurations</span>
         </a>
@@ -98,7 +98,7 @@
       <li
         class="<%=groupName == 'downloads' ? 'active' : ''%> mt-2 <%= userRole=='User' ? '' : 'd-none' %>"
       >
-        <a href="/downloads/list_downloads">
+        <a href="/dashboard/downloads/list_downloads">
           <span class="fa fa-download" aria-hidden="true"></span>
           <span>&nbsp;Downloads</span>
         </a>

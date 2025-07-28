@@ -286,7 +286,7 @@ function removeItem($id) {
     // AJAX code to call page.
     $.ajax({
       type: "POST",
-      url: "/delete_item",
+      url: "/masteritem/delete_item",
       data: {
         rowid: rowid,
         tableName: tableName,
@@ -752,7 +752,7 @@ function syncProductItem($id) {
     // AJAX code to call page.
     $.ajax({
       type: "GET",
-      url: `/help/sync_product/${productId}`,
+      url: `/masteritem/sync_product/${productId}`,
       cache: false,
       beforeSend: function () {
         showLoadingToast("Processing...");

@@ -1,15 +1,12 @@
 import express from "express";
 import * as historyController from "../controllers/history";
-import { authMiddleware } from "../middleware/is-auth";
+import { authMiddleware } from "../middleware/auth-middleware";
 
 export const historyRouter = express.Router();
 
 historyRouter.use(authMiddleware);
 
-historyRouter.get("/history", historyController.getHistory);
-historyRouter.post(
-  "/history/exportHistoryById",
-  historyController.getHistoryById,
-);
-historyRouter.post("/history/get_all", historyController.getAllHistory);
-historyRouter.get("/history/:file", historyController.downloadFile);
+historyRouter.get("/", historyController.getHistory);
+historyRouter.post("/exportHistoryById", historyController.getHistoryById);
+historyRouter.post("/get_all", historyController.getAllHistory);
+historyRouter.get("/:file", historyController.downloadFile);

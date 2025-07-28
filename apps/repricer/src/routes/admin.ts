@@ -1,29 +1,23 @@
 import express from "express";
 import * as adminController from "../controllers/admin";
-import { authMiddleware } from "../middleware/is-auth";
+import { authMiddleware } from "../middleware/auth-middleware";
 
 export const adminRouter = express.Router();
 
 adminRouter.use(authMiddleware);
 
-adminRouter.get("/adminControl", adminController.getAdminSettings);
+adminRouter.get("/", adminController.getAdminSettings);
+adminRouter.post("/purge_cron_id", adminController.purgeBasedOnCronId);
+adminRouter.post("/purge_cron_time", adminController.purgeBasedOnDate);
 adminRouter.post(
-  "/adminControl/purge_cron_id",
-  adminController.purgeBasedOnCronId,
-);
-adminRouter.post(
-  "/adminControl/purge_cron_time",
-  adminController.purgeBasedOnDate,
-);
-adminRouter.post(
-  "/admin/update_threshold_value",
+  "/update_threshold_value",
   adminController.UpdateProxyProviderThresholdValue,
 );
 adminRouter.get(
-  "/admin/reset_proxy_provider/:proxyProviderId",
+  "/reset_proxy_provider/:proxyProviderId",
   adminController.ResetProxyProvider,
 );
 adminRouter.get(
-  "/schedule/run_specific_cron/:cronName",
+  "/run_specific_cron/:cronName",
   adminController.runSpecificCron,
 );

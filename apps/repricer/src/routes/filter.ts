@@ -1,25 +1,22 @@
 import express from "express";
 import * as cronFilterController from "../controllers/cron-filter";
-import { authMiddleware } from "../middleware/is-auth";
+import { authMiddleware } from "../middleware/auth-middleware";
 
 export const cronFilterRouter = express.Router();
 
 cronFilterRouter.use(authMiddleware);
 
-cronFilterRouter.get("/filter", cronFilterController.GetFilterCron);
+cronFilterRouter.get("/", cronFilterController.GetFilterCron);
 cronFilterRouter.post(
-  "/filter/update_filter_cron",
+  "/update_filter_cron",
   cronFilterController.UpdateFilterCron,
 );
 cronFilterRouter.post(
-  "/filter/update_slow_cron",
+  "/update_slow_cron",
   cronFilterController.UpdateSlowCronExpression,
 );
-cronFilterRouter.get(
-  "/filter/export_log/:key",
-  cronFilterController.ExportLogDetails,
-);
+cronFilterRouter.get("/export_log/:key", cronFilterController.ExportLogDetails);
 cronFilterRouter.post(
-  "/filter/toggle_cron_status",
+  "/toggle_cron_status",
   cronFilterController.ToggleCronStatus,
 );

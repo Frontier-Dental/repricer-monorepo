@@ -373,7 +373,7 @@ function submitPurge() {
     if (confirm(`Are you sure you want to purge all the logs for the cron?`)) {
       $.ajax({
         type: "POST",
-        url: "/adminControl/purge_cron_id",
+        url: "/admin/purge_cron_id",
         data: { cronId: cronId },
         dataType: "json",
         cache: false,
@@ -400,7 +400,7 @@ function submitPurge() {
     ) {
       $.ajax({
         type: "POST",
-        url: "/adminControl/purge_cron_time",
+        url: "/admin/purge_cron_time",
         data: { date: dateString },
         dataType: "json",
         cache: false,
@@ -990,7 +990,7 @@ function runSpecificCron() {
   const cronName = $("#cron_to_run_ddl").val().trim();
   $.ajax({
     type: "GET",
-    url: `/schedule/run_specific_cron/${cronName}`,
+    url: `/admin/run_specific_cron/${cronName}`,
     cache: false,
     beforeSend: function () {
       //showLoadingToast("Please Wait");
@@ -1200,7 +1200,7 @@ function deleteItem(id) {
   if (confirm("Are you sure you want to delete this ?")) {
     $.ajax({
       type: "POST",
-      url: "/delete",
+      url: "/scrape/delete",
       data: { id: id },
       dataType: "json",
       cache: false,
@@ -1594,7 +1594,7 @@ function runUpdateToMax() {
   if (payLoadForManualUpdate.length > 0) {
     $.ajax({
       type: "POST",
-      url: "/masteritem/updateAllToMax",
+      url: "/productV2/updateAllToMax",
       data: { mpIds: payLoadForManualUpdate },
       dataType: "json",
       cache: false,

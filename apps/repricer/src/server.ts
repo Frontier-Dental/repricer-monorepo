@@ -51,7 +51,7 @@ const MemoryStore = memorystore(session);
 app.use(
   session({
     secret: applicationConfig.SESSION_SECRET,
-    resave: true,
+    resave: false,
     saveUninitialized: false,
     store: new MemoryStore({
       checkPeriod: 86400000,
@@ -63,7 +63,7 @@ app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({ status: "ok" });
 });
 
-app.use("/", indexRouter);
+app.use(indexRouter);
 
 app.use("/public/images", express.static("./public/images"));
 
