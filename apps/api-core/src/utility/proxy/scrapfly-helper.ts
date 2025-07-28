@@ -1,7 +1,6 @@
 import _ from "lodash";
 import * as proxySwitchHelper from "../proxy-switch-helper";
 import * as formatWrapper from "../format-wrapper";
-import { logger } from "../winston-logger";
 import xml2js from "xml2js";
 import fetch from "node-fetch";
 import { applicationConfig } from "../config";
@@ -27,7 +26,7 @@ export async function fetchData(
       `SCRAPE STARTED : ${scrappingLog} : ${url} || ${seqString} || ${new Date()}`,
     );
 
-    logger.info({
+    console.log({
       module: "SCRAPE",
       message: `SCRAPE STARTED : ${scrappingLog} : ${url} || ${seqString} || render js : ${renderJs} `,
     });
@@ -88,7 +87,7 @@ async function handleResponse(
     `SCRAPE COMPLETED : ${scrappingLog} : ${url} || TimeTaken  :  ${timeTaken} seconds || ${seqString}`,
   );
 
-  logger.info({
+  console.log({
     module: "SCRAPE",
     message: `SCRAPE COMPLETED : ${scrappingLog} : ${url} ||  ${seqString} || render js : ${renderJs}`,
     timeTaken: `${timeTaken} seconds`,
@@ -143,7 +142,7 @@ async function handleRetry(
 ): Promise<any> {
   console.log(`Scrapfly Exception : ${error} || URL : ${url}`);
 
-  logger.error({
+  console.log({
     module: "SCRAPE",
     message: `Scrapfly Exception : ${error} || URL : ${url}`,
   });
@@ -159,12 +158,12 @@ async function handleRetry(
       `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
     );
 
-    logger.warn({
+    console.log({
       module: "SCRAPE",
       message: `REPRICER CORE : ERROR (WITH RETRY) : ${error} `,
     });
 
-    logger.warn({
+    console.log({
       module: "SCRAPE",
       message: `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
     });

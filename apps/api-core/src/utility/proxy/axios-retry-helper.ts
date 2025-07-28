@@ -2,7 +2,6 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import _ from "lodash";
 import requestPromise from "request-promise";
-import { logger } from "../winston-logger";
 import xml2js from "xml2js";
 import * as proxySwitchHelper from "../proxy-switch-helper";
 import * as formatWrapper from "../format-wrapper";
@@ -36,7 +35,7 @@ export async function getScrappingResponse(
     console.log(
       `SCRAPE STARTED : SmartProxy - Web : ${_url} || ${seqString} || ${new Date()}`,
     );
-    logger.info({
+    console.log({
       module: "SCRAPE",
       message: `SCRAPE STARTED : SmartProxy - Web : ${_url} || ${seqString} `,
     });
@@ -110,7 +109,7 @@ export async function getScrappingResponse(
       console.log(
         `SCRAPE COMPLETED : SmartProxy - Web : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || TaskId : ${taskId} || ${seqString}`,
       );
-      logger.info({
+      console.log({
         module: "SCRAPE",
         message: `SCRAPE COMPLETED : SmartProxy - Web : ${_url} || TaskId : ${taskId} || ${seqString}`,
         timeTaken: `${parseHrtimeToSeconds(process.hrtime(startTime))} seconds`,
@@ -121,7 +120,7 @@ export async function getScrappingResponse(
   } catch (error: any) {
     console.log(`SmartProxy - Web Exception : ${error} || URL : ${_url}`);
     console.error("Error Stack: ", error.stack);
-    logger.error({
+    console.log({
       module: "SCRAPE",
       message: `SmartProxy - Web Exception : ${error} || URL : ${_url}`,
     });
@@ -134,11 +133,11 @@ export async function getScrappingResponse(
       console.log(
         `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
       );
-      logger.warn({
+      console.log({
         module: "SCRAPE",
         message: `REPRICER CORE : ERROR (WITH RETRY) : ${error} `,
       });
-      logger.warn({
+      console.log({
         module: "SCRAPE",
         message: `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
       });
@@ -172,7 +171,7 @@ export async function getScrapingBeeResponse(
     console.log(
       `SCRAPE STARTED : ${scrappingLog} : ${_url} || ${seqString} || ${new Date()}`,
     );
-    logger.info({
+    console.log({
       module: "SCRAPE",
       message: `SCRAPE STARTED : ${scrappingLog} : ${_url} || ${seqString} || render js : ${renderJs} `,
     });
@@ -197,7 +196,7 @@ export async function getScrapingBeeResponse(
       console.log(
         `SCRAPE COMPLETED : ${scrappingLog} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || ${seqString}`,
       );
-      logger.info({
+      console.log({
         module: "SCRAPE",
         message: `SCRAPE COMPLETED : ${scrappingLog} : ${_url} ||  ${seqString} || render js : ${renderJs}`,
         timeTaken: `${parseHrtimeToSeconds(process.hrtime(startTime))} seconds`,
@@ -238,7 +237,7 @@ export async function getScrapingBeeResponse(
     }
   } catch (error: any) {
     console.log(`Scraping Bee Exception : ${error} || URL : ${_url}`);
-    logger.error({
+    console.log({
       module: "SCRAPE",
       message: `Scraping Bee Exception : ${error} || URL : ${_url}`,
     });
@@ -251,11 +250,11 @@ export async function getScrapingBeeResponse(
       console.log(
         `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
       );
-      logger.warn({
+      console.log({
         module: "SCRAPE",
         message: `REPRICER CORE : ERROR (WITH RETRY) : ${error} `,
       });
-      logger.warn({
+      console.log({
         module: "SCRAPE",
         message: `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
       });

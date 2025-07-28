@@ -1,12 +1,10 @@
 import express, { Request, Response } from "express";
 import moment from "moment";
-import { logger, rotateLogFiles } from "../utility/winston-logger";
 
 export const appLogController = express.Router();
 
 appLogController.get("/app/clear-logs", async (req: Request, res: Response) => {
   console.log("clearing logs..");
-  rotateLogFiles(logger, 0);
   res.send({ message: "Log files archived successfully" });
 });
 
@@ -38,33 +36,6 @@ appLogController.get("/app/logs", async (req: Request, res: Response) => {
   console.log(options);
   // Query logs
   let logEntries = [];
-  logger.query(options, function (err, result) {
-    if (err) {
-      throw err;
-    }
-    console.log(result);
-
-    logEntries = result["file"];
-    if (logLevel != "ALL") {
-      logEntries = logEntries.filter(function (le: any) {
-        return le.level == logLevel;
-      });
-    }
-
-    if (keyWord != undefined) {
-      logEntries = logEntries.filter((le: any) => le.message.includes(keyWord));
-    }
-
-    logEntries = logEntries.map((log: any) => {
-      const date = new Date(log.timestamp);
-      return {
-        ...log,
-        dateTime: formatDate(date),
-      };
-    });
-    console.log(logEntries);
-    return res.json(logEntries);
-  });
 });
 
 // Helper function to format the date

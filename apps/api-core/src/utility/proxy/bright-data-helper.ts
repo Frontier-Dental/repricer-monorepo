@@ -1,7 +1,6 @@
 import puppeteer from "puppeteer-core";
 import requestPromise from "request-promise";
 import * as proxySwitchHelper from "../proxy-switch-helper";
-import { logger } from "../winston-logger";
 
 function parseHrtimeToSeconds(hrtime: [number, number]): string {
   var seconds = (hrtime[0] + hrtime[1] / 1e9).toFixed(3);
@@ -28,7 +27,7 @@ export async function fetchData(url: string, proxyDetails: any): Promise<any> {
     console.log(
       `SCRAPE : BrightData : ${url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds`,
     );
-    logger.info({
+    console.log({
       module: "SCRAPE",
       message: `BRIGHTDATA : ${url}`,
       timeTaken: `${parseHrtimeToSeconds(process.hrtime(startTime))} seconds`,
@@ -40,7 +39,7 @@ export async function fetchData(url: string, proxyDetails: any): Promise<any> {
     console.log(
       `BRIGHTDATA - Fetch Response Exception for ${url} || ERROR : ${exception}`,
     );
-    logger.error({
+    console.log({
       module: "SCRAPE",
       message: `BRIGHTDATA - Fetch Response Exception for ${url} || ERROR : ${exception}`,
     });

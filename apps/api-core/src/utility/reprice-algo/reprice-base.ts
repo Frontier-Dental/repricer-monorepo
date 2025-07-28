@@ -5,7 +5,6 @@ import { CronStatusModel } from "../../model/cron-status";
 import * as mongoHelper from "../mongo/db-helper";
 import * as _codes from "http-status-codes";
 import * as requestGenerator from "../request-generator";
-import { logger } from "../winston-logger";
 import * as sqlHelper from "../mysql/mysql-helper";
 import { ErrorItemModel } from "../../model/error-item";
 import { Net32Response } from "../../types/net32";
@@ -188,7 +187,7 @@ export async function RepriceErrorItem(
           console.log(
             `REPRICE : Cron-422 : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid}  on ${postUrl} at Time :  ${new Date()}`,
           );
-          logger.info({
+          console.log({
             module: "REPRICE",
             message: `Cron-422 : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid}  on ${postUrl} at Time :  ${new Date()}`,
           });
@@ -251,7 +250,7 @@ export async function RepriceErrorItem(
                     message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                     obj: JSON.stringify(priceUpdatedItem),
                   });
-                  logger.info({
+                  console.log({
                     module: "REPRICE",
                     message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                   });
@@ -299,7 +298,7 @@ export async function RepriceErrorItem(
                     priceUpdateResponse: repriceResult.data.priceUpdateResponse,
                   },
                 ]);
-                logger.info({
+                console.log({
                   module: "REPRICE",
                   message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                 });
@@ -681,7 +680,7 @@ async function repriceSingleVendor(
   console.log(
     `REPRICE : ${cronSetting.CronName} : Cron Key : ${keyGen} : Vendor : ${contextVendor} : Requesting Reprice info for ${prod.mpid} at Time :  ${new Date()}`,
   );
-  logger.info({
+  console.log({
     module: "REPRICE",
     message: `Cron Name : ${cronSetting.CronName}, Cron Key : ${keyGen}, Vendor : ${contextVendor}, Requesting Reprice info for ${prod.mpid} at Time :  ${new Date()}`,
   });
@@ -745,7 +744,7 @@ async function repriceSingleVendor(
           message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(priceUpdatedItem),
         });
-        logger.info({
+        console.log({
           module: "REPRICE",
           message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
         });
@@ -778,7 +777,7 @@ async function repriceSingleVendor(
         priceUpdated: false,
         priceUpdateResponse: repriceResult.priceUpdateResponse,
       });
-      logger.info({
+      console.log({
         module: "REPRICE",
         message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
       });
