@@ -26,36 +26,32 @@ export async function startFeedCronHandler(
   console.log(
     `Started Feed Cron with details ${applicationConfig.FEED_CRON_EXP}`,
   );
-  feedCron = schedule(
-    applicationConfig.FEED_CRON_EXP,
-    async () => {
-      const eligibleProductList = await getFeedEligibleList();
-      console.log(
-        `Feed Cron running on ${new Date()} with Eligible Products Count : ${eligibleProductList.length}`,
-      );
-      if (!eligibleProductList || eligibleProductList.length === 0) {
-        return;
-      }
-      const keyGen = keyGenHelper.Generate();
-      const isChunkNeeded = await IsChunkNeeded(
+  feedCron = schedule(applicationConfig.FEED_CRON_EXP, async () => {
+    const eligibleProductList = await getFeedEligibleList();
+    console.log(
+      `Feed Cron running on ${new Date()} with Eligible Products Count : ${eligibleProductList.length}`,
+    );
+    if (!eligibleProductList || eligibleProductList.length === 0) {
+      return;
+    }
+    const keyGen = keyGenHelper.Generate();
+    const isChunkNeeded = await IsChunkNeeded(
+      eligibleProductList,
+      null,
+      "REGULAR",
+    );
+    if (isChunkNeeded) {
+      let chunkedList = _.chunk(
         eligibleProductList,
-        null,
-        "REGULAR",
+        applicationConfig.BATCH_SIZE,
       );
-      if (isChunkNeeded) {
-        let chunkedList = _.chunk(
-          eligibleProductList,
-          applicationConfig.BATCH_SIZE,
-        );
-        for (let chunk of chunkedList) {
-          await repriceFeed(keyGen, chunk, new Date());
-        }
-      } else {
-        await repriceFeed(keyGen, eligibleProductList, new Date());
+      for (let chunk of chunkedList) {
+        await repriceFeed(keyGen, chunk, new Date());
       }
-    },
-    { scheduled: true },
-  );
+    } else {
+      await repriceFeed(keyGen, eligibleProductList, new Date());
+    }
+  });
 
   return res.status(_codes.StatusCodes.OK).send(`Feed Cron started.`);
 }

@@ -9,7 +9,6 @@ export async function stopAllCronHandler(
   res: Response,
 ): Promise<any> {
   stopAllMainCrons();
-  cacheHelper.DeleteCacheByKey(CacheKeyName.CRON_SETTINGS_LIST);
   return res
     .status(_codes.StatusCodes.OK)
     .send("All Cron job stopped as requested");

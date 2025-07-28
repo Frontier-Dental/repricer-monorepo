@@ -49,14 +49,10 @@ proxySwitchController.get(
 );
 
 export async function startProxySwitchResetCronLogic() {
-  _CACHE_RESET_CRON = cron.schedule(
-    "* * * * *",
-    async () => {
-      console.log(`Running  Proxy Switch Counter Reset Cron at ${new Date()}`);
-      await proxySwitchHelper.ResetFailureCounter();
-    },
-    { scheduled: true },
-  );
+  _CACHE_RESET_CRON = cron.schedule("* * * * *", async () => {
+    console.log(`Running  Proxy Switch Counter Reset Cron at ${new Date()}`);
+    await proxySwitchHelper.ResetFailureCounter();
+  });
   console.log(
     `Started Proxy Switch Reset Cron at ${new Date()} with expression 0 * * * *`,
   );

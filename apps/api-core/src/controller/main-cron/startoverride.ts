@@ -22,8 +22,6 @@ export async function startOverrideHandler(
       await dbHelper.UpdateCronDetailsByCronId(cron.CronId, false);
     }
   }
-  //Clear CRON_SETTINGS_LIST Cache
-  cacheHelper.DeleteCacheByKey(CacheKeyName.CRON_SETTINGS_LIST);
   //Wait for 15seconds for all Running Cron to Stop
   await delay(applicationConfig.OVERRIDE_DELAY);
   //Call stopAllCronV3()
@@ -66,9 +64,6 @@ export async function startOverrideHandler(
       await dbHelper.UpdateCronDetailsByCronId(cron.CronId, cron.CronStatus);
     }
   }
-
-  //Clear CRON_SETTINGS_LIST Cache
-  cacheHelper.DeleteCacheByKey(CacheKeyName.CRON_SETTINGS_LIST);
 
   //Start All Cron
   await startAllCronAsIs(existingCronConfig);

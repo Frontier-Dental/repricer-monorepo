@@ -133,7 +133,7 @@ async function getSkipReprice(
           const timeDiffInMinutes = Math.round(
             ((new Date() as any) - lastCronTime) / 60000,
           );
-          const requestEveryForProduct = await getRequestIntervalDuration(
+          const requestEveryForProduct = getRequestIntervalDuration(
             prod.requestInterval,
           );
           if (requestEveryForProduct == -1) {
@@ -146,7 +146,7 @@ async function getSkipReprice(
           const timeDiffInSeconds = Math.round(
             ((new Date() as any) - lastCronTime) / 1000,
           );
-          const requestEveryForProduct = await getRequestIntervalDuration(
+          const requestEveryForProduct = getRequestIntervalDuration(
             prod.requestInterval,
           );
           if (requestEveryForProduct == -1) {
@@ -162,7 +162,7 @@ async function getSkipReprice(
   return true;
 }
 
-async function getRequestIntervalDuration(duration: string) {
+function getRequestIntervalDuration(duration: string) {
   if (Number.isNaN(parseInt(duration)) == true) {
     return -1;
   }

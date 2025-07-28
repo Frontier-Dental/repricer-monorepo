@@ -112,9 +112,7 @@ export async function GetGlobalConfig() {
   return mongoResult as GlobalConfig;
 }
 
-export async function GetCronSettingsListFresh(): Promise<
-  CronSettingsDetail[]
-> {
+export async function GetCronSettings(): Promise<CronSettingsDetail[]> {
   const dbo = await getMongoDb();
   const result = await dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
@@ -173,19 +171,16 @@ export async function GetCronSettingsDetailsByName(
   const dbo = await getMongoDb();
   mongoResult = await dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
-    .find(query)
-    .toArray();
-  if (mongoResult && mongoResult.length == 0) {
+    .findOne(query);
+  if (!mongoResult) {
     mongoResult = await dbo
       .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME)
-      .find(query)
-      .toArray();
+      .findOne(query);
   }
-  if (mongoResult && mongoResult.length == 0) {
+  if (!mongoResult) {
     mongoResult = await dbo
       .collection(applicationConfig.SCRAPE_CRON_NAME)
-      .find(query)
-      .toArray();
+      .findOne(query);
   }
   return mongoResult;
 }

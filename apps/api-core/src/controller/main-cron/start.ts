@@ -18,7 +18,6 @@ export async function startCronHandler(
   const { jobName, cronId } = req.body;
   if (jobName === "Cron-422") {
     startError422Cron();
-    cacheHelper.DeleteCacheByKey(CacheKeyName.CRON_SETTINGS_LIST);
     return res
       .status(_codes.StatusCodes.OK)
       .send(`Cron job started successfully for jobName : ${jobName}`);
@@ -28,9 +27,11 @@ export async function startCronHandler(
     throw BadRequest(`Invalid Job Name: ${jobName}`);
   }
   const settings = await mongoHelper.GetCronSettingsDetailsByName(cronName);
+  if (!settings) {
+    throw BadRequest(`Cron settings not found for ${cronName}`);
+  }
   setCronAndStart(cronName, settings);
   await mongoHelper.UpdateCronSettings(cronId);
-  cacheHelper.DeleteCacheByKey(CacheKeyName.CRON_SETTINGS_LIST);
   return res
     .status(_codes.StatusCodes.OK)
     .send(`Cron job started successfully for jobName : ${jobName}`);

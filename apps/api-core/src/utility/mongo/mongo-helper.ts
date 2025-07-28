@@ -279,14 +279,6 @@ export const GetDelay = async (): Promise<any> => {
   return parseInt(dbResponse.delay);
 };
 
-export const GetCronSettingsListFresh = async (): Promise<any[]> => {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
-    .find()
-    .toArray();
-};
-
 export const UpdateCronDetailsByCronId = async (
   cronId: string,
   _status: any,

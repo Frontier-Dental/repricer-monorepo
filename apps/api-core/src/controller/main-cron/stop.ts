@@ -19,7 +19,6 @@ export async function stopCronHandler(
     }
     stopCron(cronName);
   }
-  cacheHelper.DeleteCacheByKey(CacheKeyName.CRON_SETTINGS_LIST);
   return res
     .status(_codes.StatusCodes.OK)
     .send(`Cron job stopped successfully for jobName : ${jobName}`);
