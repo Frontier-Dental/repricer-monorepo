@@ -7,7 +7,7 @@ import * as _codes from "http-status-codes";
 import * as requestGenerator from "../request-generator";
 import * as sqlHelper from "../mysql/mysql-helper";
 import { ErrorItemModel } from "../../model/error-item";
-import { Net32Response } from "../../types/net32";
+import { Net32Product, Net32Response } from "../../types/net32";
 import { ProductDetailsListItem } from "../mysql/mySql-mapper";
 import { CronSettings } from "../../types/cron-settings";
 import { RepriceProductHttpResponse } from "../../types/reprice-product-http-response";
@@ -18,6 +18,13 @@ import { RepriceAsyncResponse } from "../../model/reprice-async-response";
 import { applicationConfig } from "../config";
 import { CronSettingsDetail } from "../mongo/types";
 import { VendorName } from "./v2/types";
+import {
+  getAllOwnVendorIds,
+  getInternalProducts,
+  getPriceSolutionStringRepresentation,
+} from "./v2/utility";
+import { insertV2AlgoExecution } from "../mysql/v2-algo-execution";
+import { repriceProductV2 } from "./v2/v2";
 
 export async function Execute(
   keyGen: string,
@@ -73,7 +80,7 @@ export async function Execute(
     );
     const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
     let productLogs = [];
-    let net32resp = null;
+    let net32resp: AxiosResponse<Net32Product[]>;
     const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace(
       "{mpId}",
       prod.mpId,
@@ -87,6 +94,22 @@ export async function Execute(
         cronIdForScraping,
         seqString,
       );
+      const v2AlgoResult = repriceProductV2(
+        net32resp.data.map((p) => ({
+          ...p,
+          vendorId: parseInt(p.vendorId as string),
+        })),
+        getInternalProducts(prod, prioritySequence),
+        getAllOwnVendorIds(),
+      );
+      await insertV2AlgoExecution({
+        scrape_product_id: prod.productIdentifier,
+        time: new Date(),
+        chain_of_thought_html: Buffer.from(v2AlgoResult.html),
+        comment: getPriceSolutionStringRepresentation(
+          v2AlgoResult.priceSolutions,
+        ),
+      });
       for (let idx = 0; idx < prioritySequence.length; idx++) {
         const proceedNextVendor = proceedNext(
           prod,
@@ -889,14 +912,14 @@ function updateLowestVendor(
   return prod;
 }
 
-async function getNextCronTime(priceUpdateResponse: any) {
+function getNextCronTime(priceUpdateResponse: any) {
   const messageText = priceUpdateResponse.message;
   if (messageText && typeof messageText == "string") {
     const timeStr = messageText.split("this time:")[1];
     return timeStr
       ? new Date(timeStr.trim())
-      : await calculateNextCronTime(new Date(), 12);
-  } else return await calculateNextCronTime(new Date(), 12);
+      : calculateNextCronTime(new Date(), 12);
+  } else return calculateNextCronTime(new Date(), 12);
 }
 
 function updateCronBasedDetails(
