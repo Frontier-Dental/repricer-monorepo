@@ -135,7 +135,7 @@ export async function MapVendorToRoot(req: Request, res: Response) {
     for (const $ of mpIdList) {
       $.CronId = regCronData.find(
         (x: any) => x.CronName == $.CronName.trim(),
-      ).CronId;
+      )?.CronId;
       await mySqlMiddleware.MapVendorToRoot($);
     }
   }

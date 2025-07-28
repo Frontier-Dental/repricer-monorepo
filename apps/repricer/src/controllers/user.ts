@@ -26,8 +26,6 @@ export async function loginUser(req: Request, res: Response) {
   const userName = req.body.userName;
   const userPassword = req.body.userPassword;
   const result = await mongoMiddleware.GetUserLogin({ userName: userName });
-  console.log(req.body);
-  console.log(result);
   if (result) {
     if (result.userName == userName && result.userPassword == userPassword) {
       (req as any).session.users_id = result;

@@ -233,30 +233,22 @@ export const GetCronLogs = async (
 };
 
 export const GetUserLogin = async (query: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.USERS_COLLECTION)
-    .findOne(query);
-  return mongoResult;
+  return dbo.collection(applicationConfig.USERS_COLLECTION).findOne(query);
 };
 
 export const GetItemList = async (mpId: string) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-
   const query = { mpid: mpId };
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.ITEMS_COLLECTION_NAME)
     .find(query)
     .toArray();
-  return mongoResult;
 };
 
 export const UpdateCronLogPostPriceUpdate = async (req: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
     .findOneAndUpdate(
       { _id: req._id },
@@ -266,19 +258,17 @@ export const UpdateCronLogPostPriceUpdate = async (req: any) => {
         },
       },
     );
-  return mongoResult;
 };
 
 export const GetLogsById = async (id: string) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
   const query = { _id: new ObjectId(id) };
-  mongoResult = await dbo
+  const mongoResult = await dbo
     .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
     .find(query)
     .toArray();
   if (mongoResult && mongoResult.length == 0) {
-    mongoResult = await dbo
+    return dbo
       .collection(applicationConfig.ERROR_422_CRON_LOGS)
       .find(query)
       .toArray();
@@ -299,41 +289,28 @@ export const FindOneProductModel = async (query: any) => {
 };
 
 export const GetLatestCronStatus = async () => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
   const query: any = { status: "In-Progress" };
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
     .find(query)
     .sort({ _id: -1 })
     .toArray();
-  return mongoResult;
 };
 
 export const PushManualCronLogAsync = async (payload: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
     .insertOne(payload);
-  return mongoResult;
 };
 
 export const GetCronSettingsList = async () => {
-  let mongoResult: any = null;
-  cacheHelper.DeleteCacheByKey(cacheKeyEnum.PRIMARY_CRON_SETTINGS_LIST);
-  const cacheKey = cacheKeyEnum.PRIMARY_CRON_SETTINGS_LIST;
   const dbo = await getMongoDb();
-  if ((await cacheHelper.Has(cacheKey)) == true) {
-    mongoResult = await cacheHelper.Get(cacheKey);
-  } else {
-    mongoResult = await dbo
-      .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
-      .find()
-      .toArray();
-    cacheHelper.Set(cacheKey, mongoResult);
-  }
-  return mongoResult;
+  return dbo
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
+    .find()
+    .toArray();
 };
 
 export const UpdateCronSettingsList = async (payload: any, req: any) => {
@@ -360,19 +337,15 @@ export const UpdateCronSettingsList = async (payload: any, req: any) => {
         },
       );
   }
-  cacheHelper.DeleteCacheByKey(cacheKeyEnum.PRIMARY_CRON_SETTINGS_LIST);
-  cacheHelper.DeleteExternalCache(cacheKeyEnum.EXTERNAL_CRON_SETTINGS_LIST);
   return mongoResult;
 };
 
 export const InsertCronSettings = async (payload: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  const { insertedId } = await dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .insertOne(payload);
-  cacheHelper.DeleteCacheByKey(cacheKeyEnum.PRIMARY_CRON_SETTINGS_LIST);
-  return mongoResult;
+  return insertedId.toString();
 };
 
 export const ToggleCronStatus = async (
@@ -380,9 +353,8 @@ export const ToggleCronStatus = async (
   cronStatus: string,
   req: any,
 ) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .findOneAndUpdate(
       { CronId: cronId },
@@ -394,82 +366,62 @@ export const ToggleCronStatus = async (
         },
       },
     );
-  cacheHelper.DeleteCacheByKey(cacheKeyEnum.PRIMARY_CRON_SETTINGS_LIST);
-  cacheHelper.DeleteExternalCache(cacheKeyEnum.EXTERNAL_CRON_SETTINGS_LIST);
-  return mongoResult;
 };
 
 export const PurgeCronBasedOnId = async (cronId: string) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
     .deleteMany({ cronId: cronId });
-  return mongoResult;
 };
 
 export const PurgeCronBasedOnDate = async (dateString: string) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
     .deleteMany({
       time: {
         $lte: new Date(dateString),
       },
     });
-  return mongoResult;
 };
 
 export const deleteById = async (Id: string) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.PRODUCT_COLLECTION)
     .deleteOne({ mpId: Id });
-  return mongoResult;
 };
 
 export const CheckInProgressExport = async () => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
   let query = { status: "In Progress" };
-  mongoResult = await dbo.collection("exports").find(query).toArray();
-  return mongoResult;
+  return dbo.collection("exports").find(query).toArray();
 };
 
 export const FetchQueuedExport = async () => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
   let query = { $or: [{ status: "Queued" }, { status: "Batched" }] };
-  mongoResult = await dbo.collection("exports").findOne(query);
-  return mongoResult;
+  return dbo.collection("exports").findOne(query);
 };
 
 export const UpdateExportStatus = async (id: any, status: any, info = {}) => {
-  let mongoResult: any = null;
-  let set: any = info;
-  set.status = status;
   const dbo = await getMongoDb();
-  mongoResult = await dbo.collection("exports").findOneAndUpdate(
+  return dbo.collection("exports").findOneAndUpdate(
     { _id: id },
     {
-      $set: set,
+      $set: { ...info, status },
     },
   );
-  return mongoResult;
 };
 
 export const FetchExports = async () => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
   let query: any = {};
-  mongoResult = await dbo.collection("exports").find(query).toArray();
-  return mongoResult;
+  return dbo.collection("exports").find(query).toArray();
 };
 
 export const Get422ProductCountByType = async (_type: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
   let query: any = {
     $and: [
@@ -481,14 +433,12 @@ export const Get422ProductCountByType = async (_type: any) => {
       },
     ],
   };
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.ERROR_ITEM_COLLECTION)
     .countDocuments(query);
-  return mongoResult;
 };
 
 export const GetContextErrorItemsCount = async (_activeStatus: any) => {
-  var result: any = null;
   const dbo = await getMongoDb();
   const query: any = {
     nextCronTime: {
@@ -497,23 +447,15 @@ export const GetContextErrorItemsCount = async (_activeStatus: any) => {
     },
     active: _activeStatus,
   };
-  result = await dbo
+  return dbo
     .collection(applicationConfig.ERROR_ITEM_COLLECTION)
     .countDocuments(query);
-  return result;
 };
 
 export const GetConfigurations = async (activeOnly = true) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-
   const query = activeOnly ? { active: true } : {};
-  mongoResult = await dbo
-    .collection(applicationConfig.IP_CONFIG)
-    .find(query)
-    .toArray();
-
-  return mongoResult;
+  return dbo.collection(applicationConfig.IP_CONFIG).find(query).toArray();
 };
 
 export const UpdateConfiguration = async (payload: any, req: any) => {
@@ -531,25 +473,19 @@ export const UpdateConfiguration = async (payload: any, req: any) => {
             hostUrl: element.hostUrl,
             port: parseInt(element.port),
             active: element.active,
-            //"proxyPriority": parseInt(element.proxyPriority),
             AuditInfo: await SessionHelper.GetAuditInfo(req),
           },
         },
       );
-    cacheHelper.DeleteExternalCache(
-      `${cacheKeyEnum.EXTERNAL_PROXY_CONFIG_BY_PROVIDER_ID}_${parseInt(element.proxyProvider)}`,
-    );
   }
   return mongoResult;
 };
 
 export const GetHistoryDetailsForId = async (_mpId: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.HISTORY_DB)
     .findOne({ mpId: parseInt(_mpId) });
-  return mongoResult;
 };
 
 export const GetHistoryDetailsForDateRange = async (
@@ -557,7 +493,6 @@ export const GetHistoryDetailsForDateRange = async (
   endDate: any,
   counter: any,
 ) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
   const query = {
     $and: [
@@ -566,18 +501,15 @@ export const GetHistoryDetailsForDateRange = async (
       { "historicalLogs.refTime": { $lte: new Date(endDate) } },
     ],
   };
-  const totalDocCount = await dbo
-    .collection(applicationConfig.HISTORY_DB)
-    .countDocuments();
 
-  mongoResult = await dbo
+  const result = await dbo
     .collection(applicationConfig.HISTORY_DB)
     .find(query)
     .sort({ $natural: -1 })
     .skip((parseInt(counter) - 1) * applicationConfig.HISTORY_LIMIT)
     .limit(applicationConfig.HISTORY_LIMIT)
     .toArray();
-  for (let doc of mongoResult) {
+  for (let doc of result) {
     if (doc.historicalLogs) {
       doc.historicalLogs = await FilterHistoryData(
         doc.historicalLogs,
@@ -586,7 +518,7 @@ export const GetHistoryDetailsForDateRange = async (
       );
     }
   }
-  return mongoResult;
+  return result;
 };
 
 export const GetHistoryDetailsForIdByDate = async (
@@ -594,7 +526,6 @@ export const GetHistoryDetailsForIdByDate = async (
   startDate: any,
   endDate: any,
 ) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
   const query = {
     $and: [
@@ -603,7 +534,7 @@ export const GetHistoryDetailsForIdByDate = async (
       { "historicalLogs.refTime": { $lte: new Date(endDate) } },
     ],
   };
-  mongoResult = await dbo
+  const mongoResult = await dbo
     .collection(applicationConfig.HISTORY_DB)
     .findOne(query);
   if (mongoResult && mongoResult.historicalLogs) {
@@ -617,61 +548,47 @@ export const GetHistoryDetailsForIdByDate = async (
 };
 
 export const GetTotalHistoryCount = async () => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.HISTORY_DB)
-    .countDocuments();
-  return mongoResult;
+  return dbo.collection(applicationConfig.HISTORY_DB).countDocuments();
 };
 
 export const InitExportStatus = async (payload: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  const { insertedId } = await dbo
     .collection(applicationConfig.EXPORT_STATUS)
     .insertOne(payload);
-  return mongoResult;
+  return insertedId.toString();
 };
 
 export const UpdateExportStatusV2 = async (payload: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.EXPORT_STATUS)
-    .findOneAndUpdate(
-      { fileName: payload.fileName },
-      {
-        $set: {
-          status: payload.status,
-          updatedTime: new Date(),
-        },
+  return dbo.collection(applicationConfig.EXPORT_STATUS).findOneAndUpdate(
+    { fileName: payload.fileName },
+    {
+      $set: {
+        status: payload.status,
+        updatedTime: new Date(),
       },
-    );
-  return mongoResult;
+    },
+  );
 };
 
 export const GetExportFileStatus = async (_fileName: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.EXPORT_STATUS)
     .findOne({ fileName: _fileName });
-  return mongoResult;
 };
 
 export const GetExportFileNamesByStatus = async (_fileStatus: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.EXPORT_STATUS!)
     .find({ status: _fileStatus })
     .toArray();
-  return mongoResult;
 };
 
 export const Get422ProductDetailsByType = async (_type: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
   let query = {
     $and: [
@@ -683,43 +600,35 @@ export const Get422ProductDetailsByType = async (_type: any) => {
       },
     ],
   };
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.ERROR_ITEM_COLLECTION!)
     .find(query)
     .toArray();
-  return mongoResult;
 };
 
 export const GetEnvValueByKey = async (keyName: any) => {
-  let mongoResult: any = null;
-  let evalValue = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo.collection(applicationConfig.ENV_SETTINGS!).findOne();
+  const mongoResult = await dbo
+    .collection(applicationConfig.ENV_SETTINGS!)
+    .findOne();
   if (mongoResult) {
     switch (keyName) {
       case "SOURCE":
-        evalValue = mongoResult.source;
-        break;
+        return mongoResult.source;
       case "DELAY":
-        evalValue = mongoResult.delay;
-        break;
+        return mongoResult.delay;
       case "OWN_VENDOR_ID":
-        evalValue = mongoResult.ownVendorId;
-        break;
+        return mongoResult.ownVendorId;
       case "SISTER_VENDORS":
-        evalValue = mongoResult.excludedSisterVendors;
-        break;
+        return mongoResult.excludedSisterVendors;
       case "FRONTIER_API_KEY":
-        evalValue = mongoResult.FrontierApiKey;
-        break;
+        return mongoResult.FrontierApiKey;
       case "DEV_SYNC_API_KEY":
-        evalValue = mongoResult.DevIntegrationKey;
-        break;
+        return mongoResult.DevIntegrationKey;
       default:
-        break;
+        throw new Error(`Invalid key name: ${keyName}`);
     }
   }
-  return evalValue;
 };
 
 export const InsertOrUpdateProduct = async (payload: any, req: any) => {
@@ -778,14 +687,12 @@ export const InsertOrUpdateProduct = async (payload: any, req: any) => {
 };
 
 export const GetAllProductDetails = async () => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.PRODUCT_COLLECTION!)
     .find()
     .sort({ _id: -1 })
     .toArray();
-  return mongoResult;
 };
 
 export const GetAllProductDetailsV2 = async (
@@ -793,35 +700,29 @@ export const GetAllProductDetailsV2 = async (
   pageNumber: any,
   pageSize: any,
 ) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.PRODUCT_COLLECTION!)
     .find(query)
     .skip(pageNumber * pageSize)
     .sort({ _id: -1 })
     .limit(pageSize)
     .toArray();
-  return mongoResult;
 };
 
 export const GetProductCount = async (query: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.PRODUCT_COLLECTION!)
     .countDocuments(query);
-  return mongoResult;
 };
 
 export const FindProductById = async (mpid: any) => {
-  let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.PRODUCT_COLLECTION!)
     .find({ mpId: mpid })
     .toArray();
-  return mongoResult;
 };
 
 export const InsertOrUpdateProductWithCronName = async (
@@ -833,8 +734,6 @@ export const InsertOrUpdateProductWithCronName = async (
   let productDetails = await dbo
     .collection(applicationConfig.PRODUCT_COLLECTION!)
     .findOne({ mpId: payload.mpId });
-  const contextCronName = await getContextDetails(payload, "cronName");
-  const contextCronId = await getContextDetails(payload, "cronId");
   let _tradentUpdated = false;
   let _frontUpdated = false;
   let _mvpDetails = false;
@@ -944,11 +843,7 @@ const setSelectiveDetails = (details: any, prefix: any) => {
   return setObj;
 };
 
-async function FilterHistoryData(
-  historyData: any,
-  startDate: any,
-  endDate: any,
-) {
+function FilterHistoryData(historyData: any, startDate: any, endDate: any) {
   let tempLogs = _.cloneDeep(historyData);
   tempLogs = _.remove(tempLogs, ($) => {
     return $.refTime < new Date(endDate);

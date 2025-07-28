@@ -13,7 +13,7 @@ export async function GetInprogressCron(req: Request, res: Response) {
   for (let $ of inProgressCrons) {
     $.cronName = combinedArrayOfCrons.find(
       (x: any) => x.CronId == $.cronId,
-    ).CronName;
+    )?.CronName;
     if (
       $.productsCount == 0 &&
       Math.round((new Date().getTime() - $.cronTime.getTime()) / 1000) > 120

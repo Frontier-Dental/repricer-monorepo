@@ -51,7 +51,9 @@ export const getMasterItemController = async (req: Request, res: Response) => {
     _.cronSettings = cronSettings;
     _.badge_indicator = parseBadgeIndicator(_.badgeIndicator, "KEY");
     if (_.cronId) {
-      _.cronName = cronSettings.find((x: any) => x.CronId == _.cronId).CronName;
+      _.cronName = cronSettings.find(
+        (x: any) => x.CronId == _.cronId,
+      )?.CronName;
     }
     _.lastCronTime = _.last_cron_time
       ? moment(_.last_cron_time).format("DD-MM-YY HH:mm:ss")
@@ -94,7 +96,7 @@ export async function editMasterItemController(req: Request, res: Response) {
   item.cronSettings = cronSettings;
   item.badge_indicator = item.badgeIndicator;
   item.cronName = item.cronId
-    ? cronSettings.find((x: any) => x.CronId == item.cronId).CronName
+    ? cronSettings.find((x: any) => x.CronId == item.cronId)?.CronName
     : "";
   res.render("pages/itemmaster/edit", {
     item,
@@ -251,7 +253,9 @@ export async function excelDownload(req: Request, res: Response) {
   const cronSettings = await mongoMiddleware.GetCronSettingsList();
   ItemCollection.forEach((_: any) => {
     if (_.cronId) {
-      _.cronName = cronSettings.find((x: any) => x.CronId == _.cronId).CronName;
+      _.cronName = cronSettings.find(
+        (x: any) => x.CronId == _.cronId,
+      )?.CronName;
     }
     if (_.tags) {
       _.tags = _.tags.join(", ");
@@ -502,7 +506,7 @@ export async function addExcelData(req: Request, res: Response) {
           : (_.first(badgeResx) as any).key,
         cronName: row[13],
         cronId: row[13]
-          ? combinedArray.find((x: any) => x.CronName == row[13].trim()).CronId
+          ? combinedArray.find((x: any) => x.CronName == row[13].trim())?.CronId
           : "",
         scrapeOn: row[14] != null && row[14] != "" ? JSON.parse(row[14]) : true,
         allowReprice:
@@ -604,7 +608,7 @@ export async function addExcelData(req: Request, res: Response) {
         badgePercentage: row[26] ? parseFloat(row[26]) : 0,
         productName: row[28] ? row[28] : "",
         cronId: row[30]
-          ? combinedArray.find((x: any) => x.CronName == row[30].trim()).CronId
+          ? combinedArray.find((x: any) => x.CronName == row[30].trim())?.CronId
           : "",
         cronName: row[30],
         requestInterval: row[31] ? parseInt(row[31]) : 1,

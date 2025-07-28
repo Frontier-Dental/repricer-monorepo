@@ -54,19 +54,19 @@ export async function getCronSettings(req: Request, res: Response) {
     (x: any) => x.IsHidden == true,
   );
   cronSettingsResponse.custom = {};
-  cronSettingsResponse.custom.CronId = hiddenCronDetails.CronId;
-  cronSettingsResponse.custom.CronName = hiddenCronDetails.CronName;
-  cronSettingsResponse.custom.IsActive = hiddenCronDetails.CronStatus;
-  cronSettingsResponse.custom.ProxyProvider = hiddenCronDetails.ProxyProvider
+  cronSettingsResponse.custom.CronId = hiddenCronDetails?.CronId;
+  cronSettingsResponse.custom.CronName = hiddenCronDetails?.CronName;
+  cronSettingsResponse.custom.IsActive = hiddenCronDetails?.CronStatus;
+  cronSettingsResponse.custom.ProxyProvider = hiddenCronDetails?.ProxyProvider
     ? hiddenCronDetails.ProxyProvider
     : 0;
-  cronSettingsResponse.custom.IpType = hiddenCronDetails.IpType
+  cronSettingsResponse.custom.IpType = hiddenCronDetails?.IpType
     ? hiddenCronDetails.IpType
     : 0;
-  cronSettingsResponse.custom.FixedIp = hiddenCronDetails.FixedIp;
-  cronSettingsResponse.custom.Offset = hiddenCronDetails.Offset;
-  cronSettingsResponse.custom.CronTime = hiddenCronDetails.CronTime;
-  cronSettingsResponse.custom.CronTimeUnit = hiddenCronDetails.CronTimeUnit;
+  cronSettingsResponse.custom.FixedIp = hiddenCronDetails?.FixedIp;
+  cronSettingsResponse.custom.Offset = hiddenCronDetails?.Offset;
+  cronSettingsResponse.custom.CronTime = hiddenCronDetails?.CronTime;
+  cronSettingsResponse.custom.CronTimeUnit = hiddenCronDetails?.CronTimeUnit;
   cronSettingsResponse.custom.NoOf422Products =
     await mongoMiddleware.Get422ProductCountByType("422_ERROR");
   cronSettingsResponse.custom.NoOfPriceUpdateProducts =
@@ -91,12 +91,12 @@ export async function getCronSettings(req: Request, res: Response) {
   cronSettingsResponse.custom.ThresholdReached =
     await MapperHelper.GetIsStepReached(
       hiddenCronDetails,
-      hiddenCronDetails.AlternateProxyProvider.length,
+      hiddenCronDetails?.AlternateProxyProvider.length,
     );
   cronSettingsResponse.custom.CloseToThresholdReached =
     await MapperHelper.GetIsStepReached(
       hiddenCronDetails,
-      hiddenCronDetails.AlternateProxyProvider.length - 1,
+      hiddenCronDetails?.AlternateProxyProvider.length - 1,
     );
 
   res.render("pages/settings/settingsList", {
@@ -206,35 +206,35 @@ export async function updateCronSettings(req: Request, res: Response) {
   const alternateProxyProviderDetailsFor422 =
     await MapperHelper.MapAlternateProxyProviderDetails(999, payload); //999 in 1st param means it is for 422
   if (
-    cron422.ProxyProvider != payload.proxy_provider_422 ||
-    cron422.FixedIp != payload[`fixed_ip_${cron422.CronId}`] ||
-    cron422.IpType != payload[`ip_type_${cron422.CronId}`] ||
-    cron422.CronTime != payload.cron_time_422 ||
-    cron422.CronTimeUnit != payload.cron_time_unit_422 ||
-    cron422.Offset != payload.offset_422 ||
+    cron422?.ProxyProvider != payload.proxy_provider_422 ||
+    cron422?.FixedIp != payload[`fixed_ip_${cron422?.CronId}`] ||
+    cron422?.IpType != payload[`ip_type_${cron422?.CronId}`] ||
+    cron422?.CronTime != payload.cron_time_422 ||
+    cron422?.CronTimeUnit != payload.cron_time_unit_422 ||
+    cron422?.Offset != payload.offset_422 ||
     !_.isEqual(
       alternateProxyProviderDetailsFor422,
-      cron422.AlternateProxyProvider,
+      cron422?.AlternateProxyProvider,
     )
   ) {
     const cronSetting422Payload = new cronSettings(
-      cron422.CronId,
-      cron422.CronName,
+      cron422?.CronId,
+      cron422?.CronName,
       payload.cron_time_unit_422,
       payload.cron_time_422,
       null as any,
-      cron422.CronStatus,
+      cron422?.CronStatus,
       payload.offset_422,
       payload.proxy_provider_422,
-      payload[`ip_type_${cron422.CronId}`],
-      payload[`fixed_ip_${cron422.CronId}`],
+      payload[`ip_type_${cron422?.CronId}`],
+      payload[`fixed_ip_${cron422?.CronId}`],
       alternateProxyProviderDetailsFor422,
     );
     listOfUpdates.push(cronSetting422Payload);
     if (
-      cron422.CronTime != payload.cron_time_422 ||
-      cron422.Offset != payload.offset_422 ||
-      cron422.CronTimeUnit != payload.cron_time_unit_422
+      cron422?.CronTime != payload.cron_time_422 ||
+      cron422?.Offset != payload.offset_422 ||
+      cron422?.CronTimeUnit != payload.cron_time_unit_422
     ) {
       listOfUpdatedCronKey.push(
         cronMapping.find((c) => c.cronId == cronSetting422Payload.CronId)!
@@ -307,7 +307,7 @@ export async function addCronSettings(req: Request, res: Response) {
       false as any,
       null as any,
       null as any,
-    ),
+    ) as any,
   );
   await mongoMiddleware.InsertCronSettings(_.last(cronSettingsResponse));
   res.render("pages/settings/settingsList", {
@@ -331,7 +331,7 @@ export async function toggleCronStatus(req: Request, res: Response) {
       actionResponse = "Stopped";
     }
     await mongoMiddleware.ToggleCronStatus(
-      cronSettingsResponse.find((x: any) => x.CronName == CronName).CronId,
+      cronSettingsResponse.find((x: any) => x.CronName == CronName)?.CronId,
       JSON.parse(payload.Action),
       req,
     );
@@ -343,7 +343,7 @@ export async function toggleCronStatus(req: Request, res: Response) {
     const existingSettings = cronSettingsResponse.find(
       (x: any) => x.CronId == payload.CronId,
     );
-    if (JSON.parse(payload.Action) != existingSettings.CronStatus) {
+    if (JSON.parse(payload.Action) != existingSettings?.CronStatus) {
       const jobName = cronMapping.find(
         (x) => x.cronId == payload.CronId,
       )!.cronVariable;
@@ -374,7 +374,7 @@ export async function toggleCronStatus(req: Request, res: Response) {
 export async function show_details(req: Request, res: Response) {
   const param = req.params.param.trim();
   let productList = await mongoMiddleware.Get422ProductDetailsByType(param);
-  productList.paramData = param;
+  (productList as any).paramData = param;
   if (productList.length > 0) {
     for (let prod of productList) {
       prod.nextCronTime = prod.nextCronTime

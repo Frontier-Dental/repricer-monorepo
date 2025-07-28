@@ -212,6 +212,9 @@ export async function createCrons(req: Request, res: Response) {
     (x) => x.IsHidden != true,
   );
   const contextCron = _.first(generalCronDetails);
+  if (!contextCron) {
+    throw new Error("No cron found");
+  }
   let newCronList = cronMapping;
   for (let count = 1; count <= countOfCrons; count++) {
     const $id = uuidv4().split("-").join("");

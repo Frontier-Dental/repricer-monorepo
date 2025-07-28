@@ -85,7 +85,7 @@ export async function UpdateConfig(req: Request, res: Response) {
           : payload.port[$cr];
       contextConfig.active = payload.active[$cr] === "true" ? true : false;
       //contextConfig.proxyPriority = parseInt(payload.proxyPriority[$cr]);
-      if (!_.isEqual(contextConfig, configSettingsResponse[$cr])) {
+      if (!_.isEqual(contextConfig, configSettingsResponse[$cr as any])) {
         updatedConfigs.push(contextConfig as unknown as never);
       }
     }

@@ -514,7 +514,7 @@ export async function saveRootDetails(req: Request, res: Response) {
   const scrapeOnlyCronSettingsDetails = await mongoMiddleware.GetScrapeCrons();
   const linkedRegularCronName = regularCronSettingsDetails.find(
     (x: any) => x.CronId == rootDetailsForPayload.cronGroup,
-  ).CronName;
+  )?.CronName;
   const scrapeOnlyCronName = scrapeOnlyCronSettingsDetails.find(
     (x: any) => x.CronId == rootDetailsForPayload.scrapeOnlyCron,
   ).CronName;

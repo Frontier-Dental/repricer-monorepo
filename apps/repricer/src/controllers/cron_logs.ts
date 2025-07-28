@@ -43,7 +43,7 @@ export async function getCronLogs(req: Request, res: Response) {
   if (req.query.group) {
     if (req.query.group != "") {
       group = req.query.group as string;
-      cronId = cronSettings.find((x: any) => x.CronName == group).CronId;
+      cronId = cronSettings.find((x: any) => x.CronName == group)?.CronId;
     }
   }
 
@@ -67,20 +67,14 @@ export async function getCronLogs(req: Request, res: Response) {
       });
       if (!existingModel) {
         let _$cronLog: any = new CronLogs(log, idx++);
-        _$cronLog.repricedProductCount = await getRepricerCount(log);
-        _$cronLog.successScrapeCount = await getScrapeCountByFlag(log, 1); // SUCCESS:1
-        _$cronLog.failureScrapeCount = await getScrapeCountByFlag(log, 0); // FAILURE:0
-        _$cronLog.repriceFailure422Count = await getRepriceFailureByType(
-          log,
-          1,
-        ); //422-Error:1
-        _$cronLog.repriceFailureOtherCount = await getRepriceFailureByType(
-          log,
-          0,
-        ); //Any Other Error:0
+        _$cronLog.repricedProductCount = getRepricerCount(log);
+        _$cronLog.successScrapeCount = getScrapeCountByFlag(log, 1); // SUCCESS:1
+        _$cronLog.failureScrapeCount = getScrapeCountByFlag(log, 0); // FAILURE:0
+        _$cronLog.repriceFailure422Count = getRepriceFailureByType(log, 1); //422-Error:1
+        _$cronLog.repriceFailureOtherCount = getRepriceFailureByType(log, 0); //Any Other Error:0
         _$cronLog.cronName = cronSettings.find(
           (t: any) => t.CronId == log.cronId,
-        ).CronName;
+        )?.CronName;
         logViewModel.unshift(_$cronLog);
       }
     }
@@ -92,7 +86,7 @@ export async function getCronLogs(req: Request, res: Response) {
         try {
           x.cronName = cronSettings.find(
             (t: any) => t.CronId == x.cronId,
-          ).CronName;
+          )?.CronName;
         } catch (ex) {
           x.cronName = x.cronId;
         }
@@ -109,7 +103,7 @@ export async function getCronLogs(req: Request, res: Response) {
     x.endTime = moment(x.endTime).format("DD-MM-YY HH:mm:ss");
     x.cronName = filterCronDetails.find(
       (c: any) => c.cronId == x.contextCronId,
-    ).cronName;
+    )?.cronName;
   });
   let params = {
     items: logViewModel,
@@ -266,7 +260,7 @@ export async function exportBulkDataCRON() {
         "In Progress",
         {},
       );
-      if (updateExportStatus.lastErrorObject.updatedExisting) {
+      if (updateExportStatus?.lastErrorObject?.updatedExisting) {
         date.fromDate = new Date(queuedExport.fromDate);
         date.toDate = new Date(queuedExport.toDate);
         console.log(date);
@@ -951,7 +945,6 @@ export async function getFilterCronLogsByLimit(req: Request, res: Response) {
 
 export async function getCurrentTasks(req: Request, res: Response) {
   let cronSettings = await mongoMiddleware.GetCronSettingsList();
-
   const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
   cronSettings = _.concat(cronSettings, slowCronSettings);
 
@@ -962,7 +955,7 @@ export async function getCurrentTasks(req: Request, res: Response) {
         try {
           x.cronName = cronSettings.find(
             (t: any) => t.CronId == x.cronId,
-          ).CronName;
+          )?.CronName;
         } catch (ex) {
           x.cronName = x.cronId;
         }
@@ -1041,7 +1034,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
         try {
           x.cronName = cronSettings.find(
             (t: any) => t.CronId == x.cronId,
-          ).CronName;
+          )?.CronName;
         } catch (ex) {
           x.cronName = x.cronId;
         }
@@ -1105,7 +1098,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
             logAnalysisInfo.failureOtherCount;
           _$cronLog.cronName = cronSettings.find(
             (t: any) => t.CronId == log.cronId,
-          ).CronName;
+          )?.CronName;
           logViewModel.unshift(_$cronLog);
         }
       }
@@ -1271,7 +1264,7 @@ export async function getCustomCronDetails(req: Request, res: Response) {
         _$cronLog.repriceFailureOtherCount = logAnalysisInfo.failureOtherCount;
         _$cronLog.cronName = cronSettings.find(
           (t: any) => t.CronId == log.cronId,
-        ).CronName;
+        )?.CronName;
         logViewModel.unshift(_$cronLog);
       }
     }

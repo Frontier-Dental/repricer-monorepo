@@ -258,7 +258,7 @@ export async function ExportLogDetails(req: Request, res: Response) {
       x.cronKey = cronKey;
       x.sourceCronName = x.sourceCronId
         ? regularCronDetails.find((c: any) => c.CronId == x.sourceCronId)
-            .CronName
+            ?.CronName
         : null;
       x.contextCronName = contextCronName;
     });
