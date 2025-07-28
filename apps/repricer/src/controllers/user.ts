@@ -6,6 +6,9 @@ import { applicationConfig } from "../utility/config";
 
 export async function homePageHandler(req: Request, res: Response) {
   const isDowntimeOn = applicationConfig.DOWNTIME_ON;
+  if (applicationConfig.AUTHENTICATION_DISABLED) {
+    return res.redirect("/productV2/show_all");
+  }
   if (isDowntimeOn) {
     return res.render("pages/downtime.ejs", {});
   } else {
@@ -23,7 +26,9 @@ export async function loginUser(req: Request, res: Response) {
   const userName = req.body.userName;
   const userPassword = req.body.userPassword;
   const result = await mongoMiddleware.GetUserLogin({ userName: userName });
-  if (result != null) {
+  console.log(req.body);
+  console.log(result);
+  if (result) {
     if (result.userName == userName && result.userPassword == userPassword) {
       (req as any).session.users_id = result;
       return res.json({

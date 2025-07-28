@@ -103,7 +103,7 @@ export async function getCronSettings(req: Request, res: Response) {
     configItems: configItems,
     settings: cronSettingsResponse,
     groupName: "settings",
-    userRole: (req as any).session.users_id.userRole,
+    userRole: (req as any).session?.users_id?.userRole,
   });
 }
 

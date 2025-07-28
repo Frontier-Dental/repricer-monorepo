@@ -86,7 +86,7 @@ nodeApp.use(errorMiddleware);
 
 nodeApp.listen(port, async () => {
   console.log(`Application server running on post ${port} at ${new Date()}`);
-  if (applicationConfig.START_CRONS) {
+  if (applicationConfig.START_CRONS_ON_STARTUP) {
     await startAllCronLogic();
     await start422Logic();
     await startFilterCronLogic();

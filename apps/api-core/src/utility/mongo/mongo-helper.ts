@@ -1,10 +1,6 @@
 import _ from "lodash";
-import { CacheKeyName } from "../../resources/cache-key-name";
-import * as cacheHelper from "../cache-helper";
 import { getMongoDb } from ".";
 import { applicationConfig } from "../config";
-
-// Type definitions for payloads and results (use 'any' where unclear)
 
 export const GetItemList = async (): Promise<any> => {
   const dbo = await getMongoDb();
@@ -15,15 +11,11 @@ export const GetItemList = async (): Promise<any> => {
 };
 
 export const PushLogsAsync = async (payload: any): Promise<any> => {
-  let mongoResult = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  const { insertedId } = await dbo
     .collection(applicationConfig.SCRAPE_LOGS_COLLECTION_NAME)
     .insertOne(payload);
-  if (mongoResult && mongoResult.insertedId) {
-    mongoResult = mongoResult.insertedId.toString();
-  } else mongoResult = null;
-  return mongoResult;
+  return insertedId.toString();
 };
 
 export const UpdateProductAsync = async (
@@ -79,15 +71,11 @@ export const UpdateProductAsync = async (
 };
 
 export const InitCronStatusAsync = async (payload: any): Promise<any> => {
-  let mongoResult = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
+  const result = await dbo
     .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
     .insertOne(payload);
-  if (mongoResult && mongoResult.insertedId) {
-    mongoResult = mongoResult.insertedId.toString();
-  } else mongoResult = null;
-  return mongoResult;
+  return result.insertedId.toString();
 };
 
 export const UpdateCronStatusAsync = async (payload: any): Promise<any> => {
@@ -109,19 +97,11 @@ export const UpdateCronStatusAsync = async (payload: any): Promise<any> => {
 };
 
 export const GetCronSettingsList = async (): Promise<any> => {
-  const cronSettingCacheKey = CacheKeyName.CRON_SETTINGS_LIST;
-  let mongoResult = null;
-  if ((await cacheHelper.Has(cronSettingCacheKey)) == true) {
-    mongoResult = await cacheHelper.Get(cronSettingCacheKey);
-  } else {
-    const dbo = await getMongoDb();
-    mongoResult = await dbo
-      .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
-      .find()
-      .toArray();
-    cacheHelper.Set(cronSettingCacheKey, mongoResult);
-  }
-  return mongoResult;
+  const dbo = await getMongoDb();
+  return dbo
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
+    .find()
+    .toArray();
 };
 
 export const ResetPendingCronLogs = async (): Promise<any> => {
@@ -199,41 +179,23 @@ export const GetItemListById = async (_mpId: any): Promise<any> => {
 export const GetProxyConfigByProviderId = async (
   providerId: any,
 ): Promise<any> => {
-  let result = null;
-  const cacheKey = `${CacheKeyName.PROXY_CONFIG_BY_PROVIDER_ID}_${providerId}`;
-  if (await cacheHelper.Has(cacheKey)) {
-    result = await cacheHelper.Get(cacheKey);
-  } else {
-    const query = {
-      proxyProvider: providerId,
-    };
-    const dbo = await getMongoDb();
-    result = await dbo
-      .collection(applicationConfig.IP_CONFIG)
-      .find(query)
-      .toArray();
-    cacheHelper.Set(cacheKey, result);
-  }
-  return result;
+  const query = {
+    proxyProvider: providerId,
+  };
+  const dbo = await getMongoDb();
+  return dbo.collection(applicationConfig.IP_CONFIG).find(query).toArray();
 };
 
 export const GetCronSettingsDetailsByName = async (
   cronName: string,
 ): Promise<any> => {
-  const cronSettingCacheKey = CacheKeyName.CRON_SETTINGS_LIST;
-  if ((await cacheHelper.Has(cronSettingCacheKey)) == true) {
-    const cacheDetails = await cacheHelper.Get(cronSettingCacheKey);
-    return _.filter(cacheDetails, (x: any) => x.CronName == cronName);
-  } else {
-    const query = {
-      CronName: cronName,
-    };
-    const dbo = await getMongoDb();
-    return dbo
-      .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
-      .find(query)
-      .toArray();
-  }
+  const query = {
+    CronName: cronName,
+  };
+  const dbo = await getMongoDb();
+  return dbo
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
+    .findOne(query);
 };
 
 export const GetHistoryDetailsForId = async (_mpId: any): Promise<any> => {
@@ -289,7 +251,6 @@ export const FindErrorItemByIdAndStatus = async (
   _mpId: any,
   _status: any,
 ): Promise<any> => {
-  let result = 0;
   const query = {
     $and: [
       {
@@ -308,32 +269,22 @@ export const FindErrorItemByIdAndStatus = async (
 };
 
 export const GetDelay = async (): Promise<any> => {
-  let mongoResult = 0;
-  const delaySettingCacheKey = CacheKeyName.ENV_DELAY;
-  if ((await cacheHelper.Has(delaySettingCacheKey)) == true) {
-    mongoResult = await cacheHelper.Get(delaySettingCacheKey);
-  } else {
-    const dbo = await getMongoDb();
-    const dbResponse = await dbo
-      .collection(applicationConfig.ENV_SETTINGS)
-      .findOne();
-    if (dbResponse && dbResponse.delay) {
-      mongoResult = parseInt(dbResponse.delay);
-    }
-    cacheHelper.Set(delaySettingCacheKey, mongoResult);
+  const dbo = await getMongoDb();
+  const dbResponse = await dbo
+    .collection(applicationConfig.ENV_SETTINGS)
+    .findOne();
+  if (!dbResponse) {
+    throw new Error("Delay not found");
   }
-  return mongoResult;
+  return parseInt(dbResponse.delay);
 };
 
 export const GetCronSettingsListFresh = async (): Promise<any[]> => {
-  const cronSettingCacheKey = CacheKeyName.CRON_SETTINGS_LIST;
   const dbo = await getMongoDb();
-  const mongoResult = await dbo
+  return dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .find()
     .toArray();
-  cacheHelper.Set(cronSettingCacheKey, mongoResult);
-  return mongoResult;
 };
 
 export const UpdateCronDetailsByCronId = async (

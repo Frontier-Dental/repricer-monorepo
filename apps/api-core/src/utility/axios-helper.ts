@@ -86,7 +86,7 @@ export async function getAsync(
       case 8:
         responseData = await scrapflyHelper.fetchData(
           _url,
-          _.first(proxyConfigDetails),
+          _.first(proxyConfigDetails) as any,
           null,
           true,
         );
@@ -94,7 +94,7 @@ export async function getAsync(
       case 9:
         responseData = await scrapflyHelper.fetchData(
           _url,
-          _.first(proxyConfigDetails),
+          _.first(proxyConfigDetails) as any,
           null,
           false,
         );
@@ -166,7 +166,7 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings) {
       case 8:
         responseData = await scrapflyHelper.fetchData(
           _url,
-          _.first(proxyConfigDetails),
+          _.first(proxyConfigDetails) as any,
           null,
           true,
         );
@@ -174,7 +174,7 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings) {
       case 9:
         responseData = await scrapflyHelper.fetchData(
           _url,
-          _.first(proxyConfigDetails),
+          _.first(proxyConfigDetails) as any,
           null,
           false,
         );

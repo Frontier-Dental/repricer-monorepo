@@ -106,7 +106,12 @@ const envSchema = z.object({
   NET32_PROXY_PASSWORD: z.string().optional(),
   ROTATING_PROXY_URL: z.string().default("gate.smartproxy.com"),
   // Cron/URLs
-  START_CRONS: z.string().optional(),
+  START_CRONS_ON_STARTUP: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(false),
   REPRICER_UI_CACHE_CLEAR: z
     .string()
     .default("http://localhost:3000/cache/flush_repricer_all"),

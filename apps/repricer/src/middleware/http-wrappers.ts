@@ -1,23 +1,5 @@
 import axios from "axios";
-import axiosRetry from "axios-retry";
 import { applicationConfig } from "../utility/config";
-
-axiosRetry(axios, {
-  retries: applicationConfig.NO_OF_RETRIES as any, // number of retries
-  retryDelay: (retryCount) => {
-    console.log(`retry attempt : ${retryCount} at ${new Date()}`);
-    return retryCount * (applicationConfig.RETRY_INTERVAL as any); // time interval between retries
-  },
-  retryCondition: (error) => {
-    console.log(`REPRICER UI : ERROR (WITH RETRY) : ${error} `);
-    // return (error.response.status == 503 || error.response.status == 500 || error.response.status == 429);
-    return (
-      error.response?.status === 503 ||
-      error.response?.status === 500 ||
-      error.response?.status === 429
-    );
-  },
-});
 
 export async function updatePrice(request: any) {
   var config = {

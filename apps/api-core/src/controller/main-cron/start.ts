@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import {
   getMainCronNameFromJobName,
+  setCronAndStart,
   startCron,
   startError422Cron,
 } from "./shared";
@@ -14,8 +15,7 @@ export async function startCronHandler(
   req: Request,
   res: Response,
 ): Promise<any> {
-  const { jobName } = req.body;
-  const { cronId } = req.body;
+  const { jobName, cronId } = req.body;
   if (jobName === "Cron-422") {
     startError422Cron();
     cacheHelper.DeleteCacheByKey(CacheKeyName.CRON_SETTINGS_LIST);
@@ -27,7 +27,8 @@ export async function startCronHandler(
   if (!cronName) {
     throw BadRequest(`Invalid Job Name: ${jobName}`);
   }
-  startCron(cronName);
+  const settings = await mongoHelper.GetCronSettingsDetailsByName(cronName);
+  setCronAndStart(cronName, settings);
   await mongoHelper.UpdateCronSettings(cronId);
   cacheHelper.DeleteCacheByKey(CacheKeyName.CRON_SETTINGS_LIST);
   return res

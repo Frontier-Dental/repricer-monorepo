@@ -10,8 +10,7 @@ export interface AuditInfo {
   UpdatedOn: { $date: string };
 }
 
-export interface ScrapeCronDetail {
-  _id: { $oid: string };
+export interface ScrapeCronDetail extends WithId<Document> {
   CronTime: number;
   CronTimeUnit: string;
   Offset: string;
