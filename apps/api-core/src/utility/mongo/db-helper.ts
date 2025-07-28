@@ -603,10 +603,12 @@ export async function GetEligibleContextErrorItems(
   return result as ErrorItem[];
 }
 
-export async function GetFilterCronDetails(ignoreCache = false) {
+export async function GetFilterCronDetails(
+  ignoreCache = false,
+): Promise<any[]> {
   let mongoResult = null;
   const cacheKey = CacheKeyName.FILTER_CRON_DETAILS;
-  if ((await cacheHelper.Has(cacheKey)) == true && ignoreCache == false) {
+  if (cacheHelper.Has(cacheKey) && ignoreCache === false) {
     mongoResult = await cacheHelper.Get(cacheKey);
   } else {
     const dbo = await getMongoDb();
@@ -679,10 +681,10 @@ export async function UpdateCronForProductAsync(payload: any) {
   return mongoResult;
 }
 
-export async function GetSlowCronDetails(ignoreCache = false) {
+export async function GetSlowCronDetails(ignoreCache = false): Promise<any[]> {
   let mongoResult = null;
   const cacheKey = CacheKeyName.SLOW_CRON_DETAILS;
-  if ((await cacheHelper.Has(cacheKey)) == true && ignoreCache == false) {
+  if (cacheHelper.Has(cacheKey) && ignoreCache === false) {
     mongoResult = await cacheHelper.Get(cacheKey);
   } else {
     const dbo = await getMongoDb();

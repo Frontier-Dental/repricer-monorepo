@@ -107,27 +107,6 @@ const envSchema = z.object({
   ROTATING_PROXY_URL: z.string().default("gate.smartproxy.com"),
   // Cron/URLs
   START_CRONS: z.string().optional(),
-  CRON_RUN_ALL_URL: z
-    .string()
-    .default("http://localhost:5001/schedule/StartCronV3"),
-  CRON_RUN_422_URL: z
-    .string()
-    .default("http://localhost:5001/schedule/start422"),
-  FILTER_CRON_RUN_URL: z
-    .string()
-    .default("http://localhost:5001/filter/StartFilterCron"),
-  SLOW_CRON_RUN_URL: z
-    .string()
-    .default("http://localhost:5001/slow_cron/start_cron"),
-  PROXYSWITCH_CRON_RUN_URL: z
-    .string()
-    .default("http://localhost:5001/start/proxySwitchCron"),
-  PROXYSWITCH_RESET_CRON_RUN_URL: z
-    .string()
-    .default("http://localhost:5001/start/proxySwitchResetCron"),
-  SCRAPE_ONLY_CRON_RUN_URL: z
-    .string()
-    .default("http://localhost:5001/scrape/startScrapeCron"),
   REPRICER_UI_CACHE_CLEAR: z
     .string()
     .default("http://localhost:3000/cache/flush_repricer_all"),

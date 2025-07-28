@@ -10,6 +10,11 @@ export async function startAllCronHandler(
   req: Request,
   res: Response,
 ): Promise<any> {
+  await startAllCronLogic();
+  return res.status(_codes.StatusCodes.OK).send("Cron started.");
+}
+
+export async function startAllCronLogic() {
   await dbHelper.ResetPendingCronLogs();
   stopAllMainCrons();
 
@@ -25,5 +30,4 @@ export async function startAllCronHandler(
     const cronName = cronSetting.CronName;
     setCronAndStart(cronName, cronSetting);
   }
-  return res.status(_codes.StatusCodes.OK).send("Cron started.");
 }

@@ -52,7 +52,23 @@ export async function repriceProduct(
   let output = responseUtility.FilterActiveResponse(result, productItem);
 
   if (!ownProduct) {
-    throw new Error("Could not find own vendor Id");
+    return {
+      cronResponse: new RepriceAsyncResponse(
+        new RepriceModel(
+          mpid,
+          null,
+          productItem.productName,
+          productItem.unitPrice,
+          false,
+          false,
+          [],
+          RepriceMessageEnum.IGNORE_NOT_FOUND_API,
+        ),
+        output,
+      ),
+      priceUpdateResponse: null,
+      historyIdentifier: null,
+    };
   }
 
   // Do MultiPrice Reprice  - Compete with other vendors

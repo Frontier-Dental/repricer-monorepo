@@ -9,9 +9,13 @@ export async function start422Handler(
   res: Response,
 ): Promise<any> {
   console.log(`Cron-422 started on ${new Date()}`);
-  const cronSettings = await dbHelper.GetCronSettingsList();
-  setError422CronAndStart(cronSettings);
+  await start422Logic();
   return res
     .status(_codes.StatusCodes.OK)
     .send(`${applicationConfig.CRON_NAME_422} started.`);
+}
+
+export async function start422Logic() {
+  const cronSettings = await dbHelper.GetCronSettingsList();
+  setError422CronAndStart(cronSettings);
 }

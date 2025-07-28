@@ -14,47 +14,53 @@ let _CACHE_RESET_CRON: any = null;
 proxySwitchController.get(
   "/start/proxySwitchCron",
   async (req: Request, res: Response): Promise<any> => {
-    const proxySwitchCronDetails = await dbHelper.GetProxySwitchCronDetails();
-    if (proxySwitchCronDetails && proxySwitchCronDetails.length > 0) {
-      if (proxySwitchCronDetails[0]) {
-        _PS1Cron = cron.schedule(
-          proxySwitchCronDetails[0].cronExpression,
-          async () => {
-            console.log(
-              `Running ${proxySwitchCronDetails[0].cronName} at ${new Date()}`,
-            );
-            await proxySwitchHelper.SwitchProxy();
-          },
-          { scheduled: JSON.parse(proxySwitchCronDetails[0].status) },
-        );
-        console.log(
-          `Started ${proxySwitchCronDetails[0].cronName} at ${new Date()} with expression ${proxySwitchCronDetails[0].cronExpression}`,
-        );
-      }
-    }
+    await startProxySwitchCronLogic();
     return res.status(_codes.StatusCodes.OK).send(`Cron started successfully`);
   },
 );
 
+export async function startProxySwitchCronLogic() {
+  const proxySwitchCronDetails = await dbHelper.GetProxySwitchCronDetails();
+  if (proxySwitchCronDetails && proxySwitchCronDetails.length > 0) {
+    if (proxySwitchCronDetails[0]) {
+      _PS1Cron = cron.schedule(
+        proxySwitchCronDetails[0].cronExpression,
+        async () => {
+          console.log(
+            `Running ${proxySwitchCronDetails[0].cronName} at ${new Date()}`,
+          );
+          await proxySwitchHelper.SwitchProxy();
+        },
+        { scheduled: JSON.parse(proxySwitchCronDetails[0].status) },
+      );
+      console.log(
+        `Started ${proxySwitchCronDetails[0].cronName} at ${new Date()} with expression ${proxySwitchCronDetails[0].cronExpression}`,
+      );
+    }
+  }
+}
+
 proxySwitchController.get(
   "/start/proxySwitchResetCron",
   async (req: Request, res: Response): Promise<any> => {
-    _CACHE_RESET_CRON = cron.schedule(
-      "* * * * *",
-      async () => {
-        console.log(
-          `Running  Proxy Switch Counter Reset Cron at ${new Date()}`,
-        );
-        await proxySwitchHelper.ResetFailureCounter();
-      },
-      { scheduled: true },
-    );
-    console.log(
-      `Started Proxy Switch Reset Cron at ${new Date()} with expression 0 * * * *`,
-    );
+    await startProxySwitchResetCronLogic();
     return res.status(_codes.StatusCodes.OK).send(`Cron started successfully`);
   },
 );
+
+export async function startProxySwitchResetCronLogic() {
+  _CACHE_RESET_CRON = cron.schedule(
+    "* * * * *",
+    async () => {
+      console.log(`Running  Proxy Switch Counter Reset Cron at ${new Date()}`);
+      await proxySwitchHelper.ResetFailureCounter();
+    },
+    { scheduled: true },
+  );
+  console.log(
+    `Started Proxy Switch Reset Cron at ${new Date()} with expression 0 * * * *`,
+  );
+}
 
 proxySwitchController.get(
   "/proxy_provider/reset_counter/:provId/:userId",

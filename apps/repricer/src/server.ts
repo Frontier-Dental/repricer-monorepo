@@ -12,7 +12,16 @@ import morgan from "morgan";
 
 validateConfig();
 
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:", reason);
+});
+
 const app = express();
+app.use(morgan("combined"));
 app.use(bodyParser.json({ limit: "500mb" }));
 app.use(
   bodyParser.urlencoded({
@@ -34,7 +43,6 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, "..", "public")));
 app.use("/logo", express.static(path.join(__dirname, "..", "/uploads/excel")));
-app.use(morgan("combined"));
 
 app.use(cookieParser("secret"));
 

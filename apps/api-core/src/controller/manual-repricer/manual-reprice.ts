@@ -1,29 +1,26 @@
+import { AxiosResponse } from "axios";
 import { Request, Response } from "express";
 import * as _codes from "http-status-codes";
 import _ from "lodash";
+import { Net32Product } from "../../types/net32";
 import * as axiosHelper from "../../utility/axios-helper";
-import * as dbHelper from "../../utility/mongo/db-helper";
-import * as repriceBase from "../../utility/reprice-algo/reprice-base";
-import * as requestGenerator from "../../utility/request-generator";
-import * as sqlHelper from "../../utility/mysql/mysql-helper";
-import * as feedHelper from "../../utility/feed-helper";
-import { Net32Product, Net32Response } from "../../types/net32";
-import { getContextCronId } from "./shared";
-import { proceedNext } from "./shared";
-import { AxiosResponse } from "axios";
-import { ProductDetailsListItem } from "../../utility/mysql/mySql-mapper";
 import { applicationConfig } from "../../utility/config";
-import { VendorId } from "../../utility/reprice-algo/v2/types";
-import { repriceProductV2 } from "../../utility/reprice-algo/v2/v2";
+import * as feedHelper from "../../utility/feed-helper";
+import * as mongoHelper from "../../utility/mongo/db-helper";
+import * as sqlHelper from "../../utility/mysql/mysql-helper";
+import { ProductDetailsListItem } from "../../utility/mysql/mySql-mapper";
+import { insertV2AlgoExecution } from "../../utility/mysql/v2-algo-execution";
+import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import {
-  getInternalProducts,
   getAllOwnVendorIds,
-  getAllOwnVendorNames,
+  getInternalProducts,
   getPriceSolutionStringRepresentation,
 } from "../../utility/reprice-algo/v2/utility";
-import { insertV2AlgoExecution } from "../../utility/mysql/v2-algo-execution";
+import { repriceProductV2 } from "../../utility/reprice-algo/v2/v2";
+import * as requestGenerator from "../../utility/request-generator";
+import { getContextCronId, proceedNext } from "./shared";
 
-export async function manualUpdate(
+export async function manualRepriceHandler(
   req: Request<{ id: string }, any, any, { isV2Algorithm: string }>,
   res: Response,
 ): Promise<any> {
@@ -44,7 +41,7 @@ export async function manualUpdate(
     mpid,
   );
   const cronSetting = _.first(
-    await dbHelper.GetCronSettingsDetailsById(contextCronId),
+    await mongoHelper.GetCronSettingsDetailsById(contextCronId),
   );
   let cronLogs = {
     time: new Date(),
@@ -55,7 +52,7 @@ export async function manualUpdate(
   };
   const isSlowCronRun = prod.isSlowActivated;
   prod = feedHelper.SetSkipReprice([prod], false)[0];
-  const contextErrorDetails = await dbHelper.GetEligibleContextErrorItems(
+  const contextErrorDetails = await mongoHelper.GetEligibleContextErrorItems(
     true,
     mpid,
     null,
@@ -92,7 +89,6 @@ export async function manualUpdate(
         v2AlgoResult.priceSolutions,
       ),
     });
-    console.log("V2 Algo Executed and Inserted");
     for (let idx = 0; idx < prioritySequence.length; idx++) {
       const proceedNextVendor = proceedNext(prod!, prioritySequence[idx].value);
       const isVendorActivated = (prod as any)[prioritySequence[idx].value]
@@ -124,7 +120,7 @@ export async function manualUpdate(
     cronLogs.logs.push(productLogs);
   }
   (cronLogs as any).completionTime = new Date();
-  const logInDb = await dbHelper.PushLogsAsync(cronLogs);
+  const logInDb = await mongoHelper.PushLogsAsync(cronLogs);
   if (logInDb) {
     console.log(
       `Successfully logged Cron Logs in DB at ${cronLogs.time} || Id : ${logInDb}`,
