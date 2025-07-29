@@ -628,7 +628,37 @@ interface PaginatedResult<T> {
   };
 }
 
-export async function getFullProductDetails(): Promise<ProductDetails[]> {
+export async function getFullProductDetailsByProductId(
+  mpId: number,
+): Promise<ProductDetails[]> {
+  const db = getKnexInstance();
+  const baseQuery = (table: string, linkedField: string) =>
+    db("table_scrapeProductList as pl")
+      .leftJoin(table, `${table}.id`, `pl.${linkedField}`)
+      .select(
+        "pl.Id as ProductIdentifier",
+        "pl.MpId as ProductId",
+        "pl.IsSlowActivated",
+        "pl.IsBadgeItem",
+        `${table}.*`,
+      )
+      .whereNotNull(`${table}.ChannelName`)
+      .where("pl.MpId", mpId);
+
+  const unionQuery = db
+    .union([
+      baseQuery("table_tradentDetails", "LinkedTradentDetailsInfo"),
+      baseQuery("table_frontierDetails", "LinkedFrontiersDetailsInfo"),
+      baseQuery("table_mvpDetails", "LinkedMvpDetailsInfo"),
+      baseQuery("table_firstDentDetails", "LinkedFirstDentDetailsInfo"),
+      baseQuery("table_topDentDetails", "LinkedTopDentDetailsInfo"),
+    ])
+    .orderBy("ProductId");
+
+  return await unionQuery;
+}
+
+export async function getAllProductDetails(): Promise<ProductDetails[]> {
   const db = getKnexInstance();
   const baseQuery = (table: string, linkedField: string) =>
     db("table_scrapeProductList as pl")
@@ -662,4 +692,28 @@ export async function getFullProductDetails(): Promise<ProductDetails[]> {
     .orderBy("ProductId");
 
   return await unionQuery;
+}
+
+export async function getV2AlgoExecutionByScrapeProductId(
+  scrapeProductId: number,
+) {
+  const db = getKnexInstance();
+  const result = await db("v2_algo_execution")
+    .select(
+      "id",
+      "scrape_product_id",
+      "time",
+      "chain_of_thought_html",
+      "comment",
+    )
+    .where("scrape_product_id", scrapeProductId)
+    .orderBy("time", "desc");
+
+  // Convert binary chain_of_thought_html to UTF-8 string
+  return result.map((record) => ({
+    ...record,
+    chain_of_thought_html: record.chain_of_thought_html
+      ? record.chain_of_thought_html.toString("utf8")
+      : "",
+  }));
 }

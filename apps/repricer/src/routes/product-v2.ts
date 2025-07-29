@@ -58,3 +58,7 @@ productV2Router.get(
   "/get_all_products_for_cron",
   productV2Controller.getAllProductsForCron,
 );
+productV2Router.get(
+  "/v2_algo_execution/:productId",
+  productV2Controller.getV2AlgoExecutionByProductId,
+);

@@ -67,8 +67,36 @@ export async function getAllProductsForCron(
   req: Request<{ cronName: string }>,
   res: Response,
 ) {
-  const result = await mySqlHelper.getFullProductDetails();
+  const result = await mySqlHelper.getAllProductDetails();
   return res.json(result);
+}
+
+export async function getV2AlgoExecutionByProductId(
+  req: Request<{ productId: string }>,
+  res: Response,
+) {
+  const productId = parseInt(req.params.productId);
+
+  if (isNaN(productId)) {
+    return res.status(400).json({
+      status: false,
+      message: "Invalid product ID. Must be a valid number.",
+    });
+  }
+
+  const [algoResult, productDetails] = await Promise.all([
+    mySqlHelper.getV2AlgoExecutionByScrapeProductId(productId),
+    mySqlHelper.getFullProductDetailsByProductId(productId),
+  ]);
+
+  return res.json({
+    status: true,
+    data: {
+      algorithmExecutions: algoResult,
+      productDetails: productDetails,
+    },
+    message: `Found ${algoResult.length} algorithm execution records and ${productDetails.length} product detail records for product ID ${productId}`,
+  });
 }
 
 export async function collateProducts(req: Request, res: Response) {

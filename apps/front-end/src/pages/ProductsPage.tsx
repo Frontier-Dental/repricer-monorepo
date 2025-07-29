@@ -2,14 +2,43 @@
 
 import { useState, useEffect } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, ExternalLink } from "lucide-react";
+import { ArrowUpDown, ExternalLink, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/data-table";
 import type { ProductDetails } from "@/types/product";
+import { useNavigate } from "@tanstack/react-router";
+
+// Action button component
+function ActionButton({ productId }: { productId: string }) {
+  const navigate = useNavigate();
+
+  const handleView = () => {
+    navigate({ to: "/product/$productId", params: { productId } });
+  };
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleView}
+      className="h-8 w-8 p-0"
+    >
+      <Eye className="h-4 w-4" />
+    </Button>
+  );
+}
 
 // Define the columns for the data table
 const columns: ColumnDef<ProductDetails>[] = [
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const productId = row.getValue("ProductId") as string;
+      return <ActionButton productId={productId} />;
+    },
+  },
   {
     accessorKey: "ProductId",
     header: ({ column }) => {
