@@ -9,16 +9,15 @@ COPY repricer/package.json ./repricer/package.json
 RUN cd repricer && npm install
 
 # Copy source code
-COPY repricer/ ./
+COPY repricer/ ./repricer
 
-# Build TypeScript code
-RUN npm run build
+# Build TypeScript code from the repricer directory
+RUN cd repricer && npm run build
 
 # Remove dev dependencies to reduce image size
-RUN npm prune --production
+RUN cd repricer && npm prune --production
 
 # Copy app-specific package.json
-RUN cd ..
 COPY front-end/package.json ./front-end/package.json
 RUN cd front-end && npm install && npm run build && cd ..
 
@@ -28,7 +27,8 @@ EXPOSE 3000
 # Set environment variables
 ENV NODE_ENV=production
 
-RUN cd repricer
+# Set working directory to repricer for the final command
+WORKDIR /app/repricer
 
 # Start the application
 CMD ["npm", "start"]
