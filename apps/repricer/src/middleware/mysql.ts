@@ -593,3 +593,76 @@ export async function ExecuteQuery(_query: any, _params: any) {
   const db = await SqlConnectionPool.getConnection();
   return db.execute(_query, _params);
 }
+
+interface ProductDetails {
+  ProductIdentifier: number;
+  ProductId: number;
+  ProductName: string;
+  Net32Url: string;
+  ScrapeOnlyActive: boolean;
+  LinkedScrapeOnlyCron: string | null;
+  LinkedScrapeOnlyCronId: number | null;
+  RegularCronName: string | null;
+  RegularCronId: number | null;
+  SlowCronName: string | null;
+  SlowCronId: number | null;
+  IsSlowActivated: boolean;
+  IsBadgeItem: boolean;
+  [key: string]: any; // For dynamic columns from joined tables
+}
+
+interface PaginationOptions {
+  page?: number;
+  pageSize?: number;
+}
+
+interface PaginatedResult<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+}
+
+export async function getFullProductDetails(
+  cronName: string,
+): Promise<ProductDetails[]> {
+  const db = getKnexInstance();
+  const baseQuery = (table: string, linkedField: string) =>
+    db("table_scrapeProductList as pl")
+      .leftJoin(table, `${table}.id`, `pl.${linkedField}`)
+      .select(
+        "pl.Id as ProductIdentifier",
+        "pl.MpId as ProductId",
+        "pl.ProductName",
+        "pl.Net32Url",
+        "pl.IsActive as ScrapeOnlyActive",
+        "pl.LinkedCronName as LinkedScrapeOnlyCron",
+        "pl.LinkedCronId as LinkedScrapeOnlyCronId",
+        "pl.RegularCronName",
+        "pl.RegularCronId",
+        "pl.SlowCronName",
+        "pl.SlowCronId",
+        "pl.IsSlowActivated",
+        "pl.IsBadgeItem",
+        `${table}.*`,
+      )
+      .where("pl.RegularCronName", cronName)
+      .whereNotNull(`${table}.ChannelName`);
+
+  const unionQuery = db
+    .union([
+      baseQuery("table_tradentDetails", "LinkedTradentDetailsInfo"),
+      baseQuery("table_frontierDetails", "LinkedFrontiersDetailsInfo"),
+      baseQuery("table_mvpDetails", "LinkedMvpDetailsInfo"),
+      baseQuery("table_firstDentDetails", "LinkedFirstDentDetailsInfo"),
+      baseQuery("table_topDentDetails", "LinkedTopDentDetailsInfo"),
+    ])
+    .orderBy("ProductId");
+
+  return await unionQuery;
+}

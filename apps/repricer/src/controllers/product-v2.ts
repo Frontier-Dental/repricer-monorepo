@@ -63,6 +63,16 @@ export async function showAllProducts(req: Request, res: Response) {
   });
 }
 
+export async function getAllProductsForCron(
+  req: Request<{ cronName: string }>,
+  res: Response,
+) {
+  const cronName = req.params.cronName;
+
+  const result = await mySqlHelper.getFullProductDetails(cronName);
+  return res.json(result);
+}
+
 export async function collateProducts(req: Request, res: Response) {
   const _urlForActiveTradentProducts = apiMapping.find(
     (x) => x.vendorId == "17357",

@@ -6,7 +6,7 @@ export async function up(knex: Knex): Promise<void> {
     table.integer("scrape_product_id").notNullable();
     table.datetime("time").notNullable();
     table.binary("chain_of_thought_html").notNullable();
-    table.string("comment", 255).notNullable();
+    table.text("comment").notNullable();
 
     // Foreign key constraint
     table

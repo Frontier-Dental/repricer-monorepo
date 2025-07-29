@@ -66,6 +66,11 @@ app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({ status: "ok" });
 });
 
+// Route for the Vite page
+app.get("/vite", (req, res) => {
+  res.sendFile(__dirname + "/public/vite/index.html");
+});
+
 app.use(indexRouter);
 
 app.use("/public/images", express.static("./public/images"));

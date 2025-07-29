@@ -54,3 +54,7 @@ productV2Router.get(
   productV2Controller.syncProductDetails,
 );
 productV2Router.post("/updateAllToMax", productV2Controller.updateToMax);
+productV2Router.get(
+  "/get_all_products_for_cron/:cronName",
+  productV2Controller.getAllProductsForCron,
+);
