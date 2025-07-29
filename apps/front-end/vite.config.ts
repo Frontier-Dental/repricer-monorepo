@@ -18,7 +18,7 @@ export default defineConfig({
     outDir: "../repricer/public/vite",
     emptyOutDir: true,
   },
-  base: process.env.NODE_ENV === "production" ? "/vite" : "/",
+  base: "/vite",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
