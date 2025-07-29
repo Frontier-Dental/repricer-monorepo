@@ -628,9 +628,7 @@ interface PaginatedResult<T> {
   };
 }
 
-export async function getFullProductDetails(
-  cronName: string,
-): Promise<ProductDetails[]> {
+export async function getFullProductDetails(): Promise<ProductDetails[]> {
   const db = getKnexInstance();
   const baseQuery = (table: string, linkedField: string) =>
     db("table_scrapeProductList as pl")
@@ -651,7 +649,6 @@ export async function getFullProductDetails(
         "pl.IsBadgeItem",
         `${table}.*`,
       )
-      .where("pl.RegularCronName", cronName)
       .whereNotNull(`${table}.ChannelName`);
 
   const unionQuery = db

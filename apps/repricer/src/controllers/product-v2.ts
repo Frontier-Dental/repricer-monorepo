@@ -67,9 +67,7 @@ export async function getAllProductsForCron(
   req: Request<{ cronName: string }>,
   res: Response,
 ) {
-  const cronName = req.params.cronName;
-
-  const result = await mySqlHelper.getFullProductDetails(cronName);
+  const result = await mySqlHelper.getFullProductDetails();
   return res.json(result);
 }
 

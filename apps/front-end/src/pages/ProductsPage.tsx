@@ -18,7 +18,7 @@ const columns: ColumnDef<ProductDetails>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Product ID
+          MPID
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -26,13 +26,9 @@ const columns: ColumnDef<ProductDetails>[] = [
     cell: ({ row }) => (
       <div className="font-mono">{row.getValue("ProductId")}</div>
     ),
-  },
-  {
-    accessorKey: "ProductIdentifier",
-    header: "Product Identifier",
-    cell: ({ row }) => (
-      <div className="font-mono">{row.getValue("ProductIdentifier")}</div>
-    ),
+    filterFn: (row, columnId, filterValue) => {
+      return parseInt(row.getValue(columnId)) === parseInt(filterValue);
+    },
   },
   {
     accessorKey: "ChannelName",
@@ -228,6 +224,7 @@ const columns: ColumnDef<ProductDetails>[] = [
   },
   {
     accessorKey: "RegularCronName",
+    enableColumnFilter: true,
     header: "Regular Cron",
     cell: ({ row }) => (
       <div className="font-mono text-sm">{row.getValue("RegularCronName")}</div>
@@ -311,23 +308,19 @@ export function ProductsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Default cron name - you can make this configurable
-  const cronName = "Cron-15";
-
   const fetchProducts = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(
-        `/productV2/get_all_products_for_cron/${cronName}`,
-      );
+      const response = await fetch(`/productV2/get_all_products_for_cron`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const result: ProductDetails[] = await response.json();
+      console.log(result);
 
       setData(result);
     } catch (err) {
@@ -369,7 +362,7 @@ export function ProductsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Products</h1>
         <p className="text-muted-foreground">
-          View and manage product pricing data from {cronName}
+          View and manage product pricing data
         </p>
       </div>
 
