@@ -17,24 +17,26 @@ export function repriceProductV2(
   availableInternalProducts: InternalProduct[],
   ownVendorIds: number[],
 ) {
+  const validProducts = rawNet32Products
+    .filter((p) => p.priceBreaks.find((pb) => pb.minQty === 1))
+    .filter((p) => p.inStock);
   // 1. Quantity breaks that competitors have (compete)
   // 2. Quantity breaks that we have but competitors don't (remove these quantity breaks)
 
   // Get all quantity breaks that competitors have (exclude our own vendors)
-  const competitorProducts = rawNet32Products
-    .filter((p) => !ownVendorIds.includes(p.vendorId))
-    .filter((p) => p.inStock);
+  const competitorProducts = validProducts.filter(
+    (p) => !ownVendorIds.includes(p.vendorId),
+  );
   // All products that we have available to use to make changes.
-  const ourAvailableVendorProducts = rawNet32Products
+  const ourAvailableVendorProducts = validProducts
     .filter((p) => ownVendorIds.includes(p.vendorId))
     .filter((p) =>
       availableInternalProducts.find((vp) => vp.ownVendorId === p.vendorId),
-    )
-    .filter((p) => p.inStock);
+    );
 
   const competitorQuantityBreaks = getUniqueQuantityBreaks(competitorProducts);
   const highestQuantitySuchThatAllFreeShipping =
-    findHighestQuantitySuchThatAllFreeShipping(rawNet32Products);
+    findHighestQuantitySuchThatAllFreeShipping(validProducts);
   const highestQuantity = Math.max(
     ...competitorQuantityBreaks,
     highestQuantitySuchThatAllFreeShipping,

@@ -853,9 +853,10 @@ export async function RepriceIndividualPriceBreak(
                 );
             }
           } else {
-            repriceModel.repriceDetails!.newPrice = (
-              productItem.maxPrice as unknown as number
-            ).toFixed(2);
+            repriceModel.repriceDetails!.newPrice =
+              typeof productItem.maxPrice === "number"
+                ? (productItem.maxPrice as unknown as number).toFixed(2)
+                : productItem.maxPrice;
             repriceModel.repriceDetails!.isRepriced = true;
             repriceModel.repriceDetails!.explained =
               RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL;
