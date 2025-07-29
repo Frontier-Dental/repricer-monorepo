@@ -18,7 +18,7 @@ RUN cd repricer && npm run build
 RUN cd repricer && npm prune --production
 
 # Copy app-specific package.json
-COPY front-end/package.json ./front-end/package.json
+COPY front-end/ ./front-end
 RUN cd front-end && npm install && npm run build && cd ..
 
 # Expose port 3000
