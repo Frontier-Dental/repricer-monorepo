@@ -25,7 +25,14 @@ export async function startScrapeCronLogic() {
           parseInt(scrapeCronDetails[i].Offset),
         ),
         async () => {
-          await scrapeProductList(scrapeCronDetails[i]);
+          try {
+            await scrapeProductList(scrapeCronDetails[i]);
+          } catch (error) {
+            console.error(
+              `Error running ${scrapeCronDetails[i].CronName}:`,
+              error,
+            );
+          }
         },
         { scheduled: JSON.parse(scrapeCronDetails[i].status) },
       );

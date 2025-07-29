@@ -3,6 +3,9 @@ import _ from "lodash";
 import * as dbHelper from "./mongo/db-helper";
 import { ProductDetailsListItem } from "./mysql/mySql-mapper";
 import { applicationConfig } from "./config";
+import { VendorName } from "./reprice-algo/v2/types";
+import { getMongoDb } from "./mongo";
+import { WithId } from "mongodb";
 
 export async function GetContextDetails(mpid: string): Promise<any> {
   const feedPath = `${applicationConfig.FEED_FILE_PATH}${applicationConfig.FEED_FILE_NAME}`;
@@ -17,53 +20,60 @@ export async function FilterEligibleProducts(
   cronId: number,
   isSlowCron: boolean = false,
 ) {
-  if (productItemList && productItemList.length > 0) {
-    for (let prod of productItemList) {
-      //Tradent
-      if (prod.tradentDetails) {
-        prod.tradentDetails.skipReprice = await getSkipReprice(
-          prod.tradentDetails,
-          "TRADENT",
-          cronId,
-          isSlowCron,
-        );
-      }
-      //Frontier
-      if (prod.frontierDetails) {
-        prod.frontierDetails.skipReprice = await getSkipReprice(
-          prod.frontierDetails,
-          "FRONTIER",
-          cronId,
-          isSlowCron,
-        );
-      }
-      //MVP
-      if (prod.mvpDetails) {
-        prod.mvpDetails.skipReprice = await getSkipReprice(
-          prod.mvpDetails,
-          "MVP",
-          cronId,
-          isSlowCron,
-        );
-      }
-      //TOPDENT
-      if (prod.topDentDetails) {
-        prod.topDentDetails.skipReprice = await getSkipReprice(
-          prod.topDentDetails,
-          "TOPDENT",
-          cronId,
-          isSlowCron,
-        );
-      }
-      //FIRSTDENT
-      if (prod.firstDentDetails) {
-        prod.firstDentDetails.skipReprice = await getSkipReprice(
-          prod.firstDentDetails,
-          "FIRSTDENT",
-          cronId,
-          isSlowCron,
-        );
-      }
+  if (productItemList.length === 0) {
+    throw new Error("No products found");
+  }
+  const active422CronItems = await getActive422CronItems();
+  for (let prod of productItemList) {
+    //Tradent
+    if (prod.tradentDetails) {
+      prod.tradentDetails.skipReprice = getSkipReprice(
+        prod.tradentDetails,
+        VendorName.TRADENT,
+        cronId,
+        isSlowCron,
+        active422CronItems,
+      );
+    }
+    //Frontier
+    if (prod.frontierDetails) {
+      prod.frontierDetails.skipReprice = getSkipReprice(
+        prod.frontierDetails,
+        VendorName.FRONTIER,
+        cronId,
+        isSlowCron,
+        active422CronItems,
+      );
+    }
+    //MVP
+    if (prod.mvpDetails) {
+      prod.mvpDetails.skipReprice = getSkipReprice(
+        prod.mvpDetails,
+        VendorName.MVP,
+        cronId,
+        isSlowCron,
+        active422CronItems,
+      );
+    }
+    //TOPDENT
+    if (prod.topDentDetails) {
+      prod.topDentDetails.skipReprice = getSkipReprice(
+        prod.topDentDetails,
+        VendorName.TOPDENT,
+        cronId,
+        isSlowCron,
+        active422CronItems,
+      );
+    }
+    //FIRSTDENT
+    if (prod.firstDentDetails) {
+      prod.firstDentDetails.skipReprice = getSkipReprice(
+        prod.firstDentDetails,
+        VendorName.FIRSTDENT,
+        cronId,
+        isSlowCron,
+        active422CronItems,
+      );
     }
   }
   return productItemList;
@@ -99,22 +109,41 @@ export function SetSkipReprice(
   });
 }
 
-async function getSkipReprice(
+interface ErrorItem extends WithId<Document> {
+  mpId: number;
+  nextCronTime: Date;
+  active: boolean;
+  contextCronId: string;
+  vendorName: VendorName;
+  insertReason: string;
+}
+
+async function getActive422CronItems(): Promise<ErrorItem[]> {
+  const dbo = await getMongoDb();
+  const result = await dbo
+    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
+    .find({
+      active: true,
+    })
+    .toArray();
+  return result as ErrorItem[];
+}
+
+function getSkipReprice(
   prod: any,
   vendor: string,
   cronId: number,
   isSlowCron: boolean = false,
+  active422CronItems: ErrorItem[],
 ) {
   if (
     (isSlowCron == false && prod.cronId == cronId) ||
     (isSlowCron == true && prod.slowCronId == cronId)
   ) {
-    const isErrorItem = await dbHelper.FindErrorItemByIdAndStatus(
-      prod.mpid,
-      true,
-      vendor,
+    const isErrorItem = active422CronItems.find(
+      (item) => item.mpId === prod.mpid && item.vendorName === vendor,
     );
-    if (isErrorItem != 0) {
+    if (isErrorItem) {
       return true;
     }
     if (

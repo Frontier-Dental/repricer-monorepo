@@ -4,7 +4,6 @@ import moment from "moment";
 export const appLogController = express.Router();
 
 appLogController.get("/app/clear-logs", async (req: Request, res: Response) => {
-  console.log("clearing logs..");
   res.send({ message: "Log files archived successfully" });
 });
 
@@ -33,7 +32,6 @@ appLogController.get("/app/logs", async (req: Request, res: Response) => {
     order: "desc",
     fields: ["message", "level", "timestamp", "module", "timeTaken"],
   };
-  console.log(options);
   // Query logs
   let logEntries = [];
 });

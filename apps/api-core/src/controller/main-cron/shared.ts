@@ -40,7 +40,11 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
   error422Cron = schedule(
     cronString,
     async () => {
-      await runCoreCronLogicFor422();
+      try {
+        await runCoreCronLogicFor422();
+      } catch (error) {
+        console.error(`Error running 422 cron:`, error);
+      }
     },
     { scheduled: _422CronSetting.CronStatus ? true : false },
   );
@@ -78,9 +82,7 @@ export async function runCoreCronLogicFor422() {
   const isCacheValid = await IsCacheValid(cacheKey, new Date());
   if (!isCacheValid) {
     console.log(`Getting List of Eligible Products for Cron-422`);
-    const runningCacheObj: any = {};
-    runningCacheObj.cronRunning = true;
-    runningCacheObj.initTime = new Date();
+    const runningCacheObj = { cronRunning: true, initTime: new Date() };
     cacheHelper.Set(cacheKey, runningCacheObj);
     const eligibleProductList = await get422EligibleProducts();
     const keyGen = keyGenHelper.Generate();
@@ -89,37 +91,24 @@ export async function runCoreCronLogicFor422() {
     );
     if (eligibleProductList.length > 0) {
       const envVariables = await dbHelper.GetGlobalConfig();
-      const isChunkNeeded = await IsChunkNeeded(
+      let chunkedList = _.chunk(
         eligibleProductList,
-        envVariables,
-        "EXPRESS",
+        parseInt(envVariables.expressCronBatchSize!),
       );
-      if (isChunkNeeded) {
-        let chunkedList = _.chunk(
-          eligibleProductList,
-          parseInt(envVariables.expressCronBatchSize!),
-        );
-        let chunkedBatch = _.chunk(
-          chunkedList,
-          parseInt(envVariables.expressCronInstanceLimit!),
-        );
-        let batchCount = 1;
-        for (let itemList of chunkedBatch) {
-          if (itemList.length > 0) {
-            await ParallelExecute(
-              itemList,
-              new Date(),
-              `${keyGen}-${batchCount}`,
-            );
-            batchCount++;
-          }
+      let chunkedBatch = _.chunk(
+        chunkedList,
+        parseInt(envVariables.expressCronInstanceLimit!),
+      );
+      let batchCount = 1;
+      for (let itemList of chunkedBatch) {
+        if (itemList.length > 0) {
+          await ParallelExecute(
+            itemList,
+            new Date(),
+            `${keyGen}-${batchCount}`,
+          );
+          batchCount++;
         }
-      } else {
-        await repriceBase.RepriceErrorItemV2(
-          eligibleProductList,
-          new Date(),
-          keyGen,
-        );
       }
     }
     cacheHelper.DeleteCacheByKey(cacheKey);
@@ -223,9 +212,16 @@ export function setCronAndStart(
   mainCrons[cronName] = schedule(
     cronString,
     async () => {
-      await runCoreCronLogic(cronSetting);
+      try {
+        await runCoreCronLogic(cronSetting);
+      } catch (error) {
+        console.error(`Error running ${cronName}:`, error);
+      }
     },
-    { scheduled: cronSetting.CronStatus ? true : false },
+    {
+      scheduled: cronSetting.CronStatus ? true : false,
+      runOnInit: cronSetting.CronStatus ? true : false,
+    },
   );
   if (cronSetting.CronStatus) {
     console.log(`Started cron ${cronName}`);
@@ -245,31 +241,18 @@ export async function runCoreCronLogic(
     console.log(
       `${cronSettingsResponse.CronName} running on ${initTime} with Eligible Product count : ${eligibleProductList.length}  || Key : ${keyGen}`,
     );
-    const isChunkNeeded = await IsChunkNeeded(
+    let chunkedList = _.chunk(
       eligibleProductList,
-      null,
-      "REGULAR",
+      applicationConfig.BATCH_SIZE,
     );
-    if (isChunkNeeded) {
-      let chunkedList = _.chunk(
-        eligibleProductList,
-        applicationConfig.BATCH_SIZE,
-      );
-      for (let chunk of chunkedList) {
-        await repriceBase.Execute(
-          keyGen,
-          chunk,
-          new Date(),
-          cronSettingsResponse,
-        );
-      }
-    } else
+    for (let chunk of chunkedList) {
       await repriceBase.Execute(
         keyGen,
-        eligibleProductList,
-        initTime,
+        chunk,
+        new Date(),
         cronSettingsResponse,
       );
+    }
   } else {
     await logBlankCronDetailsV3(cronSettingsResponse.CronId);
     console.log(
@@ -289,7 +272,7 @@ export async function logBlankCronDetailsV3(cronId: any) {
   }
 }
 
-export async function IsChunkNeeded(list: any, envVariables: any, type: any) {
+export function IsChunkNeeded(list: any, envVariables: any, type: any) {
   switch (type) {
     case "EXPRESS":
       if (envVariables && envVariables.expressCronBatchSize) {

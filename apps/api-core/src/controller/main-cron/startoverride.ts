@@ -1,14 +1,12 @@
 import { Request, Response } from "express";
-import * as dbHelper from "../../utility/mongo/db-helper";
-import * as cacheHelper from "../../utility/cache-helper";
 import * as _codes from "http-status-codes";
 import * as _ from "lodash";
-import * as keyGenHelper from "../../utility/key-gen-helper";
-import * as mongoHelper from "../../utility/mongo/mongo-helper";
-import { CacheKeyName } from "../../resources/cache-key-name";
-import { IsChunkNeeded, startAllCronAsIs, stopAllMainCrons } from "./shared";
-import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import { applicationConfig } from "../../utility/config";
+import * as keyGenHelper from "../../utility/key-gen-helper";
+import * as dbHelper from "../../utility/mongo/db-helper";
+import * as mongoHelper from "../../utility/mongo/mongo-helper";
+import * as repriceBase from "../../utility/reprice-algo/reprice-base";
+import { startAllCronAsIs, stopAllMainCrons } from "./shared";
 
 export async function startOverrideHandler(
   req: Request,
@@ -35,27 +33,13 @@ export async function startOverrideHandler(
     console.log(
       `Override Bulk Update Process running on ${initTime} with Eligible Product count : ${listOfOverrideProducts.length}  || Key : ${keyGen}`,
     );
-    const isChunkNeeded = await IsChunkNeeded(
+    let chunkedList = _.chunk(
       listOfOverrideProducts,
-      null,
-      "REGULAR",
+      applicationConfig.BATCH_SIZE,
     );
-    if (isChunkNeeded) {
-      let chunkedList = _.chunk(
-        listOfOverrideProducts,
-        applicationConfig.BATCH_SIZE,
-      );
-      for (let chunk of chunkedList) {
-        await repriceBase.Execute(keyGen, chunk, new Date(), null, true);
-      }
-    } else
-      await repriceBase.Execute(
-        keyGen,
-        listOfOverrideProducts,
-        initTime,
-        null,
-        true,
-      );
+    for (let chunk of chunkedList) {
+      await repriceBase.Execute(keyGen, chunk, new Date(), null, true);
+    }
   }
 
   //Set Cron Status to Old Status

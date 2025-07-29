@@ -14,9 +14,13 @@ export async function startProductCronHandler(
     `Started Product Cron with ${applicationConfig.PRODUCT_CRON_EXP}`,
   );
   productCron = schedule(applicationConfig.PRODUCT_CRON_EXP, async () => {
-    const url = applicationConfig.PRODUCT_REPRICER_URL;
-    await axiosHelper.asyncProductData(url!);
-    console.log(`Requesting Product info on ${url} at Time :  ${new Date()}`);
+    try {
+      const url = applicationConfig.PRODUCT_REPRICER_URL;
+      await axiosHelper.asyncProductData(url!);
+      console.log(`Requesting Product info on ${url} at Time :  ${new Date()}`);
+    } catch (error) {
+      console.error(`Error running Product Cron:`, error);
+    }
   });
   return res.status(_codes.StatusCodes.OK).send(`Product Cron started.`);
 }

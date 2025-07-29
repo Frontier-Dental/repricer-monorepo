@@ -19,7 +19,11 @@ export async function startFilterCronLogic() {
     filterCrons[cronDetails.cronName] = schedule(
       cronDetails.cronExpression,
       async () => {
-        await filterMapper.FilterProducts(cronDetails);
+        try {
+          await filterMapper.FilterProducts(cronDetails);
+        } catch (error) {
+          console.error(`Error running ${cronDetails.cronName}:`, error);
+        }
       },
       { scheduled: JSON.parse(cronDetails.status) },
     );

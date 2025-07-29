@@ -8,7 +8,7 @@ export async function start422Handler(
   req: Request,
   res: Response,
 ): Promise<any> {
-  console.log(`Cron-422 started on ${new Date()}`);
+  console.log(`Cron-422 started due to 422 Handler Request`);
   await start422Logic();
   return res
     .status(_codes.StatusCodes.OK)

@@ -102,14 +102,16 @@ export async function Execute(
         getInternalProducts(prod, prioritySequence),
         getAllOwnVendorIds(),
       );
+      const stringRepresentation = getPriceSolutionStringRepresentation(
+        v2AlgoResult.priceSolutions,
+      );
       await insertV2AlgoExecution({
         scrape_product_id: prod.productIdentifier,
         time: new Date(),
         chain_of_thought_html: Buffer.from(v2AlgoResult.html),
-        comment: getPriceSolutionStringRepresentation(
-          v2AlgoResult.priceSolutions,
-        ),
+        comment: stringRepresentation,
       });
+      console.log("V2 algo data inserted");
       for (let idx = 0; idx < prioritySequence.length; idx++) {
         const proceedNextVendor = proceedNext(
           prod,

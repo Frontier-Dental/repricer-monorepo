@@ -30,7 +30,11 @@ export async function recreateScrapeCron(
   scrapeCrons[details.CronName] = schedule(
     cronExpression,
     async () => {
-      await scrapeProductList(details);
+      try {
+        await scrapeProductList(details);
+      } catch (error) {
+        console.error(`Error running ${details.CronName}:`, error);
+      }
     },
     { scheduled: JSON.parse(details.status) },
   );

@@ -38,10 +38,6 @@ masterDataController.get(
         await fetchAndLoad(prod);
       }
     }
-    // const executionResult = perf.stop("collate_feed");
-    // console.log(
-    //   `Execution time for Id : ${runMarker} | Time : ${executionResult.time} ms`,
-    // ); // in milliseconds
     return res
       .status(_codes.StatusCodes.OK)
       .json(

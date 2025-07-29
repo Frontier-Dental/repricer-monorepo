@@ -1,21 +1,20 @@
 import { Request, Response } from "express";
 import * as _codes from "http-status-codes";
-import * as keyGenHelper from "../../utility/key-gen-helper";
-import { ScheduledTask, schedule } from "node-cron";
 import * as _ from "lodash";
-import {
-  calculateNextCronTime,
-  getLastCronMessage,
-  getNextCronTime,
-  IsChunkNeeded,
-  updateCronBasedDetails,
-  updateLowestVendor,
-} from "./shared";
-import * as mongoHelper from "../../utility/mongo/mongo-helper";
+import { schedule, ScheduledTask } from "node-cron";
 import CronStatusModel from "../../model/cron-status";
 import { ErrorItemModel } from "../../model/error-item";
 import * as axiosHelper from "../../utility/axios-helper";
 import { applicationConfig } from "../../utility/config";
+import * as keyGenHelper from "../../utility/key-gen-helper";
+import * as mongoHelper from "../../utility/mongo/mongo-helper";
+import {
+  calculateNextCronTime,
+  getLastCronMessage,
+  getNextCronTime,
+  updateCronBasedDetails,
+  updateLowestVendor,
+} from "./shared";
 
 let feedCron: ScheduledTask | null = null;
 
@@ -27,20 +26,15 @@ export async function startFeedCronHandler(
     `Started Feed Cron with details ${applicationConfig.FEED_CRON_EXP}`,
   );
   feedCron = schedule(applicationConfig.FEED_CRON_EXP, async () => {
-    const eligibleProductList = await getFeedEligibleList();
-    console.log(
-      `Feed Cron running on ${new Date()} with Eligible Products Count : ${eligibleProductList.length}`,
-    );
-    if (!eligibleProductList || eligibleProductList.length === 0) {
-      return;
-    }
-    const keyGen = keyGenHelper.Generate();
-    const isChunkNeeded = await IsChunkNeeded(
-      eligibleProductList,
-      null,
-      "REGULAR",
-    );
-    if (isChunkNeeded) {
+    try {
+      const eligibleProductList = await getFeedEligibleList();
+      console.log(
+        `Feed Cron running on ${new Date()} with Eligible Products Count : ${eligibleProductList.length}`,
+      );
+      if (!eligibleProductList || eligibleProductList.length === 0) {
+        return;
+      }
+      const keyGen = keyGenHelper.Generate();
       let chunkedList = _.chunk(
         eligibleProductList,
         applicationConfig.BATCH_SIZE,
@@ -48,8 +42,8 @@ export async function startFeedCronHandler(
       for (let chunk of chunkedList) {
         await repriceFeed(keyGen, chunk, new Date());
       }
-    } else {
-      await repriceFeed(keyGen, eligibleProductList, new Date());
+    } catch (error) {
+      console.error(`Error running Feed Cron:`, error);
     }
   });
 

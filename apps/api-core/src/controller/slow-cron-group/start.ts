@@ -34,7 +34,11 @@ export async function startSlowCronLogic() {
         slowCrons[cronName] = cron.schedule(
           cronExpression,
           async () => {
-            await runCoreCronLogic(cronDetail);
+            try {
+              await runCoreCronLogic(cronDetail);
+            } catch (error) {
+              console.error(`Error running ${cronDetail.CronName}:`, error);
+            }
           },
           { scheduled: JSON.parse(cronDetail.CronStatus) },
         );

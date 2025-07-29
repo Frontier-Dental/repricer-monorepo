@@ -15,11 +15,15 @@ export async function startManagedServiceCronHandler(
       `Started Managed Service Cron with ${applicationConfig.MANAGED_CRON_EXP}`,
     );
     managedCron = schedule(applicationConfig.MANAGED_CRON_EXP, async () => {
-      const url = applicationConfig.COLLATE_DATA_URL;
-      console.log(
-        `Running Managed Service Cron on ${url} at Time :  ${new Date()}`,
-      );
-      await axiosHelper.native_get(url!);
+      try {
+        const url = applicationConfig.COLLATE_DATA_URL;
+        console.log(
+          `Running Managed Service Cron on ${url} at Time :  ${new Date()}`,
+        );
+        await axiosHelper.native_get(url!);
+      } catch (error) {
+        console.error(`Error running Managed Service Cron:`, error);
+      }
     });
   }
   return res

@@ -24,11 +24,17 @@ export async function recreateFilterCronHandler(
   filterCrons[cronName] = schedule(
     details.cronExpression,
     async () => {
-      await filterMapper.FilterProducts(details);
+      try {
+        await filterMapper.FilterProducts(details);
+      } catch (error) {
+        console.error(`Error running ${details.cronName}:`, error);
+      }
     },
     { scheduled: JSON.parse(details.status) },
   );
-  console.log(`Re-created ${cronName} with new details at ${new Date()}`);
+  console.log(
+    `Re-created ${cronName} with new details. Status: ${JSON.parse(details.status)}`,
+  );
   return res
     .status(_codes.StatusCodes.OK)
     .send(`Cron re-started successfully for jobName : ${jobName}`);

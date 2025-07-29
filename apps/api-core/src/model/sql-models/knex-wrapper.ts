@@ -17,6 +17,7 @@ export function getKnexInstance(): Knex {
         database: applicationConfig.SQL_DATABASE,
       },
       pool: { min: 0 },
+      acquireConnectionTimeout: 10000,
     });
     return knexInstance;
   }
