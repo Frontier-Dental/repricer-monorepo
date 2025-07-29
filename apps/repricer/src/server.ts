@@ -9,6 +9,7 @@ import { Request, Response } from "express";
 import { errorMiddleware } from "./utility/error-middleware";
 import { applicationConfig, validateConfig } from "./utility/config";
 import morgan from "morgan";
+import packageJson from "../package.json";
 
 validateConfig();
 
@@ -76,4 +77,5 @@ app.listen(PORT, () => {
   console.log(
     `Server running with node environment ${process.env.NODE_ENV} on port ${PORT} at ${new Date()}`,
   );
+  console.log(`Application version: ${packageJson.version}`);
 });
