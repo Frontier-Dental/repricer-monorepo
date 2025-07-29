@@ -100,7 +100,7 @@ export const envSchema = z.object({
   SQL_PRODUCTINFO: z.string().default("table_productInfo"),
   SQL_PRICEBREAKINFO: z.string().default("table_priceBreaks"),
   SQL_SCRAPEPRODUCTLIST: z.string().default("table_scrapeProductList"),
-  SQL_DATABASE: z.string().default("repricerDb"),
+  SQL_DATABASE: z.string(),
   SQL_SP_GETRUN_INFO: z.string().default("sp_GetLatestRunInfoByLimit"),
   SQL_SP_GETRUN_INFO_BY_CRON: z
     .string()
