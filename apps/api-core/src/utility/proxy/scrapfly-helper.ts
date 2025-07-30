@@ -26,11 +26,6 @@ export async function fetchData(
       `SCRAPE STARTED : ${scrappingLog} : ${url} || ${seqString} || ${new Date()}`,
     );
 
-    console.log({
-      module: "SCRAPE",
-      message: `SCRAPE STARTED : ${scrappingLog} : ${url} || ${seqString} || render js : ${renderJs} `,
-    });
-
     const { responseContent, timeTaken } = await scrape(
       url,
       proxyDetailsResponse.hostUrl,
@@ -86,13 +81,6 @@ async function handleResponse(
   console.log(
     `SCRAPE COMPLETED : ${scrappingLog} : ${url} || TimeTaken  :  ${timeTaken} seconds || ${seqString}`,
   );
-
-  console.log({
-    module: "SCRAPE",
-    message: `SCRAPE COMPLETED : ${scrappingLog} : ${url} ||  ${seqString} || render js : ${renderJs}`,
-    timeTaken: `${timeTaken} seconds`,
-  });
-
   if (formatResponse) {
     return await getFormattedResponse(response);
   }
@@ -142,11 +130,6 @@ async function handleRetry(
 ): Promise<any> {
   console.log(`Scrapfly Exception : ${error} || URL : ${url}`);
 
-  console.log({
-    module: "SCRAPE",
-    message: `Scrapfly Exception : ${error} || URL : ${url}`,
-  });
-
   await proxySwitchHelper.ExecuteCounter(
     parseInt(proxyDetailsResponse.proxyProvider || "0"),
   );
@@ -157,16 +140,6 @@ async function handleRetry(
     console.log(
       `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
     );
-
-    console.log({
-      module: "SCRAPE",
-      message: `REPRICER CORE : ERROR (WITH RETRY) : ${error} `,
-    });
-
-    console.log({
-      module: "SCRAPE",
-      message: `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
-    });
 
     await delay(applicationConfig.RETRY_INTERVAL);
     return await fetchData(

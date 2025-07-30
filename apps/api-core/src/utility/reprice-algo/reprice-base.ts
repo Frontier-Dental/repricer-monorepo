@@ -329,10 +329,6 @@ export async function RepriceErrorItem(
                     priceUpdateResponse: repriceResult.data.priceUpdateResponse,
                   },
                 ]);
-                console.log({
-                  module: "REPRICE",
-                  message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
-                });
               } else {
                 prod.next_cron_time = null;
                 const priceUpdatedItem = new ErrorItemModel(
@@ -709,10 +705,6 @@ async function repriceSingleVendor(
   console.log(
     `REPRICE : ${cronSetting.CronName} : Cron Key : ${keyGen} : Vendor : ${contextVendor} : Requesting Reprice info for ${prod.mpid} at Time :  ${new Date()}`,
   );
-  console.log({
-    module: "REPRICE",
-    message: `Cron Name : ${cronSetting.CronName}, Cron Key : ${keyGen}, Vendor : ${contextVendor}, Requesting Reprice info for ${prod.mpid} at Time :  ${new Date()}`,
-  });
   prod.secretKey = cronSetting.SecretKey;
   prod.last_attempted_time = new Date();
   prod.lastCronRun = isManualRun ? "Manual" : `${cronSetting.CronName}`;
@@ -773,10 +765,6 @@ async function repriceSingleVendor(
           message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(priceUpdatedItem),
         });
-        console.log({
-          module: "REPRICE",
-          message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
-        });
       } else {
         prod.next_cron_time = null;
         console.log(`GHOST : ${prod.mpid} - ${contextVendor} - ${keyGen}`);
@@ -803,10 +791,6 @@ async function repriceSingleVendor(
         logs: repriceResult.cronResponse,
         priceUpdated: false,
         priceUpdateResponse: repriceResult.priceUpdateResponse,
-      });
-      console.log({
-        module: "REPRICE",
-        message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
       });
     }
   } else {

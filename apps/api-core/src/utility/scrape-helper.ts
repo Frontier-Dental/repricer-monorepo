@@ -16,7 +16,7 @@ export async function Execute(
 ): Promise<void> {
   if (productList && productList.length > 0) {
     const keyGen = Generate();
-    mySqlHelper.InsertRunCompletionStatus(
+    await mySqlHelper.InsertRunCompletionStatus(
       new RunCompletionStatus(keyGen, "SCRAPE_ONLY", false),
     );
     const isChunkNeeded = await IsChunkNeeded(productList);
@@ -26,7 +26,7 @@ export async function Execute(
         await executeScrapeLogic(keyGen, chunk, cronSetting);
       }
     } else await executeScrapeLogic(keyGen, productList, cronSetting);
-    mySqlHelper.UpdateRunCompletionStatus(
+    await mySqlHelper.UpdateRunCompletionStatus(
       new RunCompletionStatus(keyGen, "SCRAPE_ONLY", true),
     );
   }

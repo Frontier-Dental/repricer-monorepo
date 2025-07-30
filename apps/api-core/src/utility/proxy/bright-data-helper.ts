@@ -27,11 +27,6 @@ export async function fetchData(url: string, proxyDetails: any): Promise<any> {
     console.log(
       `SCRAPE : BrightData : ${url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds`,
     );
-    console.log({
-      module: "SCRAPE",
-      message: `BRIGHTDATA : ${url}`,
-      timeTaken: `${parseHrtimeToSeconds(process.hrtime(startTime))} seconds`,
-    });
     if (contextJson) {
       response.data = contextJson;
     }
@@ -39,10 +34,6 @@ export async function fetchData(url: string, proxyDetails: any): Promise<any> {
     console.log(
       `BRIGHTDATA - Fetch Response Exception for ${url} || ERROR : ${exception}`,
     );
-    console.log({
-      module: "SCRAPE",
-      message: `BRIGHTDATA - Fetch Response Exception for ${url} || ERROR : ${exception}`,
-    });
     await proxySwitchHelper.ExecuteCounter(
       parseInt(proxyDetails.proxyProvider),
     );

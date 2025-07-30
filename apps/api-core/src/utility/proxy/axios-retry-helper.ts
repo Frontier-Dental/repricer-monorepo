@@ -35,10 +35,6 @@ export async function getScrappingResponse(
     console.log(
       `SCRAPE STARTED : SmartProxy - Web : ${_url} || ${seqString} || ${new Date()}`,
     );
-    console.log({
-      module: "SCRAPE",
-      message: `SCRAPE STARTED : SmartProxy - Web : ${_url} || ${seqString} `,
-    });
     var startTime = process.hrtime();
     const response = await axios({
       method: "post",
@@ -109,21 +105,12 @@ export async function getScrappingResponse(
       console.log(
         `SCRAPE COMPLETED : SmartProxy - Web : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || TaskId : ${taskId} || ${seqString}`,
       );
-      console.log({
-        module: "SCRAPE",
-        message: `SCRAPE COMPLETED : SmartProxy - Web : ${_url} || TaskId : ${taskId} || ${seqString}`,
-        timeTaken: `${parseHrtimeToSeconds(process.hrtime(startTime))} seconds`,
-      });
 
       return responseData;
     }
   } catch (error: any) {
     console.log(`SmartProxy - Web Exception : ${error} || URL : ${_url}`);
     console.error("Error Stack: ", error.stack);
-    console.log({
-      module: "SCRAPE",
-      message: `SmartProxy - Web Exception : ${error} || URL : ${_url}`,
-    });
     await proxySwitchHelper.ExecuteCounter(
       parseInt(proxyDetailsResponse.proxyProvider),
     );
@@ -133,14 +120,6 @@ export async function getScrappingResponse(
       console.log(
         `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
       );
-      console.log({
-        module: "SCRAPE",
-        message: `REPRICER CORE : ERROR (WITH RETRY) : ${error} `,
-      });
-      console.log({
-        module: "SCRAPE",
-        message: `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
-      });
       await delay(applicationConfig.RETRY_INTERVAL);
       return await getScrappingResponse(
         _url,
@@ -171,10 +150,6 @@ export async function getScrapingBeeResponse(
     console.log(
       `SCRAPE STARTED : ${scrappingLog} : ${_url} || ${seqString} || ${new Date()}`,
     );
-    console.log({
-      module: "SCRAPE",
-      message: `SCRAPE STARTED : ${scrappingLog} : ${_url} || ${seqString} || render js : ${renderJs} `,
-    });
     var startTime = process.hrtime();
     const options: any = {
       uri: "https://app.scrapingbee.com/api/v1/",
@@ -196,11 +171,6 @@ export async function getScrapingBeeResponse(
       console.log(
         `SCRAPE COMPLETED : ${scrappingLog} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || ${seqString}`,
       );
-      console.log({
-        module: "SCRAPE",
-        message: `SCRAPE COMPLETED : ${scrappingLog} : ${_url} ||  ${seqString} || render js : ${renderJs}`,
-        timeTaken: `${parseHrtimeToSeconds(process.hrtime(startTime))} seconds`,
-      });
       if (formatResponse && formatResponse == true) {
         let responseStartIndex = response.indexOf('<List xmlns="">');
         if (responseStartIndex < 0) {
@@ -237,10 +207,6 @@ export async function getScrapingBeeResponse(
     }
   } catch (error: any) {
     console.log(`Scraping Bee Exception : ${error} || URL : ${_url}`);
-    console.log({
-      module: "SCRAPE",
-      message: `Scraping Bee Exception : ${error} || URL : ${_url}`,
-    });
     await proxySwitchHelper.ExecuteCounter(
       parseInt(proxyDetailsResponse.proxyProvider),
     );
@@ -250,14 +216,6 @@ export async function getScrapingBeeResponse(
       console.log(
         `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
       );
-      console.log({
-        module: "SCRAPE",
-        message: `REPRICER CORE : ERROR (WITH RETRY) : ${error} `,
-      });
-      console.log({
-        module: "SCRAPE",
-        message: `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
-      });
       await delay(applicationConfig.RETRY_INTERVAL);
       return await getScrapingBeeResponse(
         _url,
