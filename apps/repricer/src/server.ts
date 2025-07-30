@@ -67,7 +67,7 @@ app.get("/health", (req: Request, res: Response) => {
 });
 
 // Route for the Vite page
-app.get("/vite", (req, res) => {
+app.get("/vite*splat", (req, res) => {
   res.sendFile(__dirname + "/public/vite/index.html");
 });
 

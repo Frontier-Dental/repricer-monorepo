@@ -11,7 +11,6 @@ export const envSchema = z.object({
   NET32_UPDATE_PRICE_URL: z
     .string()
     .default("https://api.net32.com/products/offers/update"),
-  SUBSCRIPTION_KEY: z.string().default(""),
   CRON_STATUS_COLLECTION_NAME: z.string().default("cronStatusLogs"),
   FILTER_CRON_COLLECTION_NAME: z.string().default("filterCronSettings"),
   REPRICE_OWN_ENDPOINT: z.string().default("/search/RepriceProduct/"),
@@ -19,11 +18,8 @@ export const envSchema = z.object({
   CRON_START_ENDPOINT: z.string().default("/schedule/StartCron"),
   CRON_STOP_ENDPOINT: z.string().default("/schedule/StopCron"),
   RECREATE_CRON_ENDPOINT: z.string().default("/schedule/RecreateCron"),
-  NO_OF_RETRIES: z.coerce.number().default(4),
-  RETRY_INTERVAL: z.coerce.number().default(4000),
   ERROR_ITEM_COLLECTION: z.string().default("errorItems"),
   MANUAL_PROD_UPDATE_ENDPOINT: z.string().default("/product/updateManualProd/"),
-  IP_CONFIG: z.string().default("ipConfig"),
   HISTORY_DB: z.string().default("historyData"),
   ENV_SETTINGS: z.string().default("envsettings"),
   HISTORY_LIMIT: z.coerce.number().default(50),
@@ -35,7 +31,6 @@ export const envSchema = z.object({
   FEED_REPRICER_ENDPOINT: z.string().default("/feed/RepriceProduct/"),
   PRODUCT_COLLECTION: z.string().default("products"),
   MANAGED_MONGO_URL: z.string(),
-  DATA_SOURCE: z.string().default("CMS"),
   USERS_COLLECTION: z.string().default("users"),
   DEFAULT_PRODUCT_STATUS: z.string().default("true"),
   SIMULATE_REPRICER_ENDPOINT: z.string().default("/repricer/V2AlgoTest"),
@@ -54,12 +49,6 @@ export const envSchema = z.object({
   FILTER_CRON_RECREATE_ENDPOINT: z
     .string()
     .default("/filter/RecreateFilterCron"),
-  GET_INPROGRESS_CRON: z
-    .string()
-    .default("http://localhost:3000/monitor/GetProducts"),
-  GET_PRODUCTS_COUNT: z
-    .string()
-    .default("http://localhost:3000/monitor/GetInprogressCron"),
   GET_422_BELOW_PRODUCTS_ENDPOINT: z
     .string()
     .default("/debug/filterProductsWithFloor/6e2fe8965f5040748912bb90080a2de5"),
@@ -84,7 +73,6 @@ export const envSchema = z.object({
   SCRAPE_CRON_SETTINGS_COLLECTION_NAME: z
     .string()
     .default("scrapeCronSettings"),
-  SCRAPE_PRODUCTS_COLLECTION: z.string().default("scrapeProducts"),
   SCRAPE_LOGS_COLLECTION: z.string().default("scrapeCronLogs"),
   SCRAPE_CRON_TOGGLE_STATUS_ENDPOINT: z
     .string()
@@ -96,9 +84,6 @@ export const envSchema = z.object({
   SQL_USERNAME: z.string(),
   SQL_PASSWORD: z.string(),
   SQL_PORT: z.coerce.number(),
-  SQL_RUNINFO: z.string().default("table_runInfo"),
-  SQL_PRODUCTINFO: z.string().default("table_productInfo"),
-  SQL_PRICEBREAKINFO: z.string().default("table_priceBreaks"),
   SQL_SCRAPEPRODUCTLIST: z.string().default("table_scrapeProductList"),
   SQL_DATABASE: z.string(),
   SQL_SP_GETRUN_INFO: z.string().default("sp_GetLatestRunInfoByLimit"),
@@ -121,15 +106,6 @@ export const envSchema = z.object({
   SQL_SP_UPSERT_TRADENT: z.string().default("sp_UpsertTradentDetails"),
   SQL_SP_UPSERT_FRONTIER: z.string().default("sp_UpsertFrontierDetails"),
   SQL_SP_UPSERT_MVP: z.string().default("sp_UpsertMvpDetails"),
-  SQL_SP_UPSERT_PRODUCT_DETAILSV2: z
-    .string()
-    .default("sp_UpsertProductDetailsV2"),
-  SQL_SP_GET_PRODUCT_LIST_BY_FILTER: z
-    .string()
-    .default("sp_GetFullProductDetailsListByFilter"),
-  SQL_SP_GET_PRODUCT_LIST_BY_TAG: z
-    .string()
-    .default("sp_GetFullProductDetailsListByTag"),
   USE_MYSQL: z
     .string()
     .toLowerCase()
