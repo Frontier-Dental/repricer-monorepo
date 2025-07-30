@@ -6,7 +6,7 @@ const envSchema = z.object({
   MANAGED_MONGO_URL: z.string(),
   GET_PRICE_LIST_DBNAME: z.string().default("repricer"),
   GET_PRICE_LIST_COLLECTION_NAME: z.string().default("items"),
-  SCRAPE_LOGS_COLLECTION_NAME: z.string().default("cronLogs"),
+  CRON_LOGS_COLLECTION_NAME: z.string().default("cronLogs"),
   CRON_STATUS_COLLECTION_NAME: z.string().default("cronStatusLogs"),
   CRON_SETTINGS_COLLECTION_NAME: z.string().default("cronSettings"),
   ERROR_ITEM_COLLECTION: z.string().default("errorItems"),

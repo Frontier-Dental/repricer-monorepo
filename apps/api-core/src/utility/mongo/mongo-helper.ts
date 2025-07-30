@@ -13,7 +13,7 @@ export const GetItemList = async (): Promise<any> => {
 export const PushLogsAsync = async (payload: any): Promise<any> => {
   const dbo = await getMongoDb();
   const { insertedId } = await dbo
-    .collection(applicationConfig.SCRAPE_LOGS_COLLECTION_NAME)
+    .collection(applicationConfig.CRON_LOGS_COLLECTION_NAME)
     .insertOne(payload);
   return insertedId.toString();
 };

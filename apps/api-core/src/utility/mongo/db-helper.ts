@@ -188,7 +188,7 @@ export async function GetCronSettingsDetailsByName(
 export async function PushLogsAsync(payload: any) {
   const dbo = await getMongoDb();
   const { insertedId } = await dbo
-    .collection(applicationConfig.SCRAPE_LOGS_COLLECTION_NAME)
+    .collection(applicationConfig.CRON_LOGS_COLLECTION_NAME)
     .insertOne(payload);
   return insertedId.toString();
 }

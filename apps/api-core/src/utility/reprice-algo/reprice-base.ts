@@ -72,7 +72,7 @@ export async function Execute(
     if (!isProceed) break;
 
     _contextCronStatus.SetProductCount(cronProdCounter);
-    mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
+    await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
     const prioritySequence = await requestGenerator.GetPrioritySequence(
       prod,
       null,
