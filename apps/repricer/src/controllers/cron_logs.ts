@@ -1089,8 +1089,8 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
         });
         if (!existingModel) {
           let _$cronLog: any = new CronLogs(log, idx++);
-          const logAnalysisInfo = await getLogAnalysis(log);
-          _$cronLog.repricedProductCount = await getRepricerCount(log);
+          const logAnalysisInfo = getLogAnalysis(log);
+          _$cronLog.repricedProductCount = getRepricerCount(log);
           _$cronLog.successScrapeCount = logAnalysisInfo.successCount;
           _$cronLog.failureScrapeCount = logAnalysisInfo.failureCount;
           _$cronLog.repriceFailure422Count = logAnalysisInfo.failure422Count;
@@ -1158,7 +1158,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   });
 }
 
-async function getLogAnalysis(logList: any) {
+function getLogAnalysis(logList: any) {
   let uniqueSuccessProductArray: any[] = [];
   let uniqueFailureProductArray: any[] = [];
   let logAnalysisInfo: any = {

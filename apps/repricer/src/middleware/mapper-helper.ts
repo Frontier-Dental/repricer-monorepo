@@ -342,29 +342,24 @@ export const MapFormData = async (
   return productDetails;
 };
 export const AlignCronName = async (productList: any) => {
-  try {
-    let alignedProduct: any[] = [];
-    for (var product of productList) {
-      if (!_.includes(alignedProduct, product.mpid)) {
-        const listOfRelatedProducts = productList.find(
-          (x: any) =>
-            x.mpid == product.mpid &&
-            x.channelName.toLowerCase() != product.channelName.toLowerCase(),
-        );
-        if (listOfRelatedProducts && listOfRelatedProducts.length > 0) {
-          const contextCronName = (_.last(listOfRelatedProducts) as any)
-            .cronName;
-          const contextCronId = (_.last(listOfRelatedProducts) as any).cronId;
-          _.forEach(listOfRelatedProducts, (p: any) => {
-            p.cronName = contextCronName;
-            p.cronId = contextCronId;
-          });
-        }
-        alignedProduct.push(product.mpid as never);
+  let alignedProduct: any[] = [];
+  for (var product of productList) {
+    if (!_.includes(alignedProduct, product.mpid)) {
+      const listOfRelatedProducts = productList.find(
+        (x: any) =>
+          x.mpid == product.mpid &&
+          x.channelName.toLowerCase() != product.channelName.toLowerCase(),
+      );
+      if (listOfRelatedProducts && listOfRelatedProducts.length > 0) {
+        const contextCronName = (_.last(listOfRelatedProducts) as any).cronName;
+        const contextCronId = (_.last(listOfRelatedProducts) as any).cronId;
+        _.forEach(listOfRelatedProducts, (p: any) => {
+          p.cronName = contextCronName;
+          p.cronId = contextCronId;
+        });
       }
+      alignedProduct.push(product.mpid as never);
     }
-  } catch (exception) {
-    console.log(`Exception while mapping Cron Name : Error ${exception}`);
   }
   return productList;
 };
@@ -499,21 +494,15 @@ export const MapAlternateProxyProviderDetails = async (
 ) => {
   let alternateResults: any[] = [];
   for (let i = 1; i <= 6; i++) {
-    try {
-      let info: any = {};
-      info.Sequence = i;
-      const keyToGetValue =
-        idx == 999
-          ? `proxy_provider_422_alternate_${i}`
-          : `proxy_provider_${i}`;
-      info.ProxyProvider =
-        idx == 999
-          ? parseInt(payload[keyToGetValue])
-          : parseInt(payload[keyToGetValue][idx]);
-      alternateResults.push(info as never);
-    } catch (exception) {
-      // Do nothing
-    }
+    let info: any = {};
+    info.Sequence = i;
+    const keyToGetValue =
+      idx == 999 ? `proxy_provider_422_alternate_${i}` : `proxy_provider_${i}`;
+    info.ProxyProvider =
+      idx == 999
+        ? parseInt(payload[keyToGetValue])
+        : parseInt(payload[keyToGetValue][idx]);
+    alternateResults.push(info as never);
   }
 
   return alternateResults;
@@ -521,29 +510,25 @@ export const MapAlternateProxyProviderDetails = async (
 
 export const MapSqlToCronLog = async (runInfo: any, _idx: any) => {
   let cronLog: any = {};
-  try {
-    cronLog.index = _idx;
-    cronLog.logTime = runInfo.RunStartTime ? runInfo.RunStartTime : "-";
-    cronLog.keyRef = runInfo.KeyGenId;
-    cronLog.cronId = runInfo.CronId;
-    cronLog.productCount = runInfo.ProductCount;
-    cronLog.type = runInfo.RunType;
-    cronLog.completionTime = runInfo.RunEndTime ? runInfo.RunEndTime : "-";
-    cronLog.EligibleCount = runInfo.EligibleCount;
-    cronLog.logData = {};
-    cronLog.logData._id = runInfo.RunId;
-    cronLog.logData.type = runInfo.RunType;
-    cronLog.cronName = runInfo.CronName;
-    cronLog.productIds = "-";
-    cronLog.repricedProductCount = "-";
-    cronLog.successScrapeCount = runInfo.ScrapedSuccessCount;
-    cronLog.failureScrapeCount = runInfo.ScrapedFailureCount;
-    cronLog.totalActiveCount = runInfo.EligibleCount;
-    cronLog.repriceFailure422Count = "-";
-    cronLog.repriceFailureOtherCount = "-";
-  } catch (exception) {
-    console.log(`Exception while mapping SQL to Cron Log : ${exception}`);
-  }
+  cronLog.index = _idx;
+  cronLog.logTime = runInfo.RunStartTime ? runInfo.RunStartTime : "-";
+  cronLog.keyRef = runInfo.KeyGenId;
+  cronLog.cronId = runInfo.CronId;
+  cronLog.productCount = runInfo.ProductCount;
+  cronLog.type = runInfo.RunType;
+  cronLog.completionTime = runInfo.RunEndTime ? runInfo.RunEndTime : "-";
+  cronLog.EligibleCount = runInfo.EligibleCount;
+  cronLog.logData = {};
+  cronLog.logData._id = runInfo.RunId;
+  cronLog.logData.type = runInfo.RunType;
+  cronLog.cronName = runInfo.CronName;
+  cronLog.productIds = "-";
+  cronLog.repricedProductCount = "-";
+  cronLog.successScrapeCount = runInfo.ScrapedSuccessCount;
+  cronLog.failureScrapeCount = runInfo.ScrapedFailureCount;
+  cronLog.totalActiveCount = runInfo.EligibleCount;
+  cronLog.repriceFailure422Count = "-";
+  cronLog.repriceFailureOtherCount = "-";
   return cronLog;
 };
 
@@ -572,180 +557,163 @@ export const UpsertProductDetailsInSql = async (
   mpid: any,
   req: any,
 ) => {
-  try {
-    console.log("UpsertProductDetailsInSql", payload);
-    const sqlProductDetailsList =
-      await mySqlUtility.GetFullProductDetailsById(mpid);
-    let sqlProductDetails = _.first(sqlProductDetailsList);
-    const AuditInfo = await SessionHelper.GetAuditInfo(req);
-    if (payload && payload.tradentDetails) {
-      if (sqlProductDetails != null && sqlProductDetails.tradentDetails) {
-        payload.tradentDetails = mapUserDataToDbData(
-          payload.tradentDetails,
-          sqlProductDetails.tradentDetails,
-          AuditInfo,
-        );
-        await mySqlUtility.UpdateVendorData(payload.tradentDetails, "TRADENT");
-        console.log(`Updated Tradent Info for ${mpid} at ${new Date()}`);
-      } else {
-        if (!sqlProductDetails) {
-          sqlProductDetails = {};
-        }
-        payload.tradentDetails.updatedBy = AuditInfo.UpdatedBy;
-        payload.tradentDetails.updatedAt = moment(AuditInfo.UpdatedOn).format(
-          "YYYY-MM-DD HH:mm:ss",
-        );
-        sqlProductDetails.tradentLinkInfo = await mySqlUtility.UpsertVendorData(
-          payload.tradentDetails,
-          "TRADENT",
-        );
-        console.log(
-          `Inserted Tradent Info for ${mpid} with insertId : ${sqlProductDetails.tradentLinkInfo}`,
-        );
+  console.log("UpsertProductDetailsInSql", payload);
+  const sqlProductDetailsList =
+    await mySqlUtility.GetFullProductDetailsById(mpid);
+  let sqlProductDetails = _.first(sqlProductDetailsList);
+  const AuditInfo = await SessionHelper.GetAuditInfo(req);
+  if (payload && payload.tradentDetails) {
+    if (sqlProductDetails != null && sqlProductDetails.tradentDetails) {
+      payload.tradentDetails = mapUserDataToDbData(
+        payload.tradentDetails,
+        sqlProductDetails.tradentDetails,
+        AuditInfo,
+      );
+      await mySqlUtility.UpdateVendorData(payload.tradentDetails, "TRADENT");
+      console.log(`Updated Tradent Info for ${mpid} at ${new Date()}`);
+    } else {
+      if (!sqlProductDetails) {
+        sqlProductDetails = {};
       }
+      payload.tradentDetails.updatedBy = AuditInfo.UpdatedBy;
+      payload.tradentDetails.updatedAt = moment(AuditInfo.UpdatedOn).format(
+        "YYYY-MM-DD HH:mm:ss",
+      );
+      sqlProductDetails.tradentLinkInfo = await mySqlUtility.UpsertVendorData(
+        payload.tradentDetails,
+        "TRADENT",
+      );
+      console.log(
+        `Inserted Tradent Info for ${mpid} with insertId : ${sqlProductDetails.tradentLinkInfo}`,
+      );
     }
-    if (payload && payload.frontierDetails) {
-      if (sqlProductDetails != null && sqlProductDetails.frontierDetails) {
-        payload.frontierDetails = mapUserDataToDbData(
-          payload.frontierDetails,
-          sqlProductDetails.frontierDetails,
-          AuditInfo,
-        );
-        await mySqlUtility.UpdateVendorData(
-          payload.frontierDetails,
-          "FRONTIER",
-        );
-        console.log(`Updated Frontier Info for ${mpid} at ${new Date()}`);
-      } else {
-        if (!sqlProductDetails) {
-          sqlProductDetails = {};
-        }
-        payload.frontierDetails.updatedBy = AuditInfo.UpdatedBy;
-        payload.frontierDetails.updatedAt = moment(AuditInfo.UpdatedOn).format(
-          "YYYY-MM-DD HH:mm:ss",
-        );
-        sqlProductDetails.frontierLinkInfo =
-          await mySqlUtility.UpsertVendorData(
-            payload.frontierDetails,
-            "FRONTIER",
-          );
-        console.log(
-          `Inserted Frontier Info for ${mpid} with insertId : ${sqlProductDetails.frontierLinkInfo}`,
-        );
-      }
-    }
-    if (payload && payload.mvpDetails) {
-      if (sqlProductDetails != null && sqlProductDetails.mvpDetails) {
-        payload.mvpDetails = mapUserDataToDbData(
-          payload.mvpDetails,
-          sqlProductDetails.mvpDetails,
-          AuditInfo,
-        );
-        await mySqlUtility.UpdateVendorData(payload.mvpDetails, "MVP");
-        console.log(`Updated MVP Info for ${mpid} at ${new Date()}`);
-      } else {
-        if (!sqlProductDetails) {
-          sqlProductDetails = {};
-        }
-        payload.mvpDetails.updatedBy = AuditInfo.UpdatedBy;
-        payload.mvpDetails.updatedAt = moment(AuditInfo.UpdatedOn).format(
-          "YYYY-MM-DD HH:mm:ss",
-        );
-        sqlProductDetails.mvpLinkInfo = await mySqlUtility.UpsertVendorData(
-          payload.mvpDetails,
-          "MVP",
-        );
-        console.log(
-          `Inserted MVP Info for ${mpid} with insertId : ${sqlProductDetails.mvpLinkInfo}`,
-        );
-      }
-    }
-    if (payload && payload.firstDentDetails) {
-      if (sqlProductDetails != null && sqlProductDetails.firstDentDetails) {
-        payload.firstDentDetails = mapUserDataToDbData(
-          payload.firstDentDetails,
-          sqlProductDetails.firstDentDetails,
-          AuditInfo,
-        );
-        await mySqlUtility.UpdateVendorData(
-          payload.firstDentDetails,
-          "FIRSTDENT",
-        );
-        console.log(`Updated FirstDent Info for ${mpid} at ${new Date()}`);
-      } else {
-        if (!sqlProductDetails) {
-          sqlProductDetails = {};
-        }
-        payload.firstDentDetails.updatedBy = AuditInfo.UpdatedBy;
-        payload.firstDentDetails.updatedAt = moment(AuditInfo.UpdatedOn).format(
-          "YYYY-MM-DD HH:mm:ss",
-        );
-        sqlProductDetails.firstDentLinkInfo =
-          await mySqlUtility.UpsertVendorData(
-            payload.firstDentDetails,
-            "FIRSTDENT",
-          );
-        console.log(
-          `Inserted FirstDent Info for ${mpid} with insertId : ${sqlProductDetails.firstDentLinkInfo}`,
-        );
-      }
-    }
-    if (payload && payload.topDentDetails) {
-      if (sqlProductDetails != null && sqlProductDetails.topDentDetails) {
-        payload.topDentDetails = mapUserDataToDbData(
-          payload.topDentDetails,
-          sqlProductDetails.topDentDetails,
-          AuditInfo,
-        );
-        await mySqlUtility.UpdateVendorData(payload.topDentDetails, "TOPDENT");
-        console.log(`Updated FirstDent Info for ${mpid} at ${new Date()}`);
-      } else {
-        if (!sqlProductDetails) {
-          sqlProductDetails = {};
-        }
-        payload.topDentDetails.updatedBy = AuditInfo.UpdatedBy;
-        payload.topDentDetails.updatedAt = moment(AuditInfo.UpdatedOn).format(
-          "YYYY-MM-DD HH:mm:ss",
-        );
-        sqlProductDetails.topDentLinkInfo = await mySqlUtility.UpsertVendorData(
-          payload.topDentDetails,
-          "TOPDENT",
-        );
-        console.log(
-          `Inserted TopDent Info for ${mpid} with insertId : ${sqlProductDetails.topDentLinkInfo}`,
-        );
-      }
-    }
-    await mySqlUtility.UpsertProductDetailsV2(
-      new MySqlProduct(payload, sqlProductDetails, mpid, AuditInfo),
-    );
-  } catch (exception) {
-    console.log(
-      `Exception while UpsertProductDetailsInSql for MPID : ${mpid} || ${exception}`,
-    );
   }
+  if (payload && payload.frontierDetails) {
+    if (sqlProductDetails != null && sqlProductDetails.frontierDetails) {
+      payload.frontierDetails = mapUserDataToDbData(
+        payload.frontierDetails,
+        sqlProductDetails.frontierDetails,
+        AuditInfo,
+      );
+      await mySqlUtility.UpdateVendorData(payload.frontierDetails, "FRONTIER");
+      console.log(`Updated Frontier Info for ${mpid} at ${new Date()}`);
+    } else {
+      if (!sqlProductDetails) {
+        sqlProductDetails = {};
+      }
+      payload.frontierDetails.updatedBy = AuditInfo.UpdatedBy;
+      payload.frontierDetails.updatedAt = moment(AuditInfo.UpdatedOn).format(
+        "YYYY-MM-DD HH:mm:ss",
+      );
+      sqlProductDetails.frontierLinkInfo = await mySqlUtility.UpsertVendorData(
+        payload.frontierDetails,
+        "FRONTIER",
+      );
+      console.log(
+        `Inserted Frontier Info for ${mpid} with insertId : ${sqlProductDetails.frontierLinkInfo}`,
+      );
+    }
+  }
+  if (payload && payload.mvpDetails) {
+    if (sqlProductDetails != null && sqlProductDetails.mvpDetails) {
+      payload.mvpDetails = mapUserDataToDbData(
+        payload.mvpDetails,
+        sqlProductDetails.mvpDetails,
+        AuditInfo,
+      );
+      await mySqlUtility.UpdateVendorData(payload.mvpDetails, "MVP");
+      console.log(`Updated MVP Info for ${mpid} at ${new Date()}`);
+    } else {
+      if (!sqlProductDetails) {
+        sqlProductDetails = {};
+      }
+      payload.mvpDetails.updatedBy = AuditInfo.UpdatedBy;
+      payload.mvpDetails.updatedAt = moment(AuditInfo.UpdatedOn).format(
+        "YYYY-MM-DD HH:mm:ss",
+      );
+      sqlProductDetails.mvpLinkInfo = await mySqlUtility.UpsertVendorData(
+        payload.mvpDetails,
+        "MVP",
+      );
+      console.log(
+        `Inserted MVP Info for ${mpid} with insertId : ${sqlProductDetails.mvpLinkInfo}`,
+      );
+    }
+  }
+  if (payload && payload.firstDentDetails) {
+    if (sqlProductDetails != null && sqlProductDetails.firstDentDetails) {
+      payload.firstDentDetails = mapUserDataToDbData(
+        payload.firstDentDetails,
+        sqlProductDetails.firstDentDetails,
+        AuditInfo,
+      );
+      await mySqlUtility.UpdateVendorData(
+        payload.firstDentDetails,
+        "FIRSTDENT",
+      );
+      console.log(`Updated FirstDent Info for ${mpid} at ${new Date()}`);
+    } else {
+      if (!sqlProductDetails) {
+        sqlProductDetails = {};
+      }
+      payload.firstDentDetails.updatedBy = AuditInfo.UpdatedBy;
+      payload.firstDentDetails.updatedAt = moment(AuditInfo.UpdatedOn).format(
+        "YYYY-MM-DD HH:mm:ss",
+      );
+      sqlProductDetails.firstDentLinkInfo = await mySqlUtility.UpsertVendorData(
+        payload.firstDentDetails,
+        "FIRSTDENT",
+      );
+      console.log(
+        `Inserted FirstDent Info for ${mpid} with insertId : ${sqlProductDetails.firstDentLinkInfo}`,
+      );
+    }
+  }
+  if (payload && payload.topDentDetails) {
+    if (sqlProductDetails != null && sqlProductDetails.topDentDetails) {
+      payload.topDentDetails = mapUserDataToDbData(
+        payload.topDentDetails,
+        sqlProductDetails.topDentDetails,
+        AuditInfo,
+      );
+      await mySqlUtility.UpdateVendorData(payload.topDentDetails, "TOPDENT");
+      console.log(`Updated FirstDent Info for ${mpid} at ${new Date()}`);
+    } else {
+      if (!sqlProductDetails) {
+        sqlProductDetails = {};
+      }
+      payload.topDentDetails.updatedBy = AuditInfo.UpdatedBy;
+      payload.topDentDetails.updatedAt = moment(AuditInfo.UpdatedOn).format(
+        "YYYY-MM-DD HH:mm:ss",
+      );
+      sqlProductDetails.topDentLinkInfo = await mySqlUtility.UpsertVendorData(
+        payload.topDentDetails,
+        "TOPDENT",
+      );
+      console.log(
+        `Inserted TopDent Info for ${mpid} with insertId : ${sqlProductDetails.topDentLinkInfo}`,
+      );
+    }
+  }
+  await mySqlUtility.UpsertProductDetailsV2(
+    new MySqlProduct(payload, sqlProductDetails, mpid, AuditInfo),
+  );
 };
 
 /************************* PRIVATE FUNCTIONS *********************/
 function getMappedDetails(product: any, fieldName: any) {
   let res = "";
-  try {
-    const keyValue = itemMapper.find(
-      (x) => x.field.toLowerCase() == fieldName.toLowerCase(),
-    )!.key;
-    if (product.tradentDetails) {
-      res = res + `TRADENT : ${product.tradentDetails[keyValue]} | `;
-    }
-    if (product.frontierDetails) {
-      res = res + `FRONTIER : ${product.frontierDetails[keyValue]}  | `;
-    }
-    if (product.mvpDetails) {
-      res = res + `MVP : ${product.mvpDetails[keyValue]}  | `;
-    }
-  } catch (exception) {
-    console.log(
-      `Exception happened while mapping Key : ${fieldName} | ${exception}`,
-    );
+  const keyValue = itemMapper.find(
+    (x) => x.field.toLowerCase() == fieldName.toLowerCase(),
+  )!.key;
+  if (product.tradentDetails) {
+    res = res + `TRADENT : ${product.tradentDetails[keyValue]} | `;
+  }
+  if (product.frontierDetails) {
+    res = res + `FRONTIER : ${product.frontierDetails[keyValue]}  | `;
+  }
+  if (product.mvpDetails) {
+    res = res + `MVP : ${product.mvpDetails[keyValue]}  | `;
   }
   return res;
 }

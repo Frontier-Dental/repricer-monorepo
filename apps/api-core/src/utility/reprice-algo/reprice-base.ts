@@ -60,93 +60,99 @@ export async function Execute(
   let repricedProductCount = 0;
   for (let prod of productList) {
     //Set cronSetting if it is Null
-    if (!cronSetting) {
-      cronSetting = _.first(
-        await mongoHelper.GetCronSettingsDetailsByName(prod.cronName),
-      );
-    }
-    let isProceed = true;
-    if (!isOverrideRun) {
-      isProceed = await proceedWithExecution(cronSetting.CronId);
-    }
-    if (!isProceed) break;
-
-    _contextCronStatus.SetProductCount(cronProdCounter);
-    await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
-    const prioritySequence = await requestGenerator.GetPrioritySequence(
-      prod,
-      null,
-      false,
-    );
-    const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
-    let productLogs = [];
-    let net32resp: AxiosResponse<Net32Product[]>;
-    const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace(
-      "{mpId}",
-      prod.mpId,
-    );
-    if (prioritySequence && prioritySequence.length > 0) {
-      const cronIdForScraping = isSlowCronRun
-        ? prod[prioritySequence[0].value].slowCronId
-        : prod[prioritySequence[0].value].cronId;
-      net32resp = await axiosHelper.getAsync(
-        searchRequest,
-        cronIdForScraping,
-        seqString,
-      );
-      const v2AlgoResult = repriceProductV2(
-        net32resp.data.map((p) => ({
-          ...p,
-          vendorId: parseInt(p.vendorId as string),
-        })),
-        getInternalProducts(prod, prioritySequence),
-        getAllOwnVendorIds(),
-      );
-      const stringRepresentation = getPriceSolutionStringRepresentation(
-        v2AlgoResult.priceSolutions,
-      );
-      await insertV2AlgoExecution({
-        scrape_product_id: prod.productIdentifier,
-        time: new Date(),
-        chain_of_thought_html: Buffer.from(v2AlgoResult.html),
-        comment: stringRepresentation,
-      });
-      console.log("V2 algo data inserted");
-      for (let idx = 0; idx < prioritySequence.length; idx++) {
-        const proceedNextVendor = proceedNext(
-          prod,
-          prioritySequence[idx].value,
+    try {
+      if (!cronSetting) {
+        cronSetting = _.first(
+          await mongoHelper.GetCronSettingsDetailsByName(prod.cronName),
         );
-        const isVendorActivated = prod[prioritySequence[idx].value].activated;
-        if (proceedNextVendor && isVendorActivated) {
-          let repriceResponse = await repriceWrapper(
-            net32resp,
-            prod,
-            cronSetting,
-            isOverrideRun,
-            keyGen,
-            prioritySequence,
-            idx,
-          );
-          eligibleCount++;
-          if (repriceResponse) {
-            productLogs = repriceResponse.cronLogs;
-            prod[prioritySequence[idx].value] = repriceResponse.prod;
-            if (repriceResponse.isPriceUpdated) {
-              repricedProductCount++;
-            }
+      }
+      let isProceed = true;
+      if (!isOverrideRun) {
+        isProceed = await proceedWithExecution(cronSetting.CronId);
+      }
+      if (!isProceed) break;
 
-            if (repriceResponse.skipNextVendor) {
-              break;
+      _contextCronStatus.SetProductCount(cronProdCounter);
+      await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
+      const prioritySequence = await requestGenerator.GetPrioritySequence(
+        prod,
+        null,
+        false,
+      );
+      const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
+      let productLogs = [];
+      let net32resp: AxiosResponse<Net32Product[]>;
+      const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace(
+        "{mpId}",
+        prod.mpId,
+      );
+      if (prioritySequence && prioritySequence.length > 0) {
+        const cronIdForScraping = isSlowCronRun
+          ? prod[prioritySequence[0].value].slowCronId
+          : prod[prioritySequence[0].value].cronId;
+        net32resp = await axiosHelper.getAsync(
+          searchRequest,
+          cronIdForScraping,
+          seqString,
+        );
+        const v2AlgoResult = repriceProductV2(
+          net32resp.data.map((p) => ({
+            ...p,
+            vendorId: parseInt(p.vendorId as string),
+          })),
+          getInternalProducts(prod, prioritySequence),
+          getAllOwnVendorIds(),
+        );
+        const stringRepresentation = getPriceSolutionStringRepresentation(
+          v2AlgoResult.priceSolutions,
+        );
+        await insertV2AlgoExecution({
+          scrape_product_id: prod.productIdentifier,
+          time: new Date(),
+          chain_of_thought_html: Buffer.from(v2AlgoResult.html),
+          comment: stringRepresentation,
+        });
+        console.log("V2 algo data inserted");
+        for (let idx = 0; idx < prioritySequence.length; idx++) {
+          const proceedNextVendor = proceedNext(
+            prod,
+            prioritySequence[idx].value,
+          );
+          const isVendorActivated = prod[prioritySequence[idx].value].activated;
+          if (proceedNextVendor && isVendorActivated) {
+            let repriceResponse = await repriceWrapper(
+              net32resp,
+              prod,
+              cronSetting,
+              isOverrideRun,
+              keyGen,
+              prioritySequence,
+              idx,
+            );
+            eligibleCount++;
+            if (repriceResponse) {
+              productLogs = repriceResponse.cronLogs;
+              prod[prioritySequence[idx].value] = repriceResponse.prod;
+              if (repriceResponse.isPriceUpdated) {
+                repricedProductCount++;
+              }
+
+              if (repriceResponse.skipNextVendor) {
+                break;
+              }
             }
           }
         }
       }
+      if (productLogs.length > 0) {
+        cronLogs.logs.push(productLogs);
+      }
+      cronProdCounter++;
+    } catch (error) {
+      console.log(`Exception while Reprice Base : ${error}`);
+      console.log(`Product : ${prod.mpid}`);
+      console.error(error);
     }
-    if (productLogs.length > 0) {
-      cronLogs.logs.push(productLogs);
-    }
-    cronProdCounter++;
   }
 
   //Update End Time
