@@ -66,9 +66,19 @@ app.get("/health", (req: Request, res: Response) => {
   res.status(200).json({ status: "ok" });
 });
 
+const publicPath = path.join(__dirname, "..", "public");
+
 // Route for the Vite page
 app.get("/vite*splat", (req, res) => {
-  res.sendFile(__dirname + "/public/vite/index.html");
+  // console.log(applicationConfig.NODE_ENV);
+  // console.log(path.join(__dirname, '..', 'public'))
+  // if (applicationConfig.NODE_ENV === "development") {
+  //   res.sendFile("vite/index.html");
+  // } else {
+  //   res.sendFile(__dirname + ".." + "/public/vite/index.html");
+  // }
+  console.log(path.join(publicPath, "vite/index.html"));
+  res.sendFile(path.join(publicPath, "vite/index.html"));
 });
 
 app.use(indexRouter);
