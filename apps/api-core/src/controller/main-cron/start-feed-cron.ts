@@ -87,7 +87,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
     let isPriceUpdated = false;
     if (prod.scrapeOn == true) {
       _contextCronStatus.SetProductCount(cronProdCounter);
-      mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
+      await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
       const postUrl = applicationConfig.FEED_REPRICER_OWN_URL.replace(
         "{mpId}",
         prod.mpid,
@@ -186,7 +186,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
       prod.last_cron_message = getLastCronMessage(repriceResult);
       prod = updateLowestVendor(repriceResult, prod);
       prod = updateCronBasedDetails(repriceResult, prod, isPriceUpdated);
-      mongoHelper.UpdateProductAsync(prod, isPriceUpdated);
+      await mongoHelper.UpdateProductAsync(prod, isPriceUpdated);
       cronProdCounter++;
     }
   }
@@ -195,7 +195,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
   const logInDb = await mongoHelper.PushLogsAsync(cronLogs);
 
   _contextCronStatus.SetStatus("Complete");
-  mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
+  await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
 
   if (logInDb) {
     console.log(

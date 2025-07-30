@@ -60,7 +60,7 @@ export async function Execute(
   let repricedProductCount = 0;
   for (let prod of productList) {
     //Set cronSetting if it is Null
-    console.log(`Repricing product: ${prod.mpid}`);
+    console.log(`Repricing product: ${prod.mpId}`);
     try {
       if (!cronSetting) {
         cronSetting = _.first(
@@ -150,16 +150,16 @@ export async function Execute(
       cronProdCounter++;
     } catch (error) {
       console.log(
-        `Exception while repricing product: ${prod.mpid}. Error: ${error}`,
+        `Exception while repricing product: ${prod.mpId}. Error: ${error}`,
       );
       console.error(error);
       cronLogs.logs.push({
-        productId: prod.mpid,
+        productId: prod.mpId,
         logs: error,
         vendor: "UNKNOWN",
       });
     } finally {
-      console.log(`Repricing product: ${prod.mpid} completed`);
+      console.log(`Repricing product ${prod.mpId} completed`);
     }
   }
 
@@ -226,10 +226,6 @@ export async function RepriceErrorItem(
           console.log(
             `REPRICE : Cron-422 : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid}  on ${postUrl} at Time :  ${new Date()}`,
           );
-          console.log({
-            module: "REPRICE",
-            message: `Cron-422 : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid}  on ${postUrl} at Time :  ${new Date()}`,
-          });
           prod.last_attempted_time = new Date();
           prod.lastCronRun = `Cron-422`;
           tempProd.cronName = applicationConfig.CRON_NAME_422;
@@ -284,14 +280,10 @@ export async function RepriceErrorItem(
                     "PRICE_UPDATE",
                     contextVendor,
                   );
-                  mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
+                  await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
                   console.log({
                     message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                     obj: JSON.stringify(priceUpdatedItem),
-                  });
-                  console.log({
-                    module: "REPRICE",
-                    message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                   });
                 } else {
                   prod.next_cron_time = null;
@@ -303,7 +295,7 @@ export async function RepriceErrorItem(
                     "IGNORE",
                     contextVendor,
                   );
-                  mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
+                  await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
                   console.log(`GHOST : ${prod.mpid} - ${contextVendor}`);
                 }
               } else if (
@@ -323,7 +315,7 @@ export async function RepriceErrorItem(
                   "422_ERROR",
                   contextVendor,
                 );
-                mongoHelper.UpsertErrorItemLog(errorItem);
+                await mongoHelper.UpsertErrorItemLog(errorItem);
                 console.log({
                   message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                   obj: JSON.stringify(errorItem),
@@ -395,9 +387,7 @@ export async function RepriceErrorItem(
             ]);
           }
           // Add Last_Cron_Reprice_Message
-          prod.last_cron_message = await getLastCronMessage(
-            repriceResult as any,
-          );
+          prod.last_cron_message = getLastCronMessage(repriceResult as any);
 
           // Update History With Proper Message
           if (
@@ -560,7 +550,7 @@ export async function RepriceErrorItemV2(
   }
   _contextCronStatus.SetStatus("Complete");
   await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
-  await cleanActiveProductList(keyGen);
+  cleanActiveProductList(keyGen);
 }
 
 export async function UpdateToMax(
