@@ -60,6 +60,7 @@ export async function Execute(
   let repricedProductCount = 0;
   for (let prod of productList) {
     //Set cronSetting if it is Null
+    console.log(`Repricing product: ${prod.mpid}`);
     try {
       if (!cronSetting) {
         cronSetting = _.first(
@@ -112,7 +113,6 @@ export async function Execute(
           chain_of_thought_html: Buffer.from(v2AlgoResult.html),
           comment: stringRepresentation,
         });
-        console.log("V2 algo data inserted");
         for (let idx = 0; idx < prioritySequence.length; idx++) {
           const proceedNextVendor = proceedNext(
             prod,
@@ -149,9 +149,17 @@ export async function Execute(
       }
       cronProdCounter++;
     } catch (error) {
-      console.log(`Exception while Reprice Base : ${error}`);
-      console.log(`Product : ${prod.mpid}`);
+      console.log(
+        `Exception while repricing product: ${prod.mpid}. Error: ${error}`,
+      );
       console.error(error);
+      cronLogs.logs.push({
+        productId: prod.mpid,
+        logs: error,
+        vendor: "UNKNOWN",
+      });
+    } finally {
+      console.log(`Repricing product: ${prod.mpid} completed`);
     }
   }
 
@@ -761,7 +769,7 @@ async function repriceSingleVendor(
         isManualRun == true ? "Manual" : `${cronSetting.CronName}`;
       if (prod.wait_update_period == true) {
         // Add the product to Error Item Table and update nextCronTime as +12 Hrs
-        prod.next_cron_time = await calculateNextCronTime(new Date(), 12);
+        prod.next_cron_time = calculateNextCronTime(new Date(), 12);
         const priceUpdatedItem = new ErrorItemModel(
           prod.mpid!,
           prod.next_cron_time,
@@ -784,9 +792,7 @@ async function repriceSingleVendor(
         console.log(`GHOST : ${prod.mpid} - ${contextVendor} - ${keyGen}`);
       }
     } else {
-      prod.next_cron_time = await getNextCronTime(
-        repriceResult.priceUpdateResponse,
-      );
+      prod.next_cron_time = getNextCronTime(repriceResult.priceUpdateResponse);
       // Add the product to Error Item Table.
       const errorItem = new ErrorItemModel(
         prod.mpid!,
@@ -822,7 +828,7 @@ async function repriceSingleVendor(
   }
 
   // Add Last_Cron_Reprice_Message
-  prod.last_cron_message = await getLastCronMessage(repriceResult);
+  prod.last_cron_message = getLastCronMessage(repriceResult);
   if (isManualRun == true) {
     prod.last_cron_message = prod.last_cron_message + " #MANUAL";
   }
@@ -841,8 +847,8 @@ async function repriceSingleVendor(
       `History Updated for ${prod.mpid} with Identifier : ${repriceResult.historyIdentifier} and Message : ${prod.last_cron_message}`,
     );
   }
-  prod = await updateLowestVendor(repriceResult!, prod);
-  prod = await updateCronBasedDetails(repriceResult, prod, false);
+  prod = updateLowestVendor(repriceResult!, prod);
+  prod = updateCronBasedDetails(repriceResult, prod, false);
   await sqlHelper.UpdateProductAsync(
     prod as any,
     isPriceUpdated,
