@@ -59,6 +59,6 @@ productV2Router.get(
   productV2Controller.getAllProductsForCron,
 );
 productV2Router.get(
-  "/v2_algo_execution/:productId",
+  "/v2_algo_execution/:mpId",
   productV2Controller.getV2AlgoExecutionByProductId,
 );

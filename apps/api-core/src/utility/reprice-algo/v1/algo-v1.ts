@@ -386,7 +386,6 @@ export async function repriceProduct(
   );
 
   const isDev = applicationConfig.IS_DEV;
-  // const repriceNeeded = false;
   if (!repriceNeeded) {
     return {
       cronResponse: outputResponse,

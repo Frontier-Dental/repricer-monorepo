@@ -106,12 +106,12 @@ export async function getAllProductsForCron(
 }
 
 export async function getV2AlgoExecutionByProductId(
-  req: Request<{ productId: string }>,
+  req: Request<{ mpId: string }>,
   res: Response,
 ) {
-  const productId = parseInt(req.params.productId);
+  const mpId = parseInt(req.params.mpId);
 
-  if (isNaN(productId)) {
+  if (isNaN(mpId)) {
     return res.status(400).json({
       status: false,
       message: "Invalid product ID. Must be a valid number.",
@@ -119,8 +119,8 @@ export async function getV2AlgoExecutionByProductId(
   }
 
   const [algoResult, productDetails] = await Promise.all([
-    mySqlHelper.getV2AlgoExecutionByScrapeProductId(productId),
-    mySqlHelper.getFullProductDetailsByProductId(productId),
+    mySqlHelper.getV2AlgoExecutionByScrapeProductId(mpId),
+    mySqlHelper.getFullProductDetailsByProductId(mpId),
   ]);
 
   return res.json({
@@ -129,7 +129,7 @@ export async function getV2AlgoExecutionByProductId(
       algorithmExecutions: algoResult,
       productDetails: productDetails,
     },
-    message: `Found ${algoResult.length} algorithm execution records and ${productDetails.length} product detail records for product ID ${productId}`,
+    message: `Found ${algoResult.length} algorithm execution records and ${productDetails.length} product detail records for MP ID ${mpId}`,
   });
 }
 

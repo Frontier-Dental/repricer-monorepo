@@ -5,6 +5,7 @@ export interface V2AlgoExecutionData {
   time: Date;
   chain_of_thought_html: Buffer;
   comment: string;
+  mp_id: number;
 }
 
 export async function insertV2AlgoExecution(
@@ -17,6 +18,7 @@ export async function insertV2AlgoExecution(
     time: data.time,
     chain_of_thought_html: data.chain_of_thought_html,
     comment: data.comment,
+    mp_id: data.mp_id,
   });
 
   return insertId;
