@@ -108,7 +108,7 @@ export async function Execute(
           v2AlgoResult.priceSolutions,
         );
         await insertV2AlgoExecution({
-          scrape_product_id: prod.productIdentifier,
+          scrape_product_id: prod.mpId,
           time: new Date(),
           chain_of_thought_html: Buffer.from(v2AlgoResult.html),
           comment: stringRepresentation,
