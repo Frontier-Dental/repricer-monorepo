@@ -220,7 +220,7 @@ export function setCronAndStart(
     },
     {
       scheduled: cronSetting.CronStatus ? true : false,
-      // runOnInit: cronSetting.CronStatus ? true : false,
+      runOnInit: cronSetting.CronStatus ? true : false,
     },
   );
   if (cronSetting.CronStatus) {

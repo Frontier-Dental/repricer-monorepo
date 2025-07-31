@@ -10,43 +10,43 @@
 
 import { Route as rootRouteImport } from "./routes/__root";
 import { Route as IndexRouteImport } from "./routes/index";
-import { Route as ProductProductIdRouteImport } from "./routes/product.$productId";
+import { Route as ProductMpIdRouteImport } from "./routes/product.$mpId";
 
 const IndexRoute = IndexRouteImport.update({
   id: "/",
   path: "/",
   getParentRoute: () => rootRouteImport,
 } as any);
-const ProductProductIdRoute = ProductProductIdRouteImport.update({
-  id: "/product/$productId",
-  path: "/product/$productId",
+const ProductMpIdRoute = ProductMpIdRouteImport.update({
+  id: "/product/$mpId",
+  path: "/product/$mpId",
   getParentRoute: () => rootRouteImport,
 } as any);
 
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
-  "/product/$productId": typeof ProductProductIdRoute;
+  "/product/$mpId": typeof ProductMpIdRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
-  "/product/$productId": typeof ProductProductIdRoute;
+  "/product/$mpId": typeof ProductMpIdRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/": typeof IndexRoute;
-  "/product/$productId": typeof ProductProductIdRoute;
+  "/product/$mpId": typeof ProductMpIdRoute;
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath;
-  fullPaths: "/" | "/product/$productId";
+  fullPaths: "/" | "/product/$mpId";
   fileRoutesByTo: FileRoutesByTo;
-  to: "/" | "/product/$productId";
-  id: "__root__" | "/" | "/product/$productId";
+  to: "/" | "/product/$mpId";
+  id: "__root__" | "/" | "/product/$mpId";
   fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
-  ProductProductIdRoute: typeof ProductProductIdRoute;
+  ProductMpIdRoute: typeof ProductMpIdRoute;
 }
 
 declare module "@tanstack/react-router" {
@@ -58,11 +58,11 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof IndexRouteImport;
       parentRoute: typeof rootRouteImport;
     };
-    "/product/$productId": {
-      id: "/product/$productId";
-      path: "/product/$productId";
-      fullPath: "/product/$productId";
-      preLoaderRoute: typeof ProductProductIdRouteImport;
+    "/product/$mpId": {
+      id: "/product/$mpId";
+      path: "/product/$mpId";
+      fullPath: "/product/$mpId";
+      preLoaderRoute: typeof ProductMpIdRouteImport;
       parentRoute: typeof rootRouteImport;
     };
   }
@@ -70,7 +70,7 @@ declare module "@tanstack/react-router" {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ProductProductIdRoute: ProductProductIdRoute,
+  ProductMpIdRoute: ProductMpIdRoute,
 };
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

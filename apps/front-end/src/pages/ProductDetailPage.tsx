@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface V2AlgoExecution {
   id: number;
-  scrape_product_id: number;
+  mp_id: number;
   time: string;
   chain_of_thought_html: string;
   comment: string;
@@ -63,7 +63,7 @@ interface ApiResponse {
 
 export function ProductDetailPage() {
   const navigate = useNavigate();
-  const { productId } = useParams({ from: "/product/$productId" });
+  const { mpId } = useParams({ from: "/product/$mpId" });
   const [algoData, setAlgoData] = useState<V2AlgoExecution[]>([]);
   const [productData, setProductData] = useState<ProductDetail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,7 +78,7 @@ export function ProductDetailPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `chain_of_thought_${productId}_${timestamp}.html`;
+    a.download = `chain_of_thought_${mpId}_${timestamp}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -90,7 +90,7 @@ export function ProductDetailPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/productV2/v2_algo_execution/${productId}`);
+      const response = await fetch(`/productV2/v2_algo_execution/${mpId}`);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -114,7 +114,7 @@ export function ProductDetailPage() {
 
   useEffect(() => {
     fetchData();
-  }, [productId]);
+  }, [mpId]);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "N/A";
@@ -146,7 +146,7 @@ export function ProductDetailPage() {
             Back to Products
           </Button>
           <h1 className="text-3xl font-bold tracking-tight">Product Details</h1>
-          <p className="text-muted-foreground">Product ID: {productId}</p>
+          <p className="text-muted-foreground">Product ID: {mpId}</p>
         </div>
 
         <div className="rounded-md bg-red-50 p-4">
@@ -180,7 +180,7 @@ export function ProductDetailPage() {
           Back to Products
         </Button>
         <h1 className="text-3xl font-bold tracking-tight">Product Details</h1>
-        <p className="text-muted-foreground">Product ID: {productId}</p>
+        <p className="text-muted-foreground">Product ID: {mpId}</p>
       </div>
 
       <div className="mb-6">

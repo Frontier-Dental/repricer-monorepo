@@ -108,10 +108,11 @@ export async function Execute(
           v2AlgoResult.priceSolutions,
         );
         await insertV2AlgoExecution({
-          scrape_product_id: prod.mpId,
+          scrape_product_id: prod.productIdentifier,
           time: new Date(),
           chain_of_thought_html: Buffer.from(v2AlgoResult.html),
           comment: stringRepresentation,
+          mp_id: prod.mpId,
         });
         for (let idx = 0; idx < prioritySequence.length; idx++) {
           const proceedNextVendor = proceedNext(
