@@ -19,6 +19,10 @@ import { reportRouter } from "./report";
 import { scrapeRouter } from "./scrape";
 import { scrapeLogsRouter } from "./scrape-logs";
 import { userRouter } from "./user";
+import { storageSenseController } from "../controllers/storage-sense";
+import { notifyController } from "../controllers/notify-controller";
+import { ipHealthController } from "../controllers/ip-health";
+import { monitorSenseController } from "../controllers/monitor-sense";
 
 const router = Express.Router();
 
@@ -40,6 +44,10 @@ router.use("/filter", cronFilterRouter);
 router.use("/monitor", monitorRouter);
 router.use("/app-log", appLogRouter);
 router.use("/scrape", scrapeLogsRouter);
+router.use(storageSenseController);
+router.use(notifyController);
+router.use(ipHealthController);
+router.use(monitorSenseController);
 
 router.post(
   "/masteritem/sync_excel_data",

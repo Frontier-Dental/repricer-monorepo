@@ -172,6 +172,76 @@ export const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(false),
+  SMTP_USER: z.string().default("40b12a64-d25d-4c48-8da5-4996f64a42a2"),
+  SMTP_HOST: z.string().default("smtp.postmarkapp.com"),
+  SMTP_PORT: z.coerce.number().default(25),
+  SMTP_PWD: z.string(),
+  EMAIL_ID: z.string().default("storage-sense@frontierdental.com"),
+  TO_EMAIL: z
+    .string()
+    .default(
+      "eliyahu@focusglobalsupply.com,Akshoy@voyantcs.com,repricer.support@voyantcs.com,tj@focusglobalsupply.com",
+    ),
+  ENV_NAME: z.string().default("Scraper"),
+  EMAIL_SUBJECT: z.string().default("Storage is freed"),
+  ENV_IP: z.string().default("159.89.121.57"),
+  CRON_IP_SCHEDULE: z.string().default("*/5 * * * *"),
+  START_IP_HEALTH_CRON: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
+  STORAGE_SENSE_CRON_URL: z
+    .string()
+    .default("http://localhost:5421/schedule/storage-sense"),
+  HISTORY_PURGE_CRON_URL: z
+    .string()
+    .default("http://localhost:5421/schedule/history-purger"),
+
+  STORAGE_SENSE_CRON_SCHEDULE: z.string().default("0 1 * * *"),
+  FREE_THRESHOLD: z.coerce.number().default(25),
+  DAYS_TO_KEEP: z.coerce.number().default(15),
+  IS_DEBUG: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(false),
+  STORAGE_SENSE_FILE_DELIMITER: z.string().default("/"),
+  HISTORY_PURGE_CRON_SCHEDULE: z.string().default("0 0 * * *"),
+  STORAGE_SENSE_SHELL_PATH: z.string().default("~/free-space.sh"),
+  HISTORY_ROOT_PATH: z.string().default("/root/repricer/"),
+  MONITOR_EMAIL_ID: z.string().default("monitor-health@frontierdental.com"),
+  DEBUG_IP: z.string().default("http://localhost:3000/help/check_ip_status"),
+  START_CRON_PROGRESS_SCHEDULE: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
+  CRON_PROGRESS_SCHEDULE: z.string().default("*/30 * * * *"),
+  IP_HEALTH_EMAIL_ID: z.string().default("ip-health@frontierdental.com"),
+  HISTORY_PURGER_EMAIL_ID: z
+    .string()
+    .default("history-purger@frontierdental.com"),
+  START_422_ERROR_CRON_SCHEDULE: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
+  _422_ERROR_CRON_SCHEDULE: z.string().default("*/30 * * * *"),
+  EXPORT_SAVE_CRON_SCHEDULE: z.string().default("0 1 * * *"),
+  CRON_PROGRESS_MAX_COUNT: z.coerce.number().default(25),
+  CRON_PROGRESS_EXTERNAL_ENDPOINT: z
+    .string()
+    .default("http://159.89.121.57:3000/monitor/get_cron_details"),
+  _422_ERROR_CRON_EXTERNAL_ENDPOINT: z
+    .string()
+    .default("http://159.89.121.57:3000/monitor/get_422_product"),
+  _422_ERROR_MAX_COUNT: z.coerce.number().default(100),
+  _422_ERROR_ELIGIBLE_MAX_COUNT: z.coerce.number().default(500),
 });
 
 export function validateConfig() {
