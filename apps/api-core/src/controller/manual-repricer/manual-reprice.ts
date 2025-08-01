@@ -88,6 +88,7 @@ export async function manualRepriceHandler(
       comment: getPriceSolutionStringRepresentation(
         v2AlgoResult.priceSolutions,
       ),
+      mp_id: prod.mpId,
     });
     for (let idx = 0; idx < prioritySequence.length; idx++) {
       const proceedNextVendor = proceedNext(prod!, prioritySequence[idx].value);
