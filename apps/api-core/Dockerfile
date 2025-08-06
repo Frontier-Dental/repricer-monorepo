@@ -4,17 +4,14 @@ FROM node:22-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy app-specific package.json
-COPY package.json ./package.json
-
-# Install dependencies (including dev dependencies for TypeScript build)
-RUN npm install
-
 # Copy source code
 COPY . ./
 
+# Install all at root
+RUN npm ci
+
 # Build TypeScript code
-RUN npm run build
+RUN cd apps/api-core && npm run build
 
 # Remove dev dependencies to reduce image size
 RUN npm prune --production
@@ -27,4 +24,5 @@ ENV NODE_ENV=production
 ENV TZ=Canada/Eastern
 
 # Start the application
+WORKDIR /app/apps/api-core
 CMD ["npm", "start"]
