@@ -4,22 +4,20 @@ FROM node:22-alpine
 # Set working directory
 WORKDIR /app
 
-# Install dependencies (including dev dependencies for TypeScript build)
-COPY repricer/package.json ./repricer/package.json
-RUN cd repricer && npm install
-
 # Copy source code
-COPY repricer/ ./repricer
+COPY . ./
+
+# Install all at root
+RUN npm ci
 
 # Build TypeScript code from the repricer directory
-RUN cd repricer && npm run build
+RUN cd apps/repricer && npm run build
 
 # Remove dev dependencies to reduce image size
-RUN cd repricer && npm prune --production
+RUN npm prune --production
 
-# Copy app-specific package.json
-COPY front-end/ ./front-end
-RUN cd front-end && npm install && npm run build
+# Build front-end
+RUN cd front-end && npm run build
 
 # Expose port 3000
 EXPOSE 3000
