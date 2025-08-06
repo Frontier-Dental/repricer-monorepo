@@ -12,16 +12,19 @@ import * as sqlHelper from "../../utility/mysql/mysql-helper";
 import { ProductDetailsListItem } from "../../utility/mysql/mySql-mapper";
 import { repriceProduct } from "../../utility/reprice-algo/v1/algo-v1";
 import {
-  SimplifiedNet32Product,
+  Net32AlgoProduct,
   VendorId,
   VendorIdLookup,
   VendorName,
 } from "../../utility/reprice-algo/v2/types";
-import { repriceProductV2 } from "../../utility/reprice-algo/v2/v2";
+import { repriceProductV3 } from "../../utility/reprice-algo/v2/v2";
 import {
   getInternalProducts,
   getAllOwnVendorNames,
+  getAllOwnVendorIds,
 } from "../../utility/reprice-algo/v2/utility";
+import { checkIfProductIsIn422 } from "../../utility/feed-helper";
+import { asyncFilter } from "../../utility/arrays";
 
 export async function v2AlgoTest(
   req: Request<{ mpid: string }, { products: Net32Product[] }, any, any>,
@@ -50,34 +53,43 @@ export async function v2AlgoTest(
     net32Products.some((y) => y.vendorId === VendorIdLookup[x.name]),
   );
 
-  let results: RepriceModel[] = [];
-
-  for (const priority of prioritySequenceFiltered) {
-    const result = await repriceProduct(
-      mpid,
-      net32Products,
-      internalProducts.find(
-        (x) => x.ownVendorName === priority.name,
-      ) as unknown as FrontierProduct,
-      priority.name,
-    );
-    if (result) {
-      results.push(result.cronResponse.repriceData);
-    }
-  }
-  const { priceSolutions, html } = repriceProductV2(
-    net32Products as SimplifiedNet32Product[],
-    internalProducts,
-    [
-      VendorId.FRONTIER,
-      VendorId.MVP,
-      VendorId.TRADENT,
-      VendorId.TOPDENT,
-      VendorId.FIRSTDENT,
-    ],
+  const productsWith422Presence = await Promise.all(
+    internalProducts.map(async (x) => {
+      const is422 = await checkIfProductIsIn422(
+        parseInt(mpid, 10),
+        x.ownVendorName as VendorName,
+      );
+      return {
+        ...x,
+        is422,
+      };
+    }),
   );
 
-  res.status(StatusCodes.OK).json({ priceSolutions, html });
+  // let results: RepriceModel[] = [];
+
+  // for (const priority of prioritySequenceFiltered) {
+  //   const result = await repriceProduct(
+  //     mpid,
+  //     net32Products,
+  //     internalProducts.find(
+  //       (x) => x.ownVendorName === priority.name,
+  //     ) as unknown as FrontierProduct,
+  //     priority.name,
+  //   );
+  //   if (result) {
+  //     results.push(result.cronResponse.repriceData);
+  //   }
+  // }
+  const { html } = repriceProductV3(
+    parseInt(mpid, 10),
+    net32Products as Net32AlgoProduct[],
+    productsWith422Presence.filter((x) => !x.is422),
+    getAllOwnVendorIds(),
+    productsWith422Presence.filter((x) => x.is422),
+  );
+
+  res.status(StatusCodes.OK).json({ html });
 }
 
 async function getNet32Products(mpId: string, prod: ProductDetailsListItem) {

@@ -694,12 +694,21 @@ export async function getAllProductDetails(): Promise<ProductDetails[]> {
   return await unionQuery;
 }
 
-export async function getV2AlgoExecutionByScrapeProductId(mpId: number) {
+export async function getV2AlgoExecutionByScrapeProductId(
+  mpId: number,
+  limit?: number,
+) {
   const db = getKnexInstance();
-  const result = await db("v2_algo_execution")
+  let query = db("v2_algo_execution")
     .select("id", "mp_id", "time", "chain_of_thought_html", "comment")
     .where("mp_id", mpId)
     .orderBy("time", "desc");
+
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  const result = await query;
 
   // Convert binary chain_of_thought_html to UTF-8 string
   return result.map((record) => ({

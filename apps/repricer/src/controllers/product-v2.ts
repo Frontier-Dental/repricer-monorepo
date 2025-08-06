@@ -110,7 +110,6 @@ export async function getV2AlgoExecutionByProductId(
   res: Response,
 ) {
   const mpId = parseInt(req.params.mpId);
-
   if (isNaN(mpId)) {
     return res.status(400).json({
       status: false,
@@ -119,7 +118,7 @@ export async function getV2AlgoExecutionByProductId(
   }
 
   const [algoResult, productDetails] = await Promise.all([
-    mySqlHelper.getV2AlgoExecutionByScrapeProductId(mpId),
+    mySqlHelper.getV2AlgoExecutionByScrapeProductId(mpId, 10),
     mySqlHelper.getFullProductDetailsByProductId(mpId),
   ]);
 

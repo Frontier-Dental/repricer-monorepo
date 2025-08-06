@@ -1,8 +1,9 @@
 import { Net32PriceBreak } from "../../../types/net32";
+import { Decimal } from "decimal.js";
 
 export interface PriceSolutionWithRanks {
   vendorPrices: { vendorId: number; price: number }[];
-  combination: SimplifiedNet32ProductFreeShippingAlgo[];
+  combination: Net32AlgoProductWithFreeShipping[];
   totalRank: number;
   buyBoxRankFreeShipping: number;
   buyBoxRankIncludingShipping: number;
@@ -19,7 +20,7 @@ export interface AggregatePriceSolution {
   averagePrice: number;
 }
 
-export interface SimplifiedNet32Product {
+export interface Net32AlgoProduct {
   vendorId: number;
   vendorName: string;
   inStock: boolean;
@@ -31,8 +32,12 @@ export interface SimplifiedNet32Product {
   freeShippingGap: number;
 }
 
-export interface SimplifiedNet32ProductFreeShippingAlgo
-  extends SimplifiedNet32Product {
+export interface Net32AlgoProductWithBestPrice extends Net32AlgoProduct {
+  bestPrice: Decimal;
+  freeShipping: boolean;
+}
+
+export interface Net32AlgoProductWithFreeShipping extends Net32AlgoProduct {
   freeShipping: boolean;
 }
 
@@ -47,16 +52,7 @@ export interface InternalProduct {
 
 export interface ExistingAnalytics {
   [quantity: number]: {
-    beforeShippingLadder: SimplifiedNet32Product[];
-    beforeNonShippingLadder: SimplifiedNet32Product[];
-    beforeOwnShippingRank: number;
-    beforeOwnNonShippingRank: number;
-    beforeOwnAveragePrice: number;
-    afterShippingLadder?: SimplifiedNet32Product[];
-    afterNonShippingLadder?: SimplifiedNet32Product[];
-    afterOwnShippingRank?: number;
-    afterOwnNonShippingRank?: number;
-    afterOwnAveragePrice?: number;
+    beforeShippingLadder: Net32AlgoProduct[];
   };
 }
 

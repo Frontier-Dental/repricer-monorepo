@@ -16,9 +16,9 @@ import {
   getInternalProducts,
   getPriceSolutionStringRepresentation,
 } from "../../utility/reprice-algo/v2/utility";
-import { repriceProductV2 } from "../../utility/reprice-algo/v2/v2";
 import * as requestGenerator from "../../utility/request-generator";
 import { getContextCronId, proceedNext } from "./shared";
+import { repriceProductV3 } from "../../utility/reprice-algo/v2/v2";
 
 export async function manualRepriceHandler(
   req: Request<{ id: string }, any, any, { isV2Algorithm: string }>,
@@ -73,7 +73,8 @@ export async function manualRepriceHandler(
       cronIdForScraping,
       seqString,
     );
-    const v2AlgoResult = repriceProductV2(
+    const v2AlgoResult = repriceProductV3(
+      parseInt(mpid, 10),
       net32resp.data.map((p) => ({
         ...p,
         vendorId: parseInt(p.vendorId as string),
@@ -85,9 +86,7 @@ export async function manualRepriceHandler(
       scrape_product_id: prod.productIdentifier,
       time: new Date(),
       chain_of_thought_html: Buffer.from(v2AlgoResult.html),
-      comment: getPriceSolutionStringRepresentation(
-        v2AlgoResult.priceSolutions,
-      ),
+      comment: v2AlgoResult.priceSolutions[0].solution.toString(),
       mp_id: prod.mpId,
     });
     for (let idx = 0; idx < prioritySequence.length; idx++) {

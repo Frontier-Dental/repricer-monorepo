@@ -204,6 +204,12 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(false),
+  WRITE_HTML_CHAIN_OF_THOUGHT_TO_FILE: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(false),
 });
 
 export function validateConfig() {

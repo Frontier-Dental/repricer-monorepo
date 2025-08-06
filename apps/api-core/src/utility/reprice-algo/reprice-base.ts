@@ -1,30 +1,25 @@
-import fs from "fs";
-import _ from "lodash";
-import * as axiosHelper from "../axios-helper";
-import { CronStatusModel } from "../../model/cron-status";
-import * as mongoHelper from "../mongo/db-helper";
-import * as _codes from "http-status-codes";
-import * as requestGenerator from "../request-generator";
-import * as sqlHelper from "../mysql/mysql-helper";
-import { ErrorItemModel } from "../../model/error-item";
-import { Net32Product, Net32Response } from "../../types/net32";
-import { ProductDetailsListItem } from "../mysql/mySql-mapper";
-import { CronSettings } from "../../types/cron-settings";
-import { RepriceProductHttpResponse } from "../../types/reprice-product-http-response";
 import { AxiosResponse } from "axios";
-import { repriceProduct } from "./v1/algo-v1";
-import { FrontierProduct } from "../../types/frontier";
+import fs from "fs";
+import * as _codes from "http-status-codes";
+import _ from "lodash";
+import { CronStatusModel } from "../../model/cron-status";
+import { ErrorItemModel } from "../../model/error-item";
 import { RepriceAsyncResponse } from "../../model/reprice-async-response";
+import { CronSettings } from "../../types/cron-settings";
+import { FrontierProduct } from "../../types/frontier";
+import { Net32Product, Net32Response } from "../../types/net32";
+import { RepriceProductHttpResponse } from "../../types/reprice-product-http-response";
+import * as axiosHelper from "../axios-helper";
 import { applicationConfig } from "../config";
-import { CronSettingsDetail } from "../mongo/types";
-import { VendorName } from "./v2/types";
-import {
-  getAllOwnVendorIds,
-  getInternalProducts,
-  getPriceSolutionStringRepresentation,
-} from "./v2/utility";
+import * as mongoHelper from "../mongo/db-helper";
+import * as sqlHelper from "../mysql/mysql-helper";
+import { ProductDetailsListItem } from "../mysql/mySql-mapper";
 import { insertV2AlgoExecution } from "../mysql/v2-algo-execution";
-import { repriceProductV2 } from "./v2/v2";
+import * as requestGenerator from "../request-generator";
+import { repriceProduct } from "./v1/algo-v1";
+import { VendorName } from "./v2/types";
+import { getAllOwnVendorIds, getInternalProducts } from "./v2/utility";
+import { repriceProductV3 } from "./v2/v2";
 
 export async function Execute(
   keyGen: string,
@@ -96,7 +91,8 @@ export async function Execute(
           cronIdForScraping,
           seqString,
         );
-        const v2AlgoResult = repriceProductV2(
+        const v2AlgoResult = repriceProductV3(
+          prod.mpId,
           net32resp.data.map((p) => ({
             ...p,
             vendorId: parseInt(p.vendorId as string),
@@ -104,9 +100,8 @@ export async function Execute(
           getInternalProducts(prod, prioritySequence),
           getAllOwnVendorIds(),
         );
-        const stringRepresentation = getPriceSolutionStringRepresentation(
-          v2AlgoResult.priceSolutions,
-        );
+        const stringRepresentation =
+          v2AlgoResult.priceSolutions[0].solution.toString();
         await insertV2AlgoExecution({
           scrape_product_id: prod.productIdentifier,
           time: new Date(),

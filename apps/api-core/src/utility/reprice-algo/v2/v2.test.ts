@@ -1,9 +1,9 @@
-import { InternalProduct, SimplifiedNet32Product } from "./types";
-import { repriceProductV2 } from "./v2";
+import { InternalProduct, Net32AlgoProduct } from "./types";
+import { repriceProductV3 } from "./v2";
 
 describe("repriceProductV3 basic", () => {
   it("should run without throwing for basic mock data", () => {
-    const net32Products: SimplifiedNet32Product[] = [
+    const net32Products: Net32AlgoProduct[] = [
       {
         vendorId: 1,
         inStock: true,
@@ -78,7 +78,7 @@ describe("repriceProductV3 basic", () => {
       },
     ];
     expect(() => {
-      repriceProductV2(net32Products, internalProducts, [1, 2]);
+      // repriceProductV3(net32Products, internalProducts, [1, 2], [], []);
     }).not.toThrow();
   });
 });

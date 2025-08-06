@@ -1,48 +1,73 @@
-import { RepriceData, RepriceModel } from "../../../model/reprice-model";
-import {
-  InternalProduct,
-  SimplifiedNet32Product,
-  ExistingAnalytics,
-  PriceSolutions,
-  VendorNameLookup,
-  AggregatePriceSolution,
-} from "./types";
-import { getShippingBucket, getTotalCost, hasBadge } from "./v2";
 import * as fs from "fs";
 import * as path from "path";
+import { applicationConfig } from "../../config";
+import {
+  InternalProduct,
+  Net32AlgoProduct,
+  Net32AlgoProductWithBestPrice,
+  Net32AlgoProductWithFreeShipping,
+  VendorId,
+  VendorNameLookup,
+} from "./types";
+import {
+  getHighestPriceBreakLessThanOrEqualTo,
+  getShippingBucket,
+  getTotalCostForQuantity,
+  hasBadge,
+} from "./v2";
 
 export function createHtmlFileContent(
+  mpId: number,
   internalProducts: InternalProduct[],
-  net32Products: SimplifiedNet32Product[],
-  priceSolutions: PriceSolutions,
+  net32Products: Net32AlgoProduct[],
+  solutions: {
+    solution: Net32AlgoProductWithBestPrice[];
+    averageRank: number;
+    quantity: number;
+    boardCombinations: Net32AlgoProductWithFreeShipping[][];
+    ranksForCombination: number[];
+  }[],
+  beforeLadders: { quantity: number; ladder: Net32AlgoProduct[] }[],
+  allPossibleShippingCombinations?: {
+    quantity: number;
+    combinations: Net32AlgoProductWithFreeShipping[][];
+  }[],
+  unavailableInternalProducts?: InternalProduct[],
 ) {
-  const htmlDir = path.resolve(process.cwd(), "html");
-  if (!fs.existsSync(htmlDir)) {
-    fs.mkdirSync(htmlDir);
-  }
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
-  // const htmlFile = path.join(
-  //   htmlDir,
-  //   `repriceProductV3_${mpid}_${timestamp}.html`,
-  // );
   // Get net32url from the first internalProduct, if present
   const net32url = internalProducts[0]?.net32url;
 
   // Build internal products table
-  const internalProductsTable = buildInternalProductsTable(
+  const availableInternalProductsTable = buildInternalProductsTable(
     internalProducts,
     net32Products,
   );
 
-  // --- Before tables for each quantity ---
+  // Build unavailable internal products table
+  const unavailableInternalProductsTable = unavailableInternalProducts
+    ? buildInternalProductsTable(unavailableInternalProducts, net32Products)
+    : "<p>Unavailable products were not supplied.</p>";
+
+  // --- Build sections for each quantity ---
   let newAlgoSections = "";
-  for (const quantity of Object.keys(priceSolutions)) {
-    const q = Number(quantity);
-    newAlgoSections += `<h2>Quantity: ${q}</h2>`;
+  for (const beforeLadder of beforeLadders) {
+    const quantity = beforeLadder.quantity;
+    if (quantity === 0) continue; // Skip quantity 0
+
+    newAlgoSections += `<h2>Quantity: ${quantity}</h2>`;
     newAlgoSections +=
-      `<b>Price Solutions</b>` + buildPriceSolutionsTable(priceSolutions, q);
+      `<b>Existing Board</b>` + buildBeforeLadderTable(beforeLadder);
+
+    // Find solutions for this quantity
+    const solutionsForQuantity = solutions.filter(
+      (s) => s.quantity === quantity,
+    );
+    newAlgoSections +=
+      `<br/><br/><b>Price Solutions</b>` +
+      buildSolutionsTable(solutionsForQuantity, quantity);
   }
 
+  const currentTime = new Date().toISOString();
   const htmlContent = `<!DOCTYPE html>
   <html lang="en">
   <head>
@@ -54,42 +79,62 @@ export function createHtmlFileContent(
       th, td { border: 1px solid #ccc; padding: 8px; }
       th { background: #eee; }
       pre { background: #f8f8f8; padding: 10px; border: 1px solid #ccc; }
+      .header { text-align: center; margin-bottom: 30px; }
+      .header h1 { color: #333; margin-bottom: 10px; }
+      .header p { color: #666; font-size: 16px; }
     </style>
   </head>
   <body>
+    <div class="header">
+      <h1>Product ID: ${mpId}</h1>
+      <p>Generated at: ${currentTime} UTC</p>
+    </div>
     ${net32url ? `<a href="${net32url}" target="_blank">${net32url}</a><br/><br/>` : ""}
-    <h2>Internal Products</h2>
-    ${internalProductsTable}
+    <h2>Available Internal Products</h2>
+    ${availableInternalProductsTable}
+    <h2>Unavailable Internal Products (In 422)</h2>
+    ${unavailableInternalProductsTable}
     <h2>New Algorithm</h2>
         ${newAlgoSections}
     <h2>net32Products (JSON)</h2>
     <pre>${JSON.stringify(net32Products, null, 2)}</pre>
   </body>
   </html>`;
-  // fs.writeFileSync(htmlFile, htmlContent, "utf8");
+
+  const htmlDir = path.resolve(process.cwd(), "html");
+  if (!fs.existsSync(htmlDir)) {
+    fs.mkdirSync(htmlDir);
+  }
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
+  if (applicationConfig.WRITE_HTML_CHAIN_OF_THOUGHT_TO_FILE) {
+    const htmlFile = path.join(
+      htmlDir,
+      `repriceProductV3_${mpId}_${timestamp}.html`,
+    );
+    fs.writeFileSync(htmlFile, htmlContent, "utf8");
+  }
   return htmlContent;
 }
 
 export function buildInternalProductsTable(
   internalProducts: InternalProduct[],
-  net32Products: SimplifiedNet32Product[],
+  net32Products: Net32AlgoProduct[],
 ) {
   const internalTableRows = internalProducts
     .map((p) => {
       const net32 = net32Products.find((n) => n.vendorId === p.ownVendorId);
       if (!net32) {
-        return `<tr><td>${p.ownVendorId}(${p.ownVendorName})</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td></tr>`;
+        return `<tr><td>${p.ownVendorId}(${p.ownVendorName})</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td></tr>`;
       }
-      const unitPrice = net32?.priceBreaks?.[0]?.unitPrice ?? "";
       const standardShipping = net32?.standardShipping ?? "";
       const freeShippingGap = net32?.freeShippingGap ?? "";
       const shippingBucket = net32 ? getShippingBucket(net32.shippingTime) : "";
-      return `<tr><td>${p.ownVendorId}(${p.ownVendorName})</td><td>${p.floorPrice}</td><td>${p.maxPrice}</td><td>${p.priority}</td><td>${unitPrice}</td><td>${standardShipping}</td><td>${freeShippingGap}</td><td>${shippingBucket}</td></tr>`;
+      return `<tr><td>${p.ownVendorId}(${p.ownVendorName})</td><td>${p.floorPrice}</td><td>${p.maxPrice}</td><td>${p.priority}</td><td>${standardShipping}</td><td>${freeShippingGap}</td><td>${shippingBucket}</td></tr>`;
     })
     .join("");
   return `<table>
     <thead>
-      <tr><th>ownVendorId</th><th>floorPrice</th><th>maxPrice</th><th>priority</th><th>unitPrice</th><th>standardShipping</th><th>freeShippingGap</th><th>shippingBucket</th></tr>
+      <tr><th>ownVendorId</th><th>floorPrice</th><th>maxPrice</th><th>priority</th><th>standardShipping</th><th>freeShippingGap</th><th>shippingBucket</th></tr>
     </thead>
     <tbody>
       ${internalTableRows}
@@ -97,116 +142,184 @@ export function buildInternalProductsTable(
   </table>`;
 }
 
-function buildProductTable(
-  products: SimplifiedNet32Product[],
-  quantity: number,
-  ownVendorIds: number[],
-) {
-  if (!products || products.length === 0) return "<p>No products</p>";
-  const rows = products
-    .map((p) => {
-      const priceBreak = p.priceBreaks.find((b) => b.minQty === quantity);
-      const unitPrice = priceBreak ? priceBreak.unitPrice : "N/A";
-      const totalPrice =
-        priceBreak && typeof unitPrice === "number"
-          ? getTotalCost(
-              unitPrice,
-              quantity,
-              p.standardShipping || 0,
-              p.freeShippingGap,
-            )
-          : "N/A";
-      const shippingBucket = getShippingBucket(p.shippingTime);
-      const badge = hasBadge(p);
-      const vendorName =
-        p.vendorName + (badge ? ' <span title="Badge">🏅</span>' : "");
-      const isOwnVendor = ownVendorIds.includes(p.vendorId);
-      const rowStyle = isOwnVendor ? ' style="background: #ffff99;"' : "";
-      return `<tr${rowStyle}><td>${vendorName}</td><td>${unitPrice}</td><td>${totalPrice}</td><td>${shippingBucket} (${p.shippingTime} days)</td></tr>`;
-    })
-    .join("");
-  return `<table><thead><tr><th>vendorName</th><th>unitPrice</th><th>totalPrice</th><th>shippingBucket (shippingTime)</th></tr></thead><tbody>${rows}</tbody></table>`;
-}
-
-function buildPriceSolutionsTable(
-  priceSolutions: PriceSolutions,
-  quantity: number,
-) {
-  const solutions = priceSolutions[quantity];
-  if (!solutions || solutions.length === 0) return "<p>No price solutions</p>";
-  // Get all vendorIds in any solution
-  const allVendorIds = Array.from(
-    new Set(
-      solutions.flatMap((sol) => sol.vendorPrices.map((vp) => vp.vendorId)),
-    ),
-  );
-  let header =
-    "<tr>" +
-    allVendorIds.map((id) => `<th>${VendorNameLookup[id]}</th>`).join("") +
-    "<th>averagePrice</th><th>totalRank</th><th>consideredConfigurations</th></tr>";
-  let rows = solutions
-    .map((sol, idx) => {
-      const rowStyle = idx === 0 ? ' style="background: #b3e6b3;"' : "";
-      return (
-        `<tr${rowStyle}>` +
-        allVendorIds
-          .map(
-            (id) =>
-              `<td>${sol.vendorPrices.find((vp) => vp.vendorId === id)?.price !== undefined ? sol.vendorPrices.find((vp) => vp.vendorId === id)?.price : ""}</td>`,
-          )
-          .join("") +
-        `<td>${sol.averagePrice.toFixed(2)}</td><td>${sol.totalRank}</td><td>${sol.consideredConfigurations}</td>` +
-        "</tr>"
-      );
-    })
-    .join("");
-  return `<table><thead>${header}</thead><tbody>${rows}</tbody></table><div><i>The highlighted row (green) is the chosen solution (0th element).</i></div>`;
-}
-
-function buildOldAlgorithmSection(oldModelSolutions: RepriceModel[]) {
-  let section = "<h2>Old Algorithm</h2>";
-  for (const model of oldModelSolutions) {
-    section += `<h3>${model.vendorName}</h3>`;
-    if (model.listOfRepriceDetails.length > 0) {
-      section += buildOldAlgorithmTable(model.listOfRepriceDetails);
-    } else if (model.repriceDetails) {
-      section += buildOldAlgorithmTable([
-        { ...model.repriceDetails, minQty: 1 },
-      ]);
-    } else {
-      throw new Error("No details available.");
-    }
+function buildBeforeLadderTable(beforeLadder: {
+  quantity: number;
+  ladder: Net32AlgoProduct[];
+}) {
+  const ladder = beforeLadder.ladder;
+  if (!ladder || ladder.length === 0) {
+    return "<p>No existing products</p>";
   }
-  return section;
-}
 
-function buildOldAlgorithmTable(listOfRepriceDetails: RepriceData[]) {
-  if (!listOfRepriceDetails || listOfRepriceDetails.length === 0)
-    return "<p>No details available.</p>";
-  const columns = [
-    "minQty",
-    "oldPrice",
-    "newPrice",
-    "isRepriced",
-    "explained",
-    "active",
-    "goToPrice",
-  ];
-  let header =
-    "<tr>" + columns.map((col) => `<th>${col}</th>`).join("") + "</tr>";
-  let rows = listOfRepriceDetails
-    .map((item) => {
-      return (
-        "<tr>" +
-        columns
-          .map((col) => {
-            let val = item[col as keyof RepriceData];
-            return `<td>${val !== undefined ? val : ""}</td>`;
-          })
-          .join("") +
-        "</tr>"
+  const rows = ladder
+    .map((product) => {
+      const priceBreak = getHighestPriceBreakLessThanOrEqualTo(
+        product,
+        beforeLadder.quantity,
       );
+      const unitPrice = priceBreak.unitPrice;
+      const totalPrice = getTotalCostForQuantity(
+        product,
+        beforeLadder.quantity,
+      );
+      const badge = hasBadge(product);
+      const vendorName =
+        product.vendorName + (badge ? ' <span title="Badge">🏅</span>' : "");
+
+      // Check if this is one of our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT)
+      const isOurVendor = Object.values(VendorId).includes(product.vendorId);
+      const rowStyle = isOurVendor ? ' style="background: #ffff99;"' : "";
+
+      const priceBreaksDisplay =
+        product.priceBreaks.length > 1
+          ? product.priceBreaks
+              .map((pb) => `${pb.minQty}@${pb.unitPrice}`)
+              .join(", ")
+          : "";
+      return `<tr${rowStyle}><td>${vendorName}</td><td>${unitPrice}</td><td>${totalPrice}</td><td>${product.freeShippingGap}</td><td>${product.standardShipping}</td><td>${product.shippingTime}</td><td>${priceBreaksDisplay}</td></tr>`;
     })
     .join("");
-  return `<table><thead>${header}</thead><tbody>${rows}</tbody></table>`;
+
+  return `<table>
+    <thead>
+      <tr><th>Vendor Name</th><th>Unit Price</th><th>Total Price</th><th>Free Shipping Gap</th><th>Standard Shipping</th><th>Shipping Time</th><th>Price Breaks</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table><div><i>Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT).</i></div>`;
+}
+
+function buildSolutionsTable(
+  solutions: {
+    solution: Net32AlgoProductWithBestPrice[];
+    averageRank: number;
+    quantity: number;
+    boardCombinations: Net32AlgoProductWithFreeShipping[][];
+    ranksForCombination: number[];
+  }[],
+  quantity: number,
+) {
+  if (!solutions || solutions.length === 0) return "<p>No price solutions</p>";
+
+  // Sort solutions by averageRank (lower is better)
+  const sortedSolutions = solutions.sort(
+    (a, b) => a.averageRank - b.averageRank,
+  );
+
+  // Get all unique vendors from all solutions
+  const allVendors = new Set<number>();
+  sortedSolutions.forEach((solution) => {
+    solution.solution.forEach((s) => {
+      allVendors.add(s.vendorId);
+    });
+  });
+
+  const sortedVendors = Array.from(allVendors).sort((a, b) => a - b);
+
+  // Create header with vendor columns
+  const headerColumns = sortedVendors
+    .map((vendorId) => {
+      const vendorName = VendorNameLookup[vendorId] || vendorId;
+      return `<th>${vendorName}</th>`;
+    })
+    .join("");
+
+  let rows = sortedSolutions
+    .map((solution, idx) => {
+      const rowStyle = idx === 0 ? ' style="background: #b3e6b3;"' : "";
+
+      // Create cells for each vendor
+      const vendorCells = sortedVendors
+        .map((vendorId) => {
+          const vendorInSolution = solution.solution.find(
+            (s) => s.vendorId === vendorId,
+          );
+          if (!vendorInSolution) {
+            return "<td></td>"; // Empty cell if vendor not in this solution
+          }
+          const bestPrice = vendorInSolution.bestPrice;
+          const priceDisplay = bestPrice
+            ? bestPrice.toNumber().toString()
+            : "N/A";
+
+          return `<td>${priceDisplay}</td>`;
+        })
+        .join("");
+
+      return `<tr${rowStyle}><td>${idx + 1}</td>${vendorCells}<td>${solution.averageRank.toFixed(2)}</td></tr>`;
+    })
+    .join("");
+
+  let result = `<table>
+    <thead>
+      <tr><th>Solution</th>${headerColumns}<th>Average Rank</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table><div><i>The highlighted row (green) is the best solution (lowest average rank).</i></div>`;
+
+  // Add shipping combinations tables for each solution
+  for (let i = 0; i < sortedSolutions.length; i++) {
+    const solution = sortedSolutions[i];
+    const solutionNumber = i + 1;
+    result += `<br/><br/><b>Shipping Combinations for Solution ${solutionNumber}</b>`;
+    result += buildSolutionShippingCombinationsTable(solution, solutionNumber);
+  }
+
+  return result;
+}
+
+function buildSolutionShippingCombinationsTable(
+  solution: {
+    solution: Net32AlgoProductWithBestPrice[];
+    averageRank: number;
+    quantity: number;
+    boardCombinations: Net32AlgoProductWithFreeShipping[][];
+    ranksForCombination: number[];
+  },
+  solutionNumber: number,
+) {
+  if (!solution.boardCombinations || solution.boardCombinations.length === 0) {
+    return "<p>No shipping combinations available for this solution</p>";
+  }
+
+  // Get all unique vendors from all combinations
+  const allVendors = new Set<string>();
+  solution.boardCombinations.forEach((combination) => {
+    combination.forEach((product) => {
+      allVendors.add(product.vendorName);
+    });
+  });
+
+  const sortedVendors = Array.from(allVendors).sort((a, b) =>
+    a.localeCompare(b),
+  );
+
+  // Create header with vendor names
+  const headerColumns = sortedVendors
+    .map((vendorName) => `<th>${vendorName}</th>`)
+    .join("");
+
+  // Create rows
+  const rows = solution.boardCombinations
+    .map((combination, idx) => {
+      const cells = sortedVendors
+        .map((vendorName) => {
+          const product = combination.find((p) => p.vendorName === vendorName);
+          if (!product) {
+            return "<td></td>"; // Empty cell if vendor not in this combination
+          }
+          return `<td>${product.freeShipping ? "" : "X"}</td>`;
+        })
+        .join("");
+
+      const effectiveRank = solution.ranksForCombination[idx];
+      return `<tr>${cells}<td>${effectiveRank}</td></tr>`;
+    })
+    .join("");
+
+  return `<table>
+    <thead>
+      <tr>${headerColumns}<th>Effective Rank</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table><div><i>Each row represents a shipping combination for Solution ${solutionNumber}. "X" = paid shipping, blank = free shipping or vendor not present. Effective Rank shows the best rank achieved by our vendors in this combination.</i></div>`;
 }
