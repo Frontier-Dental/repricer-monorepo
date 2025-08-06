@@ -13,11 +13,11 @@ RUN npm ci
 # Build TypeScript code from the repricer directory
 RUN cd apps/repricer && npm run build
 
+# Build front-end
+RUN cd apps/front-end && npm run build
+
 # Remove dev dependencies to reduce image size
 RUN npm prune --production
-
-# Build front-end
-RUN cd front-end && npm run build
 
 # Expose port 3000
 EXPOSE 3000
@@ -26,7 +26,7 @@ EXPOSE 3000
 ENV NODE_ENV=production
 
 # Set working directory to repricer for the final command
-WORKDIR /app/repricer
+WORKDIR /app/apps/repricer
 
 # Start the application
 CMD ["npm", "start"]
