@@ -112,7 +112,6 @@ export function repriceProductV3(
       // but this time using the optimal solution for each vendor.
       // This time we can remove any invalid shipping possibilities because
       // all prices are known.
-      console.log("HERE");
       const boardCombinationsForSolution =
         permutateFreeShippingPossibilitesWithFixedPrices(
           [

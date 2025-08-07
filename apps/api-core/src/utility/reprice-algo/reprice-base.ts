@@ -105,7 +105,8 @@ export async function Execute(
           getAllOwnVendorIds(),
         );
         const stringRepresentation =
-          v2AlgoResult.priceSolutions[0]?.solutionId.toString();
+          v2AlgoResult.priceSolutions[0]?.solutionId.toString() ||
+          "No solution found";
         await insertV2AlgoExecution({
           scrape_product_id: prod.productIdentifier,
           time: new Date(),
