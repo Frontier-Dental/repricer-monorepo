@@ -62,3 +62,7 @@ productV2Router.get(
   "/v2_algo_execution/:mpId",
   productV2Controller.getV2AlgoExecutionByProductId,
 );
+productV2Router.get(
+  "/product_details/:mpId",
+  productV2Controller.getProductDetailsByProductId,
+);

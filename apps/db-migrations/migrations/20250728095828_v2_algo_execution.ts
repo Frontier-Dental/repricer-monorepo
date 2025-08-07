@@ -7,7 +7,7 @@ export async function up(knex: Knex): Promise<void> {
     table.datetime("time").notNullable();
     table.specificType("chain_of_thought_html", "MEDIUMBLOB").notNullable();
     table.text("comment").notNullable();
-    table.integer("mp_id").notNullable();
+    table.integer("mp_id").notNullable().index();
 
     // Foreign key constraint
     table

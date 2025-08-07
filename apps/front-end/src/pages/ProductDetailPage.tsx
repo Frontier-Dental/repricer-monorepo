@@ -52,12 +52,15 @@ interface ProductDetail {
   AllowReprice: boolean;
 }
 
-interface ApiResponse {
+interface AlgoApiResponse {
   status: boolean;
-  data: {
-    algorithmExecutions: V2AlgoExecution[];
-    productDetails: ProductDetail[];
-  };
+  data: V2AlgoExecution[];
+  message: string;
+}
+
+interface ProductApiResponse {
+  status: boolean;
+  data: ProductDetail[];
   message: string;
 }
 
@@ -73,15 +76,10 @@ export function ProductDetailPage() {
     navigate({ to: "/" });
   };
 
-  const downloadHtmlFile = (htmlContent: string, timestamp: string) => {
+  const openHtmlInNewTab = (htmlContent: string) => {
     const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `chain_of_thought_${mpId}_${timestamp}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    window.open(url, "_blank");
     URL.revokeObjectURL(url);
   };
 
@@ -90,19 +88,30 @@ export function ProductDetailPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/productV2/v2_algo_execution/${mpId}`);
+      const [algoResponse, productResponse] = await Promise.all([
+        fetch(`/productV2/v2_algo_execution/${mpId}`),
+        fetch(`/productV2/product_details/${mpId}`),
+      ]);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!algoResponse.ok) {
+        throw new Error(`HTTP error! status: ${algoResponse.status}`);
       }
 
-      const result: ApiResponse = await response.json();
+      if (!productResponse.ok) {
+        throw new Error(`HTTP error! status: ${productResponse.status}`);
+      }
 
-      if (result.status) {
-        setAlgoData(result.data.algorithmExecutions);
-        setProductData(result.data.productDetails);
+      const algoResult: AlgoApiResponse = await algoResponse.json();
+      const productResult: ProductApiResponse = await productResponse.json();
+
+      if (algoResult.status && productResult.status) {
+        setAlgoData(algoResult.data);
+        setProductData(productResult.data);
       } else {
-        setError(result.message);
+        const errorMessage = algoResult.status
+          ? productResult.message
+          : algoResult.message;
+        setError(errorMessage);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -357,9 +366,6 @@ export function ProductDetailPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-2">
-                            <span className="text-sm font-medium">
-                              {record.chain_of_thought_html.length} characters
-                            </span>
                             <span className="text-xs text-muted-foreground">
                               HTML content available
                             </span>
@@ -370,15 +376,12 @@ export function ProductDetailPage() {
                             variant="outline"
                             size="sm"
                             onClick={() =>
-                              downloadHtmlFile(
-                                record.chain_of_thought_html,
-                                record.time,
-                              )
+                              openHtmlInNewTab(record.chain_of_thought_html)
                             }
                             className="flex items-center gap-2"
                           >
                             <Download className="h-4 w-4" />
-                            Download
+                            View
                           </Button>
                         </TableCell>
                       </TableRow>

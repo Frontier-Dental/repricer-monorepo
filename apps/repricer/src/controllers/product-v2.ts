@@ -117,18 +117,37 @@ export async function getV2AlgoExecutionByProductId(
     });
   }
 
-  const [algoResult, productDetails] = await Promise.all([
-    mySqlHelper.getV2AlgoExecutionByScrapeProductId(mpId, 10),
-    mySqlHelper.getFullProductDetailsByProductId(mpId),
-  ]);
+  const algoResult = await mySqlHelper.getV2AlgoExecutionByScrapeProductId(
+    mpId,
+    10,
+  );
 
   return res.json({
     status: true,
-    data: {
-      algorithmExecutions: algoResult,
-      productDetails: productDetails,
-    },
-    message: `Found ${algoResult.length} algorithm execution records and ${productDetails.length} product detail records for MP ID ${mpId}`,
+    data: algoResult,
+    message: `Found ${algoResult.length} algorithm execution records for MP ID ${mpId}`,
+  });
+}
+
+export async function getProductDetailsByProductId(
+  req: Request<{ mpId: string }>,
+  res: Response,
+) {
+  const mpId = parseInt(req.params.mpId);
+  if (isNaN(mpId)) {
+    return res.status(400).json({
+      status: false,
+      message: "Invalid product ID. Must be a valid number.",
+    });
+  }
+
+  const productDetails =
+    await mySqlHelper.getFullProductDetailsByProductId(mpId);
+
+  return res.json({
+    status: true,
+    data: productDetails,
+    message: `Found ${productDetails.length} product detail records for MP ID ${mpId}`,
   });
 }
 
