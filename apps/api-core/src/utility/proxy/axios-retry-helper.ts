@@ -32,9 +32,7 @@ export async function getScrappingResponse(
 ): Promise<any> {
   try {
     const formatResponse = applicationConfig.FORMAT_RESPONSE_CUSTOM;
-    console.log(
-      `SCRAPE STARTED : SmartProxy - Web : ${_url} || ${seqString} || ${new Date()}`,
-    );
+    console.log(`SCRAPE STARTED : SmartProxy - Web : ${_url} || ${seqString}`);
     var startTime = process.hrtime();
     const response = await axios({
       method: "post",
@@ -147,9 +145,7 @@ export async function getScrapingBeeResponse(
     const formatResponse = applicationConfig.FORMAT_RESPONSE_CUSTOM;
     const scrappingLog =
       renderJs == false ? "ScrapingBee - NonJs" : "ScrapingBee - Js";
-    console.log(
-      `SCRAPE STARTED : ${scrappingLog} : ${_url} || ${seqString} || ${new Date()}`,
-    );
+    console.log(`SCRAPE STARTED : ${scrappingLog} : ${_url} || ${seqString}`);
     var startTime = process.hrtime();
     const options: any = {
       uri: "https://app.scrapingbee.com/api/v1/",

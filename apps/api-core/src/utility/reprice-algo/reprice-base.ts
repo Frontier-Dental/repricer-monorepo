@@ -29,11 +29,12 @@ export async function Execute(
   cronSetting: any,
   isSlowCronRun: boolean = false,
 ) {
+  const cronId = cronSetting != null ? cronSetting.CronId : "N/A";
   let cronLogs: any = {
     time: cronInitTime,
     keyGen: keyGen,
     logs: [],
-    cronId: cronSetting != null ? cronSetting.CronId : "N/A",
+    cronId: cronId,
     totalCount: productList.length,
   };
   const isOverrideRun = false;
@@ -54,9 +55,12 @@ export async function Execute(
   await initCronStatus(_contextCronStatus);
   let eligibleCount = 0;
   let repricedProductCount = 0;
+  let productIndex = 0;
   for (let prod of productList) {
     //Set cronSetting if it is Null
-    console.log(`Repricing product: ${prod.mpId}`);
+    console.log(
+      `Repricing product: ${prod.mpId} (${productIndex + 1}/${productList.length}). Cron name: ${cronSetting != null ? cronSetting.CronName : "N/A"}`,
+    );
     try {
       if (!cronSetting) {
         cronSetting = _.first(
@@ -162,6 +166,7 @@ export async function Execute(
     } finally {
       console.log(`Repricing product ${prod.mpId} completed`);
     }
+    productIndex++;
   }
 
   //Update End Time
@@ -719,7 +724,7 @@ async function repriceSingleVendor(
 
   const repriceResult = await repriceProduct(
     prod.mpid!,
-    net32resp.data,
+    net32resp.data.filter((p) => p.priceBreaks !== undefined),
     prod as unknown as FrontierProduct,
     contextVendor,
   );

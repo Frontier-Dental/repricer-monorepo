@@ -22,9 +22,7 @@ export async function fetchData(
     const scrappingLog = renderJs
       ? "Scrapfly - JS Rendering"
       : "Scrapfly - Non JS Rendering";
-    console.log(
-      `SCRAPE STARTED : ${scrappingLog} : ${url} || ${seqString} || ${new Date()}`,
-    );
+    console.log(`SCRAPE STARTED : ${scrappingLog} : ${url} || ${seqString}`);
 
     const { responseContent, timeTaken } = await scrape(
       url,

@@ -27,6 +27,7 @@ export function repriceProductV3(
   unavailableInternalProducts?: InternalProduct[],
 ) {
   const validProducts = rawNet32Products
+    .filter((p) => Array.isArray(p.priceBreaks))
     .filter((p) => p.priceBreaks.find((pb) => pb.minQty === 1))
     .filter((p) => p.inStock);
   // 1. Quantity breaks that competitors have (compete)
