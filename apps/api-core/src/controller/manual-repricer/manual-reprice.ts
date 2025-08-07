@@ -11,14 +11,14 @@ import * as sqlHelper from "../../utility/mysql/mysql-helper";
 import { ProductDetailsListItem } from "../../utility/mysql/mySql-mapper";
 import { insertV2AlgoExecution } from "../../utility/mysql/v2-algo-execution";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
+import { getShippingThreshold } from "../../utility/reprice-algo/v2/shipping-threshold";
 import {
   getAllOwnVendorIds,
   getInternalProducts,
-  getPriceSolutionStringRepresentation,
 } from "../../utility/reprice-algo/v2/utility";
+import { repriceProductV3 } from "../../utility/reprice-algo/v2/v2";
 import * as requestGenerator from "../../utility/request-generator";
 import { getContextCronId, proceedNext } from "./shared";
-import { repriceProductV3 } from "../../utility/reprice-algo/v2/v2";
 
 export async function manualRepriceHandler(
   req: Request<{ id: string }, any, any, { isV2Algorithm: string }>,
@@ -78,6 +78,9 @@ export async function manualRepriceHandler(
       net32resp.data.map((p) => ({
         ...p,
         vendorId: parseInt(p.vendorId as string),
+        freeShippingThreshold: getShippingThreshold(
+          parseInt(p.vendorId as string),
+        ),
       })),
       getInternalProducts(prod, prioritySequence),
       getAllOwnVendorIds(),
@@ -86,7 +89,8 @@ export async function manualRepriceHandler(
       scrape_product_id: prod.productIdentifier,
       time: new Date(),
       chain_of_thought_html: Buffer.from(v2AlgoResult.html),
-      comment: v2AlgoResult.priceSolutions[0].solution.toString(),
+      comment:
+        v2AlgoResult.priceSolutions[0]?.solutionId || "No solution found",
       mp_id: prod.mpId,
     });
     for (let idx = 0; idx < prioritySequence.length; idx++) {

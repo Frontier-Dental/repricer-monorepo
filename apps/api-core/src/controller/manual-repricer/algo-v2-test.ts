@@ -3,28 +3,24 @@ import { Request, Response } from "express";
 import { validationResult } from "express-validator";
 import createError from "http-errors";
 import { StatusCodes } from "http-status-codes";
-import { RepriceModel } from "../../model/reprice-model";
-import { FrontierProduct } from "../../types/frontier";
 import { Net32Product } from "../../types/net32";
 import * as axiosHelper from "../../utility/axios-helper";
 import { applicationConfig } from "../../utility/config";
+import { checkIfProductIsIn422 } from "../../utility/feed-helper";
 import * as sqlHelper from "../../utility/mysql/mysql-helper";
 import { ProductDetailsListItem } from "../../utility/mysql/mySql-mapper";
-import { repriceProduct } from "../../utility/reprice-algo/v1/algo-v1";
+import { getShippingThreshold } from "../../utility/reprice-algo/v2/shipping-threshold";
 import {
   Net32AlgoProduct,
-  VendorId,
   VendorIdLookup,
   VendorName,
 } from "../../utility/reprice-algo/v2/types";
-import { repriceProductV3 } from "../../utility/reprice-algo/v2/v2";
 import {
-  getInternalProducts,
-  getAllOwnVendorNames,
   getAllOwnVendorIds,
+  getAllOwnVendorNames,
+  getInternalProducts,
 } from "../../utility/reprice-algo/v2/utility";
-import { checkIfProductIsIn422 } from "../../utility/feed-helper";
-import { asyncFilter } from "../../utility/arrays";
+import { repriceProductV3 } from "../../utility/reprice-algo/v2/v2";
 
 export async function v2AlgoTest(
   req: Request<{ mpid: string }, { products: Net32Product[] }, any, any>,
@@ -83,7 +79,12 @@ export async function v2AlgoTest(
   // }
   const { html } = repriceProductV3(
     parseInt(mpid, 10),
-    net32Products as Net32AlgoProduct[],
+    net32Products.map((p) => ({
+      ...p,
+      freeShippingThreshold: getShippingThreshold(
+        parseInt(p.vendorId as string),
+      ),
+    })) as Net32AlgoProduct[],
     productsWith422Presence.filter((x) => !x.is422),
     getAllOwnVendorIds(),
     productsWith422Presence.filter((x) => x.is422),

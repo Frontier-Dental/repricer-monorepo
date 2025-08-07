@@ -17,6 +17,7 @@ describe("repriceProductV3 basic", () => {
         ],
         freeShippingGap: 11,
         vendorName: "Vendor 1",
+        freeShippingThreshold: 100,
       },
       {
         vendorId: 2,
@@ -31,6 +32,7 @@ describe("repriceProductV3 basic", () => {
         ],
         freeShippingGap: 0,
         vendorName: "Vendor 2",
+        freeShippingThreshold: 100,
       },
       {
         vendorId: 100,
@@ -45,6 +47,7 @@ describe("repriceProductV3 basic", () => {
         ],
         freeShippingGap: 15,
         vendorName: "Vendor 3",
+        freeShippingThreshold: 100,
       },
       {
         vendorId: 101,
@@ -59,6 +62,7 @@ describe("repriceProductV3 basic", () => {
         ],
         freeShippingGap: 0,
         vendorName: "Vendor 4",
+        freeShippingThreshold: 100,
       },
     ];
     const internalProducts: InternalProduct[] = [

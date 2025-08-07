@@ -30,6 +30,7 @@ export interface Net32AlgoProduct {
   badgeName: string | null;
   priceBreaks: Net32PriceBreak[];
   freeShippingGap: number;
+  freeShippingThreshold: number;
 }
 
 export interface Net32AlgoProductWithBestPrice extends Net32AlgoProduct {

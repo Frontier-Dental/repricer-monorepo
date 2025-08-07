@@ -4,8 +4,6 @@ import { applicationConfig } from "../../config";
 import {
   InternalProduct,
   Net32AlgoProduct,
-  Net32AlgoProductWithBestPrice,
-  Net32AlgoProductWithFreeShipping,
   VendorId,
   VendorNameLookup,
 } from "./types";
@@ -13,25 +11,17 @@ import {
   getHighestPriceBreakLessThanOrEqualTo,
   getShippingBucket,
   getTotalCostForQuantity,
+  getTotalCostFreeShippingOverride,
   hasBadge,
+  Net32AlgoSolution,
 } from "./v2";
 
 export function createHtmlFileContent(
   mpId: number,
   internalProducts: InternalProduct[],
   net32Products: Net32AlgoProduct[],
-  solutions: {
-    solution: Net32AlgoProductWithBestPrice[];
-    averageRank: number;
-    quantity: number;
-    boardCombinations: Net32AlgoProductWithFreeShipping[][];
-    ranksForCombination: number[];
-  }[],
+  solutions: Net32AlgoSolution[],
   beforeLadders: { quantity: number; ladder: Net32AlgoProduct[] }[],
-  allPossibleShippingCombinations?: {
-    quantity: number;
-    combinations: Net32AlgoProductWithFreeShipping[][];
-  }[],
   unavailableInternalProducts?: InternalProduct[],
 ) {
   // Get net32url from the first internalProduct, if present
@@ -65,6 +55,11 @@ export function createHtmlFileContent(
     newAlgoSections +=
       `<br/><br/><b>Price Solutions</b>` +
       buildSolutionsTable(solutionsForQuantity, quantity);
+
+    // Add divider between quantities
+    if (quantity < beforeLadders[beforeLadders.length - 1].quantity) {
+      newAlgoSections += `<hr style="margin: 40px 0; border: 2px solid #ccc;">`;
+    }
   }
 
   const currentTime = new Date().toISOString();
@@ -94,7 +89,6 @@ export function createHtmlFileContent(
     ${availableInternalProductsTable}
     <h2>Unavailable Internal Products (In 422)</h2>
     ${unavailableInternalProductsTable}
-    <h2>New Algorithm</h2>
         ${newAlgoSections}
     <h2>net32Products (JSON)</h2>
     <pre>${JSON.stringify(net32Products, null, 2)}</pre>
@@ -124,17 +118,16 @@ export function buildInternalProductsTable(
     .map((p) => {
       const net32 = net32Products.find((n) => n.vendorId === p.ownVendorId);
       if (!net32) {
-        return `<tr><td>${p.ownVendorId}(${p.ownVendorName})</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td></tr>`;
+        return `<tr><td>${p.ownVendorId}(${p.ownVendorName})</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td><td>N/A</td></tr>`;
       }
       const standardShipping = net32?.standardShipping ?? "";
-      const freeShippingGap = net32?.freeShippingGap ?? "";
       const shippingBucket = net32 ? getShippingBucket(net32.shippingTime) : "";
-      return `<tr><td>${p.ownVendorId}(${p.ownVendorName})</td><td>${p.floorPrice}</td><td>${p.maxPrice}</td><td>${p.priority}</td><td>${standardShipping}</td><td>${freeShippingGap}</td><td>${shippingBucket}</td></tr>`;
+      return `<tr><td>${p.ownVendorId}(${p.ownVendorName})</td><td>${p.floorPrice}</td><td>${p.maxPrice}</td><td>${p.priority}</td><td>${standardShipping}</td><td>${shippingBucket}</td></tr>`;
     })
     .join("");
   return `<table>
     <thead>
-      <tr><th>ownVendorId</th><th>floorPrice</th><th>maxPrice</th><th>priority</th><th>standardShipping</th><th>freeShippingGap</th><th>shippingBucket</th></tr>
+      <tr><th>ownVendorId</th><th>floorPrice</th><th>maxPrice</th><th>priority</th><th>standardShipping</th><th>shippingBucket</th></tr>
     </thead>
     <tbody>
       ${internalTableRows}
@@ -176,28 +169,19 @@ function buildBeforeLadderTable(beforeLadder: {
               .map((pb) => `${pb.minQty}@${pb.unitPrice}`)
               .join(", ")
           : "";
-      return `<tr${rowStyle}><td>${vendorName}</td><td>${unitPrice}</td><td>${totalPrice}</td><td>${product.freeShippingGap}</td><td>${product.standardShipping}</td><td>${product.shippingTime}</td><td>${priceBreaksDisplay}</td></tr>`;
+      return `<tr${rowStyle}><td>${vendorName}</td><td>${unitPrice}</td><td>${product.standardShipping}</td><td>${totalPrice}</td><td>${product.freeShippingThreshold}</td><td>${product.freeShippingGap}</td><td>${product.shippingTime}</td><td>${priceBreaksDisplay}</td></tr>`;
     })
     .join("");
 
   return `<table>
     <thead>
-      <tr><th>Vendor Name</th><th>Unit Price</th><th>Total Price</th><th>Free Shipping Gap</th><th>Standard Shipping</th><th>Shipping Time</th><th>Price Breaks</th></tr>
+      <tr><th>Vendor Name</th><th>Unit Price</th><th>Shipping Cost</th><th>Total</th><th>Shipping Threshold</th><th>Free Shipping Gap</th><th>Shipping Time</th><th>Price Breaks</th></tr>
     </thead>
     <tbody>${rows}</tbody>
   </table><div><i>Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT).</i></div>`;
 }
 
-function buildSolutionsTable(
-  solutions: {
-    solution: Net32AlgoProductWithBestPrice[];
-    averageRank: number;
-    quantity: number;
-    boardCombinations: Net32AlgoProductWithFreeShipping[][];
-    ranksForCombination: number[];
-  }[],
-  quantity: number,
-) {
+function buildSolutionsTable(solutions: Net32AlgoSolution[], quantity: number) {
   if (!solutions || solutions.length === 0) return "<p>No price solutions</p>";
 
   // Sort solutions by averageRank (lower is better)
@@ -260,6 +244,15 @@ function buildSolutionsTable(
   for (let i = 0; i < sortedSolutions.length; i++) {
     const solution = sortedSolutions[i];
     const solutionNumber = i + 1;
+
+    // Add solution header
+    result += `<br/><br/><h3>Solution ${solutionNumber} (ID: ${solution.solutionId})</h3>`;
+
+    // Add source combinations table for this solution
+    result += `<br/><b>Source Combinations for Solution ${solutionNumber}</b>`;
+    result += buildSolutionPriceTable(solution, solutionNumber, sortedVendors);
+    result += buildSourceCombinationsTable(solution, solutionNumber);
+
     result += `<br/><br/><b>Shipping Combinations for Solution ${solutionNumber}</b>`;
     result += buildSolutionShippingCombinationsTable(solution, solutionNumber);
   }
@@ -268,13 +261,7 @@ function buildSolutionsTable(
 }
 
 function buildSolutionShippingCombinationsTable(
-  solution: {
-    solution: Net32AlgoProductWithBestPrice[];
-    averageRank: number;
-    quantity: number;
-    boardCombinations: Net32AlgoProductWithFreeShipping[][];
-    ranksForCombination: number[];
-  },
+  solution: Net32AlgoSolution,
   solutionNumber: number,
 ) {
   if (!solution.boardCombinations || solution.boardCombinations.length === 0) {
@@ -322,4 +309,95 @@ function buildSolutionShippingCombinationsTable(
     </thead>
     <tbody>${rows}</tbody>
   </table><div><i>Each row represents a shipping combination for Solution ${solutionNumber}. "X" = paid shipping, blank = free shipping or vendor not present. Effective Rank shows the best rank achieved by our vendors in this combination.</i></div>`;
+}
+
+function buildSolutionPriceTable(
+  solution: Net32AlgoSolution,
+  solutionNumber: number,
+  sortedVendors: number[],
+) {
+  // Create header with vendor columns
+  const headerColumns = sortedVendors
+    .map((vendorId) => {
+      const vendorName = VendorNameLookup[vendorId] || vendorId;
+      return `<th>${vendorName}</th>`;
+    })
+    .join("");
+
+  // Create cells for the solution
+  const vendorCells = sortedVendors
+    .map((vendorId) => {
+      const vendorInSolution = solution.solution.find(
+        (s) => s.vendorId === vendorId,
+      );
+      if (!vendorInSolution) {
+        return "<td></td>"; // Empty cell if vendor not in this solution
+      }
+      const bestPrice = vendorInSolution.bestPrice;
+      const priceDisplay = bestPrice ? bestPrice.toNumber().toString() : "N/A";
+
+      return `<td>${priceDisplay}</td>`;
+    })
+    .join("");
+
+  return `<table style="margin-bottom: 10px; font-size: 0.9em;">
+    <thead>
+      <tr><th>Solution</th>${headerColumns}<th>Average Rank</th></tr>
+    </thead>
+    <tbody>
+      <tr style="background: #b3e6b3;"><td>${solutionNumber}</td>${vendorCells}<td>${solution.averageRank.toFixed(2)}</td></tr>
+    </tbody>
+  </table>`;
+}
+
+function buildSourceCombinationsTable(
+  solution: Net32AlgoSolution,
+  solutionNumber: number,
+) {
+  if (!solution.sourceCombination || solution.sourceCombination.length === 0) {
+    return "<p>No source combination available for this solution</p>";
+  }
+
+  const rows = solution.sourceCombination
+    .map((product) => {
+      const priceBreak = getHighestPriceBreakLessThanOrEqualTo(
+        product,
+        solution.quantity,
+      );
+      const totalCost = getTotalCostFreeShippingOverride(
+        priceBreak.unitPrice,
+        solution.quantity,
+        product.freeShipping,
+        product.standardShipping,
+      );
+      const unitPrice = priceBreak.unitPrice;
+      const badge = hasBadge(product);
+      const vendorName =
+        product.vendorName + (badge ? ' <span title="Badge">🏅</span>' : "");
+
+      // Check if this is one of our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT)
+      const isOurVendor = Object.values(VendorId).includes(product.vendorId);
+      const rowStyle = isOurVendor ? ' style="background: #ffff99;"' : "";
+
+      const priceBreaksDisplay =
+        product.priceBreaks.length > 1
+          ? product.priceBreaks
+              .map((pb) => `${pb.minQty}@${pb.unitPrice}`)
+              .join(", ")
+          : "";
+
+      // Show blank cells for unit price and total if it's our vendor
+      const unitPriceDisplay = isOurVendor ? "" : unitPrice;
+      const totalCostDisplay = isOurVendor ? "" : totalCost;
+
+      return `<tr${rowStyle}><td>${vendorName}</td><td>${unitPriceDisplay}</td><td>${product.standardShipping}</td><td>${totalCostDisplay}</td><td>${product.freeShippingThreshold}</td><td>${product.freeShipping}</td><td>${product.shippingTime}</td><td>${priceBreaksDisplay}</td></tr>`;
+    })
+    .join("");
+
+  return `<table>
+    <thead>
+      <tr><th>Vendor Name</th><th>Unit Price</th><th>Shipping Cost</th><th>Total</th><th>Free Shipping Threshold</th><th>Free Shipping</th><th>Shipping Time</th><th>Price Breaks</th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table><div><i>Shows the source combination used for this solution. Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT).</i></div>`;
 }

@@ -17,6 +17,7 @@ import { ProductDetailsListItem } from "../mysql/mySql-mapper";
 import { insertV2AlgoExecution } from "../mysql/v2-algo-execution";
 import * as requestGenerator from "../request-generator";
 import { repriceProduct } from "./v1/algo-v1";
+import { getShippingThreshold } from "./v2/shipping-threshold";
 import { VendorName } from "./v2/types";
 import { getAllOwnVendorIds, getInternalProducts } from "./v2/utility";
 import { repriceProductV3 } from "./v2/v2";
@@ -96,12 +97,15 @@ export async function Execute(
           net32resp.data.map((p) => ({
             ...p,
             vendorId: parseInt(p.vendorId as string),
+            freeShippingThreshold: getShippingThreshold(
+              parseInt(p.vendorId as string),
+            ),
           })),
           getInternalProducts(prod, prioritySequence),
           getAllOwnVendorIds(),
         );
         const stringRepresentation =
-          v2AlgoResult.priceSolutions[0].solution.toString();
+          v2AlgoResult.priceSolutions[0]?.solutionId.toString();
         await insertV2AlgoExecution({
           scrape_product_id: prod.productIdentifier,
           time: new Date(),

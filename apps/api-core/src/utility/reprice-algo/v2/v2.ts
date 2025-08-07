@@ -9,6 +9,16 @@ import {
   Net32AlgoProductWithBestPrice,
 } from "./types";
 
+export interface Net32AlgoSolution {
+  solutionId: string;
+  solution: Net32AlgoProductWithBestPrice[];
+  averageRank: number;
+  quantity: number;
+  boardCombinations: Net32AlgoProductWithFreeShipping[][];
+  ranksForCombination: number[];
+  sourceCombination: Net32AlgoProductWithFreeShipping[];
+}
+
 export function repriceProductV3(
   mpId: number,
   rawNet32Products: Net32AlgoProduct[],
@@ -44,13 +54,7 @@ export function repriceProductV3(
 
   const ownVendorSubsets = getAllNonEmptySubsets(ourAvailableVendorProducts);
 
-  const solutions: {
-    solution: Net32AlgoProductWithBestPrice[];
-    averageRank: number;
-    quantity: number;
-    boardCombinations: Net32AlgoProductWithFreeShipping[][];
-    ranksForCombination: number[];
-  }[] = [];
+  const solutions: Net32AlgoSolution[] = [];
 
   const beforeLadders = [
     0,
@@ -63,49 +67,56 @@ export function repriceProductV3(
     };
   });
 
-  const allPossibleShippingCombinations: {
-    quantity: number;
-    combinations: Net32AlgoProductWithFreeShipping[][];
-  }[] = [];
-
   for (let quantity = 1; quantity <= highestQuantity; quantity++) {
-    const allPossibleShippingCombinationsForQuantity = ownVendorSubsets.flatMap(
+    const allPossibleShippingCombinations = ownVendorSubsets.flatMap(
       (vendorSubset) =>
-        permutateFreeShippingPossibilitiesForQuantity(
+        permutateFreeShippingPosibilities(
           [...competitorProducts, ...vendorSubset],
+          ownVendorIds,
           quantity,
         ),
     );
 
-    allPossibleShippingCombinations.push({
-      quantity,
-      combinations: allPossibleShippingCombinationsForQuantity,
-    });
-    const optimalSolutionForCombinations =
-      allPossibleShippingCombinationsForQuantity.map((combination) =>
-        getOptimalSolutionForBoard(
+    const optimalSolutionForCombinations = allPossibleShippingCombinations.map(
+      (combination) => {
+        const rankedByBuyBox = getProductSortedByBuyBoxRankFreeShippingAlgo(
           combination,
-          ownVendorIds,
-          availableInternalProducts,
           quantity,
-        ),
-      );
+        );
+        return {
+          solution: getOptimalSolutionForBoard(
+            combination,
+            ownVendorIds,
+            availableInternalProducts,
+            quantity,
+          ),
+          combination: rankedByBuyBox,
+        };
+      },
+    );
     // Now we have an optimal solution for each combination. Remove all duplicate solutions.
     // First we must sort to guarnatee that the same solution is not counted twice.
-    const uniqueSolutions = _.uniqBy(optimalSolutionForCombinations, (x) =>
-      x
+    const uniquePriceSets = _.uniqBy(optimalSolutionForCombinations, (x) =>
+      x.solution
         .sort((a, b) => a.vendorId - b.vendorId)
         .map((y) => `${y.vendorId}-${y.bestPrice?.toNumber()}`)
         .join(","),
     );
 
-    for (const solution of uniqueSolutions) {
+    for (const priceSet of uniquePriceSets) {
+      const solutionId = `Q${quantity}-${priceSet.solution
+        .sort((a, b) => a.vendorId - b.vendorId)
+        .map((x) => `${x.vendorId}@${x.bestPrice?.toNumber()}`)
+        .join(",")}`;
       // Now recreate all the price combinations, fixing these vendors and their prices
       // but this time using the optimal solution for each vendor.
+      // This time we can remove any invalid shipping possibilities because
+      // all prices are known.
+      console.log("HERE");
       const boardCombinationsForSolution =
-        permutateFreeShippingPossibilitiesForQuantity(
+        permutateFreeShippingPossibilitesWithFixedPrices(
           [
-            ...solution.map(({ freeShipping, ...rest }) => rest),
+            ...priceSet.solution.map(({ freeShipping, ...rest }) => rest),
             ...competitorProducts,
           ],
           quantity,
@@ -113,7 +124,7 @@ export function repriceProductV3(
       const ranksForCombination = boardCombinationsForSolution.map(
         (boardCombination) => {
           const effectiveRank = Math.min(
-            ...solution.map((x) =>
+            ...priceSet.solution.map((x) =>
               getBuyBoxRank(
                 x,
                 boardCombination.filter(
@@ -132,10 +143,12 @@ export function repriceProductV3(
         ranksForCombination.length;
       solutions.push({
         quantity,
-        solution,
+        solution: priceSet.solution,
+        sourceCombination: priceSet.combination,
         averageRank,
         boardCombinations: boardCombinationsForSolution,
         ranksForCombination: ranksForCombination,
+        solutionId,
       });
     }
   }
@@ -145,7 +158,6 @@ export function repriceProductV3(
     rawNet32Products,
     solutions,
     beforeLadders,
-    allPossibleShippingCombinations,
     unavailableInternalProducts,
   );
   return { html, priceSolutions: solutions };
@@ -240,7 +252,8 @@ function getBestCompetitivePrice(
       ? undercutTotalCost.div(quantity)
       : undercutTotalCost.sub(ourProduct.standardShipping).div(quantity);
 
-    const roundedUnderCutUnitPrice = undercutUnitPrice.toDecimalPlaces(2);
+    // Always round the price down
+    const roundedUnderCutUnitPrice = undercutUnitPrice.toDecimalPlaces(2, 1);
     if (
       roundedUnderCutUnitPrice.gte(ourVendorDetails.floorPrice) &&
       roundedUnderCutUnitPrice.lte(ourVendorDetails.maxPrice)
@@ -375,6 +388,7 @@ function getAllNonEmptySubsets<T>(arr: T[]): T[][] {
 function isFreeShippingForQuantity(
   net32Product: Net32AlgoProduct,
   quantity: number,
+  unitPriceOverride?: Decimal,
 ) {
   const highestPriceBreak = getHighestPriceBreakLessThanOrEqualTo(
     net32Product,
@@ -386,32 +400,46 @@ function isFreeShippingForQuantity(
       `No price break found for quantity 1 for product ${net32Product.vendorId}`,
     );
   }
-  const threshold = breakOne.unitPrice + net32Product.freeShippingGap;
-  const totalCost = highestPriceBreak.unitPrice * quantity;
-  if (totalCost < threshold) {
-    return false;
+  if (unitPriceOverride !== undefined) {
+    const totalCost = unitPriceOverride.mul(quantity);
+    if (totalCost.lt(net32Product.freeShippingThreshold)) {
+      return false;
+    } else {
+      return true;
+    }
   } else {
-    return true;
+    const totalCost = highestPriceBreak.unitPrice * quantity;
+    if (totalCost < net32Product.freeShippingThreshold) {
+      return false;
+    } else {
+      return true;
+    }
   }
 }
 
-/**
- * This function takes in a list of products and returns all possible permutations of them,
- * where each product can be either free shipping or not.
- * If a product already has a free shipping gap of 0, it will always be free shipping, so
- * we can reduce the problem to only those with a gap, and then add back in the free shipping products.
- * @param net32Products - The list of products to permutate.
- * @returns All possible permutations of the products, where each product can be either free shipping or not.
- */
-function permutateFreeShippingPossibilitiesForQuantity(
-  net32Products: Net32AlgoProduct[],
+function permutateFreeShippingPossibilitesWithFixedPrices(
+  net32Products: (Net32AlgoProduct | Net32AlgoProductWithBestPrice)[],
   quantity: number,
 ): Net32AlgoProductWithFreeShipping[][] {
   const nonFreeShippingProducts = net32Products.filter(
-    (x) => isFreeShippingForQuantity(x, quantity) === false,
+    (p) =>
+      isFreeShippingForQuantity(
+        p,
+        quantity,
+        (p as Net32AlgoProductWithBestPrice).bestPrice
+          ? (p as Net32AlgoProductWithBestPrice).bestPrice
+          : undefined,
+      ) === false,
   );
-  const freeShippingProducts = net32Products.filter((x) =>
-    isFreeShippingForQuantity(x, quantity),
+  const freeShippingProducts = net32Products.filter(
+    (p) =>
+      isFreeShippingForQuantity(
+        p,
+        quantity,
+        (p as Net32AlgoProductWithBestPrice).bestPrice
+          ? (p as Net32AlgoProductWithBestPrice).bestPrice
+          : undefined,
+      ) === true,
   );
   const n = nonFreeShippingProducts.length;
   const total = 1 << n; // 2^n
@@ -431,6 +459,57 @@ function permutateFreeShippingPossibilitiesForQuantity(
   return permutations.map((x) => [
     ...x,
     ...freeShippingProducts.map((x) => ({ ...x, freeShipping: true })),
+  ]);
+}
+/**
+ * This function takes in a list of products and returns all possible permutations of them,
+ * where each product can be either free shipping or not.
+ * If a product already has a standard shipping of 0, it will always be free shipping, so
+ * we can reduce the problem to only those with standard shipping of 0, and then add back in the free shipping products.
+ * @param net32Products - The list of products to permutate.
+ * @returns All possible permutations of the products, where each product can be either free shipping or not.
+ */
+function permutateFreeShippingPosibilities(
+  net32Products: Net32AlgoProduct[],
+  ownVendorIds: number[],
+  quantity: number,
+): Net32AlgoProductWithFreeShipping[][] {
+  // If it's one of our vendors, we don't know the price, so we only
+  // know if it's free shipping ALWAYS if the standard shipping is 0 as the price could
+  // change and trigger the gap depending ont he solution
+  // If it's not one of our vendors, price is fixed, so we know if it's free shipping or not
+  const alwaysFreeShippingProducts = net32Products.filter((x) => {
+    if (ownVendorIds.includes(x.vendorId)) {
+      return x.standardShipping === 0;
+    } else {
+      return isFreeShippingForQuantity(x, quantity) === true;
+    }
+  });
+  // Everything else could be free shipping depending on the price
+  // and gap and what else is in the cart.
+  const couldBeFreeShippingProducts = net32Products.filter(
+    (x) =>
+      alwaysFreeShippingProducts.map((y) => y.vendorId).includes(x.vendorId) ===
+      false,
+  );
+  const n = couldBeFreeShippingProducts.length;
+  const total = 1 << n; // 2^n
+  const permutations: Net32AlgoProductWithFreeShipping[][] = [];
+
+  for (let mask = 0; mask < total; mask++) {
+    const permutation: Net32AlgoProductWithFreeShipping[] = [];
+    for (let i = 0; i < n; i++) {
+      permutation.push({
+        ...couldBeFreeShippingProducts[i],
+        freeShipping: (mask & (1 << i)) !== 0,
+      });
+    }
+    permutations.push(permutation);
+  }
+
+  return permutations.map((x) => [
+    ...x,
+    ...alwaysFreeShippingProducts.map((x) => ({ ...x, freeShipping: true })),
   ]);
 }
 
@@ -563,10 +642,15 @@ export function getTotalCostForQuantity(
 
   const totalCost = highestPriceBreak.unitPrice * quantity;
 
-  if (freeShippingOverride) {
-    return new Decimal(totalCost);
+  if (freeShippingOverride !== undefined) {
+    if (freeShippingOverride === true) {
+      return new Decimal(totalCost);
+    } else {
+      return new Decimal(totalCost + net32Product.standardShipping);
+    }
   }
-  const threshold = breakOne.unitPrice + net32Product.freeShippingGap;
+
+  const threshold = net32Product.freeShippingThreshold;
   if (totalCost < threshold) {
     return new Decimal(totalCost + net32Product.standardShipping);
   } else {
@@ -609,7 +693,7 @@ function getProductsSortedByBuyBoxRank(
   return sortedProducts.map((x) => x.product);
 }
 
-function getTotalCostFreeShippingOverride(
+export function getTotalCostFreeShippingOverride(
   unitPrice: number,
   quantity: number,
   freeShipping: boolean,
@@ -619,24 +703,6 @@ function getTotalCostFreeShippingOverride(
     return new Decimal(unitPrice).mul(quantity);
   } else {
     return new Decimal(unitPrice).mul(quantity).add(standardShipping);
-  }
-}
-
-export function getTotalCost(
-  unitPrice: number,
-  quantity: number,
-  standardShipping: number,
-  freeShippingGap?: number,
-): number {
-  // Free shipping gap is the price at which the product becomes free shipping,
-  // relative to the current unit price. So a gap of $10 with a unit price of $5 means that
-  // you need to spend $10 more on top of the $5 unit price to get free shipping
-  const freeShippingThreshold = unitPrice + (freeShippingGap || 0);
-  const totalCostPreShipping = unitPrice * quantity;
-  if (totalCostPreShipping < freeShippingThreshold) {
-    return totalCostPreShipping + standardShipping;
-  } else {
-    return totalCostPreShipping;
   }
 }
 

@@ -1,0 +1,848 @@
+[
+  {
+    "vendorId": 20743,
+    "vendorName": "ABrite Dental",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20630,
+    "vendorName": "Ace Dental Supply",
+    "standardShipping": 5.5,
+    "freeShippingThreshold": 89.99
+  },
+  {
+    "vendorId": 20717,
+    "vendorName": "AdDent",
+    "standardShipping": 21,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 101,
+    "vendorName": "ADS Inc.",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20771,
+    "vendorName": "Alta One Inc",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20785,
+    "vendorName": "American Medical Accessories",
+    "standardShipping": 6.95,
+    "freeShippingThreshold": 30
+  },
+  {
+    "vendorId": 20821,
+    "vendorName": "Amerisano",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20806,
+    "vendorName": "Apex Dental Express",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20850,
+    "vendorName": "Artman Instruments",
+    "standardShipping": 7,
+    "freeShippingThreshold": 50
+  },
+  {
+    "vendorId": 20731,
+    "vendorName": "Ascentcare Dental Products",
+    "standardShipping": 15,
+    "freeShippingThreshold": 250
+  },
+  {
+    "vendorId": 18959,
+    "vendorName": "Avant Dental",
+    "standardShipping": 6.5,
+    "freeShippingThreshold": 100
+  },
+  {
+    "vendorId": 20856,
+    "vendorName": "Avo Dental",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20872,
+    "vendorName": "Axio Biologics",
+    "standardShipping": 500,
+    "freeShippingThreshold": 9.95
+  },
+  {
+    "vendorId": 20742,
+    "vendorName": "Best Dental Kit",
+    "standardShipping": 19.99,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20857,
+    "vendorName": "Best Instruments USA",
+    "standardShipping": 9.99,
+    "freeShippingThreshold": 200
+  },
+  {
+    "vendorId": 20844,
+    "vendorName": "Bhi Implants Ltd",
+    "standardShipping": 15,
+    "freeShippingThreshold": 299
+  },
+  {
+    "vendorId": 20730,
+    "vendorName": "Biologics USA",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20746,
+    "vendorName": "Blue Angel Health &amp; Wellness",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20763,
+    "vendorName": "BM Dental",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20780,
+    "vendorName": "Brident Dental Supply",
+    "standardShipping": 9.95,
+    "freeShippingThreshold": 75
+  },
+  {
+    "vendorId": 17033,
+    "vendorName": "Brite Sources USA",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20758,
+    "vendorName": "Brookshire Innovations",
+    "standardShipping": 5,
+    "freeShippingThreshold": 69
+  },
+  {
+    "vendorId": 20865,
+    "vendorName": "California Savings Club",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 5,
+    "vendorName": "Carolina Dental Supply",
+    "standardShipping": 9.95,
+    "freeShippingThreshold": 30
+  },
+  {
+    "vendorId": 20869,
+    "vendorName": "C-Root Dental",
+    "standardShipping": 10,
+    "freeShippingThreshold": 49
+  },
+  {
+    "vendorId": 20797,
+    "vendorName": "CTBioTech",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20828,
+    "vendorName": "curasan",
+    "standardShipping": 20,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 17542,
+    "vendorName": "Davis Dental Supply",
+    "standardShipping": 9.95,
+    "freeShippingThreshold": 49
+  },
+  {
+    "vendorId": 17396,
+    "vendorName": "DDI Supply",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20851,
+    "vendorName": "DemeTECH Corporation",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20732,
+    "vendorName": "Den-Med",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20870,
+    "vendorName": "Dental Accessories",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 16,
+    "vendorName": "Dental Connection",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20756,
+    "vendorName": "Dental District",
+    "standardShipping": 3,
+    "freeShippingThreshold": 10
+  },
+  {
+    "vendorId": 20808,
+    "vendorName": "Dental Pier",
+    "standardShipping": 4.99,
+    "freeShippingThreshold": 40
+  },
+  {
+    "vendorId": 18680,
+    "vendorName": "DentalProdX",
+    "standardShipping": 9.95,
+    "freeShippingThreshold": 500
+  },
+  {
+    "vendorId": 20820,
+    "vendorName": "Dentalree",
+    "standardShipping": 9.99,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20794,
+    "vendorName": "Dental Savings",
+    "standardShipping": 8.99,
+    "freeShippingThreshold": 300
+  },
+  {
+    "vendorId": 17037,
+    "vendorName": "Dental Supply Depot",
+    "standardShipping": 8.95,
+    "freeShippingThreshold": 500
+  },
+  {
+    "vendorId": 20747,
+    "vendorName": "Dental Technologies",
+    "standardShipping": 13,
+    "freeShippingThreshold": 300
+  },
+  {
+    "vendorId": 20734,
+    "vendorName": "Dentazon",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20718,
+    "vendorName": "Dentify",
+    "standardShipping": 3,
+    "freeShippingThreshold": 10
+  },
+  {
+    "vendorId": 20866,
+    "vendorName": "Dentine Partners",
+    "standardShipping": 5,
+    "freeShippingThreshold": 100
+  },
+  {
+    "vendorId": 20858,
+    "vendorName": "Diatech Inc.",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 140,
+    "vendorName": "DirectCrown Products",
+    "standardShipping": 14.5,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 152,
+    "vendorName": "Discount Disposables",
+    "standardShipping": 4.96,
+    "freeShippingThreshold": 300
+  },
+  {
+    "vendorId": 20874,
+    "vendorName": "DoWell Dental Products, Inc",
+    "standardShipping": 14.99,
+    "freeShippingThreshold": 500
+  },
+  {
+    "vendorId": 20740,
+    "vendorName": "Dunlin Dental Supply",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20725,
+    "vendorName": "Duraline Systems",
+    "standardShipping": 14,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 138,
+    "vendorName": "Efficient Dental Technologies",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20723,
+    "vendorName": "Elite Dental",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20812,
+    "vendorName": "Empire Medical and Dental Supplies Inc.",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20849,
+    "vendorName": "Endo Direct",
+    "standardShipping": 7.5,
+    "freeShippingThreshold": 99
+  },
+  {
+    "vendorId": 20817,
+    "vendorName": "Epdent America",
+    "standardShipping": 5,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 18855,
+    "vendorName": "Exacta Dental",
+    "standardShipping": 7.95,
+    "freeShippingThreshold": 100
+  },
+  {
+    "vendorId": 20863,
+    "vendorName": "FD Supplies",
+    "standardShipping": 9.9,
+    "freeShippingThreshold": 200
+  },
+  {
+    "vendorId": 20843,
+    "vendorName": "Firefly Supply",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20533,
+    "vendorName": "First Dent",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20722,
+    "vendorName": "Frontier Dental Supply",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20811,
+    "vendorName": "Gateway Dental Supply",
+    "standardShipping": 5.95,
+    "freeShippingThreshold": 15
+  },
+  {
+    "vendorId": 20852,
+    "vendorName": "GMZ Associates",
+    "standardShipping": 9.95,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20823,
+    "vendorName": "Golnit Sutures",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20848,
+    "vendorName": "Green Bay Dental",
+    "standardShipping": 11.95,
+    "freeShippingThreshold": 150
+  },
+  {
+    "vendorId": 16992,
+    "vendorName": "Hey Dental",
+    "standardShipping": 5.95,
+    "freeShippingThreshold": 15
+  },
+  {
+    "vendorId": 19272,
+    "vendorName": "IDS",
+    "standardShipping": 6.95,
+    "freeShippingThreshold": 500
+  },
+  {
+    "vendorId": 20772,
+    "vendorName": "IQ Dental Supply",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 18194,
+    "vendorName": "iSmile Dental Products",
+    "standardShipping": 10.99,
+    "freeShippingThreshold": 350
+  },
+  {
+    "vendorId": 17868,
+    "vendorName": "Jeweldent",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20822,
+    "vendorName": "JMU Dental Inc.",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20370,
+    "vendorName": "Laschal Surgical",
+    "standardShipping": 15.95,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20786,
+    "vendorName": "Lily Rose",
+    "standardShipping": 3,
+    "freeShippingThreshold": 10
+  },
+  {
+    "vendorId": 16999,
+    "vendorName": "LV Dental Supply",
+    "standardShipping": 3,
+    "freeShippingThreshold": 20
+  },
+  {
+    "vendorId": 109,
+    "vendorName": "Massco Dental",
+    "standardShipping": 17.99,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20791,
+    "vendorName": "Masterdeals LLC",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 18784,
+    "vendorName": "Max Dental",
+    "standardShipping": 4.5,
+    "freeShippingThreshold": 10
+  },
+  {
+    "vendorId": 20793,
+    "vendorName": "maxill inc.",
+    "standardShipping": 10.95,
+    "freeShippingThreshold": 250
+  },
+  {
+    "vendorId": 20868,
+    "vendorName": "MD Dental Supply",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20715,
+    "vendorName": "Medical Dental Max",
+    "standardShipping": 4,
+    "freeShippingThreshold": 200
+  },
+  {
+    "vendorId": 20787,
+    "vendorName": "Medical Protective Gear",
+    "standardShipping": 10,
+    "freeShippingThreshold": 50
+  },
+  {
+    "vendorId": 20726,
+    "vendorName": "Medidenta",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 17555,
+    "vendorName": "Megadental International",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20867,
+    "vendorName": "MK-dent",
+    "standardShipping": 8.99,
+    "freeShippingThreshold": 150
+  },
+  {
+    "vendorId": 20796,
+    "vendorName": "MN Health Inc",
+    "standardShipping": 3,
+    "freeShippingThreshold": 10
+  },
+  {
+    "vendorId": 20755,
+    "vendorName": "MVP Dental Supply",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20825,
+    "vendorName": "Newark Dental",
+    "standardShipping": 9.95,
+    "freeShippingThreshold": 100
+  },
+  {
+    "vendorId": 20814,
+    "vendorName": "Nimbus Eco Inc",
+    "standardShipping": 5,
+    "freeShippingThreshold": 50
+  },
+  {
+    "vendorId": 20876,
+    "vendorName": "Ninja Clave",
+    "standardShipping": 9.99,
+    "freeShippingThreshold": 3200
+  },
+  {
+    "vendorId": 20739,
+    "vendorName": "Noble Dental Supplies",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 17107,
+    "vendorName": "Novus Dental Supplies",
+    "standardShipping": 10,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20775,
+    "vendorName": "Oceanside Medical Supply",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 18491,
+    "vendorName": "ODS Online",
+    "standardShipping": 8.95,
+    "freeShippingThreshold": 35
+  },
+  {
+    "vendorId": 20750,
+    "vendorName": "ONS Dental Supply",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20846,
+    "vendorName": "Orion Innovations Inc",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 19740,
+    "vendorName": "OrthoExtent",
+    "standardShipping": 15.95,
+    "freeShippingThreshold": 400
+  },
+  {
+    "vendorId": 20862,
+    "vendorName": "Ortho Shop",
+    "standardShipping": 9.95,
+    "freeShippingThreshold": 100
+  },
+  {
+    "vendorId": 130,
+    "vendorName": "PA Dental",
+    "standardShipping": 5.95,
+    "freeShippingThreshold": 15
+  },
+  {
+    "vendorId": 20877,
+    "vendorName": "Phoenix Imaging",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20803,
+    "vendorName": "Plaque HD",
+    "standardShipping": 20,
+    "freeShippingThreshold": 600
+  },
+  {
+    "vendorId": 8,
+    "vendorName": "Practicon",
+    "standardShipping": 9.95,
+    "freeShippingThreshold": 200
+  },
+  {
+    "vendorId": 20847,
+    "vendorName": "Precision",
+    "standardShipping": 5.95,
+    "freeShippingThreshold": 100
+  },
+  {
+    "vendorId": 19094,
+    "vendorName": "Premium Plus Dental",
+    "standardShipping": 8.95,
+    "freeShippingThreshold": 300
+  },
+  {
+    "vendorId": 20733,
+    "vendorName": "Primo Dental",
+    "standardShipping": 9.95,
+    "freeShippingThreshold": 50
+  },
+  {
+    "vendorId": 18010,
+    "vendorName": "ProDentUSA",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20841,
+    "vendorName": "PureLife Dental",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20805,
+    "vendorName": "Purple Palm Gloves",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20864,
+    "vendorName": "Quality Dental Plus",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20790,
+    "vendorName": "Rainier American Mask Company LLC",
+    "standardShipping": 2.99,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20824,
+    "vendorName": "Red Rock Dental Supplies",
+    "standardShipping": 10,
+    "freeShippingThreshold": 100
+  },
+  {
+    "vendorId": 20854,
+    "vendorName": "Rhondium Dental Products",
+    "standardShipping": 7.99,
+    "freeShippingThreshold": 300
+  },
+  {
+    "vendorId": 20861,
+    "vendorName": "Ritter Dental",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20130,
+    "vendorName": "River Dental Supplies",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20729,
+    "vendorName": "RMH3 Dental",
+    "standardShipping": 3,
+    "freeShippingThreshold": 9.99
+  },
+  {
+    "vendorId": 19298,
+    "vendorName": "Russman Debubblizer &amp; Dental Supply LLC",
+    "standardShipping": 10.5,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 18921,
+    "vendorName": "Sentry Dental",
+    "standardShipping": 6,
+    "freeShippingThreshold": 50
+  },
+  {
+    "vendorId": 18127,
+    "vendorName": "Shine Dental",
+    "standardShipping": 5.99,
+    "freeShippingThreshold": 10
+  },
+  {
+    "vendorId": 17570,
+    "vendorName": "SmartChoice Dental",
+    "standardShipping": 2.99,
+    "freeShippingThreshold": 10
+  },
+  {
+    "vendorId": 20777,
+    "vendorName": "Smile Dental Supply",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20752,
+    "vendorName": "Snap Medical Industries",
+    "standardShipping": 5,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20875,
+    "vendorName": "Solventum",
+    "standardShipping": 35,
+    "freeShippingThreshold": 1000
+  },
+  {
+    "vendorId": 20761,
+    "vendorName": "SS White",
+    "standardShipping": 9.95,
+    "freeShippingThreshold": 50
+  },
+  {
+    "vendorId": 20816,
+    "vendorName": "Starcona Dental Solutions",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20721,
+    "vendorName": "Supply Doc",
+    "standardShipping": 10.99,
+    "freeShippingThreshold": 499
+  },
+  {
+    "vendorId": 20810,
+    "vendorName": "The Turbine Source",
+    "standardShipping": 8.75,
+    "freeShippingThreshold": 400
+  },
+  {
+    "vendorId": 16961,
+    "vendorName": "Ting Dental",
+    "standardShipping": 14,
+    "freeShippingThreshold": 300
+  },
+  {
+    "vendorId": 20727,
+    "vendorName": "Top Dent",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20871,
+    "vendorName": "Top Quality Manufacturing",
+    "standardShipping": 9.95,
+    "freeShippingThreshold": 250
+  },
+  {
+    "vendorId": 17357,
+    "vendorName": "Tradent Supply",
+    "standardShipping": 3,
+    "freeShippingThreshold": 10
+  },
+  {
+    "vendorId": 20738,
+    "vendorName": "TriRock Dental",
+    "standardShipping": 3.59,
+    "freeShippingThreshold": 7.5
+  },
+  {
+    "vendorId": 20873,
+    "vendorName": "Tuxedo Imaging",
+    "standardShipping": 15,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 18522,
+    "vendorName": "US Dental Supplies",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20815,
+    "vendorName": "Vast Dental Hub",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20855,
+    "vendorName": "Venta Endo",
+    "standardShipping": 5,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20827,
+    "vendorName": "Video Dental Concepts",
+    "standardShipping": 35,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20853,
+    "vendorName": "Vincismile Group",
+    "standardShipping": 6,
+    "freeShippingThreshold": 500
+  },
+  {
+    "vendorId": 47,
+    "vendorName": "Washington Trade International",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20759,
+    "vendorName": "Wehmer Corporation",
+    "standardShipping": 9.95,
+    "freeShippingThreshold": 50
+  },
+  {
+    "vendorId": 20460,
+    "vendorName": "Wisdom Dental Supply",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20764,
+    "vendorName": "Woodhouse Labs",
+    "standardShipping": 6.99,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20860,
+    "vendorName": "Yeah Dental",
+    "standardShipping": 0,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20753,
+    "vendorName": "You First Services",
+    "standardShipping": 4.95,
+    "freeShippingThreshold": 0
+  },
+  {
+    "vendorId": 20724,
+    "vendorName": "Yourdent",
+    "standardShipping": 6,
+    "freeShippingThreshold": 100
+  }
+]
