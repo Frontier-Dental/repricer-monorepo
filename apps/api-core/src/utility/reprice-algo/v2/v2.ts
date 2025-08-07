@@ -96,17 +96,29 @@ export function repriceProductV3(
     );
     // Now we have an optimal solution for each combination. Remove all duplicate solutions.
     // First we must sort to guarnatee that the same solution is not counted twice.
-    const uniquePriceSets = _.uniqBy(optimalSolutionForCombinations, (x) =>
-      x.solution
-        .sort((a, b) => a.vendorId - b.vendorId)
-        .map((y) => `${y.vendorId}-${y.bestPrice?.toNumber()}`)
-        .join(","),
+    // const uniquePriceSets = _.uniqBy(optimalSolutionForCombinations, (x) =>
+    //   x.solution
+    //     .sort((a, b) => a.vendorId - b.vendorId)
+    //     .map((y) => `${y.vendorId}-${y.bestPrice?.toNumber()}`)
+    //     .join(","),
+    // );
+
+    // Generate all unique price combinations including not picking vendors
+    const uniquePriceSets = generateAllUniquePriceCombinations(
+      optimalSolutionForCombinations,
     );
+
+    // const uniquePriceSets2 = _.uniqBy(allPriceCombinations, (x) =>
+    //   x.solution
+    //     .sort((a, b) => a.vendorId - b.vendorId)
+    //     .map((y) => `${y.vendorId}-${y.bestPrice?.toNumber()}`)
+    //     .join(","),
+    // );
 
     for (const priceSet of uniquePriceSets) {
       const solutionId = `Q${quantity}-${priceSet.solution
         .sort((a, b) => a.vendorId - b.vendorId)
-        .map((x) => `${x.vendorId}@${x.bestPrice?.toNumber()}`)
+        .map((x) => `${x.vendorName}@${x.bestPrice?.toNumber()}`)
         .join(",")}`;
       // Now recreate all the price combinations, fixing these vendors and their prices
       // but this time using the optimal solution for each vendor.
@@ -160,6 +172,113 @@ export function repriceProductV3(
     unavailableInternalProducts,
   );
   return { html, priceSolutions: solutions };
+}
+
+/**
+ * Generates all unique price combinations for vendors, including the option to not pick a vendor entirely.
+ * For each vendor, we can either pick one of their unique prices or not pick them at all.
+ * The total number of combinations is (n1 + 1)(n2 + 1)...(nk + 1) - 1, where ni is the number of unique prices for vendor i.
+ * We subtract 1 because we must pick at least one vendor.
+ * @param optimalSolutionForCombinations - Array of solutions with their optimal prices
+ * @returns Array of unique price combinations
+ */
+function generateAllUniquePriceCombinations(
+  optimalSolutionForCombinations: {
+    solution: Net32AlgoProductWithBestPrice[];
+    combination: Net32AlgoProductWithFreeShipping[];
+  }[],
+): {
+  solution: Net32AlgoProductWithBestPrice[];
+  combination: Net32AlgoProductWithFreeShipping[];
+}[] {
+  // Group solutions by vendor to get unique prices for each vendor
+  const vendorPriceMap = new Map<number, Set<number>>();
+
+  // Collect all unique prices for each vendor
+  optimalSolutionForCombinations.forEach(({ solution }) => {
+    solution.forEach((product) => {
+      if (!vendorPriceMap.has(product.vendorId)) {
+        vendorPriceMap.set(product.vendorId, new Set());
+      }
+      vendorPriceMap.get(product.vendorId)!.add(product.bestPrice.toNumber());
+    });
+  });
+
+  // Convert to arrays for easier processing
+  const vendorPrices: { vendorId: number; prices: number[] }[] = [];
+  vendorPriceMap.forEach((prices, vendorId) => {
+    vendorPrices.push({
+      vendorId,
+      prices: Array.from(prices).sort((a, b) => a - b),
+    });
+  });
+
+  // Sort by vendorId for consistent ordering
+  vendorPrices.sort((a, b) => a.vendorId - b.vendorId);
+
+  // Generate all combinations using cartesian product
+  const combinations: Net32AlgoProductWithBestPrice[][] = [];
+
+  function generateCombinations(
+    currentCombination: Net32AlgoProductWithBestPrice[],
+    vendorIndex: number,
+  ) {
+    if (vendorIndex === vendorPrices.length) {
+      // We've processed all vendors
+      if (currentCombination.length > 0) {
+        // Only add if we have at least one vendor (not empty)
+        combinations.push([...currentCombination]);
+      }
+      return;
+    }
+
+    const currentVendor = vendorPrices[vendorIndex];
+
+    // Option 1: Don't pick this vendor
+    generateCombinations(currentCombination, vendorIndex + 1);
+
+    // Option 2: Pick this vendor with one of their prices
+    currentVendor.prices.forEach((price) => {
+      // Find the original product data for this vendor and price
+      const originalProduct = optimalSolutionForCombinations
+        .flatMap(({ solution }) => solution)
+        .find(
+          (p) =>
+            p.vendorId === currentVendor.vendorId &&
+            p.bestPrice.toNumber() === price,
+        );
+
+      if (originalProduct) {
+        currentCombination.push(originalProduct);
+        generateCombinations(currentCombination, vendorIndex + 1);
+        currentCombination.pop(); // Backtrack
+      }
+    });
+  }
+
+  generateCombinations([], 0);
+
+  // Convert back to the expected format with combination data
+  return combinations.map((solution) => {
+    // Find a matching combination from the original data
+    const matchingOriginal = optimalSolutionForCombinations.find(
+      ({ solution: origSolution }) => {
+        if (origSolution.length !== solution.length) return false;
+        return solution.every((product) =>
+          origSolution.some(
+            (orig) =>
+              orig.vendorId === product.vendorId &&
+              orig.bestPrice.toNumber() === product.bestPrice.toNumber(),
+          ),
+        );
+      },
+    );
+
+    return {
+      solution,
+      combination: matchingOriginal?.combination || [],
+    };
+  });
 }
 
 function getOptimalSolutionForBoard(

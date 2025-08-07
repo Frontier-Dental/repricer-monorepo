@@ -229,13 +229,13 @@ function buildSolutionsTable(solutions: Net32AlgoSolution[], quantity: number) {
         })
         .join("");
 
-      return `<tr${rowStyle}><td>${idx + 1}</td>${vendorCells}<td>${solution.averageRank.toFixed(2)}</td></tr>`;
+      return `<tr${rowStyle}><td>${idx + 1}</td><td>${solution.solutionId}</td>${vendorCells}<td>${solution.averageRank.toFixed(2)}</td></tr>`;
     })
     .join("");
 
   let result = `<table>
     <thead>
-      <tr><th>Solution</th>${headerColumns}<th>Average Rank</th></tr>
+      <tr><th>Solution</th><th>Solution ID</th>${headerColumns}<th>Average Rank</th></tr>
     </thead>
     <tbody>${rows}</tbody>
   </table><div><i>The highlighted row (green) is the best solution (lowest average rank).</i></div>`;
@@ -355,7 +355,7 @@ function buildSourceCombinationsTable(
   solutionNumber: number,
 ) {
   if (!solution.sourceCombination || solution.sourceCombination.length === 0) {
-    return "<p>No source combination available for this solution</p>";
+    return "<p>No source combination available for this solution. This was a permutated solution, not from a specific board configuration.</p>";
   }
 
   const rows = solution.sourceCombination
