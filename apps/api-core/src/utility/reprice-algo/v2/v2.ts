@@ -404,13 +404,25 @@ function getBestCompetitivePrice(
       ? undercutTotalCost.div(quantity)
       : undercutTotalCost.sub(ourProduct.standardShipping).div(quantity);
 
-    // Always round the price down
-    const roundedUnderCutUnitPrice = undercutUnitPrice.toDecimalPlaces(2, 1);
+    if (undercutUnitPrice.gt(ourVendorDetails.maxPrice)) {
+      return new Decimal(ourVendorDetails.maxPrice);
+    }
+
+    const undercutUnitPriceRoundUp = undercutUnitPrice.toDecimalPlaces(2, 0);
+    const undercutUnitPriceRoundDown = undercutUnitPrice.toDecimalPlaces(2, 1);
+
+    // Prefer the higher price if it's within the range.
+
     if (
-      roundedUnderCutUnitPrice.gte(ourVendorDetails.floorPrice) &&
-      roundedUnderCutUnitPrice.lte(ourVendorDetails.maxPrice)
+      undercutUnitPriceRoundUp.gte(ourVendorDetails.floorPrice) &&
+      undercutUnitPriceRoundUp.lte(ourVendorDetails.maxPrice)
     ) {
-      return roundedUnderCutUnitPrice;
+      return undercutUnitPriceRoundUp;
+    } else if (
+      undercutUnitPriceRoundDown.gte(ourVendorDetails.floorPrice) &&
+      undercutUnitPriceRoundDown.lte(ourVendorDetails.maxPrice)
+    ) {
+      return undercutUnitPriceRoundDown;
     }
   }
 }
@@ -476,7 +488,7 @@ function isBeatingCompetitorOnBuyBoxRules(
   }
 }
 
-function getUndercutPriceToCompete(
+function getStrictlyLessThanUndercutPriceToCompete(
   targetPrice: Decimal,
   ourProduct: Net32AlgoProduct,
   targetProduct: Net32AlgoProduct,
@@ -486,39 +498,62 @@ function getUndercutPriceToCompete(
   const targetHasBadge = hasBadge(targetProduct);
   const weHaveBadge = hasBadge(ourProduct);
   if (targetHasBadge && !weHaveBadge) {
-    return targetPrice.mul(0.9).sub(0.01);
+    return targetPrice.mul(0.9);
   } else if (targetHasBadge && weHaveBadge) {
     if (
       getShippingBucket(targetProduct.shippingTime) >
       getShippingBucket(ourProduct.shippingTime)
     ) {
       // We have better shipping
-      return targetPrice.mul(1.005).sub(0.01);
+      return targetPrice.mul(1.005);
     } else if (
       getShippingBucket(targetProduct.shippingTime) <
       getShippingBucket(ourProduct.shippingTime)
     ) {
       // We have worse shipping
-      return targetPrice.mul(0.995).sub(0.01);
+      return targetPrice.mul(0.995);
     } else {
       // We have the same shipping
-      return targetPrice.sub(0.01);
+      return targetPrice;
     }
   } else if (!targetHasBadge && weHaveBadge) {
-    return targetPrice.mul(1.1).sub(0.01);
+    return targetPrice.mul(1.1);
   } else if (
     getShippingBucket(targetProduct.shippingTime) >
     getShippingBucket(ourProduct.shippingTime)
   ) {
-    return targetPrice.mul(1.005).sub(0.01);
+    return targetPrice.mul(1.005);
   } else if (
     getShippingBucket(targetProduct.shippingTime) <
     getShippingBucket(ourProduct.shippingTime)
   ) {
-    return targetPrice.mul(0.995).sub(0.01);
+    return targetPrice.mul(0.995);
   } else {
-    return targetPrice.sub(0.01);
+    return targetPrice;
   }
+}
+
+function getUndercutPriceToCompete(
+  targetPrice: Decimal,
+  ourProduct: Net32AlgoProduct,
+  targetProduct: Net32AlgoProduct,
+) {
+  const strictlyLessThanPriceToCompete =
+    getStrictlyLessThanUndercutPriceToCompete(
+      targetPrice,
+      ourProduct,
+      targetProduct,
+    );
+  // Here we round down as the price has to be strictly less than the target price
+  // Example would be $10.02 * 0.9 = $9.018, which we round down to $9.01 as $9.02 would not pass the undercut rules
+  let roundedUndercutPriceToCompete =
+    strictlyLessThanPriceToCompete.toDecimalPlaces(2, 1);
+  // If there is no multiplication, i.e., it's a situation where we're undercutting by just a penny,
+  // we'll have to manually take out a penny
+  if (!roundedUndercutPriceToCompete.lt(strictlyLessThanPriceToCompete)) {
+    roundedUndercutPriceToCompete = roundedUndercutPriceToCompete.sub(0.01);
+  }
+  return roundedUndercutPriceToCompete;
 }
 
 // Helper to get all non-empty subsets of an array
