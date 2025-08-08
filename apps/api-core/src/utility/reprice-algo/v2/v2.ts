@@ -56,6 +56,11 @@ export function repriceProductV3(
   const ownVendorSubsets = getAllNonEmptySubsets(ourAvailableVendorProducts);
 
   const solutions: Net32AlgoSolution[] = [];
+  const allInvalidInitialSolutions: {
+    solution: Net32AlgoProductWithBestPrice[];
+    combination: Net32AlgoProductWithFreeShipping[];
+    quantity: number;
+  }[] = [];
 
   const beforeLadders = [
     0,
@@ -95,26 +100,26 @@ export function repriceProductV3(
         };
       },
     );
-    // Now we have an optimal solution for each combination. Remove all duplicate solutions.
-    // First we must sort to guarnatee that the same solution is not counted twice.
-    // const uniquePriceSets = _.uniqBy(optimalSolutionForCombinations, (x) =>
-    //   x.solution
-    //     .sort((a, b) => a.vendorId - b.vendorId)
-    //     .map((y) => `${y.vendorId}-${y.bestPrice?.toNumber()}`)
-    //     .join(","),
-    // );
 
-    // Generate all unique price combinations including not picking vendors
-    const uniquePriceSets = generateAllUniquePriceCombinations(
-      optimalSolutionForCombinations,
+    const onlyValidSolutions = optimalSolutionForCombinations.filter((s) =>
+      isValidSolution(s.solution),
     );
 
-    // const uniquePriceSets2 = _.uniqBy(allPriceCombinations, (x) =>
-    //   x.solution
-    //     .sort((a, b) => a.vendorId - b.vendorId)
-    //     .map((y) => `${y.vendorId}-${y.bestPrice?.toNumber()}`)
-    //     .join(","),
-    // );
+    const invalidInitialSolutions = optimalSolutionForCombinations.filter(
+      (s) => !isValidSolution(s.solution),
+    );
+
+    // Collect invalid solutions with quantity information
+    invalidInitialSolutions.forEach((invalidSolution) => {
+      allInvalidInitialSolutions.push({
+        ...invalidSolution,
+        quantity,
+      });
+    });
+
+    // Generate all unique price combinations including not picking vendors
+    const uniquePriceSets =
+      generateAllUniquePriceCombinations(onlyValidSolutions);
 
     for (const priceSet of uniquePriceSets) {
       const solutionId = `Q${quantity}-${priceSet.solution
@@ -171,8 +176,36 @@ export function repriceProductV3(
     solutions,
     beforeLadders,
     unavailableInternalProducts,
+    allInvalidInitialSolutions,
   );
   return { html, priceSolutions: solutions };
+}
+
+/**
+ * Checks if a solution is valid.
+ * We have to take out solutions that are invalid.
+ * A solution can be invalid if there's free shipping but the price is below the threshold
+ * on a product.
+ * A solution can also be invalid if there's no free shipping but the price is already above the threshold
+ * on a product.
+ * @param solution - The solution to check
+ * @returns True if the solution is valid, false otherwise
+ */
+function isValidSolution(solution: Net32AlgoProductWithBestPrice[]): boolean {
+  for (const product of solution) {
+    if (
+      product.freeShipping === true &&
+      product.bestPrice.lt(product.freeShippingThreshold)
+    ) {
+      return false;
+    } else if (
+      product.freeShipping === false &&
+      product.bestPrice.gt(product.freeShippingThreshold)
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -469,7 +502,7 @@ function getUndercutPriceToCompete(
       return targetPrice.mul(0.995).sub(0.01);
     } else {
       // We have the same shipping
-      return targetPrice.sub(0.01).sub(0.01);
+      return targetPrice.sub(0.01);
     }
   } else if (!targetHasBadge && weHaveBadge) {
     return targetPrice.mul(1.1).sub(0.01);

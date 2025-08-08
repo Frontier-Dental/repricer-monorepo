@@ -4,6 +4,8 @@ import { applicationConfig } from "../../config";
 import {
   InternalProduct,
   Net32AlgoProduct,
+  Net32AlgoProductWithBestPrice,
+  Net32AlgoProductWithFreeShipping,
   VendorId,
   VendorNameLookup,
 } from "./types";
@@ -23,6 +25,11 @@ export function createHtmlFileContent(
   solutions: Net32AlgoSolution[],
   beforeLadders: { quantity: number; ladder: Net32AlgoProduct[] }[],
   unavailableInternalProducts?: InternalProduct[],
+  invalidInitialSolutions?: {
+    solution: Net32AlgoProductWithBestPrice[];
+    combination: Net32AlgoProductWithFreeShipping[];
+    quantity: number;
+  }[],
 ) {
   // Get net32url from the first internalProduct, if present
   const net32url = internalProducts[0]?.net32url;
@@ -54,7 +61,11 @@ export function createHtmlFileContent(
     );
     newAlgoSections +=
       `<br/><br/><b>Price Solutions</b>` +
-      buildSolutionsTable(solutionsForQuantity, quantity);
+      buildSolutionsTable(
+        solutionsForQuantity,
+        quantity,
+        invalidInitialSolutions,
+      );
 
     // Add divider between quantities
     if (quantity < beforeLadders[beforeLadders.length - 1].quantity) {
@@ -175,13 +186,21 @@ function buildBeforeLadderTable(beforeLadder: {
 
   return `<table>
     <thead>
-      <tr><th>Vendor Name</th><th>Unit Price</th><th>Shipping Cost</th><th>Total</th><th>Shipping Threshold</th><th>Free Shipping Gap</th><th>Shipping Time</th><th>Price Breaks</th></tr>
+      <tr><th>Vendor Name</th><th>Unit Price</th><th>Shipping Cost</th><th>Total</th><th>Shipping Threshold</th><th>Free Shipping Gap</th><th>Shipping Time</th><th>Existing Price Breaks</th></tr>
     </thead>
     <tbody>${rows}</tbody>
   </table><div><i>Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT).</i></div>`;
 }
 
-function buildSolutionsTable(solutions: Net32AlgoSolution[], quantity: number) {
+function buildSolutionsTable(
+  solutions: Net32AlgoSolution[],
+  quantity: number,
+  invalidInitialSolutions?: {
+    solution: Net32AlgoProductWithBestPrice[];
+    combination: Net32AlgoProductWithFreeShipping[];
+    quantity: number;
+  }[],
+) {
   if (!solutions || solutions.length === 0) return "<p>No price solutions</p>";
 
   // Sort solutions by averageRank (lower is better)
@@ -240,6 +259,18 @@ function buildSolutionsTable(solutions: Net32AlgoSolution[], quantity: number) {
     <tbody>${rows}</tbody>
   </table><div><i>The highlighted row (green) is the best solution (lowest average rank).</i></div>`;
 
+  // Add invalid initial solutions for this quantity right under the price solutions table
+  if (invalidInitialSolutions) {
+    const invalidSolutionsForQuantity = invalidInitialSolutions.filter(
+      (s) => s.quantity === quantity,
+    );
+    if (invalidSolutionsForQuantity.length > 0) {
+      result +=
+        `<br/><br/><b>Invalid Initial Solutions</b>` +
+        buildInvalidSolutionsTable(invalidSolutionsForQuantity, quantity);
+    }
+  }
+
   // Add shipping combinations tables for each solution
   for (let i = 0; i < sortedSolutions.length; i++) {
     const solution = sortedSolutions[i];
@@ -258,6 +289,68 @@ function buildSolutionsTable(solutions: Net32AlgoSolution[], quantity: number) {
   }
 
   return result;
+}
+
+function buildInvalidSolutionsTable(
+  invalidSolutions: {
+    solution: Net32AlgoProductWithBestPrice[];
+    combination: Net32AlgoProductWithFreeShipping[];
+    quantity: number;
+  }[],
+  quantity: number,
+) {
+  if (!invalidSolutions || invalidSolutions.length === 0) {
+    return "<p>No invalid initial solutions</p>";
+  }
+
+  // Get all unique vendors from all invalid solutions
+  const allVendors = new Set<number>();
+  invalidSolutions.forEach((solution) => {
+    solution.solution.forEach((s) => {
+      allVendors.add(s.vendorId);
+    });
+  });
+
+  const sortedVendors = Array.from(allVendors).sort((a, b) => a - b);
+
+  // Create header with vendor columns
+  const headerColumns = sortedVendors
+    .map((vendorId) => {
+      const vendorName = VendorNameLookup[vendorId] || vendorId;
+      return `<th>${vendorName}</th>`;
+    })
+    .join("");
+
+  let rows = invalidSolutions
+    .map((solution, idx) => {
+      // Create cells for each vendor
+      const vendorCells = sortedVendors
+        .map((vendorId) => {
+          const vendorInSolution = solution.solution.find(
+            (s) => s.vendorId === vendorId,
+          );
+          if (!vendorInSolution) {
+            return "<td></td>"; // Empty cell if vendor not in this solution
+          }
+          const bestPrice = vendorInSolution.bestPrice;
+          const priceDisplay = bestPrice
+            ? bestPrice.toNumber().toString()
+            : "N/A";
+
+          return `<td>${priceDisplay}</td>`;
+        })
+        .join("");
+
+      return `<tr style="background: #ffebee;"><td>${idx + 1}</td>${vendorCells}</tr>`;
+    })
+    .join("");
+
+  return `<table>
+    <thead>
+      <tr><th>Invalid Solution</th>${headerColumns}</tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table><div><i>Invalid solutions are tinted in faint red. These solutions were rejected due to free shipping threshold violations.</i></div>`;
 }
 
 function buildSolutionShippingCombinationsTable(
@@ -396,7 +489,7 @@ function buildSourceCombinationsTable(
 
   return `<table>
     <thead>
-      <tr><th>Vendor Name</th><th>Unit Price</th><th>Shipping Cost</th><th>Total</th><th>Free Shipping Threshold</th><th>Free Shipping</th><th>Shipping Time</th><th>Price Breaks</th></tr>
+      <tr><th>Vendor Name</th><th>Unit Price</th><th>Shipping Cost</th><th>Total</th><th>Free Shipping Threshold</th><th>Free Shipping</th><th>Shipping Time</th><th>Existing Price Breaks</th></tr>
     </thead>
     <tbody>${rows}</tbody>
   </table><div><i>Shows the source combination used for this solution. Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT).</i></div>`;
