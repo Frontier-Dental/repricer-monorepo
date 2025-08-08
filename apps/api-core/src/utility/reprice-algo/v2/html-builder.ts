@@ -4,8 +4,6 @@ import { applicationConfig } from "../../config";
 import {
   InternalProduct,
   Net32AlgoProduct,
-  Net32AlgoProductWithBestPrice,
-  Net32AlgoProductWithFreeShipping,
   VendorId,
   VendorNameLookup,
 } from "./types";
@@ -16,6 +14,7 @@ import {
   getTotalCostFreeShippingOverride,
   hasBadge,
   Net32AlgoSolution,
+  Net32AlgoSolutionWithCombination,
 } from "./v2";
 
 export function createHtmlFileContent(
@@ -25,11 +24,7 @@ export function createHtmlFileContent(
   solutions: Net32AlgoSolution[],
   beforeLadders: { quantity: number; ladder: Net32AlgoProduct[] }[],
   unavailableInternalProducts?: InternalProduct[],
-  invalidInitialSolutions?: {
-    solution: Net32AlgoProductWithBestPrice[];
-    combination: Net32AlgoProductWithFreeShipping[];
-    quantity: number;
-  }[],
+  invalidInitialSolutions?: Net32AlgoSolutionWithCombination[],
 ) {
   // Get net32url from the first internalProduct, if present
   const net32url = internalProducts[0]?.net32url;
@@ -195,11 +190,7 @@ function buildBeforeLadderTable(beforeLadder: {
 function buildSolutionsTable(
   solutions: Net32AlgoSolution[],
   quantity: number,
-  invalidInitialSolutions?: {
-    solution: Net32AlgoProductWithBestPrice[];
-    combination: Net32AlgoProductWithFreeShipping[];
-    quantity: number;
-  }[],
+  invalidInitialSolutions?: Net32AlgoSolutionWithCombination[],
 ) {
   if (!solutions || solutions.length === 0) return "<p>No price solutions</p>";
 
@@ -292,11 +283,7 @@ function buildSolutionsTable(
 }
 
 function buildInvalidSolutionsTable(
-  invalidSolutions: {
-    solution: Net32AlgoProductWithBestPrice[];
-    combination: Net32AlgoProductWithFreeShipping[];
-    quantity: number;
-  }[],
+  invalidSolutions: Net32AlgoSolutionWithCombination[],
   quantity: number,
 ) {
   if (!invalidSolutions || invalidSolutions.length === 0) {
@@ -447,23 +434,28 @@ function buildSourceCombinationsTable(
   solution: Net32AlgoSolution,
   solutionNumber: number,
 ) {
-  if (!solution.sourceCombination || solution.sourceCombination.length === 0) {
+  if (
+    !solution.postSolutionInsertBoard ||
+    solution.postSolutionInsertBoard.length === 0
+  ) {
     return "<p>No source combination available for this solution. This was a permutated solution, not from a specific board configuration.</p>";
   }
 
-  const rows = solution.sourceCombination
+  const rows = solution.postSolutionInsertBoard
     .map((product) => {
       const priceBreak = getHighestPriceBreakLessThanOrEqualTo(
         product,
         solution.quantity,
       );
+      const unitPrice = product.bestPrice
+        ? product.bestPrice.toNumber()
+        : priceBreak.unitPrice;
       const totalCost = getTotalCostFreeShippingOverride(
-        priceBreak.unitPrice,
+        unitPrice,
         solution.quantity,
         product.freeShipping,
         product.standardShipping,
       );
-      const unitPrice = priceBreak.unitPrice;
       const badge = hasBadge(product);
       const vendorName =
         product.vendorName + (badge ? ' <span title="Badge">🏅</span>' : "");
@@ -480,8 +472,8 @@ function buildSourceCombinationsTable(
           : "";
 
       // Show blank cells for unit price and total if it's our vendor
-      const unitPriceDisplay = isOurVendor ? "" : unitPrice;
-      const totalCostDisplay = isOurVendor ? "" : totalCost;
+      const unitPriceDisplay = unitPrice;
+      const totalCostDisplay = totalCost;
 
       return `<tr${rowStyle}><td>${vendorName}</td><td>${unitPriceDisplay}</td><td>${product.standardShipping}</td><td>${totalCostDisplay}</td><td>${product.freeShippingThreshold}</td><td>${product.freeShipping}</td><td>${product.shippingTime}</td><td>${priceBreaksDisplay}</td></tr>`;
     })

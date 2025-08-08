@@ -3,7 +3,7 @@ import { Decimal } from "decimal.js";
 
 export interface PriceSolutionWithRanks {
   vendorPrices: { vendorId: number; price: number }[];
-  combination: Net32AlgoProductWithFreeShipping[];
+  combination: Net32AlgoProductEnriched[];
   totalRank: number;
   buyBoxRankFreeShipping: number;
   buyBoxRankIncludingShipping: number;
@@ -33,13 +33,17 @@ export interface Net32AlgoProduct {
   freeShippingThreshold: number;
 }
 
-export interface Net32AlgoProductWithBestPrice extends Net32AlgoProduct {
-  bestPrice: Decimal;
+export interface Net32AlgoProductEnriched extends Net32AlgoProduct {
   freeShipping: boolean;
+  bestPrice?: Decimal;
 }
 
-export interface Net32AlgoProductWithFreeShipping extends Net32AlgoProduct {
-  freeShipping: boolean;
+export interface Net32AlgoProductWrapper {
+  product: Net32AlgoProductEnriched;
+  totalCost: Decimal;
+  unitPrice: Decimal;
+  hasBadge: boolean;
+  shippingBucket: number;
 }
 
 export interface InternalProduct {

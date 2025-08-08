@@ -5,18 +5,26 @@ import { createHtmlFileContent } from "./html-builder";
 import {
   InternalProduct,
   Net32AlgoProduct,
-  Net32AlgoProductWithFreeShipping,
-  Net32AlgoProductWithBestPrice,
+  Net32AlgoProductEnriched,
+  Net32AlgoProductWrapper,
 } from "./types";
 
 export interface Net32AlgoSolution {
   solutionId: string;
-  solution: Net32AlgoProductWithBestPrice[];
+  solution: Net32AlgoProductEnriched[];
   averageRank: number;
   quantity: number;
-  boardCombinations: Net32AlgoProductWithFreeShipping[][];
+  boardCombinations: Net32AlgoProductEnriched[][];
   ranksForCombination: number[];
-  sourceCombination: Net32AlgoProductWithFreeShipping[];
+  sourceCombination: Net32AlgoProductEnriched[];
+  postSolutionInsertBoard: Net32AlgoProductEnriched[];
+}
+
+export interface Net32AlgoSolutionWithCombination {
+  solution: Net32AlgoProductEnriched[];
+  targetCombination: Net32AlgoProductEnriched[];
+  quantity: number;
+  postSolutionInsertBoard: Net32AlgoProductEnriched[];
 }
 
 export function repriceProductV3(
@@ -56,11 +64,7 @@ export function repriceProductV3(
   const ownVendorSubsets = getAllNonEmptySubsets(ourAvailableVendorProducts);
 
   const solutions: Net32AlgoSolution[] = [];
-  const allInvalidInitialSolutions: {
-    solution: Net32AlgoProductWithBestPrice[];
-    combination: Net32AlgoProductWithFreeShipping[];
-    quantity: number;
-  }[] = [];
+  const allInvalidInitialSolutions: Net32AlgoSolutionWithCombination[] = [];
 
   const beforeLadders = [
     0,
@@ -89,14 +93,26 @@ export function repriceProductV3(
           combination,
           quantity,
         );
-        return {
-          solution: getOptimalSolutionForBoard(
-            combination,
-            ownVendorIds,
-            availableInternalProducts,
+        const optimalSolution = getOptimalSolutionForBoard(
+          combination,
+          ownVendorIds,
+          availableInternalProducts,
+          quantity,
+        );
+        const postSolutionInsertBoard =
+          getProductSortedByBuyBoxRankFreeShippingAlgo(
+            [
+              ...optimalSolution,
+              ...rankedByBuyBox
+                .map((x) => x.product)
+                .filter((p) => !ownVendorIds.includes(p.vendorId)),
+            ],
             quantity,
-          ),
-          combination: rankedByBuyBox,
+          );
+        return {
+          solution: optimalSolution,
+          targetCombination: rankedByBuyBox,
+          postSolutionInsertBoard,
         };
       },
     );
@@ -112,14 +128,27 @@ export function repriceProductV3(
     // Collect invalid solutions with quantity information
     invalidInitialSolutions.forEach((invalidSolution) => {
       allInvalidInitialSolutions.push({
-        ...invalidSolution,
+        solution: invalidSolution.solution,
+        targetCombination: invalidSolution.targetCombination.map(
+          (x) => x.product,
+        ),
+        postSolutionInsertBoard: invalidSolution.postSolutionInsertBoard.map(
+          (x) => x.product,
+        ),
         quantity,
       });
     });
 
     // Generate all unique price combinations including not picking vendors
-    const uniquePriceSets =
-      generateAllUniquePriceCombinations(onlyValidSolutions);
+    const uniquePriceSets = generateAllUniquePriceCombinations(
+      onlyValidSolutions.map((s) => ({
+        solution: s.solution,
+        targetCombination: s.targetCombination.map((x) => x.product),
+        postSolutionInsertBoard: s.postSolutionInsertBoard.map(
+          (x) => x.product,
+        ),
+      })),
+    );
 
     for (const priceSet of uniquePriceSets) {
       const solutionId = `Q${quantity}-${priceSet.solution
@@ -161,10 +190,11 @@ export function repriceProductV3(
       solutions.push({
         quantity,
         solution: priceSet.solution,
-        sourceCombination: priceSet.combination,
+        sourceCombination: priceSet.targetCombination,
         averageRank,
         boardCombinations: boardCombinationsForSolution,
         ranksForCombination: ranksForCombination,
+        postSolutionInsertBoard: priceSet.postSolutionInsertBoard,
         solutionId,
       });
     }
@@ -191,8 +221,11 @@ export function repriceProductV3(
  * @param solution - The solution to check
  * @returns True if the solution is valid, false otherwise
  */
-function isValidSolution(solution: Net32AlgoProductWithBestPrice[]): boolean {
+function isValidSolution(solution: Net32AlgoProductEnriched[]): boolean {
   for (const product of solution) {
+    if (product.bestPrice === undefined) {
+      throw new Error("Best price is undefined. This is a bug. ");
+    }
     if (
       product.freeShipping === true &&
       product.bestPrice.lt(product.freeShippingThreshold)
@@ -218,12 +251,14 @@ function isValidSolution(solution: Net32AlgoProductWithBestPrice[]): boolean {
  */
 function generateAllUniquePriceCombinations(
   optimalSolutionForCombinations: {
-    solution: Net32AlgoProductWithBestPrice[];
-    combination: Net32AlgoProductWithFreeShipping[];
+    solution: Net32AlgoProductEnriched[];
+    targetCombination: Net32AlgoProductEnriched[];
+    postSolutionInsertBoard: Net32AlgoProductEnriched[];
   }[],
 ): {
-  solution: Net32AlgoProductWithBestPrice[];
-  combination: Net32AlgoProductWithFreeShipping[];
+  solution: Net32AlgoProductEnriched[];
+  targetCombination: Net32AlgoProductEnriched[];
+  postSolutionInsertBoard: Net32AlgoProductEnriched[];
 }[] {
   // Group solutions by vendor to get unique prices for each vendor
   const vendorPriceMap = new Map<number, Set<number>>();
@@ -234,7 +269,7 @@ function generateAllUniquePriceCombinations(
       if (!vendorPriceMap.has(product.vendorId)) {
         vendorPriceMap.set(product.vendorId, new Set());
       }
-      vendorPriceMap.get(product.vendorId)!.add(product.bestPrice.toNumber());
+      vendorPriceMap.get(product.vendorId)!.add(product.bestPrice!.toNumber());
     });
   });
 
@@ -251,10 +286,10 @@ function generateAllUniquePriceCombinations(
   vendorPrices.sort((a, b) => a.vendorId - b.vendorId);
 
   // Generate all combinations using cartesian product
-  const combinations: Net32AlgoProductWithBestPrice[][] = [];
+  const combinations: Net32AlgoProductEnriched[][] = [];
 
   function generateCombinations(
-    currentCombination: Net32AlgoProductWithBestPrice[],
+    currentCombination: Net32AlgoProductEnriched[],
     vendorIndex: number,
   ) {
     if (vendorIndex === vendorPrices.length) {
@@ -279,7 +314,7 @@ function generateAllUniquePriceCombinations(
         .find(
           (p) =>
             p.vendorId === currentVendor.vendorId &&
-            p.bestPrice.toNumber() === price,
+            p.bestPrice!.toNumber() === price,
         );
 
       if (originalProduct) {
@@ -302,7 +337,7 @@ function generateAllUniquePriceCombinations(
           origSolution.some(
             (orig) =>
               orig.vendorId === product.vendorId &&
-              orig.bestPrice.toNumber() === product.bestPrice.toNumber(),
+              orig.bestPrice!.toNumber() === product.bestPrice!.toNumber(),
           ),
         );
       },
@@ -310,17 +345,18 @@ function generateAllUniquePriceCombinations(
 
     return {
       solution,
-      combination: matchingOriginal?.combination || [],
+      targetCombination: matchingOriginal?.targetCombination || [],
+      postSolutionInsertBoard: matchingOriginal?.postSolutionInsertBoard || [],
     };
   });
 }
 
 function getOptimalSolutionForBoard(
-  combination: Net32AlgoProductWithFreeShipping[],
+  combination: Net32AlgoProductEnriched[],
   ownVendorIds: number[],
   availableInternalProducts: InternalProduct[],
   quantity: number,
-): Net32AlgoProductWithBestPrice[] {
+): Net32AlgoProductEnriched[] {
   const ownVendors = combination.filter((p) =>
     ownVendorIds.includes(p.vendorId),
   );
@@ -336,19 +372,17 @@ function getOptimalSolutionForBoard(
         (vp) => vp.ownVendorId === ownVendor.vendorId,
       )!,
       ownVendor,
-      competitorsRankedByBuyBox,
+      competitorsRankedByBuyBox.map((x) => x.product),
       quantity,
       ownVendor.freeShipping,
     ),
   }));
-  return ownVendorsWithBestPrices.filter(
-    (x) => x.bestPrice !== undefined,
-  ) as Net32AlgoProductWithBestPrice[];
+  return ownVendorsWithBestPrices.filter((x) => x.bestPrice !== undefined);
 }
 
 function getBuyBoxRank(
-  ownProduct: Net32AlgoProductWithFreeShipping,
-  competitors: Net32AlgoProductWithFreeShipping[],
+  ownProduct: Net32AlgoProductEnriched,
+  competitors: Net32AlgoProductEnriched[],
   quantity: number,
   unitPriceOverride?: Decimal,
 ) {
@@ -357,9 +391,9 @@ function getBuyBoxRank(
   for (let i = 0; i < competitorsSortedByBuyBoxRank.length; i++) {
     const competitor = competitorsSortedByBuyBoxRank[i];
     const competitorTotalCost = getTotalCostForQuantity(
-      competitor,
+      competitor.product,
       quantity,
-      competitor.freeShipping,
+      competitor.product.freeShipping,
     );
     const ourTotalCost = unitPriceOverride
       ? getTotalCostForQuantityWithUnitPriceOverride(
@@ -371,7 +405,7 @@ function getBuyBoxRank(
       : getTotalCostForQuantity(ownProduct, quantity, ownProduct.freeShipping);
     const beatingCompetitor = isBeatingCompetitorOnBuyBoxRules(
       ownProduct,
-      competitor,
+      competitor.product,
       ourTotalCost,
       competitorTotalCost,
     );
@@ -385,7 +419,7 @@ function getBuyBoxRank(
 function getBestCompetitivePrice(
   ourVendorDetails: InternalProduct,
   ourProduct: Net32AlgoProduct,
-  competitorsSortedByBuyBoxRank: Net32AlgoProductWithFreeShipping[],
+  competitorsSortedByBuyBoxRank: Net32AlgoProductEnriched[],
   quantity: number,
   weHaveFreeShipping: boolean,
 ) {
@@ -412,7 +446,6 @@ function getBestCompetitivePrice(
     const undercutUnitPriceRoundDown = undercutUnitPrice.toDecimalPlaces(2, 1);
 
     // Prefer the higher price if it's within the range.
-
     if (
       undercutUnitPriceRoundUp.gte(ourVendorDetails.floorPrice) &&
       undercutUnitPriceRoundUp.lte(ourVendorDetails.maxPrice)
@@ -605,16 +638,16 @@ function isFreeShippingForQuantity(
 }
 
 function permutateFreeShippingPossibilitesWithFixedPrices(
-  net32Products: (Net32AlgoProduct | Net32AlgoProductWithBestPrice)[],
+  net32Products: (Net32AlgoProduct | Net32AlgoProductEnriched)[],
   quantity: number,
-): Net32AlgoProductWithFreeShipping[][] {
+): Net32AlgoProductEnriched[][] {
   const nonFreeShippingProducts = net32Products.filter(
     (p) =>
       isFreeShippingForQuantity(
         p,
         quantity,
-        (p as Net32AlgoProductWithBestPrice).bestPrice
-          ? (p as Net32AlgoProductWithBestPrice).bestPrice
+        (p as Net32AlgoProductEnriched).bestPrice
+          ? (p as Net32AlgoProductEnriched).bestPrice
           : undefined,
       ) === false,
   );
@@ -623,17 +656,17 @@ function permutateFreeShippingPossibilitesWithFixedPrices(
       isFreeShippingForQuantity(
         p,
         quantity,
-        (p as Net32AlgoProductWithBestPrice).bestPrice
-          ? (p as Net32AlgoProductWithBestPrice).bestPrice
+        (p as Net32AlgoProductEnriched).bestPrice
+          ? (p as Net32AlgoProductEnriched).bestPrice
           : undefined,
       ) === true,
   );
   const n = nonFreeShippingProducts.length;
   const total = 1 << n; // 2^n
-  const permutations: Net32AlgoProductWithFreeShipping[][] = [];
+  const permutations: Net32AlgoProductEnriched[][] = [];
 
   for (let mask = 0; mask < total; mask++) {
-    const permutation: Net32AlgoProductWithFreeShipping[] = [];
+    const permutation: Net32AlgoProductEnriched[] = [];
     for (let i = 0; i < n; i++) {
       permutation.push({
         ...nonFreeShippingProducts[i],
@@ -660,7 +693,7 @@ function permutateFreeShippingPosibilities(
   net32Products: Net32AlgoProduct[],
   ownVendorIds: number[],
   quantity: number,
-): Net32AlgoProductWithFreeShipping[][] {
+): Net32AlgoProductEnriched[][] {
   // If it's one of our vendors, we don't know the price, so we only
   // know if it's free shipping ALWAYS if the standard shipping is 0 as the price could
   // change and trigger the gap depending ont he solution
@@ -681,10 +714,10 @@ function permutateFreeShippingPosibilities(
   );
   const n = couldBeFreeShippingProducts.length;
   const total = 1 << n; // 2^n
-  const permutations: Net32AlgoProductWithFreeShipping[][] = [];
+  const permutations: Net32AlgoProductEnriched[][] = [];
 
   for (let mask = 0; mask < total; mask++) {
-    const permutation: Net32AlgoProductWithFreeShipping[] = [];
+    const permutation: Net32AlgoProductEnriched[] = [];
     for (let i = 0; i < n; i++) {
       permutation.push({
         ...couldBeFreeShippingProducts[i],
@@ -700,95 +733,98 @@ function permutateFreeShippingPosibilities(
   ]);
 }
 
-function sortedBasedOnByBoxRules(
-  products: {
-    product: Net32AlgoProduct;
-    price: Decimal;
+function sortBasedOnBuyBoxRulesV2(
+  a: {
+    totalCost: Decimal;
     hasBadge: boolean;
     shippingBucket: number;
-  }[],
-): {
-  product: Net32AlgoProduct;
-  price: Decimal;
-  hasBadge: boolean;
-  shippingBucket: number;
-}[] {
-  const clonedArray = [...products];
-  return clonedArray
-    .sort((a, b) => a.price.sub(b.price).toNumber())
-    .sort((a, b) => {
-      // If both have badge
-      if (a.hasBadge && b.hasBadge) {
-        // If a is in a lower shipping bucket (faster) than b, need to be at least 0.5% cheaper
-        if (a.shippingBucket < b.shippingBucket) {
-          if (new Decimal(b.price).lte(new Decimal(a.price).mul(0.995)))
-            return 1;
-          return -1;
-        }
-        // If b is in a lower shipping bucket (faster) than a, need to be at least 0.5% cheaper
-        if (b.shippingBucket < a.shippingBucket) {
-          if (new Decimal(a.price).lte(new Decimal(b.price).mul(0.995)))
-            return -1;
-          return 1;
-        }
-        // If both have the same shipping bucket, need to be at least 1c cheaper
-        if (new Decimal(a.price).lte(new Decimal(b.price).sub(0.01))) return -1;
-        if (new Decimal(b.price).lte(new Decimal(a.price).sub(0.01))) return 1;
-        return 0;
-      }
-      // If a has badge, b does not, need to be at least 10% cheaper
-      if (a.hasBadge && !b.hasBadge) {
-        if (new Decimal(b.price).lte(new Decimal(a.price).mul(0.9))) return 1;
-        return -1;
-      }
-      // If b has badge, a does not, need to be at least 10% cheaper
-      if (!a.hasBadge && b.hasBadge) {
-        if (new Decimal(a.price).lte(new Decimal(b.price).mul(0.9))) return -1;
+  },
+  b: {
+    totalCost: Decimal;
+    hasBadge: boolean;
+    shippingBucket: number;
+  },
+) {
+  // If both have badge
+  if (a.hasBadge && b.hasBadge) {
+    // If a is in a lower shipping bucket (faster) than b, need to be at least 0.5% cheaper
+    if (a.shippingBucket < b.shippingBucket) {
+      if (new Decimal(b.totalCost).lte(new Decimal(a.totalCost).mul(0.995)))
         return 1;
-      }
-      // If a is in a lower shipping bucket (faster) than b, need to be at least 0.5% cheaper
-      if (a.shippingBucket < b.shippingBucket) {
-        if (new Decimal(b.price).lte(new Decimal(a.price).mul(0.995))) return 1;
+      return -1;
+    }
+    // If b is in a lower shipping bucket (faster) than a, need to be at least 0.5% cheaper
+    if (b.shippingBucket < a.shippingBucket) {
+      if (new Decimal(a.totalCost).lte(new Decimal(b.totalCost).mul(0.995)))
         return -1;
-      }
-      // If b is in a lower shipping bucket (faster) than a, need to be at least 0.5% cheaper
-      if (b.shippingBucket < a.shippingBucket) {
-        if (new Decimal(a.price).lte(new Decimal(b.price).mul(0.995)))
-          return -1;
-        return 1;
-      }
-      // Otherwise, 0.01 cheaper wins
-      if (new Decimal(a.price).lte(new Decimal(b.price).sub(0.01))) return -1;
-      if (new Decimal(b.price).lte(new Decimal(a.price).sub(0.01))) return 1;
-      return 0;
-    });
+      return 1;
+    }
+    // If both have the same shipping bucket, need to be at least 1c cheaper
+    if (new Decimal(a.totalCost).lte(new Decimal(b.totalCost).sub(0.01)))
+      return -1;
+    if (new Decimal(b.totalCost).lte(new Decimal(a.totalCost).sub(0.01)))
+      return 1;
+    return 0;
+  }
+  // If a has badge, b does not, need to be at least 10% cheaper
+  if (a.hasBadge && !b.hasBadge) {
+    if (new Decimal(b.totalCost).lte(new Decimal(a.totalCost).mul(0.9)))
+      return 1;
+    return -1;
+  }
+  // If b has badge, a does not, need to be at least 10% cheaper
+  if (!a.hasBadge && b.hasBadge) {
+    if (new Decimal(a.totalCost).lte(new Decimal(b.totalCost).mul(0.9)))
+      return -1;
+    return 1;
+  }
+  // If a is in a lower shipping bucket (faster) than b, need to be at least 0.5% cheaper
+  if (a.shippingBucket < b.shippingBucket) {
+    if (new Decimal(b.totalCost).lte(new Decimal(a.totalCost).mul(0.995)))
+      return 1;
+    return -1;
+  }
+  // If b is in a lower shipping bucket (faster) than a, need to be at least 0.5% cheaper
+  if (b.shippingBucket < a.shippingBucket) {
+    if (new Decimal(a.totalCost).lte(new Decimal(b.totalCost).mul(0.995)))
+      return -1;
+    return 1;
+  }
+  // Otherwise, 0.01 cheaper wins
+  if (new Decimal(a.totalCost).lte(new Decimal(b.totalCost).sub(0.01)))
+    return -1;
+  if (new Decimal(b.totalCost).lte(new Decimal(a.totalCost).sub(0.01)))
+    return 1;
+  return 0;
 }
 
 function getProductSortedByBuyBoxRankFreeShippingAlgo(
-  net32Products: Net32AlgoProductWithFreeShipping[],
+  net32Products: Net32AlgoProductEnriched[],
   quantity: number,
-): Net32AlgoProductWithFreeShipping[] {
+): Net32AlgoProductWrapper[] {
   const productInfos = net32Products.map((prod) => {
-    const unitPrice = getHighestPriceBreakLessThanOrEqualTo(
-      prod,
-      quantity,
-    ).unitPrice;
+    const unitPrice = prod.bestPrice
+      ? prod.bestPrice
+      : new Decimal(
+          getHighestPriceBreakLessThanOrEqualTo(prod, quantity).unitPrice,
+        );
     return {
       product: prod,
-      price: getTotalCostFreeShippingOverride(
+      totalCost: getTotalCostFreeShippingOverride(
         unitPrice,
         quantity,
         prod.freeShipping,
         prod.standardShipping,
       ),
+      unitPrice,
       hasBadge: prod.badgeId > 0 && prod.badgeName !== undefined,
       shippingBucket: getShippingBucket(prod.shippingTime),
-    };
+    } as Net32AlgoProductWrapper;
   });
-  const sortedProducts = sortedBasedOnByBoxRules(productInfos);
-  return sortedProducts.map(
-    (x) => x.product,
-  ) as Net32AlgoProductWithFreeShipping[];
+  const sortedProducts = productInfos.sort((a, b) =>
+    sortBasedOnBuyBoxRulesV2(a, b),
+  );
+  return sortedProducts;
 }
 
 export function getTotalCostForQuantityWithUnitPriceOverride(
@@ -868,20 +904,27 @@ function getProductsSortedByBuyBoxRank(
 ): Net32AlgoProduct[] {
   // Prepare info for all products
   const productInfos = net32Products.map((prod) => {
+    const highestPriceBreak = getHighestPriceBreakLessThanOrEqualTo(
+      prod,
+      quantity,
+    );
     return {
       product: prod,
-      price: getTotalCostForQuantity(prod, quantity),
+      unitPrice: new Decimal(highestPriceBreak.unitPrice),
+      totalCost: getTotalCostForQuantity(prod, quantity),
       hasBadge: hasBadge(prod),
       shippingBucket: getShippingBucket(prod.shippingTime),
     };
   });
 
-  const sortedProducts = sortedBasedOnByBoxRules(productInfos);
+  const sortedProducts = productInfos.sort((a, b) =>
+    sortBasedOnBuyBoxRulesV2(a, b),
+  );
   return sortedProducts.map((x) => x.product);
 }
 
 export function getTotalCostFreeShippingOverride(
-  unitPrice: number,
+  unitPrice: number | Decimal,
   quantity: number,
   freeShipping: boolean,
   standardShipping: number,
