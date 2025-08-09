@@ -9,14 +9,8 @@ import * as feedHelper from "../../utility/feed-helper";
 import * as mongoHelper from "../../utility/mongo/db-helper";
 import * as sqlHelper from "../../utility/mysql/mysql-helper";
 import { ProductDetailsListItem } from "../../utility/mysql/mySql-mapper";
-import { insertV2AlgoExecution } from "../../utility/mysql/v2-algo-execution";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
-import { getShippingThreshold } from "../../utility/reprice-algo/v2/shipping-threshold";
-import {
-  getAllOwnVendorIds,
-  getInternalProducts,
-} from "../../utility/reprice-algo/v2/utility";
-import { repriceProductV3 } from "../../utility/reprice-algo/v2/v2";
+import { repriceProductV2Wrapper } from "../../utility/reprice-algo/v2/wrapper";
 import * as requestGenerator from "../../utility/request-generator";
 import { getContextCronId, proceedNext } from "./shared";
 
@@ -73,26 +67,7 @@ export async function manualRepriceHandler(
       cronIdForScraping,
       seqString,
     );
-    const v2AlgoResult = repriceProductV3(
-      parseInt(mpid, 10),
-      net32resp.data.map((p) => ({
-        ...p,
-        vendorId: parseInt(p.vendorId as string),
-        freeShippingThreshold: getShippingThreshold(
-          parseInt(p.vendorId as string),
-        ),
-      })),
-      getInternalProducts(prod, prioritySequence),
-      getAllOwnVendorIds(),
-    );
-    await insertV2AlgoExecution({
-      scrape_product_id: prod.productIdentifier,
-      time: new Date(),
-      chain_of_thought_html: Buffer.from(v2AlgoResult.html),
-      comment:
-        v2AlgoResult.priceSolutions[0]?.solutionId || "No solution found",
-      mp_id: prod.mpId,
-    });
+    await repriceProductV2Wrapper(net32resp.data, prod, prioritySequence);
     for (let idx = 0; idx < prioritySequence.length; idx++) {
       const proceedNextVendor = proceedNext(prod!, prioritySequence[idx].value);
       const isVendorActivated = (prod as any)[prioritySequence[idx].value]

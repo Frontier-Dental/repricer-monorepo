@@ -20,7 +20,8 @@ import {
   getAllOwnVendorNames,
   getInternalProducts,
 } from "../../utility/reprice-algo/v2/utility";
-import { repriceProductV3 } from "../../utility/reprice-algo/v2/v2";
+import { repriceProductV2 } from "../../utility/reprice-algo/v2/v2_algorithm";
+import { findOrCreateV2AlgoSettingsForVendors } from "../../utility/mysql/v2-algo-settings";
 
 export async function v2AlgoTest(
   req: Request<{ mpid: string }, { products: Net32Product[] }, any, any>,
@@ -62,22 +63,21 @@ export async function v2AlgoTest(
     }),
   );
 
-  // let results: RepriceModel[] = [];
+  const vendorSettings = await findOrCreateV2AlgoSettingsForVendors(
+    parseInt(mpid, 10),
+    internalProducts
+      .filter(
+        (x) =>
+          !productsWith422Presence.find(
+            (y) => y.ownVendorId === x.ownVendorId && y.is422,
+          ),
+      )
+      .map((x) => x.ownVendorId),
+  );
 
-  // for (const priority of prioritySequenceFiltered) {
-  //   const result = await repriceProduct(
-  //     mpid,
-  //     net32Products,
-  //     internalProducts.find(
-  //       (x) => x.ownVendorName === priority.name,
-  //     ) as unknown as FrontierProduct,
-  //     priority.name,
-  //   );
-  //   if (result) {
-  //     results.push(result.cronResponse.repriceData);
-  //   }
-  // }
-  const { html } = repriceProductV3(
+  console.log(vendorSettings);
+
+  const { html } = repriceProductV2(
     parseInt(mpid, 10),
     net32Products.map((p) => ({
       ...p,
@@ -87,6 +87,7 @@ export async function v2AlgoTest(
     })) as Net32AlgoProduct[],
     productsWith422Presence.filter((x) => !x.is422),
     getAllOwnVendorIds(),
+    vendorSettings, // vendorSettings - not needed for testing
     productsWith422Presence.filter((x) => x.is422),
   );
 

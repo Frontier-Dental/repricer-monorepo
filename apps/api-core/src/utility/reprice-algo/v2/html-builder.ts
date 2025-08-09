@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { applicationConfig } from "../../config";
+import { V2AlgoSettingsData } from "../../mysql/v2-algo-settings";
 import {
   InternalProduct,
   Net32AlgoProduct,
@@ -15,7 +16,7 @@ import {
   hasBadge,
   Net32AlgoSolution,
   Net32AlgoSolutionWithCombination,
-} from "./v2";
+} from "./v2_algorithm";
 
 export function createHtmlFileContent(
   mpId: number,
@@ -25,6 +26,7 @@ export function createHtmlFileContent(
   beforeLadders: { quantity: number; ladder: Net32AlgoProduct[] }[],
   unavailableInternalProducts?: InternalProduct[],
   invalidInitialSolutions?: Net32AlgoSolutionWithCombination[],
+  vendorSettings?: V2AlgoSettingsData[],
 ) {
   // Get net32url from the first internalProduct, if present
   const net32url = internalProducts[0]?.net32url;
@@ -39,6 +41,11 @@ export function createHtmlFileContent(
   const unavailableInternalProductsTable = unavailableInternalProducts
     ? buildInternalProductsTable(unavailableInternalProducts, net32Products)
     : "<p>Unavailable products were not supplied.</p>";
+
+  // Build vendor settings table
+  const vendorSettingsTable = vendorSettings
+    ? buildVendorSettingsTable(vendorSettings)
+    : "<p>Vendor settings were not supplied.</p>";
 
   // --- Build sections for each quantity ---
   let newAlgoSections = "";
@@ -95,6 +102,8 @@ export function createHtmlFileContent(
     ${availableInternalProductsTable}
     <h2>Unavailable Internal Products (In 422)</h2>
     ${unavailableInternalProductsTable}
+    <h2>Vendor Settings</h2>
+    ${vendorSettingsTable}
         ${newAlgoSections}
     <h2>net32Products (JSON)</h2>
     <pre>${JSON.stringify(net32Products, null, 2)}</pre>
@@ -485,4 +494,101 @@ function buildSourceCombinationsTable(
     </thead>
     <tbody>${rows}</tbody>
   </table><div><i>Shows the source combination used for this solution. Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT).</i></div>`;
+}
+
+function buildVendorSettingsTable(vendorSettings: V2AlgoSettingsData[]) {
+  if (!vendorSettings || vendorSettings.length === 0) {
+    return "<p>No vendor settings available</p>";
+  }
+
+  // Get all unique vendor IDs and create header
+  const vendorIds = [...new Set(vendorSettings.map((s) => s.vendor_id))].sort(
+    (a, b) => a - b,
+  );
+  const headerColumns = vendorIds
+    .map((vendorId) => {
+      const vendorName = VendorNameLookup[vendorId] || `Vendor ${vendorId}`;
+      return `<th>${vendorName}</th>`;
+    })
+    .join("");
+
+  // Define all settings fields to show as rows
+  const settingsFields: Array<{
+    key: keyof Omit<V2AlgoSettingsData, "id" | "mp_id" | "vendor_id">;
+    label: string;
+  }> = [
+    {
+      key: "suppress_price_break_if_Q1_not_updated",
+      label: "Suppress Price Break if Q1 Not Updated",
+    },
+    { key: "suppress_price_break", label: "Suppress Price Break" },
+    {
+      key: "compete_on_price_break_only",
+      label: "Compete on Price Break Only",
+    },
+    { key: "up_down", label: "Up/Down" },
+    { key: "badge_indicator", label: "Badge Indicator" },
+    { key: "execution_priority", label: "Execution Priority" },
+    { key: "reprice_up_percentage", label: "Reprice Up Percentage" },
+    { key: "compare_q2_with_q1", label: "Compare Q2 with Q1" },
+    { key: "compete_with_all_vendors", label: "Compete with All Vendors" },
+    {
+      key: "reprice_up_badge_percentage",
+      label: "Reprice Up Badge Percentage",
+    },
+    { key: "sister_vendor_ids", label: "Sister Vendor IDs" },
+    { key: "exclude_vendors", label: "Exclude Vendors" },
+    { key: "inactive_vendor_id", label: "Inactive Vendor ID" },
+    { key: "handling_time_group", label: "Handling Time Group" },
+    { key: "keep_position", label: "Keep Position" },
+    {
+      key: "inventory_competition_threshold",
+      label: "Inventory Competition Threshold",
+    },
+    { key: "reprice_down_percentage", label: "Reprice Down Percentage" },
+    {
+      key: "reprice_down_badge_percentage",
+      label: "Reprice Down Badge Percentage",
+    },
+    { key: "floor_compete_with_next", label: "Floor Compete with Next" },
+    { key: "ignore_phantom_q_break", label: "Ignore Phantom Q Break" },
+    {
+      key: "compete_with_own_quantity_0",
+      label: "Compete with Own Quantity 0",
+    },
+    { key: "not_cheapest", label: "Not Cheapest" },
+  ];
+
+  // Create rows for each setting
+  const rows = settingsFields
+    .map((field) => {
+      const cells = vendorIds
+        .map((vendorId) => {
+          const setting = vendorSettings.find((s) => s.vendor_id === vendorId);
+          const value = setting ? setting[field.key] : "-";
+
+          // Format the value based on type
+          let displayValue: string;
+          if (typeof value === "boolean") {
+            displayValue = value ? "Yes" : "No";
+          } else if (typeof value === "string" && value === "") {
+            displayValue = "-";
+          } else {
+            displayValue = String(value);
+          }
+
+          return `<td>${displayValue}</td>`;
+        })
+        .join("");
+
+      return `<tr><td><strong>${field.label}</strong></td>${cells}</tr>`;
+    })
+    .join("");
+
+  return `<table>
+    <thead>
+      <tr><th>Setting</th>${headerColumns}</tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table><div><i>Each row represents a setting, and each column represents a vendor. Empty values are shown as '-'.</i></div>`;
 }

@@ -14,13 +14,10 @@ import { applicationConfig } from "../config";
 import * as mongoHelper from "../mongo/db-helper";
 import * as sqlHelper from "../mysql/mysql-helper";
 import { ProductDetailsListItem } from "../mysql/mySql-mapper";
-import { insertV2AlgoExecution } from "../mysql/v2-algo-execution";
 import * as requestGenerator from "../request-generator";
 import { repriceProduct } from "./v1/algo-v1";
-import { getShippingThreshold } from "./v2/shipping-threshold";
 import { VendorName } from "./v2/types";
-import { getAllOwnVendorIds, getInternalProducts } from "./v2/utility";
-import { repriceProductV3 } from "./v2/v2";
+import { repriceProductV2Wrapper } from "./v2/wrapper";
 
 export async function Execute(
   keyGen: string,
@@ -96,28 +93,7 @@ export async function Execute(
           cronIdForScraping,
           seqString,
         );
-        const v2AlgoResult = repriceProductV3(
-          prod.mpId,
-          net32resp.data.map((p) => ({
-            ...p,
-            vendorId: parseInt(p.vendorId as string),
-            freeShippingThreshold: getShippingThreshold(
-              parseInt(p.vendorId as string),
-            ),
-          })),
-          getInternalProducts(prod, prioritySequence),
-          getAllOwnVendorIds(),
-        );
-        const stringRepresentation =
-          v2AlgoResult.priceSolutions[0]?.solutionId.toString() ||
-          "No solution found";
-        await insertV2AlgoExecution({
-          scrape_product_id: prod.productIdentifier,
-          time: new Date(),
-          chain_of_thought_html: Buffer.from(v2AlgoResult.html),
-          comment: stringRepresentation,
-          mp_id: prod.mpId,
-        });
+        await repriceProductV2Wrapper(net32resp.data, prod, prioritySequence);
         for (let idx = 0; idx < prioritySequence.length; idx++) {
           const proceedNextVendor = proceedNext(
             prod,

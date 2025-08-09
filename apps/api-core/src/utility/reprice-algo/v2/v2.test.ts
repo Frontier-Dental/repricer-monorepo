@@ -1,5 +1,5 @@
 import { InternalProduct, Net32AlgoProduct } from "./types";
-import { repriceProductV3 } from "./v2";
+import { repriceProductV2 } from "./v2_algorithm";
 
 describe("repriceProductV3 basic", () => {
   it("should run without throwing for basic mock data", () => {

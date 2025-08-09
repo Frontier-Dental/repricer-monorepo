@@ -1,6 +1,7 @@
 import { Decimal } from "decimal.js";
 import _ from "lodash";
 import { Net32PriceBreak } from "../../../types/net32";
+import { V2AlgoSettingsData } from "../../mysql/v2-algo-settings";
 import { createHtmlFileContent } from "./html-builder";
 import {
   InternalProduct,
@@ -27,11 +28,12 @@ export interface Net32AlgoSolutionWithCombination {
   postSolutionInsertBoard: Net32AlgoProductEnriched[];
 }
 
-export function repriceProductV3(
+export function repriceProductV2(
   mpId: number,
   rawNet32Products: Net32AlgoProduct[],
   availableInternalProducts: InternalProduct[],
   ownVendorIds: number[],
+  vendorSettings?: V2AlgoSettingsData[],
   unavailableInternalProducts?: InternalProduct[],
 ) {
   const validProducts = rawNet32Products
@@ -207,6 +209,7 @@ export function repriceProductV3(
     beforeLadders,
     unavailableInternalProducts,
     allInvalidInitialSolutions,
+    vendorSettings,
   );
   return { html, priceSolutions: solutions };
 }
