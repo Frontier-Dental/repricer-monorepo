@@ -6,8 +6,18 @@ import { ArrowUpDown, ExternalLink, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/data-table";
+import { DataTableToolbar } from "@/components/data-table-toolbar";
 import type { ProductDetails } from "@/types/product";
 import { toast } from "sonner";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
+  VisibilityState,
+} from "@tanstack/react-table";
 
 // Utility to format "ago" time
 function timeAgo(date: Date | string | number) {
@@ -171,6 +181,24 @@ export function ProductsPage() {
   const [cacheTimestamp, setCacheTimestamp] = useState<string | null>(null);
   const [isCached, setIsCached] = useState<boolean>(false);
   const [isRemoving422, setIsRemoving422] = useState(false);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+  // Create table instance for the toolbar
+  const table = useReactTable({
+    data,
+    columns,
+    state: {
+      sorting,
+      columnVisibility,
+    },
+    onSortingChange: setSorting,
+    onColumnVisibilityChange: setColumnVisibility,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
   const fetchProducts = async (ignoreCache: boolean = false) => {
     setIsLoading(true);
@@ -265,6 +293,7 @@ export function ProductsPage() {
           </div>
         </div>
       </div>
+      <DataTableToolbar table={table} />
       <DataTable columns={columns} data={data} isLoading={isLoading} />
       {error && (
         <div className="mt-4 rounded-md bg-red-50 p-4">

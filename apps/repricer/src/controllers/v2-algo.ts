@@ -1,6 +1,10 @@
 import { getAllProductDetails } from "../services/algo_v2/products";
 import { Request, Response } from "express";
 import { getAlgoResultsWithExecutionData } from "../services/algo_v2/results";
+import {
+  getV2AlgoSettingsByMpId,
+  updateV2AlgoSettings as updateSettings,
+} from "../services/algo_v2/settings";
 
 // Cache for products data
 let productsCache: any[] | null = null;
@@ -64,4 +68,70 @@ export async function getAlgoResultsWithExecution(
     mp_id: mpIdNumber,
     count: results.length,
   });
+}
+
+export async function getV2AlgoSettings(
+  req: Request<{ mpId: string }>,
+  res: Response,
+) {
+  try {
+    const { mpId } = req.params;
+    const mpIdNumber = parseInt(mpId, 10);
+
+    if (isNaN(mpIdNumber)) {
+      return res.status(400).json({
+        error: "Invalid mp_id parameter. Must be a valid number.",
+      });
+    }
+
+    const settings = await getV2AlgoSettingsByMpId(mpIdNumber);
+
+    return res.json({
+      data: settings,
+      mp_id: mpIdNumber,
+      count: settings.length,
+    });
+  } catch (error) {
+    console.error("Error fetching v2 algo settings:", error);
+    return res.status(500).json({
+      error: "Internal server error while fetching algo settings",
+    });
+  }
+}
+
+export async function updateV2AlgoSettings(
+  req: Request<{ mpId: string }>,
+  res: Response,
+) {
+  try {
+    const { mpId } = req.params;
+    const mpIdNumber = parseInt(mpId, 10);
+    const settingsData = req.body;
+
+    if (isNaN(mpIdNumber)) {
+      return res.status(400).json({
+        error: "Invalid mp_id parameter. Must be a valid number.",
+      });
+    }
+
+    // Ensure mp_id matches the URL parameter
+    if (settingsData.mp_id !== mpIdNumber) {
+      return res.status(400).json({
+        error: "mp_id in body must match mp_id in URL",
+      });
+    }
+
+    const updatedId: number = await updateSettings(settingsData);
+
+    return res.json({
+      success: true,
+      id: updatedId,
+      message: "Settings updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating v2 algo settings:", error);
+    return res.status(500).json({
+      error: "Internal server error while updating algo settings",
+    });
+  }
 }

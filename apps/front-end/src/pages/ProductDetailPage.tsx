@@ -8,6 +8,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
+import { V2AlgoSettingsForm } from "@/components/V2AlgoSettingsForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Cross2Icon } from "@radix-ui/react-icons";
 
 interface V2AlgoResultWithExecution {
   // From v2_algo_results table
@@ -30,8 +34,43 @@ interface V2AlgoResultWithExecution {
   chain_of_thought_html: string | null;
 }
 
+interface V2AlgoSettings {
+  id?: number;
+  mp_id: number;
+  vendor_id: number;
+  suppress_price_break_if_Q1_not_updated: boolean;
+  suppress_price_break: boolean;
+  compete_on_price_break_only: boolean;
+  up_down: "UP" | "UP/DOWN" | "DOWN";
+  badge_indicator: "ALL" | "BADGE";
+  execution_priority: number;
+  reprice_up_percentage: number;
+  compare_q2_with_q1: boolean;
+  compete_with_all_vendors: boolean;
+  reprice_up_badge_percentage: number;
+  sister_vendor_ids: string;
+  exclude_vendors: string;
+  inactive_vendor_id: string;
+  handling_time_group: boolean;
+  keep_position: boolean;
+  inventory_competition_threshold: number;
+  reprice_down_percentage: number;
+  max_price: number;
+  floor_price: number;
+  reprice_down_badge_percentage: number;
+  floor_compete_with_next: boolean;
+  compete_with_own_quantity_0: boolean;
+  not_cheapest: boolean;
+}
+
 interface AlgoApiResponse {
   data: V2AlgoResultWithExecution[];
+  mp_id: number;
+  count: number;
+}
+
+interface SettingsApiResponse {
+  data: V2AlgoSettings[];
   mp_id: number;
   count: number;
 }
@@ -40,8 +79,12 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const { mpId } = useParams({ from: "/product/$mpId" });
   const [algoData, setAlgoData] = useState<V2AlgoResultWithExecution[]>([]);
+  const [settingsData, setSettingsData] = useState<V2AlgoSettings[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [vendorFilter, setVendorFilter] = useState("");
+  const [jobFilter, setJobFilter] = useState("");
 
   const handleBack = () => {
     navigate({ to: "/" });
@@ -80,8 +123,41 @@ export function ProductDetailPage() {
     }
   };
 
+  const fetchSettings = async () => {
+    setIsLoadingSettings(true);
+    try {
+      const response = await fetch(`/v2-algo/get_algo_settings/${mpId}`);
+      if (response.ok) {
+        const result: SettingsApiResponse = await response.json();
+        setSettingsData(result.data || []);
+      }
+    } catch (err) {
+      console.error("Error fetching settings:", err);
+    } finally {
+      setIsLoadingSettings(false);
+    }
+  };
+
+  const handleSaveSettings = async (settings: V2AlgoSettings) => {
+    const response = await fetch(`/v2-algo/update_algo_settings/${mpId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(settings),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to save settings");
+    }
+
+    // Refresh settings data
+    await fetchSettings();
+  };
+
   useEffect(() => {
     fetchData();
+    fetchSettings();
   }, [mpId]);
 
   const formatDate = (dateString: string) => {
@@ -130,6 +206,13 @@ export function ProductDetailPage() {
     }
   };
 
+  // Get unique vendors from algo data
+  const uniqueVendors = Array.from(
+    new Map(
+      algoData.map((item) => [item.vendor_id, item.vendor_name]),
+    ).entries(),
+  ).sort((a, b) => a[1].localeCompare(b[1]));
+
   // Define columns for the DataTable
   const columns: ColumnDef<V2AlgoResultWithExecution>[] = [
     {
@@ -175,26 +258,6 @@ export function ProductDetailPage() {
       cell: ({ row }) => {
         const result = row.getValue("result") as string;
         return <Badge variant={getResultBadgeVariant(result)}>{result}</Badge>;
-      },
-    },
-    {
-      accessorKey: "triggered_by_vendor",
-      header: "Triggered By",
-      cell: ({ row }) => {
-        const triggeredBy = row.getValue("triggered_by_vendor") as
-          | string
-          | null;
-        return (
-          <div className="text-sm">
-            {triggeredBy ? (
-              <Badge variant="outline" className="text-xs">
-                {triggeredBy}
-              </Badge>
-            ) : (
-              <span className="text-muted-foreground">N/A</span>
-            )}
-          </div>
-        );
       },
     },
     {
@@ -294,6 +357,16 @@ export function ProductDetailPage() {
     },
   ];
 
+  const filteredAlgoData = algoData.filter((item) => {
+    const matchesVendor = item.vendor_name
+      .toLowerCase()
+      .includes(vendorFilter.toLowerCase());
+    const matchesJobId = item.job_id
+      .toLowerCase()
+      .includes(jobFilter.toLowerCase());
+    return matchesVendor && matchesJobId;
+  });
+
   if (error) {
     return (
       <div className="container mx-auto py-10">
@@ -370,17 +443,108 @@ export function ProductDetailPage() {
           </CardContent>
         </Card>
       ) : (
-        <DataTable
-          columns={columns}
-          data={algoData}
-          isLoading={isLoading}
-          initialSorting={[
-            {
-              id: "run_time",
-              desc: true,
-            },
-          ]}
-        />
+        <>
+          {/* Filters */}
+          <div className="flex items-center space-x-2 pb-4">
+            <Input
+              id="vendor-filter"
+              placeholder="Filter by vendor..."
+              value={vendorFilter}
+              onChange={(e) => setVendorFilter(e.target.value)}
+              className="h-8 w-[150px] lg:w-[200px]"
+            />
+            <Input
+              id="job-filter"
+              placeholder="Filter by job ID..."
+              value={jobFilter}
+              onChange={(e) => setJobFilter(e.target.value)}
+              className="h-8 w-[150px] lg:w-[200px]"
+            />
+            {(vendorFilter || jobFilter) && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setVendorFilter("");
+                  setJobFilter("");
+                }}
+                className="h-8 px-2 lg:px-3"
+              >
+                Reset
+                <Cross2Icon className="ml-2 h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          <DataTable
+            columns={columns}
+            data={filteredAlgoData}
+            isLoading={isLoading}
+            initialSorting={[
+              {
+                id: "run_time",
+                desc: true,
+              },
+            ]}
+          />
+        </>
+      )}
+
+      {/* Vendor Settings Section */}
+      <div className="mt-12 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold">
+              Vendor Algorithm Settings
+            </h2>
+            <p className="text-muted-foreground mt-1">
+              Configure algorithm settings for each vendor
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={fetchSettings}
+            disabled={isLoadingSettings}
+          >
+            {isLoadingSettings ? "Loading..." : "Refresh Settings"}
+          </Button>
+        </div>
+      </div>
+
+      {uniqueVendors.length > 0 && (
+        <Tabs
+          defaultValue={uniqueVendors[0]?.[0]?.toString()}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-5">
+            {uniqueVendors.map(([vendorId, vendorName]) => (
+              <TabsTrigger key={vendorId} value={vendorId.toString()}>
+                {vendorName}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {uniqueVendors.map(([vendorId, vendorName]) => {
+            const vendorSettings = settingsData.find(
+              (s) => s.vendor_id === vendorId,
+            );
+
+            return (
+              <TabsContent
+                key={vendorId}
+                value={vendorId.toString()}
+                className="mt-6"
+              >
+                <V2AlgoSettingsForm
+                  mpId={parseInt(mpId)}
+                  vendorId={vendorId}
+                  vendorName={vendorName}
+                  initialSettings={vendorSettings}
+                  onSave={handleSaveSettings}
+                />
+              </TabsContent>
+            );
+          })}
+        </Tabs>
       )}
     </div>
   );
