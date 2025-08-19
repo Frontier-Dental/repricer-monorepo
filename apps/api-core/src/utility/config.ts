@@ -110,7 +110,8 @@ const envSchema = z.object({
     .string()
     .toLowerCase()
     .transform(JSON.parse as any)
-    .pipe(z.boolean()),
+    .pipe(z.boolean())
+    .default(false),
   REPRICER_UI_CACHE_CLEAR: z
     .string()
     .default("http://localhost:3000/cache/flush_repricer_all"),
