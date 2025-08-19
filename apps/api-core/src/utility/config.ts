@@ -106,7 +106,7 @@ const envSchema = z.object({
   NET32_PROXY_PASSWORD: z.string().optional(),
   ROTATING_PROXY_URL: z.string().default("gate.smartproxy.com"),
   // Cron/URLs
-  START_CRONS_ON_STARTUP: z
+  SCHEDULE_CRONS_ON_STARTUP: z
     .string()
     .toLowerCase()
     .transform(JSON.parse as any)
@@ -205,6 +205,13 @@ const envSchema = z.object({
     .pipe(z.boolean())
     .default(false),
   WRITE_HTML_CHAIN_OF_THOUGHT_TO_FILE: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(false),
+  V2_ALGO_HTML_FILE_EXPIRY_HOURS: z.coerce.number().default(24),
+  RUN_CRONS_ON_INIT: z
     .string()
     .toLowerCase()
     .transform(JSON.parse as any)

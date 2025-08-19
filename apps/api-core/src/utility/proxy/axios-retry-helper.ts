@@ -14,7 +14,7 @@ axiosRetry(axios, {
     return retryCount * applicationConfig.RETRY_INTERVAL; // time interval between retries
   },
   retryCondition: (error: any) => {
-    console.log(`REPRICER CORE : ERROR (WITH RETRY) : ${error} `);
+    console.log(`ERROR (WITH RETRY) : ${error} `);
     return (
       error.response.status == 503 ||
       error.response.status == 500 ||
@@ -114,10 +114,8 @@ export async function getScrappingResponse(
     );
     const retryEligible = await retryConditionForAxios(error);
     if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible == true) {
-      console.log(`REPRICER CORE : ERROR (WITH RETRY) : ${error} `);
-      console.log(
-        `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
-      );
+      console.log(`ERROR (WITH RETRY) : ${error} `);
+      console.log(`RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`);
       await delay(applicationConfig.RETRY_INTERVAL);
       return await getScrappingResponse(
         _url,
@@ -208,10 +206,8 @@ export async function getScrapingBeeResponse(
     );
     const retryEligible = await retryCondition(error);
     if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible == true) {
-      console.log(`REPRICER CORE : ERROR (WITH RETRY) : ${error} `);
-      console.log(
-        `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
-      );
+      console.log(`ERROR (WITH RETRY) : ${error} `);
+      console.log(`RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`);
       await delay(applicationConfig.RETRY_INTERVAL);
       return await getScrapingBeeResponse(
         _url,

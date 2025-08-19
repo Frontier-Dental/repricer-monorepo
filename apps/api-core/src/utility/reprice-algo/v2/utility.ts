@@ -1,10 +1,5 @@
 import { ProductDetailsListItem } from "../../mysql/mySql-mapper";
-import {
-  PriceSolutions,
-  PriceSolutionWithRanks,
-  VendorId,
-  VendorName,
-} from "./types";
+import { AlgoResult, PriceSolutions, VendorId, VendorName } from "./types";
 
 export function getAllOwnVendorNames() {
   return [
@@ -14,6 +9,14 @@ export function getAllOwnVendorNames() {
     { name: VendorName.TOPDENT },
     { name: VendorName.FIRSTDENT },
   ];
+}
+
+export function isChangeResult(result: AlgoResult) {
+  return (
+    result === AlgoResult.CHANGE_UP ||
+    result === AlgoResult.CHANGE_DOWN ||
+    result === AlgoResult.CHANGE_NEW
+  );
 }
 
 export function getAllOwnVendorIds() {
@@ -43,9 +46,9 @@ export function getPriceSolutionStringRepresentation(
 
 export function getInternalProducts(
   prod: ProductDetailsListItem,
-  prioritySequence: { name: string }[],
+  allVendors: { name: string }[],
 ) {
-  return prioritySequence
+  return allVendors
     .map((x, i) => {
       switch (x.name) {
         case VendorName.FRONTIER:

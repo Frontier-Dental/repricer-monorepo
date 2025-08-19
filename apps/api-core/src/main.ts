@@ -28,6 +28,7 @@ import { startSlowCronLogic } from "./controller/slow-cron-group/start";
 import { applicationConfig, validateConfig } from "./utility/config";
 import { errorMiddleware } from "./utility/error-middleware";
 import packageJson from "../package.json";
+import { startV2AlgoHtmlFileCleanupCron } from "./services/algo-html-file-cleanup";
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
@@ -88,8 +89,8 @@ nodeApp.use(errorMiddleware);
 nodeApp.listen(port, async () => {
   console.log(`Application server running on post ${port} at ${new Date()}`);
   console.log(`Application version: ${packageJson.version}`);
-  if (applicationConfig.START_CRONS_ON_STARTUP) {
-    console.log("Starting enabled crons on startup");
+  if (applicationConfig.SCHEDULE_CRONS_ON_STARTUP) {
+    console.log("Scheduling enabled crons on startup");
     await startAllCronLogic();
     await start422Logic();
     await startFilterCronLogic();
@@ -97,6 +98,7 @@ nodeApp.listen(port, async () => {
     await startProxySwitchCronLogic();
     await startProxySwitchResetCronLogic();
     await startScrapeCronLogic();
+    startV2AlgoHtmlFileCleanupCron();
     console.log("All enabled crons started on startup");
   }
   if (!fs.existsSync("./activeProducts.json")) {

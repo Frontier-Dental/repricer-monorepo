@@ -2,9 +2,10 @@ import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
 
 export interface V2AlgoExecutionData {
   scrape_product_id: number;
-  time: Date;
+  created_at: Date;
+  expires_at: Date;
   chain_of_thought_html: Buffer;
-  comment: string;
+  vendor_id: number;
   mp_id: number;
 }
 
@@ -15,9 +16,10 @@ export async function insertV2AlgoExecution(
 
   const [insertId] = await knex("v2_algo_execution").insert({
     scrape_product_id: data.scrape_product_id,
-    time: data.time,
+    created_at: data.created_at,
+    expires_at: data.expires_at,
     chain_of_thought_html: data.chain_of_thought_html,
-    comment: data.comment,
+    vendor_id: data.vendor_id,
     mp_id: data.mp_id,
   });
 

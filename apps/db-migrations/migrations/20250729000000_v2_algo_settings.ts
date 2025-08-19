@@ -38,12 +38,13 @@ export async function up(knex: Knex): Promise<void> {
       .notNullable()
       .defaultTo(1);
     table.decimal("reprice_down_percentage", 10, 2).notNullable().defaultTo(-1);
+    table.decimal("floor_price", 10, 2).notNullable().defaultTo(0);
+    table.decimal("max_price", 10, 2).notNullable().defaultTo(99999999.99);
     table
       .decimal("reprice_down_badge_percentage", 10, 2)
       .notNullable()
       .defaultTo(-1);
     table.boolean("floor_compete_with_next").notNullable().defaultTo(false);
-    table.boolean("ignore_phantom_q_break").notNullable().defaultTo(false);
     table.boolean("compete_with_own_quantity_0").notNullable().defaultTo(false);
     table.boolean("not_cheapest").notNullable().defaultTo(false);
   });

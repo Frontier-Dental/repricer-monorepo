@@ -134,10 +134,8 @@ async function handleRetry(
   const retryEligible = await retryCondition(error);
 
   if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible) {
-    console.log(`REPRICER CORE : ERROR (WITH RETRY) : ${error} `);
-    console.log(
-      `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
-    );
+    console.log(`ERROR (WITH RETRY) : ${error} `);
+    console.log(`RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`);
 
     await delay(applicationConfig.RETRY_INTERVAL);
     return await fetchData(

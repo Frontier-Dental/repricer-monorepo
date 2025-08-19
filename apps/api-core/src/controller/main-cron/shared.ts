@@ -219,8 +219,8 @@ export function setCronAndStart(
       }
     },
     {
-      scheduled: cronSetting.CronStatus ? true : false,
-      // runOnInit: cronSetting.CronStatus ? true : false,
+      scheduled: cronSetting.CronStatus,
+      runOnInit: cronSetting.CronStatus && applicationConfig.RUN_CRONS_ON_INIT,
     },
   );
   if (cronSetting.CronStatus) {

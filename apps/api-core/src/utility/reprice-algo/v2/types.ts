@@ -3,7 +3,7 @@ import { Decimal } from "decimal.js";
 
 export interface PriceSolutionWithRanks {
   vendorPrices: { vendorId: number; price: number }[];
-  combination: Net32AlgoProductEnriched[];
+  combination: Net32AlgoProductWithBestPrice[];
   totalRank: number;
   buyBoxRankFreeShipping: number;
   buyBoxRankIncludingShipping: number;
@@ -26,6 +26,7 @@ export interface Net32AlgoProduct {
   inStock: boolean;
   standardShipping: number;
   shippingTime: number;
+  inventory: number;
   badgeId: number;
   badgeName: string | null;
   priceBreaks: Net32PriceBreak[];
@@ -33,17 +34,21 @@ export interface Net32AlgoProduct {
   freeShippingThreshold: number;
 }
 
-export interface Net32AlgoProductEnriched extends Net32AlgoProduct {
-  freeShipping: boolean;
-  bestPrice?: Decimal;
+export interface Net32AlgoProductWithBestPrice extends Net32AlgoProduct {
+  bestPrice?: Decimal | null;
 }
 
 export interface Net32AlgoProductWrapper {
-  product: Net32AlgoProductEnriched;
+  product: Net32AlgoProduct | Net32AlgoProductWithBestPrice;
   totalCost: Decimal;
-  unitPrice: Decimal;
+  effectiveUnitPrice: Decimal;
   hasBadge: boolean;
   shippingBucket: number;
+}
+
+export interface Net32AlgoProductWrapperWithBuyBoxRank
+  extends Net32AlgoProductWrapper {
+  buyBoxRank: number;
 }
 
 export interface InternalProduct {
@@ -71,6 +76,25 @@ export enum VendorName {
   TRADENT = "TRADENT",
   FIRSTDENT = "FIRSTDENT",
   TOPDENT = "TOPDENT",
+}
+
+export enum Net32PriceUpdateResult {
+  OK = "OK",
+  UNKNOWN_ERROR = "UNKNOWN_ERROR",
+  ERROR_422 = "ERROR_422",
+}
+
+export enum AlgoResult {
+  CHANGE_UP = "CHANGE #UP",
+  CHANGE_NEW = "CHANGE #NEW",
+  CHANGE_DOWN = "CHANGE #DOWN",
+  IGNORE_FLOOR = "IGNORE #FLOOR",
+  IGNORE_LOWEST = "IGNORE #LOWEST",
+  IGNORE_SISTER_LOWEST = "IGNORE #SISTER_LOWEST",
+  IGNORE_SETTINGS = "IGNORE #SETTINGS",
+  IGNORE_SAME_PRICE = "IGNORE #SAME_PRICE",
+  IGNORE_UNNECESSARY_QBREAK = "IGNORE #UNNECESSARY_QBREAK",
+  ERROR = "ERROR",
 }
 
 export enum VendorId {

@@ -4,10 +4,11 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable("v2_algo_execution", (table) => {
     table.increments("id").primary();
     table.integer("scrape_product_id").notNullable();
-    table.datetime("time").notNullable();
+    table.datetime("created_at").notNullable();
+    table.datetime("expires_at").notNullable();
     table.specificType("chain_of_thought_html", "MEDIUMBLOB").notNullable();
-    table.text("comment").notNullable();
     table.integer("mp_id").notNullable().index();
+    table.integer("vendor_id").notNullable().index();
 
     // Foreign key constraint
     table

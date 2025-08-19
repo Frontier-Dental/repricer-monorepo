@@ -1,9 +1,9 @@
 import { InternalProduct, Net32AlgoProduct } from "./types";
-import { repriceProductV2 } from "./v2_algorithm";
+import { repriceProductV2 } from "./algorithm";
 
 describe("repriceProductV3 basic", () => {
   it("should run without throwing for basic mock data", () => {
-    const net32Products: Net32AlgoProduct[] = [
+    const net32Products = [
       {
         vendorId: 1,
         inStock: true,

@@ -21,9 +21,10 @@ export interface V2AlgoSettingsData {
   keep_position: boolean;
   inventory_competition_threshold: number;
   reprice_down_percentage: number;
+  max_price: number;
+  floor_price: number;
   reprice_down_badge_percentage: number;
   floor_compete_with_next: boolean;
-  ignore_phantom_q_break: boolean;
   compete_with_own_quantity_0: boolean;
   not_cheapest: boolean;
 }
@@ -65,11 +66,12 @@ export async function createV2AlgoSettings(
     inactive_vendor_id: "",
     handling_time_group: false,
     keep_position: false,
+    max_price: 99999999.99,
+    floor_price: 0,
     inventory_competition_threshold: 1,
     reprice_down_percentage: -1,
     reprice_down_badge_percentage: -1,
     floor_compete_with_next: false,
-    ignore_phantom_q_break: false,
     compete_with_own_quantity_0: false,
     not_cheapest: false,
   };
@@ -102,6 +104,5 @@ export async function findOrCreateV2AlgoSettingsForVendors(
   const settingsPromises = vendorIds.map((vendorId) =>
     findOrCreateV2AlgoSettings(mpId, vendorId),
   );
-
   return Promise.all(settingsPromises);
 }

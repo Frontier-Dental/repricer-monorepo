@@ -33,11 +33,27 @@ const config: { [key: string]: Knex.Config } = {
   development: {
     client: "mysql2",
     connection: getConnectionConfig("development"),
+    migrations: {
+      directory: "./migrations",
+      extension: "ts",
+    },
+    seeds: {
+      directory: "./seeds",
+      extension: "ts",
+    },
   },
 
   production: {
     client: "mysql2",
     connection: getConnectionConfig("production"),
+    migrations: {
+      directory: "./migrations",
+      extension: "ts",
+    },
+    seeds: {
+      directory: "./seeds",
+      extension: "ts",
+    },
   },
 };
 
