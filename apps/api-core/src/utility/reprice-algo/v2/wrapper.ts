@@ -2,6 +2,7 @@ import { Net32Product } from "../../../types/net32";
 import { insertV2AlgoExecution } from "../../mysql/v2-algo-execution";
 import { findOrCreateV2AlgoSettingsForVendors } from "../../mysql/v2-algo-settings";
 import { findTinyproxyConfigsByVendorIds } from "../../mysql/tinyproxy-configs";
+import { insertMultipleV2AlgoResults } from "../../mysql/v2-algo-results";
 import { getShippingThreshold } from "./shipping-threshold";
 import { Net32PriceUpdateResult, VendorName } from "./types";
 import {
@@ -9,20 +10,32 @@ import {
   getInternalProducts,
   isChangeResult,
 } from "./utility";
-import { Net32AlgoSolutionWithResult, repriceProductV2 } from "./algorithm";
+import {
+  Net32AlgoSolutionWithHttpResult,
+  Net32AlgoSolutionWithQBreakValid,
+  Net32AlgoSolutionWithResult,
+  repriceProductV2,
+} from "./algorithm";
 import { updateProductInfo } from "../../net32/reprice";
 import { applicationConfig } from "../../config";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosProxyConfig, AxiosRequestConfig } from "axios";
 import moment from "moment";
+import { v4 } from "uuid";
 
 export async function repriceProductV2Wrapper(
   net32Products: Net32Product[],
   prod: any,
   vendorNameList: { name: VendorName }[],
+  cronName: string,
+  jobId: string,
 ) {
   const mpId = prod.mpId;
   const internalProducts = getInternalProducts(prod, vendorNameList);
 
+  if (internalProducts.length === 0) {
+    console.log(`No vendors configured found for product ${prod.mpId}`);
+    return;
+  }
   // Get all unique vendor IDs from net32Products
   const allVendorIds = internalProducts.map((p) => p.ownVendorId);
 
@@ -49,6 +62,31 @@ export async function repriceProductV2Wrapper(
   const uniqueVendorIds = [
     ...new Set(solutionResults.map((s) => s.vendor.vendorId)),
   ];
+
+  const finalResults = await updatePricesIfNecessary(
+    solutionResults,
+    prod.vpCode,
+    applicationConfig.IS_DEV,
+  );
+
+  // Store algorithm results in the new v2_algo_results table
+  const algoResults = finalResults.map((result) => ({
+    job_id: jobId,
+    suggested_price: result.suggestedPrice,
+    comment: result.comment,
+    triggered_by_vendor: result.triggeredByVendor,
+    result: result.result,
+    quantity: result.quantity,
+    vendor_id: result.vendor.vendorId,
+    mp_id: mpId,
+    cron_name: cronName,
+    run_time: moment().toDate(),
+    q_break_valid: result.qBreakValid,
+    price_update_result: result.httpResult,
+  }));
+
+  await insertMultipleV2AlgoResults(algoResults);
+
   // We only need to store one html file per vendor, not per quantity.
   await Promise.all(
     uniqueVendorIds.map(async (vendorId) => {
@@ -68,22 +106,20 @@ export async function repriceProductV2Wrapper(
         chain_of_thought_html: Buffer.from(result.html),
         mp_id: prod.mpId,
         vendor_id: result.vendor.vendorId,
+        job_id: jobId,
       });
     }),
   );
 
-  return updatePricesIfNecessary(
-    solutionResults,
-    prod.vpCode,
-    applicationConfig.IS_DEV,
-  );
+  console.log(`Algorithm execution completed with job ID: ${jobId}`);
+  return finalResults;
 }
 
 async function updatePricesIfNecessary(
-  solutionResults: Net32AlgoSolutionWithResult[],
+  solutionResults: Net32AlgoSolutionWithQBreakValid[],
   vpCode: string,
   isDev: boolean,
-) {
+): Promise<Net32AlgoSolutionWithHttpResult[]> {
   // Execute price updates using the correct proxy configuration for each vendor
   // Get unique vendor IDs from the final solution
   const solutionVendorIds = [
@@ -113,7 +149,7 @@ async function updatePricesIfNecessary(
 
       try {
         // Create axios config with proxy settings
-        const axiosConfig = {
+        const axiosConfig: AxiosRequestConfig = {
           proxy: {
             host: proxyConfig.ip,
             port: proxyConfig.port,
@@ -160,6 +196,7 @@ async function updatePricesIfNecessary(
   );
   return solutionResults.map((s) => ({
     ...s,
-    priceUpdateResult: results.find((r) => r.vendorId === s.vendor.vendorId),
+    httpResult: results.find((r) => r.vendorId === s.vendor.vendorId)
+      ?.updateResult,
   }));
 }

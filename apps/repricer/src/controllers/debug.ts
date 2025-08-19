@@ -4,9 +4,9 @@ import fs from "fs";
 import { Parser } from "json2csv";
 import _ from "lodash";
 import moment from "moment";
-import * as httpMiddleware from "../middleware/http-wrappers";
-import * as mongoMiddleware from "../middleware/mongo";
-import * as mySqlMiddleware from "../middleware/mysql";
+import * as httpMiddleware from "../utility/http-wrappers";
+import * as mongoMiddleware from "../services/mongo";
+import * as mySqlMiddleware from "../services/mysql";
 import { applicationConfig } from "../utility/config";
 
 export async function ResetSlowCronUpdate(req: Request, res: Response) {

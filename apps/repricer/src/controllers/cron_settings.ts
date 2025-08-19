@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { Request, Response } from "express";
-import * as mongoMiddleware from "../middleware/mongo";
-import * as httpMiddleware from "../middleware/http-wrappers";
+import * as mongoMiddleware from "../services/mongo";
+import * as httpMiddleware from "../utility/http-wrappers";
 import * as SessionHelper from "../utility/session-helper";
 import * as MapperHelper from "../middleware/mapper-helper";
 import cronSettings from "../models/cron-settings";

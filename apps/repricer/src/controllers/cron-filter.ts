@@ -1,8 +1,8 @@
 import _ from "lodash";
 import moment from "moment";
 import excelJs from "exceljs";
-import * as mongoMiddleware from "../middleware/mongo";
-import * as httpMiddleware from "../middleware/http-wrappers";
+import * as mongoMiddleware from "../services/mongo";
+import * as httpMiddleware from "../utility/http-wrappers";
 import cronSettings from "../models/cron-settings";
 import cronMapping from "../../resources/cronMapping.json";
 import * as SessionHelper from "../utility/session-helper";

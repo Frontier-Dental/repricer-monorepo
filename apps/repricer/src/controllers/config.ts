@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import _ from "lodash";
 import moment from "moment";
 import * as SessionHelper from "../utility/session-helper";
-import * as mongoMiddleware from "../middleware/mongo";
+import * as mongoMiddleware from "../services/mongo";
 
 export async function GetConfigSetup(req: Request, res: Response) {
   let configItems = await mongoMiddleware.GetConfigurations(false);

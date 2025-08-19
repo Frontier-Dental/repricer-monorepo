@@ -10,6 +10,7 @@ import * as sqlHelper from "../../utility/mysql/mysql-helper";
 import { ProductDetailsListItem } from "../../utility/mysql/mySql-mapper";
 import { getAllOwnVendorNames } from "../../utility/reprice-algo/v2/utility";
 import { repriceProductV2Wrapper } from "../../utility/reprice-algo/v2/wrapper";
+import { v4 } from "uuid";
 
 export async function v2AlgoTest(
   req: Request<{ mpid: string }, { products: Net32Product[] }, any, any>,
@@ -36,6 +37,8 @@ export async function v2AlgoTest(
     net32Products,
     prod,
     getAllOwnVendorNames(),
+    "MANUAL",
+    v4(),
   );
 
   res.status(StatusCodes.OK).json(results);

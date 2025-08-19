@@ -2,10 +2,10 @@ import excelJs from "exceljs";
 import { Request, Response } from "express";
 import _ from "lodash";
 import moment from "moment";
-import * as httpHelper from "../middleware/http-wrappers";
+import * as httpHelper from "../utility/http-wrappers";
 import * as mapper from "../middleware/mapper-helper";
-import * as mongoMiddleware from "../middleware/mongo";
-import * as mySqlHelper from "../middleware/mysql";
+import * as mongoMiddleware from "../services/mongo";
+import * as mySqlHelper from "../services/mysql";
 import * as productHelper from "../middleware/product-helper";
 import apiMapping from "../../resources/apiMapping.json";
 import badgeResx from "../../resources/badgeIndicatorMapping.json";
@@ -13,6 +13,7 @@ import handlingTimeGroupResx from "../../resources/HandlingTimeFilterMapping.jso
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
 import axios from "axios";
+import { getAllProductDetails } from "../services/algo_v2/products";
 
 export async function showAllProducts(req: Request, res: Response) {
   let pgNo = 0;
@@ -60,94 +61,6 @@ export async function showAllProducts(req: Request, res: Response) {
     tags: req.query.tags || "",
     groupName: "Products",
     userRole: (req as any).session.users_id?.userRole,
-  });
-}
-
-// Cache for products data
-let productsCache: any[] | null = null;
-let productsCacheTime: Date | null = null;
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
-
-export async function getAllProductsForCron(
-  req: Request<{ cronName: string }>,
-  res: Response,
-) {
-  const ignoreCache = req.query.ignoreCache === "true";
-  const now = new Date();
-
-  // Check if we should use cache
-  if (!ignoreCache && productsCache && productsCacheTime) {
-    const cacheAge = now.getTime() - productsCacheTime.getTime();
-    if (cacheAge < CACHE_DURATION) {
-      console.log(
-        `Returning cached products data (age: ${Math.round(cacheAge / 1000)}s)`,
-      );
-      return res.json({
-        data: productsCache,
-        cacheTimestamp: productsCacheTime.toISOString(),
-        isCached: true,
-      });
-    }
-  }
-
-  console.log("Fetching fresh products data from database...");
-  const result = await mySqlHelper.getAllProductDetails();
-
-  // Update cache
-  productsCache = result;
-  productsCacheTime = now;
-
-  console.log(`Updated products cache with ${result.length} records`);
-  return res.json({
-    data: result,
-    cacheTimestamp: now.toISOString(),
-    isCached: false,
-  });
-}
-
-export async function getV2AlgoExecutionByProductId(
-  req: Request<{ mpId: string }>,
-  res: Response,
-) {
-  const mpId = parseInt(req.params.mpId);
-  if (isNaN(mpId)) {
-    return res.status(400).json({
-      status: false,
-      message: "Invalid product ID. Must be a valid number.",
-    });
-  }
-
-  const algoResult = await mySqlHelper.getV2AlgoExecutionByScrapeProductId(
-    mpId,
-    10,
-  );
-
-  return res.json({
-    status: true,
-    data: algoResult,
-    message: `Found ${algoResult.length} algorithm execution records for MP ID ${mpId}`,
-  });
-}
-
-export async function getProductDetailsByProductId(
-  req: Request<{ mpId: string }>,
-  res: Response,
-) {
-  const mpId = parseInt(req.params.mpId);
-  if (isNaN(mpId)) {
-    return res.status(400).json({
-      status: false,
-      message: "Invalid product ID. Must be a valid number.",
-    });
-  }
-
-  const productDetails =
-    await mySqlHelper.getFullProductDetailsByProductId(mpId);
-
-  return res.json({
-    status: true,
-    data: productDetails,
-    message: `Found ${productDetails.length} product detail records for MP ID ${mpId}`,
   });
 }
 

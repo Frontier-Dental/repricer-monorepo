@@ -1,7 +1,7 @@
 import excelJs from "exceljs";
 import { Request, Response } from "express";
 import * as mapperHelper from "../middleware/mapper-helper";
-import * as mongoHelper from "../middleware/mongo";
+import * as mongoHelper from "../services/mongo";
 import { applicationConfig } from "../utility/config";
 
 export const GetFailedRepriceDetails = async (req: Request, res: Response) => {

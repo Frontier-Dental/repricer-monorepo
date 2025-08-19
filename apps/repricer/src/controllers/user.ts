@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import passwordGenerator from "generate-password";
-import * as httpMiddleware from "../middleware/http-wrappers";
-import * as mongoMiddleware from "../middleware/mongo";
+import * as httpMiddleware from "../utility/http-wrappers";
+import * as mongoMiddleware from "../services/mongo";
 import { applicationConfig } from "../utility/config";
 
 export async function homePageHandler(req: Request, res: Response) {

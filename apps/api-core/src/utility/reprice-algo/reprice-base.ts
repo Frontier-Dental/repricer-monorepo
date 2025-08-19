@@ -20,7 +20,7 @@ import { VendorName } from "./v2/types";
 import { repriceProductV2Wrapper } from "./v2/wrapper";
 
 export async function Execute(
-  keyGen: string,
+  jobId: string,
   productList: any[],
   cronInitTime: any,
   cronSetting: any,
@@ -29,7 +29,7 @@ export async function Execute(
   const cronId = cronSetting != null ? cronSetting.CronId : "N/A";
   let cronLogs: any = {
     time: cronInitTime,
-    keyGen: keyGen,
+    keyGen: jobId,
     logs: [],
     cronId: cronId,
     totalCount: productList.length,
@@ -47,7 +47,7 @@ export async function Execute(
     productList.length,
     "In-Progress",
     cronSetting != null ? cronSetting.CronId : "OVERRIDE_RUN",
-    keyGen,
+    jobId,
   );
   await initCronStatus(_contextCronStatus);
   let eligibleCount = 0;
@@ -93,7 +93,13 @@ export async function Execute(
           cronIdForScraping,
           seqString,
         );
-        await repriceProductV2Wrapper(net32resp.data, prod, prioritySequence);
+        await repriceProductV2Wrapper(
+          net32resp.data,
+          prod,
+          prioritySequence,
+          cronSetting ? cronSetting.CronName : "MANUAL",
+          jobId,
+        );
         for (let idx = 0; idx < prioritySequence.length; idx++) {
           const proceedNextVendor = proceedNext(
             prod,
@@ -106,7 +112,7 @@ export async function Execute(
               prod,
               cronSetting,
               isOverrideRun,
-              keyGen,
+              jobId,
               prioritySequence,
               idx,
             );

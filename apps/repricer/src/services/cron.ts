@@ -1,4 +1,4 @@
-import * as httpMiddleware from "./http-wrappers";
+import * as httpMiddleware from "../utility/http-wrappers";
 
 export const CreateUpdatePriceCron = async (listOfRequests: any) => {
   for (const _rq of listOfRequests) {

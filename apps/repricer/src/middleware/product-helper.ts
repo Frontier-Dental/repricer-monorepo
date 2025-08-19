@@ -1,6 +1,6 @@
 import _ from "lodash";
-import * as mongoMiddleware from "./mongo";
-import * as httpHelper from "./http-wrappers";
+import * as mongoMiddleware from "../services/mongo";
+import * as httpHelper from "../utility/http-wrappers";
 import apiMapping from "../../resources/apiMapping.json";
 import ProductModel from "../models/product";
 import { applicationConfig } from "../utility/config";

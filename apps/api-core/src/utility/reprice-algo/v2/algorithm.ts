@@ -38,7 +38,7 @@ export interface Net32AlgoSolution {
   vendorSettings: V2AlgoSettingsData;
   postSolutionInsertBoard: Net32AlgoProductWithBestPrice[];
   competitorsAndSistersFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
-  rawTriggeredByVendor?: number | string;
+  rawTriggeredByVendor?: string;
 }
 
 export interface Net32AlgoSolutionWithResult
@@ -46,7 +46,7 @@ export interface Net32AlgoSolutionWithResult
   result: AlgoResult;
   comment: string;
   suggestedPrice: number | null;
-  triggeredByVendor: number | string | null;
+  triggeredByVendor: string | null;
 }
 
 export interface Net32AlgoSolutionWithQBreakValid
@@ -56,7 +56,7 @@ export interface Net32AlgoSolutionWithQBreakValid
 
 export interface Net32AlgoSolutionWithHttpResult
   extends Net32AlgoSolutionWithQBreakValid {
-  httpResult: Net32PriceUpdateResult;
+  httpResult?: Net32PriceUpdateResult;
 }
 
 export interface Net32AlgoSolutionWithCombination {
@@ -80,9 +80,7 @@ export function repriceProductV2(
   ownVendorIds: number[],
   vendorSettings: V2AlgoSettingsData[],
 ) {
-  const net32url = availableInternalProducts.find(
-    (p) => p.ownVendorId === ownVendorIds[0],
-  )?.net32url;
+  const net32url = availableInternalProducts[0].net32url;
   if (!net32url) {
     throw new Error("No net32url found for own vendor");
   }
@@ -510,7 +508,7 @@ function getOptimalSolutionForBoard(
   solution: Net32AlgoProductWithBestPrice;
   competitorsFromViewOfOwnVendorRanked: Net32AlgoProduct[];
   competitorsAndSistersFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
-  rawTriggeredByVendor?: number | string;
+  rawTriggeredByVendor?: string;
 } {
   const sisterVendors = ourVendors.filter(
     (v) => v.vendorId !== ownVendor.vendorId,
@@ -630,7 +628,6 @@ function getBestCompetitivePrice(
 
     if (undercutUnitPrice.gt(ownVendorSetting.max_price)) {
       return {
-        triggeredByVendor: "MAX",
         price: new Decimal(ownVendorSetting.max_price),
       };
     }
@@ -658,7 +655,7 @@ function getBestCompetitivePrice(
       resultingTotalRoundUp.lte(undercutTotalCost)
     ) {
       return {
-        triggeredByVendor: competitor.vendorId,
+        triggeredByVendor: `${competitor.vendorId}-${competitor.vendorName}`,
         price: undercutUnitPriceRoundUp,
       };
     } else if (
@@ -667,7 +664,7 @@ function getBestCompetitivePrice(
       resultingTotalRoundDown.lte(undercutTotalCost)
     ) {
       return {
-        triggeredByVendor: competitor.vendorId,
+        triggeredByVendor: `${competitor.vendorId}-${competitor.vendorName}`,
         price: undercutUnitPriceRoundDown,
       };
     }

@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import moment from "moment";
-import * as httpMiddleware from "../middleware/http-wrappers";
-import * as mongoMiddleware from "../middleware/mongo";
+import * as httpMiddleware from "../utility/http-wrappers";
+import * as mongoMiddleware from "../services/mongo";
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
 

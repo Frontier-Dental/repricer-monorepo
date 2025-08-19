@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import * as mongoMiddleware from "./mongo";
+import * as mongoMiddleware from "../services/mongo";
 
 export default (req: Request, res: Response, next: NextFunction) => {
   if (req.headers.oprtype == "DEV_SYNC") {

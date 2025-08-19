@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import * as httpMiddleware from "../middleware/http-wrappers";
+import * as httpMiddleware from "../utility/http-wrappers";
 import { applicationConfig } from "../utility/config";
 
 export async function onInit(req: Request, res: Response) {

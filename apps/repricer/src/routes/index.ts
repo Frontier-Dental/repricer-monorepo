@@ -23,11 +23,13 @@ import { storageSenseController } from "../controllers/storage-sense";
 import { notifyController } from "../controllers/notify-controller";
 import { ipHealthController } from "../controllers/ip-health";
 import { monitorSenseController } from "../controllers/monitor-sense";
+import { v2AlgoRouter } from "./v2-algo";
 
 const router = Express.Router();
 
 router.use(userRouter);
 router.use("/productV2", productV2Router);
+router.use("/v2-algo", v2AlgoRouter);
 router.use("/masteritem", productRouter);
 router.use("/dashboard", cronLogsRouter);
 router.use("/help", helpRouter);

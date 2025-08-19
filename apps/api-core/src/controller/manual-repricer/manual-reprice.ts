@@ -13,6 +13,7 @@ import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import { repriceProductV2Wrapper } from "../../utility/reprice-algo/v2/wrapper";
 import * as requestGenerator from "../../utility/request-generator";
 import { getContextCronId, proceedNext } from "./shared";
+import { v4 } from "uuid";
 
 export async function manualRepriceHandler(
   req: Request<{ id: string }, any, any, { isV2Algorithm: string }>,
@@ -20,7 +21,7 @@ export async function manualRepriceHandler(
 ): Promise<any> {
   const mpid = req.params.id;
   console.log(`Running Manual Reprice for ${mpid} at ${new Date()}`);
-  const keyGen = "N/A";
+  const jobId = v4();
   const isOverrideRun = false;
   let prod: ProductDetailsListItem | undefined =
     await sqlHelper.GetItemListById(mpid);
@@ -39,7 +40,7 @@ export async function manualRepriceHandler(
   );
   let cronLogs = {
     time: new Date(),
-    keyGen: keyGen,
+    keyGen: jobId,
     logs: [] as any[],
     cronId: contextCronId,
     type: "Manual",
@@ -67,7 +68,13 @@ export async function manualRepriceHandler(
       cronIdForScraping,
       seqString,
     );
-    await repriceProductV2Wrapper(net32resp.data, prod, prioritySequence);
+    await repriceProductV2Wrapper(
+      net32resp.data,
+      prod,
+      prioritySequence,
+      "MANUAL",
+      jobId,
+    );
     for (let idx = 0; idx < prioritySequence.length; idx++) {
       const proceedNextVendor = proceedNext(prod!, prioritySequence[idx].value);
       const isVendorActivated = (prod as any)[prioritySequence[idx].value]
@@ -78,7 +85,7 @@ export async function manualRepriceHandler(
           prod!,
           cronSetting!,
           isOverrideRun,
-          keyGen,
+          jobId,
           prioritySequence,
           idx,
           true,

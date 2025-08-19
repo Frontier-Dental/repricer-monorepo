@@ -1,5 +1,5 @@
 import _ from "lodash";
-import * as sqlMiddleware from "./mysql";
+import * as sqlMiddleware from "../services/mysql";
 import * as mapperHelper from "./mapper-helper";
 
 export async function GetRunInfo(

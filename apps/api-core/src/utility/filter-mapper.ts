@@ -3,7 +3,7 @@ import moment from "moment";
 import * as dbHelper from "./mongo/db-helper";
 import * as sqlHelper from "./mysql/mysql-helper";
 import { FilterCronLog } from "../model/filter-cron-log";
-import { Generate } from "./key-gen-helper";
+import { Generate } from "./job-id-helper";
 import { RepriceRenewedMessageEnum } from "../model/reprice-renewed-message";
 import { FilterCronItem } from "../model/filter-cron-log";
 import { GetInfo } from "../model/global-param";

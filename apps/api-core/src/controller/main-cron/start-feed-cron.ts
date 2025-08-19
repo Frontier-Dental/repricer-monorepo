@@ -6,7 +6,7 @@ import CronStatusModel from "../../model/cron-status";
 import { ErrorItemModel } from "../../model/error-item";
 import * as axiosHelper from "../../utility/axios-helper";
 import { applicationConfig } from "../../utility/config";
-import * as keyGenHelper from "../../utility/key-gen-helper";
+import * as keyGenHelper from "../../utility/job-id-helper";
 import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import {
   calculateNextCronTime,

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import _ from "lodash";
-import * as mongoMiddleware from "../middleware/mongo";
+import * as mongoMiddleware from "../services/mongo";
 import { applicationConfig } from "../utility/config";
 
 export async function showLogHistory(req: Request, res: Response) {

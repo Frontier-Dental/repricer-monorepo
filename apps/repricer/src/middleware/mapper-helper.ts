@@ -4,7 +4,7 @@ import badgeResx from "../../resources/badgeIndicatorMapping.json";
 import FailedReport from "../models/failed-report";
 import moment from "moment";
 import LatestScrapeInfo from "../models/api-response/latest-scrape-info";
-import * as mySqlUtility from "./mysql";
+import * as mySqlUtility from "../services/mysql";
 import MySqlProduct from "../models/sql-models/mysql-product";
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";

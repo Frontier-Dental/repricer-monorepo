@@ -73,62 +73,6 @@ const columns: ColumnDef<ProductDetails>[] = [
     },
   },
   {
-    accessorKey: "ChannelName",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Channel
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => <div>{row.getValue("ChannelName")}</div>,
-  },
-  {
-    accessorKey: "ChannelId",
-    header: "Channel ID",
-    cell: ({ row }) => (
-      <div className="font-mono text-sm">{row.getValue("ChannelId")}</div>
-    ),
-  },
-  {
-    accessorKey: "UnitPrice",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Unit Price
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const price = row.getValue("UnitPrice") as string;
-      return <div className="font-medium">${price}</div>;
-    },
-  },
-  {
-    accessorKey: "FloorPrice",
-    header: "Floor Price",
-    cell: ({ row }) => {
-      const price = row.getValue("FloorPrice") as string;
-      return <div>${price}</div>;
-    },
-  },
-  {
-    accessorKey: "MaxPrice",
-    header: "Max Price",
-    cell: ({ row }) => {
-      const price = row.getValue("MaxPrice") as string;
-      return <div>${price}</div>;
-    },
-  },
-  {
     accessorKey: "Activated",
     header: "Status",
     cell: ({ row }) => {
@@ -177,94 +121,6 @@ const columns: ColumnDef<ProductDetails>[] = [
     },
   },
   {
-    accessorKey: "LowestVendor",
-    header: "Lowest Vendor",
-    cell: ({ row }) => (
-      <div className="max-w-[200px] truncate">
-        {row.getValue("LowestVendor")}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "LowestVendorPrice",
-    header: "Lowest Vendor Price",
-    cell: ({ row }) => (
-      <div className="font-mono text-sm">
-        {row.getValue("LowestVendorPrice")}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "LastExistingPrice",
-    header: "Last Existing Price",
-    cell: ({ row }) => (
-      <div className="font-mono text-sm">
-        {row.getValue("LastExistingPrice")}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "LastSuggestedPrice",
-    header: "Last Suggested Price",
-    cell: ({ row }) => (
-      <div className="font-mono text-sm">
-        {row.getValue("LastSuggestedPrice")}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "LastCronMessage",
-    header: "Last Cron Message",
-    cell: ({ row }) => {
-      const message = row.getValue("LastCronMessage") as string;
-      return <div className="max-w-[300px] truncate text-sm">{message}</div>;
-    },
-  },
-  {
-    accessorKey: "LastCronTime",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Last Cron Time
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const date = new Date(row.getValue("LastCronTime"));
-      return (
-        <div className="text-sm">
-          {date.toLocaleDateString()} {date.toLocaleTimeString()}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "LastUpdateTime",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Last Update Time
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const date = new Date(row.getValue("LastUpdateTime"));
-      return (
-        <div className="text-sm">
-          {date.toLocaleDateString()} {date.toLocaleTimeString()}
-        </div>
-      );
-    },
-  },
-  {
     accessorKey: "RegularCronName",
     enableColumnFilter: true,
     header: "Regular Cron",
@@ -279,20 +135,6 @@ const columns: ColumnDef<ProductDetails>[] = [
       <div className="font-mono text-sm">
         {row.getValue("LinkedScrapeOnlyCron")}
       </div>
-    ),
-  },
-  {
-    accessorKey: "ExecutionPriority",
-    header: "Execution Priority",
-    cell: ({ row }) => (
-      <div className="font-mono">{row.getValue("ExecutionPriority")}</div>
-    ),
-  },
-  {
-    accessorKey: "PriorityValue",
-    header: "Priority Value",
-    cell: ({ row }) => (
-      <div className="font-mono">{row.getValue("PriorityValue")}</div>
     ),
   },
   {
@@ -313,35 +155,6 @@ const columns: ColumnDef<ProductDetails>[] = [
         </div>
       );
     },
-  },
-  {
-    accessorKey: "UpdatedAt",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Updated At
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const date = new Date(row.getValue("UpdatedAt"));
-      return (
-        <div className="text-sm">
-          {date.toLocaleDateString()} {date.toLocaleTimeString()}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "UpdatedBy",
-    header: "Updated By",
-    cell: ({ row }) => (
-      <div className="text-sm">{row.getValue("UpdatedBy")}</div>
-    ),
   },
 ];
 
@@ -365,8 +178,8 @@ export function ProductsPage() {
 
     try {
       const url = ignoreCache
-        ? `/productV2/get_all_products_for_cron?ignoreCache=true`
-        : `/productV2/get_all_products_for_cron`;
+        ? `/v2-algo/get_all_products_for_cron?ignoreCache=true`
+        : `/v2-algo/get_all_products_for_cron`;
 
       const response = await fetch(url);
 

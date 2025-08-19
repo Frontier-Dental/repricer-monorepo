@@ -26,7 +26,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      "/productV2": {
+      "/v2-algo": {
         target: "http://localhost:3000",
         changeOrigin: true,
         secure: false,

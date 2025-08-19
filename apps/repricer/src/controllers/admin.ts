@@ -1,8 +1,8 @@
 import moment from "moment";
 import _ from "lodash";
-import * as mongoMiddleware from "../middleware/mongo";
+import * as mongoMiddleware from "../services/mongo";
 import * as cacheController from "./cache";
-import * as httpHelper from "../middleware/http-wrappers";
+import * as httpHelper from "../utility/http-wrappers";
 import * as SessionHelper from "../utility/session-helper";
 import { Request, Response } from "express";
 import { applicationConfig } from "../utility/config";

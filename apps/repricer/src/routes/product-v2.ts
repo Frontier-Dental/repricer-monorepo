@@ -54,15 +54,3 @@ productV2Router.get(
   productV2Controller.syncProductDetails,
 );
 productV2Router.post("/updateAllToMax", productV2Controller.updateToMax);
-productV2Router.get(
-  "/get_all_products_for_cron",
-  productV2Controller.getAllProductsForCron,
-);
-productV2Router.get(
-  "/v2_algo_execution/:mpId",
-  productV2Controller.getV2AlgoExecutionByProductId,
-);
-productV2Router.get(
-  "/product_details/:mpId",
-  productV2Controller.getProductDetailsByProductId,
-);

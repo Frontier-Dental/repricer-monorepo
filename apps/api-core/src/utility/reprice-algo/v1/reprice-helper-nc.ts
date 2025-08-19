@@ -168,7 +168,7 @@ export async function Reprice(
       nextIndex++;
     }
 
-    for (let i = nextIndex; i <= sortedPayload.length; i++) {
+    for (let i = nextIndex; i < sortedPayload.length; i++) {
       if (
         sortedPayload[i] &&
         _.includes(excludedVendors, sortedPayload[i].vendorId.toString())
@@ -322,7 +322,7 @@ export async function Reprice(
         //If Own vendor is 2nd Lowest
         if (sortedPayload[1] && sortedPayload[1].vendorId == $.VENDOR_ID) {
           let nextIndex = 2;
-          for (let i = nextIndex; i <= sortedPayload.length; i++) {
+          for (let i = nextIndex; i < sortedPayload.length; i++) {
             if (
               sortedPayload[i] &&
               (_.includes(
@@ -431,7 +431,7 @@ export async function Reprice(
           }
         } else if (sortedPayload[1]) {
           let nextIndex = 1;
-          for (let i = nextIndex; i <= sortedPayload.length; i++) {
+          for (let i = nextIndex; i < sortedPayload.length; i++) {
             if (
               sortedPayload[i] &&
               (_.includes(
@@ -1100,7 +1100,7 @@ export async function RepriceIndividualPriceBreak(
           sortedPayload[1].vendorId == $.VENDOR_ID
         ) {
           let nextIndex = 2;
-          for (let i = nextIndex; i <= sortedPayload.length; i++) {
+          for (let i = nextIndex; i < sortedPayload.length; i++) {
             if (
               sortedPayload[i] &&
               (_.includes(
@@ -1178,7 +1178,7 @@ export async function RepriceIndividualPriceBreak(
           }
         } else if (sortedPayload[1]) {
           let nextIndex = 1;
-          for (let i = nextIndex; i <= sortedPayload.length; i++) {
+          for (let i = nextIndex; i < sortedPayload.length; i++) {
             if (
               sortedPayload[i] &&
               (_.includes(

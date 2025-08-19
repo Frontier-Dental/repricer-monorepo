@@ -1,74 +1,45 @@
 "use client";
 
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { ArrowLeft, Download } from "lucide-react";
+import { ArrowLeft, Download, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/data-table";
+import type { ColumnDef } from "@tanstack/react-table";
 
-interface V2AlgoExecution {
+interface V2AlgoResultWithExecution {
+  // From v2_algo_results table
   id: number;
-  mp_id: number;
-  time: string;
-  chain_of_thought_html: string;
+  job_id: string;
+  suggested_price: number | null;
   comment: string;
-}
+  triggered_by_vendor: string | null;
+  result: string;
+  quantity: number;
+  vendor_id: number;
+  vendor_name: string; // New field for vendor name
+  mp_id: number;
+  cron_name: string;
+  run_time: string;
+  q_break_valid: boolean;
+  price_update_result: string | null;
 
-interface ProductDetail {
-  ProductIdentifier: number;
-  ProductId: number;
-  IsSlowActivated: boolean;
-  IsBadgeItem: boolean;
-  ChannelName: string;
-  Activated: boolean;
-  UnitPrice: number;
-  FloorPrice: number;
-  MaxPrice: number;
-  ChannelId: string;
-  LastCronTime: string;
-  LastUpdateTime: string;
-  LastCronMessage: string;
-  LowestVendor: string;
-  LowestVendorPrice: string;
-  LastExistingPrice: string;
-  LastSuggestedPrice: string;
-  ExecutionPriority: number;
-  LastCronRun: string;
-  BadgeIndicator: string;
-  BadgePercentage: number;
-  RepricingRule: number;
-  PriorityValue: number;
-  IsNCNeeded: boolean;
-  ScrapeOn: boolean;
-  AllowReprice: boolean;
+  // Only the HTML content from v2_algo_execution
+  chain_of_thought_html: string | null;
 }
 
 interface AlgoApiResponse {
-  status: boolean;
-  data: V2AlgoExecution[];
-  message: string;
-}
-
-interface ProductApiResponse {
-  status: boolean;
-  data: ProductDetail[];
-  message: string;
+  data: V2AlgoResultWithExecution[];
+  mp_id: number;
+  count: number;
 }
 
 export function ProductDetailPage() {
   const navigate = useNavigate();
   const { mpId } = useParams({ from: "/product/$mpId" });
-  const [algoData, setAlgoData] = useState<V2AlgoExecution[]>([]);
-  const [productData, setProductData] = useState<ProductDetail[]>([]);
+  const [algoData, setAlgoData] = useState<V2AlgoResultWithExecution[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,30 +59,18 @@ export function ProductDetailPage() {
     setError(null);
 
     try {
-      const [algoResponse, productResponse] = await Promise.all([
-        fetch(`/productV2/v2_algo_execution/${mpId}`),
-        fetch(`/productV2/product_details/${mpId}`),
-      ]);
+      const algoResponse = await fetch(
+        `/v2-algo/get_algo_results_with_execution/${mpId}`,
+      );
 
       if (!algoResponse.ok) {
         throw new Error(`HTTP error! status: ${algoResponse.status}`);
       }
 
-      if (!productResponse.ok) {
-        throw new Error(`HTTP error! status: ${productResponse.status}`);
-      }
-
       const algoResult: AlgoApiResponse = await algoResponse.json();
-      const productResult: ProductApiResponse = await productResponse.json();
 
-      if (algoResult.status && productResult.status) {
-        setAlgoData(algoResult.data);
-        setProductData(productResult.data);
-      } else {
-        const errorMessage = algoResult.status
-          ? productResult.message
-          : algoResult.message;
-        setError(errorMessage);
+      if (algoResponse.status) {
+        setAlgoData(algoResult.data || []);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -141,6 +100,199 @@ export function ProductDetailPage() {
     if (price === null || price === undefined || price === "") return "N/A";
     return `$${parseFloat(price.toString()).toFixed(2)}`;
   };
+
+  const getResultBadgeVariant = (result: string) => {
+    switch (result?.toUpperCase()) {
+      case "CHANGE_DOWN":
+        return "destructive";
+      case "CHANGE_UP":
+        return "default";
+      case "IGNORE_FLOOR":
+        return "secondary";
+      case "IGNORE_MAX":
+        return "secondary";
+      default:
+        return "outline";
+    }
+  };
+
+  const getPriceUpdateResultBadgeVariant = (result: string | null) => {
+    if (!result) return "secondary";
+    switch (result.toUpperCase()) {
+      case "SUCCESS":
+        return "default";
+      case "FAILED":
+        return "destructive";
+      case "PENDING":
+        return "secondary";
+      default:
+        return "outline";
+    }
+  };
+
+  // Define columns for the DataTable
+  const columns: ColumnDef<V2AlgoResultWithExecution>[] = [
+    {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => (
+        <div className="font-medium">#{row.getValue("id")}</div>
+      ),
+    },
+    {
+      accessorKey: "job_id",
+      header: "Job ID",
+      cell: ({ row }) => (
+        <div className="font-mono text-xs">{row.getValue("job_id")}</div>
+      ),
+    },
+    {
+      accessorKey: "vendor_id",
+      header: "Vendor ID",
+      cell: ({ row }) => <div>{row.getValue("vendor_id")}</div>,
+    },
+    {
+      accessorKey: "vendor_name",
+      header: "Vendor Name",
+      cell: ({ row }) => <div>{row.getValue("vendor_name")}</div>,
+    },
+    {
+      accessorKey: "quantity",
+      header: "Quantity",
+      cell: ({ row }) => <div>{row.getValue("quantity")}</div>,
+    },
+    {
+      accessorKey: "suggested_price",
+      header: "Suggested Price",
+      cell: ({ row }) => {
+        const price = row.getValue("suggested_price") as number | null;
+        return <div>{price ? formatPrice(price) : "N/A"}</div>;
+      },
+    },
+    {
+      accessorKey: "result",
+      header: "Result",
+      cell: ({ row }) => {
+        const result = row.getValue("result") as string;
+        return <Badge variant={getResultBadgeVariant(result)}>{result}</Badge>;
+      },
+    },
+    {
+      accessorKey: "triggered_by_vendor",
+      header: "Triggered By",
+      cell: ({ row }) => {
+        const triggeredBy = row.getValue("triggered_by_vendor") as
+          | string
+          | null;
+        return (
+          <div className="text-sm">
+            {triggeredBy ? (
+              <Badge variant="outline" className="text-xs">
+                {triggeredBy}
+              </Badge>
+            ) : (
+              <span className="text-muted-foreground">N/A</span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "price_update_result",
+      header: "Price Update Result",
+      cell: ({ row }) => {
+        const result = row.getValue("price_update_result") as string | null;
+        return (
+          <Badge variant={getPriceUpdateResultBadgeVariant(result)}>
+            {result || "N/A"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "q_break_valid",
+      header: "Q-Break Valid",
+      cell: ({ row }) => {
+        const isValid = row.getValue("q_break_valid") as boolean;
+        return (
+          <Badge variant={isValid ? "default" : "secondary"}>
+            {isValid ? "Valid" : "Invalid"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "cron_name",
+      header: "Cron Name",
+      cell: ({ row }) => (
+        <div className="text-sm">{row.getValue("cron_name")}</div>
+      ),
+    },
+    {
+      accessorKey: "run_time",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Run Time
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const runTime = row.getValue("run_time") as string;
+        return (
+          <div className="flex flex-col">
+            <span className="font-medium">{formatDate(runTime)}</span>
+          </div>
+        );
+      },
+      sortingFn: "datetime",
+    },
+    {
+      accessorKey: "comment",
+      header: "Comment",
+      cell: ({ row }) => {
+        const comment = row.getValue("comment") as string;
+        return (
+          <div className="max-w-md">
+            <p className="text-sm">{truncateComment(comment)}</p>
+            {comment && comment.length > 100 && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {comment.length} characters total
+              </p>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const record = row.original;
+        return (
+          <div>
+            {record.chain_of_thought_html ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openHtmlInNewTab(record.chain_of_thought_html!)}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                View HTML
+              </Button>
+            ) : (
+              <span className="text-xs text-muted-foreground">No HTML</span>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
 
   if (error) {
     return (
@@ -194,204 +346,41 @@ export function ProductDetailPage() {
 
       <div className="mb-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">Product Information</h2>
+          <div>
+            <h2 className="text-2xl font-semibold">
+              Algorithm Results & Execution History
+            </h2>
+            <p className="text-muted-foreground mt-1">
+              {algoData.length} algorithm execution
+              {algoData.length !== 1 ? "s" : ""} found
+            </p>
+          </div>
           <Button variant="outline" onClick={fetchData} disabled={isLoading}>
             {isLoading ? "Loading..." : "Refresh"}
           </Button>
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="space-y-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="flex items-center space-x-4 animate-pulse"
-                  >
-                    <div className="h-4 bg-gray-200 rounded w-16"></div>
-                    <div className="h-4 bg-gray-200 rounded w-32"></div>
-                    <div className="h-4 bg-gray-200 rounded w-48"></div>
-                    <div className="h-4 bg-gray-200 rounded w-24"></div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      {algoData.length === 0 && !isLoading ? (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground">
+              No algorithm results found for this product.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="space-y-8">
-          {/* Product Details Table */}
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-semibold mb-4">Product Details</h3>
-              {productData.length === 0 ? (
-                <p className="text-center text-muted-foreground">
-                  No product details found for this product.
-                </p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Channel</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Scrape</TableHead>
-                      <TableHead>Reprice</TableHead>
-                      <TableHead>Unit Price</TableHead>
-                      <TableHead>Floor Price</TableHead>
-                      <TableHead>Max Price</TableHead>
-                      <TableHead>Channel ID</TableHead>
-                      <TableHead>Last Cron Message</TableHead>
-                      <TableHead>Last Cron Time</TableHead>
-                      <TableHead>Last Update</TableHead>
-                      <TableHead>Lowest Vendor</TableHead>
-                      <TableHead>Priority</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {productData.map((product, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">
-                          {product.ChannelName}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              product.Activated ? "default" : "secondary"
-                            }
-                          >
-                            {product.Activated ? "Active" : "Inactive"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={product.ScrapeOn ? "default" : "secondary"}
-                          >
-                            {product.ScrapeOn ? "On" : "Off"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              product.AllowReprice ? "default" : "secondary"
-                            }
-                          >
-                            {product.AllowReprice ? "On" : "Off"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatPrice(product.UnitPrice)}</TableCell>
-                        <TableCell>{formatPrice(product.FloorPrice)}</TableCell>
-                        <TableCell>{formatPrice(product.MaxPrice)}</TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {product.ChannelId || "N/A"}
-                        </TableCell>
-                        <TableCell className="max-w-[200px]">
-                          <div
-                            className="truncate"
-                            title={product.LastCronMessage || "N/A"}
-                          >
-                            {product.LastCronMessage || "N/A"}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {formatDate(product.LastCronTime)}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {formatDate(product.LastUpdateTime)}
-                        </TableCell>
-                        <TableCell className="max-w-[150px] truncate">
-                          {product.LowestVendor || "N/A"}
-                        </TableCell>
-                        <TableCell>
-                          {product.ExecutionPriority || "N/A"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Algorithm Executions Table */}
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="text-lg font-semibold mb-4">
-                Algorithm Execution History
-              </h3>
-              {algoData.length === 0 ? (
-                <p className="text-center text-muted-foreground">
-                  No algorithm execution records found for this product.
-                </p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px]">ID</TableHead>
-                      <TableHead>Execution Time</TableHead>
-                      <TableHead>Comment</TableHead>
-                      <TableHead className="w-[200px]">HTML Content</TableHead>
-                      <TableHead className="w-[120px]">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {algoData.map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell className="font-medium">
-                          #{record.id}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              {formatDate(record.time)}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(record.time).toISOString()}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="max-w-md">
-                            <p className="text-sm">
-                              {truncateComment(record.comment)}
-                            </p>
-                            {record.comment && record.comment.length > 100 && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {record.comment.length} characters total
-                              </p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col gap-2">
-                            <span className="text-xs text-muted-foreground">
-                              HTML content available
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              openHtmlInNewTab(record.chain_of_thought_html)
-                            }
-                            className="flex items-center gap-2"
-                          >
-                            <Download className="h-4 w-4" />
-                            View
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <DataTable
+          columns={columns}
+          data={algoData}
+          isLoading={isLoading}
+          initialSorting={[
+            {
+              id: "run_time",
+              desc: true,
+            },
+          ]}
+        />
       )}
     </div>
   );

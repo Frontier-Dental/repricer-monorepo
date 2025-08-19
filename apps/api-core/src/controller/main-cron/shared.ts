@@ -1,7 +1,7 @@
 import { ScheduledTask, schedule } from "node-cron";
 import { CronSettingsDetail } from "../../utility/mongo/types";
 import * as responseUtility from "../../utility/response-utility";
-import * as keyGenHelper from "../../utility/key-gen-helper";
+import * as keyGenHelper from "../../utility/job-id-helper";
 import * as dbHelper from "../../utility/mongo/db-helper";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import * as mySqlHelper from "../../utility/mysql/mysql-helper";
@@ -237,21 +237,16 @@ export async function runCoreCronLogic(
     cronSettingsResponse.CronId,
   );
   if (eligibleProductList && eligibleProductList.length > 0) {
-    const keyGen = keyGenHelper.Generate();
+    const jobId = keyGenHelper.Generate();
     console.log(
-      `${cronSettingsResponse.CronName} running on ${initTime} with Eligible Product count : ${eligibleProductList.length}  || Key : ${keyGen}`,
+      `${cronSettingsResponse.CronName} running on ${initTime} with Eligible Product count : ${eligibleProductList.length}  || Job ID : ${jobId}`,
     );
     let chunkedList = _.chunk(
       eligibleProductList,
       applicationConfig.BATCH_SIZE,
     );
     for (let chunk of chunkedList) {
-      await repriceBase.Execute(
-        keyGen,
-        chunk,
-        new Date(),
-        cronSettingsResponse,
-      );
+      await repriceBase.Execute(jobId, chunk, new Date(), cronSettingsResponse);
     }
   } else {
     await logBlankCronDetailsV3(cronSettingsResponse.CronId);

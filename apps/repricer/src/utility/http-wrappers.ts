@@ -1,5 +1,5 @@
 import axios from "axios";
-import { applicationConfig } from "../utility/config";
+import { applicationConfig } from "./config";
 
 export async function updatePrice(request: any) {
   var config = {

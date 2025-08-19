@@ -9,6 +9,8 @@ export async function up(knex: Knex): Promise<void> {
     table.specificType("chain_of_thought_html", "MEDIUMBLOB").notNullable();
     table.integer("mp_id").notNullable().index();
     table.integer("vendor_id").notNullable().index();
+    table.string("job_id", 36).notNullable().index();
+    table.foreign("job_id").references("job_id").inTable("v2_algo_results");
 
     // Foreign key constraint
     table

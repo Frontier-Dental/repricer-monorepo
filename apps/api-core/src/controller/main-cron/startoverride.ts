@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import * as _codes from "http-status-codes";
 import * as _ from "lodash";
 import { applicationConfig } from "../../utility/config";
-import * as keyGenHelper from "../../utility/key-gen-helper";
+import * as keyGenHelper from "../../utility/job-id-helper";
 import * as dbHelper from "../../utility/mongo/db-helper";
 import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
