@@ -17,6 +17,7 @@ import {
   getSortedRowModel,
   SortingState,
   VisibilityState,
+  ColumnFiltersState,
 } from "@tanstack/react-table";
 
 // Utility to format "ago" time
@@ -183,6 +184,7 @@ export function ProductsPage() {
   const [isRemoving422, setIsRemoving422] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   // Create table instance for the toolbar
   const table = useReactTable({
@@ -191,9 +193,11 @@ export function ProductsPage() {
     state: {
       sorting,
       columnVisibility,
+      columnFilters,
     },
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -294,7 +298,12 @@ export function ProductsPage() {
         </div>
       </div>
       <DataTableToolbar table={table} />
-      <DataTable columns={columns} data={data} isLoading={isLoading} />
+      <DataTable
+        columns={columns}
+        data={data}
+        isLoading={isLoading}
+        table={table}
+      />
       {error && (
         <div className="mt-4 rounded-md bg-red-50 p-4">
           <div className="flex">

@@ -12,17 +12,18 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  Table as TableInstance,
 } from "@tanstack/react-table";
 import * as React from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
+  Table,
 } from "@/components/ui/table";
 
 import { DataTablePagination } from "./data-table-pagination";
@@ -32,6 +33,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   isLoading?: boolean;
   initialSorting?: SortingState;
+  table?: TableInstance<TData>;
 }
 
 // Skeleton row component for loading state
@@ -52,13 +54,15 @@ export function DataTable<TData, TValue>({
   data,
   isLoading = false,
   initialSorting = [],
+  table: externalTable,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [sorting, setSorting] = React.useState<SortingState>(initialSorting);
 
-  const table = useReactTable({
+  // Always create internal table for fallback
+  const internalTable = useReactTable({
     data,
     columns,
     state: {
@@ -82,6 +86,9 @@ export function DataTable<TData, TValue>({
       },
     },
   });
+
+  // Use external table if provided, otherwise use internal table
+  const table = externalTable || internalTable;
 
   return (
     <div className="space-y-4">
