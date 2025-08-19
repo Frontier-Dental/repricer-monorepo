@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, ExternalLink, Eye } from "lucide-react";
+import { ArrowUpDown, ExternalLink, Eye, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/data-table";
@@ -261,6 +261,14 @@ export function ProductsPage() {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8">
+        <Button
+          variant="outline"
+          onClick={() => (window.location.href = "/")}
+          className="mb-4 flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
         <h1 className="text-3xl font-bold tracking-tight">Products</h1>
         <p className="text-muted-foreground">
           View and manage product pricing data
