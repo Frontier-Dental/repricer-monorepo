@@ -177,13 +177,13 @@ function buildBeforeLadderTable(beforeLadder: {
               .map((pb) => `${pb.minQty}@${pb.unitPrice}`)
               .join(", ")
           : "";
-      return `<tr${rowStyle}><td>${vendorName}</td><td>${unitPrice}</td><td>${product.standardShipping}</td><td>${totalPrice}</td><td>${product.freeShippingThreshold}</td><td>${product.freeShippingGap}</td><td>${product.shippingTime}</td><td>${product.inventory}</td><td>${priceBreaksDisplay}</td></tr>`;
+      return `<tr${rowStyle}><td>${vendorName}</td><td>${unitPrice}</td><td>${product.standardShipping}</td><td>${totalPrice}</td><td>${product.freeShippingThreshold}</td><td>${product.shippingTime}</td><td>${product.inventory}</td><td>${priceBreaksDisplay}</td></tr>`;
     })
     .join("");
 
   return `<table>
     <thead>
-      <tr><th>Vendor Name</th><th>Unit Price</th><th>Shipping Cost</th><th>Total</th><th>Shipping Threshold</th><th>Free Shipping Gap</th><th>Shipping Time</th><th>Inventory</th><th>Existing Price Breaks</th></tr>
+      <tr><th>Vendor Name</th><th>Unit Price</th><th>Shipping Cost</th><th>Total</th><th>Shipping Threshold</th><th>Shipping Time</th><th>Inventory</th><th>Existing Price Breaks</th></tr>
     </thead>
     <tbody>${rows}</tbody>
   </table><div><i>Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT).</i></div>`;

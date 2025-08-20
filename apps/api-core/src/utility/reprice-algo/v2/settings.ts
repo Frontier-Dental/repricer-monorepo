@@ -229,7 +229,7 @@ export function applyUpDownPercentage(
     );
     if (maximumPrice.lt(new Decimal(setting.floor_price))) {
       // If we're below the floor, then we basically ignore this setting
-      // by returning the original, unmodified new price.
+      // by returning the original, unmodified proposed price.
       return newPrice;
     }
     if (newPrice.lte(maximumPrice)) {
