@@ -98,7 +98,6 @@ export async function Execute(
           prod,
           prioritySequence,
           cronSetting ? cronSetting.CronName : "MANUAL",
-          jobId,
         );
         for (let idx = 0; idx < prioritySequence.length; idx++) {
           const proceedNextVendor = proceedNext(

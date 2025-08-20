@@ -73,7 +73,6 @@ export async function manualRepriceHandler(
       prod,
       prioritySequence,
       "MANUAL",
-      jobId,
     );
     for (let idx = 0; idx < prioritySequence.length; idx++) {
       const proceedNextVendor = proceedNext(prod!, prioritySequence[idx].value);

@@ -20,14 +20,15 @@ import {
   getInternalProducts,
   isChangeResult,
 } from "./utility";
+import { v4 } from "uuid";
 
 export async function repriceProductV2Wrapper(
   net32Products: Net32Product[],
   prod: any,
   vendorNameList: { name: VendorName }[],
   cronName: string,
-  jobId: string,
 ) {
+  const jobId = v4();
   const mpId = prod.mpId;
   const internalProducts = getInternalProducts(prod, vendorNameList);
 

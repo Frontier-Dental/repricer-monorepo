@@ -38,7 +38,6 @@ export async function v2AlgoTest(
     prod,
     getAllOwnVendorNames(),
     "MANUAL",
-    v4(),
   );
 
   res.status(StatusCodes.OK).json(results);
