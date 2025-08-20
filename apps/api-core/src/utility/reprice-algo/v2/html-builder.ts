@@ -323,7 +323,7 @@ function buildVendorViewOfBoardTable(solution: Net32AlgoSolution) {
 }
 
 function buildResultsTable(solution: Net32AlgoSolutionWithQBreakValid) {
-  const result = solution.result || "N/A";
+  const result = solution.algoResult || "N/A";
   const qBreakValid = solution.qBreakValid ? "Yes" : "No";
   const comment = solution.comment || "N/A";
   const suggestedPrice =

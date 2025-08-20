@@ -1,5 +1,5 @@
 import { ProductDetailsListItem } from "../../mysql/mySql-mapper";
-import { AlgoResult, PriceSolutions, VendorId, VendorName } from "./types";
+import { AlgoResult, VendorId, VendorName } from "./types";
 
 export function getAllOwnVendorNames() {
   return [
@@ -27,21 +27,6 @@ export function getAllOwnVendorIds() {
     VendorId.TOPDENT,
     VendorId.FIRSTDENT,
   ];
-}
-
-export function getPriceSolutionStringRepresentation(
-  priceSolution: PriceSolutions,
-) {
-  return Object.keys(priceSolution)
-    .map((quantity) => {
-      if (
-        priceSolution[quantity as any] &&
-        priceSolution[quantity as any].length > 0
-      ) {
-        return `${quantity}: ${JSON.stringify(priceSolution[quantity as any][0].vendorPrices)}`;
-      }
-    })
-    .join("\n");
 }
 
 export function getInternalProducts(

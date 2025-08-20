@@ -1,15 +1,16 @@
+import Decimal from "decimal.js";
 import { flow } from "lodash/fp";
 import { V2AlgoSettingsData } from "../../mysql/v2-algo-settings";
 import {
   getShippingBucket,
   hasBadge,
   Net32AlgoSolution,
+  Net32AlgoSolutionWithQBreakValid,
+  Net32AlgoSolutionWithResult,
   QuantitySolution,
-  QuantitySolutionWithBuyBoxRank,
 } from "./algorithm";
 import { AlgoResult, Net32AlgoProduct } from "./types";
-import { BuyBoxPosition } from "./algorithm";
-import Decimal from "decimal.js";
+import { isChangeResult } from "./utility";
 
 export function applyCompetitionFilters(
   competitors: Net32AlgoProduct[],
@@ -73,6 +74,37 @@ export function applyVendorExclusionFilter(
       return excludedVendors.includes(c.vendorId) === false;
     } else {
       return true;
+    }
+  });
+}
+
+export function applySuppressQBreakIfQ1NotUpdated(
+  solutionResults: Net32AlgoSolutionWithResult[],
+): Net32AlgoSolutionWithQBreakValid[] {
+  return solutionResults.map((s) => {
+    if (!s.vendorSettings.suppress_price_break_if_Q1_not_updated) {
+      return {
+        ...s,
+        qBreakValid: true,
+      };
+    } else {
+      const q1 = solutionResults.find(
+        (s) =>
+          s.quantity === 1 &&
+          s.vendor.vendorId === s.vendor.vendorId &&
+          isChangeResult(s.algoResult),
+      );
+      if (!q1) {
+        return {
+          ...s,
+          qBreakValid: false,
+        };
+      } else {
+        return {
+          ...s,
+          qBreakValid: true,
+        };
+      }
     }
   });
 }
@@ -196,7 +228,9 @@ export function applyUpDownPercentage(
       100 - setting.reprice_down_percentage / 100,
     );
     if (maximumPrice.lt(new Decimal(setting.floor_price))) {
-      maximumPrice = new Decimal(setting.floor_price);
+      // If we're below the floor, then we basically ignore this setting
+      // by returning the original, unmodified new price.
+      return newPrice;
     }
     if (newPrice.lte(maximumPrice)) {
       return newPrice;
@@ -206,33 +240,4 @@ export function applyUpDownPercentage(
   } else {
     return newPrice;
   }
-}
-
-export function applySuppressQBreakIfQ1NotUpdated(
-  newSolution: QuantitySolution[],
-  vendorSettings: V2AlgoSettingsData[],
-) {
-  return newSolution.filter((solution) => {
-    const vendorSetting = vendorSettings.find(
-      (s) => s.vendor_id === solution.vendorId,
-    );
-    if (!vendorSetting) {
-      throw new Error(
-        `Vendor setting not found for vendor ${solution.vendorId}`,
-      );
-    }
-    if (vendorSetting.suppress_price_break_if_Q1_not_updated) {
-      const q1 = newSolution.find(
-        (q) => q.quantity === 1 && q.vendorId === solution.vendorId,
-      );
-      if (!q1) {
-        // If Q1 is not updated, we need to suppress the price break
-        return false;
-      } else {
-        return true;
-      }
-    } else {
-      return true;
-    }
-  });
 }

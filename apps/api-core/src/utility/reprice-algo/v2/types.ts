@@ -1,25 +1,6 @@
 import { Net32PriceBreak } from "../../../types/net32";
 import { Decimal } from "decimal.js";
 
-export interface PriceSolutionWithRanks {
-  vendorPrices: { vendorId: number; price: number }[];
-  combination: Net32AlgoProductWithBestPrice[];
-  totalRank: number;
-  buyBoxRankFreeShipping: number;
-  buyBoxRankIncludingShipping: number;
-}
-
-export interface AggregatePriceSolution {
-  vendorPrices: {
-    vendorId: number;
-    price: number;
-  }[];
-  consideredConfigurations: number;
-  solutions: PriceSolutionWithRanks;
-  totalRank: number;
-  averagePrice: number;
-}
-
 export interface Net32AlgoProduct {
   vendorId: number;
   vendorName: string;
@@ -60,16 +41,6 @@ export interface InternalProduct {
   net32url?: string;
 }
 
-export interface ExistingAnalytics {
-  [quantity: number]: {
-    beforeShippingLadder: Net32AlgoProduct[];
-  };
-}
-
-export interface PriceSolutions {
-  [quantity: number]: AggregatePriceSolution[];
-}
-
 export enum VendorName {
   FRONTIER = "FRONTIER",
   MVP = "MVP",
@@ -93,8 +64,6 @@ export enum AlgoResult {
   IGNORE_LOWEST = "IGNORE #LOWEST",
   IGNORE_SISTER_LOWEST = "IGNORE #SISTER_LOWEST",
   IGNORE_SETTINGS = "IGNORE #SETTINGS",
-  IGNORE_SAME_PRICE = "IGNORE #SAME_PRICE",
-  IGNORE_UNNECESSARY_QBREAK = "IGNORE #UNNECESSARY_QBREAK",
   ERROR = "ERROR",
 }
 

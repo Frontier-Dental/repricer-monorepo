@@ -78,7 +78,7 @@ export async function repriceProductV2Wrapper(
       suggested_price: result.suggestedPrice,
       comment: result.comment,
       triggered_by_vendor: result.triggeredByVendor,
-      result: result.result,
+      result: result.algoResult,
       quantity: result.quantity,
       vendor_id: result.vendor.vendorId,
       mp_id: mpId,
@@ -171,7 +171,8 @@ async function updatePricesIfNecessary(
   isDev: boolean,
 ): Promise<Net32AlgoSolutionWithChangeResult[]> {
   const validSolutionsWithChanges = solutionResults
-    .filter((s) => isChangeResult(s.result))
+    .filter((s) => isChangeResult(s.algoResult))
+    .filter((s) => s.qBreakValid)
     .filter((s) => s.vendor.bestPrice !== undefined)
     .filter(priceIsWithinBounariesSafeguard);
 
