@@ -12,6 +12,7 @@ import { V2AlgoSettingsForm } from "@/components/V2AlgoSettingsForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Cross2Icon } from "@radix-ui/react-icons";
+import { toast } from "sonner";
 
 interface V2AlgoResultWithExecution {
   // From v2_algo_results table
@@ -82,6 +83,7 @@ export function ProductDetailPage() {
   const [settingsData, setSettingsData] = useState<V2AlgoSettings[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [isManualRepricing, setIsManualRepricing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [vendorFilter, setVendorFilter] = useState("");
   const [jobFilter, setJobFilter] = useState("");
@@ -91,6 +93,34 @@ export function ProductDetailPage() {
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank");
     URL.revokeObjectURL(url);
+  };
+
+  const handleManualReprice = async () => {
+    setIsManualRepricing(true);
+    try {
+      const response = await fetch("/productV2/runManualCron", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mpIds: [parseInt(mpId)] }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Manual reprice initiated:", result);
+
+      // Show success message or handle response as needed
+      toast.success("Manual reprice succeeded!");
+    } catch (error) {
+      console.error("Error initiating manual reprice:", error);
+      toast.error("Failed to initiate manual reprice. Please try again.");
+    } finally {
+      setIsManualRepricing(false);
+    }
   };
 
   const fetchData = async () => {
@@ -415,9 +445,19 @@ export function ProductDetailPage() {
               {algoData.length !== 1 ? "s" : ""} found
             </p>
           </div>
-          <Button variant="outline" onClick={fetchData} disabled={isLoading}>
-            {isLoading ? "Loading..." : "Refresh"}
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="default"
+              onClick={handleManualReprice}
+              disabled={isManualRepricing}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isManualRepricing ? "Repricing..." : "Manual Reprice"}
+            </Button>
+            <Button variant="outline" onClick={fetchData} disabled={isLoading}>
+              {isLoading ? "Loading..." : "Refresh"}
+            </Button>
+          </div>
         </div>
       </div>
 

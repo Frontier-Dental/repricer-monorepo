@@ -367,7 +367,7 @@ export async function runManualReprice(req: Request, res: Response) {
   let failedIds: any[] = [];
   if (selectedProducts && selectedProducts.length > 0) {
     for (const prod of selectedProducts) {
-      const manualRepriceUrl = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.MANUAL_REPRICER_ENDPOINT}/${prod.trim()}`;
+      const manualRepriceUrl = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.MANUAL_REPRICER_ENDPOINT}/${prod}`;
       const repriceResult = await httpHelper.native_get(manualRepriceUrl);
       if (
         repriceResult &&

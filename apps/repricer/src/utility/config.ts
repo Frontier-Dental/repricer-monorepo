@@ -159,7 +159,7 @@ export const envSchema = z.object({
     .default("http://localhost:5421/schedule/on-demand/mysql-sync"),
   MAX_UPDATE_REPRICER_ENDPOINT: z.string().default("/repricer/UpdateToMax"),
   SESSION_SECRET: z.string(),
-  REPRICER_API_BASE_URL: z.string().default("http://127.0.0.1:5001"),
+  REPRICER_API_BASE_URL: z.string(),
   AUTHENTICATION_DISABLED: z
     .string()
     .toLowerCase()
