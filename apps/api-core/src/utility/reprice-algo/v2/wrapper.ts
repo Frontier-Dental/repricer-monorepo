@@ -137,9 +137,11 @@ export async function repriceProductV2Wrapper(
 
 function priceIsWithinBounariesSafeguard(solution: Net32AlgoSolution) {
   if (!solution.vendor.bestPrice) {
-    throw new Error("No best price found for vendor");
+    throw new Error(
+      `No best price found for vendor when considering final price boundaries check.` +
+        `We should not get here.`,
+    );
   }
-
   if (
     solution.vendor.bestPrice.toNumber() >=
       solution.vendorSettings.floor_price &&
@@ -148,7 +150,10 @@ function priceIsWithinBounariesSafeguard(solution: Net32AlgoSolution) {
     return true;
   } else {
     throw new Error(
-      `Price is outside of boundaries for vendor ${solution.vendor.vendorId}. We should not get here.`,
+      `Price is outside of boundaries for vendor ${solution.vendor.vendorId}.` +
+        `Proposed price: ${solution.vendor.bestPrice.toNumber()},` +
+        `Floor: ${solution.vendorSettings.floor_price},` +
+        `Max: ${solution.vendorSettings.max_price}. We should not get here.`,
     );
   }
 }
