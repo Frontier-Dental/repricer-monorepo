@@ -24,6 +24,7 @@ export function createHtmlFileContent(
   solutions: Net32AlgoSolutionWithQBreakValid[],
   beforeLadders: { quantity: number; ladder: Net32AlgoProductWrapper[] }[],
   net32url: string,
+  jobId: string,
 ) {
   // Get vendor info from the first solution (all solutions are for the same vendor)
   if (solutions.length === 0) {
@@ -91,6 +92,7 @@ export function createHtmlFileContent(
     <div class="vendor-info">
       <h2>Vendor ID: ${vendorId}</h2>
       <p>Vendor Name: ${vendorName}</p>
+      <p>Job ID: ${jobId}</p>
     </div>
     <h2>Vendor Settings</h2>
     ${buildVendorSettingsTableSingleVendor(vendorSettings)}

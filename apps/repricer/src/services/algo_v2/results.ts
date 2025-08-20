@@ -2,9 +2,9 @@ import { getKnexInstance } from "../knex-wrapper";
 
 // Vendor name lookup mapping
 const VendorNameLookup: Record<number, string> = {
-  17357: "FRONTIER",
-  17358: "MVP",
-  17359: "TRADENT",
+  20722: "FRONTIER",
+  20755: "MVP",
+  17357: "TRADENT",
   20727: "TOPDENT",
   20533: "FIRSTDENT",
 };
@@ -53,12 +53,14 @@ export async function getAlgoResultsWithExecutionData(
       knex.raw(`
         (SELECT e.chain_of_thought_html 
          FROM v2_algo_execution e 
-         WHERE e.job_id = r.job_id 
+         WHERE e.job_id = r.job_id AND e.vendor_id = r.vendor_id
          LIMIT 1) as chain_of_thought_html
       `),
     ])
     .where("r.mp_id", mpId)
     .orderBy("r.run_time", "desc");
+
+  console.log(results);
 
   // Convert Buffer to string for chain_of_thought_html and add vendor name
   return results.map((result) => ({

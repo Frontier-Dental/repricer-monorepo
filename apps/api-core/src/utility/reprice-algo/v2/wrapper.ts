@@ -57,6 +57,7 @@ export async function repriceProductV2Wrapper(
     internalProducts,
     getAllOwnVendorIds(),
     vendorSettings,
+    jobId,
   );
 
   const uniqueVendorIds = [

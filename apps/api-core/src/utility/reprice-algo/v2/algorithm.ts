@@ -79,6 +79,7 @@ export function repriceProductV2(
   availableInternalProducts: InternalProduct[],
   ownVendorIds: number[],
   vendorSettings: V2AlgoSettingsData[],
+  jobId: string,
 ) {
   const net32url = availableInternalProducts[0].net32url;
   if (!net32url) {
@@ -213,6 +214,7 @@ export function repriceProductV2(
       ),
       beforeLadders,
       net32url,
+      jobId,
     );
     return { vendorId, html };
   });
