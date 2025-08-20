@@ -365,10 +365,13 @@ export async function runManualReprice(req: Request, res: Response) {
     ? req.body.mpIds
     : [req.body.mpIds];
   let failedIds: any[] = [];
+  console.log(selectedProducts);
   if (selectedProducts && selectedProducts.length > 0) {
     for (const prod of selectedProducts) {
       const manualRepriceUrl = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.MANUAL_REPRICER_ENDPOINT}/${prod}`;
+      console.log(manualRepriceUrl);
       const repriceResult = await httpHelper.native_get(manualRepriceUrl);
+      console.log(repriceResult);
       if (
         repriceResult &&
         repriceResult.status == 200 &&
@@ -381,7 +384,7 @@ export async function runManualReprice(req: Request, res: Response) {
             ", added successfully",
         );
       } else {
-        failedIds.push(prod.trim() as never);
+        failedIds.push(prod);
       }
     }
   }
