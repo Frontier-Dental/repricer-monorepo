@@ -26,11 +26,37 @@ export function createHtmlFileContent(
   net32url: string,
   jobId: string,
 ) {
-  // Get vendor info from the first solution (all solutions are for the same vendor)
+  // Check if solutions is empty
   if (solutions.length === 0) {
-    throw new Error("No solutions provided for HTML generation");
+    // Return minimal HTML with just basic info when no solutions
+    const currentTime = new Date().toISOString();
+    return `<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>repriceProductV3 Output - No Solutions</title>
+    <style>
+      body { margin-left: 20%; margin-right: 20%; }
+      pre { background: #f8f8f8; padding: 10px; border: 1px solid #ccc; }
+      .header { text-align: center; margin-bottom: 30px; }
+      .header h1 { color: #333; margin-bottom: 10px; }
+      .header p { color: #666; font-size: 16px; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Product ID: ${mpId}</h1>
+      <p>Generated at: ${currentTime} UTC</p>
+    </div>
+    ${net32url ? `<a href="${net32url}" target="_blank">${net32url}</a><br/><br/>` : ""}
+    <p><strong>Job ID:</strong> ${jobId}</p>
+    <h2>net32Products (JSON)</h2>
+    <pre>${JSON.stringify(net32Products, null, 2)}</pre>
+  </body>
+  </html>`;
   }
 
+  // Get vendor info from the first solution (all solutions are for the same vendor)
   const vendorId = solutions[0].vendor.vendorId;
   const vendorName = VendorNameLookup[vendorId] || `Vendor ${vendorId}`;
   const vendorSettings = solutions[0].vendorSettings;

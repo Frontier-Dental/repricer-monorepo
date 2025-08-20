@@ -72,6 +72,11 @@ export async function repriceProductV2Wrapper(
       applicationConfig.IS_DEV,
     );
 
+    if (finalResults.length === 0) {
+      console.log(`No solutions found for product ${prod.mpId}`);
+      return [];
+    }
+
     // Store algorithm results in the new v2_algo_results table
     const algoResults = finalResults.map((result) => ({
       job_id: jobId,
@@ -113,8 +118,6 @@ export async function repriceProductV2Wrapper(
         });
       }),
     );
-
-    console.log(`Algorithm execution completed with job ID: ${jobId}`);
     return finalResults;
   } catch (error) {
     console.error(
@@ -132,6 +135,8 @@ export async function repriceProductV2Wrapper(
       cron_name: cronName,
       created_at: new Date(),
     });
+  } finally {
+    console.log(`Algorithm execution completed with job ID: ${jobId}`);
   }
 }
 

@@ -629,10 +629,7 @@ function computeTargetUnitPrice(
   // If the target price is above the threshold,
   // then there's no shipping, so we can use that
   // OR if NC is set -> we ignore our own shipping cost
-  if (
-    undercutUnitPriceAboveThreshold.gte(ourProduct.freeShippingThreshold) ||
-    notCheapest
-  ) {
+  if (undercutTotalCost.gte(ourProduct.freeShippingThreshold) || notCheapest) {
     return undercutUnitPriceAboveThreshold;
   } else {
     // If it's below, then we know we have to have shipping, so we use the solution with shipping
