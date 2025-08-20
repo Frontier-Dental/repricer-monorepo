@@ -84,37 +84,14 @@ const columns: ColumnDef<ProductDetails>[] = [
     },
   },
   {
-    accessorKey: "Activated",
+    accessorKey: "IsActive",
     header: "Status",
     cell: ({ row }) => {
-      const activated = row.getValue("Activated") as number;
+      console.log(row.original);
+      const activated = row.getValue("IsActive") as number;
       return (
         <Badge variant={activated === 1 ? "default" : "secondary"}>
           {activated === 1 ? "Active" : "Inactive"}
-        </Badge>
-      );
-    },
-  },
-  {
-    accessorKey: "ScrapeOn",
-    header: "Scrape On",
-    cell: ({ row }) => {
-      const scrapeOn = row.getValue("ScrapeOn") as number;
-      return (
-        <Badge variant={scrapeOn === 1 ? "default" : "secondary"}>
-          {scrapeOn === 1 ? "Yes" : "No"}
-        </Badge>
-      );
-    },
-  },
-  {
-    accessorKey: "AllowReprice",
-    header: "Allow Reprice",
-    cell: ({ row }) => {
-      const allowReprice = row.getValue("AllowReprice") as number;
-      return (
-        <Badge variant={allowReprice === 1 ? "default" : "secondary"}>
-          {allowReprice === 1 ? "Yes" : "No"}
         </Badge>
       );
     },
@@ -137,15 +114,6 @@ const columns: ColumnDef<ProductDetails>[] = [
     header: "Regular Cron",
     cell: ({ row }) => (
       <div className="font-mono text-sm">{row.getValue("RegularCronName")}</div>
-    ),
-  },
-  {
-    accessorKey: "LinkedScrapeOnlyCron",
-    header: "Scrape Only Cron",
-    cell: ({ row }) => (
-      <div className="font-mono text-sm">
-        {row.getValue("LinkedScrapeOnlyCron")}
-      </div>
     ),
   },
   {
