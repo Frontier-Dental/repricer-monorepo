@@ -60,8 +60,6 @@ export async function getAlgoResultsWithExecutionData(
     .where("r.mp_id", mpId)
     .orderBy("r.run_time", "desc");
 
-  console.log(results);
-
   // Convert Buffer to string for chain_of_thought_html and add vendor name
   return results.map((result) => ({
     ...result,
