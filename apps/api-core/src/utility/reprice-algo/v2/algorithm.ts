@@ -157,12 +157,14 @@ export function repriceProductV2(
       );
 
       const solutionId = `Q${quantity}-${vendorSolution.vendorName}@${vendorSolution.bestPrice?.toNumber()}`;
-      const buyBoxRank = getExpectedBuyBoxRank(
-        vendorSolution,
-        competitorsFromViewOfOwnVendorRanked,
-        quantity,
-        vendorSetting.not_cheapest,
-      );
+      const buyBoxRank = vendorSolution.bestPrice
+        ? getExpectedBuyBoxRank(
+            vendorSolution,
+            competitorsFromViewOfOwnVendorRanked,
+            quantity,
+            vendorSetting.not_cheapest,
+          )
+        : Infinity;
 
       const postSolutionInsertBoard = getProductsSortedByBuyBoxRank(
         [vendorSolution, ...competitorsFromViewOfOwnVendorRanked],
@@ -170,7 +172,7 @@ export function repriceProductV2(
       );
       solutions.push({
         quantity,
-        buyBoxRank: !vendorSolution.bestPrice ? Infinity : buyBoxRank,
+        buyBoxRank,
         vendor: vendorSolution,
         vendorSettings: vendorSetting,
         postSolutionInsertBoard: postSolutionInsertBoard.map((x) => x.product),
@@ -446,30 +448,20 @@ function getSolutionResult(
       triggeredByVendor: null,
     };
   } else if (suggestedPrice.lt(existingPriceBreak.unitPrice)) {
-    if (!solution.rawTriggeredByVendor) {
-      throw new Error(
-        "rawTriggeredByVendor is not set but we detect a change. We should not be here.",
-      );
-    }
     return {
       ...solution,
       result: AlgoResult.CHANGE_DOWN,
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "We are pricing down.",
-      triggeredByVendor: solution.rawTriggeredByVendor,
+      triggeredByVendor: solution.rawTriggeredByVendor || null,
     };
   } else if (suggestedPrice.gt(existingPriceBreak.unitPrice)) {
-    if (!solution.rawTriggeredByVendor) {
-      throw new Error(
-        "rawTriggeredByVendor is not set but we detect a change. We should not be here.",
-      );
-    }
     return {
       ...solution,
       result: AlgoResult.CHANGE_UP,
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "We are pricing up.",
-      triggeredByVendor: solution.rawTriggeredByVendor,
+      triggeredByVendor: solution.rawTriggeredByVendor || null,
     };
   }
   return {
@@ -623,6 +615,12 @@ function getBestCompetitivePrice(
   quantity: number,
   ownVendorSetting: V2AlgoSettingsData,
 ) {
+  // If there's no competitors, we should just price to max
+  if (competitorsSortedByBuyBoxRank.length === 0) {
+    return {
+      price: new Decimal(ownVendorSetting.max_price),
+    };
+  }
   for (const competitor of competitorsSortedByBuyBoxRank) {
     const competitorTotalCost = getTotalCostForQuantity(competitor, quantity);
     const undercutTotalCost = getUndercutPriceToCompete(

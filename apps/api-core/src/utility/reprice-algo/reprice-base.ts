@@ -129,6 +129,12 @@ export async function Execute(
             }
           }
         }
+      } else {
+        console.log(
+          "Skipping product: ",
+          prod.mpId,
+          " because no vendors are enabled.",
+        );
       }
       if (productLogs.length > 0) {
         cronLogs.logs.push(productLogs);
