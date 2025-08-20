@@ -78,10 +78,11 @@ export enum VendorName {
   TOPDENT = "TOPDENT",
 }
 
-export enum Net32PriceUpdateResult {
+export enum ChangeResult {
   OK = "OK",
   UNKNOWN_ERROR = "UNKNOWN_ERROR",
   ERROR_422 = "ERROR_422",
+  NOT_EXECUTION_PRIORITY = "NOT_EXECUTION_PRIORITY",
 }
 
 export enum AlgoResult {

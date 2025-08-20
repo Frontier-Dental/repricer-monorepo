@@ -253,6 +253,7 @@ function buildSourceCombinationsTable(solution: Net32AlgoSolution) {
         product,
         solution.quantity,
         unitPrice,
+        false,
       );
       const badge = hasBadge(product);
       const vendorName =

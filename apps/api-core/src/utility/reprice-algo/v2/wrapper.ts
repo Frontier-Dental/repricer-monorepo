@@ -1,26 +1,25 @@
+import { AxiosError, AxiosRequestConfig } from "axios";
+import moment from "moment";
 import { Net32Product } from "../../../types/net32";
-import { insertV2AlgoExecution } from "../../mysql/v2-algo-execution";
-import { findOrCreateV2AlgoSettingsForVendors } from "../../mysql/v2-algo-settings";
+import { applicationConfig } from "../../config";
 import { findTinyproxyConfigsByVendorIds } from "../../mysql/tinyproxy-configs";
+import { insertV2AlgoExecution } from "../../mysql/v2-algo-execution";
 import { insertMultipleV2AlgoResults } from "../../mysql/v2-algo-results";
+import { findOrCreateV2AlgoSettingsForVendors } from "../../mysql/v2-algo-settings";
+import { updateProductInfo } from "../../net32/reprice";
+import {
+  Net32AlgoSolution,
+  Net32AlgoSolutionWithChangeResult,
+  Net32AlgoSolutionWithQBreakValid,
+  repriceProductV2,
+} from "./algorithm";
 import { getShippingThreshold } from "./shipping-threshold";
-import { Net32PriceUpdateResult, VendorName } from "./types";
+import { ChangeResult, VendorName } from "./types";
 import {
   getAllOwnVendorIds,
   getInternalProducts,
   isChangeResult,
 } from "./utility";
-import {
-  Net32AlgoSolutionWithHttpResult,
-  Net32AlgoSolutionWithQBreakValid,
-  Net32AlgoSolutionWithResult,
-  repriceProductV2,
-} from "./algorithm";
-import { updateProductInfo } from "../../net32/reprice";
-import { applicationConfig } from "../../config";
-import { AxiosError, AxiosProxyConfig, AxiosRequestConfig } from "axios";
-import moment from "moment";
-import { v4 } from "uuid";
 
 export async function repriceProductV2Wrapper(
   net32Products: Net32Product[],
@@ -83,7 +82,7 @@ export async function repriceProductV2Wrapper(
     cron_name: cronName,
     run_time: moment().toDate(),
     q_break_valid: result.qBreakValid,
-    price_update_result: result.httpResult,
+    price_update_result: result.changeResult,
   }));
 
   await insertMultipleV2AlgoResults(algoResults);
@@ -116,28 +115,61 @@ export async function repriceProductV2Wrapper(
   return finalResults;
 }
 
+function priceIsWithinBounariesSafeguard(solution: Net32AlgoSolution) {
+  if (!solution.vendor.bestPrice) {
+    throw new Error("No best price found for vendor");
+  }
+
+  if (
+    solution.vendor.bestPrice.toNumber() >=
+      solution.vendorSettings.floor_price &&
+    solution.vendor.bestPrice.toNumber() <= solution.vendorSettings.max_price
+  ) {
+    return true;
+  } else {
+    throw new Error(
+      `Price is outside of boundaries for vendor ${solution.vendor.vendorId}. We should not get here.`,
+    );
+  }
+}
+
+function isLowestExecutionPriority(
+  solution: Net32AlgoSolution,
+  allSolutions: Net32AlgoSolution[],
+) {
+  const minimumExecutionPriority = Math.min(
+    ...allSolutions.map((sol) => sol.vendorSettings.execution_priority),
+  );
+  return (
+    solution.vendorSettings.execution_priority === minimumExecutionPriority
+  );
+}
+
 async function updatePricesIfNecessary(
   solutionResults: Net32AlgoSolutionWithQBreakValid[],
   vpCode: string,
   isDev: boolean,
-): Promise<Net32AlgoSolutionWithHttpResult[]> {
-  // Execute price updates using the correct proxy configuration for each vendor
-  // Get unique vendor IDs from the final solution
+): Promise<Net32AlgoSolutionWithChangeResult[]> {
+  const validSolutionsWithChanges = solutionResults
+    .filter((s) => isChangeResult(s.result))
+    .filter((s) => s.vendor.bestPrice !== undefined)
+    .filter(priceIsWithinBounariesSafeguard);
+
   const solutionVendorIds = [
-    ...new Set(solutionResults.map((s) => s.vendor.vendorId)),
+    ...new Set(validSolutionsWithChanges.map((s) => s.vendor.vendorId)),
   ];
 
-  // Fetch proxy configs for all vendors in the solution
   const proxyConfigs = await findTinyproxyConfigsByVendorIds(solutionVendorIds);
 
   const results = await Promise.all(
     solutionVendorIds.map(async (vendorId) => {
-      const updatesForVendor = solutionResults
-        .filter((s) => s.vendor.vendorId === vendorId)
-        .filter((s) => isChangeResult(s.result))
-        .filter((s) => s.vendor.bestPrice !== undefined);
-      if (!updatesForVendor) {
-        throw new Error(`No solution found for vendor ${vendorId}`);
+      const updatesForVendor = validSolutionsWithChanges.filter(
+        (s) => s.vendor.vendorId === vendorId,
+      );
+      if (updatesForVendor.length === 0) {
+        throw new Error(
+          `No solution found for vendor ${vendorId}. We should not get here.`,
+        );
       }
 
       const proxyConfig = proxyConfigs.find(
@@ -147,6 +179,12 @@ async function updatePricesIfNecessary(
       if (!proxyConfig) {
         throw new Error(`No proxy configuration found for vendor ${vendorId}`);
       }
+
+      // Just pick the first quantity for this vendor as all the settings will be the same
+      const hasExecutionPriority = isLowestExecutionPriority(
+        updatesForVendor[0],
+        solutionResults,
+      );
 
       try {
         // Create axios config with proxy settings
@@ -167,11 +205,13 @@ async function updatePricesIfNecessary(
           price: s.vendor.bestPrice!.toNumber(),
           activeCd: 1, // Active
         }));
-        console.log("Price changes: ", priceList);
+        console.log("Price changes in net32 format: ", priceList);
 
         if (isDev) {
           console.log("We are in dev mode, not executing actual change.");
-        } else {
+        }
+
+        if (hasExecutionPriority && !isDev) {
           // Execute the price update
           await updateProductInfo(
             proxyConfig.subscription_key,
@@ -181,23 +221,30 @@ async function updatePricesIfNecessary(
             },
             axiosConfig,
           );
+          console.log(`Successfully updated price for vendor ${vendorId}`);
+          return { vendorId, changeResult: ChangeResult.OK };
+        } else {
+          return {
+            vendorId,
+            changeResult: ChangeResult.NOT_EXECUTION_PRIORITY,
+          };
         }
-
-        console.log(`Successfully updated price for vendor ${vendorId}`);
-        return { vendorId, updateResult: Net32PriceUpdateResult.OK };
       } catch (error) {
         if (error instanceof AxiosError && error.response?.status === 422) {
-          return { vendorId, updateResult: Net32PriceUpdateResult.ERROR_422 };
+          return { vendorId, changeResult: ChangeResult.ERROR_422 };
         }
         console.error(`Failed to update price for vendor ${vendorId}:`, error);
-        return { vendorId, updateResult: Net32PriceUpdateResult.UNKNOWN_ERROR };
-        // You might want to log this failure or handle it appropriately
+        return { vendorId, changeResult: ChangeResult.UNKNOWN_ERROR };
       }
     }),
   );
-  return solutionResults.map((s) => ({
-    ...s,
-    httpResult: results.find((r) => r.vendorId === s.vendor.vendorId)
-      ?.updateResult,
-  }));
+  return solutionResults.map((s) => {
+    const changeResult = results.find(
+      (r) => r.vendorId === s.vendor.vendorId,
+    )?.changeResult;
+    return {
+      ...s,
+      changeResult: changeResult ?? null,
+    };
+  });
 }

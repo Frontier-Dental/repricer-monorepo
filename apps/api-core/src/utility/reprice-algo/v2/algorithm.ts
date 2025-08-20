@@ -17,7 +17,7 @@ import {
   Net32AlgoProduct,
   Net32AlgoProductWithBestPrice,
   Net32AlgoProductWrapperWithBuyBoxRank,
-  Net32PriceUpdateResult,
+  ChangeResult,
 } from "./types";
 
 export interface QuantitySolution {
@@ -54,9 +54,9 @@ export interface Net32AlgoSolutionWithQBreakValid
   qBreakValid: boolean;
 }
 
-export interface Net32AlgoSolutionWithHttpResult
+export interface Net32AlgoSolutionWithChangeResult
   extends Net32AlgoSolutionWithQBreakValid {
-  httpResult?: Net32PriceUpdateResult;
+  changeResult: ChangeResult | null;
 }
 
 export interface Net32AlgoSolutionWithCombination {
@@ -114,22 +114,22 @@ export function repriceProductV2(
     };
   });
 
-  const beforePositions: BuyBoxPosition[] = competitorQuantityBreaks
-    .map((q) => {
-      const ladder = getProductsSortedByBuyBoxRank(validProducts, q);
-      return ladder
-        .map((p, i) => ({
-          quantity: q,
-          buyBoxRank: i,
-          vendorId: p.product.vendorId,
-          unitPrice: p.effectiveUnitPrice,
-        }))
-        .flat();
-    })
-    .flat();
+  // const beforePositions: BuyBoxPosition[] = competitorQuantityBreaks
+  //   .map((q) => {
+  //     const ladder = getProductsSortedByBuyBoxRank(validProducts, q);
+  //     return ladder
+  //       .map((p, i) => ({
+  //         quantity: q,
+  //         buyBoxRank: i,
+  //         vendorId: p.product.vendorId,
+  //         unitPrice: p.effectiveUnitPrice,
+  //       }))
+  //       .flat();
+  //   })
+  //   .flat();
 
   for (const quantity of competitorQuantityBreaks) {
-    const competitorsRankedByBuyBox = getProductsSortedByBuyBoxRank(
+    const rawCompetitorsRankedByBuyBox = getProductsSortedByBuyBoxRank(
       competitorProducts,
       quantity,
     );
@@ -149,7 +149,7 @@ export function repriceProductV2(
         competitorsAndSistersFromViewOfOwnVendorRanked,
         rawTriggeredByVendor,
       } = getOptimalSolutionForBoard(
-        competitorsRankedByBuyBox.map((x) => x.product),
+        rawCompetitorsRankedByBuyBox.map((x) => x.product),
         ourVendor,
         quantity,
         vendorSetting,
@@ -161,6 +161,7 @@ export function repriceProductV2(
         vendorSolution,
         competitorsFromViewOfOwnVendorRanked,
         quantity,
+        vendorSetting.not_cheapest,
       );
 
       const postSolutionInsertBoard = getProductsSortedByBuyBoxRank(
@@ -556,6 +557,7 @@ function getExpectedBuyBoxRank(
   ownProduct: Net32AlgoProductWithBestPrice,
   competitors: Net32AlgoProduct[],
   quantity: number,
+  notCheapest: boolean,
 ) {
   if (!ownProduct.bestPrice) {
     throw new Error("Own product has no best price. This is an error");
@@ -574,6 +576,7 @@ function getExpectedBuyBoxRank(
       ownProduct,
       quantity,
       ownProduct.bestPrice,
+      notCheapest,
     );
     const beatingCompetitor = isBeatingCompetitorOnBuyBoxRules(
       ownProduct,
@@ -592,6 +595,7 @@ function computeTargetUnitPrice(
   undercutTotalCost: Decimal,
   ourProduct: Net32AlgoProduct,
   quantity: number,
+  notCheapest: boolean,
 ) {
   // Consider both solutions if target unit price is above or below threshold
   const undercutUnitPriceAboveThreshold = undercutTotalCost.div(quantity);
@@ -599,8 +603,13 @@ function computeTargetUnitPrice(
     .sub(ourProduct.standardShipping)
     .div(quantity);
 
-  // If the target price is above the threshold, then there's no shipping, so we can use that
-  if (undercutUnitPriceAboveThreshold.gte(ourProduct.freeShippingThreshold)) {
+  // If the target price is above the threshold,
+  // then there's no shipping, so we can use that
+  // OR if NC is set -> we ignore our own shipping cost
+  if (
+    undercutUnitPriceAboveThreshold.gte(ourProduct.freeShippingThreshold) ||
+    notCheapest
+  ) {
     return undercutUnitPriceAboveThreshold;
   } else {
     // If it's below, then we know we have to have shipping, so we use the solution with shipping
@@ -626,6 +635,7 @@ function getBestCompetitivePrice(
       undercutTotalCost,
       ourProduct,
       quantity,
+      ownVendorSetting.not_cheapest,
     );
 
     if (undercutUnitPrice.gt(ownVendorSetting.max_price)) {
@@ -641,12 +651,14 @@ function getBestCompetitivePrice(
       ourProduct,
       quantity,
       undercutUnitPriceRoundUp,
+      ownVendorSetting.not_cheapest,
     );
     const resultingTotalRoundDown =
       getTotalCostForQuantityWithUnitPriceOverride(
         ourProduct,
         quantity,
         undercutUnitPriceRoundDown,
+        ownVendorSetting.not_cheapest,
       );
 
     // Prefer the higher price if it's within the range and
@@ -942,8 +954,12 @@ export function getTotalCostForQuantityWithUnitPriceOverride(
   net32Product: Net32AlgoProduct,
   quantity: number,
   unitPriceOverride: Decimal,
+  ignoreShipping: boolean,
 ) {
   const totalCost = unitPriceOverride.mul(quantity);
+  if (ignoreShipping) {
+    return totalCost;
+  }
   if (totalCost.lt(net32Product.freeShippingThreshold)) {
     return totalCost.add(net32Product.standardShipping);
   } else {
