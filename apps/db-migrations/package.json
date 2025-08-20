@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "migrate:dev": "knex migrate:latest --env development",
+    "migrate:dev:down": "knex migrate:down --env development",
     "rollback:dev": "knex migrate:rollback --env development",
     "migrate:prod": "knex migrate:latest --env production",
     "seed:dev": "knex seed:run --env development",

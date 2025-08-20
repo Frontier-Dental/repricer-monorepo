@@ -1,13 +1,11 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { Navigation } from "../components/Navigation";
 
 export const Route = createRootRoute({
   component: () => (
-    <>
-      <div className="min-h-screen bg-background">
-        <Outlet />
-      </div>
-      <TanStackRouterDevtools />
-    </>
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <Outlet />
+    </div>
   ),
 });

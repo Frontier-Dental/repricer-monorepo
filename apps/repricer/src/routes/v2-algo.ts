@@ -5,6 +5,7 @@ import {
   getAlgoResultsWithExecution,
   getV2AlgoSettings,
   updateV2AlgoSettings,
+  getAllV2AlgoErrorsController,
 } from "../controllers/v2-algo";
 export const v2AlgoRouter = express.Router();
 
@@ -17,3 +18,6 @@ v2AlgoRouter.get(
 );
 v2AlgoRouter.get("/get_algo_settings/:mpId", getV2AlgoSettings);
 v2AlgoRouter.put("/update_algo_settings/:mpId", updateV2AlgoSettings);
+
+// V2 Algo Error route
+v2AlgoRouter.get("/get_all_algo_errors", getAllV2AlgoErrorsController);

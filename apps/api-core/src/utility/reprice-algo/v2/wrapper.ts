@@ -6,6 +6,7 @@ import { findTinyproxyConfigsByVendorIds } from "../../mysql/tinyproxy-configs";
 import { insertV2AlgoExecution } from "../../mysql/v2-algo-execution";
 import { insertMultipleV2AlgoResults } from "../../mysql/v2-algo-results";
 import { findOrCreateV2AlgoSettingsForVendors } from "../../mysql/v2-algo-settings";
+import { insertV2AlgoError } from "../../mysql/v2-algo-error";
 import { updateProductInfo } from "../../net32/reprice";
 import {
   Net32AlgoSolution,
@@ -30,90 +31,108 @@ export async function repriceProductV2Wrapper(
 ) {
   const jobId = v4();
   const mpId = prod.mpId;
-  const internalProducts = getInternalProducts(prod, vendorNameList);
+  try {
+    const internalProducts = getInternalProducts(prod, vendorNameList);
 
-  if (internalProducts.length === 0) {
-    console.log(`No vendors configured found for product ${prod.mpId}`);
-    return;
+    if (internalProducts.length === 0) {
+      console.log(`No vendors configured found for product ${prod.mpId}`);
+      return;
+    }
+    // Get all unique vendor IDs from net32Products
+    const allVendorIds = internalProducts.map((p) => p.ownVendorId);
+
+    // Fetch or create v2_algo_settings for each vendor
+    const vendorSettings = await findOrCreateV2AlgoSettingsForVendors(
+      mpId,
+      allVendorIds,
+    );
+
+    const solutionResults = repriceProductV2(
+      prod.mpId,
+      net32Products.map((p) => ({
+        ...p,
+        vendorId: parseInt(p.vendorId as string),
+        freeShippingThreshold: getShippingThreshold(
+          parseInt(p.vendorId as string),
+        ),
+      })),
+      internalProducts,
+      getAllOwnVendorIds(),
+      vendorSettings,
+      jobId,
+    );
+
+    const uniqueVendorIds = [
+      ...new Set(solutionResults.map((s) => s.vendor.vendorId)),
+    ];
+
+    const finalResults = await updatePricesIfNecessary(
+      solutionResults,
+      prod.vpCode,
+      applicationConfig.IS_DEV,
+    );
+
+    // Store algorithm results in the new v2_algo_results table
+    const algoResults = finalResults.map((result) => ({
+      job_id: jobId,
+      suggested_price: result.suggestedPrice,
+      comment: result.comment,
+      triggered_by_vendor: result.triggeredByVendor,
+      result: result.result,
+      quantity: result.quantity,
+      vendor_id: result.vendor.vendorId,
+      mp_id: mpId,
+      cron_name: cronName,
+      run_time: moment().toDate(),
+      q_break_valid: result.qBreakValid,
+      price_update_result: result.changeResult,
+    }));
+
+    await insertMultipleV2AlgoResults(algoResults);
+
+    // We only need to store one html file per vendor, not per quantity.
+    await Promise.all(
+      uniqueVendorIds.map(async (vendorId) => {
+        const result = solutionResults.find(
+          (s) => s.vendor.vendorId === vendorId,
+        );
+        if (!result) {
+          throw new Error(`No result found for vendor ${vendorId}`);
+        }
+        await insertV2AlgoExecution({
+          scrape_product_id: prod.productIdentifier,
+          created_at: moment().toDate(),
+          expires_at: moment()
+            .utc()
+            .add(applicationConfig.V2_ALGO_HTML_FILE_EXPIRY_HOURS, "hours")
+            .toDate(),
+          chain_of_thought_html: Buffer.from(result.html),
+          mp_id: prod.mpId,
+          vendor_id: result.vendor.vendorId,
+          job_id: jobId,
+        });
+      }),
+    );
+
+    console.log(`Algorithm execution completed with job ID: ${jobId}`);
+    return finalResults;
+  } catch (error) {
+    console.error(
+      `Error executing repriceProductV2Wrapper for job ${jobId}:`,
+      error,
+    );
+
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    await insertV2AlgoError({
+      error_message: errorMessage + (errorStack ? `\n${errorStack}` : ""),
+      net32_products: net32Products,
+      mp_id: mpId,
+      cron_name: cronName,
+      created_at: new Date(),
+    });
   }
-  // Get all unique vendor IDs from net32Products
-  const allVendorIds = internalProducts.map((p) => p.ownVendorId);
-
-  // Fetch or create v2_algo_settings for each vendor
-  const vendorSettings = await findOrCreateV2AlgoSettingsForVendors(
-    mpId,
-    allVendorIds,
-  );
-
-  const solutionResults = repriceProductV2(
-    prod.mpId,
-    net32Products.map((p) => ({
-      ...p,
-      vendorId: parseInt(p.vendorId as string),
-      freeShippingThreshold: getShippingThreshold(
-        parseInt(p.vendorId as string),
-      ),
-    })),
-    internalProducts,
-    getAllOwnVendorIds(),
-    vendorSettings,
-    jobId,
-  );
-
-  const uniqueVendorIds = [
-    ...new Set(solutionResults.map((s) => s.vendor.vendorId)),
-  ];
-
-  const finalResults = await updatePricesIfNecessary(
-    solutionResults,
-    prod.vpCode,
-    applicationConfig.IS_DEV,
-  );
-
-  // Store algorithm results in the new v2_algo_results table
-  const algoResults = finalResults.map((result) => ({
-    job_id: jobId,
-    suggested_price: result.suggestedPrice,
-    comment: result.comment,
-    triggered_by_vendor: result.triggeredByVendor,
-    result: result.result,
-    quantity: result.quantity,
-    vendor_id: result.vendor.vendorId,
-    mp_id: mpId,
-    cron_name: cronName,
-    run_time: moment().toDate(),
-    q_break_valid: result.qBreakValid,
-    price_update_result: result.changeResult,
-  }));
-
-  await insertMultipleV2AlgoResults(algoResults);
-
-  // We only need to store one html file per vendor, not per quantity.
-  await Promise.all(
-    uniqueVendorIds.map(async (vendorId) => {
-      const result = solutionResults.find(
-        (s) => s.vendor.vendorId === vendorId,
-      );
-      if (!result) {
-        throw new Error(`No result found for vendor ${vendorId}`);
-      }
-      await insertV2AlgoExecution({
-        scrape_product_id: prod.productIdentifier,
-        created_at: moment().toDate(),
-        expires_at: moment()
-          .utc()
-          .add(applicationConfig.V2_ALGO_HTML_FILE_EXPIRY_HOURS, "hours")
-          .toDate(),
-        chain_of_thought_html: Buffer.from(result.html),
-        mp_id: prod.mpId,
-        vendor_id: result.vendor.vendorId,
-        job_id: jobId,
-      });
-    }),
-  );
-
-  console.log(`Algorithm execution completed with job ID: ${jobId}`);
-  return finalResults;
 }
 
 function priceIsWithinBounariesSafeguard(solution: Net32AlgoSolution) {

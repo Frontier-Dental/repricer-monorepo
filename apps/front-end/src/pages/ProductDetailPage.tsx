@@ -1,7 +1,7 @@
 "use client";
 
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { ArrowLeft, Download, ArrowUpDown } from "lucide-react";
+import { Download, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -85,10 +85,6 @@ export function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [vendorFilter, setVendorFilter] = useState("");
   const [jobFilter, setJobFilter] = useState("");
-
-  const handleBack = () => {
-    navigate({ to: "/" });
-  };
 
   const openHtmlInNewTab = (htmlContent: string) => {
     const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
@@ -373,10 +369,9 @@ export function ProductDetailPage() {
         <div className="mb-8">
           <Button
             variant="outline"
-            onClick={handleBack}
+            onClick={() => navigate({ to: "/" })}
             className="mb-4 flex items-center gap-2"
           >
-            <ArrowLeft className="h-4 w-4" />
             Back to Products
           </Button>
           <h1 className="text-3xl font-bold tracking-tight">Product Details</h1>
@@ -405,14 +400,6 @@ export function ProductDetailPage() {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8">
-        <Button
-          variant="outline"
-          onClick={handleBack}
-          className="mb-4 flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Products
-        </Button>
         <h1 className="text-3xl font-bold tracking-tight">Product Details</h1>
         <p className="text-muted-foreground">Product ID: {mpId}</p>
       </div>
