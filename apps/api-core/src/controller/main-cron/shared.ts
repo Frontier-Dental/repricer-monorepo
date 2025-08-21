@@ -284,7 +284,8 @@ export async function getCronEligibleProductsV3(cronId: any) {
   if (globalConfig && globalConfig.source == "FEED") {
     return eligibleProductList;
   }
-  eligibleProductList = await mySqlHelper.GetActiveProductListByCronId(cronId); //await dbHelper.GetActiveProductList(cronId);
+  eligibleProductList =
+    await mySqlHelper.GetActiveFullProductDetailsList(cronId); //await dbHelper.GetActiveProductList(cronId);
   eligibleProductList = await feedHelper.FilterEligibleProducts(
     eligibleProductList,
     cronId,

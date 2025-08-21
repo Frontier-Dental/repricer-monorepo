@@ -13,6 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Cross2Icon } from "@radix-ui/react-icons";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 interface V2AlgoResultWithExecution {
   // From v2_algo_results table
@@ -87,6 +91,8 @@ export function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [vendorFilter, setVendorFilter] = useState("");
   const [jobFilter, setJobFilter] = useState("");
+  const [v2AlgoOnly, setV2AlgoOnly] = useState<boolean>(false);
+  const [isUpdatingV2AlgoOnly, setIsUpdatingV2AlgoOnly] = useState(false);
 
   const openHtmlInNewTab = (htmlContent: string) => {
     const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
@@ -120,6 +126,45 @@ export function ProductDetailPage() {
       toast.error("Failed to initiate manual reprice. Please try again.");
     } finally {
       setIsManualRepricing(false);
+    }
+  };
+
+  const handleV2AlgoOnlyToggle = async (checked: boolean) => {
+    setIsUpdatingV2AlgoOnly(true);
+    try {
+      const response = await fetch(`/v2-algo/update_v2_algo_only/${mpId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ v2_algo_only: checked }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      setV2AlgoOnly(checked);
+      toast.success("V2 Algo Only setting updated successfully!");
+    } catch (error) {
+      console.error("Error updating V2 Algo Only setting:", error);
+      toast.error("Failed to update V2 Algo Only setting. Please try again.");
+      // Revert the toggle if the update failed
+      setV2AlgoOnly(!checked);
+    } finally {
+      setIsUpdatingV2AlgoOnly(false);
+    }
+  };
+
+  const fetchV2AlgoOnlyStatus = async () => {
+    try {
+      const response = await fetch(`/v2-algo/get_v2_algo_only_status/${mpId}`);
+      if (response.ok) {
+        const result = await response.json();
+        setV2AlgoOnly(result.v2_algo_only || false);
+      }
+    } catch (err) {
+      console.error("Error fetching V2 Algo Only status:", err);
     }
   };
 
@@ -184,6 +229,7 @@ export function ProductDetailPage() {
   useEffect(() => {
     fetchData();
     fetchSettings();
+    fetchV2AlgoOnlyStatus();
   }, [mpId]);
 
   const formatDate = (dateString: string) => {
@@ -520,6 +566,43 @@ export function ProductDetailPage() {
           />
         </>
       )}
+
+      {/* V2 Algo Only Toggle Section */}
+      <div className="mt-8 mb-6">
+        <div className="flex items-center space-x-4 mb-4">
+          <Label htmlFor="v2-algo-only" className="text-base font-semibold">
+            V2 Algo Only
+          </Label>
+          <div className="flex items-center space-x-2">
+            {isUpdatingV2AlgoOnly && (
+              <span className="text-sm text-muted-foreground">Updating...</span>
+            )}
+            <Switch
+              id="v2-algo-only"
+              checked={v2AlgoOnly}
+              onCheckedChange={handleV2AlgoOnlyToggle}
+              disabled={isUpdatingV2AlgoOnly}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              If V2 Algo Only is set, the V1 algo will not run and the V2 Algo
+              will make price changes on Net32.
+            </AlertDescription>
+          </Alert>
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              If V2 Algo Only is not set, both algorithms will run but only the
+              V1 algo will make price changes.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
 
       {/* Vendor Settings Section */}
       <div className="mt-12 mb-6">

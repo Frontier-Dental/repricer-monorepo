@@ -70,6 +70,7 @@ export async function repriceProductV2Wrapper(
       solutionResults,
       prod.vpCode,
       applicationConfig.IS_DEV,
+      prod.v2AlgoOnly,
     );
 
     if (finalResults.length === 0) {
@@ -179,6 +180,7 @@ async function updatePricesIfNecessary(
   solutionResults: Net32AlgoSolutionWithQBreakValid[],
   vpCode: string,
   isDev: boolean,
+  v2AlgoOnly: boolean,
 ): Promise<Net32AlgoSolutionWithChangeResult[]> {
   const validSolutionsWithChanges = solutionResults
     .filter((s) => isChangeResult(s.algoResult))
@@ -242,7 +244,7 @@ async function updatePricesIfNecessary(
           console.log("We are in dev mode, not executing actual change.");
         }
 
-        if (hasExecutionPriority && !isDev) {
+        if (hasExecutionPriority && !isDev && v2AlgoOnly) {
           // Execute the price update
           await updateProductInfo(
             proxyConfig.subscription_key,

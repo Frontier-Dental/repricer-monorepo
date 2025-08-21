@@ -9,6 +9,7 @@ import { DataTable } from "@/components/data-table";
 import { DataTableToolbar } from "@/components/data-table-toolbar";
 import type { ProductDetails } from "@/types/product";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 import {
   useReactTable,
   getCoreRowModel,
@@ -53,94 +54,59 @@ function ActionButton({ productId }: { productId: string }) {
   );
 }
 
-// Define the columns for the data table
-const columns: ColumnDef<ProductDetails>[] = [
-  {
-    id: "actions",
-    header: "",
-    cell: ({ row }) => {
-      const productId = row.getValue("ProductId") as string;
-      return <ActionButton productId={productId} />;
-    },
-  },
-  {
-    accessorKey: "ProductId",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          MPID
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
-    cell: ({ row }) => (
-      <div className="font-mono">{row.getValue("ProductId")}</div>
-    ),
-    filterFn: (row, columnId, filterValue) => {
-      return parseInt(row.getValue(columnId)) === parseInt(filterValue);
-    },
-  },
-  {
-    accessorKey: "IsActive",
-    header: "Status",
-    cell: ({ row }) => {
-      console.log(row.original);
-      const activated = row.getValue("IsActive") as number;
-      return (
-        <Badge variant={activated === 1 ? "default" : "secondary"}>
-          {activated === 1 ? "Active" : "Inactive"}
-        </Badge>
-      );
-    },
-  },
-  {
-    accessorKey: "IsBadgeItem",
-    header: "Badge Item",
-    cell: ({ row }) => {
-      const isBadgeItem = row.getValue("IsBadgeItem") as number;
-      return (
-        <Badge variant={isBadgeItem === 1 ? "default" : "secondary"}>
-          {isBadgeItem === 1 ? "Yes" : "No"}
-        </Badge>
-      );
-    },
-  },
-  {
-    accessorKey: "RegularCronName",
-    enableColumnFilter: true,
-    header: "Regular Cron",
-    cell: ({ row }) => (
-      <div className="font-mono text-sm">{row.getValue("RegularCronName")}</div>
-    ),
-  },
-  {
-    accessorKey: "Net32Url",
-    header: "Net32 URL",
-    cell: ({ row }) => {
-      const url = row.getValue("Net32Url") as string;
-      return (
-        <div className="max-w-[200px]">
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-          >
-            View Product <ExternalLink className="h-3 w-3" />
-          </a>
-        </div>
-      );
-    },
-  },
-];
+// V2 Algo Only toggle component
+function V2AlgoOnlyToggle({
+  productId,
+  initialValue,
+  onToggle,
+}: {
+  productId: string;
+  initialValue: boolean;
+  onToggle: (productId: string, value: boolean) => void;
+}) {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [value, setValue] = useState(initialValue);
 
-interface ApiResponse {
-  data: ProductDetails[];
-  cacheTimestamp: string;
-  isCached: boolean;
+  const handleToggle = async (checked: boolean) => {
+    setIsUpdating(true);
+    try {
+      const response = await fetch(
+        `/v2-algo/update_v2_algo_only/${productId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ v2_algo_only: checked }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      setValue(checked);
+      onToggle(productId, checked);
+      toast.success("V2 Algo Only setting updated successfully!");
+    } catch (error) {
+      console.error("Error updating V2 Algo Only setting:", error);
+      toast.error("Failed to update V2 Algo Only setting. Please try again.");
+      // Revert the toggle if the update failed
+      setValue(!checked);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center space-x-2">
+      <Switch
+        checked={value}
+        onCheckedChange={handleToggle}
+        disabled={isUpdating}
+      />
+    </div>
+  );
 }
 
 export function ProductsPage() {
@@ -153,6 +119,114 @@ export function ProductsPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
+  // Define the columns for the data table
+  const columns: ColumnDef<ProductDetails>[] = [
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => {
+        const productId = row.getValue("ProductId") as string;
+        return <ActionButton productId={productId} />;
+      },
+    },
+    {
+      accessorKey: "ProductId",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            MPID
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="font-mono">{row.getValue("ProductId")}</div>
+      ),
+      filterFn: (row, columnId, filterValue) => {
+        return parseInt(row.getValue(columnId)) === parseInt(filterValue);
+      },
+    },
+    {
+      accessorKey: "IsActive",
+      header: "Status",
+      cell: ({ row }) => {
+        const activated = row.getValue("IsActive") as number;
+        return (
+          <Badge variant={activated === 1 ? "default" : "secondary"}>
+            {activated === 1 ? "Active" : "Inactive"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "IsBadgeItem",
+      header: "Badge Item",
+      cell: ({ row }) => {
+        const isBadgeItem = row.getValue("IsBadgeItem") as number;
+        return (
+          <Badge variant={isBadgeItem === 1 ? "default" : "secondary"}>
+            {isBadgeItem === 1 ? "Yes" : "No"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "v2_algo_only",
+      header: "V2 Algo Only",
+      cell: ({ row }) => {
+        const productId = row.getValue("ProductId") as string;
+        const v2AlgoOnly = row.getValue("v2_algo_only") as boolean;
+        return (
+          <V2AlgoOnlyToggle
+            productId={productId}
+            initialValue={v2AlgoOnly || false}
+            onToggle={(id, value) => {
+              // Update the local state when toggle changes
+              const updatedData = data.map((product: ProductDetails) =>
+                product.ProductId.toString() === id.toString()
+                  ? { ...product, v2_algo_only: value }
+                  : product,
+              );
+              setData(updatedData);
+            }}
+          />
+        );
+      },
+    },
+    {
+      accessorKey: "RegularCronName",
+      enableColumnFilter: true,
+      header: "Regular Cron",
+      cell: ({ row }) => (
+        <div className="font-mono text-sm">
+          {row.getValue("RegularCronName")}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "Net32Url",
+      header: "Net32 URL",
+      cell: ({ row }) => {
+        const url = row.getValue("Net32Url") as string;
+        return (
+          <div className="max-w-[200px]">
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            >
+              View Product <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        );
+      },
+    },
+  ];
 
   // Create table instance for the toolbar
   const table = useReactTable({
@@ -172,9 +246,17 @@ export function ProductsPage() {
     getSortedRowModel: getSortedRowModel(),
   });
 
+  interface ApiResponse {
+    data: ProductDetails[];
+    cacheTimestamp: string;
+    isCached: boolean;
+  }
+
   const fetchProducts = async (ignoreCache: boolean = false) => {
     setIsLoading(true);
     setError(null);
+
+    console.log("fetching products");
 
     try {
       const url = ignoreCache

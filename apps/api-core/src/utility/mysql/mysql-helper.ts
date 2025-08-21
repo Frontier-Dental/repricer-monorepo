@@ -331,6 +331,165 @@ export async function UpdateHistoryWithMessage(
   return updateResult;
 }
 
+export async function GetActiveFullProductDetailsList(cronId: string) {
+  const knex = getKnexInstance();
+
+  // Build the base query for each vendor using UNION
+  const tradentQuery = knex
+    .select(
+      "pl.Id as ProductIdentifier",
+      "pl.MpId as ProductId",
+      "pl.ProductName",
+      "pl.Net32Url",
+      "pl.IsActive as ScrapeOnlyActive",
+      "pl.LinkedCronName as LinkedScrapeOnlyCron",
+      "pl.LinkedCronId as LinkedScrapeOnlyCronId",
+      "pl.RegularCronName",
+      "pl.RegularCronId",
+      "pl.SlowCronName",
+      "pl.SlowCronId",
+      "pl.IsSlowActivated",
+      "pl.v2_algo_only",
+      knex.raw("tdl.*"),
+    )
+    .from("table_scrapeProductList as pl")
+    .leftJoin(
+      "table_tradentDetails as tdl",
+      "tdl.id",
+      "pl.LinkedTradentDetailsInfo",
+    )
+    .where("pl.RegularCronId", cronId)
+    .where("pl.IsSlowActivated", "!=", true)
+    .whereNotNull("tdl.ChannelName")
+    .where("tdl.Activated", true);
+
+  const frontierQuery = knex
+    .select(
+      "pl.Id as ProductIdentifier",
+      "pl.MpId as ProductId",
+      "pl.ProductName",
+      "pl.Net32Url",
+      "pl.IsActive as ScrapeOnlyActive",
+      "pl.LinkedCronName as LinkedScrapeOnlyCron",
+      "pl.LinkedCronId as LinkedScrapeOnlyCronId",
+      "pl.RegularCronName",
+      "pl.RegularCronId",
+      "pl.SlowCronName",
+      "pl.SlowCronId",
+      "pl.IsSlowActivated",
+      "pl.v2_algo_only",
+
+      knex.raw("fdl.*"),
+    )
+    .from("table_scrapeProductList as pl")
+    .leftJoin(
+      "table_frontierDetails as fdl",
+      "fdl.id",
+      "pl.LinkedFrontiersDetailsInfo",
+    )
+    .where("pl.RegularCronId", cronId)
+    .where("pl.IsSlowActivated", "!=", true)
+    .whereNotNull("fdl.ChannelName")
+    .where("fdl.Activated", true);
+
+  const mvpQuery = knex
+    .select(
+      "pl.Id as ProductIdentifier",
+      "pl.MpId as ProductId",
+      "pl.ProductName",
+      "pl.Net32Url",
+      "pl.IsActive as ScrapeOnlyActive",
+      "pl.LinkedCronName as LinkedScrapeOnlyCron",
+      "pl.LinkedCronId as LinkedScrapeOnlyCronId",
+      "pl.RegularCronName",
+      "pl.RegularCronId",
+      "pl.SlowCronName",
+      "pl.SlowCronId",
+      "pl.IsSlowActivated",
+      "pl.v2_algo_only",
+      knex.raw("mdl.*"),
+    )
+    .from("table_scrapeProductList as pl")
+    .leftJoin("table_mvpDetails as mdl", "mdl.id", "pl.LinkedMvpDetailsInfo")
+    .where("pl.RegularCronId", cronId)
+    .where("pl.IsSlowActivated", "!=", true)
+    .whereNotNull("mdl.ChannelName")
+    .where("mdl.Activated", true);
+
+  const firstDentQuery = knex
+    .select(
+      "pl.Id as ProductIdentifier",
+      "pl.MpId as ProductId",
+      "pl.ProductName",
+      "pl.Net32Url",
+      "pl.IsActive as ScrapeOnlyActive",
+      "pl.LinkedCronName as LinkedScrapeOnlyCron",
+      "pl.LinkedCronId as LinkedScrapeOnlyCronId",
+      "pl.RegularCronName",
+      "pl.RegularCronId",
+      "pl.SlowCronName",
+      "pl.SlowCronId",
+      "pl.IsSlowActivated",
+      "pl.v2_algo_only",
+      knex.raw("firstDl.*"),
+    )
+    .from("table_scrapeProductList as pl")
+    .leftJoin(
+      "table_firstDentDetails as firstDl",
+      "firstDl.id",
+      "pl.LinkedFirstDentDetailsInfo",
+    )
+    .where("pl.RegularCronId", cronId)
+    .where("pl.IsSlowActivated", "!=", true)
+    .whereNotNull("firstDl.ChannelName")
+    .where("firstDl.Activated", true);
+
+  const topDentQuery = knex
+    .select(
+      "pl.Id as ProductIdentifier",
+      "pl.MpId as ProductId",
+      "pl.ProductName",
+      "pl.Net32Url",
+      "pl.IsActive as ScrapeOnlyActive",
+      "pl.LinkedCronName as LinkedScrapeOnlyCron",
+      "pl.LinkedCronId as LinkedScrapeOnlyCronId",
+      "pl.RegularCronName",
+      "pl.RegularCronId",
+      "pl.SlowCronName",
+      "pl.SlowCronId",
+      "pl.IsSlowActivated",
+      "pl.v2_algo_only",
+      knex.raw("topDl.*"),
+    )
+    .from("table_scrapeProductList as pl")
+    .leftJoin(
+      "table_topDentDetails as topDl",
+      "topDl.id",
+      "pl.LinkedTopDentDetailsInfo",
+    )
+    .where("pl.RegularCronId", cronId)
+    .where("pl.IsSlowActivated", "!=", true)
+    .whereNotNull("topDl.ChannelName")
+    .where("topDl.Activated", true);
+
+  // Use raw SQL for the UNION query to ensure MySQL2 compatibility
+  const unionQuery = `
+    (${tradentQuery.toString()})
+    UNION
+    (${frontierQuery.toString()})
+    UNION
+    (${mvpQuery.toString()})
+    UNION
+    (${firstDentQuery.toString()})
+    UNION
+    (${topDentQuery.toString()})
+    ORDER BY ProductId
+  `;
+
+  const result = await knex.raw(unionQuery);
+  return MapProductDetailsList(result[0]);
+}
+
 /**************************** PRIVATE FUNCTIONS ***********************************/
 async function getContextItemByKey(payload: any, key: string): Promise<any> {
   if (payload.tradentDetails != null) return payload.tradentDetails[key];

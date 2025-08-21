@@ -1,4 +1,8 @@
-import { getAllProductDetails } from "../services/algo_v2/products";
+import {
+  getAllProductDetails,
+  updateV2AlgoOnly,
+  getV2AlgoOnlyStatus,
+} from "../services/algo_v2/products";
 import { Request, Response } from "express";
 import { getAlgoResultsWithExecutionData } from "../services/algo_v2/results";
 import {
@@ -132,5 +136,64 @@ export async function getAllV2AlgoErrorsController(
   return res.json({
     data: errors,
     count: errors.length,
+  });
+}
+
+export async function updateV2AlgoOnlyController(
+  req: Request<{ mpId: string }>,
+  res: Response,
+) {
+  const { mpId } = req.params;
+  const { v2_algo_only } = req.body;
+  const mpIdNumber = parseInt(mpId, 10);
+
+  if (isNaN(mpIdNumber)) {
+    return res.status(400).json({
+      error: "Invalid mp_id parameter. Must be a valid number.",
+    });
+  }
+
+  if (typeof v2_algo_only !== "boolean") {
+    return res.status(400).json({
+      error: "v2_algo_only must be a boolean value.",
+    });
+  }
+
+  const updatedRows = await updateV2AlgoOnly(mpIdNumber, v2_algo_only);
+
+  if (updatedRows === 0) {
+    return res.status(404).json({
+      error: "Product not found with the specified mp_id.",
+    });
+  }
+
+  return res.json({
+    success: true,
+    message: "v2_algo_only field updated successfully",
+    mp_id: mpIdNumber,
+    v2_algo_only: v2_algo_only,
+    updated_rows: updatedRows,
+  });
+}
+
+export async function getV2AlgoOnlyStatusController(
+  req: Request<{ mpId: string }>,
+  res: Response,
+) {
+  const { mpId } = req.params;
+  const mpIdNumber = parseInt(mpId, 10);
+
+  if (isNaN(mpIdNumber)) {
+    return res.status(400).json({
+      error: "Invalid mp_id parameter. Must be a valid number.",
+    });
+  }
+
+  const v2AlgoOnly = await getV2AlgoOnlyStatus(mpIdNumber);
+
+  return res.json({
+    success: true,
+    mp_id: mpIdNumber,
+    v2_algo_only: v2AlgoOnly,
   });
 }

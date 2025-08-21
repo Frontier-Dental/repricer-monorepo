@@ -99,32 +99,35 @@ export async function Execute(
           prioritySequence,
           cronSetting ? cronSetting.CronName : "MANUAL",
         );
-        for (let idx = 0; idx < prioritySequence.length; idx++) {
-          const proceedNextVendor = proceedNext(
-            prod,
-            prioritySequence[idx].value,
-          );
-          const isVendorActivated = prod[prioritySequence[idx].value].activated;
-          if (proceedNextVendor && isVendorActivated) {
-            let repriceResponse = await repriceWrapper(
-              net32resp,
+        if (!prod.v2AlgoOnly) {
+          for (let idx = 0; idx < prioritySequence.length; idx++) {
+            const proceedNextVendor = proceedNext(
               prod,
-              cronSetting,
-              isOverrideRun,
-              jobId,
-              prioritySequence,
-              idx,
+              prioritySequence[idx].value,
             );
-            eligibleCount++;
-            if (repriceResponse) {
-              productLogs = repriceResponse.cronLogs;
-              prod[prioritySequence[idx].value] = repriceResponse.prod;
-              if (repriceResponse.isPriceUpdated) {
-                repricedProductCount++;
-              }
+            const isVendorActivated =
+              prod[prioritySequence[idx].value].activated;
+            if (proceedNextVendor && isVendorActivated) {
+              let repriceResponse = await repriceWrapper(
+                net32resp,
+                prod,
+                cronSetting,
+                isOverrideRun,
+                jobId,
+                prioritySequence,
+                idx,
+              );
+              eligibleCount++;
+              if (repriceResponse) {
+                productLogs = repriceResponse.cronLogs;
+                prod[prioritySequence[idx].value] = repriceResponse.prod;
+                if (repriceResponse.isPriceUpdated) {
+                  repricedProductCount++;
+                }
 
-              if (repriceResponse.skipNextVendor) {
-                break;
+                if (repriceResponse.skipNextVendor) {
+                  break;
+                }
               }
             }
           }

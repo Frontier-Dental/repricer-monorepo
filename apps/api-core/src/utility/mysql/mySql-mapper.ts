@@ -56,6 +56,7 @@ export const MapProductDetailsList = (
   for (const prodId of listOfProductIds) {
     const mappedProduct = {
       mpId: parseInt(prodId),
+      v2AlgoOnly: groupedList[parseInt(prodId)][0].v2_algo_only === 1,
       productIdentifier: groupedList[parseInt(prodId)][0].ProductIdentifier,
       isSlowActivated:
         _.first(groupedList[parseInt(prodId)])?.IsSlowActivated == 1
