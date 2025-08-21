@@ -365,6 +365,7 @@ function buildResultsTable(solution: Net32AlgoSolutionWithQBreakValid) {
     <tbody>
       <tr><td>Result</td><td>${result}</td></tr>
       <tr><td>Q-Break Valid</td><td>${qBreakValid}</td></tr>
+      <tr><td>Q-Break Invalid Reason</td><td>${solution.qBreakInvalidReason ? solution.qBreakInvalidReason.join(", ") : "N/A"}</td></tr>
       <tr><td>Comment</td><td>${comment}</td></tr>
       <tr><td>Suggested Price</td><td>${suggestedPrice}</td></tr>
       <tr><td>Triggered By Vendor</td><td>${triggeredByVendor}</td></tr>
