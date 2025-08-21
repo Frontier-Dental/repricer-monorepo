@@ -129,17 +129,6 @@ async function getActive422CronItems(): Promise<ErrorItem[]> {
   return result as ErrorItem[];
 }
 
-export async function checkIfProductIsIn422(mpid: number, vendor: VendorName) {
-  const dbo = await getMongoDb();
-  const result = await dbo
-    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
-    .findOne({ mpId: mpid, vendorName: vendor, active: true });
-  if (result) {
-    return true;
-  }
-  return false;
-}
-
 function getSkipReprice(
   prod: any,
   vendor: string,

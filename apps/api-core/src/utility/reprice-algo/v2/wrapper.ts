@@ -15,13 +15,16 @@ import {
   repriceProductV2,
 } from "./algorithm";
 import { getShippingThreshold } from "./shipping-threshold";
-import { ChangeResult, VendorName } from "./types";
+import { ChangeResult, VendorName, VendorNameLookup } from "./types";
 import {
   getAllOwnVendorIds,
   getInternalProducts,
   isChangeResult,
 } from "./utility";
 import { v4 } from "uuid";
+import { ErrorItemModel } from "../../../model/error-item";
+import { calculateNextCronTime } from "../../../controller/main-cron/shared";
+import * as mongoHelper from "../../mongo/db-helper";
 
 export async function repriceProductV2Wrapper(
   net32Products: Net32Product[],
@@ -119,6 +122,32 @@ export async function repriceProductV2Wrapper(
         });
       }),
     );
+
+    for (const uniqueVendorId of uniqueVendorIds) {
+      const changeApplied = finalResults.find(
+        (r) =>
+          r.vendor.vendorId === uniqueVendorId &&
+          r.changeResult === ChangeResult.OK,
+      );
+      const vendorName = VendorNameLookup[uniqueVendorId];
+      if (changeApplied) {
+        // Add the product to Error Item Table and update nextCronTime as +12 Hrs
+        const priceUpdatedItem = new ErrorItemModel(
+          prod.mpId!,
+          calculateNextCronTime(new Date(), 12),
+          true,
+          prod.cronId!,
+          "PRICE_UPDATE",
+          vendorName,
+        );
+        await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
+        console.log({
+          message: `V2 Algo: ${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
+          obj: JSON.stringify(priceUpdatedItem),
+        });
+      }
+    }
+
     return finalResults;
   } catch (error) {
     console.error(
