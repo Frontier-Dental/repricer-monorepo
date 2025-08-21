@@ -287,6 +287,11 @@ export function ProductDetailPage() {
       },
     },
     {
+      accessorKey: "triggered_by_vendor",
+      header: "Triggered By Vendor",
+      cell: ({ row }) => <div>{row.getValue("triggered_by_vendor")}</div>,
+    },
+    {
       accessorKey: "price_update_result",
       header: "Price Update Result",
       cell: ({ row }) => {
