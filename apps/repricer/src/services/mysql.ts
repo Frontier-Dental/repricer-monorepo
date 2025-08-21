@@ -2,6 +2,7 @@ import SqlConnectionPool from "../models/sql-models/mysql-db";
 import * as SqlMapper from "../utility/mapper/mysql-mapper";
 import { applicationConfig } from "../utility/config";
 import { getKnexInstance } from "./knex-wrapper";
+import bcrypt from "bcrypt";
 
 export async function GetLatestRunInfo(
   noOfRecords: any,
@@ -592,4 +593,56 @@ export async function UpdateBranchDataForVendor(
 export async function ExecuteQuery(_query: any, _params: any) {
   const db = await SqlConnectionPool.getConnection();
   return db.execute(_query, _params);
+}
+
+export async function CreateUser(username: string, password: string) {
+  const db = getKnexInstance();
+  const [userId] = await db("users").insert({
+    username,
+    password,
+  });
+  return userId;
+}
+
+export async function AuthenticateUser(username: string, password: string) {
+  const db = getKnexInstance();
+  const user = await db("users")
+    .select("id", "username", "password")
+    .where("username", username)
+    .first();
+
+  if (!user) {
+    return null;
+  }
+
+  // Compare the provided password with the stored hash
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (isPasswordValid) {
+    // Return user without password for security
+    return {
+      id: user.id,
+      username: user.username,
+    };
+  }
+
+  return null;
+}
+
+export async function ChangePassword(username: string, newPassword: string) {
+  const db = getKnexInstance();
+  const result = await db("users").where("username", username).update({
+    password: newPassword,
+    updated_at: db.fn.now(),
+  });
+  return result > 0;
+}
+
+export async function CheckUserExists(username: string) {
+  const db = getKnexInstance();
+  const user = await db("users")
+    .select("id", "username")
+    .where("username", username)
+    .first();
+  return user || null;
 }

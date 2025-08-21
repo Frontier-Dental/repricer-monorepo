@@ -9,13 +9,17 @@
     "rollback:dev": "knex migrate:rollback --env development",
     "migrate:prod": "knex migrate:latest --env production",
     "seed:dev": "knex seed:run --env development",
-    "seed:make": "knex seed:make"
+    "seed:make": "knex seed:make",
+    "create-user": "tsx scripts/create-user.ts"
   },
   "author": "Julian Wilson <julianwlsn@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^16.4.5",
     "knex": "^3.1.0",
-    "dotenv": "^16.4.5"
+    "tsx": "^4.20.4"
   },
   "devDependencies": {
     "ts-node": "^10.9.1",

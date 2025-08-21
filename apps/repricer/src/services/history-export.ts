@@ -186,7 +186,7 @@ export async function ExportAndSaveV2(
     endDate: moment(endDate).format("YYYY-MM-DD HH:mm:ss"),
     fileName: historyFileName,
   };
-  httpMiddleware.native_post(historyExportUrl, requestPayload);
+  await httpMiddleware.native_post(historyExportUrl, requestPayload);
   console.log(
     `Called ExportAndSave For All for Date ${new Date(startDate)} | ${new Date(endDate)} | ContextPath : ${historyFileName} `,
   );
