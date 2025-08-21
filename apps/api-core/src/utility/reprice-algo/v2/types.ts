@@ -67,6 +67,11 @@ export enum AlgoResult {
   ERROR = "ERROR",
 }
 
+export enum QbreakInvalidReason {
+  SUPPRESS_BECAUSE_Q1_NOT_UPDATED = "SUPPRESS_BECAUSE_Q1_NOT_UPDATED",
+  UNNECESSARY = "UNNECESSARY",
+}
+
 export enum VendorId {
   FRONTIER = 20722,
   TRADENT = 17357,

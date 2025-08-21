@@ -19,6 +19,7 @@ import {
   Net32AlgoProductWithBestPrice,
   Net32AlgoProductWrapperWithBuyBoxRank,
   ChangeResult,
+  QbreakInvalidReason,
 } from "./types";
 
 export interface QuantitySolution {
@@ -53,6 +54,7 @@ export interface Net32AlgoSolutionWithResult
 export interface Net32AlgoSolutionWithQBreakValid
   extends Net32AlgoSolutionWithResult {
   qBreakValid: boolean;
+  qBreakInvalidReason?: QbreakInvalidReason[];
 }
 
 export interface Net32AlgoSolutionWithChangeResult
@@ -248,11 +250,20 @@ function removeUnnecessaryQuantityBreaks(
     applySuppressQBreakIfQ1NotUpdated(solutionResults);
   // TODO: More advanced filtering if we are already beating all competitors on a lower Q break
   return solutionResults.map((s, i) => {
+    const invalidReasons: QbreakInvalidReason[] = [];
+    if (!invalidQuantityBreaks[i].qBreakValid) {
+      invalidReasons.push(QbreakInvalidReason.UNNECESSARY);
+    }
+    if (!suppressQBreakIfQ1NotUpdated[i].qBreakValid) {
+      invalidReasons.push(QbreakInvalidReason.SUPPRESS_BECAUSE_Q1_NOT_UPDATED);
+    }
     return {
       ...s,
       qBreakValid:
         invalidQuantityBreaks[i].qBreakValid &&
         suppressQBreakIfQ1NotUpdated[i].qBreakValid,
+      qBreakInvalidReason:
+        invalidReasons.length > 0 ? invalidReasons : undefined,
     };
   });
 }
