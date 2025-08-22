@@ -89,9 +89,33 @@ export async function getV2AlgoSettings(
   }
 
   const settings = await getV2AlgoSettingsByMpId(mpIdNumber);
+  const formattedSettings = settings.map((setting) => {
+    return {
+      ...setting,
+      reprice_up_percentage: Number(setting.reprice_up_percentage),
+      reprice_down_percentage: Number(setting.reprice_down_percentage),
+      reprice_up_badge_percentage: Number(setting.reprice_up_badge_percentage),
+      reprice_down_badge_percentage: Number(
+        setting.reprice_down_badge_percentage,
+      ),
+      max_price: Number(setting.max_price),
+      floor_price: Number(setting.floor_price),
+      suppress_price_break: setting.suppress_price_break === 1,
+      floor_compete_with_next: setting.floor_compete_with_next === 1,
+      keep_position: setting.keep_position === 1,
+      compare_q2_with_q1: setting.compare_q2_with_q1 === 1,
+      compete_on_price_break_only: setting.compete_on_price_break_only === 1,
+      suppress_price_break_if_Q1_not_updated:
+        setting.suppress_price_break_if_Q1_not_updated === 1,
+      compete_with_all_vendors: setting.compete_with_all_vendors === 1,
+      compete_with_own_quantity_0: setting.compete_with_own_quantity_0 === 1,
+      not_cheapest: setting.not_cheapest === 1,
+      handling_time_group: setting.handling_time_group === 1,
+    };
+  });
 
   return res.json({
-    data: settings,
+    data: formattedSettings,
     mp_id: mpIdNumber,
     count: settings.length,
   });
