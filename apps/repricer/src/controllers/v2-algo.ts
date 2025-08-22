@@ -109,7 +109,6 @@ export async function getV2AlgoSettings(
         setting.suppress_price_break_if_Q1_not_updated === 1,
       compete_with_all_vendors: setting.compete_with_all_vendors === 1,
       not_cheapest: setting.not_cheapest === 1,
-      handling_time_group: setting.handling_time_group === 1,
       enabled: setting.enabled === 1,
     };
   });
