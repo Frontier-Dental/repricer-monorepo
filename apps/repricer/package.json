@@ -18,6 +18,7 @@
     "axios-retry": "^3.3.1",
     "basic-ftp": "^5.0.5",
     "bcrypt": "^6.0.0",
+    "@repricer-monorepo/shared": "*",
     "body-parser": "^2.2.0",
     "child_process": "^1.0.2",
     "cookie-parser": "^1.4.6",
