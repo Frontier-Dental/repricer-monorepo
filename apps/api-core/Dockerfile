@@ -10,8 +10,7 @@ COPY . ./
 # Install all at root
 RUN npm ci
 
-# Build TypeScript code
-RUN cd apps/api-core && npm run build
+RUN npm run build
 
 # Remove dev dependencies to reduce image size
 RUN npm prune --production

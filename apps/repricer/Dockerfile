@@ -10,11 +10,7 @@ COPY . ./
 # Install all at root
 RUN npm ci
 
-# Build TypeScript code from the repricer directory
-RUN cd apps/repricer && npm run build
-
-# Build front-end
-RUN cd apps/front-end && npm run build
+RUN npm run build
 
 # Remove dev dependencies to reduce image size
 RUN npm prune --production
