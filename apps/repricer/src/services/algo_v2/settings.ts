@@ -17,7 +17,7 @@ export interface V2AlgoSettings {
   sister_vendor_ids: string;
   exclude_vendors: string;
   inactive_vendor_id: string;
-  handling_time_group: boolean;
+  handling_time_group: "ALL" | "FAST_SHIPPING" | "STOCKED" | "LONG_HANDLING";
   keep_position: boolean;
   inventory_competition_threshold: number;
   reprice_down_percentage: number;
@@ -25,7 +25,7 @@ export interface V2AlgoSettings {
   floor_price: number;
   reprice_down_badge_percentage: number;
   floor_compete_with_next: boolean;
-  compete_with_own_quantity_0: boolean;
+  own_vendor_threshold: number;
   not_cheapest: boolean;
 }
 
@@ -47,7 +47,7 @@ export interface V2AlgoSettingsDb {
   sister_vendor_ids: string;
   exclude_vendors: string;
   inactive_vendor_id: string;
-  handling_time_group: number;
+  handling_time_group: "ALL" | "FAST_SHIPPING" | "STOCKED" | "LONG_HANDLING";
   keep_position: number;
   inventory_competition_threshold: number;
   reprice_down_percentage: string;
@@ -55,7 +55,7 @@ export interface V2AlgoSettingsDb {
   floor_price: string;
   reprice_down_badge_percentage: string;
   floor_compete_with_next: number;
-  compete_with_own_quantity_0: number;
+  own_vendor_threshold: number;
   not_cheapest: number;
 }
 

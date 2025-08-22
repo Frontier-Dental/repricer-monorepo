@@ -42,7 +42,12 @@ const settingsSchema = z.object({
   sister_vendor_ids: z.string(),
   exclude_vendors: z.string(),
   inactive_vendor_id: z.string(),
-  handling_time_group: z.boolean(),
+  handling_time_group: z.enum([
+    "ALL",
+    "FAST_SHIPPING",
+    "STOCKED",
+    "LONG_HANDLING",
+  ]),
   keep_position: z.boolean(),
   inventory_competition_threshold: z.number().min(1).max(100),
   reprice_down_percentage: z.number().min(-1).max(100),
@@ -50,7 +55,7 @@ const settingsSchema = z.object({
   floor_price: z.number().min(0),
   reprice_down_badge_percentage: z.number().min(-1).max(100),
   floor_compete_with_next: z.boolean(),
-  compete_with_own_quantity_0: z.boolean(),
+  own_vendor_threshold: z.number().min(0).max(100),
   not_cheapest: z.boolean(),
   enabled: z.boolean(),
 });
@@ -74,7 +79,7 @@ interface V2AlgoSettings {
   sister_vendor_ids: string;
   exclude_vendors: string;
   inactive_vendor_id: string;
-  handling_time_group: boolean;
+  handling_time_group: "ALL" | "FAST_SHIPPING" | "STOCKED" | "LONG_HANDLING";
   keep_position: boolean;
   inventory_competition_threshold: number;
   reprice_down_percentage: number;
@@ -82,7 +87,7 @@ interface V2AlgoSettings {
   floor_price: number;
   reprice_down_badge_percentage: number;
   floor_compete_with_next: boolean;
-  compete_with_own_quantity_0: boolean;
+  own_vendor_threshold: number;
   not_cheapest: boolean;
 }
 
@@ -188,6 +193,36 @@ export function V2AlgoSettingsForm({
                       <SelectItem value="UP">UP</SelectItem>
                       <SelectItem value="UP/DOWN">UP/DOWN</SelectItem>
                       <SelectItem value="DOWN">DOWN</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="handling_time_group"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Handling Time Group</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="ALL">ALL</SelectItem>
+                      <SelectItem value="FAST_SHIPPING">
+                        FAST_SHIPPING
+                      </SelectItem>
+                      <SelectItem value="STOCKED">STOCKED</SelectItem>
+                      <SelectItem value="LONG_HANDLING">
+                        LONG_HANDLING
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -521,20 +556,23 @@ export function V2AlgoSettingsForm({
             />
             <FormField
               control={form.control}
-              name="compete_with_own_quantity_0"
+              name="own_vendor_threshold"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">
-                      Compete with Own Quantity 0
-                    </FormLabel>
-                  </div>
+                <FormItem>
+                  <FormLabel>Own Vendor Threshold</FormLabel>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      {...field}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value === "" ? "" : Number(value));
+                      }}
                     />
                   </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -566,25 +604,6 @@ export function V2AlgoSettingsForm({
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">
                       Suppress Price Break if Q1 Not Updated
-                    </FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="handling_time_group"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">
-                      Handling Time Group
                     </FormLabel>
                   </div>
                   <FormControl>

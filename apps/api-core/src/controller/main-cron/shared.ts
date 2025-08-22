@@ -10,7 +10,7 @@ import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import * as _ from "lodash";
 import { CacheKeyName } from "../../resources/cache-key-name";
 import * as cacheHelper from "../../utility/cache-helper";
-import { VendorName } from "../../utility/reprice-algo/v2/types";
+import { VendorName } from "@repricer-monorepo/shared";
 import { applicationConfig } from "../../utility/config";
 
 const mainCrons: Record<string, ScheduledTask> = {};

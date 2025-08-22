@@ -17,7 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
-import { VendorNameLookup } from "@/types/product";
+import { VendorNameLookup } from "@repricer-monorepo/shared";
 
 interface V2AlgoResultWithExecution {
   // From v2_algo_results table

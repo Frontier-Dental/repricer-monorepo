@@ -3,7 +3,7 @@ import { OwnVendorProductDetails } from "../../model/user-models/custom-product"
 import { FullProductDetailsV2 } from "../../types/full-product-details-v2";
 import { RepriceModel } from "../../model/reprice-model";
 import { SecretKeyEntry } from "../../types/cron-settings";
-import { VendorName } from "../reprice-algo/v2/types";
+import { VendorName } from "@repricer-monorepo/shared";
 
 // Types for the mapped product details list
 export interface ProductDetailsListItem {

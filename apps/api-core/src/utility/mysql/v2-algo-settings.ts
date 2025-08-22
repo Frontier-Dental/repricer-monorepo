@@ -17,7 +17,7 @@ export interface V2AlgoSettingsData {
   sister_vendor_ids: string;
   exclude_vendors: string;
   inactive_vendor_id: string;
-  handling_time_group: boolean;
+  handling_time_group: "ALL" | "FAST_SHIPPING" | "STOCKED" | "LONG_HANDLING";
   keep_position: boolean;
   inventory_competition_threshold: number;
   reprice_down_percentage: number;
@@ -25,7 +25,7 @@ export interface V2AlgoSettingsData {
   floor_price: number;
   reprice_down_badge_percentage: number;
   floor_compete_with_next: boolean;
-  compete_with_own_quantity_0: boolean;
+  own_vendor_threshold: number;
   not_cheapest: boolean;
 }
 
@@ -64,7 +64,7 @@ export async function createV2AlgoSettings(
     sister_vendor_ids: "",
     exclude_vendors: "",
     inactive_vendor_id: "",
-    handling_time_group: false,
+    handling_time_group: "ALL",
     keep_position: false,
     max_price: 99999999.99,
     floor_price: 0,
@@ -72,7 +72,7 @@ export async function createV2AlgoSettings(
     reprice_down_percentage: -1,
     reprice_down_badge_percentage: -1,
     floor_compete_with_next: false,
-    compete_with_own_quantity_0: false,
+    own_vendor_threshold: 1,
     not_cheapest: false,
   };
 

@@ -1,19 +1,18 @@
+import axios from "axios";
 import excelJs from "exceljs";
 import { Request, Response } from "express";
 import _ from "lodash";
 import moment from "moment";
-import * as httpHelper from "../utility/http-wrappers";
-import * as mapper from "../middleware/mapper-helper";
-import * as mongoMiddleware from "../services/mongo";
-import * as mySqlHelper from "../services/mysql";
-import * as productHelper from "../middleware/product-helper";
 import apiMapping from "../../resources/apiMapping.json";
 import badgeResx from "../../resources/badgeIndicatorMapping.json";
 import handlingTimeGroupResx from "../../resources/HandlingTimeFilterMapping.json";
-import * as SessionHelper from "../utility/session-helper";
+import * as mapper from "../middleware/mapper-helper";
+import * as productHelper from "../middleware/product-helper";
+import * as mongoMiddleware from "../services/mongo";
+import * as mySqlHelper from "../services/mysql";
 import { applicationConfig } from "../utility/config";
-import axios from "axios";
-import { getAllProductDetails } from "../services/algo_v2/products";
+import * as httpHelper from "../utility/http-wrappers";
+import * as SessionHelper from "../utility/session-helper";
 
 export async function showAllProducts(req: Request, res: Response) {
   let pgNo = 0;

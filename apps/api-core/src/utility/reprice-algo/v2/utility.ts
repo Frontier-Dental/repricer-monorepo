@@ -1,5 +1,6 @@
+import { VendorId, VendorName } from "@repricer-monorepo/shared";
 import { ProductDetailsListItem } from "../../mysql/mySql-mapper";
-import { AlgoResult, VendorId, VendorName } from "./types";
+import { AlgoResult } from "./types";
 
 export function getAllOwnVendorNames() {
   return [

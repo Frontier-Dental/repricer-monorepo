@@ -16,7 +16,7 @@ import * as sqlHelper from "../mysql/mysql-helper";
 import { ProductDetailsListItem } from "../mysql/mySql-mapper";
 import * as requestGenerator from "../request-generator";
 import { repriceProduct } from "./v1/algo-v1";
-import { VendorName } from "./v2/types";
+import { VendorName } from "@repricer-monorepo/shared";
 import { repriceProductV2Wrapper } from "./v2/wrapper";
 
 export async function Execute(

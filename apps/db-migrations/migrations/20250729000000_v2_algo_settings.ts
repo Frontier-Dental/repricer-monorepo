@@ -30,7 +30,15 @@ export async function up(knex: Knex): Promise<void> {
     table.string("sister_vendor_ids").notNullable().defaultTo("");
     table.string("exclude_vendors").notNullable().defaultTo("");
     table.string("inactive_vendor_id").notNullable().defaultTo("");
-    table.boolean("handling_time_group").notNullable().defaultTo(false);
+    table
+      .enum("handling_time_group", [
+        "ALL",
+        "FAST_SHIPPING",
+        "STOCKED",
+        "LONG_HANDLING",
+      ])
+      .notNullable()
+      .defaultTo("ALL");
     table.boolean("keep_position").notNullable().defaultTo(false);
     table
       .integer("inventory_competition_threshold")
@@ -45,8 +53,9 @@ export async function up(knex: Knex): Promise<void> {
       .notNullable()
       .defaultTo(-1);
     table.boolean("floor_compete_with_next").notNullable().defaultTo(false);
-    table.boolean("compete_with_own_quantity_0").notNullable().defaultTo(false);
+    table.integer("own_vendor_threshold").unsigned().notNullable().defaultTo(1);
     table.boolean("not_cheapest").notNullable().defaultTo(false);
+    table.boolean("enabled").notNullable().defaultTo(false);
   });
 }
 

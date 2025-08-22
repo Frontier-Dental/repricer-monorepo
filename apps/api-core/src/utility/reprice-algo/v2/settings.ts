@@ -23,8 +23,7 @@ export function applyCompetitionFilters(
       applyInactiveVendorIdFilter(competitors, ourVendorSettings),
     (competitors) => applyVendorExclusionFilter(competitors, ourVendorSettings),
     (competitors) => applyQuantityFilter(competitors, ourVendorSettings),
-    (competitors) =>
-      applyHandlingTimeGroup(competitors, ourVendorSettings, ourProduct),
+    (competitors) => applyHandlingTimeGroup(competitors, ourVendorSettings),
   )(competitors);
 }
 
@@ -121,16 +120,19 @@ export function applyQuantityFilter(
 export function applyHandlingTimeGroup(
   competitors: Net32AlgoProduct[],
   ourVendorSettings: V2AlgoSettingsData,
-  ourProduct: Net32AlgoProduct,
 ) {
   return competitors.filter((c) => {
-    if (ourVendorSettings.handling_time_group) {
-      return (
-        getShippingBucket(c.shippingTime) ===
-        getShippingBucket(ourProduct.shippingTime)
-      );
-    } else {
-      return true;
+    switch (ourVendorSettings.handling_time_group) {
+      case "ALL":
+        return true;
+      case "FAST_SHIPPING":
+        return c.shippingTime === 1 || c.shippingTime === 2;
+      case "STOCKED":
+        return c.shippingTime <= 5;
+      case "LONG_HANDLING":
+        return c.shippingTime >= 6;
+      default:
+        return true;
     }
   });
 }
@@ -157,14 +159,11 @@ export function applyCompeteOnPriceBreaksOnly(
   }
 }
 
-export function applyCompeteWithOwnQuantityZero(
+export function applyOwnVendorThreshold(
   solution: Net32AlgoSolution,
   vendorSetting: V2AlgoSettingsData,
 ) {
-  if (
-    !vendorSetting.compete_with_own_quantity_0 &&
-    solution.vendor.inventory === 0
-  ) {
+  if (solution.vendor.inventory < vendorSetting.own_vendor_threshold) {
     return AlgoResult.IGNORE_SETTINGS;
   } else {
     return null;

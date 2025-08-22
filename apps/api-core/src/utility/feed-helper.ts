@@ -3,7 +3,7 @@ import _ from "lodash";
 import * as dbHelper from "./mongo/db-helper";
 import { ProductDetailsListItem } from "./mysql/mySql-mapper";
 import { applicationConfig } from "./config";
-import { VendorName } from "./reprice-algo/v2/types";
+import { VendorName } from "@repricer-monorepo/shared";
 import { getMongoDb } from "./mongo";
 import { WithId } from "mongodb";
 

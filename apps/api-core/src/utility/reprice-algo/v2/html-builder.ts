@@ -2,12 +2,8 @@ import * as fs from "fs";
 import * as path from "path";
 import { applicationConfig } from "../../config";
 import { V2AlgoSettingsData } from "../../mysql/v2-algo-settings";
-import {
-  Net32AlgoProduct,
-  Net32AlgoProductWrapper,
-  VendorId,
-  VendorNameLookup,
-} from "./types";
+import { Net32AlgoProduct, Net32AlgoProductWrapper } from "./types";
+import { VendorId, VendorNameLookup } from "@repricer-monorepo/shared";
 import {
   getHighestPriceBreakLessThanOrEqualTo,
   getTotalCostForQuantity,
@@ -422,8 +418,8 @@ function buildVendorSettingsTableSingleVendor(
     { key: "max_price", label: "Max Price" },
     { key: "floor_compete_with_next", label: "Floor Compete with Next" },
     {
-      key: "compete_with_own_quantity_0",
-      label: "Compete with Own Quantity 0",
+      key: "own_vendor_threshold",
+      label: "Own Vendor Threshold",
     },
     { key: "not_cheapest", label: "Not Cheapest" },
   ];

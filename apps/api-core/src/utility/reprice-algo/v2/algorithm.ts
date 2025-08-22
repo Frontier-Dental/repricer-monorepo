@@ -4,7 +4,7 @@ import { V2AlgoSettingsData } from "../../mysql/v2-algo-settings";
 import { createHtmlFileContent } from "./html-builder";
 import {
   applyCompeteOnPriceBreaksOnly,
-  applyCompeteWithOwnQuantityZero,
+  applyOwnVendorThreshold,
   applyCompetitionFilters,
   applyFloorCompeteWithNext,
   applySuppressPriceBreakFilter,
@@ -378,7 +378,7 @@ function getSolutionResult(
       triggeredByVendor: null,
     };
   }
-  const competeWithOwnQuantityZero = applyCompeteWithOwnQuantityZero(
+  const competeWithOwnQuantityZero = applyOwnVendorThreshold(
     solution,
     vendorSetting,
   );

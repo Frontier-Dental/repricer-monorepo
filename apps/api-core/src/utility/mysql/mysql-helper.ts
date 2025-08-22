@@ -5,7 +5,7 @@ import { FullProductDetailsV2 } from "../../types/full-product-details-v2";
 import { GetTriggeredByValue, MapProductDetailsList } from "./mySql-mapper";
 import { HistoryModel } from "../../model/sql-models/history";
 import { applicationConfig } from "../config";
-import { VendorName } from "../reprice-algo/v2/types";
+import { VendorName } from "@repricer-monorepo/shared";
 import {
   PriceBreakInfo,
   ProductInfo,

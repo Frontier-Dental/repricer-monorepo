@@ -15,7 +15,7 @@ import {
   repriceProductV2,
 } from "./algorithm";
 import { getShippingThreshold } from "./shipping-threshold";
-import { ChangeResult, VendorName, VendorNameLookup } from "./types";
+import { ChangeResult } from "./types";
 import {
   getAllOwnVendorIds,
   getInternalProducts,
@@ -25,6 +25,7 @@ import { v4 } from "uuid";
 import { ErrorItemModel } from "../../../model/error-item";
 import { calculateNextCronTime } from "../../../controller/main-cron/shared";
 import * as mongoHelper from "../../mongo/db-helper";
+import { VendorName, VendorNameLookup } from "@repricer-monorepo/shared";
 
 export async function repriceProductV2Wrapper(
   net32Products: Net32Product[],

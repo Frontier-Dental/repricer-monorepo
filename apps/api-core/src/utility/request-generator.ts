@@ -5,7 +5,7 @@ import { GlobalConfig } from "../types/global-config";
 import { ErrorItem } from "../types/error-item";
 import { ProductDetailsListItem } from "./mysql/mySql-mapper";
 import { applicationConfig } from "./config";
-import { VendorName } from "./reprice-algo/v2/types";
+import { VendorName } from "@repricer-monorepo/shared";
 
 export async function GetProductItemListQuery(): Promise<{
   idRef: string;
