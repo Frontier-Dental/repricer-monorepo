@@ -447,8 +447,8 @@ async function syncVendorSettingsForMpId(
       floor_price: setting.FloorPrice || 0,
       max_price: setting.MaxPrice || 99999999.99,
       reprice_down_badge_percentage:
-        Number(setting.PercentageDown) !== 0
-          ? Number(setting.PercentageDown) * 100
+        Number(setting.BadgePercentageDown) !== 0
+          ? Number(setting.BadgePercentageDown) * 100
           : -1,
       floor_compete_with_next: setting.CompeteWithNext === 1,
       own_vendor_threshold: setting.OwnVendorThreshold || 1,

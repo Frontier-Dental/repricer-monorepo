@@ -217,11 +217,13 @@ export function V2AlgoSettingsForm({
                     <SelectContent>
                       <SelectItem value="ALL">ALL</SelectItem>
                       <SelectItem value="FAST_SHIPPING">
-                        FAST_SHIPPING
+                        FAST_SHIPPING (1 - 2 days)
                       </SelectItem>
-                      <SelectItem value="STOCKED">STOCKED</SelectItem>
+                      <SelectItem value="STOCKED">
+                        STOCKED (1 - 5 days)
+                      </SelectItem>
                       <SelectItem value="LONG_HANDLING">
-                        LONG_HANDLING
+                        LONG_HANDLING (6+ days)
                       </SelectItem>
                     </SelectContent>
                   </Select>
