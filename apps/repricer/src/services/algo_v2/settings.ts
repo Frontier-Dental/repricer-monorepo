@@ -31,6 +31,7 @@ export interface V2AlgoSettings {
 
 export interface V2AlgoSettingsDb {
   id?: number;
+  enabled: number;
   mp_id: number;
   vendor_id: number;
   suppress_price_break_if_Q1_not_updated: number;

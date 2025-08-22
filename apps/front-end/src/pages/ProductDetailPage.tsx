@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
+import { VendorNameLookup } from "@/types/product";
 
 interface V2AlgoResultWithExecution {
   // From v2_algo_results table
@@ -277,13 +278,6 @@ export function ProductDetailPage() {
         return "outline";
     }
   };
-
-  // Get unique vendors from algo data
-  const uniqueVendors = Array.from(
-    new Map(
-      algoData.map((item) => [item.vendor_id, item.vendor_name]),
-    ).entries(),
-  ).sort((a, b) => a[1].localeCompare(b[1]));
 
   // Define columns for the DataTable
   const columns: ColumnDef<V2AlgoResultWithExecution>[] = [
@@ -625,35 +619,35 @@ export function ProductDetailPage() {
         </div>
       </div>
 
-      {uniqueVendors.length > 0 && (
+      {settingsData.length > 0 && (
         <Tabs
-          defaultValue={uniqueVendors[0]?.[0]?.toString()}
+          defaultValue={settingsData[0]?.vendor_id.toString()}
           className="w-full"
         >
           <TabsList className="grid w-full grid-cols-5">
-            {uniqueVendors.map(([vendorId, vendorName]) => (
-              <TabsTrigger key={vendorId} value={vendorId.toString()}>
-                {vendorName}
+            {settingsData.map(({ vendor_id }) => (
+              <TabsTrigger key={vendor_id} value={vendor_id.toString()}>
+                {VendorNameLookup[vendor_id]}
               </TabsTrigger>
             ))}
           </TabsList>
 
-          {uniqueVendors.map(([vendorId, vendorName]) => {
+          {settingsData.map(({ vendor_id }) => {
             const vendorSettings = settingsData.find(
-              (s) => s.vendor_id === vendorId,
+              (s) => s.vendor_id === vendor_id,
             );
 
             return (
               <TabsContent
-                key={vendorId}
-                value={vendorId.toString()}
+                key={vendor_id}
+                value={vendor_id.toString()}
                 className="mt-6"
               >
                 <V2AlgoSettingsForm
                   mpId={parseInt(mpId)}
-                  vendorId={vendorId}
-                  vendorName={vendorName}
-                  initialSettings={vendorSettings}
+                  vendorId={vendor_id}
+                  vendorName={VendorNameLookup[vendor_id]}
+                  initialSettings={vendorSettings!}
                   onSave={handleSaveSettings}
                 />
               </TabsContent>

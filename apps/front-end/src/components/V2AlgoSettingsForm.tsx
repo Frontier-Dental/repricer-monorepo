@@ -52,6 +52,7 @@ const settingsSchema = z.object({
   floor_compete_with_next: z.boolean(),
   compete_with_own_quantity_0: z.boolean(),
   not_cheapest: z.boolean(),
+  enabled: z.boolean(),
 });
 
 type SettingsFormData = z.infer<typeof settingsSchema>;
@@ -624,6 +625,26 @@ export function V2AlgoSettingsForm({
                     <FormLabel className="text-base">
                       Floor Compete with Next
                     </FormLabel>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <FormField
+              control={form.control}
+              name="enabled"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Enabled</FormLabel>
                   </div>
                   <FormControl>
                     <Switch

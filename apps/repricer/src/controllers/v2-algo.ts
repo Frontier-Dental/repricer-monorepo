@@ -111,6 +111,7 @@ export async function getV2AlgoSettings(
       compete_with_own_quantity_0: setting.compete_with_own_quantity_0 === 1,
       not_cheapest: setting.not_cheapest === 1,
       handling_time_group: setting.handling_time_group === 1,
+      enabled: setting.enabled === 1,
     };
   });
 

@@ -10,7 +10,8 @@
     "migrate:prod": "knex migrate:latest --env production",
     "seed:dev": "knex seed:run --env development",
     "seed:make": "knex seed:make",
-    "create-user": "tsx scripts/create-user.ts"
+    "create-user": "tsx scripts/create-user.ts",
+    "migrate-all-vendors": "tsx scripts/migrate-firstdent-settings.ts"
   },
   "author": "Julian Wilson <julianwlsn@gmail.com>",
   "license": "ISC",

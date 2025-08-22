@@ -41,6 +41,7 @@ export interface Net32AlgoSolution {
   postSolutionInsertBoard: Net32AlgoProductWithBestPrice[];
   competitorsAndSistersFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
   rawTriggeredByVendor?: string;
+  pushedToMax?: boolean;
 }
 
 export interface Net32AlgoSolutionWithResult
@@ -140,6 +141,7 @@ export function repriceProductV2(
         competitorsFromViewOfOwnVendorRanked,
         competitorsAndSistersFromViewOfOwnVendorRanked,
         rawTriggeredByVendor,
+        pushedToMax,
       } = getOptimalSolutionForBoard(
         rawCompetitorsRankedByBuyBox.map((x) => x.product),
         ourVendor,
@@ -172,6 +174,7 @@ export function repriceProductV2(
         solutionId,
         competitorsAndSistersFromViewOfOwnVendorRanked,
         rawTriggeredByVendor,
+        pushedToMax,
       });
     }
   }
@@ -481,28 +484,19 @@ function getSolutionResult(
       triggeredByVendor: null,
     };
   } else if (suggestedPrice.lt(existingPriceBreak.unitPrice)) {
-    if (!solution.rawTriggeredByVendor) {
-      throw new Error(
-        "No triggered by vendor found for change down. We should not get here",
-      );
-    }
     return {
       ...solution,
       algoResult: AlgoResult.CHANGE_DOWN,
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "We are pricing down.",
-      triggeredByVendor: solution.rawTriggeredByVendor,
+      triggeredByVendor: solution.rawTriggeredByVendor || null,
     };
   } else if (suggestedPrice.gt(existingPriceBreak.unitPrice)) {
     return {
       ...solution,
       algoResult: AlgoResult.CHANGE_UP,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: solution.rawTriggeredByVendor
-        ? "We are pricing up to just undercut a competitor."
-        : "We are pushing to max.",
-      // This can be caused by pushing to max.
-      // There might not be a vendor triggering the change in this case.
+      comment: "We are pricing up to just undercut a competitor.",
       triggeredByVendor: solution.rawTriggeredByVendor || null,
     };
   }
@@ -546,6 +540,7 @@ function getOptimalSolutionForBoard(
   competitorsFromViewOfOwnVendorRanked: Net32AlgoProduct[];
   competitorsAndSistersFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
   rawTriggeredByVendor?: string;
+  pushedToMax?: boolean;
 } {
   const sisterVendors = ourVendors.filter(
     (v) => v.vendorId !== ownVendor.vendorId,
@@ -584,6 +579,7 @@ function getOptimalSolutionForBoard(
         quantity,
       ),
     rawTriggeredByVendor: bestCompetitivePrice.triggeredByVendor,
+    pushedToMax: bestCompetitivePrice.pushedToMax,
   };
 }
 
@@ -658,6 +654,7 @@ function getBestCompetitivePrice(
   if (competitorsSortedByBuyBoxRank.length === 0) {
     return {
       price: new Decimal(ownVendorSetting.max_price),
+      pushedToMax: true,
     };
   }
   for (const competitor of competitorsSortedByBuyBoxRank) {
@@ -678,6 +675,7 @@ function getBestCompetitivePrice(
     if (undercutUnitPrice.gt(ownVendorSetting.max_price)) {
       return {
         price: new Decimal(ownVendorSetting.max_price),
+        pushedToMax: true,
       };
     }
 
