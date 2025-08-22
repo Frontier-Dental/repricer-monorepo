@@ -89,9 +89,9 @@ export function repriceProductV2(
   if (!net32url) {
     throw new Error("No net32url found for own vendor");
   }
-  const validProducts = rawNet32Products
-    .filter((p) => Array.isArray(p.priceBreaks))
-    .filter((p) => p.priceBreaks.find((pb) => pb.minQty === 1));
+  const validProducts = rawNet32Products.filter((p) =>
+    Array.isArray(p.priceBreaks),
+  );
 
   const competitorProducts = validProducts.filter(
     (p) => !ownVendorIds.includes(p.vendorId),
