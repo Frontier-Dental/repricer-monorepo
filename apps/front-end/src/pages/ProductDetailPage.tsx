@@ -57,7 +57,7 @@ interface V2AlgoSettings {
   sister_vendor_ids: string;
   exclude_vendors: string;
   inactive_vendor_id: string;
-  handling_time_group: boolean;
+  handling_time_group: "ALL" | "FAST_SHIPPING" | "STOCKED" | "LONG_HANDLING";
   keep_position: boolean;
   inventory_competition_threshold: number;
   reprice_down_percentage: number;
@@ -65,7 +65,7 @@ interface V2AlgoSettings {
   floor_price: number;
   reprice_down_badge_percentage: number;
   floor_compete_with_next: boolean;
-  compete_with_own_quantity_0: boolean;
+  own_vendor_threshold: number;
   not_cheapest: boolean;
 }
 
