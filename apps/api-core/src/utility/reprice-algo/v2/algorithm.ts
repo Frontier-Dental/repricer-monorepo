@@ -1017,12 +1017,6 @@ export function getTotalCostForQuantity(
     net32Product,
     quantity,
   );
-  const breakOne = net32Product.priceBreaks.find((pb) => pb.minQty === 1);
-  if (!breakOne) {
-    throw new Error(
-      `No price break found for quantity 1 for product ${net32Product.vendorId}`,
-    );
-  }
   let totalCost: Decimal;
   if (net32Product.bestPrice) {
     totalCost = net32Product.bestPrice.mul(quantity);
