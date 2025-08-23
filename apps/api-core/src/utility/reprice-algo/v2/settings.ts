@@ -18,12 +18,12 @@ export function applyCompetitionFilters(
   ourVendorSettings: V2AlgoSettingsData,
 ) {
   return flow(
-    (competitors) => applyBadgeIndicatorFilter(competitors, ourVendorSettings),
     (competitors) =>
       applyInactiveVendorIdFilter(competitors, ourVendorSettings),
     (competitors) => applyVendorExclusionFilter(competitors, ourVendorSettings),
     (competitors) => applyQuantityFilter(competitors, ourVendorSettings),
     (competitors) => applyHandlingTimeGroup(competitors, ourVendorSettings),
+    (competitors) => applyBadgeIndicatorFilter(competitors, ourVendorSettings),
   )(competitors);
 }
 
@@ -48,7 +48,8 @@ export function applyBadgeIndicatorFilter(
   competitors: Net32AlgoProduct[],
   ourVendorSettings: V2AlgoSettingsData,
 ) {
-  return competitors.filter((c) => {
+  const preFilter = competitors;
+  const postFilter = competitors.filter((c) => {
     if (ourVendorSettings.badge_indicator === "ALL") {
       return c;
     } else if (ourVendorSettings.badge_indicator === "BADGE") {
@@ -59,6 +60,17 @@ export function applyBadgeIndicatorFilter(
       );
     }
   });
+
+  // Special behavior. If we set to only compete on badge and there are
+  // no badges in the list, then we just return the pre-filtered list.
+  if (
+    ourVendorSettings.badge_indicator === "BADGE" &&
+    !postFilter.find((c) => hasBadge(c))
+  ) {
+    return preFilter;
+  } else {
+    return postFilter;
+  }
 }
 
 export function applyVendorExclusionFilter(

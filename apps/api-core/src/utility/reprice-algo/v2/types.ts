@@ -22,7 +22,7 @@ export interface Net32AlgoProductWithBestPrice extends Net32AlgoProduct {
 export interface Net32AlgoProductWrapper {
   product: Net32AlgoProduct | Net32AlgoProductWithBestPrice;
   totalCost: Decimal;
-  effectiveUnitPrice: Decimal;
+  effectiveUnitPrice?: Decimal | null;
   hasBadge: boolean;
   shippingBucket: number;
 }

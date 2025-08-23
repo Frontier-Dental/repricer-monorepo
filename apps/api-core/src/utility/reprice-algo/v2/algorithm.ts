@@ -940,13 +940,11 @@ function getProductsSortedByBuyBoxRank(
 ): Net32AlgoProductWrapperWithBuyBoxRank[] {
   const productInfos = net32Products
     .map((prod) => {
-      const unitPrice =
-        (prod as Net32AlgoProductWithBestPrice).bestPrice !== undefined
-          ? (prod as Net32AlgoProductWithBestPrice).bestPrice!
-          : new Decimal(
-              getHighestPriceBreakLessThanOrEqualTo(prod, quantity).unitPrice,
-            );
-
+      const unitPrice = (prod as Net32AlgoProductWithBestPrice).bestPrice
+        ? (prod as Net32AlgoProductWithBestPrice).bestPrice
+        : new Decimal(
+            getHighestPriceBreakLessThanOrEqualTo(prod, quantity).unitPrice,
+          );
       return {
         product: prod,
         totalCost: getTotalCostForQuantity(prod, quantity),
@@ -955,7 +953,7 @@ function getProductsSortedByBuyBoxRank(
         shippingBucket: getShippingBucket(prod.shippingTime),
       };
     })
-    .filter((p) => p.effectiveUnitPrice.gt(0));
+    .filter((p) => (p.effectiveUnitPrice ? p.effectiveUnitPrice.gt(0) : true));
   // It's possible there is no Q1 which would result in a unit price of 0, which is invalid.
 
   const sortedProducts = productInfos.toSorted((a, b) =>
