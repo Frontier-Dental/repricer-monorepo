@@ -87,6 +87,12 @@ export function applySuppressQBreakIfQ1NotUpdated(
         qBreakValid: true,
       };
     } else {
+      if (s.quantity === 1) {
+        return {
+          ...s,
+          qBreakValid: true,
+        };
+      }
       const q1 = solutionResults.find(
         (s) =>
           s.quantity === 1 &&

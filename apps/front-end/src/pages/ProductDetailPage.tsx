@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/data-table";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 import { V2AlgoSettingsForm } from "@/components/V2AlgoSettingsForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -279,6 +279,22 @@ export function ProductDetailPage() {
     }
   };
 
+  // Custom sorting function for dates
+  const dateSortingFn = (
+    rowA: Row<V2AlgoResultWithExecution>,
+    rowB: Row<V2AlgoResultWithExecution>,
+    columnId: string,
+  ) => {
+    const dateA = rowA.getValue(columnId) as string;
+    const dateB = rowB.getValue(columnId) as string;
+
+    if (!dateA && !dateB) return 0;
+    if (!dateA) return 1;
+    if (!dateB) return -1;
+
+    return new Date(dateA).getTime() - new Date(dateB).getTime();
+  };
+
   // Define columns for the DataTable
   const columns: ColumnDef<V2AlgoResultWithExecution>[] = [
     {
@@ -383,7 +399,8 @@ export function ProductDetailPage() {
           </div>
         );
       },
-      sortingFn: "datetime",
+      sortingFn: dateSortingFn,
+      sortUndefined: false,
     },
     {
       accessorKey: "comment",
@@ -404,7 +421,7 @@ export function ProductDetailPage() {
     },
     {
       id: "actions",
-      header: "Actions",
+      header: "",
       cell: ({ row }) => {
         const record = row.original;
         return (

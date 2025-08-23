@@ -21,6 +21,7 @@ import {
   ChangeResult,
   QbreakInvalidReason,
 } from "./types";
+import uniqBy from "lodash/uniqBy";
 
 export interface QuantitySolution {
   quantity: number;
@@ -378,16 +379,13 @@ function getSolutionResult(
       triggeredByVendor: null,
     };
   }
-  const competeWithOwnQuantityZero = applyOwnVendorThreshold(
-    solution,
-    vendorSetting,
-  );
-  if (competeWithOwnQuantityZero) {
+  const ownVendorThreshold = applyOwnVendorThreshold(solution, vendorSetting);
+  if (ownVendorThreshold) {
     return {
       ...solution,
-      algoResult: competeWithOwnQuantityZero,
+      algoResult: ownVendorThreshold,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "We have quantity 0, so we can't compete.",
+      comment: "We are below our own vendor quantity threshold.",
       triggeredByVendor: null,
     };
   }
@@ -397,11 +395,21 @@ function getSolutionResult(
     existingPriceBreak,
   );
   if (upDownRestriction) {
+    let comment;
+    if (vendorSetting.up_down === "UP") {
+      comment = "We are set to only price up and we are trying to price down.";
+    } else if (vendorSetting.up_down === "DOWN") {
+      comment = "We are set to only price down and we are trying to price up.";
+    } else {
+      throw new Error(
+        `Invalid up/down setting: ${vendorSetting.up_down} to trigger this restriction. We should not be here.`,
+      );
+    }
     return {
       ...solution,
       algoResult: upDownRestriction,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "We have hit the up/down restriction.",
+      comment,
       triggeredByVendor: null,
     };
   }
@@ -446,7 +454,8 @@ function getSolutionResult(
     solution.competitorsAndSistersFromViewOfOwnVendorRanked.find(
       (s) => s.buyBoxRank === 0 && ownVendorIds.includes(s.product.vendorId),
     );
-  if (sisterInBuyBox) {
+  const competeAll = vendorSetting.compete_with_all_vendors;
+  if (sisterInBuyBox && !competeAll) {
     return {
       ...solution,
       algoResult: AlgoResult.IGNORE_SISTER_LOWEST,
@@ -465,7 +474,7 @@ function getSolutionResult(
         s.buyBoxRank === 0 &&
         simulatedSisterVendorIds.includes(s.product.vendorId),
     );
-  if (simulatedSisterInBuyBox) {
+  if (simulatedSisterInBuyBox && !competeAll) {
     return {
       ...solution,
       algoResult: AlgoResult.IGNORE_SETTINGS,
@@ -575,7 +584,15 @@ function getOptimalSolutionForBoard(
     ),
     competitorsAndSistersFromViewOfOwnVendorRanked:
       getProductsSortedByBuyBoxRank(
-        [...competitorsRankedByBuyBox.map((x) => x.product), ...sisterVendors],
+        uniqBy(
+          [
+            ...competitorsRankedByBuyBox.map((x) => x.product),
+            ...sisterVendors,
+          ],
+          (x) => x.vendorId,
+        ),
+        // Sisters might be added twice if compete_with_all_vendors is true, so we need
+        // to filter out the duplicates
         quantity,
       ),
     rawTriggeredByVendor: bestCompetitivePrice.triggeredByVendor,
@@ -850,22 +867,6 @@ function getUndercutPriceToCompete(
   return roundedUndercutPriceToCompete;
 }
 
-// Helper to get all non-empty subsets of an array
-function getAllNonEmptySubsets<T>(arr: T[]): T[][] {
-  const result: T[][] = [];
-  const n = arr.length;
-  for (let i = 1; i < 1 << n; i++) {
-    const subset: T[] = [];
-    for (let j = 0; j < n; j++) {
-      if (i & (1 << j)) {
-        subset.push(arr[j]);
-      }
-    }
-    result.push(subset);
-  }
-  return result;
-}
-
 function sortBasedOnBuyBoxRulesV2(
   a: {
     totalCost: Decimal;
@@ -935,22 +936,25 @@ function getProductsSortedByBuyBoxRank(
   net32Products: (Net32AlgoProduct | Net32AlgoProductWithBestPrice)[],
   quantity: number,
 ): Net32AlgoProductWrapperWithBuyBoxRank[] {
-  const productInfos = net32Products.map((prod) => {
-    const unitPrice =
-      (prod as Net32AlgoProductWithBestPrice).bestPrice !== undefined
-        ? (prod as Net32AlgoProductWithBestPrice).bestPrice!
-        : new Decimal(
-            getHighestPriceBreakLessThanOrEqualTo(prod, quantity).unitPrice,
-          );
+  const productInfos = net32Products
+    .map((prod) => {
+      const unitPrice =
+        (prod as Net32AlgoProductWithBestPrice).bestPrice !== undefined
+          ? (prod as Net32AlgoProductWithBestPrice).bestPrice!
+          : new Decimal(
+              getHighestPriceBreakLessThanOrEqualTo(prod, quantity).unitPrice,
+            );
 
-    return {
-      product: prod,
-      totalCost: getTotalCostForQuantity(prod, quantity),
-      effectiveUnitPrice: unitPrice,
-      hasBadge: hasBadge(prod),
-      shippingBucket: getShippingBucket(prod.shippingTime),
-    };
-  });
+      return {
+        product: prod,
+        totalCost: getTotalCostForQuantity(prod, quantity),
+        effectiveUnitPrice: unitPrice,
+        hasBadge: hasBadge(prod),
+        shippingBucket: getShippingBucket(prod.shippingTime),
+      };
+    })
+    .filter((p) => p.effectiveUnitPrice.gt(0));
+  // It's possible there is no Q1 which would result in a unit price of 0, which is invalid.
 
   const sortedProducts = productInfos.toSorted((a, b) =>
     sortBasedOnBuyBoxRulesV2(a, b),
