@@ -212,14 +212,21 @@ export function applyFloorCompeteWithNext(
 export function applyUpDownPercentage(
   newPrice: Decimal,
   setting: V2AlgoSettingsData,
+  hasBadge: boolean,
   oldPrice?: Decimal,
 ) {
   // If there's nothing to compare to, then we can just return the new price
   if (!oldPrice) {
     return newPrice;
   }
-  if (newPrice.gt(oldPrice) && setting.reprice_up_percentage > 0) {
-    let minimumPrice = oldPrice.mul(100 + setting.reprice_up_percentage / 100);
+  const upSetting = hasBadge
+    ? setting.reprice_up_badge_percentage
+    : setting.reprice_up_percentage;
+  const downSetting = hasBadge
+    ? setting.reprice_down_badge_percentage
+    : setting.reprice_down_percentage;
+  if (newPrice.gt(oldPrice) && upSetting > 0) {
+    let minimumPrice = oldPrice.mul(100 + upSetting / 100);
     if (minimumPrice.gt(new Decimal(setting.max_price))) {
       minimumPrice = new Decimal(setting.max_price);
     }
@@ -228,10 +235,8 @@ export function applyUpDownPercentage(
     } else {
       return minimumPrice;
     }
-  } else if (newPrice.lt(oldPrice) && setting.reprice_down_percentage > 0) {
-    let maximumPrice = oldPrice.mul(
-      100 - setting.reprice_down_percentage / 100,
-    );
+  } else if (newPrice.lt(oldPrice) && downSetting > 0) {
+    let maximumPrice = oldPrice.mul(100 - downSetting / 100);
     if (maximumPrice.lt(new Decimal(setting.floor_price))) {
       // If we're below the floor, then we basically ignore this setting
       // by returning the original, unmodified proposed price.

@@ -348,11 +348,48 @@ function getSolutionResult(
       triggeredByVendor: null,
     };
   }
+
   const suggestedPrice = applyUpDownPercentage(
     solution.vendor.bestPrice,
     vendorSetting,
+    hasBadge(solution.vendor),
     existingPriceBreak && new Decimal(existingPriceBreak.unitPrice),
   ).toDecimalPlaces(2);
+  // Check if a sister is already in the buy box position
+  // from the perspective of this vendor.
+  const sisterInBuyBox =
+    solution.competitorsAndSistersFromViewOfOwnVendorRanked.find(
+      (s) => s.buyBoxRank === 0 && ownVendorIds.includes(s.product.vendorId),
+    );
+  const competeAll = vendorSetting.compete_with_all_vendors;
+  if (sisterInBuyBox && !competeAll) {
+    return {
+      ...solution,
+      algoResult: AlgoResult.IGNORE_SISTER_LOWEST,
+      suggestedPrice: suggestedPrice.toNumber(),
+      comment: "A sister is already in the buy box position.",
+      triggeredByVendor: null,
+    };
+  }
+  const simulatedSisterVendorIds = vendorSetting.sister_vendor_ids
+    .split(",")
+    .map(parseInt)
+    .filter((x) => !isNaN(x));
+  const simulatedSisterInBuyBox =
+    solution.competitorsAndSistersFromViewOfOwnVendorRanked.find(
+      (s) =>
+        s.buyBoxRank === 0 &&
+        simulatedSisterVendorIds.includes(s.product.vendorId),
+    );
+  if (simulatedSisterInBuyBox && !competeAll) {
+    return {
+      ...solution,
+      algoResult: AlgoResult.IGNORE_SETTINGS,
+      suggestedPrice: suggestedPrice.toNumber(),
+      comment: "A simulated sister is already in the buy box position.",
+      triggeredByVendor: null,
+    };
+  }
   const competeOnPriceBreaksOnly = applyCompeteOnPriceBreaksOnly(
     vendorSetting,
     solution.quantity,
@@ -447,41 +484,6 @@ function getSolutionResult(
         triggeredByVendor: null,
       };
     }
-  }
-  // Check if a sister is already in the buy box position
-  // from the perspective of this vendor.
-  const sisterInBuyBox =
-    solution.competitorsAndSistersFromViewOfOwnVendorRanked.find(
-      (s) => s.buyBoxRank === 0 && ownVendorIds.includes(s.product.vendorId),
-    );
-  const competeAll = vendorSetting.compete_with_all_vendors;
-  if (sisterInBuyBox && !competeAll) {
-    return {
-      ...solution,
-      algoResult: AlgoResult.IGNORE_SISTER_LOWEST,
-      suggestedPrice: suggestedPrice.toNumber(),
-      comment: "A sister is already in the buy box position.",
-      triggeredByVendor: null,
-    };
-  }
-  const simulatedSisterVendorIds = vendorSetting.sister_vendor_ids
-    .split(",")
-    .map(parseInt)
-    .filter((x) => !isNaN(x));
-  const simulatedSisterInBuyBox =
-    solution.competitorsAndSistersFromViewOfOwnVendorRanked.find(
-      (s) =>
-        s.buyBoxRank === 0 &&
-        simulatedSisterVendorIds.includes(s.product.vendorId),
-    );
-  if (simulatedSisterInBuyBox && !competeAll) {
-    return {
-      ...solution,
-      algoResult: AlgoResult.IGNORE_SETTINGS,
-      suggestedPrice: suggestedPrice.toNumber(),
-      comment: "A simulated sister is already in the buy box position.",
-      triggeredByVendor: null,
-    };
   }
   // Okay now we know we can make a change as everything else has been ruled out.
   if (!existingPriceBreak) {
