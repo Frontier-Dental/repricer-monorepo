@@ -35,7 +35,8 @@ interface V2AlgoResultWithExecution {
   run_time: string;
   q_break_valid: boolean;
   price_update_result: string | null;
-
+  new_price_breaks: string | null;
+  sister_position_check: string | null;
   // Only the HTML content from v2_algo_execution
   chain_of_thought_html: string | null;
 }
@@ -239,12 +240,6 @@ export function ProductDetailPage() {
     return date.toLocaleDateString() + " " + date.toLocaleTimeString();
   };
 
-  const truncateComment = (comment: string, maxLength: number = 100) => {
-    if (!comment) return "No comment provided";
-    if (comment.length <= maxLength) return comment;
-    return comment.substring(0, maxLength) + "...";
-  };
-
   const formatPrice = (price: number | string) => {
     if (price === null || price === undefined || price === "") return "N/A";
     return `$${parseFloat(price.toString()).toFixed(2)}`;
@@ -360,6 +355,19 @@ export function ProductDetailPage() {
       },
     },
     {
+      accessorKey: "new_price_breaks",
+      header: "Resulting Price Breaks",
+      cell: ({ row }) => <div>{row.getValue("new_price_breaks")}</div>,
+    },
+    {
+      accessorKey: "sister_position_check",
+      header: "Sister Position Check",
+      cell: ({ row }) => {
+        const result = row.getValue("sister_position_check") as string;
+        return <Badge variant={getResultBadgeVariant(result)}>{result}</Badge>;
+      },
+    },
+    {
       accessorKey: "q_break_valid",
       header: "Q-Break Valid",
       cell: ({ row }) => {
@@ -409,12 +417,9 @@ export function ProductDetailPage() {
         const comment = row.getValue("comment") as string;
         return (
           <div className="max-w-md">
-            <p className="text-sm">{truncateComment(comment)}</p>
-            {comment && comment.length > 100 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {comment.length} characters total
-              </p>
-            )}
+            <p className="text-sm whitespace-pre-wrap break-words">
+              {comment || "No comment provided"}
+            </p>
           </div>
         );
       },

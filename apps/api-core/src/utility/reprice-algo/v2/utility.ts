@@ -30,6 +30,12 @@ export function getAllOwnVendorIds() {
   ];
 }
 
+export function getPriceListFormatted(
+  priceList: { minQty: number; price: number }[],
+) {
+  return priceList.map((p) => `Q${p.minQty}@${p.price.toFixed(2)}`).join(", ");
+}
+
 export function getInternalProducts(
   prod: ProductDetailsListItem,
   allVendors: { name: string }[],

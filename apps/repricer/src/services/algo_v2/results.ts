@@ -50,6 +50,8 @@ export async function getAlgoResultsWithExecutionData(
       "r.run_time",
       "r.q_break_valid",
       "r.price_update_result",
+      "r.new_price_breaks",
+      "r.sister_position_check",
       knex.raw(`
         (SELECT e.chain_of_thought_html 
          FROM v2_algo_execution e 

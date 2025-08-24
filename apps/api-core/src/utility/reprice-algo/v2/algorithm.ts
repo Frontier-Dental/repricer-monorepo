@@ -51,6 +51,7 @@ export interface Net32AlgoSolutionWithResult
   comment: string;
   suggestedPrice: number | null;
   triggeredByVendor: string | null;
+  sisterPositionCheck: AlgoResult | null;
 }
 
 export interface Net32AlgoSolutionWithQBreakValid
@@ -62,6 +63,7 @@ export interface Net32AlgoSolutionWithQBreakValid
 export interface Net32AlgoSolutionWithChangeResult
   extends Net32AlgoSolutionWithQBreakValid {
   changeResult: ChangeResult | null;
+  priceList: { minQty: number; price: number }[] | null;
 }
 
 export interface Net32AlgoSolutionWithCombination {
@@ -195,16 +197,20 @@ export function repriceProductV2(
     )
     .flat();
 
-  const solutionResults = solutions.map((s) =>
-    getSolutionResult(
-      s,
-      existingPriceBreaks,
-      vendorSettings,
-      availableVendorIds,
-    ),
-  );
+  const solutionResults = solutions.map((s) => {
+    const baseResult = getSolutionResult(s, existingPriceBreaks);
+    const sisterPositionCheck =
+      checkSisterPosition(s, s.vendorSettings, ownVendorIds) || null;
+    return {
+      ...s,
+      ...baseResult,
+      sisterPositionCheck,
+      comment: `${baseResult.comment} ${sisterPositionCheck ? "A sister is already in the buy box position." : ""}`,
+    };
+  });
   const solutionResultsWithQBreakValid =
     removeUnnecessaryQuantityBreaks(solutionResults);
+
   const htmlFiles = availableVendorIds.map((vendorId) => {
     const html = createHtmlFileContent(
       mpId,
@@ -320,28 +326,48 @@ function removeInvalidQuantityBreaks(
   }));
 }
 
+function checkSisterPosition(
+  solution: Net32AlgoSolution,
+  vendorSetting: V2AlgoSettingsData,
+  ownVendorIds: number[],
+) {
+  // Check if a sister is already in the buy box position
+  // from the perspective of this vendor.
+  const sisterInBuyBox =
+    solution.competitorsAndSistersFromViewOfOwnVendorRanked.find(
+      (s) => s.buyBoxRank === 0 && ownVendorIds.includes(s.product.vendorId),
+    );
+  const competeAll = vendorSetting.compete_with_all_vendors;
+  if (sisterInBuyBox && !competeAll) {
+    return AlgoResult.IGNORE_SISTER_LOWEST;
+  }
+  const simulatedSisterVendorIds = vendorSetting.sister_vendor_ids
+    .split(",")
+    .map(parseInt)
+    .filter((x) => !isNaN(x));
+  const simulatedSisterInBuyBox =
+    solution.competitorsAndSistersFromViewOfOwnVendorRanked.find(
+      (s) =>
+        s.buyBoxRank === 0 &&
+        simulatedSisterVendorIds.includes(s.product.vendorId),
+    );
+  if (simulatedSisterInBuyBox && !competeAll) {
+    return AlgoResult.IGNORE_SISTER_LOWEST;
+  }
+}
+
 function getSolutionResult(
   solution: Net32AlgoSolution,
   existingPriceBreaks: QuantitySolution[],
-  vendorSettings: V2AlgoSettingsData[],
-  ownVendorIds: number[],
-): Net32AlgoSolutionWithResult {
+) {
+  const vendorSetting = solution.vendorSettings;
   const existingPriceBreak = existingPriceBreaks.find(
     (pb) =>
       pb.quantity === solution.quantity &&
       pb.vendorId === solution.vendor.vendorId,
   );
-  const vendorSetting = vendorSettings.find(
-    (v) => v.vendor_id === solution.vendor.vendorId,
-  );
-  if (!vendorSetting) {
-    throw new Error(
-      `No vendor settings found for vendor ${solution.vendor.vendorId}`,
-    );
-  }
   if (!solution.vendor.bestPrice) {
     return {
-      ...solution,
       algoResult: AlgoResult.IGNORE_FLOOR,
       suggestedPrice: null,
       comment: "We have hit the floor price.",
@@ -355,48 +381,13 @@ function getSolutionResult(
     hasBadge(solution.vendor),
     existingPriceBreak && new Decimal(existingPriceBreak.unitPrice),
   ).toDecimalPlaces(2);
-  // Check if a sister is already in the buy box position
-  // from the perspective of this vendor.
-  const sisterInBuyBox =
-    solution.competitorsAndSistersFromViewOfOwnVendorRanked.find(
-      (s) => s.buyBoxRank === 0 && ownVendorIds.includes(s.product.vendorId),
-    );
-  const competeAll = vendorSetting.compete_with_all_vendors;
-  if (sisterInBuyBox && !competeAll) {
-    return {
-      ...solution,
-      algoResult: AlgoResult.IGNORE_SISTER_LOWEST,
-      suggestedPrice: suggestedPrice.toNumber(),
-      comment: "A sister is already in the buy box position.",
-      triggeredByVendor: null,
-    };
-  }
-  const simulatedSisterVendorIds = vendorSetting.sister_vendor_ids
-    .split(",")
-    .map(parseInt)
-    .filter((x) => !isNaN(x));
-  const simulatedSisterInBuyBox =
-    solution.competitorsAndSistersFromViewOfOwnVendorRanked.find(
-      (s) =>
-        s.buyBoxRank === 0 &&
-        simulatedSisterVendorIds.includes(s.product.vendorId),
-    );
-  if (simulatedSisterInBuyBox && !competeAll) {
-    return {
-      ...solution,
-      algoResult: AlgoResult.IGNORE_SETTINGS,
-      suggestedPrice: suggestedPrice.toNumber(),
-      comment: "A simulated sister is already in the buy box position.",
-      triggeredByVendor: null,
-    };
-  }
+
   const competeOnPriceBreaksOnly = applyCompeteOnPriceBreaksOnly(
     vendorSetting,
     solution.quantity,
   );
   if (competeOnPriceBreaksOnly) {
     return {
-      ...solution,
       algoResult: competeOnPriceBreaksOnly,
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "This vendor only competes on price breaks.",
@@ -409,7 +400,6 @@ function getSolutionResult(
   );
   if (suppressPriceBreak) {
     return {
-      ...solution,
       algoResult: suppressPriceBreak,
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "This vendor suppresses price breaks.",
@@ -419,7 +409,6 @@ function getSolutionResult(
   const ownVendorThreshold = applyOwnVendorThreshold(solution, vendorSetting);
   if (ownVendorThreshold) {
     return {
-      ...solution,
       algoResult: ownVendorThreshold,
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "We are below our own vendor quantity threshold.",
@@ -443,7 +432,6 @@ function getSolutionResult(
       );
     }
     return {
-      ...solution,
       algoResult: upDownRestriction,
       suggestedPrice: suggestedPrice.toNumber(),
       comment,
@@ -456,7 +444,6 @@ function getSolutionResult(
   );
   if (floorCompeteWithNext) {
     return {
-      ...solution,
       algoResult: floorCompeteWithNext,
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "Floor compete with next is off and we have hit the floor.",
@@ -469,7 +456,6 @@ function getSolutionResult(
   ) {
     if (solution.buyBoxRank === 0) {
       return {
-        ...solution,
         algoResult: AlgoResult.IGNORE_LOWEST,
         suggestedPrice: suggestedPrice.toNumber(),
         comment: "We are already winning buy box.",
@@ -477,7 +463,6 @@ function getSolutionResult(
       };
     } else {
       return {
-        ...solution,
         algoResult: AlgoResult.IGNORE_FLOOR,
         suggestedPrice: suggestedPrice.toNumber(),
         comment: "Floor compete with next is on and we have the same price.",
@@ -488,7 +473,6 @@ function getSolutionResult(
   // Okay now we know we can make a change as everything else has been ruled out.
   if (!existingPriceBreak) {
     return {
-      ...solution,
       algoResult: AlgoResult.CHANGE_NEW,
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "We are a new price break.",
@@ -496,7 +480,6 @@ function getSolutionResult(
     };
   } else if (suggestedPrice.lt(existingPriceBreak.unitPrice)) {
     return {
-      ...solution,
       algoResult: AlgoResult.CHANGE_DOWN,
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "We are pricing down.",
@@ -504,7 +487,6 @@ function getSolutionResult(
     };
   } else if (suggestedPrice.gt(existingPriceBreak.unitPrice)) {
     return {
-      ...solution,
       algoResult: AlgoResult.CHANGE_UP,
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "We are pricing up to just undercut a competitor.",
@@ -512,7 +494,6 @@ function getSolutionResult(
     };
   }
   return {
-    ...solution,
     algoResult: AlgoResult.ERROR,
     suggestedPrice: null,
     comment: "We have hit an error. We should not be here.",

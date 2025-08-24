@@ -19,6 +19,7 @@ import { ChangeResult } from "./types";
 import {
   getAllOwnVendorIds,
   getInternalProducts,
+  getPriceListFormatted,
   isChangeResult,
 } from "./utility";
 import { v4 } from "uuid";
@@ -96,7 +97,13 @@ export async function repriceProductV2Wrapper(
       run_time: moment().toDate(),
       q_break_valid: result.qBreakValid,
       price_update_result: result.changeResult,
+      new_price_breaks: result.priceList
+        ? getPriceListFormatted(result.priceList)
+        : null,
+      sister_position_check: result.sisterPositionCheck,
     }));
+
+    console.log(algoResults);
 
     await insertMultipleV2AlgoResults(algoResults);
 
@@ -249,6 +256,11 @@ async function updatePricesIfNecessary(
         solutionResults,
       );
 
+      const priceList = updatesForVendor.map((s) => ({
+        minQty: s.quantity,
+        price: s.vendor.bestPrice!.toNumber(),
+      }));
+
       try {
         // Create axios config with proxy settings
         const axiosConfig: AxiosRequestConfig = {
@@ -263,11 +275,6 @@ async function updatePricesIfNecessary(
           },
         };
 
-        const priceList = updatesForVendor.map((s) => ({
-          minQty: s.quantity,
-          price: s.vendor.bestPrice!.toNumber(),
-          activeCd: 1, // Active
-        }));
         console.log("Price changes in net32 format: ", priceList);
 
         if (isDev) {
@@ -280,34 +287,38 @@ async function updatePricesIfNecessary(
             proxyConfig.subscription_key,
             {
               vpCode: vpCode, // Assuming this is the vendor product code
-              priceList,
+              priceList: priceList.map((pl) => ({ ...pl, activeCd: 1 })),
             },
             axiosConfig,
           );
           console.log(`Successfully updated price for vendor ${vendorId}`);
-          return { vendorId, changeResult: ChangeResult.OK };
+          return { vendorId, changeResult: ChangeResult.OK, priceList };
         } else {
           return {
             vendorId,
             changeResult: ChangeResult.NOT_EXECUTION_PRIORITY,
+            priceList,
           };
         }
       } catch (error) {
         if (error instanceof AxiosError && error.response?.status === 422) {
-          return { vendorId, changeResult: ChangeResult.ERROR_422 };
+          return { vendorId, changeResult: ChangeResult.ERROR_422, priceList };
         }
         console.error(`Failed to update price for vendor ${vendorId}:`, error);
-        return { vendorId, changeResult: ChangeResult.UNKNOWN_ERROR };
+        return {
+          vendorId,
+          changeResult: ChangeResult.UNKNOWN_ERROR,
+          priceList,
+        };
       }
     }),
   );
   return solutionResults.map((s) => {
-    const changeResult = results.find(
-      (r) => r.vendorId === s.vendor.vendorId,
-    )?.changeResult;
+    const changeResult = results.find((r) => r.vendorId === s.vendor.vendorId);
     return {
       ...s,
-      changeResult: changeResult ?? null,
+      changeResult: changeResult ? changeResult.changeResult : null,
+      priceList: changeResult ? changeResult.priceList : null,
     };
   });
 }
