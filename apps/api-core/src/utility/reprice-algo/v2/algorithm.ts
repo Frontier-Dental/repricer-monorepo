@@ -41,6 +41,7 @@ export interface Net32AlgoSolution {
   vendorSettings: V2AlgoSettingsData;
   postSolutionInsertBoard: Net32AlgoProductWithBestPrice[];
   competitorsAndSistersFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
+  everyoneFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
   rawTriggeredByVendor?: string;
   pushedToMax?: boolean;
 }
@@ -51,7 +52,6 @@ export interface Net32AlgoSolutionWithResult
   comment: string;
   suggestedPrice: number | null;
   triggeredByVendor: string | null;
-  sisterPositionCheck: AlgoResult | null;
 }
 
 export interface Net32AlgoSolutionWithQBreakValid
@@ -145,6 +145,7 @@ export function repriceProductV2(
         competitorsAndSistersFromViewOfOwnVendorRanked,
         rawTriggeredByVendor,
         pushedToMax,
+        everyoneFromViewOfOwnVendorRanked,
       } = getOptimalSolutionForBoard(
         rawCompetitorsRankedByBuyBox.map((x) => x.product),
         ourVendor,
@@ -164,7 +165,12 @@ export function repriceProductV2(
         : Infinity;
 
       const postSolutionInsertBoard = getProductsSortedByBuyBoxRank(
-        [vendorSolution, ...competitorsFromViewOfOwnVendorRanked],
+        [
+          vendorSolution,
+          ...competitorsAndSistersFromViewOfOwnVendorRanked.map(
+            (x) => x.product,
+          ),
+        ],
         // If Compare Q2 on Q1, we are still inserting on Q2, eventhough we are ranking on Q1.
         quantity,
       );
@@ -178,6 +184,7 @@ export function repriceProductV2(
         competitorsAndSistersFromViewOfOwnVendorRanked,
         rawTriggeredByVendor,
         pushedToMax,
+        everyoneFromViewOfOwnVendorRanked,
       });
     }
   }
@@ -198,14 +205,14 @@ export function repriceProductV2(
     .flat();
 
   const solutionResults = solutions.map((s) => {
-    const baseResult = getSolutionResult(s, existingPriceBreaks);
-    const sisterPositionCheck =
-      checkSisterPosition(s, s.vendorSettings, ownVendorIds) || null;
+    const baseResult = getSolutionResult(
+      s,
+      existingPriceBreaks,
+      availableVendorIds,
+    );
     return {
       ...s,
       ...baseResult,
-      sisterPositionCheck,
-      comment: `${baseResult.comment} ${sisterPositionCheck ? "A sister is already in the buy box position." : ""}`,
     };
   });
   const solutionResultsWithQBreakValid =
@@ -326,39 +333,10 @@ function removeInvalidQuantityBreaks(
   }));
 }
 
-function checkSisterPosition(
-  solution: Net32AlgoSolution,
-  vendorSetting: V2AlgoSettingsData,
-  ownVendorIds: number[],
-) {
-  // Check if a sister is already in the buy box position
-  // from the perspective of this vendor.
-  const sisterInBuyBox =
-    solution.competitorsAndSistersFromViewOfOwnVendorRanked.find(
-      (s) => s.buyBoxRank === 0 && ownVendorIds.includes(s.product.vendorId),
-    );
-  const competeAll = vendorSetting.compete_with_all_vendors;
-  if (sisterInBuyBox && !competeAll) {
-    return AlgoResult.IGNORE_SISTER_LOWEST;
-  }
-  const simulatedSisterVendorIds = vendorSetting.sister_vendor_ids
-    .split(",")
-    .map(parseInt)
-    .filter((x) => !isNaN(x));
-  const simulatedSisterInBuyBox =
-    solution.competitorsAndSistersFromViewOfOwnVendorRanked.find(
-      (s) =>
-        s.buyBoxRank === 0 &&
-        simulatedSisterVendorIds.includes(s.product.vendorId),
-    );
-  if (simulatedSisterInBuyBox && !competeAll) {
-    return AlgoResult.IGNORE_SISTER_LOWEST;
-  }
-}
-
 function getSolutionResult(
   solution: Net32AlgoSolution,
   existingPriceBreaks: QuantitySolution[],
+  availableVendorIds: number[],
 ) {
   const vendorSetting = solution.vendorSettings;
   const existingPriceBreak = existingPriceBreaks.find(
@@ -381,6 +359,57 @@ function getSolutionResult(
     hasBadge(solution.vendor),
     existingPriceBreak && new Decimal(existingPriceBreak.unitPrice),
   ).toDecimalPlaces(2);
+
+  // Check if a sister is already in the buy box position
+  // from the perspective of this vendor.
+  const sisterInBuyBox = solution.everyoneFromViewOfOwnVendorRanked.find(
+    (s) =>
+      s.buyBoxRank === 0 &&
+      availableVendorIds
+        .filter((x) => x !== solution.vendor.vendorId)
+        .includes(s.product.vendorId),
+  );
+  const competeAll = vendorSetting.compete_with_all_vendors;
+  if (sisterInBuyBox && !competeAll) {
+    return {
+      algoResult: AlgoResult.IGNORE_SISTER_LOWEST,
+      suggestedPrice: suggestedPrice.toNumber(),
+      comment: "A sister is already in the buy box position.",
+      triggeredByVendor: null,
+    };
+  }
+  const simulatedSisterVendorIds = vendorSetting.sister_vendor_ids
+    .split(",")
+    .map(parseInt)
+    .filter((x) => !isNaN(x));
+  const simulatedSisterInBuyBox =
+    solution.everyoneFromViewOfOwnVendorRanked.find(
+      (s) =>
+        s.buyBoxRank === 0 &&
+        simulatedSisterVendorIds.includes(s.product.vendorId),
+    );
+  if (simulatedSisterInBuyBox && !competeAll) {
+    return {
+      algoResult: AlgoResult.IGNORE_SISTER_LOWEST,
+      suggestedPrice: suggestedPrice.toNumber(),
+      comment: "A simulated sister is already in the buy box position.",
+      triggeredByVendor: null,
+    };
+  }
+
+  if (
+    solution.everyoneFromViewOfOwnVendorRanked.find(
+      (s) =>
+        s.buyBoxRank === 0 && s.product.vendorId === solution.vendor.vendorId,
+    )
+  ) {
+    return {
+      algoResult: AlgoResult.IGNORE_LOWEST,
+      suggestedPrice: suggestedPrice.toNumber(),
+      comment: "We are already winning buy box.",
+      triggeredByVendor: null,
+    };
+  }
 
   const competeOnPriceBreaksOnly = applyCompeteOnPriceBreaksOnly(
     vendorSetting,
@@ -531,6 +560,7 @@ function getOptimalSolutionForBoard(
   solution: Net32AlgoProductWithBestPrice;
   competitorsFromViewOfOwnVendorRanked: Net32AlgoProduct[];
   competitorsAndSistersFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
+  everyoneFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
   rawTriggeredByVendor?: string;
   pushedToMax?: boolean;
 } {
@@ -538,19 +568,23 @@ function getOptimalSolutionForBoard(
     (v) => v.vendorId !== ownVendor.vendorId,
   );
 
-  const competitorsFromViewOfOwnVendor = applyCompetitionFilters(
-    competitors,
-    ownVendor,
-    vendorSetting,
-  );
-
   const competitorsRankedByBuyBox = getRankedCompetitorsToCompeteWith(
     vendorSetting,
     ourVendors,
-    competitorsFromViewOfOwnVendor,
+    applyCompetitionFilters(competitors, vendorSetting),
     quantity,
     ownVendor,
   );
+
+  const everyoneFromViewOfOwnVendorRanked = getProductsSortedByBuyBoxRank(
+    [
+      ...applyCompetitionFilters(competitors, vendorSetting),
+      ...sisterVendors,
+      ownVendor,
+    ],
+    quantity,
+  );
+
   const bestCompetitivePrice = getBestCompetitivePrice(
     ownVendor,
     competitorsRankedByBuyBox.map((x) => x.product),
@@ -570,7 +604,7 @@ function getOptimalSolutionForBoard(
         uniqBy(
           [
             ...competitorsRankedByBuyBox.map((x) => x.product),
-            ...sisterVendors,
+            ...applyCompetitionFilters(sisterVendors, vendorSetting),
           ],
           (x) => x.vendorId,
         ),
@@ -580,6 +614,7 @@ function getOptimalSolutionForBoard(
       ),
     rawTriggeredByVendor: bestCompetitivePrice.triggeredByVendor,
     pushedToMax: bestCompetitivePrice.pushedToMax,
+    everyoneFromViewOfOwnVendorRanked,
   };
 }
 

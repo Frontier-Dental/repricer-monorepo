@@ -100,7 +100,6 @@ export async function repriceProductV2Wrapper(
       new_price_breaks: result.priceList
         ? getPriceListFormatted(result.priceList)
         : null,
-      sister_position_check: result.sisterPositionCheck,
     }));
 
     console.log(algoResults);

@@ -36,7 +36,6 @@ interface V2AlgoResultWithExecution {
   q_break_valid: boolean;
   price_update_result: string | null;
   new_price_breaks: string | null;
-  sister_position_check: string | null;
   // Only the HTML content from v2_algo_execution
   chain_of_thought_html: string | null;
 }
@@ -360,14 +359,6 @@ export function ProductDetailPage() {
       cell: ({ row }) => <div>{row.getValue("new_price_breaks")}</div>,
     },
     {
-      accessorKey: "sister_position_check",
-      header: "Sister Position Check",
-      cell: ({ row }) => {
-        const result = row.getValue("sister_position_check") as string;
-        return <Badge variant={getResultBadgeVariant(result)}>{result}</Badge>;
-      },
-    },
-    {
       accessorKey: "q_break_valid",
       header: "Q-Break Valid",
       cell: ({ row }) => {
@@ -416,7 +407,7 @@ export function ProductDetailPage() {
       cell: ({ row }) => {
         const comment = row.getValue("comment") as string;
         return (
-          <div className="max-w-md">
+          <div className="max-w-lg">
             <p className="text-sm whitespace-pre-wrap break-words">
               {comment || "No comment provided"}
             </p>

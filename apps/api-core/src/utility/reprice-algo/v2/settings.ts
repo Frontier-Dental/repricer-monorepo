@@ -13,18 +13,16 @@ import { AlgoResult, Net32AlgoProduct } from "./types";
 import { isChangeResult } from "./utility";
 
 export function applyCompetitionFilters(
-  competitors: Net32AlgoProduct[],
-  ourProduct: Net32AlgoProduct,
+  products: Net32AlgoProduct[],
   ourVendorSettings: V2AlgoSettingsData,
 ) {
   return flow(
-    (competitors) =>
-      applyInactiveVendorIdFilter(competitors, ourVendorSettings),
-    (competitors) => applyVendorExclusionFilter(competitors, ourVendorSettings),
-    (competitors) => applyQuantityFilter(competitors, ourVendorSettings),
-    (competitors) => applyHandlingTimeGroup(competitors, ourVendorSettings),
-    (competitors) => applyBadgeIndicatorFilter(competitors, ourVendorSettings),
-  )(competitors);
+    (products) => applyInactiveVendorIdFilter(products, ourVendorSettings),
+    (products) => applyVendorExclusionFilter(products, ourVendorSettings),
+    (products) => applyQuantityFilter(products, ourVendorSettings),
+    (products) => applyHandlingTimeGroup(products, ourVendorSettings),
+    (products) => applyBadgeIndicatorFilter(products, ourVendorSettings),
+  )(products);
 }
 
 export function applyInactiveVendorIdFilter(

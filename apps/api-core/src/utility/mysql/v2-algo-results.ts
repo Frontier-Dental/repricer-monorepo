@@ -14,7 +14,6 @@ export interface V2AlgoResultData {
   q_break_valid: boolean;
   price_update_result?: string | null;
   new_price_breaks?: string | null;
-  sister_position_check: string | null;
 }
 
 export async function insertMultipleV2AlgoResults(
