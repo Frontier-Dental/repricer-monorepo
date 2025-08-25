@@ -290,6 +290,18 @@ async function updatePricesIfNecessary(
           );
           console.log(`Successfully updated price for vendor ${vendorId}`);
           return { vendorId, changeResult: ChangeResult.OK, priceList };
+        } else if (hasExecutionPriority && !isDev && !v2AlgoOnly) {
+          return {
+            vendorId,
+            changeResult: ChangeResult.CHANGE_PREVENTED_V2_DISABLED,
+            priceList,
+          };
+        } else if (hasExecutionPriority && isDev) {
+          return {
+            vendorId,
+            changeResult: ChangeResult.CHANGE_PREVENTED_DEV,
+            priceList,
+          };
         } else {
           return {
             vendorId,
