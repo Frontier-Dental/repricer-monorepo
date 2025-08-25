@@ -40,14 +40,12 @@ export interface Net32AlgoSolution {
   quantity: number;
   vendorSettings: V2AlgoSettingsData;
   postSolutionInsertBoard: Net32AlgoProductWithBestPrice[];
-  competitorsAndSistersFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
   everyoneFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
   rawTriggeredByVendor?: string;
   pushedToMax?: boolean;
 }
 
-export interface Net32AlgoSolutionWithResult
-  extends Omit<Net32AlgoSolution, "rawTriggeredByVendor"> {
+export interface Net32AlgoSolutionWithResult extends Net32AlgoSolution {
   algoResult: AlgoResult;
   comment: string;
   suggestedPrice: number | null;
@@ -142,7 +140,6 @@ export function repriceProductV2(
       const {
         solution: vendorSolution,
         competitorsFromViewOfOwnVendorRanked,
-        competitorsAndSistersFromViewOfOwnVendorRanked,
         rawTriggeredByVendor,
         pushedToMax,
         everyoneFromViewOfOwnVendorRanked,
@@ -167,9 +164,7 @@ export function repriceProductV2(
       const postSolutionInsertBoard = getProductsSortedByBuyBoxRank(
         [
           vendorSolution,
-          ...competitorsAndSistersFromViewOfOwnVendorRanked.map(
-            (x) => x.product,
-          ),
+          ...everyoneFromViewOfOwnVendorRanked.map((x) => x.product),
         ],
         // If Compare Q2 on Q1, we are still inserting on Q2, eventhough we are ranking on Q1.
         quantity,
@@ -181,7 +176,6 @@ export function repriceProductV2(
         vendorSettings: vendorSetting,
         postSolutionInsertBoard: postSolutionInsertBoard.map((x) => x.product),
         solutionId,
-        competitorsAndSistersFromViewOfOwnVendorRanked,
         rawTriggeredByVendor,
         pushedToMax,
         everyoneFromViewOfOwnVendorRanked,
@@ -350,6 +344,7 @@ function getSolutionResult(
       suggestedPrice: null,
       comment: "We have hit the floor price.",
       triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   }
 
@@ -376,6 +371,7 @@ function getSolutionResult(
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "A sister is already in the buy box position.",
       triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   }
   const simulatedSisterVendorIds = vendorSetting.sister_vendor_ids
@@ -394,6 +390,7 @@ function getSolutionResult(
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "A simulated sister is already in the buy box position.",
       triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   }
 
@@ -408,6 +405,7 @@ function getSolutionResult(
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "We are already winning buy box.",
       triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   }
 
@@ -421,6 +419,7 @@ function getSolutionResult(
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "This vendor only competes on price breaks.",
       triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   }
   const suppressPriceBreak = applySuppressPriceBreakFilter(
@@ -433,6 +432,7 @@ function getSolutionResult(
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "This vendor suppresses price breaks.",
       triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   }
   const ownVendorThreshold = applyOwnVendorThreshold(solution, vendorSetting);
@@ -442,6 +442,7 @@ function getSolutionResult(
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "We are below our own vendor quantity threshold.",
       triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   }
   const upDownRestriction = applyUpDownRestriction(
@@ -465,6 +466,7 @@ function getSolutionResult(
       suggestedPrice: suggestedPrice.toNumber(),
       comment,
       triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   }
   const floorCompeteWithNext = applyFloorCompeteWithNext(
@@ -477,6 +479,7 @@ function getSolutionResult(
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "Floor compete with next is off and we have hit the floor.",
       triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   }
   if (
@@ -489,6 +492,7 @@ function getSolutionResult(
         suggestedPrice: suggestedPrice.toNumber(),
         comment: "We are already winning buy box.",
         triggeredByVendor: null,
+        rawTriggeredByVendor: solution.rawTriggeredByVendor,
       };
     } else {
       return {
@@ -496,6 +500,7 @@ function getSolutionResult(
         suggestedPrice: suggestedPrice.toNumber(),
         comment: "Floor compete with next is on and we have the same price.",
         triggeredByVendor: null,
+        rawTriggeredByVendor: solution.rawTriggeredByVendor,
       };
     }
   }
@@ -506,6 +511,7 @@ function getSolutionResult(
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "We are a new price break.",
       triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   } else if (suggestedPrice.lt(existingPriceBreak.unitPrice)) {
     return {
@@ -513,6 +519,7 @@ function getSolutionResult(
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "We are pricing down.",
       triggeredByVendor: solution.rawTriggeredByVendor || null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   } else if (suggestedPrice.gt(existingPriceBreak.unitPrice)) {
     return {
@@ -520,6 +527,7 @@ function getSolutionResult(
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "We are pricing up to just undercut a competitor.",
       triggeredByVendor: solution.rawTriggeredByVendor || null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   }
   return {
@@ -527,27 +535,8 @@ function getSolutionResult(
     suggestedPrice: null,
     comment: "We have hit an error. We should not be here.",
     triggeredByVendor: null,
+    rawTriggeredByVendor: solution.rawTriggeredByVendor,
   };
-}
-
-function getRankedCompetitorsToCompeteWith(
-  vendorSetting: V2AlgoSettingsData,
-  ownVendors: Net32AlgoProductWithBestPrice[],
-  competitorsOnly: Net32AlgoProductWithBestPrice[],
-  quantity: number,
-  ownVendor: Net32AlgoProductWithBestPrice,
-) {
-  if (vendorSetting.compete_with_all_vendors) {
-    return getProductsSortedByBuyBoxRank(
-      [
-        ...competitorsOnly,
-        ...ownVendors.filter((v) => v.vendorId !== ownVendor.vendorId),
-      ],
-      quantity,
-    );
-  } else {
-    return getProductsSortedByBuyBoxRank(competitorsOnly, quantity);
-  }
 }
 
 function getOptimalSolutionForBoard(
@@ -559,7 +548,6 @@ function getOptimalSolutionForBoard(
 ): {
   solution: Net32AlgoProductWithBestPrice;
   competitorsFromViewOfOwnVendorRanked: Net32AlgoProduct[];
-  competitorsAndSistersFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
   everyoneFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
   rawTriggeredByVendor?: string;
   pushedToMax?: boolean;
@@ -568,20 +556,21 @@ function getOptimalSolutionForBoard(
     (v) => v.vendorId !== ownVendor.vendorId,
   );
 
-  const competitorsRankedByBuyBox = getRankedCompetitorsToCompeteWith(
+  const competitorsView = applyCompetitionFilters(
+    [
+      ...competitors,
+      ...(vendorSetting.compete_with_all_vendors ? sisterVendors : []),
+    ],
     vendorSetting,
-    ourVendors,
-    applyCompetitionFilters(competitors, vendorSetting),
+  );
+
+  const competitorsRankedByBuyBox = getProductsSortedByBuyBoxRank(
+    competitorsView,
     quantity,
-    ownVendor,
   );
 
   const everyoneFromViewOfOwnVendorRanked = getProductsSortedByBuyBoxRank(
-    [
-      ...applyCompetitionFilters(competitors, vendorSetting),
-      ...sisterVendors,
-      ownVendor,
-    ],
+    applyCompetitionFilters([...competitors, ...sisterVendors], vendorSetting),
     quantity,
   );
 
@@ -599,19 +588,6 @@ function getOptimalSolutionForBoard(
     competitorsFromViewOfOwnVendorRanked: competitorsRankedByBuyBox.map(
       (x) => x.product,
     ),
-    competitorsAndSistersFromViewOfOwnVendorRanked:
-      getProductsSortedByBuyBoxRank(
-        uniqBy(
-          [
-            ...competitorsRankedByBuyBox.map((x) => x.product),
-            ...applyCompetitionFilters(sisterVendors, vendorSetting),
-          ],
-          (x) => x.vendorId,
-        ),
-        // Sisters might be added twice if compete_with_all_vendors is true, so we need
-        // to filter out the duplicates
-        quantity,
-      ),
     rawTriggeredByVendor: bestCompetitivePrice.triggeredByVendor,
     pushedToMax: bestCompetitivePrice.pushedToMax,
     everyoneFromViewOfOwnVendorRanked,

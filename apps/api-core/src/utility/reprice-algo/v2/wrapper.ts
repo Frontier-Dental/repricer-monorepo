@@ -249,7 +249,7 @@ async function updatePricesIfNecessary(
       // Just pick the first quantity for this vendor as all the settings will be the same
       const hasExecutionPriority = isLowestExecutionPriority(
         updatesForVendor[0],
-        solutionResults,
+        validSolutionsWithChanges,
       );
 
       const priceList = updatesForVendor.map((s) => ({

@@ -306,13 +306,13 @@ function buildSourceCombinationsTable(solution: Net32AlgoSolution) {
 
 function buildVendorViewOfBoardTable(solution: Net32AlgoSolution) {
   if (
-    !solution.competitorsAndSistersFromViewOfOwnVendorRanked ||
-    solution.competitorsAndSistersFromViewOfOwnVendorRanked.length === 0
+    !solution.everyoneFromViewOfOwnVendorRanked ||
+    solution.everyoneFromViewOfOwnVendorRanked.length === 0
   ) {
     return "<p>No competitors or sisters available for this solution.</p>";
   }
 
-  const rows = solution.competitorsAndSistersFromViewOfOwnVendorRanked
+  const rows = solution.everyoneFromViewOfOwnVendorRanked
     .map((productWrapper) => {
       const product = productWrapper.product;
       const unitPrice = productWrapper.effectiveUnitPrice;
@@ -353,6 +353,7 @@ function buildResultsTable(solution: Net32AlgoSolutionWithQBreakValid) {
       ? solution.suggestedPrice.toString()
       : "N/A";
   const triggeredByVendor = solution.triggeredByVendor || "N/A";
+  const rawTriggeredByVendor = solution.rawTriggeredByVendor || "N/A";
 
   return `<table style="margin-bottom: 10px; font-size: 0.9em;">
     <thead>
@@ -365,6 +366,7 @@ function buildResultsTable(solution: Net32AlgoSolutionWithQBreakValid) {
       <tr><td>Comment</td><td>${comment}</td></tr>
       <tr><td>Suggested Price</td><td>${suggestedPrice}</td></tr>
       <tr><td>Triggered By Vendor</td><td>${triggeredByVendor}</td></tr>
+      <tr><td>Raw Triggered By Vendor</td><td>${rawTriggeredByVendor}</td></tr>
     </tbody>
   </table>`;
 }
