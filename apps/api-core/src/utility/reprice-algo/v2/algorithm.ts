@@ -41,6 +41,7 @@ export interface Net32AlgoSolution {
   vendorSettings: V2AlgoSettingsData;
   postSolutionInsertBoard: Net32AlgoProductWithBestPrice[];
   everyoneFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
+  everyoneIncludingOwnVendorBefore: Net32AlgoProductWrapperWithBuyBoxRank[];
   rawTriggeredByVendor?: string;
   pushedToMax?: boolean;
 }
@@ -143,6 +144,7 @@ export function repriceProductV2(
         rawTriggeredByVendor,
         pushedToMax,
         everyoneFromViewOfOwnVendorRanked,
+        everyoneIncludingOwnVendorBefore,
       } = getOptimalSolutionForBoard(
         rawCompetitorsRankedByBuyBox.map((x) => x.product),
         ourVendor,
@@ -179,6 +181,7 @@ export function repriceProductV2(
         rawTriggeredByVendor,
         pushedToMax,
         everyoneFromViewOfOwnVendorRanked,
+        everyoneIncludingOwnVendorBefore,
       });
     }
   }
@@ -357,7 +360,7 @@ function getSolutionResult(
 
   // Check if a sister is already in the buy box position
   // from the perspective of this vendor.
-  const sisterInBuyBox = solution.everyoneFromViewOfOwnVendorRanked.find(
+  const sisterInBuyBox = solution.everyoneIncludingOwnVendorBefore.find(
     (s) =>
       s.buyBoxRank === 0 &&
       availableVendorIds
@@ -379,7 +382,7 @@ function getSolutionResult(
     .map(parseInt)
     .filter((x) => !isNaN(x));
   const simulatedSisterInBuyBox =
-    solution.everyoneFromViewOfOwnVendorRanked.find(
+    solution.everyoneIncludingOwnVendorBefore.find(
       (s) =>
         s.buyBoxRank === 0 &&
         simulatedSisterVendorIds.includes(s.product.vendorId),
@@ -395,7 +398,7 @@ function getSolutionResult(
   }
 
   if (
-    solution.everyoneFromViewOfOwnVendorRanked.find(
+    solution.everyoneIncludingOwnVendorBefore.find(
       (s) =>
         s.buyBoxRank === 0 && s.product.vendorId === solution.vendor.vendorId,
     )
@@ -549,6 +552,7 @@ function getOptimalSolutionForBoard(
   solution: Net32AlgoProductWithBestPrice;
   competitorsFromViewOfOwnVendorRanked: Net32AlgoProduct[];
   everyoneFromViewOfOwnVendorRanked: Net32AlgoProductWrapperWithBuyBoxRank[];
+  everyoneIncludingOwnVendorBefore: Net32AlgoProductWrapperWithBuyBoxRank[];
   rawTriggeredByVendor?: string;
   pushedToMax?: boolean;
 } {
@@ -569,8 +573,19 @@ function getOptimalSolutionForBoard(
     quantity,
   );
 
-  const everyoneFromViewOfOwnVendorRanked = getProductsSortedByBuyBoxRank(
+  const everyoneFromViewOfOwnVendor = getProductsSortedByBuyBoxRank(
     applyCompetitionFilters([...competitors, ...sisterVendors], vendorSetting),
+    quantity,
+  );
+
+  const everyoneIncludingOwnVendorBefore = getProductsSortedByBuyBoxRank(
+    [
+      ...applyCompetitionFilters(
+        [...competitors, ...sisterVendors],
+        vendorSetting,
+      ),
+      ownVendor,
+    ],
     quantity,
   );
 
@@ -590,7 +605,8 @@ function getOptimalSolutionForBoard(
     ),
     rawTriggeredByVendor: bestCompetitivePrice.triggeredByVendor,
     pushedToMax: bestCompetitivePrice.pushedToMax,
-    everyoneFromViewOfOwnVendorRanked,
+    everyoneFromViewOfOwnVendorRanked: everyoneFromViewOfOwnVendor,
+    everyoneIncludingOwnVendorBefore,
   };
 }
 
