@@ -239,6 +239,12 @@ export function ProductDetailPage() {
     return date.toLocaleDateString() + " " + date.toLocaleTimeString();
   };
 
+  const truncateComment = (comment: string, maxLength: number = 100) => {
+    if (!comment) return "No comment provided";
+    if (comment.length <= maxLength) return comment;
+    return comment.substring(0, maxLength) + "...";
+  };
+
   const formatPrice = (price: number | string) => {
     if (price === null || price === undefined || price === "") return "N/A";
     return `$${parseFloat(price.toString()).toFixed(2)}`;
@@ -359,6 +365,14 @@ export function ProductDetailPage() {
       cell: ({ row }) => <div>{row.getValue("new_price_breaks")}</div>,
     },
     {
+      accessorKey: "sister_position_check",
+      header: "Sister Position Check",
+      cell: ({ row }) => {
+        const result = row.getValue("sister_position_check") as string;
+        return <Badge variant={getResultBadgeVariant(result)}>{result}</Badge>;
+      },
+    },
+    {
       accessorKey: "q_break_valid",
       header: "Q-Break Valid",
       cell: ({ row }) => {
@@ -407,10 +421,8 @@ export function ProductDetailPage() {
       cell: ({ row }) => {
         const comment = row.getValue("comment") as string;
         return (
-          <div className="max-w-lg">
-            <p className="text-sm whitespace-pre-wrap break-words">
-              {comment || "No comment provided"}
-            </p>
+          <div className="max-w-md">
+            <p className="text-sm">{truncateComment(comment)}</p>
           </div>
         );
       },
@@ -568,6 +580,10 @@ export function ProductDetailPage() {
               {
                 id: "run_time",
                 desc: true,
+              },
+              {
+                id: "id",
+                desc: false,
               },
             ]}
           />
