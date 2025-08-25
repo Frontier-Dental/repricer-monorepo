@@ -8,6 +8,7 @@ import {
   getAllV2AlgoErrorsController,
   updateV2AlgoOnlyController,
   getV2AlgoOnlyStatusController,
+  syncVendorSettings,
 } from "../controllers/v2-algo";
 export const v2AlgoRouter = express.Router();
 
@@ -32,3 +33,6 @@ v2AlgoRouter.get(
   "/get_v2_algo_only_status/:mpId",
   getV2AlgoOnlyStatusController,
 );
+
+// Sync vendor settings for specific MP ID
+v2AlgoRouter.post("/sync_vendor_settings/:mpId", syncVendorSettings);

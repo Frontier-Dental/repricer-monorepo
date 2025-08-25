@@ -89,6 +89,8 @@ export function ProductDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isManualRepricing, setIsManualRepricing] = useState(false);
+  const [isRemovingFrom422, setIsRemovingFrom422] = useState(false);
+  const [isSyncingSettings, setIsSyncingSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [vendorFilter, setVendorFilter] = useState("");
   const [jobFilter, setJobFilter] = useState("");
@@ -122,11 +124,65 @@ export function ProductDetailPage() {
 
       // Show success message or handle response as needed
       toast.success("Manual reprice succeeded!");
+
+      // Refresh the data table to show updated results
+      await fetchData();
     } catch (error) {
       console.error("Error initiating manual reprice:", error);
       toast.error("Failed to initiate manual reprice. Please try again.");
     } finally {
       setIsManualRepricing(false);
+    }
+  };
+
+  const handleRemoveFrom422 = async () => {
+    setIsRemovingFrom422(true);
+    try {
+      const response = await fetch("/productV2/removeFrom422", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mpIds: [parseInt(mpId)] }),
+      });
+
+      const result = await response.json();
+      if (response.ok && result.status) {
+        toast.success("Product removed from 422 successfully!");
+      } else {
+        toast.error(result.message || "Failed to remove product from 422.");
+      }
+    } catch (err) {
+      console.error("Error removing product from 422:", err);
+      toast.error("Failed to remove product from 422.");
+    } finally {
+      setIsRemovingFrom422(false);
+    }
+  };
+
+  const handleSyncVendorSettings = async () => {
+    setIsSyncingSettings(true);
+    try {
+      const response = await fetch(`/v2-algo/sync_vendor_settings/${mpId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const result = await response.json();
+      if (response.ok && result.success) {
+        toast.success("Vendor settings synced successfully!");
+        // Refresh the settings data after sync
+        await fetchSettings();
+      } else {
+        toast.error(result.message || "Failed to sync vendor settings.");
+      }
+    } catch (err) {
+      console.error("Error syncing vendor settings:", err);
+      toast.error("Failed to sync vendor settings.");
+    } finally {
+      setIsSyncingSettings(false);
     }
   };
 
@@ -523,6 +579,21 @@ export function ProductDetailPage() {
               className="bg-blue-600 hover:bg-blue-700"
             >
               {isManualRepricing ? "Repricing..." : "Manual Reprice"}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRemoveFrom422}
+              disabled={isRemovingFrom422}
+            >
+              {isRemovingFrom422 ? "Removing..." : "Remove from 422"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleSyncVendorSettings}
+              disabled={isSyncingSettings}
+              className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+            >
+              {isSyncingSettings ? "Syncing..." : "Sync Vendor Settings"}
             </Button>
             <Button variant="outline" onClick={fetchData} disabled={isLoading}>
               {isLoading ? "Loading..." : "Refresh"}

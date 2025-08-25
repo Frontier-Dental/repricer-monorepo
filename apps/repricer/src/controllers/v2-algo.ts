@@ -8,6 +8,7 @@ import { getAlgoResultsWithExecutionData } from "../services/algo_v2/results";
 import {
   getV2AlgoSettingsByMpId,
   updateV2AlgoSettings as updateSettings,
+  syncVendorSettingsForMpId,
 } from "../services/algo_v2/settings";
 import { getAllV2AlgoErrors } from "../services/algo_v2/errors";
 
@@ -218,5 +219,28 @@ export async function getV2AlgoOnlyStatusController(
     success: true,
     mp_id: mpIdNumber,
     v2_algo_only: v2AlgoOnly,
+  });
+}
+
+export async function syncVendorSettings(
+  req: Request<{ mpId: string }>,
+  res: Response,
+) {
+  const { mpId } = req.params;
+  const mpIdNumber = parseInt(mpId, 10);
+
+  if (isNaN(mpIdNumber)) {
+    return res.status(400).json({
+      error: "Invalid mp_id parameter. Must be a valid number.",
+    });
+  }
+
+  const result = await syncVendorSettingsForMpId(mpIdNumber);
+
+  return res.json({
+    success: true,
+    mp_id: mpIdNumber,
+    message: `Successfully synced vendor settings for MP ID ${mpIdNumber}`,
+    data: result,
   });
 }
