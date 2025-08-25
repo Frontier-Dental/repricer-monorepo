@@ -50,9 +50,7 @@ export const GetScrapeCron = async (req: Request, res: Response) => {
 export const ToggleCronStatus = async (req: Request, res: Response) => {
   const cronId = req.body.id;
   const cronStatus = parseInt(req.body.status);
-  console.log(cronId);
   const jobName = cronMapping.find((x) => x.cronId == cronId)?.cronVariable;
-  console.log(jobName);
 
   const response = await httpMiddleware.toggleScrapeCron({
     jobName: jobName,

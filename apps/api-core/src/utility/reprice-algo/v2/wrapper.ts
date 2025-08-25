@@ -102,8 +102,6 @@ export async function repriceProductV2Wrapper(
         : null,
     }));
 
-    console.log(algoResults);
-
     await insertMultipleV2AlgoResults(algoResults);
 
     // We only need to store one html file per vendor, not per quantity.
