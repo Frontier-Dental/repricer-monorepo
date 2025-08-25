@@ -18,7 +18,6 @@ export function createHtmlFileContent(
   mpId: number,
   net32Products: Net32AlgoProduct[],
   solutions: Net32AlgoSolutionWithQBreakValid[],
-  beforeLadders: { quantity: number; ladder: Net32AlgoProductWrapper[] }[],
   net32url: string,
   jobId: string,
 ) {
@@ -59,28 +58,49 @@ export function createHtmlFileContent(
 
   // --- Build sections for each quantity ---
   let newAlgoSections = "";
-  for (const beforeLadder of beforeLadders) {
-    const quantity = beforeLadder.quantity;
+
+  // Group solutions by quantity
+  const solutionsByQuantity = new Map<
+    number,
+    Net32AlgoSolutionWithQBreakValid[]
+  >();
+  for (const solution of solutions) {
+    const quantity = solution.quantity;
+    if (!solutionsByQuantity.has(quantity)) {
+      solutionsByQuantity.set(quantity, []);
+    }
+    solutionsByQuantity.get(quantity)!.push(solution);
+  }
+
+  // Sort quantities in ascending order
+  const sortedQuantities = Array.from(solutionsByQuantity.keys()).sort(
+    (a, b) => a - b,
+  );
+
+  for (const quantity of sortedQuantities) {
     if (quantity === 0) continue; // Skip quantity 0
 
-    newAlgoSections += `<h2>Quantity: ${quantity}</h2>`;
-    newAlgoSections +=
-      `<b>Existing Board</b>` +
-      buildBeforeLadderTable({
-        quantity: beforeLadder.quantity,
-        ladder: beforeLadder.ladder.map((x) => x.product),
-      });
+    const solutionsForQuantity = solutionsByQuantity.get(quantity)!;
 
-    // Find solutions for this quantity
-    const solutionsForQuantity = solutions.filter(
-      (s) => s.quantity === quantity,
-    );
+    newAlgoSections += `<h2>Quantity: ${quantity}</h2>`;
+
+    // Get beforeLadder from the first solution for this quantity
+    const firstSolution = solutionsForQuantity[0];
+    if (firstSolution.beforeLadder) {
+      newAlgoSections +=
+        `<b>Existing Board</b>` +
+        buildBeforeLadderTable({
+          quantity: quantity,
+          ladder: firstSolution.beforeLadder.map((x: any) => x.product),
+        });
+    }
+
     newAlgoSections +=
       `<br/><br/><b>Price Solutions</b>` +
       buildSolutionsTable(solutionsForQuantity);
 
     // Add divider between quantities
-    if (quantity < beforeLadders[beforeLadders.length - 1].quantity) {
+    if (quantity < sortedQuantities[sortedQuantities.length - 1]) {
       newAlgoSections += `<hr style="margin: 40px 0; border: 2px solid #ccc;">`;
     }
   }

@@ -44,6 +44,7 @@ export interface Net32AlgoSolution {
   everyoneIncludingOwnVendorBefore: Net32AlgoProductWrapperWithBuyBoxRank[];
   rawTriggeredByVendor?: string;
   pushedToMax?: boolean;
+  beforeLadder: Net32AlgoProductWrapperWithBuyBoxRank[];
 }
 
 export interface Net32AlgoSolutionWithResult extends Net32AlgoSolution {
@@ -107,35 +108,52 @@ export function repriceProductV2(
 
   const availableVendorIds = ourAvailableVendorProducts.map((v) => v.vendorId);
 
-  const competitorQuantityBreaks =
-    getUniqueValidQuantityBreaks(competitorProducts);
-
   const solutions: Net32AlgoSolution[] = [];
 
-  const beforeLadders = competitorQuantityBreaks.map((quantity) => {
-    const ladder = getProductsSortedByBuyBoxRank(validProducts, quantity);
-    return {
-      quantity,
-      ladder,
-    };
-  });
-
-  for (const quantity of competitorQuantityBreaks) {
-    for (const ourVendor of ourAvailableVendorProducts) {
-      const vendorSetting = vendorSettings.find(
-        (v) => v.vendor_id === ourVendor.vendorId,
+  for (const ourVendor of ourAvailableVendorProducts) {
+    const vendorSetting = vendorSettings.find(
+      (v) => v.vendor_id === ourVendor.vendorId,
+    );
+    if (!vendorSetting) {
+      throw new Error(
+        `No vendor settings found for vendor ${ourVendor.vendorId}`,
       );
-      if (!vendorSetting) {
-        throw new Error(
-          `No vendor settings found for vendor ${ourVendor.vendorId}`,
-        );
-      }
+    }
+    const filteredCompetitors = applyCompetitionFilters(
+      [
+        ...competitorProducts,
+        ...(vendorSetting.compete_with_all_vendors
+          ? ourAvailableVendorProducts.filter(
+              (p) => p.vendorId !== ourVendor.vendorId,
+            )
+          : []),
+      ],
+      vendorSetting,
+    );
 
+    const competitorQuantityBreaks =
+      getUniqueValidQuantityBreaks(filteredCompetitors);
+
+    for (const quantity of competitorQuantityBreaks) {
       const competeQuantity = getCompeteQuantity(vendorSetting, quantity);
 
       const rawCompetitorsRankedByBuyBox = getProductsSortedByBuyBoxRank(
         competitorProducts,
         competeQuantity,
+      );
+
+      const beforeLadder = getProductsSortedByBuyBoxRank(
+        [
+          ...filteredCompetitors,
+          ...applyCompetitionFilters(
+            ourAvailableVendorProducts.filter(
+              (p) => p.vendorId !== ourVendor.vendorId,
+            ),
+            vendorSetting,
+          ),
+          ourVendor,
+        ],
+        quantity,
       );
 
       const {
@@ -178,6 +196,7 @@ export function repriceProductV2(
         vendorSettings: vendorSetting,
         postSolutionInsertBoard: postSolutionInsertBoard.map((x) => x.product),
         solutionId,
+        beforeLadder,
         rawTriggeredByVendor,
         pushedToMax,
         everyoneFromViewOfOwnVendorRanked,
@@ -207,9 +226,11 @@ export function repriceProductV2(
       existingPriceBreaks,
       availableVendorIds,
     );
+    const pushedToMax = s.pushedToMax;
     return {
       ...s,
       ...baseResult,
+      comment: baseResult.comment + (pushedToMax ? " Pushed to max." : ""),
     };
   });
   const solutionResultsWithQBreakValid =
@@ -222,7 +243,6 @@ export function repriceProductV2(
       solutionResultsWithQBreakValid.filter(
         (s) => s.vendor.vendorId === vendorId,
       ),
-      beforeLadders,
       net32url,
       jobId,
     );
@@ -345,7 +365,7 @@ function getSolutionResult(
     return {
       algoResult: AlgoResult.IGNORE_FLOOR,
       suggestedPrice: null,
-      comment: "We have hit the floor price.",
+      comment: "Hit the floor price.",
       triggeredByVendor: null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
@@ -363,7 +383,7 @@ function getSolutionResult(
     return {
       algoResult: ownVendorThreshold,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "We are below our own vendor quantity threshold.",
+      comment: "Below own vendor quantity threshold.",
       triggeredByVendor: null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
@@ -417,7 +437,7 @@ function getSolutionResult(
     return {
       algoResult: AlgoResult.IGNORE_LOWEST,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "We are already winning buy box.",
+      comment: "Already winning buy box.",
       triggeredByVendor: null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
@@ -431,7 +451,8 @@ function getSolutionResult(
     return {
       algoResult: floorCompeteWithNext,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "Floor compete with next is off and we have hit the floor.",
+      comment:
+        "Floor compete with next is off and own vendor has hit the floor.",
       triggeredByVendor: null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
@@ -445,7 +466,7 @@ function getSolutionResult(
     return {
       algoResult: competeOnPriceBreaksOnly,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "This vendor only competes on price breaks.",
+      comment: "Only competes on price breaks.",
       triggeredByVendor: null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
@@ -458,7 +479,7 @@ function getSolutionResult(
     return {
       algoResult: suppressPriceBreak,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "This vendor suppresses price breaks.",
+      comment: "Suppresses price breaks.",
       triggeredByVendor: null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
@@ -472,9 +493,9 @@ function getSolutionResult(
   if (upDownRestriction) {
     let comment;
     if (vendorSetting.up_down === "UP") {
-      comment = "We are set to only price up and we are trying to price down.";
+      comment = "Set to only price up and trying to price down.";
     } else if (vendorSetting.up_down === "DOWN") {
-      comment = "We are set to only price down and we are trying to price up.";
+      comment = "Set to only price down and trying to price up.";
     } else {
       throw new Error(
         `Invalid up/down setting: ${vendorSetting.up_down} to trigger this restriction. We should not be here.`,
@@ -496,7 +517,7 @@ function getSolutionResult(
       return {
         algoResult: AlgoResult.IGNORE_LOWEST,
         suggestedPrice: suggestedPrice.toNumber(),
-        comment: "We are already winning buy box.",
+        comment: "Already winning buy box.",
         triggeredByVendor: null,
         rawTriggeredByVendor: solution.rawTriggeredByVendor,
       };
@@ -504,7 +525,8 @@ function getSolutionResult(
       return {
         algoResult: AlgoResult.IGNORE_FLOOR,
         suggestedPrice: suggestedPrice.toNumber(),
-        comment: "Floor compete with next is on and we have the same price.",
+        comment:
+          "Floor compete with next is on and own vendor has the same price.",
         triggeredByVendor: null,
         rawTriggeredByVendor: solution.rawTriggeredByVendor,
       };
@@ -515,7 +537,7 @@ function getSolutionResult(
     return {
       algoResult: AlgoResult.CHANGE_NEW,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "We are a new price break.",
+      comment: "New price break.",
       triggeredByVendor: null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
@@ -523,7 +545,7 @@ function getSolutionResult(
     return {
       algoResult: AlgoResult.CHANGE_DOWN,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "We are pricing down.",
+      comment: "Pricing down.",
       triggeredByVendor: solution.rawTriggeredByVendor || null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
@@ -531,7 +553,7 @@ function getSolutionResult(
     return {
       algoResult: AlgoResult.CHANGE_UP,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "We are pricing up to just undercut a competitor.",
+      comment: "Pricing up to just undercut a competitor.",
       triggeredByVendor: solution.rawTriggeredByVendor || null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
@@ -539,7 +561,7 @@ function getSolutionResult(
   return {
     algoResult: AlgoResult.ERROR,
     suggestedPrice: null,
-    comment: "We have hit an error. We should not be here.",
+    comment: "Hit an error. We should not be here.",
     triggeredByVendor: null,
     rawTriggeredByVendor: solution.rawTriggeredByVendor,
   };
@@ -704,6 +726,7 @@ function getBestCompetitivePrice(
 
     if (undercutUnitPrice.gt(ownVendorSetting.max_price)) {
       return {
+        triggeredByVendor: `${competitor.vendorId}-${competitor.vendorName}`,
         price: new Decimal(ownVendorSetting.max_price),
         pushedToMax: true,
       };
