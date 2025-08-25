@@ -162,7 +162,6 @@ export function V2AlgoSettingsForm({
                     <Input
                       type="number"
                       min="0"
-                      max="100"
                       {...field}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -267,8 +266,7 @@ export function V2AlgoSettingsForm({
                   <FormControl>
                     <Input
                       type="number"
-                      min="1"
-                      max="100"
+                      min="0"
                       {...field}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -291,7 +289,6 @@ export function V2AlgoSettingsForm({
                       type="number"
                       step="0.01"
                       min="-1"
-                      max="100"
                       {...field}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -340,7 +337,6 @@ export function V2AlgoSettingsForm({
                       type="number"
                       step="0.01"
                       min="-1"
-                      max="100"
                       {...field}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -566,7 +562,6 @@ export function V2AlgoSettingsForm({
                     <Input
                       type="number"
                       min="0"
-                      max="100"
                       {...field}
                       onChange={(e) => {
                         const value = e.target.value;
