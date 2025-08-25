@@ -213,7 +213,7 @@ export function applyFloorCompeteWithNext(
   vendorSetting: V2AlgoSettingsData,
 ) {
   if (!vendorSetting.floor_compete_with_next && solution.buyBoxRank > 0) {
-    return AlgoResult.IGNORE_SETTINGS;
+    return AlgoResult.IGNORE_FLOOR;
   } else {
     return null;
   }

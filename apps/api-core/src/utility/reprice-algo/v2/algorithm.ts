@@ -423,6 +423,20 @@ function getSolutionResult(
     };
   }
 
+  const floorCompeteWithNext = applyFloorCompeteWithNext(
+    solution,
+    vendorSetting,
+  );
+  if (floorCompeteWithNext) {
+    return {
+      algoResult: floorCompeteWithNext,
+      suggestedPrice: suggestedPrice.toNumber(),
+      comment: "Floor compete with next is off and we have hit the floor.",
+      triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
+    };
+  }
+
   const competeOnPriceBreaksOnly = applyCompeteOnPriceBreaksOnly(
     vendorSetting,
     solution.quantity,
@@ -470,19 +484,6 @@ function getSolutionResult(
       algoResult: upDownRestriction,
       suggestedPrice: suggestedPrice.toNumber(),
       comment,
-      triggeredByVendor: null,
-      rawTriggeredByVendor: solution.rawTriggeredByVendor,
-    };
-  }
-  const floorCompeteWithNext = applyFloorCompeteWithNext(
-    solution,
-    vendorSetting,
-  );
-  if (floorCompeteWithNext) {
-    return {
-      algoResult: floorCompeteWithNext,
-      suggestedPrice: suggestedPrice.toNumber(),
-      comment: "Floor compete with next is off and we have hit the floor.",
       triggeredByVendor: null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
