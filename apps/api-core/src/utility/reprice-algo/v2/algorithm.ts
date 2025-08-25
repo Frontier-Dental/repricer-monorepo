@@ -358,6 +358,17 @@ function getSolutionResult(
     existingPriceBreak && new Decimal(existingPriceBreak.unitPrice),
   ).toDecimalPlaces(2);
 
+  const ownVendorThreshold = applyOwnVendorThreshold(solution, vendorSetting);
+  if (ownVendorThreshold) {
+    return {
+      algoResult: ownVendorThreshold,
+      suggestedPrice: suggestedPrice.toNumber(),
+      comment: "We are below our own vendor quantity threshold.",
+      triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
+    };
+  }
+
   // Check if a sister is already in the buy box position
   // from the perspective of this vendor.
   const sisterInBuyBox = solution.everyoneIncludingOwnVendorBefore.find(
@@ -438,16 +449,7 @@ function getSolutionResult(
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   }
-  const ownVendorThreshold = applyOwnVendorThreshold(solution, vendorSetting);
-  if (ownVendorThreshold) {
-    return {
-      algoResult: ownVendorThreshold,
-      suggestedPrice: suggestedPrice.toNumber(),
-      comment: "We are below our own vendor quantity threshold.",
-      triggeredByVendor: null,
-      rawTriggeredByVendor: solution.rawTriggeredByVendor,
-    };
-  }
+
   const upDownRestriction = applyUpDownRestriction(
     suggestedPrice,
     vendorSetting,
