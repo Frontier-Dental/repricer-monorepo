@@ -183,9 +183,8 @@ function priceIsWithinBounariesSafeguard(solution: Net32AlgoSolution) {
     );
   }
   if (
-    solution.vendor.bestPrice.toNumber() >=
-      solution.vendorSettings.floor_price &&
-    solution.vendor.bestPrice.toNumber() <= solution.vendorSettings.max_price
+    solution.vendor.bestPrice.gte(solution.vendorSettings.floor_price) &&
+    solution.vendor.bestPrice.lte(solution.vendorSettings.max_price)
   ) {
     return true;
   } else {
