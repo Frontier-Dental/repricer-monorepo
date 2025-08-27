@@ -120,7 +120,7 @@ function updateAllPrice(index) {
         showLoadingToast("Please Wait");
       },
       success: function (data) {
-        showSuccessToast(data.message);
+        showSuccessToast('Success');
         setTimeout(function () {
           location.reload();
         }, 3000);
@@ -173,14 +173,8 @@ function editAll() {
   $('[name="offset_422"]').removeAttr("readonly");
   $('[name="cron_time_422"]').removeAttr("readonly");
   $('[name="cron_time_unit_422"]').removeAttr("disabled");
-  $('[name="proxy_provider_1"]').removeAttr("disabled");
-  $('[name="proxy_provider_2"]').removeAttr("disabled");
-  $('[name="proxy_provider_3"]').removeAttr("disabled");
-  $('[name="proxy_provider_4"]').removeAttr("disabled");
-  $('[name="proxy_provider_422_alternate_1"]').removeAttr("disabled");
-  $('[name="proxy_provider_422_alternate_2"]').removeAttr("disabled");
-  $('[name="proxy_provider_422_alternate_3"]').removeAttr("disabled");
-  $('[name="proxy_provider_422_alternate_4"]').removeAttr("disabled");
+  $('[name^="proxy_provider_"]').removeAttr("disabled");
+  $('[name^="proxy_provider_422_alternate_"]').removeAttr("disabled");
 
   var fixedIpControls = $("input[name*='fixed_ip_']");
   for (var i = 0; i < fixedIpControls.length; i++) {
@@ -614,6 +608,7 @@ function saveEnvConfigurations() {
   const mvpPriority = $("#ddl_exec_priority_mvp").val();
   const topDentPriority = $("#ddl_exec_priority_top").val();
   const firstDentPriority = $("#ddl_exec_priority_fir").val();
+  const triadPriority = $("#ddl_exec_priority_tri").val();
   const expressCronOverlapThreshold = $("#txtOverlapThreshold").val();
   const expressCronBatchSize = $("#txtCronBatchSize").val();
   const expressCronInstanceLimit = $("#txtExpressInstanceCount").val();
@@ -625,6 +620,7 @@ function saveEnvConfigurations() {
       mvp_priority: mvpPriority,
       firstDent_priority: firstDentPriority,
       topDent_priority: topDentPriority,
+      triad_priority: triadPriority
     },
   };
   if (
@@ -950,6 +946,7 @@ function saveBranches(mpid) {
   const mvpDetails = collectDetails("mvp");
   const topDentDetails = collectDetails("topDent");
   const firstDentDetails = collectDetails("firstDent");
+  const triadDetails = collectDetails('triad');
 
   // console.log('Tradent Details:', tradentDetails);
   // console.log('Frontier Details:', frontierDetails);
@@ -963,6 +960,7 @@ function saveBranches(mpid) {
     ...{ mvpDetails },
     ...{ topDentDetails },
     ...{ firstDentDetails },
+    ...({ triadDetails }),
   };
 
   $.ajax({
@@ -1618,3 +1616,149 @@ function runUpdateToMax() {
     showErrorToast("No Product Selected to be Updated to Max...");
   }
 }
+
+function updateProductQuantity(mpid) {
+  $('#quantityUpdateMpId').text(mpid);
+  $('.vendor-checkbox').prop('checked', false);
+  $('.vendor-quantity').val(0).prop('disabled', true);
+  $('#updateQuantityModal').modal('show');
+}
+
+// Store original modal content
+let originalModalContent = null;
+
+// Restore modal to original state when closed
+$('#updateQuantityModal').on('hidden.bs.modal', function () {
+  // If we stored the results, restore the original content
+  if (originalModalContent) {
+      $('#updateQuantityModal .modal-dialog').html(originalModalContent);
+      originalModalContent = null;
+  }
+});
+
+// Enable/disable quantity input based on checkbox state
+$(document).on('change', '.vendor-checkbox', function() {
+  const vendorId = $(this).attr('id').replace('vendor', '');
+  const quantityInput = $('#quantity' + vendorId);
+
+  if ($(this).is(':checked')) {
+      quantityInput.prop('disabled', false);
+  } else {
+      quantityInput.prop('disabled', true).val(0);
+      quantityInput.removeClass('is-invalid');
+  }
+});
+
+// Remove invalid class when user types in the input
+$(document).on('input', '.vendor-quantity', function() {
+  if ($(this).hasClass('is-invalid')) {
+      const value = $(this).val();
+      if (/^\d+$/.test(value)) {
+          $(this).removeClass('is-invalid');
+      }
+  }
+});
+
+$(document).on('click', '#confirmQuantityUpdate', function() {
+  const mpid = $('#quantityUpdateMpId').text();
+  const vendorData = [];
+  let hasInvalidInput = false;
+
+  $('.vendor-checkbox:checked').each(function() {
+      const vendorId = $(this).attr('id').replace('vendor', '');
+      const quantityInput = $('#quantity' + vendorId);
+      const quantity = quantityInput.val();
+      const vendorName = $(this).val();
+
+      // Validate that the input is a valid non-negative integer
+      if (quantity === '' || !/^\d+$/.test(quantity)) {
+          hasInvalidInput = true;
+          quantityInput.addClass('is-invalid');
+      } else {
+          quantityInput.removeClass('is-invalid');
+          vendorData.push({
+              vendor: vendorName,
+              quantity: parseInt(quantity)
+          });
+      }
+  });
+
+  if (hasInvalidInput) {
+      showErrorToast("Please enter valid quantities (0 or positive integers only).");
+      return;
+  }
+
+  if (vendorData.length === 0) {
+      showErrorToast("Please select at least one vendor and enter a quantity.");
+      return;
+  }
+
+  $.ajax({
+      type: "POST",
+      url: "/productV2/updateProductQuantity",
+      data: { 
+          mpid: mpid,
+          vendorData: vendorData
+      },
+      dataType: "json",
+      cache: false,
+      beforeSend: function () {
+          showLoadingToast("Updating quantities...");
+      },
+      success: function (data) {
+          $.toast().reset('all');
+
+          // Store original modal content before modifying
+          if (!originalModalContent) {
+              originalModalContent = $('#updateQuantityModal .modal-dialog').html();
+          }
+
+          const modalBody = $('#updateQuantityModal .modal-body');
+          let resultsHtml = '';
+
+          if (data.status == true && data.data && data.data.results) {
+              resultsHtml += '<table class="table table-bordered">';
+              resultsHtml += '<thead><tr><th>Vendor</th><th>Status</th><th>HTTP Code</th><th>Message</th></tr></thead>';
+              resultsHtml += '<tbody>';
+
+              data.data.results.forEach(result => {
+                  const statusText = result.success ? 'Success' : 'Failed';
+                  const errorMessage = result.data && result.data.message ? result.data.message : 
+                                     (result.data && result.data.error ? result.data.error : '-');
+
+                  resultsHtml += `<tr>`;
+                  resultsHtml += `<td><strong>${result.vendor.toUpperCase()}</strong></td>`;
+                  resultsHtml += `<td>${statusText}</td>`;
+                  resultsHtml += `<td>${result.status}</td>`;
+                  resultsHtml += `<td>${result.success && result.status === 404 ? errorMessage : (result.success ? 'Updated successfully' : errorMessage)}</td>`;
+                  resultsHtml += `</tr>`;
+              });
+
+              resultsHtml += '</tbody></table>';
+
+              modalBody.html(resultsHtml);
+
+              // Change the footer buttons
+              $('#updateQuantityModal .modal-footer').html(
+                  '<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>'
+              );
+          } else {
+              // Error case
+              resultsHtml = '<div class="alert alert-danger">' + (data.message || 'An error occurred') + '</div>';
+              modalBody.html(resultsHtml);
+
+              setTimeout(function() {
+                  $('#updateQuantityModal').modal('hide');
+              }, 2000);
+          }
+      },
+      error: function (xhr) {
+          let errorMessage = "Something went wrong. Please try again";
+          if (xhr.responseJSON && xhr.responseJSON.message) {
+              errorMessage = xhr.responseJSON.message;
+          }
+          showErrorToast(errorMessage);
+          $('#updateQuantityModal').modal('hide');
+      }
+  });
+});

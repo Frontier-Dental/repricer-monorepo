@@ -57,6 +57,10 @@ export default class MySqlProduct {
       sqlProductDetails.topDentLinkInfo != null
         ? sqlProductDetails.topDentLinkInfo
         : null;
+    this.LinkedTriadDetailsInfo =
+      sqlProductDetails.triadLinkInfo != null
+        ? sqlProductDetails.triadLinkInfo
+        : null;
     this.IsBadgeItem = this.getItemValue(payload, "isBadgeItem");
   }
   getItemValue(payload: any, identifier: any) {
@@ -74,6 +78,9 @@ export default class MySqlProduct {
     }
     if (payload.firstDentDetails) {
       return payload.firstDentDetails[identifier];
+    }
+    if (payload.triadDetails) {
+      return payload.triadDetails[identifier];
     }
   }
 }

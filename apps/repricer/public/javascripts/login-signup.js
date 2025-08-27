@@ -744,6 +744,89 @@ if ($("#update_product_form_firstDent").length > 0) {
     });
 }
 
+if ($("#update_product_form_triad").length > 0) {
+  $("#update_product_form_triad")
+    .submit(function (e) {
+      e.preventDefault();
+    })
+    .validate({
+      rules: {
+        channel_name: {
+          required: true,
+        },
+        Scrape_on_off: {
+          required: true,
+        },
+        unit_price: {
+          required: true,
+        },
+        floor_price: {
+          required: true,
+        },
+        mpid: {
+          required: true,
+        },
+        secret_key: {
+          required: true,
+        },
+        focus_id: {
+          required: true,
+        },
+        channel_Id: {
+          required: false,
+        },
+        is_nc_needed: {
+          required: false,
+        }
+
+      },
+      messages: {
+        channel_name: "Please enter Channel Name",
+        Scrape_on_off: "Please Use Scrape Button",
+        unit_price: "Please enter Unit Price",
+        floor_price: "Please enter Floor Price",
+        mpid: "Please enter MPID",
+        focus_id: "Please enter Focus ID",
+        channel_Id: "Please enter Channel ID",
+        secret_key: "Please enter Secret Key",
+      },
+      submitHandler: function (form) {
+        let formData = $("#update_product_form_triad").serializeArray();
+        $.ajax({
+          type: "POST",
+          url: "/productV2/update_product_V2",
+          data: formData,
+          dataType: "json",
+          cache: false,
+          beforeSend: function () {
+            $(".addItemButton").prop("disabled", true);
+            $(".addItemButton").html(
+              '<i class="ace-icon fa fa-spinner fa-spin bigger-125"></i> Please wait...'
+            );
+            showLoadingToast("Processing...");
+          },
+          success: function (data) {
+            $(".addItemButton").html("Submit");
+            $(".addItemButton").prop("disabled", false);
+            if (data.status == 1) {
+              showSuccessToast(data.message);
+              setTimeout(function () {
+                cancelProductEdit();
+              }, 1000);
+            } else {
+              showErrorToast(data.message);
+            }
+          },
+          error: function () {
+            $(".addItemButton").html("Submit");
+            $(".addItemButton").prop("disabled", false);
+            showErrorToast("Something went wrong. Please try again");
+          },
+        });
+      },
+    });
+}
+
 function syncProductItem($id) {
   var productId = $id.trim();
   if (

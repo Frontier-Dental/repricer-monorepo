@@ -65,6 +65,11 @@ export default class CustomProduct {
   triggeredByVendor: string;
   ignorePhantomQBreak: boolean;
   ownVendorThreshold: number;
+  repriceResult: any;
+  getBBBadgeValue: any;
+  getBBShippingValue: any;
+  getBBBadge: boolean;
+  getBBShipping: boolean;
 
   constructor(sqlEntity: any) {
     this.channelName = sqlEntity["ChannelName"];
@@ -139,5 +144,10 @@ export default class CustomProduct {
     this.ignorePhantomQBreak =
       sqlEntity["IgnorePhantomBreak"] == 1 ? true : false;
     this.ownVendorThreshold = sqlEntity["OwnVendorThreshold"];
+    this.repriceResult = sqlEntity["RepriceResult"];
+    this.getBBBadgeValue = sqlEntity["GetBBBadgeValue"];
+    this.getBBShippingValue = sqlEntity["GetBBShippingValue"];
+    this.getBBBadge = sqlEntity["GetBBBadge"] == 1 ? true : false;
+    this.getBBShipping = sqlEntity["GetBBShipping"] == 1 ? true : false;
   }
 }

@@ -3,10 +3,7 @@ function edit() {
   $('[name="btnSave"]').removeAttr("aria-disabled");
   $('[name="btnEdit"]').addClass("d-none");
   $('[name="btnCancel"]').removeClass("d-none");
-  $('[name="proxy_provider_1"]').removeAttr("disabled");
-  $('[name="proxy_provider_2"]').removeAttr("disabled");
-  $('[name="proxy_provider_3"]').removeAttr("disabled");
-  $('[name="proxy_provider_4"]').removeAttr("disabled");
+  $('[name^="proxy_provider_"]').removeAttr("disabled");
 
   var cronTimeControls = $("input[name*='s_cron_time_']");
   removeAttributeDefined(cronTimeControls, "readonly");
