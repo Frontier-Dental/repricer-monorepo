@@ -77,43 +77,47 @@ export async function showAllProducts(req: Request, res: Response) {
   });
 }
 
-// export async function updateProductQuantity(req: Request, res: Response) {
-//   const mpid = req.body.mpid;
-//   const vendorData = req.body.vendorData || [];
+export async function updateProductQuantity(req: Request, res: Response) {
+  const mpid = req.body.mpid;
+  const vendorData = req.body.vendorData || [];
 
-//   try {
-//       const config = {
-//           method: 'POST',
-//           url: 'http://localhost:5001/data/UpdateProductQuantity',
-//           headers: {
-//               'Content-Type': 'application/json'
-//           },
-//           data: {
-//               mpid: mpid,
-//               vendorData: vendorData
-//           }
-//       };
+  try {
+    const config = {
+      method: "POST",
+      url: "http://localhost:5001/data/UpdateProductQuantity",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: {
+        mpid: mpid,
+        vendorData: vendorData,
+      },
+    };
 
-//       const response = await axios.post(config.url, config.data, {
-//           headers: config.headers,
-//           'axios-retry': {
-//               retries: 0
-//           }
-//       });
+    const headers: any = {
+      headers: config.headers,
+      "axios-retry": {
+        retries: 0,
+      },
+    };
 
-//       return res.json({
-//           status: true,
-//           message: response.message,
-//           data: response.data
-//       });
-//   } catch (error) {
-//       console.error('Error calling API:', error);
-//       return res.status(500).json({
-//           status: false,
-//           message: error?.response?.data?.message || `Error updating product quantity for mpid ${mpid}`
-//       });
-//   }
-// });
+    const response: any = await axios.post(config.url, config.data, headers);
+
+    return res.json({
+      status: true,
+      message: response.message,
+      data: response.data,
+    });
+  } catch (error: any) {
+    console.error("Error calling API:", error);
+    return res.status(500).json({
+      status: false,
+      message:
+        error?.response?.data?.message ||
+        `Error updating product quantity for mpid ${mpid}`,
+    });
+  }
+}
 
 export async function collateProducts(req: Request, res: Response) {
   const _urlForActiveTradentProducts = apiMapping.find(
