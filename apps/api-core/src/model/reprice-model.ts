@@ -156,7 +156,7 @@ export class RepriceModel {
     );
   }
 
-  updateTriggeredBy(vendorName: string, vendorId: string) {
-    this.repriceDetails!.triggeredByVendor = `${vendorId}-${vendorName}`;
+  updateTriggeredBy(vendorName: any, vendorId: any, minQty: any) {
+    this.repriceDetails!.triggeredByVendor = `${minQty} @ ${vendorId}-${vendorName}`;
   }
 }

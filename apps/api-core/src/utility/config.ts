@@ -213,6 +213,7 @@ const envSchema = z.object({
   NET32_UPDATE_QUANTITY_URL: z
     .string()
     .default("https://api.net32.com/inventory/products/update"),
+  SQL_TRIAD_DETAILS: z.string().default("table_triadDetails"),
   SQL_PROXY_NET_32: z.string().default("table_proxiesNet32"),
   ENABLE_SLOW_CRON_FEATURE: z
     .string()

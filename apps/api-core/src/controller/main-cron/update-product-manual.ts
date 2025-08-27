@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import * as _codes from "http-status-codes";
 import { ErrorItemModel } from "../../model/error-item";
+import * as filterMapper from "../../utility/filter-mapper";
+
 import {
   calculateNextCronTime,
   getLastCronMessage,
@@ -60,7 +62,11 @@ export async function updateProductManualHandler(
     prod.last_attempted_time = new Date(cronTime);
     prod = updateLowestVendor(tempData, prod);
     prod = await updateCronBasedDetails(tempData, prod, isPriceUpdated);
-    prod.last_cron_message = getLastCronMessage(tempData);
+    prod.last_cron_message = await filterMapper.GetLastCronMessage(
+      tempData,
+      prod.mpid,
+      "UNKNOWN",
+    );
   }
   await mongoHelper.UpdateProductAsync(prod, isPriceUpdated);
   return res.status(_codes.StatusCodes.OK).send("Success!");

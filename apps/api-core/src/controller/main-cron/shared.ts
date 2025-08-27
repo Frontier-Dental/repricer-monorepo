@@ -385,33 +385,6 @@ export function updateLowestVendor(repriceResult: any, prod: any) {
   return prod;
 }
 
-export function getLastCronMessage(repriceResult: any) {
-  let resultStr = "";
-  if (
-    repriceResult &&
-    repriceResult.data &&
-    repriceResult.data.cronResponse &&
-    repriceResult.data.cronResponse.repriceData
-  ) {
-    if (repriceResult.data.cronResponse.repriceData.repriceDetails) {
-      resultStr =
-        repriceResult.data.cronResponse.repriceData.repriceDetails.explained;
-    } else if (
-      repriceResult.data.cronResponse.repriceData.listOfRepriceDetails &&
-      repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.length >
-        0
-    ) {
-      for (const rep of repriceResult.data.cronResponse.repriceData
-        .listOfRepriceDetails) {
-        resultStr += `${rep.minQty}@${rep.explained}/`;
-      }
-    }
-  } else {
-    resultStr = `Reprice Result is empty`;
-  }
-  return resultStr;
-}
-
 export function updateCronBasedDetails(
   repriceResult: any,
   prod: any,

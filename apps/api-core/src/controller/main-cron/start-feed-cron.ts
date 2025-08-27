@@ -8,9 +8,9 @@ import * as axiosHelper from "../../utility/axios-helper";
 import { applicationConfig } from "../../utility/config";
 import * as keyGenHelper from "../../utility/job-id-helper";
 import * as mongoHelper from "../../utility/mongo/mongo-helper";
+import * as filterMapper from "../../utility/filter-mapper";
 import {
   calculateNextCronTime,
-  getLastCronMessage,
   getNextCronTime,
   updateCronBasedDetails,
   updateLowestVendor,
@@ -183,7 +183,11 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
         });
       }
       // Add Last_Cron_Reprice_Message
-      prod.last_cron_message = getLastCronMessage(repriceResult);
+      prod.last_cron_message = await filterMapper.GetLastCronMessage(
+        repriceResult,
+        prod.mpid,
+        "UNKNOWN",
+      );
       prod = updateLowestVendor(repriceResult, prod);
       prod = updateCronBasedDetails(repriceResult, prod, isPriceUpdated);
       await mongoHelper.UpdateProductAsync(prod, isPriceUpdated);

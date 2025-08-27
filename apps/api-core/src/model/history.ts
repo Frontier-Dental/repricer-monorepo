@@ -94,7 +94,12 @@ export class HistoricalPrice {
     this.repriceResult = repriceResult;
   }
   getOtherVendorList(listOfVendors: Net32Product[]): string {
-    if (!listOfVendors || listOfVendors.length === 0) return "";
+    if (
+      !listOfVendors ||
+      listOfVendors.length === 0 ||
+      (listOfVendors as unknown as number) === 1
+    )
+      return "";
     let otherVendorList = "";
     for (let idx = 1; idx < listOfVendors.length - 1; idx++) {
       const unitPrice = listOfVendors[idx].priceBreaks.find(
