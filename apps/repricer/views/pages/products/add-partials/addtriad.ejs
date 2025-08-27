@@ -1,0 +1,210 @@
+<div class="card">
+    <div class="card-body">
+      <form method="post" autocomplete="off" id="add_item_form_triad">
+        <input type="hidden" value="Triad" name="triad_vendors" />
+        <div class="row no-gutters">
+          <div class="form-group col-3">
+            <label for="triad_channel_name" class="font-weight-bold">
+              Channel Name <span style="color: red;font-weight: bold;">*</span>
+            </label>
+            <input type="text" class="form-control" value="" name="triad_channel_name" placeholder="Channel Name" />
+          </div>
+          <div class="form-group col-3">
+            <label for="triad_executionPriority" class="font-weight-bold">Execution Priority
+              :</label>
+            <br>
+            <select class="form-select form-control" name="triad_executionPriority"
+              aria-label="Default select example">
+              <option value=1>1</option>
+              <option value=2>2</option>
+              <option value=3>3</option>
+              <option value=4>4</option>
+              <option value=5>5</option>
+              <option value=6>6</option>
+            </select>
+          </div>
+          <div class="form-group col-3">
+            <label for="triad_percentageIncrease" class="font-weight-bold">Reprice Up %</label>
+            <input type="number" class="form-control" value="" name="triad_percentageIncrease" placeholder="Reprice Up %"
+              min="0" max="100" />
+          </div>
+          <div class="form-group col-3" name="divBadgePercentage">
+            <label for="triad_badgePercentage" class="font-weight-bold">Reprice UP Badge Percentage %</label>
+            <input type="number" class="form-control" value="" name="triad_badgePercentage"
+              placeholder="Badge Percentage (%)" min="0" max="100" />
+          </div>
+        </div>
+        <div class="row no-gutters">
+          <div class="form-group col-3">
+            <label for="triad_sisterVendorId" class="font-weight-bold">Sister Vendor Id (Separated by
+              [;])</label>
+            <input type="text" class="form-control" value="" name="triad_sisterVendorId"
+              placeholder="Sister Vendor Id" />
+          </div>
+          <div class="form-group col-3">
+            <label for="triad_inactiveVendorId" class="font-weight-bold">Inactive Vendor Id (Separated by
+              [;])</label>
+            <input type="text" class="form-control" value="" name="triad_inactiveVendorId"
+              placeholder="Inactive Vendor Id" />
+          </div>
+          <div class="form-group col-3">
+            <label for="triad_override_bulk_rule" class="font-weight-bold">Override Bulk Update (Up/Down)
+              :</label>
+            <select class="form-select form-control" name="triad_override_bulk_rule" aria-label="Default select example">
+              <option value=-1>-- Please Select --</option>
+              <option value=0>Only Up</option>
+              <option value=1>Only Down</option>
+              <option value=2>Both</option>
+            </select>
+          </div>
+          <div class="form-group col-3">
+            <label for="triad_handling_time_filter" class="font-weight-bold">Handling Time Group :</label>
+            <select class="form-select form-control" name="triad_handling_time_filter" aria-label="Default select example"
+              onchange="enablePercentageData(this)">
+              <option value='ALL'>All</option>
+              <option value='FAST_SHIPPING'>1-2 days (Fast Shipping)</option>
+              <option value='STOCKED'>1-5 days (Stocked)</option>
+              <option value='LONG_HANDLING'>6+ days (Long Handling)</option>
+            </select>
+          </div>
+        </div>
+        <div class="row no-gutters">
+          <div class="form-group col-3">
+            <label for="triad_excludedVendors" class="font-weight-bold">Exclude Vendor(s) (Separated by
+              [;])</label>
+            <input type="text" class="form-control" value="" name="triad_excludedVendors"
+              placeholder="Excluded Vendor Ids" />
+          </div>
+          <div class="form-group col-3">
+            <label for="triad_inventoryThreshold" class="font-weight-bold">Inventory Competition Threshold</label>
+            <input type="number" class="form-control" value="" name="triad_inventoryThreshold"
+              placeholder="Inventory Competition Threshold" min="0" max="100" />
+          </div>
+          <div class="form-group col-3">
+            <label for="triad_percentageDown" class="font-weight-bold">Reprice Down %</label>
+            <input type="number" class="form-control" value="" name="triad_percentageDown"
+              placeholder="Reprice Down %" min="0" max="1" />
+          </div>
+          <div class="form-group col-3">
+            <label for="triad_badgePercentageDown" class="font-weight-bold">Reprice Down Badge %</label>
+            <input type="number" class="form-control" value="" name="triad_badgePercentageDown"
+              placeholder="Reprice Down Badge %" min="0" max="1" step="0.001" />
+          </div>
+          <div class="form-group col-3">
+            <label for="triad_ownVendorThreshold" class="font-weight-bold">Own Vendor Threshold</label>
+            <input type="number" class="form-control" value="" name="triad_ownVendorThreshold"
+              placeholder="Own Vendor Threshold" min="1" step="1" />
+          </div>
+        </div>
+        <div class="row no-gutters">
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_Scrape_on_off" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">
+              Reprice - Scrape <span style="color: red;font-weight: bold;">*</span>
+            </label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_Reprice_on_off" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Reprice</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_suppressPriceBreak" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Suppress Price Break</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_competeAll" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Compete with all vendors</label>
+          </div>
+        </div>
+        <div class="row no-gutters">
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_compareWithQ1" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Q2 compete with Q1</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_applyBuyBox" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Apply Buy Box</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_applyNcForBuyBox" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Apply NC For Buy Box</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_includeInactiveVendors" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Include Inactive Vendors (On/Off)</label>
+          </div>
+        </div>
+        <div class="row no-gutters">
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_override_bulk_update" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Override Bulk Update (On/Off)</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_suppressPriceBreakForOne" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Suppress Price Break if Qty 1 not
+              updated</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_beatQPrice" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Compete On Price Breaks Only</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_keepPosition" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Keep Position</label>
+          </div>
+        </div>
+        <div class="row no-gutters">
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_competeWithNext" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Floor-Compete With Next</label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="triad_ignorePhantomQBreak" />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">Ignore Phantom Q Break</label>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>

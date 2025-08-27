@@ -595,6 +595,94 @@
           <div class="panel">
             <%- include('add-partials/addtopdent.ejs') %>
           </div>
+          <!-- Triad details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">TRIAD DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <label for="" class="no-data-check">No Data</label>
+                <label class="switch">
+                  <input type="checkbox" name="insertNullData" id="checkData_triad" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="row no-gutters" id="triad_data" style="display: none;">
+              <div class="col-md-3">
+                <label class="switch">
+                  <input type="checkbox" name="triad_activated" checked />
+                  <span class="slider"></span>
+                </label>
+                <label for="" class="font-weight-bold">Active</label>
+              </div>
+              <div class="col-md-3">
+                <label for="triad_focusId" class="font-weight-bold">Focus ID : </label>
+                <span>
+                  --
+                </span>
+              </div>
+              <div class="col-md-3">
+                <label for="triad_channelId" class="font-weight-bold">
+                  Channel ID<span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="text" class="form-control" name="triad_channelId" placeholder="Channel ID" value="" />
+              </div>
+              <div class="col-md-3">
+                <label for="is_nc_needed_triad_select" class="font-weight-bold">NC(Net Cost) :</label>
+                <br>
+                <select class="form-select form-control" name="is_nc_needed_triad_select"
+                  aria-label="Default select example">
+                  <option value=true>Yes</option>
+                  <option value=false selected>No</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="badgeIndicatorId_triad" class="font-weight-bold">Badge Indicator :</label>
+                <br>
+                <select class="form-select form-control" name="badgeIndicatorId_triad"
+                  aria-label="Default select example">
+                  <option value='NONE' selected>None</option>
+                  <option value='BEST_VALUE'>Best Value</option>
+                  <option value='TOP_SELLER'>Best Seller</option>
+                  <option value='LOWEST_PRICE'>Lowest Price</option>
+                  <option value='CLEARANCE'>Clearance</option>
+                  <option value='NEW'>New</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="reprice_rule_select_triad" class="font-weight-bold">Reprice Rule(Up/Down) :</label>
+                <br>
+                <select class="form-select form-control" name="reprice_rule_select_triad"
+                  aria-label="Default select example">
+                  <option value=0>Only Up</option>
+                  <option value=1>Only Down</option>
+                  <option value=2 selected>Both</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label for="triad_floor_price" class="font-weight-bold">Floor Price
+                  <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="number" class="form-control" name="triad_floor_price" placeholder="Floor Price" value=""
+                  required />
+              </div>
+              <div class="col-md-3">
+                <label for="triad_max_price" class="font-weight-bold">Max Price</label>
+                <input type="number" class="form-control" name="triad_max_price" placeholder="Max Price" value="" />
+              </div>
+              <div class="col-md-3">
+                <label for="triad_unit_price" class="font-weight-bold">Unit Price
+                  <span style="color: red;font-weight: bold;">*</span>
+                </label>
+                <input type="number" class="form-control" name="triad_unit_price" placeholder="Unit Price" value="" />
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <%- include('add-partials/addtriad.ejs') %>
+          </div>
           <!-- </form> -->
           <h3>
             <button type="button" id="add_product_form_all" class="btn btn-success mx-1 mt-3 mb-3"
