@@ -352,44 +352,6 @@ export async function GetAllRepriceEligibleProductByTag(filterTag: any) {
   return await SqlMapper.MapProductDetailsList(scrapeDetails);
 }
 
-export async function GetAllRepriceEligibleProductByMpid(mpid: any) {
-  let scrapeDetails = null;
-  const db = await SqlConnectionPool.getConnection();
-  try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GET_PRODUCT_BY_MPID}(?)`;
-    const [rows] = await db.query(queryToCall, [mpid]);
-    if (rows != null && (rows as any)[0] != null) {
-      scrapeDetails = (rows as any)[0];
-    }
-  } catch (exception) {
-    console.log(
-      `Exception while GetAllRepriceEligibleProductByMpid : ${exception}`,
-    );
-  } finally {
-    SqlConnectionPool.releaseConnection(db);
-  }
-  return await SqlMapper.MapProductDetailsList(scrapeDetails);
-}
-
-export async function GetAllRepriceEligibleProductByChannelId(channelId: any) {
-  let scrapeDetails = null;
-  const db = await SqlConnectionPool.getConnection();
-  try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GET_PRODUCT_BY_CHANNEL_ID}(?)`;
-    const [rows] = await db.query(queryToCall, [channelId]);
-    if (rows != null && (rows as any)[0] != null) {
-      scrapeDetails = (rows as any)[0];
-    }
-  } catch (exception) {
-    console.log(
-      `Exception while GetAllRepriceEligibleProductByChannelId : ${exception}`,
-    );
-  } finally {
-    SqlConnectionPool.releaseConnection(db);
-  }
-  return await SqlMapper.MapProductDetailsList(scrapeDetails);
-}
-
 export async function GetFullProductDetailsById(mpid: any) {
   let scrapeDetails: any = null;
   const db = await SqlConnectionPool.getConnection();
