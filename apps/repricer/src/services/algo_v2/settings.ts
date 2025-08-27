@@ -1,3 +1,8 @@
+import {
+  AlgoBadgeIndicator,
+  AlgoHandlingTimeGroup,
+  AlgoPriceDirection,
+} from "@repricer-monorepo/shared";
 import { getKnexInstance } from "../knex-wrapper";
 
 export interface V2AlgoSettings {
@@ -7,8 +12,8 @@ export interface V2AlgoSettings {
   suppress_price_break_if_Q1_not_updated: boolean;
   suppress_price_break: boolean;
   compete_on_price_break_only: boolean;
-  up_down: "UP" | "UP/DOWN" | "DOWN";
-  badge_indicator: "ALL" | "BADGE";
+  up_down: AlgoPriceDirection;
+  badge_indicator: AlgoBadgeIndicator;
   execution_priority: number;
   reprice_up_percentage: number;
   compare_q2_with_q1: boolean;
@@ -17,7 +22,7 @@ export interface V2AlgoSettings {
   sister_vendor_ids: string;
   exclude_vendors: string;
   inactive_vendor_id: string;
-  handling_time_group: "ALL" | "FAST_SHIPPING" | "STOCKED" | "LONG_HANDLING";
+  handling_time_group: AlgoHandlingTimeGroup;
   keep_position: boolean;
   inventory_competition_threshold: number;
   reprice_down_percentage: number;
@@ -37,8 +42,8 @@ export interface V2AlgoSettingsDb {
   suppress_price_break_if_Q1_not_updated: number;
   suppress_price_break: number;
   compete_on_price_break_only: number;
-  up_down: "UP" | "UP/DOWN" | "DOWN";
-  badge_indicator: "ALL" | "BADGE";
+  up_down: AlgoPriceDirection;
+  badge_indicator: AlgoBadgeIndicator;
   execution_priority: number;
   reprice_up_percentage: number;
   compare_q2_with_q1: number;
@@ -47,7 +52,7 @@ export interface V2AlgoSettingsDb {
   sister_vendor_ids: string;
   exclude_vendors: string;
   inactive_vendor_id: string;
-  handling_time_group: "ALL" | "FAST_SHIPPING" | "STOCKED" | "LONG_HANDLING";
+  handling_time_group: AlgoHandlingTimeGroup;
   keep_position: number;
   inventory_competition_threshold: number;
   reprice_down_percentage: string;
@@ -194,9 +199,14 @@ export async function syncVendorSettingsForMpId(
           setting.SuppressPriceBreakForOne === 1,
         suppress_price_break: setting.SuppressPriceBreak === 1,
         compete_on_price_break_only: setting.BeatQPrice === 1,
-        up_down: setting.RepricingRule === 2 ? "UP/DOWN" : "DOWN",
+        up_down:
+          setting.RepricingRule === 2
+            ? AlgoPriceDirection.UP_DOWN
+            : AlgoPriceDirection.DOWN,
         badge_indicator:
-          setting.BadgeIndicator === "BADGE_ONLY" ? "BADGE" : "ALL",
+          setting.BadgeIndicator === "BADGE_ONLY"
+            ? AlgoBadgeIndicator.BADGE
+            : AlgoBadgeIndicator.ALL,
         execution_priority: setting.ExecutionPriority || 0,
         reprice_up_percentage: setting.PercentageIncrease || -1,
         compare_q2_with_q1: setting.CompareWithQ1 === 1,

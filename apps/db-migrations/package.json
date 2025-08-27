@@ -7,17 +7,20 @@
     "migrate:dev": "knex migrate:latest --env development",
     "migrate:dev:down": "knex migrate:down --env development",
     "rollback:dev": "knex migrate:rollback --env development",
+    "rollback:dev:all": "knex migrate:rollback --env development --all",
     "migrate:prod": "knex migrate:latest --env production",
     "seed:dev": "knex seed:run --env development",
     "seed:make": "knex seed:make",
     "create-user": "tsx scripts/create-user.ts",
-    "migrate-settings": "tsx scripts/migrate-settings.ts"
+    "migrate-settings": "tsx scripts/migrate-settings.ts",
+    "migrate-channel-ids": "tsx scripts/migrate-channel-ids.ts"
   },
   "author": "Julian Wilson <julianwlsn@gmail.com>",
   "license": "ISC",
   "dependencies": {
     "@types/bcrypt": "^6.0.0",
     "bcrypt": "^6.0.0",
+    "@repricer-monorepo/shared": "*",
     "dotenv": "^16.4.5",
     "knex": "^3.1.0",
     "tsx": "^4.20.4"

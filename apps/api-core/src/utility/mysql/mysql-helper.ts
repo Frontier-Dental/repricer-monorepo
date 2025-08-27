@@ -349,7 +349,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
       "pl.SlowCronName",
       "pl.SlowCronId",
       "pl.IsSlowActivated",
-      "pl.v2_algo_only",
+      "pl.algo_execution_mode",
       knex.raw("tdl.*"),
     )
     .from("table_scrapeProductList as pl")
@@ -377,7 +377,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
       "pl.SlowCronName",
       "pl.SlowCronId",
       "pl.IsSlowActivated",
-      "pl.v2_algo_only",
+      "pl.algo_execution_mode",
 
       knex.raw("fdl.*"),
     )
@@ -406,7 +406,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
       "pl.SlowCronName",
       "pl.SlowCronId",
       "pl.IsSlowActivated",
-      "pl.v2_algo_only",
+      "pl.algo_execution_mode",
       knex.raw("mdl.*"),
     )
     .from("table_scrapeProductList as pl")
@@ -430,7 +430,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
       "pl.SlowCronName",
       "pl.SlowCronId",
       "pl.IsSlowActivated",
-      "pl.v2_algo_only",
+      "pl.algo_execution_mode",
       knex.raw("firstDl.*"),
     )
     .from("table_scrapeProductList as pl")
@@ -458,7 +458,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
       "pl.SlowCronName",
       "pl.SlowCronId",
       "pl.IsSlowActivated",
-      "pl.v2_algo_only",
+      "pl.algo_execution_mode",
       knex.raw("topDl.*"),
     )
     .from("table_scrapeProductList as pl")

@@ -9,7 +9,13 @@ import { DataTable } from "@/components/data-table";
 import { DataTableToolbar } from "@/components/data-table-toolbar";
 import type { ProductDetails } from "@/types/product";
 import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   useReactTable,
   getCoreRowModel,
@@ -54,30 +60,30 @@ function ActionButton({ productId }: { productId: string }) {
   );
 }
 
-// V2 Algo Only toggle component
-function V2AlgoOnlyToggle({
+// Algorithm Execution Mode component
+function AlgoExecutionModeSelect({
   productId,
   initialValue,
   onToggle,
 }: {
   productId: string;
-  initialValue: boolean;
-  onToggle: (productId: string, value: boolean) => void;
+  initialValue: string;
+  onToggle: (productId: string, value: string) => void;
 }) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [value, setValue] = useState(initialValue);
 
-  const handleToggle = async (checked: boolean) => {
+  const handleChange = async (newValue: string) => {
     setIsUpdating(true);
     try {
       const response = await fetch(
-        `/v2-algo/update_v2_algo_only/${productId}`,
+        `/v2-algo/update_algo_execution_mode/${productId}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ v2_algo_only: checked }),
+          body: JSON.stringify({ algo_execution_mode: newValue }),
         },
       );
 
@@ -85,14 +91,16 @@ function V2AlgoOnlyToggle({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      setValue(checked);
-      onToggle(productId, checked);
-      toast.success("V2 Algo Only setting updated successfully!");
+      setValue(newValue);
+      onToggle(productId, newValue);
+      toast.success("Algorithm execution mode updated successfully!");
     } catch (error) {
-      console.error("Error updating V2 Algo Only setting:", error);
-      toast.error("Failed to update V2 Algo Only setting. Please try again.");
-      // Revert the toggle if the update failed
-      setValue(!checked);
+      console.error("Error updating algorithm execution mode:", error);
+      toast.error(
+        "Failed to update algorithm execution mode. Please try again.",
+      );
+      // Revert the change if the update failed
+      setValue(value);
     } finally {
       setIsUpdating(false);
     }
@@ -100,11 +108,17 @@ function V2AlgoOnlyToggle({
 
   return (
     <div className="flex items-center space-x-2">
-      <Switch
-        checked={value}
-        onCheckedChange={handleToggle}
-        disabled={isUpdating}
-      />
+      <Select value={value} onValueChange={handleChange} disabled={isUpdating}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Select mode" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="V1_ONLY">V1 Only</SelectItem>
+          <SelectItem value="V2_ONLY">V2 Only</SelectItem>
+          <SelectItem value="V2_EXECUTE_V1_DRY">V2 + V1 Dry</SelectItem>
+          <SelectItem value="V1_EXECUTE_V2_DRY">V1 + V2 Dry</SelectItem>
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -175,20 +189,20 @@ export function ProductsPage() {
       },
     },
     {
-      accessorKey: "v2_algo_only",
-      header: "V2 Algo Only",
+      accessorKey: "algo_execution_mode",
+      header: "Execution Mode",
       cell: ({ row }) => {
         const productId = row.getValue("ProductId") as string;
-        const v2AlgoOnly = row.getValue("v2_algo_only") as boolean;
+        const algoExecutionMode = row.getValue("algo_execution_mode") as string;
         return (
-          <V2AlgoOnlyToggle
+          <AlgoExecutionModeSelect
             productId={productId}
-            initialValue={v2AlgoOnly || false}
+            initialValue={algoExecutionMode || "V1_ONLY"}
             onToggle={(id, value) => {
-              // Update the local state when toggle changes
+              // Update the local state when execution mode changes
               const updatedData = data.map((product: ProductDetails) =>
                 product.ProductId.toString() === id.toString()
-                  ? { ...product, v2_algo_only: value }
+                  ? { ...product, algo_execution_mode: value }
                   : product,
               );
               setData(updatedData);

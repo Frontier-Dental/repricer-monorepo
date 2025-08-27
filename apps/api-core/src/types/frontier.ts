@@ -1,3 +1,5 @@
+import { AlgoExecutionMode } from "@repricer-monorepo/shared";
+
 export interface FrontierProduct {
   channelName: string;
   activated: boolean;
@@ -69,4 +71,5 @@ export interface FrontierProduct {
   secretKey: any[];
   contextCronName: string;
   contextMinQty?: number;
+  algo_execution_mode?: AlgoExecutionMode;
 }

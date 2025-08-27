@@ -6,8 +6,8 @@ import {
   getV2AlgoSettings,
   updateV2AlgoSettings,
   getAllV2AlgoErrorsController,
-  updateV2AlgoOnlyController,
-  getV2AlgoOnlyStatusController,
+  updateAlgoExecutionModeController,
+  getAlgoExecutionModeController,
   syncVendorSettings,
 } from "../controllers/v2-algo";
 export const v2AlgoRouter = express.Router();
@@ -25,13 +25,16 @@ v2AlgoRouter.put("/update_algo_settings/:mpId", updateV2AlgoSettings);
 // V2 Algo Error route
 v2AlgoRouter.get("/get_all_algo_errors", getAllV2AlgoErrorsController);
 
-// Update v2_algo_only field
-v2AlgoRouter.put("/update_v2_algo_only/:mpId", updateV2AlgoOnlyController);
+// Update algo_execution_mode field
+v2AlgoRouter.put(
+  "/update_algo_execution_mode/:mpId",
+  updateAlgoExecutionModeController,
+);
 
-// Get v2_algo_only status
+// Get algo_execution_mode status
 v2AlgoRouter.get(
-  "/get_v2_algo_only_status/:mpId",
-  getV2AlgoOnlyStatusController,
+  "/get_algo_execution_mode/:mpId",
+  getAlgoExecutionModeController,
 );
 
 // Sync vendor settings for specific MP ID

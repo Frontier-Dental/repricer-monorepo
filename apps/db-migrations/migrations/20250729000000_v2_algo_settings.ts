@@ -1,4 +1,7 @@
 import type { Knex } from "knex";
+import { AlgoPriceDirection } from "@repricer-monorepo/shared";
+import { AlgoBadgeIndicator } from "@repricer-monorepo/shared";
+import { AlgoHandlingTimeGroup } from "@repricer-monorepo/shared";
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable("v2_algo_settings", (table) => {
@@ -12,13 +15,20 @@ export async function up(knex: Knex): Promise<void> {
     table.boolean("suppress_price_break").notNullable().defaultTo(false);
     table.boolean("compete_on_price_break_only").notNullable().defaultTo(false);
     table
-      .enum("up_down", ["UP", "UP/DOWN", "DOWN"])
+      .enum("up_down", [
+        AlgoPriceDirection.UP,
+        AlgoPriceDirection.UP_DOWN,
+        AlgoPriceDirection.DOWN,
+      ])
       .notNullable()
-      .defaultTo("UP/DOWN");
+      .defaultTo(AlgoPriceDirection.UP_DOWN);
     table
-      .enum("badge_indicator", ["ALL", "BADGE"])
+      .enum("badge_indicator", [
+        AlgoBadgeIndicator.ALL,
+        AlgoBadgeIndicator.BADGE,
+      ])
       .notNullable()
-      .defaultTo("ALL");
+      .defaultTo(AlgoBadgeIndicator.ALL);
     table.integer("execution_priority").unsigned().notNullable().defaultTo(0);
     table.decimal("reprice_up_percentage", 10, 2).notNullable().defaultTo(-1);
     table.boolean("compare_q2_with_q1").notNullable().defaultTo(false);
@@ -32,13 +42,13 @@ export async function up(knex: Knex): Promise<void> {
     table.string("inactive_vendor_id").notNullable().defaultTo("");
     table
       .enum("handling_time_group", [
-        "ALL",
-        "FAST_SHIPPING",
-        "STOCKED",
-        "LONG_HANDLING",
+        AlgoHandlingTimeGroup.ALL,
+        AlgoHandlingTimeGroup.FAST_SHIPPING,
+        AlgoHandlingTimeGroup.STOCKED,
+        AlgoHandlingTimeGroup.LONG_HANDLING,
       ])
       .notNullable()
-      .defaultTo("ALL");
+      .defaultTo(AlgoHandlingTimeGroup.ALL);
     table.boolean("keep_position").notNullable().defaultTo(false);
     table
       .integer("inventory_competition_threshold")

@@ -25,6 +25,7 @@ import {
   MinQtyPricePresent,
   notQ2VsQ1,
 } from "./shared";
+import { AlgoExecutionMode } from "@repricer-monorepo/shared";
 
 export async function repriceProduct(
   mpid: string,
@@ -402,6 +403,9 @@ export async function repriceProduct(
     (x) => x.vendor === contextVendor.toUpperCase(),
   )?.priceUpdateUrl;
   let priceUpdatedResponse = null;
+  const priceChangeAllowed =
+    productItem.algo_execution_mode === AlgoExecutionMode.V1_ONLY ||
+    productItem.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY;
   if (repriceResult.isMultiplePriceBreakAvailable !== true) {
     priceUpdatedRequest.payload = new UpdateRequest(
       mpid,
@@ -409,7 +413,7 @@ export async function repriceProduct(
       1,
       productItem.cronName,
     );
-    if (isDev === false) {
+    if (isDev === false && priceChangeAllowed) {
       priceUpdatedResponse = await axiosHelper.postAsync(
         priceUpdatedRequest,
         priceUpdateUrl!,
@@ -441,7 +445,7 @@ export async function repriceProduct(
       }
     });
     if (priceUpdatedRequest.payload.priceList.length > 0) {
-      if (isDev === false) {
+      if (isDev === false && priceChangeAllowed) {
         priceUpdatedResponse = await axiosHelper.postAsync(
           priceUpdatedRequest,
           priceUpdateUrl!,

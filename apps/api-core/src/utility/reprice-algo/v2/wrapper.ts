@@ -26,7 +26,11 @@ import { v4 } from "uuid";
 import { ErrorItemModel } from "../../../model/error-item";
 import { calculateNextCronTime } from "../../../controller/main-cron/shared";
 import * as mongoHelper from "../../mongo/db-helper";
-import { VendorName, VendorNameLookup } from "@repricer-monorepo/shared";
+import {
+  AlgoExecutionMode,
+  VendorName,
+  VendorNameLookup,
+} from "@repricer-monorepo/shared";
 
 export async function repriceProductV2Wrapper(
   net32Products: Net32Product[],
@@ -75,7 +79,7 @@ export async function repriceProductV2Wrapper(
       solutionResults,
       prod.vpCode,
       applicationConfig.IS_DEV,
-      prod.v2AlgoOnly,
+      prod.algo_execution_mode,
     );
 
     if (finalResults.length === 0) {
@@ -94,7 +98,6 @@ export async function repriceProductV2Wrapper(
       vendor_id: result.vendor.vendorId,
       mp_id: mpId,
       cron_name: cronName,
-      run_time: moment().toDate(),
       q_break_valid: result.qBreakValid,
       price_update_result: result.changeResult,
       new_price_breaks: result.priceList
@@ -213,7 +216,7 @@ async function updatePricesIfNecessary(
   solutionResults: Net32AlgoSolutionWithQBreakValid[],
   vpCode: string,
   isDev: boolean,
-  v2AlgoOnly: boolean,
+  algo_execution_mode: AlgoExecutionMode,
 ): Promise<Net32AlgoSolutionWithChangeResult[]> {
   const validSolutionsWithChanges = solutionResults
     .filter((s) => isChangeResult(s.algoResult))
@@ -277,7 +280,11 @@ async function updatePricesIfNecessary(
           console.log("We are in dev mode, not executing actual change.");
         }
 
-        if (hasExecutionPriority && !isDev && v2AlgoOnly) {
+        const priceChangeAllowed =
+          algo_execution_mode === AlgoExecutionMode.V2_ONLY ||
+          algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY;
+
+        if (hasExecutionPriority && !isDev && priceChangeAllowed) {
           // Execute the price update
           await updateProductInfo(
             proxyConfig.subscription_key,
@@ -289,7 +296,7 @@ async function updatePricesIfNecessary(
           );
           console.log(`Successfully updated price for vendor ${vendorId}`);
           return { vendorId, changeResult: ChangeResult.OK, priceList };
-        } else if (hasExecutionPriority && !isDev && !v2AlgoOnly) {
+        } else if (hasExecutionPriority && !isDev && !priceChangeAllowed) {
           return {
             vendorId,
             changeResult: ChangeResult.CHANGE_PREVENTED_V2_DISABLED,

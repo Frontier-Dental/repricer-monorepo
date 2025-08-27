@@ -14,6 +14,7 @@ import { repriceProductV2Wrapper } from "../../utility/reprice-algo/v2/wrapper";
 import * as requestGenerator from "../../utility/request-generator";
 import { getContextCronId, proceedNext } from "./shared";
 import { v4 } from "uuid";
+import { AlgoExecutionMode } from "@repricer-monorepo/shared";
 
 export async function manualRepriceHandler(
   req: Request<{ id: string }, any, any, { isV2Algorithm: string }>,
@@ -68,12 +69,18 @@ export async function manualRepriceHandler(
       cronIdForScraping,
       seqString,
     );
-    await repriceProductV2Wrapper(
-      net32resp.data,
-      prod,
-      prioritySequence,
-      "MANUAL",
-    );
+    if (
+      prod.algo_execution_mode === AlgoExecutionMode.V2_ONLY ||
+      prod.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY ||
+      prod.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY
+    ) {
+      await repriceProductV2Wrapper(
+        net32resp.data,
+        prod,
+        prioritySequence,
+        "MANUAL",
+      );
+    }
     for (let idx = 0; idx < prioritySequence.length; idx++) {
       const proceedNextVendor = proceedNext(prod!, prioritySequence[idx].value);
       const isVendorActivated = (prod as any)[prioritySequence[idx].value]

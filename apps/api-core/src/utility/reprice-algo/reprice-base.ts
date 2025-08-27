@@ -16,7 +16,7 @@ import * as sqlHelper from "../mysql/mysql-helper";
 import { ProductDetailsListItem } from "../mysql/mySql-mapper";
 import * as requestGenerator from "../request-generator";
 import { repriceProduct } from "./v1/algo-v1";
-import { VendorName } from "@repricer-monorepo/shared";
+import { AlgoExecutionMode, VendorName } from "@repricer-monorepo/shared";
 import { repriceProductV2Wrapper } from "./v2/wrapper";
 
 export async function Execute(
@@ -93,13 +93,23 @@ export async function Execute(
           cronIdForScraping,
           seqString,
         );
-        await repriceProductV2Wrapper(
-          net32resp.data,
-          prod,
-          prioritySequence,
-          cronSetting ? cronSetting.CronName : "MANUAL",
-        );
-        if (!prod.v2AlgoOnly) {
+        if (
+          prod.algo_execution_mode === AlgoExecutionMode.V2_ONLY ||
+          prod.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY ||
+          prod.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY
+        ) {
+          await repriceProductV2Wrapper(
+            net32resp.data,
+            prod,
+            prioritySequence,
+            cronSetting ? cronSetting.CronName : "MANUAL",
+          );
+        }
+        if (
+          prod.algo_execution_mode === AlgoExecutionMode.V1_ONLY ||
+          prod.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY ||
+          prod.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY
+        ) {
           for (let idx = 0; idx < prioritySequence.length; idx++) {
             const proceedNextVendor = proceedNext(
               prod,

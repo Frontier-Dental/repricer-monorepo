@@ -1,16 +1,17 @@
-import {
-  getAllProductDetails,
-  updateV2AlgoOnly,
-  getV2AlgoOnlyStatus,
-} from "../services/algo_v2/products";
+import { AlgoExecutionMode } from "@repricer-monorepo/shared";
 import { Request, Response } from "express";
+import { getAllV2AlgoErrors } from "../services/algo_v2/errors";
+import {
+  getAlgoExecutionMode,
+  getAllProductDetails,
+  updateAlgoExecutionMode,
+} from "../services/algo_v2/products";
 import { getAlgoResultsWithExecutionData } from "../services/algo_v2/results";
 import {
   getV2AlgoSettingsByMpId,
-  updateV2AlgoSettings as updateSettings,
   syncVendorSettingsForMpId,
+  updateV2AlgoSettings as updateSettings,
 } from "../services/algo_v2/settings";
-import { getAllV2AlgoErrors } from "../services/algo_v2/errors";
 
 // Cache for products data
 let productsCache: any[] | null = null;
@@ -163,12 +164,12 @@ export async function getAllV2AlgoErrorsController(
   });
 }
 
-export async function updateV2AlgoOnlyController(
+export async function updateAlgoExecutionModeController(
   req: Request<{ mpId: string }>,
   res: Response,
 ) {
   const { mpId } = req.params;
-  const { v2_algo_only } = req.body;
+  const { algo_execution_mode } = req.body;
   const mpIdNumber = parseInt(mpId, 10);
 
   if (isNaN(mpIdNumber)) {
@@ -177,13 +178,23 @@ export async function updateV2AlgoOnlyController(
     });
   }
 
-  if (typeof v2_algo_only !== "boolean") {
+  // Validate the algo_execution_mode value
+  const validModes = [
+    AlgoExecutionMode.V2_ONLY,
+    AlgoExecutionMode.V1_ONLY,
+    AlgoExecutionMode.V2_EXECUTE_V1_DRY,
+    AlgoExecutionMode.V1_EXECUTE_V2_DRY,
+  ];
+  if (!validModes.includes(algo_execution_mode)) {
     return res.status(400).json({
-      error: "v2_algo_only must be a boolean value.",
+      error: `algo_execution_mode must be one of: ${validModes.join(", ")}`,
     });
   }
 
-  const updatedRows = await updateV2AlgoOnly(mpIdNumber, v2_algo_only);
+  const updatedRows = await updateAlgoExecutionMode(
+    mpIdNumber,
+    algo_execution_mode,
+  );
 
   if (updatedRows === 0) {
     return res.status(404).json({
@@ -193,14 +204,14 @@ export async function updateV2AlgoOnlyController(
 
   return res.json({
     success: true,
-    message: "v2_algo_only field updated successfully",
+    message: "algo_execution_mode field updated successfully",
     mp_id: mpIdNumber,
-    v2_algo_only: v2_algo_only,
+    algo_execution_mode: algo_execution_mode,
     updated_rows: updatedRows,
   });
 }
 
-export async function getV2AlgoOnlyStatusController(
+export async function getAlgoExecutionModeController(
   req: Request<{ mpId: string }>,
   res: Response,
 ) {
@@ -213,12 +224,12 @@ export async function getV2AlgoOnlyStatusController(
     });
   }
 
-  const v2AlgoOnly = await getV2AlgoOnlyStatus(mpIdNumber);
+  const algoExecutionMode = await getAlgoExecutionMode(mpIdNumber);
 
   return res.json({
     success: true,
     mp_id: mpIdNumber,
-    v2_algo_only: v2AlgoOnly,
+    algo_execution_mode: algoExecutionMode,
   });
 }
 

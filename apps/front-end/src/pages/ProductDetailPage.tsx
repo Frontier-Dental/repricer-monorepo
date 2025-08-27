@@ -1,23 +1,27 @@
 "use client";
 
-import { useNavigate, useParams } from "@tanstack/react-router";
-import { Download, ArrowUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { DataTable } from "@/components/data-table";
-import type { ColumnDef, Row } from "@tanstack/react-table";
 import { V2AlgoSettingsForm } from "@/components/V2AlgoSettingsForm";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataTable } from "@/components/data-table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Cross2Icon } from "@radix-ui/react-icons";
-import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Cross2Icon } from "@radix-ui/react-icons";
 import { VendorNameLookup } from "@repricer-monorepo/shared";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import type { ColumnDef, Row } from "@tanstack/react-table";
+import { ArrowUpDown, Download } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface V2AlgoResultWithExecution {
   // From v2_algo_results table
@@ -94,8 +98,9 @@ export function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [vendorFilter, setVendorFilter] = useState("");
   const [jobFilter, setJobFilter] = useState("");
-  const [v2AlgoOnly, setV2AlgoOnly] = useState<boolean>(false);
-  const [isUpdatingV2AlgoOnly, setIsUpdatingV2AlgoOnly] = useState(false);
+  const [algoExecutionMode, setAlgoExecutionMode] = useState<string>("V1_ONLY");
+  const [isUpdatingAlgoExecutionMode, setIsUpdatingAlgoExecutionMode] =
+    useState(false);
 
   const openHtmlInNewTab = (htmlContent: string) => {
     const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
@@ -186,42 +191,47 @@ export function ProductDetailPage() {
     }
   };
 
-  const handleV2AlgoOnlyToggle = async (checked: boolean) => {
-    setIsUpdatingV2AlgoOnly(true);
+  const handleAlgoExecutionModeChange = async (value: string) => {
+    setIsUpdatingAlgoExecutionMode(true);
     try {
-      const response = await fetch(`/v2-algo/update_v2_algo_only/${mpId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `/v2-algo/update_algo_execution_mode/${mpId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ algo_execution_mode: value }),
         },
-        body: JSON.stringify({ v2_algo_only: checked }),
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      setV2AlgoOnly(checked);
-      toast.success("V2 Algo Only setting updated successfully!");
+      setAlgoExecutionMode(value);
+      toast.success("Algorithm execution mode updated successfully!");
     } catch (error) {
-      console.error("Error updating V2 Algo Only setting:", error);
-      toast.error("Failed to update V2 Algo Only setting. Please try again.");
-      // Revert the toggle if the update failed
-      setV2AlgoOnly(!checked);
+      console.error("Error updating algorithm execution mode:", error);
+      toast.error(
+        "Failed to update algorithm execution mode. Please try again.",
+      );
+      // Revert the change if the update failed
+      setAlgoExecutionMode(algoExecutionMode);
     } finally {
-      setIsUpdatingV2AlgoOnly(false);
+      setIsUpdatingAlgoExecutionMode(false);
     }
   };
 
-  const fetchV2AlgoOnlyStatus = async () => {
+  const fetchAlgoExecutionMode = async () => {
     try {
-      const response = await fetch(`/v2-algo/get_v2_algo_only_status/${mpId}`);
+      const response = await fetch(`/v2-algo/get_algo_execution_mode/${mpId}`);
       if (response.ok) {
         const result = await response.json();
-        setV2AlgoOnly(result.v2_algo_only || false);
+        setAlgoExecutionMode(result.algo_execution_mode || "V1_ONLY");
       }
     } catch (err) {
-      console.error("Error fetching V2 Algo Only status:", err);
+      console.error("Error fetching algorithm execution mode:", err);
     }
   };
 
@@ -286,7 +296,7 @@ export function ProductDetailPage() {
   useEffect(() => {
     fetchData();
     fetchSettings();
-    fetchV2AlgoOnlyStatus();
+    fetchAlgoExecutionMode();
   }, [mpId]);
 
   const formatDate = (dateString: string) => {
@@ -661,40 +671,36 @@ export function ProductDetailPage() {
         </>
       )}
 
-      {/* V2 Algo Only Toggle Section */}
+      {/* Algorithm Execution Mode Section */}
       <div className="mt-8 mb-6">
         <div className="flex items-center space-x-4 mb-4">
-          <Label htmlFor="v2-algo-only" className="text-base font-semibold">
-            V2 Algo Only
+          <Label
+            htmlFor="algo-execution-mode"
+            className="text-base font-semibold"
+          >
+            Algorithm Execution Mode
           </Label>
           <div className="flex items-center space-x-2">
-            {isUpdatingV2AlgoOnly && (
-              <span className="text-sm text-muted-foreground">Updating...</span>
-            )}
-            <Switch
-              id="v2-algo-only"
-              checked={v2AlgoOnly}
-              onCheckedChange={handleV2AlgoOnlyToggle}
-              disabled={isUpdatingV2AlgoOnly}
-            />
+            <Select
+              value={algoExecutionMode}
+              onValueChange={handleAlgoExecutionModeChange}
+              disabled={isUpdatingAlgoExecutionMode}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select execution mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="V1_ONLY">V1 Only</SelectItem>
+                <SelectItem value="V2_ONLY">V2 Only</SelectItem>
+                <SelectItem value="V2_EXECUTE_V1_DRY">
+                  V2 Execute, V1 Dry Run
+                </SelectItem>
+                <SelectItem value="V1_EXECUTE_V2_DRY">
+                  V1 Execute, V2 Dry Run
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-
-        <div className="space-y-3">
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              If V2 Algo Only is set, the V1 algo will not run and the V2 Algo
-              will make price changes on Net32.
-            </AlertDescription>
-          </Alert>
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              If V2 Algo Only is not set, both algorithms will run but only the
-              V1 algo will make price changes.
-            </AlertDescription>
-          </Alert>
         </div>
       </div>
 

@@ -29,3 +29,28 @@ export const VendorIdLookup: Record<VendorName, VendorId> = {
   [VendorName.TOPDENT]: VendorId.TOPDENT,
   [VendorName.FIRSTDENT]: VendorId.FIRSTDENT,
 };
+
+export enum AlgoExecutionMode {
+  V2_ONLY = "V2_ONLY",
+  V1_ONLY = "V1_ONLY",
+  V2_EXECUTE_V1_DRY = "V2_EXECUTE_V1_DRY",
+  V1_EXECUTE_V2_DRY = "V1_EXECUTE_V2_DRY",
+}
+
+export enum AlgoPriceDirection {
+  UP = "UP",
+  UP_DOWN = "UP/DOWN",
+  DOWN = "DOWN",
+}
+
+export enum AlgoBadgeIndicator {
+  ALL = "ALL",
+  BADGE = "BADGE",
+}
+
+export enum AlgoHandlingTimeGroup {
+  ALL = "ALL",
+  FAST_SHIPPING = "FAST_SHIPPING",
+  STOCKED = "STOCKED",
+  LONG_HANDLING = "LONG_HANDLING",
+}

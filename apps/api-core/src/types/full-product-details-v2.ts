@@ -1,3 +1,5 @@
+import { AlgoExecutionMode } from "@repricer-monorepo/shared";
+
 export interface FullProductDetailsV2 {
   ProductIdentifier: number;
   ProductId: number;
@@ -71,5 +73,5 @@ export interface FullProductDetailsV2 {
   TriggeredByVendor?: string | null;
   IgnorePhantomBreak?: number;
   OwnVendorThreshold?: number;
-  v2_algo_only?: number | null;
+  algo_execution_mode?: AlgoExecutionMode;
 }

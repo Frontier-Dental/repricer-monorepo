@@ -1,3 +1,4 @@
+import { Date } from "mongoose";
 import { getKnexInstance } from "../knex-wrapper";
 
 // Vendor name lookup mapping
@@ -22,7 +23,8 @@ export interface V2AlgoResultWithExecution {
   vendor_name: string; // New field for vendor name
   mp_id: number;
   cron_name: string;
-  run_time: Date;
+  created_at: Date;
+  updated_at: Date;
   q_break_valid: boolean;
   price_update_result: string | null;
 
@@ -47,7 +49,7 @@ export async function getAlgoResultsWithExecutionData(
       "r.vendor_id",
       "r.mp_id",
       "r.cron_name",
-      "r.run_time",
+      "r.created_at",
       "r.q_break_valid",
       "r.price_update_result",
       "r.new_price_breaks",
@@ -59,7 +61,7 @@ export async function getAlgoResultsWithExecutionData(
       `),
     ])
     .where("r.mp_id", mpId)
-    .orderBy("r.run_time", "desc");
+    .orderBy("r.created_at", "desc");
 
   // Convert Buffer to string for chain_of_thought_html and add vendor name
   return results.map((result) => ({

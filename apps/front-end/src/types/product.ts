@@ -72,4 +72,5 @@ export interface ProductDetails {
   IgnorePhantomBreak: number;
   OwnVendorThreshold: number;
   RepriceResult: string | null;
+  algo_execution_mode?: string;
 }
