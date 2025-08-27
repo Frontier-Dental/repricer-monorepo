@@ -2,10 +2,9 @@ import _ from "lodash";
 import moment from "moment";
 import * as dbHelper from "./mongo/db-helper";
 import * as sqlHelper from "./mysql/mysql-helper";
-import { FilterCronLog } from "../model/filter-cron-log";
+import { FilterCronItem, FilterCronLog } from "../model/filterCronLog";
 import { Generate } from "./job-id-helper";
 import { RepriceRenewedMessageEnum } from "../model/reprice-renewed-message";
-import { FilterCronItem } from "../model/filter-cron-log";
 import { GetInfo } from "../model/global-param";
 import { RepriceModel } from "../model/reprice-model";
 import { FrontierProduct } from "../types/frontier";
@@ -83,15 +82,17 @@ export async function FilterBasedOnParams(
       });
       break;
     case "INVENTORY_THRESHOLD":
-      if (parseInt(productItem.inventoryThreshold as unknown as string) == 0) {
-        outputResult = inputResult;
+      if (productItem.includeInactiveVendors == true) {
+        outputResult = _.filter(inputResult, (item) => {
+          return (
+            parseInt(item.inventory) >= parseInt(productItem.inventoryThreshold)
+          );
+        });
       } else {
         outputResult = inputResult.filter((item) => {
           return (
             item.inStock == true &&
-            item.inventory &&
-            item.inventory >
-              parseInt(productItem.inventoryThreshold as unknown as string)
+            parseInt(item.inventory) >= parseInt(productItem.inventoryThreshold)
           );
         });
       }
@@ -132,14 +133,21 @@ export async function FilterBasedOnParams(
       break;
     case "BADGE_INDICATOR":
       if (_.isEqual(productItem.badgeIndicator, "BADGE_ONLY")) {
-        let badgedItems = inputResult.filter((item) => {
-          return (
-            item.badgeId &&
-            item.badgeId > 0 &&
-            item.badgeName &&
-            item.inStock == true
-          );
-        });
+        let badgedItems = [];
+        if (productItem.includeInactiveVendors == true) {
+          badgedItems = _.filter(inputResult, (item) => {
+            return item.badgeId && item.badgeId > 0 && item.badgeName;
+          });
+        } else {
+          badgedItems = _.filter(inputResult, (item) => {
+            return (
+              item.badgeId &&
+              item.badgeId > 0 &&
+              item.badgeName &&
+              item.inStock == true
+            );
+          });
+        }
         if (
           !badgedItems.find(($bi) => {
             return $bi.vendorId == $.VENDOR_ID;
@@ -154,9 +162,16 @@ export async function FilterBasedOnParams(
         }
         outputResult = badgedItems;
       } else if (_.isEqual(productItem.badgeIndicator, "NON_BADGE_ONLY")) {
-        let nonBadgedItems = inputResult.filter((item) => {
-          return (!item.badgeId || item.badgeId == 0) && item.inStock == true;
-        });
+        let nonBadgedItems = [];
+        if (productItem.includeInactiveVendors == true) {
+          nonBadgedItems = _.filter(inputResult, (item) => {
+            return !item.badgeId || item.badgeId == 0;
+          });
+        } else {
+          nonBadgedItems = _.filter(inputResult, (item) => {
+            return (!item.badgeId || item.badgeId == 0) && item.inStock == true;
+          });
+        }
         if (
           !nonBadgedItems.find(($bi) => {
             return $bi.vendorId == $.VENDOR_ID;
@@ -241,7 +256,7 @@ export function IsVendorFloorPrice(
   const contextPriceBreak = priceBreakList.find((x) => x.minQty == minQty);
   if (
     contextPriceBreak &&
-    parseFloat(contextPriceBreak.unitPrice as unknown as string) < floorPrice
+    parseFloat(contextPriceBreak.unitPrice as unknown as string) <= floorPrice
   )
     return true;
   return false;
@@ -315,6 +330,20 @@ export async function VerifyFloorWithSister(
     );
     return model;
   } else return false;
+}
+
+export async function IsWaitingForNextRun(
+  mpId: any,
+  contextVendor: string,
+  prod: any,
+) {
+  if (prod.cronName == process.env.CRON_NAME_422) return false; // If the product is Express Cron, no need to check for waiting status
+  const dbResult = await dbHelper.FindErrorItemByIdAndStatus(
+    parseInt(mpId),
+    true,
+    contextVendor.toUpperCase(),
+  );
+  return dbResult > 0;
 }
 
 async function getFilterQuery(filterDate: any, regularCronSet: any) {
@@ -421,4 +450,140 @@ export function subtractPercentage(originalNumber: number, percentage: number) {
       Math.floor((originalNumber - originalNumber * percentage) * 100) / 100
     ).toFixed(2),
   );
+}
+
+export async function GetProductDetailsByVendor(
+  details: any,
+  contextVendor: string,
+) {
+  if (contextVendor == "TRADENT") {
+    return details.tradentDetails;
+  }
+  if (contextVendor == "FRONTIER") {
+    return details.frontierDetails;
+  }
+  if (contextVendor == "MVP") {
+    return details.mvpDetails;
+  }
+  if (contextVendor == "TOPDENT") {
+    return details.topDentDetails;
+  }
+  if (contextVendor == "FIRSTDENT") {
+    return details.firstDentDetails;
+  }
+  if (contextVendor == "TRIAD") {
+    return details.triadDetails;
+  }
+}
+
+async function flattenExistingMessages(
+  existingLastCronMessage: any,
+): Promise<[]> {
+  const segments = existingLastCronMessage.split("/").filter(Boolean); // Remove empty segments
+  return segments.map((segment: string) => {
+    const match = segment.match(/^(\d+)@(.+)$/);
+    if (match) {
+      const minQty = parseInt(match[1]);
+      const message = match[0]; // Preserve full message
+      return { minQty: minQty, message: message };
+    }
+  });
+}
+
+export async function GetLastCronMessage(
+  repriceResult: any,
+  mpId: string,
+  contextVendor: string,
+): Promise<string> {
+  const productDetails = await sqlHelper.GetItemListById(mpId);
+  let resultStr = "";
+  if (
+    productDetails &&
+    repriceResult &&
+    repriceResult.data &&
+    repriceResult.data.cronResponse &&
+    repriceResult.data.cronResponse.repriceData
+  ) {
+    const contextVendorDetails = await GetProductDetailsByVendor(
+      productDetails,
+      contextVendor,
+    );
+    if (contextVendorDetails) {
+      const existingLastCronMessage = contextVendorDetails.last_cron_message;
+      if (existingLastCronMessage != null || existingLastCronMessage != "") {
+        if (repriceResult.data.cronResponse.repriceData.repriceDetails) {
+          resultStr = repriceResult.data.cronResponse.repriceData.repriceDetails
+            .isRepriced
+            ? repriceResult.data.cronResponse.repriceData.repriceDetails
+                .explained
+            : existingLastCronMessage;
+        } else if (
+          repriceResult.data.cronResponse.repriceData.listOfRepriceDetails &&
+          repriceResult.data.cronResponse.repriceData.listOfRepriceDetails
+            .length > 0
+        ) {
+          const existingSegregatedMessage: any = await flattenExistingMessages(
+            existingLastCronMessage,
+          );
+          const repricedPriceBreak = _.filter(
+            repriceResult.data.cronResponse.repriceData.listOfRepriceDetails,
+            (rp: any) => rp.isRepriced === true,
+          );
+          if (repricedPriceBreak && repricedPriceBreak.length > 0) {
+            let recordsOfMessages = [];
+            //If Existing Price breaks are Available
+            for (let record of existingSegregatedMessage) {
+              if (record) {
+                const priceUpdaterPriceBreak = repricedPriceBreak.find(
+                  (x: any) => x.minQty === record.minQty,
+                );
+                if (priceUpdaterPriceBreak)
+                  recordsOfMessages.push({
+                    minQty: record.minQty,
+                    message: priceUpdaterPriceBreak.explained,
+                  });
+                else recordsOfMessages.push(record);
+              }
+            }
+            //If New Price breaks are Added
+            for (let pb of repricedPriceBreak) {
+              const hasPriceBreak = existingSegregatedMessage.some(
+                (item: { minQty: any }) => item.minQty === pb.minQty,
+              );
+              if (!hasPriceBreak) {
+                recordsOfMessages.push({
+                  minQty: pb.minQty,
+                  message: pb.explained,
+                });
+              }
+            }
+            if (recordsOfMessages.length > 0) {
+              for (const rep of recordsOfMessages) {
+                resultStr += `${rep.minQty}@${rep.message}/`;
+              }
+            }
+          } else {
+            resultStr = existingLastCronMessage;
+          }
+        } else resultStr = `Reprice Result is empty`;
+      } else if (repriceResult.data.cronResponse.repriceData.repriceDetails) {
+        resultStr =
+          repriceResult.data.cronResponse.repriceData.repriceDetails.explained;
+      } else if (
+        !(
+          repriceResult.data.cronResponse.repriceData.listOfRepriceDetails &&
+          repriceResult.data.cronResponse.repriceData.listOfRepriceDetails
+            .length > 0
+        )
+      ) {
+        resultStr = `Reprice Result is empty`;
+      } else {
+        for (const rep of repriceResult.data.cronResponse.repriceData
+          .listOfRepriceDetails) {
+          resultStr += `${rep.minQty}@${rep.explained}/`;
+        }
+      }
+    }
+  }
+  return resultStr;
 }
