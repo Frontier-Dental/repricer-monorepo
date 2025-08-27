@@ -2,6 +2,7 @@ import _ from "lodash";
 import * as globalParam from "../model/global-param";
 import { Net32Product } from "../types/net32";
 import { FrontierProduct } from "../types/frontier";
+import { VendorName } from "@repricer-monorepo/shared";
 
 export function FormatActiveField(data: Net32Product[]) {
   // Return a new array with all priceBreaks' active property set to true, without mutating input
@@ -50,35 +51,42 @@ export function SetGlobalDetails(
   // Create a shallow copy to avoid mutating the original
   const updatedProductItem = { ...productItem };
   switch (contextVendor.toUpperCase()) {
-    case "TRADENT":
+    case VendorName.TRADENT:
       updatedProductItem.ownVendorId = "17357";
       if (!updatedProductItem.sisterVendorId) {
         updatedProductItem.sisterVendorId = "20722;20755;20533;20727;5";
       }
       break;
-    case "FRONTIER":
+    case VendorName.FRONTIER:
       updatedProductItem.ownVendorId = "20722";
       if (!updatedProductItem.sisterVendorId) {
         updatedProductItem.sisterVendorId = "17357;20755;20533;20727;5";
       }
       break;
-    case "MVP":
+    case VendorName.MVP:
       updatedProductItem.ownVendorId = "20755";
       if (!updatedProductItem.sisterVendorId) {
         updatedProductItem.sisterVendorId = "17357;20722;20533;20727;5";
       }
       break;
-    case "TOPDENT":
+    case VendorName.TOPDENT:
       updatedProductItem.ownVendorId = "20727";
       if (!updatedProductItem.sisterVendorId) {
         updatedProductItem.sisterVendorId = "17357;20722;20533;20755;5";
       }
       break;
-    case "FIRSTDENT":
+    case VendorName.FIRSTDENT:
       updatedProductItem.ownVendorId = "20533";
       if (!updatedProductItem.sisterVendorId) {
         updatedProductItem.sisterVendorId = "17357;20722;20755;20727;5";
       }
+      break;
+    case VendorName.TRIAD:
+      productItem.ownVendorId = "5";
+      productItem.sisterVendorId =
+        productItem.sisterVendorId && productItem.sisterVendorId != null
+          ? productItem.sisterVendorId
+          : "17357;20722;20755;20727;20533";
       break;
     default:
       throw new Error(`Invalid vendor: ${contextVendor}`);

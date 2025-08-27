@@ -11,6 +11,7 @@ export function getContextCronId(productDetails: any): string {
     return productDetails.topDentDetails.cronId;
   if (productDetails.firstDentDetails)
     return productDetails.firstDentDetails.cronId;
+  if (productDetails.triadDetails) return productDetails.triadDetails.cronId;
   return "";
 }
 

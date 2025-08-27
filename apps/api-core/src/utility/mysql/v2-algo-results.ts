@@ -10,7 +10,8 @@ export interface V2AlgoResultData {
   vendor_id: number;
   mp_id: number;
   cron_name: string;
-  run_time: Date;
+  created_at?: Date;
+  updated_at?: Date;
   q_break_valid: boolean;
   price_update_result?: string | null;
   new_price_breaks?: string | null;

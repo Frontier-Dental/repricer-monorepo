@@ -1,3 +1,8 @@
+import {
+  AlgoBadgeIndicator,
+  AlgoHandlingTimeGroup,
+  AlgoPriceDirection,
+} from "@repricer-monorepo/shared";
 import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
 
 export interface V2AlgoSettingsData {
@@ -7,8 +12,8 @@ export interface V2AlgoSettingsData {
   suppress_price_break_if_Q1_not_updated: boolean;
   suppress_price_break: boolean;
   compete_on_price_break_only: boolean;
-  up_down: "UP" | "UP/DOWN" | "DOWN";
-  badge_indicator: "ALL" | "BADGE";
+  up_down: AlgoPriceDirection;
+  badge_indicator: AlgoBadgeIndicator;
   execution_priority: number;
   reprice_up_percentage: number;
   compare_q2_with_q1: boolean;
@@ -17,7 +22,7 @@ export interface V2AlgoSettingsData {
   sister_vendor_ids: string;
   exclude_vendors: string;
   inactive_vendor_id: string;
-  handling_time_group: "ALL" | "FAST_SHIPPING" | "STOCKED" | "LONG_HANDLING";
+  handling_time_group: AlgoHandlingTimeGroup;
   keep_position: boolean;
   inventory_competition_threshold: number;
   reprice_down_percentage: number;
@@ -54,8 +59,8 @@ export async function createV2AlgoSettings(
     suppress_price_break_if_Q1_not_updated: false,
     suppress_price_break: false,
     compete_on_price_break_only: false,
-    up_down: "UP/DOWN",
-    badge_indicator: "ALL",
+    up_down: AlgoPriceDirection.UP_DOWN,
+    badge_indicator: AlgoBadgeIndicator.ALL,
     execution_priority: 0,
     reprice_up_percentage: -1,
     compare_q2_with_q1: false,
@@ -64,7 +69,7 @@ export async function createV2AlgoSettings(
     sister_vendor_ids: "",
     exclude_vendors: "",
     inactive_vendor_id: "",
-    handling_time_group: "ALL",
+    handling_time_group: AlgoHandlingTimeGroup.ALL,
     keep_position: false,
     max_price: 99999999.99,
     floor_price: 0,

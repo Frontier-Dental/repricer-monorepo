@@ -191,6 +191,9 @@ export async function UpdateProductAsync(
     case VendorName.FIRSTDENT:
       contextTableName = applicationConfig.SQL_FIRSTDENT_DETAILS!;
       break;
+    case VendorName.TRIAD:
+      contextTableName = applicationConfig.SQL_TRIAD_DETAILS!;
+      break;
     default:
       break;
   }
@@ -349,7 +352,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
       "pl.SlowCronName",
       "pl.SlowCronId",
       "pl.IsSlowActivated",
-      "pl.v2_algo_only",
+      "pl.algo_execution_mode",
       knex.raw("tdl.*"),
     )
     .from("table_scrapeProductList as pl")
@@ -377,7 +380,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
       "pl.SlowCronName",
       "pl.SlowCronId",
       "pl.IsSlowActivated",
-      "pl.v2_algo_only",
+      "pl.algo_execution_mode",
 
       knex.raw("fdl.*"),
     )
@@ -406,7 +409,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
       "pl.SlowCronName",
       "pl.SlowCronId",
       "pl.IsSlowActivated",
-      "pl.v2_algo_only",
+      "pl.algo_execution_mode",
       knex.raw("mdl.*"),
     )
     .from("table_scrapeProductList as pl")
@@ -430,7 +433,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
       "pl.SlowCronName",
       "pl.SlowCronId",
       "pl.IsSlowActivated",
-      "pl.v2_algo_only",
+      "pl.algo_execution_mode",
       knex.raw("firstDl.*"),
     )
     .from("table_scrapeProductList as pl")
@@ -458,7 +461,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
       "pl.SlowCronName",
       "pl.SlowCronId",
       "pl.IsSlowActivated",
-      "pl.v2_algo_only",
+      "pl.algo_execution_mode",
       knex.raw("topDl.*"),
     )
     .from("table_scrapeProductList as pl")
@@ -472,6 +475,34 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
     .whereNotNull("topDl.ChannelName")
     .where("topDl.Activated", true);
 
+  const triadQuery = knex
+    .select(
+      "pl.Id as ProductIdentifier",
+      "pl.MpId as ProductId",
+      "pl.ProductName",
+      "pl.Net32Url",
+      "pl.IsActive as ScrapeOnlyActive",
+      "pl.LinkedCronName as LinkedScrapeOnlyCron",
+      "pl.LinkedCronId as LinkedScrapeOnlyCronId",
+      "pl.RegularCronName",
+      "pl.RegularCronId",
+      "pl.SlowCronName",
+      "pl.SlowCronId",
+      "pl.IsSlowActivated",
+      "pl.algo_execution_mode",
+      knex.raw("triadDl.*"),
+    )
+    .from("table_scrapeProductList as pl")
+    .leftJoin(
+      "table_triadDetails as triadDl",
+      "triadDl.id",
+      "pl.LinkedTriadDetailsInfo",
+    )
+    .where("pl.RegularCronId", cronId)
+    .where("pl.IsSlowActivated", "!=", true)
+    .whereNotNull("triadDl.ChannelName")
+    .where("triadDl.Activated", true);
+
   // Use raw SQL for the UNION query to ensure MySQL2 compatibility
   const unionQuery = `
     (${tradentQuery.toString()})
@@ -483,6 +514,8 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
     (${firstDentQuery.toString()})
     UNION
     (${topDentQuery.toString()})
+    UNION
+    (${triadQuery.toString()})
     ORDER BY ProductId
   `;
 
@@ -495,4 +528,7 @@ async function getContextItemByKey(payload: any, key: string): Promise<any> {
   if (payload.tradentDetails != null) return payload.tradentDetails[key];
   if (payload.frontierDetails != null) return payload.frontierDetails[key];
   if (payload.mvpDetails != null) return payload.mvpDetails[key];
+  if (payload.topDentDetails != null) return payload.topDentDetails[key];
+  if (payload.firstDentDetails != null) return payload.firstDentDetails[key];
+  if (payload.triadDetails != null) return payload.triadDetails[key];
 }

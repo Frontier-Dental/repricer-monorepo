@@ -1,23 +1,27 @@
 "use client";
 
-import { useNavigate, useParams } from "@tanstack/react-router";
-import { Download, ArrowUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { DataTable } from "@/components/data-table";
-import type { ColumnDef, Row } from "@tanstack/react-table";
 import { V2AlgoSettingsForm } from "@/components/V2AlgoSettingsForm";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataTable } from "@/components/data-table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Cross2Icon } from "@radix-ui/react-icons";
-import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Info } from "lucide-react";
-import { VendorNameLookup } from "@repricer-monorepo/shared";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Cross2Icon } from "@radix-ui/react-icons";
+import { VendorNameLookup, VendorId } from "@repricer-monorepo/shared";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import type { ColumnDef, Row } from "@tanstack/react-table";
+import { ArrowUpDown, Download } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface V2AlgoResultWithExecution {
   // From v2_algo_results table
@@ -67,6 +71,7 @@ interface V2AlgoSettings {
   floor_compete_with_next: boolean;
   own_vendor_threshold: number;
   not_cheapest: boolean;
+  enabled: boolean;
 }
 
 interface AlgoApiResponse {
@@ -94,8 +99,11 @@ export function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [vendorFilter, setVendorFilter] = useState("");
   const [jobFilter, setJobFilter] = useState("");
-  const [v2AlgoOnly, setV2AlgoOnly] = useState<boolean>(false);
-  const [isUpdatingV2AlgoOnly, setIsUpdatingV2AlgoOnly] = useState(false);
+  const [algoExecutionMode, setAlgoExecutionMode] = useState<string>("V1_ONLY");
+  const [isUpdatingAlgoExecutionMode, setIsUpdatingAlgoExecutionMode] =
+    useState(false);
+  const [net32Url, setNet32Url] = useState<string | null>(null);
+  const [isLoadingNet32Url, setIsLoadingNet32Url] = useState(false);
 
   const openHtmlInNewTab = (htmlContent: string) => {
     const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
@@ -186,42 +194,62 @@ export function ProductDetailPage() {
     }
   };
 
-  const handleV2AlgoOnlyToggle = async (checked: boolean) => {
-    setIsUpdatingV2AlgoOnly(true);
+  const handleAlgoExecutionModeChange = async (value: string) => {
+    setIsUpdatingAlgoExecutionMode(true);
     try {
-      const response = await fetch(`/v2-algo/update_v2_algo_only/${mpId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `/v2-algo/update_algo_execution_mode/${mpId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ algo_execution_mode: value }),
         },
-        body: JSON.stringify({ v2_algo_only: checked }),
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      setV2AlgoOnly(checked);
-      toast.success("V2 Algo Only setting updated successfully!");
+      setAlgoExecutionMode(value);
+      toast.success("Algorithm execution mode updated successfully!");
     } catch (error) {
-      console.error("Error updating V2 Algo Only setting:", error);
-      toast.error("Failed to update V2 Algo Only setting. Please try again.");
-      // Revert the toggle if the update failed
-      setV2AlgoOnly(!checked);
+      console.error("Error updating algorithm execution mode:", error);
+      toast.error(
+        "Failed to update algorithm execution mode. Please try again.",
+      );
+      // Revert the change if the update failed
+      setAlgoExecutionMode(algoExecutionMode);
     } finally {
-      setIsUpdatingV2AlgoOnly(false);
+      setIsUpdatingAlgoExecutionMode(false);
     }
   };
 
-  const fetchV2AlgoOnlyStatus = async () => {
+  const fetchAlgoExecutionMode = async () => {
     try {
-      const response = await fetch(`/v2-algo/get_v2_algo_only_status/${mpId}`);
+      const response = await fetch(`/v2-algo/get_algo_execution_mode/${mpId}`);
       if (response.ok) {
         const result = await response.json();
-        setV2AlgoOnly(result.v2_algo_only || false);
+        setAlgoExecutionMode(result.algo_execution_mode || "V1_ONLY");
       }
     } catch (err) {
-      console.error("Error fetching V2 Algo Only status:", err);
+      console.error("Error fetching algorithm execution mode:", err);
+    }
+  };
+
+  const fetchNet32Url = async () => {
+    setIsLoadingNet32Url(true);
+    try {
+      const response = await fetch(`/v2-algo/get_net32_url/${mpId}`);
+      if (response.ok) {
+        const result = await response.json();
+        setNet32Url(result.net32_url);
+      }
+    } catch (err) {
+      console.error("Error fetching net32 URL:", err);
+    } finally {
+      setIsLoadingNet32Url(false);
     }
   };
 
@@ -250,6 +278,35 @@ export function ProductDetailPage() {
       setIsLoading(false);
     }
   };
+
+  const createDefaultSettings = (vendorId: number): V2AlgoSettings => ({
+    mp_id: parseInt(mpId),
+    vendor_id: vendorId,
+    suppress_price_break_if_Q1_not_updated: false,
+    suppress_price_break: false,
+    compete_on_price_break_only: false,
+    up_down: "UP/DOWN",
+    badge_indicator: "ALL",
+    execution_priority: 0,
+    reprice_up_percentage: -1,
+    compare_q2_with_q1: false,
+    compete_with_all_vendors: false,
+    reprice_up_badge_percentage: -1,
+    sister_vendor_ids: "",
+    exclude_vendors: "",
+    inactive_vendor_id: "",
+    handling_time_group: "ALL",
+    keep_position: false,
+    inventory_competition_threshold: 1,
+    reprice_down_percentage: -1,
+    max_price: 99999999.99,
+    floor_price: 0,
+    reprice_down_badge_percentage: -1,
+    floor_compete_with_next: false,
+    own_vendor_threshold: 1,
+    not_cheapest: false,
+    enabled: false,
+  });
 
   const fetchSettings = async () => {
     setIsLoadingSettings(true);
@@ -286,7 +343,8 @@ export function ProductDetailPage() {
   useEffect(() => {
     fetchData();
     fetchSettings();
-    fetchV2AlgoOnlyStatus();
+    fetchAlgoExecutionMode();
+    fetchNet32Url();
   }, [mpId]);
 
   const formatDate = (dateString: string) => {
@@ -558,6 +616,30 @@ export function ProductDetailPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Product Details</h1>
         <p className="text-muted-foreground">Product ID: {mpId}</p>
+
+        {isLoadingNet32Url ? (
+          <div className="mt-4">
+            <Button variant="outline" disabled>
+              Loading Net32 URL...
+            </Button>
+          </div>
+        ) : net32Url ? (
+          <div className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => window.open(net32Url, "_blank")}
+              // className="bg-blue-600 hover:bg-blue-700"
+            >
+              Open Net32 Product Page
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-4">
+            <Button variant="outline" disabled>
+              No Net32 URL Available
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="mb-6">
@@ -661,40 +743,36 @@ export function ProductDetailPage() {
         </>
       )}
 
-      {/* V2 Algo Only Toggle Section */}
+      {/* Algorithm Execution Mode Section */}
       <div className="mt-8 mb-6">
         <div className="flex items-center space-x-4 mb-4">
-          <Label htmlFor="v2-algo-only" className="text-base font-semibold">
-            V2 Algo Only
+          <Label
+            htmlFor="algo-execution-mode"
+            className="text-base font-semibold"
+          >
+            Algorithm Execution Mode
           </Label>
           <div className="flex items-center space-x-2">
-            {isUpdatingV2AlgoOnly && (
-              <span className="text-sm text-muted-foreground">Updating...</span>
-            )}
-            <Switch
-              id="v2-algo-only"
-              checked={v2AlgoOnly}
-              onCheckedChange={handleV2AlgoOnlyToggle}
-              disabled={isUpdatingV2AlgoOnly}
-            />
+            <Select
+              value={algoExecutionMode}
+              onValueChange={handleAlgoExecutionModeChange}
+              disabled={isUpdatingAlgoExecutionMode}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select execution mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="V1_ONLY">V1 Only</SelectItem>
+                <SelectItem value="V2_ONLY">V2 Only</SelectItem>
+                <SelectItem value="V2_EXECUTE_V1_DRY">
+                  V2 Execute, V1 Dry Run
+                </SelectItem>
+                <SelectItem value="V1_EXECUTE_V2_DRY">
+                  V1 Execute, V2 Dry Run
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-
-        <div className="space-y-3">
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              If V2 Algo Only is set, the V1 algo will not run and the V2 Algo
-              will make price changes on Net32.
-            </AlertDescription>
-          </Alert>
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              If V2 Algo Only is not set, both algorithms will run but only the
-              V1 algo will make price changes.
-            </AlertDescription>
-          </Alert>
         </div>
       </div>
 
@@ -719,42 +797,94 @@ export function ProductDetailPage() {
         </div>
       </div>
 
-      {settingsData.length > 0 && (
-        <Tabs
-          defaultValue={settingsData[0]?.vendor_id.toString()}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-5">
-            {settingsData.map(({ vendor_id }) => (
-              <TabsTrigger key={vendor_id} value={vendor_id.toString()}>
-                {VendorNameLookup[vendor_id]}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+      <Tabs
+        defaultValue={Object.values(VendorId)
+          .filter((x) => typeof x === "number")[0]
+          .toString()}
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-5">
+          {Object.values(VendorId)
+            .filter((x) => typeof x === "number")
+            .map((vendorId) => {
+              console.log(vendorId);
+              const vendorIdNumber = Number(vendorId);
+              const vendorSettings = settingsData.find(
+                (s) => s.vendor_id === vendorIdNumber,
+              );
+              const isEnabled = vendorSettings?.enabled || false;
 
-          {settingsData.map(({ vendor_id }) => {
-            const vendorSettings = settingsData.find(
-              (s) => s.vendor_id === vendor_id,
-            );
+              return (
+                <TabsTrigger
+                  key={vendorId}
+                  value={vendorId.toString()}
+                  className={`${
+                    isEnabled
+                      ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200 data-[state=active]:bg-green-200"
+                      : "bg-red-100 text-red-800 border-red-300 hover:bg-red-200 data-[state=active]:bg-red-200"
+                  }`}
+                >
+                  {VendorNameLookup[vendorId as keyof typeof VendorNameLookup]}
+                </TabsTrigger>
+              );
+            })}
+        </TabsList>
 
-            return (
-              <TabsContent
-                key={vendor_id}
-                value={vendor_id.toString()}
-                className="mt-6"
-              >
-                <V2AlgoSettingsForm
-                  mpId={parseInt(mpId)}
-                  vendorId={vendor_id}
-                  vendorName={VendorNameLookup[vendor_id]}
-                  initialSettings={vendorSettings!}
-                  onSave={handleSaveSettings}
-                />
-              </TabsContent>
-            );
-          })}
-        </Tabs>
-      )}
+        {Object.values(VendorId).map((vendorId) => {
+          const vendorIdNumber = Number(vendorId);
+          const vendorSettings = settingsData.find(
+            (s) => s.vendor_id === vendorIdNumber,
+          );
+
+          // Use existing settings or create default settings
+          const settings =
+            vendorSettings || createDefaultSettings(vendorIdNumber);
+
+          return (
+            <TabsContent
+              key={vendorId}
+              value={vendorId.toString()}
+              className="mt-6"
+            >
+              <V2AlgoSettingsForm
+                mpId={parseInt(mpId)}
+                vendorId={vendorIdNumber}
+                vendorName={
+                  VendorNameLookup[vendorId as keyof typeof VendorNameLookup]
+                }
+                initialSettings={settings}
+                onSave={handleSaveSettings}
+                onToggleEnabled={async (enabled: boolean) => {
+                  try {
+                    const response = await fetch(
+                      `/v2-algo/toggle_enabled/${mpId}/${vendorIdNumber}`,
+                      {
+                        method: "PUT",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                      },
+                    );
+
+                    if (response.ok) {
+                      // Refresh settings to get updated data
+                      await fetchSettings();
+                      toast.success(
+                        `Vendor ${enabled ? "enabled" : "disabled"} successfully`,
+                      );
+                    } else {
+                      toast.error("Failed to toggle vendor status");
+                    }
+                  } catch (error) {
+                    console.error("Error toggling vendor status:", error);
+                    toast.error("Failed to toggle vendor status");
+                  }
+                }}
+              />
+            </TabsContent>
+          );
+        })}
+      </Tabs>
     </div>
   );
 }

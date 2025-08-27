@@ -141,6 +141,11 @@ export function MapOverrideExecutionPriority(
       priorityList.firstDent_priority,
     );
   }
+  if (productDetails.triadDetails) {
+    productDetails.triadDetails.executionPriority = parseInt(
+      priorityList.triad_priority,
+    );
+  }
   return productDetails;
 }
 

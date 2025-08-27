@@ -143,16 +143,19 @@ export function repriceProductV2(
       );
 
       const beforeLadder = getProductsSortedByBuyBoxRank(
-        [
-          ...filteredCompetitors,
-          ...applyCompetitionFilters(
-            ourAvailableVendorProducts.filter(
-              (p) => p.vendorId !== ourVendor.vendorId,
+        uniqBy(
+          [
+            ...filteredCompetitors,
+            ...applyCompetitionFilters(
+              ourAvailableVendorProducts.filter(
+                (p) => p.vendorId !== ourVendor.vendorId,
+              ),
+              vendorSetting,
             ),
-            vendorSetting,
-          ),
-          ourVendor,
-        ],
+            ourVendor,
+          ],
+          (p) => p.vendorId,
+        ),
         quantity,
       );
 

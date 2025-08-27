@@ -3,7 +3,7 @@ import { OwnVendorProductDetails } from "../../model/user-models/custom-product"
 import { FullProductDetailsV2 } from "../../types/full-product-details-v2";
 import { RepriceModel } from "../../model/reprice-model";
 import { SecretKeyEntry } from "../../types/cron-settings";
-import { VendorName } from "@repricer-monorepo/shared";
+import { AlgoExecutionMode, VendorName } from "@repricer-monorepo/shared";
 
 // Types for the mapped product details list
 export interface ProductDetailsListItem {
@@ -23,6 +23,7 @@ export interface ProductDetailsListItem {
   mvpDetails: OwnVendorProductDetails | null;
   topDentDetails: OwnVendorProductDetails | null;
   firstDentDetails: OwnVendorProductDetails | null;
+  triadDetails: OwnVendorProductDetails | null;
   mpid?: string;
   secretKey?: SecretKeyEntry[];
   last_attempted_time?: Date;
@@ -40,6 +41,7 @@ export interface ProductDetailsListItem {
   next_cron_time?: Date | null;
   wait_update_period?: boolean;
   cronId?: string;
+  algo_execution_mode?: AlgoExecutionMode;
 }
 
 export type ProductDetailsList = ProductDetailsListItem[];
@@ -56,7 +58,7 @@ export const MapProductDetailsList = (
   for (const prodId of listOfProductIds) {
     const mappedProduct = {
       mpId: parseInt(prodId),
-      v2AlgoOnly: groupedList[parseInt(prodId)][0].v2_algo_only === 1,
+      algo_execution_mode: groupedList[parseInt(prodId)][0].algo_execution_mode,
       productIdentifier: groupedList[parseInt(prodId)][0].ProductIdentifier,
       isSlowActivated:
         _.first(groupedList[parseInt(prodId)])?.IsSlowActivated == 1
@@ -90,6 +92,10 @@ export const MapProductDetailsList = (
         groupedList[parseInt(prodId)],
         VendorName.FIRSTDENT,
       ),
+      triadLinkInfo: getLinkedInfoForVendor(
+        groupedList[parseInt(prodId)],
+        VendorName.TRIAD,
+      ),
       tradentDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
         VendorName.TRADENT,
@@ -109,6 +115,10 @@ export const MapProductDetailsList = (
       firstDentDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
         VendorName.FIRSTDENT,
+      ),
+      triadDetails: getMappedVendorDetails(
+        groupedList[parseInt(prodId)],
+        VendorName.TRIAD,
       ),
     };
     mappedList.push(mappedProduct);

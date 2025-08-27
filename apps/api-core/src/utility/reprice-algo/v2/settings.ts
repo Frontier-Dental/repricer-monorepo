@@ -17,29 +17,11 @@ export function applyCompetitionFilters(
   ourVendorSettings: V2AlgoSettingsData,
 ) {
   return flow(
-    (products) => applyInactiveVendorIdFilter(products, ourVendorSettings),
     (products) => applyVendorExclusionFilter(products, ourVendorSettings),
-    (products) => applyQuantityFilter(products, ourVendorSettings),
+    (products) => applyMinQuantityFilter(products, ourVendorSettings),
     (products) => applyHandlingTimeGroup(products, ourVendorSettings),
     (products) => applyBadgeIndicatorFilter(products, ourVendorSettings),
   )(products);
-}
-
-export function applyInactiveVendorIdFilter(
-  competitors: Net32AlgoProduct[],
-  ourVendorSettings: V2AlgoSettingsData,
-) {
-  const competeOnZeroQuantityVendors = ourVendorSettings.inactive_vendor_id
-    .split(",")
-    .map(parseInt)
-    .filter((x) => !isNaN(x));
-  return competitors.filter((c) => {
-    if (competeOnZeroQuantityVendors.includes(c.vendorId)) {
-      return c.inventory >= 0;
-    } else {
-      return c.inventory > 0;
-    }
-  });
 }
 
 export function applyBadgeIndicatorFilter(
@@ -124,11 +106,17 @@ export function applySuppressQBreakIfQ1NotUpdated(
   });
 }
 
-export function applyQuantityFilter(
+export function applyMinQuantityFilter(
   competitors: Net32AlgoProduct[],
   ourVendorSettings: V2AlgoSettingsData,
 ) {
+  const inactiveVendorId = ourVendorSettings.inactive_vendor_id
+    .split(",")
+    .map(parseInt);
   return competitors.filter((c) => {
+    if (inactiveVendorId.includes(c.vendorId)) {
+      return true;
+    }
     return c.inventory >= ourVendorSettings.inventory_competition_threshold;
   });
 }

@@ -75,6 +75,16 @@ export async function FilterEligibleProducts(
         active422CronItems,
       );
     }
+    //TRIAD
+    if (prod.triadDetails) {
+      prod.triadDetails.skipReprice = getSkipReprice(
+        prod.triadDetails,
+        VendorName.TRIAD,
+        cronId,
+        isSlowCron,
+        active422CronItems,
+      );
+    }
   }
   return productItemList;
 }
@@ -105,6 +115,9 @@ export function SetSkipReprice(
       firstDentDetails: prod.firstDentDetails
         ? { ...prod.firstDentDetails, skipReprice: value }
         : prod.firstDentDetails,
+      triadDetails: prod.triadDetails
+        ? { ...prod.triadDetails, skipReprice: value }
+        : prod.triadDetails,
     };
   });
 }

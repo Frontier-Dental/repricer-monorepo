@@ -195,6 +195,10 @@ export async function getContextCronId(productDetails: any, vendorName: any) {
       return productDetails.firstDentDetails
         ? productDetails.firstDentDetails.cronId
         : null;
+    case VendorName.TRIAD:
+      return productDetails.triadDetails
+        ? productDetails.triadDetails.cronId
+        : null;
     default:
       throw new Error(`Invalid vendor name: ${vendorName}`);
   }

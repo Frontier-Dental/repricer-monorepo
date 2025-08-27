@@ -1,5 +1,9 @@
 import knex from "knex";
 import dotenv from "dotenv";
+import {
+  AlgoBadgeIndicator,
+  AlgoPriceDirection,
+} from "@repricer-monorepo/shared";
 
 // Load environment variables
 const environment = process.env.NODE_ENV || "development";
@@ -93,9 +97,14 @@ async function migrateVendorSettings(vendorConfig: VendorConfig) {
         setting.SuppressPriceBreakForOne === 1,
       suppress_price_break: setting.SuppressPriceBreak === 1,
       compete_on_price_break_only: setting.BeatQPrice === 1,
-      up_down: setting.RepricingRule === 2 ? "UP/DOWN" : "DOWN",
+      up_down:
+        setting.RepricingRule === 2
+          ? AlgoPriceDirection.UP_DOWN
+          : AlgoPriceDirection.DOWN,
       badge_indicator:
-        setting.BadgeIndicator === "BADGE_ONLY" ? "BADGE" : "ALL",
+        setting.BadgeIndicator === "BADGE_ONLY"
+          ? AlgoBadgeIndicator.BADGE
+          : AlgoBadgeIndicator.ALL,
       execution_priority: setting.ExecutionPriority || 0,
       reprice_up_percentage: setting.PercentageIncrease || -1,
       compare_q2_with_q1: setting.CompareWithQ1 === 1,
@@ -122,39 +131,72 @@ async function migrateVendorSettings(vendorConfig: VendorConfig) {
       not_cheapest: setting.IsNCNeeded === 1,
     }));
 
-    // Perform upsert operation
+    // Perform batch operations
     let insertedCount = 0;
     let updatedCount = 0;
 
-    for (const setting of transformedSettings) {
-      // Check if record already exists
-      const existingRecord = await db("v2_algo_settings")
-        .where({
-          mp_id: setting.mp_id,
-          vendor_id: setting.vendor_id,
-        })
-        .first();
+    try {
+      // Get existing records to determine what needs to be inserted vs updated
+      const existingRecords = await db("v2_algo_settings")
+        .whereIn(
+          ["mp_id", "vendor_id"],
+          transformedSettings.map((s) => [s.mp_id, s.vendor_id]),
+        )
+        .select("mp_id", "vendor_id");
 
-      if (existingRecord) {
-        // Update existing record
-        await db("v2_algo_settings")
-          .where({
-            mp_id: setting.mp_id,
-            vendor_id: setting.vendor_id,
-          })
-          .update(setting);
-        updatedCount++;
+      // Create a map for quick lookup
+      const existingMap = new Map(
+        existingRecords.map((r) => [`${r.mp_id}-${r.vendor_id}`, true]),
+      );
+
+      // Separate records into insert and update batches
+      const toInsert: typeof transformedSettings = [];
+      const toUpdate: typeof transformedSettings = [];
+
+      for (const setting of transformedSettings) {
+        const key = `${setting.mp_id}-${setting.vendor_id}`;
+        const existing = existingMap.get(key);
+
+        if (existing) {
+          toUpdate.push(setting);
+        } else {
+          toInsert.push(setting);
+        }
+      }
+
+      // Perform batch insert for new records
+      if (toInsert.length > 0) {
+        await db("v2_algo_settings").insert(toInsert);
+        insertedCount = toInsert.length;
         console.log(
-          `🔄 Updated: MP ID ${setting.mp_id} (${updatedCount} updated, ${insertedCount} inserted)`,
-        );
-      } else {
-        // Insert new record
-        await db("v2_algo_settings").insert(setting);
-        insertedCount++;
-        console.log(
-          `✅ Inserted: MP ID ${setting.mp_id} (${insertedCount}/${transformedSettings.length})`,
+          `✅ Batch inserted ${toInsert.length} new settings for ${vendorConfig.vendorName}`,
         );
       }
+
+      // Perform batch updates for existing records
+      if (toUpdate.length > 0) {
+        // Use a transaction for batch updates
+        await db.transaction(async (trx) => {
+          for (const setting of toUpdate) {
+            await trx("v2_algo_settings")
+              .where({
+                mp_id: setting.mp_id,
+                vendor_id: setting.vendor_id,
+              })
+              .update(setting);
+          }
+        });
+        updatedCount = toUpdate.length;
+        console.log(
+          `🔄 Batch updated ${toUpdate.length} existing settings for ${vendorConfig.vendorName}`,
+        );
+      }
+    } catch (error) {
+      console.error(
+        `❌ Error during batch operations for ${vendorConfig.vendorName}:`,
+        error,
+      );
+      throw error;
     }
 
     console.log(
@@ -214,60 +256,45 @@ async function migrateAllVendors() {
     },
   ];
 
-  console.log("🚀 Starting parallel migration of all vendor settings...");
+  console.log("🚀 Starting sequential migration of all vendor settings...");
   console.log(
     `📋 Vendors to migrate: ${vendorConfigs.map((v) => v.vendorName).join(", ")}`,
   );
 
-  // Start all migrations in parallel
-  const migrationPromises = vendorConfigs.map(async (vendorConfig) => {
-    try {
-      console.log(`\n${"=".repeat(60)}`);
-      console.log(`🔄 Starting ${vendorConfig.vendorName} migration...`);
-      const result = await migrateVendorSettings(vendorConfig);
-      console.log(`✅ Completed ${vendorConfig.vendorName} migration`);
-      return { vendorName: vendorConfig.vendorName, ...result };
-    } catch (error) {
-      console.error(`❌ Failed to migrate ${vendorConfig.vendorName}:`, error);
-      return {
-        vendorName: vendorConfig.vendorName,
-        insertedCount: 0,
-        updatedCount: 0,
-        error: true,
-      };
-    }
-  });
-
-  // Wait for all migrations to complete
-  const results = await Promise.all(migrationPromises);
-
-  // Calculate totals
+  // Process vendors one at a time
   let totalInserted = 0;
   let totalUpdated = 0;
   let successCount = 0;
   let errorCount = 0;
 
-  console.log(`\n${"=".repeat(60)}`);
-  console.log("🎉 Migration Summary:");
+  for (const vendorConfig of vendorConfigs) {
+    try {
+      console.log(`\n${"=".repeat(60)}`);
+      console.log(`🔄 Starting ${vendorConfig.vendorName} migration...`);
 
-  for (const result of results) {
-    if (result.error) {
-      console.log(`❌ ${result.vendorName}: Failed`);
-      errorCount++;
-    } else {
-      const inserted = result.insertedCount || 0;
-      const updated = result.updatedCount || 0;
+      const result = await migrateVendorSettings(vendorConfig);
+
+      console.log(`✅ Completed ${vendorConfig.vendorName} migration`);
+
+      const inserted = result?.insertedCount || 0;
+      const updated = result?.updatedCount || 0;
+
       console.log(
-        `✅ ${result.vendorName}: ${inserted} inserted, ${updated} updated`,
+        `✅ ${vendorConfig.vendorName}: ${inserted} inserted, ${updated} updated`,
       );
+
       totalInserted += inserted;
       totalUpdated += updated;
       successCount++;
+    } catch (error) {
+      console.error(`❌ Failed to migrate ${vendorConfig.vendorName}:`, error);
+      errorCount++;
     }
   }
 
   console.log(`\n${"=".repeat(60)}`);
-  console.log("📊 Overall Summary:");
+  console.log("🎉 Migration Summary:");
+  console.log(`📊 Overall Summary:`);
   console.log(
     `✅ Successful migrations: ${successCount}/${vendorConfigs.length}`,
   );
@@ -309,61 +336,46 @@ async function syncSingleMpId(mpId: number) {
     `📋 Vendors to sync: ${vendorConfigs.map((v) => v.vendorName).join(", ")}`,
   );
 
-  // Start all vendor syncs in parallel
-  const syncPromises = vendorConfigs.map(async (vendorConfig) => {
-    try {
-      console.log(`\n${"=".repeat(60)}`);
-      console.log(
-        `🔄 Starting ${vendorConfig.vendorName} sync for MP ID ${mpId}...`,
-      );
-      const result = await syncVendorSettingsForMpId(vendorConfig, mpId);
-      console.log(
-        `✅ Completed ${vendorConfig.vendorName} sync for MP ID ${mpId}`,
-      );
-      return { vendorName: vendorConfig.vendorName, ...result };
-    } catch (error) {
-      console.error(
-        `❌ Failed to sync ${vendorConfig.vendorName} for MP ID ${mpId}:`,
-        error,
-      );
-      return {
-        vendorName: vendorConfig.vendorName,
-        insertedCount: 0,
-        updatedCount: 0,
-        error: true,
-      };
-    }
-  });
-
-  // Wait for all syncs to complete
-  const results = await Promise.all(syncPromises);
-
-  // Calculate totals
+  // Process vendors one at a time
   let totalInserted = 0;
   let totalUpdated = 0;
   let successCount = 0;
   let errorCount = 0;
 
-  console.log(`\n${"=".repeat(60)}`);
-  console.log(`🎉 Sync Summary for MP ID ${mpId}:`);
+  for (const vendorConfig of vendorConfigs) {
+    try {
+      console.log(`\n${"=".repeat(60)}`);
+      console.log(
+        `🔄 Starting ${vendorConfig.vendorName} sync for MP ID ${mpId}...`,
+      );
 
-  for (const result of results) {
-    if (result.error) {
-      console.log(`❌ ${result.vendorName}: Failed`);
-      errorCount++;
-    } else {
+      const result = await syncVendorSettingsForMpId(vendorConfig, mpId);
+
+      console.log(
+        `✅ Completed ${vendorConfig.vendorName} sync for MP ID ${mpId}`,
+      );
+
       const inserted = result.insertedCount || 0;
       const updated = result.updatedCount || 0;
+
       console.log(
-        `✅ ${result.vendorName}: ${inserted} inserted, ${updated} updated`,
+        `✅ ${vendorConfig.vendorName}: ${inserted} inserted, ${updated} updated`,
       );
+
       totalInserted += inserted;
       totalUpdated += updated;
       successCount++;
+    } catch (error) {
+      console.error(
+        `❌ Failed to sync ${vendorConfig.vendorName} for MP ID ${mpId}:`,
+        error,
+      );
+      errorCount++;
     }
   }
 
   console.log(`\n${"=".repeat(60)}`);
+  console.log(`🎉 Sync Summary for MP ID ${mpId}:`);
   console.log(`📊 Overall Summary for MP ID ${mpId}:`);
   console.log(`✅ Successful syncs: ${successCount}/${vendorConfigs.length}`);
   console.log(`❌ Failed syncs: ${errorCount}/${vendorConfigs.length}`);
@@ -426,9 +438,14 @@ async function syncVendorSettingsForMpId(
         setting.SuppressPriceBreakForOne === 1,
       suppress_price_break: setting.SuppressPriceBreak === 1,
       compete_on_price_break_only: setting.BeatQPrice === 1,
-      up_down: setting.RepricingRule === 2 ? "UP/DOWN" : "DOWN",
+      up_down:
+        setting.RepricingRule === 2
+          ? AlgoPriceDirection.UP_DOWN
+          : AlgoPriceDirection.DOWN,
       badge_indicator:
-        setting.BadgeIndicator === "BADGE_ONLY" ? "BADGE" : "ALL",
+        setting.BadgeIndicator === "BADGE_ONLY"
+          ? AlgoBadgeIndicator.BADGE
+          : AlgoBadgeIndicator.ALL,
       execution_priority: setting.ExecutionPriority || 0,
       reprice_up_percentage: setting.PercentageIncrease || -1,
       compare_q2_with_q1: setting.CompareWithQ1 === 1,

@@ -39,4 +39,12 @@ export const apiMapping = [
     priceUpdateUrl: "http://134.122.47.37:3000/dashboard/updatePriceAsync",
     vendor: "TOPDENT",
   },
+  {
+    vendorId: "5",
+    apiUrl: "http://157.230.58.34:3000/help/ProductDetails/{mpid}",
+    activeListUrl:
+      "http://157.230.58.34:3000/masteritem/get_all_active_products",
+    priceUpdateUrl: "http://134.199.204.223:3000/dashboard/updatePriceAsync",
+    vendor: "TRIAD",
+  },
 ];

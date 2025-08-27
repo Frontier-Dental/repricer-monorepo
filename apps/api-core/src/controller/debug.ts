@@ -46,6 +46,11 @@ debugController.get(
       (productDetails as any).firstDentDetails.allowReprice = false;
       contextCronName = (productDetails as any).firstDentDetails.cronName;
     }
+    if (productDetails!.triadDetails) {
+      (productDetails as any).triadDetails.skipReprice = false;
+      (productDetails as any).triadDetails.allowReprice = false;
+      contextCronName = (productDetails as any).triadDetails.cronName;
+    }
     let cronSettingsResponse =
       await dbHelper.GetCronSettingsDetailsByName(contextCronName);
     if (
@@ -401,6 +406,10 @@ function getContextCronId(productDetails: any, vendorName: string) {
     case "FIRSTDENT":
       return productDetails.firstDentDetails
         ? productDetails.firstDentDetails.cronId
+        : null;
+    case "TRIAD":
+      return productDetails.triadDetails
+        ? productDetails.triadDetails.cronId
         : null;
     default:
       return null;

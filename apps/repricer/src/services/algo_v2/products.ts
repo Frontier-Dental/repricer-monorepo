@@ -14,30 +14,30 @@ export async function getAllProductDetails() {
     "pl.SlowCronId",
     "pl.IsSlowActivated",
     "pl.IsBadgeItem",
-    "pl.v2_algo_only",
+    "pl.algo_execution_mode",
   );
 
   return result;
 }
 
-export async function updateV2AlgoOnly(
+export async function updateAlgoExecutionMode(
   mpId: number,
-  v2AlgoOnly: boolean,
+  algoExecutionMode: string,
 ): Promise<number> {
   const db = getKnexInstance();
   const result = await db("table_scrapeProductList")
     .where("MpId", mpId)
-    .update({ v2_algo_only: v2AlgoOnly });
+    .update({ algo_execution_mode: algoExecutionMode });
 
   return result;
 }
 
-export async function getV2AlgoOnlyStatus(mpId: number): Promise<boolean> {
+export async function getAlgoExecutionMode(mpId: number): Promise<string> {
   const db = getKnexInstance();
   const result = await db("table_scrapeProductList")
-    .select("v2_algo_only")
+    .select("algo_execution_mode")
     .where("MpId", mpId)
     .first();
 
-  return result?.v2_algo_only || false;
+  return result.algo_execution_mode;
 }
