@@ -98,7 +98,17 @@
           <div class="form-group col-3">
             <label for="ownVendorThreshold" class="font-weight-bold">Own Vendor Threshold</label>
             <input type="number" class="form-control" value="<%= model.topDentDetails.ownVendorThreshold %>"
-              name="ownVendorThreshold" placeholder="Own Vendor Threshold" min="1" step="1" />
+              name="ownVendorThreshold" placeholder="Own Vendor Threshold" min="0" step="1" />
+          </div>
+          <div class="form-group col-3">
+            <label for="badgePercentageDown" class="font-weight-bold">Get BB - Shipping %</label>
+            <input type="number" class="form-control" value="<%= model.topDentDetails.getBBShippingValue %>"
+              name="getBBShippingValue" placeholder="Get BB - Shipping %" min="0" max="1" step="0.001" />
+          </div>
+          <div class="form-group col-3">
+            <label for="badgePercentageDown" class="font-weight-bold">Get BB - Badge %</label>
+            <input type="number" class="form-control" value="<%= model.topDentDetails.getBBBadgeValue %>" name="getBBBadgeValue"
+              placeholder="Get BB - Badge %" min="0" max="1" step="0.001" />
           </div>
         </div>
         <div class="row no-gutters">
@@ -217,6 +227,24 @@
             </label>
             <label for="" class="font-weight-bold">
               Ignore Phantom Q Break <span style="color: red;font-weight: bold;">*</span>
+            </label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="getBBShipping" <%=model.topDentDetails.getBBShipping==true ? 'checked' : '' %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">
+              Get BB - Shipping <span style="color: red;font-weight: bold;">*</span>
+            </label>
+          </div>
+          <div class="form-group col-3">
+            <label class="switch">
+              <input type="checkbox" name="getBBBadge" <%=model.topDentDetails.getBBBadge==true ? 'checked' : '' %> />
+              <span class="slider"></span>
+            </label>
+            <label for="" class="font-weight-bold">
+              Get BB - Badge <span style="color: red;font-weight: bold;">*</span>
             </label>
           </div>
         </div>

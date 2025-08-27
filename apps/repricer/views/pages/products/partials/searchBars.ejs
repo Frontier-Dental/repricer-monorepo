@@ -1,0 +1,16 @@
+<form method="GET" id="" action="show_all" class="">
+    <div class="row">
+        <%- include('./searchBarItem.ejs', { 
+            fieldName: 'mpid', 
+            fieldValue: typeof mpid !== 'undefined' ? mpid : '', 
+            placeholder: 'Search by MPID',
+            otherFieldName: 'channelId'
+        }) %>
+        <%- include('./searchBarItem.ejs', { 
+            fieldName: 'channelId', 
+            fieldValue: typeof channelId !== 'undefined' ? channelId : '', 
+            placeholder: 'Search by Channel ID',
+            otherFieldName: 'mpid'
+        }) %>
+    </div>
+</form>

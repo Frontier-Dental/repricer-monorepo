@@ -4,7 +4,7 @@
             <div class="page">
                 <div class="container-fluid"></div>
                 <div class="d-flex justify-content-between">
-                    <h1 class="commanHeading">Configure Scrape Cron <b>
+                    <h1 class="commanHeading">Configure Date Only Cron <b>
                         </b></h1>
                     <div class="d-flex">
                         <a onClick="edit()" class="btn btn-primary mx-1" name="btnEdit" style="color: white;"><i
@@ -25,7 +25,7 @@
                             <thead>
                                 <tr>
                                     <th style="display: none;">Cron Id</th>
-                                    <th>Scrape Cron Name</th>
+                                    <th>Data Only Cron Name</th>
                                     <th style="width: 135px;">Cron Unit</th>
                                     <th style="width: 100px;">Cron Interval</th>
                                     <th style="width: 100px;">Cron Offset</th>
@@ -75,7 +75,7 @@
                                                     placeholder="Offset" readonly />
                                             </td>
                                             <td>
-                                                <select class="form-select form-control" name="scr_proxy_provider" aria-label="Default select example" disabled>
+                                                <select class="form-select form-control" name="scr_proxy_provider" aria-label="Default select example" disabled title="<%= item.ProxyProvider_Name %>">
                                                     <% configItems.forEach(function(configItem) { %>
                                                         <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider === item.ProxyProvider ? "selected" : "" %>>
                                                             <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
@@ -84,7 +84,7 @@
                                                 </select>
                                             </td>
                                             <td>
-                                                <select class="form-select form-control" name="proxy_provider_1" aria-label="Default select example" disabled>
+                                                <select class="form-select form-control" name="proxy_provider_1" aria-label="Default select example" disabled title="<%= item.ProxyProvider_1_Name %>">
                                                     <% configItems.forEach(function(configItem) { %>
                                                         <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider === item.ProxyProvider_1 ? "selected" : "" %>>
                                                             <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
@@ -92,7 +92,7 @@
                                                     <% }); %>
                                                 </select>
                                                 <br />
-                                                <select class="form-select form-control" name="proxy_provider_2" aria-label="Default select example" disabled>
+                                                <select class="form-select form-control" name="proxy_provider_2" aria-label="Default select example" disabled title="<%= item.ProxyProvider_2_Name %>">
                                                     <% configItems.forEach(function(configItem) { %>
                                                         <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider === item.ProxyProvider_2 ? "selected" : "" %>>
                                                             <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
@@ -100,7 +100,7 @@
                                                     <% }); %>
                                                 </select>
                                                 <br />
-                                                <select class="form-select form-control" name="proxy_provider_3" aria-label="Default select example" disabled>
+                                                <select class="form-select form-control" name="proxy_provider_3" aria-label="Default select example" disabled title="<%= item.ProxyProvider_3_Name %>">
                                                     <% configItems.forEach(function(configItem) { %>
                                                         <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider === item.ProxyProvider_3 ? "selected" : "" %>>
                                                             <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
@@ -108,7 +108,7 @@
                                                     <% }); %>
                                                 </select>
                                                 <br />
-                                                <select class="form-select form-control" name="proxy_provider_4" aria-label="Default select example" disabled>
+                                                <select class="form-select form-control" name="proxy_provider_4" aria-label="Default select example" disabled title="<%= item.ProxyProvider_4_Name %>">
                                                     <% configItems.forEach(function(configItem) { %>
                                                         <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider === item.ProxyProvider_4 ? "selected" : "" %>>
                                                             <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
@@ -116,7 +116,7 @@
                                                     <% }); %>
                                                 </select>
                                                 <br />
-                                                <select class="form-select form-control" name="proxy_provider_5" aria-label="Default select example" disabled>
+                                                <select class="form-select form-control" name="proxy_provider_5" aria-label="Default select example" disabled title="<%= item.ProxyProvider_5_Name %>">
                                                     <% configItems.forEach(function(configItem) { %>
                                                         <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider === item.ProxyProvider_5 ? "selected" : "" %>>
                                                             <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
@@ -124,21 +124,15 @@
                                                     <% }); %>
                                                 </select>
                                                 <br />
-                                                <!-- <select class="form-select form-control" name="proxy_provider_6"
-                                                    aria-label="Default select example" disabled>
-                                                    <option <%=item.ProxyProvider_6==0 ? "selected" : "" %>
-                                                        value=0>ScrapingBee - Non-JS Rendering</option>
-                                                    <option <%=item.ProxyProvider_6==2 ? "selected" : "" %>
-                                                        value=2>Bright Data</option>
-                                                    <option <%=item.ProxyProvider_6==3 ? "selected" : "" %>
-                                                        value=3>SmartProxy - Web</option>
-                                                    <option <%=item.ProxyProvider_6==5 ? "selected" : "" %>
-                                                        value=5>ScrapingBee - JS Rendering</option>
-                                                    <option <%=item.ProxyProvider_6==11 ? "selected" : "" %>
-                                                        value=11>Smart Proxy - Rotating - AXIOS</option>
-                                                    <option <%=item.ProxyProvider_6==12 ? "selected" : "" %>
-                                                        value=12>Smart Proxy - Rotating - HTTP</option>
-                                                </select> -->
+                                                <select class="form-select form-control" name="proxy_provider_6" aria-label="Default select example" disabled title="<%= item.ProxyProvider_6_Name %>">
+                                                    <% configItems.forEach(function(configItem) { %>
+                                                        <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider===item.ProxyProvider_6 ? "selected"
+                                                            : "" %>>
+                                                            <%=configItem.proxyProviderName%>
+                                                                <%= configItem.method ? ' - ' + configItem.method : '' %>
+                                                        </option>
+                                                        <% }); %>
+                                                </select>
                                             </td>
                                             <td style="width:max-content">
                                                 <%= item.lastUpdatedBy %>

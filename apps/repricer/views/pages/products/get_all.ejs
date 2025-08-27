@@ -17,36 +17,20 @@
                                 <h1 class="commanHeading">Products</h1><span>( <%= (pageNumber * pageSize) + 1 %> - <%= Math.min((pageNumber * pageSize) +
                                     pageSize,totalDocs) %> / <%= totalDocs %> )</span>
                             </div>
-                            <form method="GET" id="" action="show_all" class="">
-                                <div class="row">
-                                    <div class="col form-group mx-sm-3 mb-2  ">
-                                        <input type="text" class="form-control" id="tags" name="tags"
-                                            value="<%= tags %>" placeholder="Search">
-                                        <button type="submit" name="search" value="true"
-                                            class="btn btn-primary mb-2 mr-2 nf-1">
-                                            <i class="fa-solid fa-magnifying-glass"></i>
-                                        </button>
-                                        <% if (tags !='' ) { %>
-                                            <a href="/productV2/show_all" class="close-btn ">
-                                                <i class="fa-solid fa-xmark"></i>
-                                             </a>
-                                        <% } %>
-                                    </div>
-                                </div>
-                            </form>
+                            <%- include('./partials/searchBars.ejs', { mpid: typeof mpid !== 'undefined' ? mpid : '', channelId: typeof channelId !== 'undefined' ? channelId : '' }) %>
                               <!-- pagination-->  
                               <div
-                              class="card border-0 flex-column justify-content-between track-ccard-b bg-transparent">
-                              <div md="" class="mt-4 text-center">
+                              class="card border-0 flex-column justify-content-between track-ccard-b bg-transparent" style="margin-left: 25px;">
+                              <div md="" class="mt-1 text-center">
                                   <nav aria-label="" class="">
                                       <ul class="pagination  justify-content-center">
                                           <li class="page-item ">
-                                              <a href="/productV2/show_all?pgno=1&tags=<%= tags %>"><button
+                                              <a href="/productV2/show_all?pgno=1&mpid=<%= typeof mpid !== 'undefined' ? mpid : '' %>&channelId=<%= typeof channelId !== 'undefined' ? channelId : '' %>"><button
                                                       class="btn tracknumlisting-pagination-button">&laquo;</button></a>
                                           </li>
                                           <li class="page-item ">
                                               <a
-                                                  href="/productV2/show_all?pgno=<%= Math.max(1, pageNumber) %>&tags=<%= tags %>"><button
+                                                  href="/productV2/show_all?pgno=<%= Math.max(1, pageNumber) %>&mpid=<%= typeof mpid !== 'undefined' ? mpid : '' %>&channelId=<%= typeof channelId !== 'undefined' ? channelId : '' %>"><button
                                                       class="btn tracknumlisting-pagination-button">Previous</button></a>
                                           </li>
                                           <% pages.slice(upVal, lowVal).map(pg=> {
@@ -54,7 +38,7 @@
                                               %>
                                               <li class="page-item ">
                                                   <a
-                                                      href="/productV2/show_all?pgno=<%= (pg + 1) %>&tags=<%= tags %>"><button
+                                                      href="/productV2/show_all?pgno=<%= (pg + 1) %>&mpid=<%= typeof mpid !== 'undefined' ? mpid : '' %>&channelId=<%= typeof channelId !== 'undefined' ? channelId : '' %>"><button
                                                           class="btn tracknumlisting-pagination-button <%- active %>">
                                                           <%= (pg + 1) %>
                                                       </button></a>
@@ -64,12 +48,12 @@
                                               <% }) %>
                                                   <li class="page-item ">
                                                       <a
-                                                          href="/productV2/show_all?pgno=<%= Math.min(totalPages, Number(pageNumber) + 2) %>&tags=<%= tags %>"><button
+                                                          href="/productV2/show_all?pgno=<%= Math.min(totalPages, Number(pageNumber) + 2) %>&mpid=<%= typeof mpid !== 'undefined' ? mpid : '' %>&channelId=<%= typeof channelId !== 'undefined' ? channelId : '' %>"><button
                                                               class="btn tracknumlisting-pagination-button">Next</button></a>
                                                   </li>
                                                   <li class="page-item">
                                                       <a
-                                                          href="/productV2/show_all?pgno=<%= totalPages %>&tags=<%= tags %>"><button
+                                                          href="/productV2/show_all?pgno=<%= totalPages %>&mpid=<%= typeof mpid !== 'undefined' ? mpid : '' %>&channelId=<%= typeof channelId !== 'undefined' ? channelId : '' %>"><button
                                                               class="btn tracknumlisting-pagination-button">&raquo;</button></a>
                                                   </li>
                                       </ul>
@@ -78,7 +62,8 @@
                           </div>
                             </div>
                             <div class="d-flex btns-ht">
-                                <% if (tags==='' ) { %>
+                                <% let hasSearch = (typeof mpid !== 'undefined' && mpid !== '') || (typeof channelId !== 'undefined' && channelId !== ''); %>
+                                <% if (!hasSearch) { %>
                                     <!-- <a href="/masteritem/runAllCron" class="btn btn-success mx-1">-->
                                         <!-- <i class="fa-solid fa-play"></i>  -->
                                     <!--  Run Cron</a> -->
@@ -88,7 +73,7 @@
                                             <input type="hidden" class="form-control" id="mpIds" name="mpIds" value="<%= item.mpid %>" />
                                             <% }); %>
                                         </div>
-                                        <button type="submit" class="btn btn-warning text-white mx-1" onClick="runManualScrape(false, false)">Manual Scrape</button>
+                                        <button type="submit" class="btn btn-warning text-white mx-1" onClick="runManualScrape(false)">Manual Scrape</button>
                                         <button type="submit" class="btn btn-success text-white mx-1" onClick="runUpdateToMax()">Update to Max</button>
                                         <% } %>
                                             <!-- <a href="/masteritem/resetCron" class="btn btn-dark mx-1">-->
@@ -156,12 +141,14 @@
                             </div>
                         </form>
 
-                        <div class="card mt-4">
+                        <%- include('./partials/updateQuantityModal.ejs') %>
+
+                        <div class="card mt-4" style="overflow-x: auto;width: 100%;">
                          
                             <% if(items.length===0) { %>
                                 <div class="m-2">No items found !</div>
                                 <% } else { %>
-                                    <div class="body table-responsive">
+                                    <!-- <div class="body table-responsive "> -->
                                         <table id="example" class="table table-striped table-bordered"
                                             style="width: auto;">
                                             <thead class="table-primary">
@@ -189,7 +176,7 @@
                                                     <th class="t-head long-txt">Apply Buy Box</th>
                                                     <th class="t-head long-txt">Apply NC For Buy Box</th>
                                                     <th class="t-head">Triggered By Vendor</th>
-                                                    
+                                                    <th class="t-head">Result</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -208,6 +195,8 @@
                                                                 <a onclick="syncProductItem('<%= item.mpid%>');"><i class="fas fa-sync-alt" style="cursor: pointer;color: red;"></i></a>
                                                                 &nbsp;<br>
                                                                 <a onclick="removeFrom422ById('<%= item.mpid%>');"><i class="fas fa-bell" style="cursor: pointer;color: red;"></i></a>
+                                                                &nbsp;<br>
+                                                                <a onclick="updateProductQuantity('<%= item.mpid%>');"><i class="fas fa-sort-amount-up" style="cursor: pointer;"></i></a>
                                                         </td>
                                                         <td>
                                                             <span class="tr-row">
@@ -250,6 +239,15 @@
                                                                                                                 <% } else { %>
                                                                                                                     <b>TOP:</b><br>
                                                                                                                     <%= item.topDent.channelName %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.channelName %>
                                                                                                                         <% } %>
                                                                                                         </span>
                                                                                                            
@@ -298,7 +296,17 @@
                                                                                                                                                                                                     <b>TOP:</b><br>
                                                                                                                                                                                                     <%= (item.topDent.activated).toString().slice(0,1).toUpperCase() %>
                                                                                                                                                                                                         <% } %>
-                                                                                                                                                                                        </span>                                                                                                                 </span>
+                                                                                                                                                                                        </span>
+                                                                                                                                                                                        <hr>
+                                                                                                                                                                                        <span class="car-row">
+                                                                                                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                                                                                                <% } else { %>
+                                                                                                                                                                                                    <b>CAR:</b><br>
+                                                                                                                                                                                                    <%= (item.triad.activated).toString().slice(0,1).toUpperCase() %>
+                                                                                                                                                                                                        <% } %>
+                                                                                                                                                                                        </span>
+                                                                                                        <br>
                                                                                                         <br>
                                                                                                         <!-- <a class="btn btn-success mb-2 mr-2 active-btn" style="float: right;color: antiquewhite;" title="Activate All"> 
                                                                                                             <i onClick="activateProductForAll('<%= item.mpid%> ')" class="fa-solid fa-floppy-disk"></i>
@@ -336,6 +344,13 @@
                                                                                                                                     <br>
                                                                                                                                     <br>
                                                                                                                                     <br><br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
+                                                                                                                                    <br>
                                                                                                                                     <br>
                                                                                                                                     
                                                                                                                                     <div class="act-deact-btn" style="margin-top: 3px;">
@@ -392,6 +407,15 @@
                                                                                                                     <%= item.topDent.channelId %>
                                                                                                                         <% } %>
                                                                                                         </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row tr-cwid">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.channelId %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
                                                         </td>
                                                         <td>
                                                             <%= item.cronName %>
@@ -442,6 +466,15 @@
                                                                                                                     <%= item.topDent.lastCronTime %>
                                                                                                                         <% } %>
                                                                                                         </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row tr-wid">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.lastCronTime %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
                                                         </td>
                                                         <td>
                                                             <span class="tr-row tr-wid">
@@ -484,6 +517,15 @@
                                                                                                                 <% } else { %>
                                                                                                                     <b>TOP:</b><br>
                                                                                                                     <%= item.topDent.lastCronRun %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row tr-wid">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.lastCronRun %>
                                                                                                                         <% } %>
                                                                                                         </span>
                                                         </td>
@@ -530,6 +572,15 @@
                                                                                                                     <%= item.topDent.lastUpdateTime %>
                                                                                                                         <% } %>
                                                                                                         </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row tr-wid">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.lastUpdateTime %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
                                                         </td>
                                                         <td>
                                                             <span class="tr-row">
@@ -572,6 +623,15 @@
                                                                                                                 <% } else { %>
                                                                                                                     <b>TOP:</b><br>
                                                                                                                     <%= item.topDent.lastUpdatedBy %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.lastUpdatedBy %>
                                                                                                                         <% } %>
                                                                                                         </span>
                                                         </td>
@@ -622,6 +682,16 @@
                                                                                                                             <% } %>
                                                                                                                     </span>
                                                                                                         </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %> <span class="tr-mwid">
+                                                                                                                        <b>CAR:</b><br>
+                                                                                                                        <%= item.triad.last_cron_message %>
+                                                                                                                            <% } %>
+                                                                                                                    </span>
+                                                                                                        </span>
                                                         </td>
                                                         <td>
                                                             <span class="tr-row tr-cwid">
@@ -666,6 +736,15 @@
                                                                     <% } else { %>
                                                                         <b>TOP:</b><br>
                                                                         <%= item.topDent.lastSuggestedPrice %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="car-row tr-cwid">
+                                                                <% if(item.triad==null){ %>
+                                                                    <b>CAR:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>CAR:</b><br>
+                                                                        <%= item.triad.lastSuggestedPrice %>
                                                                             <% } %>
                                                             </span>
                                                         </td>
@@ -715,6 +794,16 @@
                                                                                                                         item.topDent.lowest_vendor_price %>
                                                                                                                         <% } %>
                                                                                                         </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.lowest_vendor_price ? (item.triad.lowest_vendor_price).toString().replace(/ \//g,",") :
+                                                                                                                        item.triad.lowest_vendor_price %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
                                                         </td>
                                                         <td>
                                                             <span class="tr-row">
@@ -757,6 +846,15 @@
                                                                                                                 <% } else { %>
                                                                                                                     <b>TOP:</b><br>
                                                                                                                     <%= item.topDent.unitPrice %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.unitPrice %>
                                                                                                                         <% } %>
                                                                                                         </span>
                                                         </td>
@@ -803,6 +901,15 @@
                                                                                                                     <%= item.topDent.floorPrice %>
                                                                                                                         <% } %>
                                                                                                         </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.floorPrice %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
                                                         </td>
                                                         <td>
                                                             <span class="tr-row">
@@ -845,6 +952,15 @@
                                                                                                                 <% } else { %>
                                                                                                                     <b>TOP:</b><br>
                                                                                                                     <%= item.topDent.maxPrice %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.maxPrice %>
                                                                                                                         <% } %>
                                                                                                         </span>
                                                         </td>
@@ -902,6 +1018,17 @@
                                                                                                                     </span>
                                                                                                                     <% } %>
                                                                                                         </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <span title="<%= item.triad.is_nc_needed.toString().toUpperCase() %>">
+                                                                                                                        <%= (item.triad.is_nc_needed).toString().slice(0,1).toUpperCase() %>
+                                                                                                                    </span>
+                                                                                                                    <% } %>
+                                                                                                        </span>
                                                         </td>
                                                         <td>
                                                             <span class="tr-row tr-cwid">
@@ -944,6 +1071,15 @@
                                                                                                                 <% } else { %>
                                                                                                                     <b>TOP:</b><br>
                                                                                                                     <%= item.topDent.suppressPriceBreakForOne==true ? "On" : "Off" %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row tr-cwid">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.suppressPriceBreakForOne==true ? "On" : "Off" %>
                                                                                                                         <% } %>
                                                                                                         </span>
                                                         </td>
@@ -990,6 +1126,15 @@
                                                                     <% } else { %>
                                                                         <b>TOP:</b><br>
                                                                         <%= item.topDent.applyBuyBoxLogic==true ? "On" : "Off" %>
+                                                                            <% } %>
+                                                            </span>
+                                                            <hr>
+                                                            <span class="car-row tr-cwid">
+                                                                <% if(item.triad==null){ %>
+                                                                    <b>CAR:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>CAR:</b><br>
+                                                                        <%= item.triad.applyBuyBoxLogic==true ? "On" : "Off" %>
                                                                             <% } %>
                                                             </span>
                                                         </td>
@@ -1039,6 +1184,15 @@
                                                                         <%= item.topDent.applyNcForBuyBox==true ? "On" : "Off" %>
                                                                             <% } %>
                                                             </span>
+                                                            <hr>
+                                                            <span class="car-row tr-cwid">
+                                                                <% if(item.triad==null){ %>
+                                                                    <b>CAR:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>CAR:</b><br>
+                                                                        <%= item.triad.applyNcForBuyBox==true ? "On" : "Off" %>
+                                                                            <% } %>
+                                                            </span>
                                                         </td>
                                                         <td>
                                                             <span class="tr-row tr-cwid">
@@ -1085,14 +1239,79 @@
                                                                         <%= item.topDent.triggeredByVendor %>
                                                                             <% } %>
                                                             </span>
+                                                            <hr>
+                                                            <span class="car-row tr-cwid">
+                                                                <% if(item.triad==null){ %>
+                                                                    <b>CAR:</b> <br>N/A
+                                                                    <% } else { %>
+                                                                        <b>CAR:</b><br>
+                                                                        <%= item.triad.triggeredByVendor %>
+                                                                            <% } %>
+                                                            </span>
                                                         </td>
-                                                        
+                                                                                                                <td>
+                                                                                                                    <span class="tr-row">
+                                                                                                                        <% if(item.tradent==null){ %>
+                                                                                                                            <b>TRA:</b> <br>N/A
+                                                                                                                            <% } else { %>
+                                                                                                                                <b>TRA:</b><br>
+                                                                                                                                <%= item.tradent.repriceResult %>
+                                                                                                                                    <% } %>
+                                                                                                                    </span>
+                                                                                                                    <hr>
+                                                                                                                    <span class="fr-row">
+                                                                                                                        <% if(item.frontier==null){ %>
+                                                                                                                            <b>FRO:</b> <br>N/A
+                                                                                                                            <% } else { %>
+                                                                                                                                <b>FRO:</b><br>
+                                                                                                                                <%= item.frontier.repriceResult %>
+                                                                                                                                    <% } %>
+                                                                                                                    </span>
+                                                                                                                    <hr>
+                                                                                                                    <span class="mvp-row">
+                                                                                                                        <% if(item.mvp==null){ %>
+                                                                                                                            <b>MVP:</b> <br>N/A
+                                                                                                                            <% } else { %>
+                                                                                                                                <b>MVP:</b><br>
+                                                                                                                                <%= item.mvp.repriceResult %>
+                                                                                                                                    <% } %>
+                                                                                                                    </span>
+                                                                                                                    <hr>
+                                                                                                                    <span class="fir-row">
+                                                                                                                        <% if(item.firstDent==null){ %>
+                                                                                                                            <b>FIR:</b> <br>N/A
+                                                                                                                            <% } else { %>
+                                                                                                                                <b>FIR:</b><br>
+                                                                                                                                <%= item.firstDent.repriceResult %>
+                                                                                                                                    <% } %>
+                                                                                                                    </span>
+                                                                                                                    <hr>
+                                                                                                                    <span class="top-row">
+                                                                                                                        <% if(item.topDent==null){ %>
+                                                                                                                            <b>TOP:</b> <br>N/A
+                                                                                                                            <% } else { %>
+                                                                                                                                <b>TOP:</b><br>
+                                                                                                                                <%= item.topDent.repriceResult %>
+                                                                                                                                    <% } %>
+                                                                                                                    </span>
+                                                                                                                    <hr>
+                                                                                                                    <span class="car-row">
+                                                                                                                        <% if(item.triad==null){ %>
+                                                                                                                            <b>CAR:</b> <br>N/A
+                                                                                                                            <% } else { %>
+                                                                                                                                <b>CAR:</b><br>
+                                                                                                                                <%= item.triad.repriceResult %>
+                                                                                                                                    <% } %>
+                                                                                                                    </span>
+                                                                                                                
+                                                                                                                
+                                                                                                                </td>
                                                     </tr>
                                                     <% }); %>
                                             </tbody>
                                         </table>
                                         <% } %>
-                                    </div>
+                                    <!-- </div> -->
 
                                     
 
@@ -1222,13 +1441,22 @@
                         .table th, .table td {
                             padding: .4rem;
                         }
-                        .tr-row ,.fr-row, .mvp-row,.fir-row,.top-row{
+                        .tr-row ,.fr-row, .mvp-row,.fir-row,.top-row,.car-row{
                             height: 75px !important;
                             display: inline-block;
                             font-size: 12px;
                         }
                         .mx-1 {
                             margin-right: 0px !important;
+                        }
+                        /* Hide number input spinners */
+                        .vendor-quantity::-webkit-inner-spin-button,
+                        .vendor-quantity::-webkit-outer-spin-button {
+                            -webkit-appearance: none;
+                            margin: 0;
+                        }
+                        .vendor-quantity {
+                            -moz-appearance: textfield;
                         }
                     </style>
 

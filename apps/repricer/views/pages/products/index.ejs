@@ -144,9 +144,9 @@
               <a onClick="cancelProductEdit()" class="btn btn-danger mb-2 mr-2"
                 style="float: right;color: antiquewhite;"><i class="fa-solid fa-xmark"></i>
                 Cancel</a>
-              <a onClick="runManualScrape(true, false)" class="btn btn-warning mb-2 mr-2"
+              <a onClick="runManualScrape(true)" class="btn btn-warning mb-2 mr-2"
                 style="float: right;color: antiquewhite;"><i class="fa-solid fa-pen-nib"></i>
-                Manual Reprice</a>
+                Manual Scrape</a>
               <a onClick="removeFrom422()" class="btn btn-primary mb-2 mr-2"
                 style="float: right;color: antiquewhite;"><i class="fa-solid fa-bell"></i>
                 Remove From 422</a>
@@ -194,7 +194,7 @@
             </div>
             <div class="col-md-3 form-group">
               <label for="scrapeOnlyCron" class="font-weight-bold">
-                Scrape Only Cron Name<span style="color: red;font-weight: bold;">*</span>
+                Data Only Cron Name<span style="color: red;font-weight: bold;">*</span>
               </label>
               <select class="form-select form-control" name="scrapeOnlyCron" aria-label="Default select example">
                 <% model.scrapeOnlyCrons.forEach(function (list) { %>
@@ -728,6 +728,105 @@
             <%- include('partials/topdent.ejs') %>
           </div>
           <!-- Topdent details end -->
+          <!-- Triad details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">TRIAD DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <% if (model.triadDetails==null) { %>
+                  <label for="" class="no-data-check">No Data</label>
+                  <label class="switch">
+                    <input type="checkbox" name="insertNullData" id="checkData_triad" checked disabled />
+                    <span class="slider"></span>
+                  </label>
+                  <% } else { %>
+                    <a onClick="saveBranches('<%= model.mpId%> ')" class="btn btn-primary mb-2 mr-2"
+                      style="float: right;color: antiquewhite;"><i class="fa-solid fa-floppy-disk"></i>
+                      Save</a>
+                    <% } %>
+              </div>
+            </div>
+            <% if (model.triadDetails) { %>
+              <div class="row no-gutters" id="triad_data">
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="triad_activated" <%=model.triadDetails.activated=='true' ||
+                      model.triadDetails.activated===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="" class="font-weight-bold">Active - Repricer</label>
+                </div>
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="triad_is_nc_needed" <%=model.triadDetails.is_nc_needed=='true' ||
+                      model.triadDetails.is_nc_needed===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="" class="font-weight-bold">
+                    NC (On/Off) <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                </div>
+                <div class="col-md-6"></div>
+                <div class="col">
+                  <label for="triad_channel_Id" class="font-weight-bold">
+                    Channel ID <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="text" class="form-control" value="<%= model.triadDetails.channelId %>"
+                    name="triad_channel_Id" placeholder="Channel ID" />
+                </div>
+                <div class="col-3">
+                  <label for="triad_badgeIndicator" class="font-weight-bold">Badge Indicator</label>
+                  <select class="form-select form-control" name="triad_badgeIndicator"
+                    aria-label="Default select example" onchange="enablePercentageData(this)">
+                    <option <%=model.triadDetails.badgeIndicator=='ALL_ZERO' ? "selected" : "" %>
+                      value='ALL_ZERO'>Compete all - Regular</option>
+                    <option <%=model.triadDetails.badgeIndicator=='ALL_PERCENTAGE' ? "selected" : "" %>
+                      value='ALL_PERCENTAGE'>Compete with all - Percentage</option>
+                    <option <%=model.triadDetails.badgeIndicator=='BADGE_ONLY' ? "selected" : "" %>
+                      value='BADGE_ONLY'>Compete with Authorized Distributors only</option>
+                    <option <%=model.triadDetails.badgeIndicator=='NON_BADGE_ONLY' ? "selected" : "" %>
+                      value='NON_BADGE_ONLY'>Compete with Non-Authorized Distributors only</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="triad_repricingRule" class="font-weight-bold">Up/Down</label>
+                  <select class="form-select form-control" name="triad_reprice_rule_select"
+                    aria-label="Default select example">
+                    <option <%=model.triadDetails.repricingRule==-1 ? "selected" : "" %> value=-1>-- Please Select --
+                    </option>
+                    <option <%=model.triadDetails.repricingRule==0 ? "selected" : "" %> value=0>Only Up</option>
+                    <option <%=model.triadDetails.repricingRule==1 ? "selected" : "" %> value=1>Only Down</option>
+                    <option <%=model.triadDetails.repricingRule==2 ? "selected" : "" %> value=2>Both</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="triad_floor_price" class="font-weight-bold">
+                    Floor Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" value="<%= model.triadDetails.floorPrice %>"
+                    name="triad_floor_price" placeholder="Floor Price" />
+                </div>
+                <div class="col">
+                  <label for="triad_max_price" class="font-weight-bold">Max Price</label>
+                  <input type="number" class="form-control" value="<%= model.triadDetails.maxPrice %>"
+                    name="triad_max_price" placeholder="Max Price" />
+                </div>
+                <div class="col">
+                  <label for="triad_unit_price" class="font-weight-bold">
+                    Unit Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" name="triad_unit_price" placeholder="Unit Price"
+                    value="<%= model.triadDetails.unitPrice %>" />
+                </div>
+              </div>
+              <% } %>
+          </div>
+          <div class="panel">
+            <%- include('partials/triad.ejs') %>
+          </div>
+          <!-- Triad details end -->
         </div>
       </div>
     </body>
