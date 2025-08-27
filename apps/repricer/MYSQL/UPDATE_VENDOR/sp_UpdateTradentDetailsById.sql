@@ -59,7 +59,11 @@ CREATE PROCEDURE sp_UpdateTradentDetailsById (
   IN _badgeDown decimal(5, 3),
   IN _competeWithNext boolean,
   IN _ignorePhantomBreak boolean,
-  IN _ownVendorThreshold int
+  IN _ownVendorThreshold int,
+  IN _getBBBadge boolean,
+  IN _getBBShipping boolean,
+  IN _getBBBadgeValue decimal(5, 3),
+  IN _getBBShippingValue decimal(5, 3)
 ) BEGIN
 select
   *
@@ -124,7 +128,11 @@ set
   BadgePercentageDown = _badgeDown,
   CompeteWithNext = _competeWithNext,
   IgnorePhantomBreak = _ignorePhantomBreak,
-  OwnVendorThreshold = _ownVendorThreshold
+  OwnVendorThreshold = _ownVendorThreshold,
+  GetBBBadge = _getBBBadge,
+  GetBBShipping = _getBBShipping,
+  GetBBBadgeValue = _getBBBadgeValue,
+  GetBBShippingValue = _getBBShippingValue
 where
   MpId = _mpid;
 

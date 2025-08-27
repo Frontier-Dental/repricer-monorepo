@@ -1,9 +1,9 @@
 use repricerDb;
 
-DROP PROCEDURE IF EXISTS sp_UpsertFrontierDetails;
+DROP PROCEDURE IF EXISTS sp_UpsertFirstDentDetails;
 
 delimiter / /
-CREATE PROCEDURE sp_UpsertFrontierDetails (
+CREATE PROCEDURE sp_UpsertFirstDentDetails (
   IN mpid int,
   IN channelname varchar(50),
   IN scrapeon boolean,
@@ -59,8 +59,12 @@ CREATE PROCEDURE sp_UpsertFrontierDetails (
   IN _repriceDown decimal(5, 3),
   IN _badgeDown decimal(5, 3),
   IN competeWithNext boolean,
-  IN ignorePhantomBreak boolean,
-  IN ownVendorThreshold int
+  IN _ignorePhantomBreak boolean,
+  IN ownVendorThreshold int,
+  IN getBBBadge boolean,
+  IN getBBShipping boolean,
+  IN getBBBadgeValue decimal(5, 3),
+  IN getBBShippingValue decimal(5, 3)
 ) BEGIN DECLARE EXIT
 HANDLER FOR SQLEXCEPTION BEGIN
 -- Rollback the transaction if an error occurs
@@ -70,12 +74,8 @@ END;
 
 START TRANSACTION;
 
-DELETE FROM table_frontierDetails
-where
-  MpId = mpid;
-
 INSERT INTO
-  table_frontierDetails (
+  table_firstDentDetails (
     MpId,
     ChannelName,
     ScrapeOn,
@@ -132,7 +132,11 @@ INSERT INTO
     BadgePercentageDown,
     CompeteWithNext,
     IgnorePhantomBreak,
-    ownVendorThreshold
+    OwnVendorThreshold,
+    GetBBBadge,
+    GetBBShipping,
+    GetBBBadgeValue,
+    GetBBShippingValue
   )
 values
   (
@@ -191,8 +195,12 @@ values
     _repriceDown,
     _badgeDown,
     competeWithNext,
-    ignorePhantomBreak,
-    ownVendorThreshold
+    _ignorePhantomBreak,
+    ownVendorThreshold,
+    getBBBadge,
+    getBBShipping,
+    getBBBadgeValue,
+    getBBShippingValue
   );
 
 SELECT

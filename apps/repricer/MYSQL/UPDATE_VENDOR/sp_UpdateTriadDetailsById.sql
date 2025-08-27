@@ -1,9 +1,9 @@
 use repricerDb;
 
-DROP PROCEDURE IF EXISTS sp_UpdateTopDentDetailsById;
+DROP PROCEDURE IF EXISTS sp_UpdateTriadDetailsById;
 
 delimiter / /
-CREATE PROCEDURE sp_UpdateTopDentDetailsById (
+CREATE PROCEDURE sp_UpdateTriadDetailsById (
   IN _mpid int,
   IN _channelname varchar(50),
   IN _scrapeon boolean,
@@ -58,16 +58,21 @@ CREATE PROCEDURE sp_UpdateTopDentDetailsById (
   IN _repriceDown decimal(5, 3),
   IN _badgeDown decimal(5, 3),
   IN _competeWithNext boolean,
-  IN _ignorePhantomBreak boolean
+  IN _ignorePhantomBreak boolean,
+  IN _ownVendorThreshold int,
+  IN _getBBBadge boolean,
+  IN _getBBShipping boolean,
+  IN _getBBBadgeValue decimal(5, 3),
+  IN _getBBShippingValue decimal(5, 3)
 ) BEGIN
 select
   *
 from
-  table_topDentDetails
+  table_triadDetails
 where
   MpId = _mpid;
 
-Update table_topDentDetails
+Update table_triadDetails
 set
   ChannelName = _channelname,
   ScrapeOn = _scrapeon,
@@ -122,7 +127,12 @@ set
   PercentageDown = _repriceDown,
   BadgePercentageDown = _badgeDown,
   CompeteWithNext = _competeWithNext,
-  IgnorePhantomBreak = _ignorePhantomBreak
+  IgnorePhantomBreak = _ignorePhantomBreak,
+  OwnVendorThreshold = _ownVendorThreshold,
+  GetBBBadge = _getBBBadge,
+  GetBBShipping = _getBBShipping,
+  GetBBBadgeValue = _getBBBadgeValue,
+  GetBBShippingValue = _getBBShippingValue
 where
   MpId = _mpid;
 

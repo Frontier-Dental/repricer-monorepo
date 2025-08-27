@@ -1,9 +1,9 @@
 use repricerDb;
 
-DROP PROCEDURE IF EXISTS sp_UpsertMvpDetails;
+DROP PROCEDURE IF EXISTS sp_UpsertTradentDetails;
 
 delimiter / /
-CREATE PROCEDURE sp_UpsertMvpDetails (
+CREATE PROCEDURE sp_UpsertTradentDetails (
   IN mpid int,
   IN channelname varchar(50),
   IN scrapeon boolean,
@@ -51,16 +51,20 @@ CREATE PROCEDURE sp_UpsertMvpDetails (
   IN executionpriority int,
   IN applybuyboxlogic boolean,
   IN applyncforbuybox boolean,
-  IN sisterVendorId VARCHAR(255),
-  IN handlingTimeFilter VARCHAR(50),
+  IN sisterVendorId varchar(255),
+  IN handlingTimeFilter varchar(50),
   IN keepPosition boolean,
   IN excludedVendors VARCHAR(255),
   IN inventoryThreshold int,
   IN _repriceDown decimal(5, 3),
   IN _badgeDown decimal(5, 3),
   IN competeWithNext boolean,
-  IN ignorePhantomBreak boolean,
-  IN ownVendorThreshold int
+  IN ignorePhantomQBreak boolean,
+  IN ownVendorThreshold int,
+  IN bbBadge boolean,
+  IN bbShipping boolean,
+  IN getBBBadgeValue decimal(5, 3),
+  IN getBBShippingValue decimal(5, 3)
 ) BEGIN DECLARE EXIT
 HANDLER FOR SQLEXCEPTION BEGIN
 -- Rollback the transaction if an error occurs
@@ -70,12 +74,8 @@ END;
 
 START TRANSACTION;
 
-DELETE FROM table_mvpDetails
-where
-  MpId = mpid;
-
 INSERT INTO
-  table_mvpDetails (
+  table_tradentDetails (
     MpId,
     ChannelName,
     ScrapeOn,
@@ -132,7 +132,11 @@ INSERT INTO
     BadgePercentageDown,
     CompeteWithNext,
     IgnorePhantomBreak,
-    OwnVendorThreshold
+    OwnVendorThreshold,
+    GetBBBadge,
+    GetBBShipping,
+    GetBBBadgeValue,
+    GetBBShippingValue
   )
 values
   (
@@ -191,8 +195,12 @@ values
     _repriceDown,
     _badgeDown,
     competeWithNext,
-    ignorePhantomBreak,
-    ownVendorThreshold
+    ignorePhantomQBreak,
+    ownVendorThreshold,
+    bbBadge,
+    bbShipping,
+    getBBBadgeValue,
+    getBBShippingValue
   );
 
 SELECT
