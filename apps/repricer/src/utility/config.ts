@@ -127,8 +127,10 @@ export const envSchema = z.object({
     .default(false),
   SQL_SP_UPDATE_FIRSTDENT: z.string().default("sp_UpdateFirstDentDetailsById"),
   SQL_SP_UPDATE_TOPDENT: z.string().default("sp_UpdateTopDentDetailsById"),
+  SQL_SP_UPDATE_TRIAD: z.string().default("sp_UpdateTriadDetailsById"),
   SQL_SP_UPSERT_TOPDENT: z.string().default("sp_UpsertTopDentDetails"),
   SQL_SP_UPSERT_FIRSTDENT: z.string().default("sp_UpsertFirstDentDetails"),
+  SQL_SP_UPSERT_TRIAD: z.string().default("sp_UpsertTriadDetails"),
   SQL_SP_UPSERT_PRODUCT_DETAILSV3: z
     .string()
     .default("sp_UpsertProductDetailsV3"),

@@ -123,16 +123,31 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
     case "FIRSTDENT":
       contextSpName = applicationConfig.SQL_SP_UPSERT_FIRSTDENT;
       break;
+    case "TRIAD":
+      contextSpName = applicationConfig.SQL_SP_UPSERT_TRIAD;
+      break;
     default:
       break;
   }
-  if (!payload.inventoryThreshold) {
+  if (
+    !payload.inventoryThreshold ||
+    payload.inventoryThreshold == null ||
+    payload.inventoryThreshold == ""
+  ) {
     payload.inventoryThreshold = 0;
   }
-  if (!payload.percentageDown) {
+  if (
+    !payload.percentageDown ||
+    payload.percentageDown == null ||
+    payload.percentageDown == ""
+  ) {
     payload.percentageDown = 0;
   }
-  if (!payload.badgePercentageDown) {
+  if (
+    !payload.badgePercentageDown ||
+    payload.badgePercentageDown == null ||
+    payload.badgePercentageDown == ""
+  ) {
     payload.badgePercentageDown = 0;
   }
   if (
@@ -147,10 +162,38 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
   ) {
     payload.ignorePhantomQBreak = true;
   }
-  if (!payload.ownVendorThreshold) {
+  if (
+    payload.ownVendorThreshold === undefined ||
+    payload.ownVendorThreshold === null ||
+    payload.ownVendorThreshold === ""
+  ) {
     payload.ownVendorThreshold = 1;
   }
-  const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+  if (typeof payload.getBBBadge == "undefined" || payload.getBBBadge == null) {
+    payload.getBBBadge = true;
+  }
+  if (
+    typeof payload.getBBShipping == "undefined" ||
+    payload.getBBShipping == null
+  ) {
+    payload.getBBShipping = true;
+  }
+  if (
+    payload.getBBBadgeValue === undefined ||
+    payload.getBBBadgeValue === null ||
+    payload.getBBBadgeValue === ""
+  ) {
+    payload.getBBBadgeValue = 0.1;
+  }
+  if (
+    payload.getBBShippingValue === undefined ||
+    payload.getBBShippingValue === null ||
+    payload.getBBShippingValue === ""
+  ) {
+    payload.getBBShippingValue = 0.005;
+  }
+
+  const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
   var [rows] = await db.query(queryToCall, [
     parseInt(payload.mpid),
     payload.channelName,
@@ -209,6 +252,10 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
     payload.competeWithNext,
     payload.ignorePhantomQBreak,
     parseInt(payload.ownVendorThreshold),
+    payload.getBBBadge,
+    payload.getBBShipping,
+    parseFloat(payload.getBBBadgeValue),
+    parseFloat(payload.getBBShippingValue),
   ]);
   if (rows != null && (rows as any)[0] != null) {
     upsertResult = (rows as any)[0][0];
@@ -221,7 +268,12 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
 export async function UpsertProductDetailsV2(payload: any) {
   let upsertResult: any = null;
   const db = await SqlConnectionPool.getConnection();
-  const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+  const queryToCall = `CALL ${process.env.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+  const slowCronId =
+    payload.IsSlowActivated == true ? payload.SlowCronId : null;
+  const slowCronName =
+    payload.IsSlowActivated == true ? payload.SlowCronName : null;
+
   upsertResult = await db.query(queryToCall, [
     payload.MpId,
     payload.IsActive,
@@ -233,12 +285,12 @@ export async function UpsertProductDetailsV2(payload: any) {
     payload.ProductName,
     payload.RegularCronName,
     payload.RegularCronId,
-    payload.SlowCronName,
-    payload.SlowCronId,
+    slowCronName,
+    slowCronId,
     payload.LinkedTradentDetailsInfo,
     payload.LinkedFrontiersDetailsInfo,
     payload.LinkedMvpDetailsInfo,
-    false,
+    payload.isSlowActivated,
     payload.IsBadgeItem,
     payload.LinkedTopDentDetailsInfo,
     payload.LinkedFirstDentDetailsInfo,
@@ -300,8 +352,45 @@ export async function GetAllRepriceEligibleProductByTag(filterTag: any) {
   return await SqlMapper.MapProductDetailsList(scrapeDetails);
 }
 
+export async function GetAllRepriceEligibleProductByMpid(mpid: any) {
+  let scrapeDetails = null;
+  const db = await SqlConnectionPool.getConnection();
+  try {
+    const queryToCall = `CALL ${process.env.SQL_SP_GET_PRODUCT_BY_MPID}(?)`;
+    const [rows] = await db.query(queryToCall, [mpid]);
+    if (rows != null && (rows as any)[0] != null) {
+      scrapeDetails = (rows as any)[0];
+    }
+  } catch (exception) {
+    console.log(
+      `Exception while GetAllRepriceEligibleProductByMpid : ${exception}`,
+    );
+  } finally {
+    SqlConnectionPool.releaseConnection(db);
+  }
+  return await SqlMapper.MapProductDetailsList(scrapeDetails);
+}
+
+export async function GetAllRepriceEligibleProductByChannelId(channelId: any) {
+  let scrapeDetails = null;
+  const db = await SqlConnectionPool.getConnection();
+  try {
+    const queryToCall = `CALL ${process.env.SQL_SP_GET_PRODUCT_BY_CHANNEL_ID}(?)`;
+    const [rows] = await db.query(queryToCall, [channelId]);
+    if (rows != null && (rows as any)[0] != null) {
+      scrapeDetails = (rows as any)[0];
+    }
+  } catch (exception) {
+    console.log(
+      `Exception while GetAllRepriceEligibleProductByChannelId : ${exception}`,
+    );
+  } finally {
+    SqlConnectionPool.releaseConnection(db);
+  }
+  return await SqlMapper.MapProductDetailsList(scrapeDetails);
+}
+
 export async function GetFullProductDetailsById(mpid: any) {
-  console.log("GetFullProductDetailsById", mpid);
   let scrapeDetails: any = null;
   const db = await SqlConnectionPool.getConnection();
   const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID}(?)`;
@@ -332,6 +421,9 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
     case "TOPDENT":
       contextSpName = applicationConfig.SQL_SP_UPDATE_TOPDENT;
       break;
+    case "TRIAD":
+      contextSpName = applicationConfig.SQL_SP_UPDATE_TRIAD;
+      break;
     default:
       break;
   }
@@ -356,10 +448,39 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
   ) {
     payload.ignorePhantomQBreak = true;
   }
-  if (!payload.ownVendorThreshold) {
+  if (
+    payload.ownVendorThreshold === undefined ||
+    payload.ownVendorThreshold === null ||
+    payload.ownVendorThreshold === ""
+  ) {
     payload.ownVendorThreshold = 1;
   }
-  const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+  if (typeof payload.getBBBadge == "undefined" || payload.getBBBadge == null) {
+    payload.getBBBadge = true;
+  }
+  if (
+    typeof payload.getBBShipping == "undefined" ||
+    payload.getBBShipping == null
+  ) {
+    payload.getBBShipping = true;
+  }
+  if (
+    payload.getBBBadgeValue === undefined ||
+    payload.getBBBadgeValue === null ||
+    payload.getBBBadgeValue === ""
+  ) {
+    payload.getBBBadgeValue = 0.1;
+  }
+  if (
+    payload.getBBShippingValue === undefined ||
+    payload.getBBShippingValue === null ||
+    payload.getBBShippingValue === ""
+  ) {
+    payload.getBBShippingValue = 0.005;
+  }
+
+  const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
   var [rows] = await db.query(queryToCall, [
     parseInt(payload.mpid),
     payload.channelName,
@@ -411,12 +532,16 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
     payload.handlingTimeFilter,
     payload.keepPosition,
     payload.excludedVendors,
-    parseFloat(payload.inventoryThreshold),
+    parseInt(payload.inventoryThreshold),
     parseFloat(payload.percentageDown),
     parseFloat(payload.badgePercentageDown),
     payload.competeWithNext,
     payload.ignorePhantomQBreak,
     parseInt(payload.ownVendorThreshold),
+    payload.getBBBadge,
+    payload.getBBShipping,
+    parseFloat(payload.getBBBadgeValue),
+    parseFloat(payload.getBBShippingValue),
   ]);
   if (rows != null && (rows as any)[0] != null) {
     upsertResult = (rows as any)[0][0];
@@ -442,6 +567,16 @@ export async function GetLinkedVendorDetails(mpId: any, vendorName: any) {
   if (vendorName == "MVP") {
     tableName = "table_mvpDetails";
   }
+  if (vendorName == "FIRSTDENT") {
+    tableName = "table_firstDentDetails";
+  }
+  if (vendorName == "TOPDENT") {
+    tableName = "table_topDentDetails";
+  }
+  if (vendorName == "TRIAD") {
+    tableName = "table_triadDetails";
+  }
+
   const queryToCall = `select Id from ${tableName} where MpId=${mpId}`;
   noOfRecords = await db.execute(queryToCall);
   return noOfRecords[0][0]["Id"];
@@ -503,6 +638,12 @@ export async function ChangeProductActivation(mpid: any, status: any) {
   console.log(
     `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
   );
+  queryToCall = `update table_triadDetails set Activated=? where MpId=?`;
+  noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
+  console.log(
+    `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
+  );
+
   return noOfRecords;
 }
 
@@ -510,12 +651,14 @@ export async function MapVendorToRoot(data: any) {
   const traId = await GetLinkedVendorDetails(parseInt(data.MPID), "TRADENT");
   const froId = await GetLinkedVendorDetails(parseInt(data.MPID), "FRONTIER");
   const mvpId = await GetLinkedVendorDetails(parseInt(data.MPID), "MVP");
+  const triId = await GetLinkedVendorDetails(parseInt(data.MPID), "TRIAD");
   let noOfRecords: any = null;
   const db = await SqlConnectionPool.getConnection();
   let queryToCall = `UPDATE ${applicationConfig.SQL_SCRAPEPRODUCTLIST} SET `;
   queryToCall += `LinkedTradentDetailsInfo = ?, `;
   queryToCall += `LinkedFrontiersDetailsInfo = ?, `;
   queryToCall += `LinkedMvpDetailsInfo = ?, `;
+  queryToCall += `LinkedTriadDetailsInfo = ?, `;
   queryToCall += `RegularCronName = ?, `;
   queryToCall += `RegularCronId = ? `;
   queryToCall += `WHERE MpId = ?`;
@@ -523,6 +666,7 @@ export async function MapVendorToRoot(data: any) {
     traId,
     froId,
     mvpId,
+    triId,
     data.CronName.trim(),
     data.CronId,
     parseInt(data.MPID),
@@ -574,6 +718,10 @@ export async function UpdateBranchDataForVendor(
   if (vendorName == "TOPDENT") {
     tableName = "table_topDentDetails";
   }
+  if (vendorName == "TRIAD") {
+    tableName = "table_triadDetails";
+  }
+
   const queryToCall = `Update ${tableName} set Activated=?,ChannelId=?,IsNCNeeded=?,BadgeIndicator=?,RepricingRule=?,FloorPrice=?,MaxPrice=?,UnitPrice=? where MpId=?`;
   noOfRecords = await db.execute(queryToCall, [
     JSON.parse(payLoad.activated),
