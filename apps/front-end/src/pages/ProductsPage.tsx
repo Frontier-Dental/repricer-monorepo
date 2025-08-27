@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, ExternalLink, Eye } from "lucide-react";
+import { ArrowUpDown, ExternalLink, Eye, Globe, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/data-table";
 import { DataTableToolbar } from "@/components/data-table-toolbar";
-import type { ProductDetails } from "@/types/product";
 import { toast } from "sonner";
 import {
   Select,
@@ -34,7 +33,7 @@ function timeAgo(date: Date | string | number) {
   const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
   if (seconds < 60) return `${seconds} seconds ago`;
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : ""} ago`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
   const days = Math.floor(hours / 24);
@@ -42,21 +41,85 @@ function timeAgo(date: Date | string | number) {
 }
 
 // Action button component
-function ActionButton({ productId }: { productId: string }) {
+function ActionButton({
+  productId,
+  net32Url,
+}: {
+  productId: string;
+  net32Url: string | null;
+}) {
+  const [isRemovingFrom422, setIsRemovingFrom422] = useState(false);
+
   const handleView = () => {
     window.open(`/vite/product/${productId}`, "_blank");
   };
 
+  const handleOpenNet32 = () => {
+    if (net32Url) {
+      window.open(net32Url, "_blank");
+    }
+  };
+
+  const handleRemoveFrom422 = async () => {
+    if (!net32Url) return;
+
+    setIsRemovingFrom422(true);
+    try {
+      const response = await fetch("/productV2/removeFrom422", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mpIds: [parseInt(productId)] }),
+      });
+
+      const result = await response.json();
+      if (response.ok && result.status) {
+        toast.success("Product removed from 422 successfully!");
+      } else {
+        toast.error(result.message || "Failed to remove product from 422.");
+      }
+    } catch (err) {
+      console.error("Error removing product from 422:", err);
+      toast.error("Failed to remove product from 422.");
+    } finally {
+      setIsRemovingFrom422(false);
+    }
+  };
+
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleView}
-      className="cursor-pointer"
-      title="View product details in new tab"
-    >
-      <Eye className="h-4 w-4" />
-    </Button>
+    <div className="flex items-center space-x-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleView}
+        className="cursor-pointer"
+        title="View product details in new tab"
+      >
+        <Eye className="h-4 w-4" />
+      </Button>
+      {net32Url && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleOpenNet32}
+          className="cursor-pointer"
+          title="Open Net32 URL in new tab"
+        >
+          <Globe className="h-4 w-4" />
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleRemoveFrom422}
+        disabled={isRemovingFrom422 || !net32Url}
+        className="cursor-pointer"
+        title="Remove product from 422"
+      >
+        <Bell className="h-4 w-4" />
+      </Button>
+    </div>
   );
 }
 
@@ -123,8 +186,32 @@ function AlgoExecutionModeSelect({
   );
 }
 
+// Define the type for products with algo data
+interface ProductWithAlgoData {
+  channel_name: string;
+  enabled: number;
+  mp_id: number;
+  channel_id: string | null;
+  cron_name: string | null;
+  slow_cron_name: string | null;
+  last_cron_run_at: string | null;
+  last_cron_run_name: string | null;
+  last_updated_at: string | null;
+  last_updated_cron_name: string | null;
+  last_reprice_comment: string | null;
+  last_suggested_price: number | null;
+  floor_price: number | null;
+  max_price: number | null;
+  not_cheapest: number;
+  suppress_price_break_if_Q1_not_updated: number;
+  triggered_by_vendor: string | null;
+  result: string | null;
+  net32_url: string | null;
+  algo_execution_mode: string | null;
+}
+
 export function ProductsPage() {
-  const [data, setData] = useState<ProductDetails[]>([]);
+  const [data, setData] = useState<ProductWithAlgoData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cacheTimestamp, setCacheTimestamp] = useState<string | null>(null);
@@ -135,73 +222,233 @@ export function ProductsPage() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   // Define the columns for the data table
-  const columns: ColumnDef<ProductDetails>[] = [
+  const columns: ColumnDef<ProductWithAlgoData>[] = [
     {
       id: "actions",
       header: "",
       cell: ({ row }) => {
-        const productId = row.getValue("ProductId") as string;
-        return <ActionButton productId={productId} />;
+        const mpId = row.getValue("mp_id") as number;
+        const net32Url = row.getValue("net32_url") as string | null;
+        return <ActionButton productId={mpId.toString()} net32Url={net32Url} />;
       },
     },
     {
-      accessorKey: "ProductId",
+      accessorKey: "channel_name",
       header: ({ column }) => {
         return (
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           >
-            MPID
+            Channel Name
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
       },
       cell: ({ row }) => (
-        <div className="font-mono">{row.getValue("ProductId")}</div>
+        <div className="font-medium">{row.getValue("channel_name")}</div>
+      ),
+    },
+    {
+      accessorKey: "enabled",
+      header: "Enabled",
+      cell: ({ row }) => {
+        const enabled = row.getValue("enabled") as number;
+        return (
+          <Badge variant={enabled === 1 ? "default" : "secondary"}>
+            {enabled === 1 ? "Yes" : "No"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "mp_id",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            MP ID
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => (
+        <div className="font-mono">{row.getValue("mp_id")}</div>
       ),
       filterFn: (row, columnId, filterValue) => {
-        return parseInt(row.getValue(columnId)) === parseInt(filterValue);
+        if (!filterValue) return true;
+        const rowValue = row.getValue(columnId) as number;
+        const filterNum = parseInt(filterValue, 10);
+        return !isNaN(filterNum) && rowValue === filterNum;
       },
     },
     {
-      accessorKey: "IsActive",
-      header: "Status",
+      accessorKey: "channel_id",
+      header: "Channel ID",
+      cell: ({ row }) => (
+        <div className="font-mono text-sm">
+          {row.getValue("channel_id") || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "cron_name",
+      header: "Cron Name",
+      cell: ({ row }) => (
+        <div className="font-mono text-sm">
+          {row.getValue("cron_name") || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "slow_cron_name",
+      header: "Slow Cron Name",
+      cell: ({ row }) => (
+        <div className="font-mono text-sm">
+          {row.getValue("slow_cron_name") || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "last_cron_run_at",
+      header: "Last Cron Run",
       cell: ({ row }) => {
-        const activated = row.getValue("IsActive") as number;
+        const date = row.getValue("last_cron_run_at") as string;
         return (
-          <Badge variant={activated === 1 ? "default" : "secondary"}>
-            {activated === 1 ? "Active" : "Inactive"}
+          <div className="text-sm">
+            {date ? new Date(date).toLocaleString() : "Never"}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "last_cron_run_name",
+      header: "Last Cron Run Name",
+      cell: ({ row }) => (
+        <div className="font-mono text-sm">
+          {row.getValue("last_cron_run_name") || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "last_updated_at",
+      header: "Last Updated",
+      cell: ({ row }) => {
+        const date = row.getValue("last_updated_at") as string;
+        return <div className="text-sm">{date ? timeAgo(date) : "Never"}</div>;
+      },
+    },
+    {
+      accessorKey: "last_updated_cron_name",
+      header: "Last Updated Cron",
+      cell: ({ row }) => (
+        <div className="font-mono text-sm">
+          {row.getValue("last_updated_cron_name") || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "last_reprice_comment",
+      header: "Last Reprice Comment",
+      cell: ({ row }) => (
+        <div className="text-sm max-w-[200px] truncate">
+          {row.getValue("last_reprice_comment") || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "last_suggested_price",
+      header: "Last Suggested Price",
+      cell: ({ row }) => {
+        const price = row.getValue("last_suggested_price") as number;
+        return <div className="text-sm">{price ? `$${price}` : "N/A"}</div>;
+      },
+    },
+    {
+      accessorKey: "floor_price",
+      header: "Floor Price",
+      cell: ({ row }) => {
+        const price = row.getValue("floor_price") as number;
+        return <div className="text-sm">{price ? `$${price}` : "N/A"}</div>;
+      },
+    },
+    {
+      accessorKey: "max_price",
+      header: "Max Price",
+      cell: ({ row }) => {
+        const price = row.getValue("max_price") as number;
+        return <div className="text-sm">{price ? `$${price}` : "N/A"}</div>;
+      },
+    },
+    {
+      accessorKey: "not_cheapest",
+      header: "Not Cheapest",
+      cell: ({ row }) => {
+        const notCheapest = row.getValue("not_cheapest") as number;
+        return (
+          <Badge variant={notCheapest === 1 ? "default" : "secondary"}>
+            {notCheapest === 1 ? "Yes" : "No"}
           </Badge>
         );
       },
     },
     {
-      accessorKey: "IsBadgeItem",
-      header: "Badge Item",
+      accessorKey: "suppress_price_break_if_Q1_not_updated",
+      header: "Suppress PB if Q1 not updated",
       cell: ({ row }) => {
-        const isBadgeItem = row.getValue("IsBadgeItem") as number;
+        const suppress = row.getValue(
+          "suppress_price_break_if_Q1_not_updated",
+        ) as number;
         return (
-          <Badge variant={isBadgeItem === 1 ? "default" : "secondary"}>
-            {isBadgeItem === 1 ? "Yes" : "No"}
+          <Badge variant={suppress === 1 ? "default" : "secondary"}>
+            {suppress === 1 ? "Yes" : "No"}
           </Badge>
         );
+      },
+    },
+    {
+      accessorKey: "triggered_by_vendor",
+      header: "Triggered By",
+      cell: ({ row }) => (
+        <div className="text-sm">
+          {row.getValue("triggered_by_vendor") || "N/A"}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "result",
+      header: "Result",
+      cell: ({ row }) => {
+        const result = row.getValue("result") as string;
+        if (!result) return <div className="text-sm">N/A</div>;
+
+        const getBadgeVariant = (result: string) => {
+          if (result.includes("SUCCESS") || result.includes("OK"))
+            return "default";
+          if (result.includes("ERROR") || result.includes("FAIL"))
+            return "destructive";
+          return "secondary";
+        };
+
+        return <Badge variant={getBadgeVariant(result)}>{result}</Badge>;
       },
     },
     {
       accessorKey: "algo_execution_mode",
       header: "Execution Mode",
       cell: ({ row }) => {
-        const productId = row.getValue("ProductId") as string;
+        const mpId = row.getValue("mp_id") as number;
         const algoExecutionMode = row.getValue("algo_execution_mode") as string;
         return (
           <AlgoExecutionModeSelect
-            productId={productId}
+            productId={mpId.toString()}
             initialValue={algoExecutionMode || "V1_ONLY"}
             onToggle={(id, value) => {
               // Update the local state when execution mode changes
-              const updatedData = data.map((product: ProductDetails) =>
-                product.ProductId.toString() === id.toString()
+              const updatedData = data.map((product: ProductWithAlgoData) =>
+                product.mp_id.toString() === id.toString()
                   ? { ...product, algo_execution_mode: value }
                   : product,
               );
@@ -212,30 +459,24 @@ export function ProductsPage() {
       },
     },
     {
-      accessorKey: "RegularCronName",
-      enableColumnFilter: true,
-      header: "Regular Cron",
-      cell: ({ row }) => (
-        <div className="font-mono text-sm">
-          {row.getValue("RegularCronName")}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "Net32Url",
+      accessorKey: "net32_url",
       header: "Net32 URL",
       cell: ({ row }) => {
-        const url = row.getValue("Net32Url") as string;
+        const url = row.getValue("net32_url") as string;
         return (
           <div className="max-w-[200px]">
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
-            >
-              View Product <ExternalLink className="h-3 w-3" />
-            </a>
+            {url ? (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                View Product <ExternalLink className="h-3 w-3" />
+              </a>
+            ) : (
+              <div className="text-sm text-muted-foreground">N/A</div>
+            )}
           </div>
         );
       },
@@ -261,7 +502,7 @@ export function ProductsPage() {
   });
 
   interface ApiResponse {
-    data: ProductDetails[];
+    data: ProductWithAlgoData[];
     cacheTimestamp: string;
     isCached: boolean;
   }
@@ -270,12 +511,12 @@ export function ProductsPage() {
     setIsLoading(true);
     setError(null);
 
-    console.log("fetching products");
+    console.log("fetching products with algo data");
 
     try {
       const url = ignoreCache
-        ? `/v2-algo/get_all_products_for_cron?ignoreCache=true`
-        : `/v2-algo/get_all_products_for_cron`;
+        ? `/v2-algo/get_all_products_with_algo_data?ignoreCache=true`
+        : `/v2-algo/get_all_products_with_algo_data`;
 
       const response = await fetch(url);
 
@@ -289,7 +530,7 @@ export function ProductsPage() {
       setIsCached(result.isCached);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
-      console.error("Error fetching products:", err);
+      console.error("Error fetching products with algo data:", err);
     } finally {
       setIsLoading(false);
     }
@@ -325,9 +566,12 @@ export function ProductsPage() {
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Products with Algorithm Data
+        </h1>
         <p className="text-muted-foreground">
-          View and manage product pricing data
+          View and manage product pricing data with algorithm settings and
+          execution history
         </p>
       </div>
       <div className="mb-4 flex items-center justify-between">

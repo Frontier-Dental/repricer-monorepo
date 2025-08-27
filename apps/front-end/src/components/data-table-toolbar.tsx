@@ -20,23 +20,28 @@ export function DataTableToolbar<TData>({
     <div className="flex items-center justify-between pb-4">
       <div className="flex flex-1 items-center space-x-2">
         <Input
-          placeholder="Filter by MPID..."
-          value={table.getColumn("ProductId")?.getFilterValue() as string}
+          placeholder="Filter by MP ID..."
+          value={table.getColumn("mp_id")?.getFilterValue() as string}
           onChange={(event) => {
-            table.getColumn("ProductId")?.setFilterValue(event.target.value);
+            table.getColumn("mp_id")?.setFilterValue(event.target.value);
           }}
           className="h-8 w-[150px] lg:w-[250px]"
         />
         <Input
-          placeholder="Filter by Regular Cron..."
+          placeholder="Filter by Channel ID..."
+          value={table.getColumn("channel_id")?.getFilterValue() as string}
+          onChange={(event) => {
+            table.getColumn("channel_id")?.setFilterValue(event.target.value);
+          }}
+          className="h-8 w-[150px] lg:w-[250px]"
+        />
+        <Input
+          placeholder="Filter by Cron Name..."
           value={
-            (table.getColumn("RegularCronName")?.getFilterValue() as string) ??
-            ""
+            (table.getColumn("cron_name")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table
-              .getColumn("RegularCronName")
-              ?.setFilterValue(event.target.value)
+            table.getColumn("cron_name")?.setFilterValue(event.target.value)
           }
           className="h-8 w-[150px] lg:w-[250px]"
         />

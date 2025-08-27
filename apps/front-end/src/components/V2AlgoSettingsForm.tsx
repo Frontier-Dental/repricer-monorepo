@@ -89,6 +89,7 @@ interface V2AlgoSettings {
   floor_compete_with_next: boolean;
   own_vendor_threshold: number;
   not_cheapest: boolean;
+  enabled: boolean;
 }
 
 interface V2AlgoSettingsFormProps {
@@ -97,6 +98,7 @@ interface V2AlgoSettingsFormProps {
   vendorName: string;
   initialSettings: V2AlgoSettings;
   onSave: (settings: V2AlgoSettings) => Promise<void>;
+  onToggleEnabled: (enabled: boolean) => Promise<void>;
 }
 
 function formatDefaultValues(settings: V2AlgoSettings) {
@@ -118,6 +120,7 @@ export function V2AlgoSettingsForm({
   vendorName,
   initialSettings,
   onSave,
+  onToggleEnabled,
 }: V2AlgoSettingsFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -129,7 +132,13 @@ export function V2AlgoSettingsForm({
   const onSubmit = async (data: SettingsFormData) => {
     setIsLoading(true);
     try {
-      await onSave(data);
+      // Ensure the enabled value is preserved from the current state
+      const settingsWithEnabled = {
+        ...data,
+        enabled: isEnabled,
+      };
+
+      await onSave(settingsWithEnabled);
       toast.success("Settings saved successfully!");
     } catch (error) {
       toast.error("Failed to save settings");
@@ -139,17 +148,34 @@ export function V2AlgoSettingsForm({
     }
   };
 
+  const isEnabled = initialSettings.enabled;
+
   return (
     <div className="max-w-4xl">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold">{vendorName} Settings</h3>
-        <p className="text-sm text-muted-foreground">
-          Configure algorithm settings for {vendorName} (Vendor ID: {vendorId})
-        </p>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">Enabled:</span>
+            <Switch
+              checked={isEnabled}
+              onCheckedChange={async (checked) => {
+                await onToggleEnabled(checked);
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">{vendorName}</h2>
+        <p className="text-lg text-gray-600">Vendor ID: {vendorId}</p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className={`space-y-4 ${!isEnabled ? "opacity-50 pointer-events-none" : ""}`}
+        >
           {/* General Settings */}
           <div className="grid grid-cols-3 gap-3">
             <FormField
@@ -455,6 +481,27 @@ export function V2AlgoSettingsForm({
             />
           </div>
 
+          <FormField
+            control={form.control}
+            name="own_vendor_threshold"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Own Vendor Threshold</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value === "" ? "" : Number(value));
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           {/* Boolean Settings */}
           <div className="grid grid-cols-3 gap-3">
             <FormField
@@ -536,26 +583,7 @@ export function V2AlgoSettingsForm({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="own_vendor_threshold"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Own Vendor Threshold</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      {...field}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(value === "" ? "" : Number(value));
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
             <FormField
               control={form.control}
               name="not_cheapest"
@@ -636,28 +664,8 @@ export function V2AlgoSettingsForm({
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <FormField
-              control={form.control}
-              name="enabled"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Enabled</FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-
           <div className="flex justify-end pt-2">
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !isEnabled}>
               {isLoading ? "Saving..." : "Save Settings"}
             </Button>
           </div>

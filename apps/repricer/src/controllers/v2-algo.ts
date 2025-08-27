@@ -1,4 +1,4 @@
-import { AlgoExecutionMode } from "@repricer-monorepo/shared";
+import { AlgoExecutionMode, VendorNameLookup } from "@repricer-monorepo/shared";
 import { Request, Response } from "express";
 import { getAllV2AlgoErrors } from "../services/algo_v2/errors";
 import {
@@ -11,6 +11,9 @@ import {
   getV2AlgoSettingsByMpId,
   syncVendorSettingsForMpId,
   updateV2AlgoSettings as updateSettings,
+  getAllProductsWithAlgoData,
+  toggleV2AlgoEnabled,
+  getNet32Url,
 } from "../services/algo_v2/settings";
 
 // Cache for products data
@@ -18,7 +21,7 @@ let productsCache: any[] | null = null;
 let productsCacheTime: Date | null = null;
 const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
 
-export async function getAllProductsForCron(
+export async function getAllProducts(
   req: Request<{ cronName: string }>,
   res: Response,
 ) {
@@ -254,4 +257,109 @@ export async function syncVendorSettings(
     message: `Successfully synced vendor settings for MP ID ${mpIdNumber}`,
     data: result,
   });
+}
+
+// Cache for products with algo data
+let productsWithAlgoCache: any[] | null = null;
+let productsWithAlgoCacheTime: Date | null = null;
+const PRODUCTS_WITH_ALGO_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+export async function getAllProductsWithAlgoDataController(
+  req: Request,
+  res: Response,
+) {
+  const ignoreCache = req.query.ignoreCache === "true";
+  const now = new Date();
+
+  // Check if we should use cache
+  if (!ignoreCache && productsWithAlgoCache && productsWithAlgoCacheTime) {
+    const cacheAge = now.getTime() - productsWithAlgoCacheTime.getTime();
+    if (cacheAge < PRODUCTS_WITH_ALGO_CACHE_DURATION) {
+      console.log(
+        `Returning cached products with algo data (age: ${Math.round(cacheAge / 1000)}s)`,
+      );
+      return res.json({
+        data: productsWithAlgoCache,
+        cacheTimestamp: productsWithAlgoCacheTime.toISOString(),
+        isCached: true,
+      });
+    }
+  }
+
+  console.log("Fetching fresh products with algo data from database...");
+
+  const products = await getAllProductsWithAlgoData();
+
+  // Update cache
+  productsWithAlgoCache = products;
+  productsWithAlgoCacheTime = now;
+
+  console.log(
+    `Updated products with algo cache with ${products.length} records`,
+  );
+  return res.json({
+    data: products,
+    cacheTimestamp: now.toISOString(),
+    isCached: false,
+  });
+}
+
+export async function toggleV2AlgoEnabledController(
+  req: Request<{ mpId: string; vendorId: string }>,
+  res: Response,
+) {
+  const { mpId, vendorId } = req.params;
+  const mpIdNumber = parseInt(mpId, 10);
+  const vendorIdNumber = parseInt(vendorId, 10);
+
+  if (isNaN(mpIdNumber)) {
+    return res.status(400).json({
+      error: "Invalid mp_id parameter. Must be a valid number.",
+    });
+  }
+
+  if (isNaN(vendorIdNumber)) {
+    return res.status(400).json({
+      error: "Invalid vendor_id parameter. Must be a valid number.",
+    });
+  }
+
+  const result = await toggleV2AlgoEnabled(mpIdNumber, vendorIdNumber);
+
+  return res.json({
+    success: true,
+    mp_id: mpIdNumber,
+    vendor_id: vendorIdNumber,
+    enabled: result.enabled,
+    message: `Successfully toggled enabled status to ${result.enabled}`,
+  });
+}
+
+export async function getNet32UrlController(
+  req: Request<{ mpId: string }>,
+  res: Response,
+) {
+  const { mpId } = req.params;
+  const mpIdNumber = parseInt(mpId, 10);
+
+  if (isNaN(mpIdNumber)) {
+    return res.status(400).json({
+      error: "Invalid mp_id parameter. Must be a valid number.",
+    });
+  }
+
+  try {
+    const net32Url = await getNet32Url(mpIdNumber);
+
+    return res.json({
+      success: true,
+      mp_id: mpIdNumber,
+      net32_url: net32Url,
+    });
+  } catch (error) {
+    console.error("Error fetching net32 URL:", error);
+    return res.status(500).json({
+      error: "Internal server error while fetching net32 URL",
+    });
+  }
 }

@@ -2,6 +2,7 @@ import {
   AlgoBadgeIndicator,
   AlgoHandlingTimeGroup,
   AlgoPriceDirection,
+  VendorNameLookup,
 } from "@repricer-monorepo/shared";
 import { getKnexInstance } from "../knex-wrapper";
 
@@ -291,4 +292,166 @@ export async function syncVendorSettingsForMpId(
     updatedCount: totalUpdated,
     vendorResults,
   };
+}
+
+export async function getAllProductsWithAlgoData(): Promise<any[]> {
+  const knex = getKnexInstance();
+
+  const query = knex("v2_algo_settings as vas")
+    .leftJoin("channel_ids as ci", function () {
+      this.on("vas.mp_id", "=", "ci.mp_id").andOn(
+        "vas.vendor_id",
+        "=",
+        "ci.vendor_id",
+      );
+    })
+    .leftJoin("table_scrapeProductList as spl", function () {
+      this.on("vas.mp_id", "=", "spl.MpId");
+    })
+    .leftJoin(
+      function () {
+        this.select(
+          "mp_id",
+          "vendor_id",
+          "triggered_by_vendor",
+          "cron_name",
+          "created_at",
+        )
+          .from("v2_algo_results as var1")
+          .where("price_update_result", "=", "OK")
+          .whereIn(["mp_id", "vendor_id", "created_at"], function () {
+            this.select(
+              "mp_id",
+              "vendor_id",
+              knex.raw("MAX(created_at) as created_at"),
+            )
+              .from("v2_algo_results")
+              .where("price_update_result", "=", "OK")
+              .groupBy("mp_id", "vendor_id");
+          })
+          .as("latest_updated_result");
+      },
+      function () {
+        this.on("vas.mp_id", "=", "latest_updated_result.mp_id").andOn(
+          "vas.vendor_id",
+          "=",
+          "latest_updated_result.vendor_id",
+        );
+      },
+    )
+    .leftJoin(
+      function () {
+        this.select(
+          "mp_id",
+          "vendor_id",
+          "created_at",
+          "cron_name",
+          "comment",
+          "suggested_price",
+          "result",
+          "triggered_by_vendor",
+        )
+          .from("v2_algo_results as var2")
+          .whereIn(["mp_id", "vendor_id", "created_at"], function () {
+            this.select(
+              "mp_id",
+              "vendor_id",
+              knex.raw("MAX(created_at) as created_at"),
+            )
+              .from("v2_algo_results")
+              .groupBy("mp_id", "vendor_id");
+          })
+          .as("latest_cron_run");
+      },
+      function () {
+        this.on("vas.mp_id", "=", "latest_cron_run.mp_id").andOn(
+          "vas.vendor_id",
+          "=",
+          "latest_cron_run.vendor_id",
+        );
+      },
+    );
+
+  const results = await query
+    .select(
+      // V2 algo settings fields (main table)
+      "vas.floor_price",
+      "vas.max_price",
+      "vas.not_cheapest",
+      "vas.enabled",
+      "vas.vendor_id",
+      "vas.mp_id",
+      "vas.suppress_price_break_if_Q1_not_updated",
+      // Channel IDs fields
+      "ci.channel_id",
+      // Scrape product list fields (if they exist)
+      "spl.Net32Url as net32_url",
+      "spl.RegularCronName as cron_name",
+      "spl.SlowCronName as slow_cron_name",
+      "spl.algo_execution_mode",
+      // Latest successful algo results fields (if they exist)
+      "latest_updated_result.cron_name as last_updated_cron_name",
+      "latest_updated_result.created_at as last_updated_at",
+      // Latest cron run fields (regardless of status)
+      // "latest_cron_run.*",
+      "latest_cron_run.created_at as last_cron_run_at",
+      "latest_cron_run.cron_name as last_cron_run_name",
+      "latest_cron_run.comment as last_reprice_comment",
+      "latest_cron_run.suggested_price as last_suggested_price",
+      "latest_cron_run.result",
+      "latest_cron_run.triggered_by_vendor",
+    )
+    .orderBy(["vas.mp_id", "vas.vendor_id"]);
+
+  return results.map((result) => ({
+    ...result,
+    channel_name:
+      VendorNameLookup[result.vendor_id] || `Vendor ${result.vendor_id}`,
+  }));
+}
+
+export async function toggleV2AlgoEnabled(
+  mpId: number,
+  vendorId: number,
+): Promise<{ enabled: boolean }> {
+  const knex = getKnexInstance();
+
+  // First, check if settings exist
+  const currentSetting = await knex("v2_algo_settings")
+    .where({ mp_id: mpId, vendor_id: vendorId })
+    .select("enabled")
+    .first();
+
+  if (!currentSetting) {
+    // Settings don't exist, create them with enabled = true
+    const defaultSettings = {
+      mp_id: mpId,
+      vendor_id: vendorId,
+      enabled: true, // Start enabled when creating new settings
+    };
+
+    await knex("v2_algo_settings").insert(defaultSettings);
+    return { enabled: true };
+  }
+
+  // Settings exist, toggle the enabled status
+  const newEnabledStatus = !currentSetting.enabled;
+
+  // Update the database
+  await knex("v2_algo_settings")
+    .where({ mp_id: mpId, vendor_id: vendorId })
+    .update({ enabled: newEnabledStatus });
+
+  return { enabled: newEnabledStatus };
+}
+
+export async function getNet32Url(mpId: number): Promise<string | null> {
+  const knex = getKnexInstance();
+
+  const result = await knex("table_scrapeProductList")
+    .where("MpId", mpId)
+    .select("Net32Url")
+    .first();
+
+  return result?.Net32Url || null;
 }
