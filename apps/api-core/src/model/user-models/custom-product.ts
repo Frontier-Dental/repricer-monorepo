@@ -1,3 +1,4 @@
+import Decimal from "decimal.js";
 interface SqlEntity {
   ChannelName?: string;
   Activated?: number;
@@ -63,6 +64,10 @@ interface SqlEntity {
   TriggeredByVendor?: string;
   IgnorePhantomBreak?: number;
   OwnVendorThreshold?: number;
+  GetBBBadgeValue?: number;
+  GetBBShippingValue?: number;
+  GetBBBadge?: number;
+  GetBBShipping?: number;
 }
 
 export class OwnVendorProductDetails {
@@ -113,7 +118,7 @@ export class OwnVendorProductDetails {
   last_cron_time: string;
   lowest_vendor: string;
   lowest_vendor_price: number;
-  next_cron_time: string;
+  next_cron_time: string | null;
   slowCronId: string;
   slowCronName: string;
   last_update_time: string;
@@ -133,6 +138,10 @@ export class OwnVendorProductDetails {
   ignorePhantomQBreak: boolean;
   ownVendorThreshold: number;
   skipReprice?: boolean;
+  getBBBadgeValue?: number;
+  getBBShippingValue?: number;
+  getBBBadge?: number;
+  getBBShipping?: number;
 
   constructor(sqlEntity: SqlEntity) {
     this.channelName = sqlEntity["ChannelName"] || "";
@@ -187,7 +196,7 @@ export class OwnVendorProductDetails {
     this.last_cron_time = sqlEntity["LastCronTime"] || "";
     this.lowest_vendor = sqlEntity["LowestVendor"] || "";
     this.lowest_vendor_price = sqlEntity["LowestVendorPrice"] || 0;
-    this.next_cron_time = sqlEntity["NextCronTime"] || "";
+    this.next_cron_time = sqlEntity["NextCronTime"] || null;
     this.slowCronId = sqlEntity["SlowCronId"] || "";
     this.slowCronName = sqlEntity["SlowCronName"] || "";
     this.last_update_time = sqlEntity["LastUpdateTime"] || "";
@@ -207,6 +216,10 @@ export class OwnVendorProductDetails {
     this.ignorePhantomQBreak =
       sqlEntity["IgnorePhantomBreak"] == 1 ? true : false;
     this.ownVendorThreshold = sqlEntity["OwnVendorThreshold"] || 0;
+    this.getBBBadgeValue = sqlEntity["GetBBBadgeValue"] || 0;
+    this.getBBShippingValue = sqlEntity["GetBBShippingValue"] || 0;
+    this.getBBBadge = sqlEntity["GetBBBadge"] == 1 ? true : false;
+    this.getBBShipping = sqlEntity["GetBBShipping"] == 1 ? true : false;
   }
 }
 

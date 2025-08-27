@@ -41,6 +41,8 @@ export class HistoricalPrice {
   apiResponse: any;
   vendorName: string;
   contextCronName: string;
+  triggeredByVendor: any;
+  repriceResult: any;
 
   constructor(
     existingPrice: number,
@@ -54,6 +56,8 @@ export class HistoricalPrice {
     eligibleList: Net32Product[],
     contextVendor: string,
     cronName: string,
+    triggeredByVendor: any,
+    repriceResult: any,
   ) {
     this.existingPrice = existingPrice;
     this.minQty = minQty;
@@ -86,6 +90,8 @@ export class HistoricalPrice {
     this.apiResponse = eligibleList;
     this.vendorName = contextVendor;
     this.contextCronName = cronName;
+    this.triggeredByVendor = triggeredByVendor;
+    this.repriceResult = repriceResult;
   }
   getOtherVendorList(listOfVendors: Net32Product[]): string {
     if (!listOfVendors || listOfVendors.length === 0) return "";

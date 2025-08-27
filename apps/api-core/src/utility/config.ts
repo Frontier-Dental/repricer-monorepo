@@ -173,8 +173,8 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
-  NO_OF_RETRIES: z.coerce.number().default(4),
-  RETRY_INTERVAL: z.coerce.number().default(4000),
+  NO_OF_RETRIES: z.coerce.number().default(2),
+  RETRY_INTERVAL: z.coerce.number().default(2000),
   _422_CACHE_VALID_PERIOD: z.coerce.number().default(120),
   CRON_NAME_422: z.string().default("Cron-422"),
   VENDOR_ID: z.coerce.number().default(17357),
@@ -192,7 +192,28 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
-  NODE_ENV: z.string().default("development"),
+  SCRAPE_ONLY_LOGGING: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
+  SCRAPE_RUN_LOGGING: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
+  START_CRONS: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
+  NET32_UPDATE_QUANTITY_URL: z
+    .string()
+    .default("https://api.net32.com/inventory/products/update"),
+  SQL_PROXY_NET_32: z.string().default("table_proxiesNet32"),
   ENABLE_SLOW_CRON_FEATURE: z
     .string()
     .toLowerCase()

@@ -55,4 +55,7 @@ export class RunInfo {
   GetRunEndTimeQuery(runInfoId: any) {
     return `UPDATE ${applicationConfig.SQL_RUNINFO} SET RunEndTime='${moment(this.RunEndTime).format("DD-MM-YYYY HH:mm:ss")}' WHERE Id=${runInfoId}`;
   }
+  GetCompletedProductCountQuery(lastValue: number, runInfoId: any) {
+    return `UPDATE ${applicationConfig.SQL_RUNINFO} SET CompletedProductCount=${lastValue + 1} WHERE Id=${runInfoId}`;
+  }
 }

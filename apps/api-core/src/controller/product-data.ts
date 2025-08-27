@@ -6,6 +6,7 @@ import * as path from "path";
 import moment from "moment";
 import * as axiosHelper from "../utility/axios-helper";
 import { applicationConfig } from "../utility/config";
+import { processUpdateProductQuantities } from "../utility/net32/updateProductQuantity";
 export const dataController = express.Router();
 
 /************* PUBLIC APIS *************/
@@ -26,6 +27,40 @@ dataController.get(
           .status(_codes.StatusCodes.INTERNAL_SERVER_ERROR)
           .send("Sorry some error occurred!");
       }
+    }
+  },
+);
+
+dataController.post(
+  "/data/UpdateProductQuantity",
+  async (req: Request, res: Response) => {
+    if (!req.body.vendorData) {
+      res
+        .status(_codes.StatusCodes.INTERNAL_SERVER_ERROR)
+        .send("Vendor data is missing");
+      return;
+    }
+
+    if (!req.body.mpid) {
+      res
+        .status(_codes.StatusCodes.INTERNAL_SERVER_ERROR)
+        .send("MPID is missing");
+      return;
+    }
+
+    try {
+      const results = await processUpdateProductQuantities({
+        mpid: req.body.mpid,
+        vendorData: req.body.vendorData,
+      });
+
+      res.status(_codes.StatusCodes.OK).json({ results });
+    } catch (error) {
+      console.log("Error while updating product quantity", error);
+      res.status(_codes.StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: "Error while updating product quantity",
+        message: error instanceof Error ? error?.message : "Unknown error",
+      });
     }
   },
 );

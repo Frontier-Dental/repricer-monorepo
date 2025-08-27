@@ -31,10 +31,11 @@ async function scrapeProductListForProduct(
   cronSettingsResponse: ScrapeCronDetail,
   productId: string,
 ) {
-  const scrapeProductList =
-    await mySqlHelper.GetScrapeProductDetailsByIdAndCron(
-      cronSettingsResponse.CronId,
-      productId,
-    );
-  await scrapeHelper.Execute(scrapeProductList, cronSettingsResponse);
+  const scrapeProductList = await mySqlHelper.GetItemListById(productId);
+  if (scrapeProductList) {
+    scrapeProductList.MpId = scrapeProductList.mpId;
+    scrapeProductList.LinkedTradentDetailsInfo =
+      scrapeProductList.tradentLinkInfo;
+    await scrapeHelper.Execute([scrapeProductList], cronSettingsResponse);
+  }
 }

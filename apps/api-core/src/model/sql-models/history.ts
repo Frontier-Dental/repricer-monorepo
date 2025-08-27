@@ -16,6 +16,8 @@ export class HistoryModel {
   OtherVendorList: string;
   LinkedApiResponse: number;
   ContextCronName: string;
+  TriggeredByVendor: any;
+  RepriceResult: any;
 
   constructor(
     history: HistoricalPrice,
@@ -57,5 +59,7 @@ export class HistoryModel {
     this.OtherVendorList = history.otherVendorList;
     this.LinkedApiResponse = apiResponseLinkedId;
     this.ContextCronName = history.contextCronName;
+    this.TriggeredByVendor = history.triggeredByVendor;
+    this.RepriceResult = history.repriceResult;
   }
 }

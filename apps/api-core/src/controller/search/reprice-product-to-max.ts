@@ -12,6 +12,9 @@ import * as formatter from "../../utility/format-wrapper";
 import * as HistoryHelper from "../../utility/history-helper";
 import * as repriceHelper from "../../utility/reprice-algo/v1/reprice-helper";
 import * as responseUtility from "../../utility/response-utility";
+import * as ResultParser from "../utility/repriceResultParser";
+import * as filterMapper from "../utility/filterMapper";
+import * as buyBoxHelper from "../utility/buyBoxHelper";
 import {
   delay,
   getPriceStepValue,
@@ -24,6 +27,7 @@ export async function repriceProductToMax(
   req: Request,
   res: Response,
 ): Promise<any> {
+  let adHocUpdateQuery = `Update ${process.env.SQL_HISTORY}`;
   let productItem = req.body.prod;
   const contextVendor = req.body.contextVendor;
   await delay(await dbHelper.GetDelay());
