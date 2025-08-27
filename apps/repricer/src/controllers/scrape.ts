@@ -37,7 +37,44 @@ export const GetScrapeCron = async (req: Request, res: Response) => {
       item,
       5,
     );
-    item.ProxyProvider_6 = null; //await MapperHelper.GetAlternateProxyProviderId(item, 6);
+    item.ProxyProvider_6 = await MapperHelper.GetAlternateProxyProviderId(
+      item,
+      6,
+    );
+    item.ProxyProvider_1_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        item.ProxyProvider_1,
+      );
+    item.ProxyProvider_2_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        item.ProxyProvider_2,
+      );
+    item.ProxyProvider_3_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        item.ProxyProvider_3,
+      );
+    item.ProxyProvider_4_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        item.ProxyProvider_4,
+      );
+    item.ProxyProvider_5_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        item.ProxyProvider_5,
+      );
+    item.ProxyProvider_6_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        item.ProxyProvider_6,
+      );
+    item.ProxyProvider_Name = await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      item.ProxyProvider,
+    );
   }
   res.render("pages/scrape/scrapeOnlyList", {
     configItems: configItems,
@@ -144,6 +181,24 @@ export const UpdateScrapeCronExp = async (req: Request, res: Response) => {
       updatedList,
       req,
     );
+
+    let invalidUpdates = [];
+    for (const cronSetting of updatedList) {
+      const validationErrors =
+        await MapperHelper.ValidateAlternateProxyDetails(cronSetting);
+      if (validationErrors === false) {
+        invalidUpdates.push({
+          cronName: cronSetting.CronName,
+        });
+      }
+    }
+
+    if (invalidUpdates.length > 0) {
+      return res.json({
+        status: false,
+        message: `First & Last Alternate Proxy Providers are not the same for Cron : ${invalidUpdates.map((x) => x.cronName).join(", ")}`,
+      });
+    }
 
     if (updateResponse) {
       if (listOfUpdatedCronKey.length > 0) {

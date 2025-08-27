@@ -583,6 +583,14 @@ export async function addExcelData(req: Request, res: Response) {
           row[56] != null && row[56] != "" ? JSON.parse(row[56]) : true,
         ownVendorThreshold:
           row[57] != null && row[57] != "" ? parseInt(row[57]) : 1,
+        getBBShipping:
+          row[59] != null && row[59] != "" ? JSON.parse(row[59]) : false,
+        getBBShippingValue:
+          row[60] != null && row[60] != "" ? parseFloat(row[60]) : 0,
+        getBBBadge:
+          row[61] != null && row[61] != "" ? JSON.parse(row[61]) : false,
+        getBBBadgeValue:
+          row[62] != null && row[62] != "" ? parseFloat(row[62]) : 0,
       };
       items.push($item as never);
     } else {
@@ -683,6 +691,15 @@ export async function addExcelData(req: Request, res: Response) {
       itemData.firstDentDetails.executionPriority == null
     ) {
       itemData.firstDentDetails.executionPriority = 5;
+    }
+    itemData.triadDetails = items.find(
+      (x) => x.channelName.toUpperCase() == "TRIAD" && x.mpid == pId,
+    );
+    if (
+      itemData.triadDetails &&
+      itemData.triadDetails.executionPriority == null
+    ) {
+      itemData.triadDetails.executionPriority = 6;
     }
     //Align Cron Details
     await mapperHelper.AlignProducts(itemData, combinedArray, slowCronIds);

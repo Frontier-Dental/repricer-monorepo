@@ -40,15 +40,55 @@ export async function getCronSettings(req: Request, res: Response) {
       setting,
       3,
     );
-    setting.ProxyProvider_4 = null; //await MapperHelper.GetAlternateProxyProviderId(setting, 4);
-    setting.ThresholdReached = await MapperHelper.GetIsStepReached(
+    setting.ProxyProvider_4 = await MapperHelper.GetAlternateProxyProviderId(
       setting,
-      setting.AlternateProxyProvider.length,
+      4,
     );
-    setting.CloseToThresholdReached = await MapperHelper.GetIsStepReached(
+    setting.ProxyProvider_5 = await MapperHelper.GetAlternateProxyProviderId(
       setting,
-      setting.AlternateProxyProvider.length - 1,
+      5,
     );
+    setting.ProxyProvider_6 = await MapperHelper.GetAlternateProxyProviderId(
+      setting,
+      6,
+    );
+    setting.ProxyProvider_1_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        setting.ProxyProvider_1,
+      );
+    setting.ProxyProvider_2_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        setting.ProxyProvider_2,
+      );
+    setting.ProxyProvider_3_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        setting.ProxyProvider_3,
+      );
+    setting.ProxyProvider_4_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        setting.ProxyProvider_4,
+      );
+    setting.ProxyProvider_5_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        setting.ProxyProvider_5,
+      );
+    setting.ProxyProvider_6_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        setting.ProxyProvider_6,
+      );
+    setting.ProxyProvider_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        setting.ProxyProvider,
+      );
+    setting.ThresholdReached = false; //await MapperHelper.GetIsStepReached(setting, setting.AlternateProxyProvider.length-1);
+    setting.CloseToThresholdReached = false; //await MapperHelper.GetIsStepReached(setting, setting.AlternateProxyProvider.length - 2);
   }
   const hiddenCronDetails = cronSettingsResult.find(
     (x: any) => x.IsHidden == true,
@@ -87,17 +127,49 @@ export async function getCronSettings(req: Request, res: Response) {
     await MapperHelper.GetAlternateProxyProviderId(hiddenCronDetails, 2);
   cronSettingsResponse.custom.ProxyProvider_3 =
     await MapperHelper.GetAlternateProxyProviderId(hiddenCronDetails, 3);
-  cronSettingsResponse.custom.ProxyProvider_4 = null; //await MapperHelper.GetAlternateProxyProviderId(hiddenCronDetails, 4);
-  cronSettingsResponse.custom.ThresholdReached =
-    await MapperHelper.GetIsStepReached(
-      hiddenCronDetails,
-      hiddenCronDetails?.AlternateProxyProvider.length,
+  cronSettingsResponse.custom.ProxyProvider_4 =
+    await MapperHelper.GetAlternateProxyProviderId(hiddenCronDetails, 4);
+  cronSettingsResponse.custom.ProxyProvider_5 =
+    await MapperHelper.GetAlternateProxyProviderId(hiddenCronDetails, 5);
+  cronSettingsResponse.custom.ProxyProvider_6 =
+    await MapperHelper.GetAlternateProxyProviderId(hiddenCronDetails, 6);
+  cronSettingsResponse.custom.ProxyProvider_1_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      cronSettingsResponse.custom.ProxyProvider_1,
     );
-  cronSettingsResponse.custom.CloseToThresholdReached =
-    await MapperHelper.GetIsStepReached(
-      hiddenCronDetails,
-      hiddenCronDetails?.AlternateProxyProvider.length - 1,
+  cronSettingsResponse.custom.ProxyProvider_2_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      cronSettingsResponse.custom.ProxyProvider_2,
     );
+  cronSettingsResponse.custom.ProxyProvider_3_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      cronSettingsResponse.custom.ProxyProvider_3,
+    );
+  cronSettingsResponse.custom.ProxyProvider_4_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      cronSettingsResponse.custom.ProxyProvider_4,
+    );
+  cronSettingsResponse.custom.ProxyProvider_5_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      cronSettingsResponse.custom.ProxyProvider_5,
+    );
+  cronSettingsResponse.custom.ProxyProvider_6_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      cronSettingsResponse.custom.ProxyProvider_6,
+    );
+  cronSettingsResponse.custom.ProxyProvider_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      hiddenCronDetails.ProxyProvider,
+    );
+  cronSettingsResponse.custom.ThresholdReached = false; //await MapperHelper.GetIsStepReached(hiddenCronDetails, hiddenCronDetails.AlternateProxyProvider.length-1);
+  cronSettingsResponse.custom.CloseToThresholdReached = false; // await MapperHelper.GetIsStepReached(hiddenCronDetails, hiddenCronDetails.AlternateProxyProvider.length - 2);
 
   res.render("pages/settings/settingsList", {
     configItems: configItems,
@@ -243,6 +315,23 @@ export async function updateCronSettings(req: Request, res: Response) {
     }
   }
   if (listOfUpdates.length > 0) {
+    let invalidUpdates = [];
+    for (const cronSetting of listOfUpdates) {
+      const validationErrors =
+        await MapperHelper.ValidateAlternateProxyDetails(cronSetting);
+      if (validationErrors === false) {
+        invalidUpdates.push({
+          cronName: cronSetting.CronName,
+        });
+      }
+    }
+    if (invalidUpdates.length > 0) {
+      return res.json({
+        status: false,
+        message: `First & Last Alternate Proxy Providers are not the same for Cron : ${invalidUpdates.map((x) => x.cronName).join(", ")}`,
+      });
+    }
+
     const response = await mongoMiddleware.UpdateCronSettingsList(
       listOfUpdates,
       req,
@@ -436,7 +525,14 @@ export async function exportItems(req: Request, res: Response) {
 
 async function getSecretKeyDetails(idx: any, payload: any) {
   let secretKeyDetails: any[] = [];
-  const vendorName = ["TRADENT", "FRONTIER", "MVP", "FIRSTDENT", "TOPDENT"];
+  const vendorName = [
+    "TRADENT",
+    "FRONTIER",
+    "MVP",
+    "FIRSTDENT",
+    "TOPDENT",
+    "TRIAD",
+  ];
   for (const v of vendorName) {
     let vDetail: any = {};
     vDetail.vendorName = v;
@@ -455,6 +551,9 @@ async function getSecretKeyDetails(idx: any, payload: any) {
         break;
       case "TOPDENT":
         vDetail.secretKey = payload.secret_key_topdent[idx];
+        break;
+      case "TRIAD":
+        vDetail.secretKey = payload.secret_key_triad[idx];
         break;
       default:
         break;

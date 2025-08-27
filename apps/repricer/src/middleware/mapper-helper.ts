@@ -18,6 +18,7 @@ export function MapV2(productDetails: any[]) {
     item.firstDent = p.firstDentDetails;
     item.topDent = p.topDentDetails;
     item.mvp = p.mvpDetails;
+    item.triad = p.triadDetails;
     item.cronName = getCommonEntityValue(item, "cronName", false);
     item.cronId = getCommonEntityValue(item, "cronId", false);
     item.net32Url = getCommonEntityValue(item, "net32url", true);
@@ -99,6 +100,21 @@ export function MapV2(productDetails: any[]) {
         : item.firstDent.last_attempted_time;
       item.firstDent.tags = removeBackslashes(item.firstDent.tags);
     }
+    if (item.triad) {
+      item.triad.updatedAt = item.triad.updatedAt
+        ? moment(item.triad.updatedAt).format("DD-MM-YY HH:mm:ss")
+        : item.triad.updatedAt;
+      item.triad.lastCronTime = item.triad.last_cron_time
+        ? moment(item.triad.last_cron_time).format("DD-MM-YY HH:mm:ss")
+        : item.triad.last_cron_time;
+      item.triad.lastUpdateTime = item.triad.last_update_time
+        ? moment(item.triad.last_update_time).format("DD-MM-YY HH:mm:ss")
+        : item.triad.last_update_time;
+      item.triad.lastAttemptedTime = item.triad.last_attempted_time
+        ? moment(item.triad.last_attempted_time).format("DD-MM-YY HH:mm:ss")
+        : item.triad.last_attempted_time;
+      item.triad.tags = removeBackslashes(item.triad.tags);
+    }
     return item;
   });
 }
@@ -131,6 +147,13 @@ export const MapBadgeIndicator = async (product: any) => {
   if (product.topDentDetails) {
     product.topDentDetails.badge_indicator = parseBadgeIndicator(
       product.topDentDetails.badgeIndicator,
+      "KEY",
+    );
+  }
+
+  if (product.triadDetails) {
+    product.triadDetails.badge_indicator = parseBadgeIndicator(
+      product.triadDetails.badgeIndicator,
       "KEY",
     );
   }
@@ -244,20 +267,43 @@ export const MapUserResponse = async (
   productDetails.keepPosition =
     updateDetails.keepPosition == "on" ? true : false;
   productDetails.excludedVendors = updateDetails.excludedVendors;
-  productDetails.inventoryThreshold = parseInt(
-    updateDetails.inventoryThreshold,
-  );
-  productDetails.percentageDown = parseFloat(updateDetails.percentageDown);
-  productDetails.badgePercentageDown = parseFloat(
-    updateDetails.badgePercentageDown,
-  );
+  productDetails.inventoryThreshold = !isNaN(
+    parseInt(updateDetails.inventoryThreshold),
+  )
+    ? parseInt(updateDetails.inventoryThreshold)
+    : 0;
+  productDetails.percentageDown = !isNaN(
+    parseFloat(updateDetails.percentageDown),
+  )
+    ? parseFloat(updateDetails.percentageDown)
+    : 0;
+  productDetails.badgePercentageDown = !isNaN(
+    parseFloat(updateDetails.badgePercentageDown),
+  )
+    ? parseFloat(updateDetails.badgePercentageDown)
+    : 0;
   productDetails.competeWithNext =
     updateDetails.competeWithNext == "on" ? true : false;
   productDetails.ignorePhantomQBreak =
     updateDetails.ignorePhantomQBreak == "on" ? true : false;
-  productDetails.ownVendorThreshold = parseInt(
-    updateDetails.ownVendorThreshold,
-  );
+  productDetails.ownVendorThreshold = !isNaN(
+    parseInt(updateDetails.ownVendorThreshold),
+  )
+    ? parseInt(updateDetails.ownVendorThreshold)
+    : 1;
+  productDetails.getBBBadgeValue = !isNaN(
+    parseInt(updateDetails.getBBBadgeValue),
+  )
+    ? parseFloat(updateDetails.getBBBadgeValue)
+    : 0.1;
+  productDetails.getBBShippingValue = !isNaN(
+    parseInt(updateDetails.getBBShippingValue),
+  )
+    ? parseFloat(updateDetails.getBBShippingValue)
+    : 0.005;
+  productDetails.getBBBadge = updateDetails.getBBBadge == "on" ? true : false;
+  productDetails.getBBShipping =
+    updateDetails.getBBShipping == "on" ? true : false;
   return productDetails;
 };
 export const MapFormData = async (
@@ -339,6 +385,19 @@ export const MapFormData = async (
   productDetails.ownVendorThreshold = formVendorData.ownVendorThreshold
     ? parseInt(formVendorData.ownVendorThreshold)
     : 1;
+  productDetails.getBBBadgeValue = !isNaN(
+    parseInt(formVendorData.getBBBadgeValue),
+  )
+    ? parseFloat(formVendorData.getBBBadgeValue)
+    : 0.1;
+  productDetails.getBBShippingValue = !isNaN(
+    parseInt(formVendorData.getBBShippingValue),
+  )
+    ? parseFloat(formVendorData.getBBShippingValue)
+    : 0.005;
+  productDetails.getBBBadge = formVendorData.getBBBadge == "on" ? true : false;
+  productDetails.getBBShipping =
+    formVendorData.getBBShipping == "on" ? true : false;
   return productDetails;
 };
 export const AlignCronName = async (productList: any) => {
@@ -456,6 +515,14 @@ export const AlignProducts = async (
       if (dbProductDetails.isSlowActivated == true) {
         product.topDentDetails.slowCronId = dbSlowCronId;
         product.topDentDetails.slowCronName = dbSlowCronName;
+      }
+    }
+    if (product.triadDetails) {
+      product.triadDetails.cronId = currentCronId;
+      product.triadDetails.cronName = currentCronName;
+      if (dbProductDetails.isSlowActivated == true) {
+        product.triadDetails.slowCronId = dbSlowCronId;
+        product.triadDetails.slowCronName = dbSlowCronName;
       }
     }
   }
@@ -677,7 +744,7 @@ export const UpsertProductDetailsInSql = async (
         AuditInfo,
       );
       await mySqlUtility.UpdateVendorData(payload.topDentDetails, "TOPDENT");
-      console.log(`Updated FirstDent Info for ${mpid} at ${new Date()}`);
+      console.log(`Updated TopDent Info for ${mpid} at ${new Date()}`);
     } else {
       if (!sqlProductDetails) {
         sqlProductDetails = {};
@@ -695,9 +762,59 @@ export const UpsertProductDetailsInSql = async (
       );
     }
   }
+
+  if (payload && payload.triadDetails) {
+    if (sqlProductDetails != null && sqlProductDetails.triadDetails) {
+      payload.triadDetails = mapUserDataToDbData(
+        payload.triadDetails,
+        sqlProductDetails.triadDetails,
+        AuditInfo,
+      );
+      await mySqlUtility.UpdateVendorData(payload.triadDetails, "TRIAD");
+      console.log(`Updated Triad Info for ${mpid} at ${new Date()}`);
+    } else {
+      if (!sqlProductDetails) {
+        sqlProductDetails = {};
+      }
+      payload.triadDetails.updatedBy = AuditInfo.UpdatedBy;
+      payload.triadDetails.updatedAt = moment(AuditInfo.UpdatedOn).format(
+        "YYYY-MM-DD HH:mm:ss",
+      );
+      sqlProductDetails.triadLinkInfo = await mySqlUtility.UpsertVendorData(
+        payload.triadDetails,
+        "TRIAD",
+      );
+      console.log(
+        `Inserted Triad Info for ${mpid} with insertId : ${sqlProductDetails.triadLinkInfo}`,
+      );
+    }
+  }
+
   await mySqlUtility.UpsertProductDetailsV2(
     new MySqlProduct(payload, sqlProductDetails, mpid, AuditInfo),
   );
+};
+
+export const ValidateAlternateProxyDetails = async (cronSettings) => {
+  // if (cronSettings.AlternateProxyProvider && cronSettings.AlternateProxyProvider.length > 0) {
+  //     const firstProvider = cronSettings.AlternateProxyProvider[0].ProxyProvider;
+  //     const lastProxyProvider = cronSettings.AlternateProxyProvider[cronSettings.AlternateProxyProvider.length - 1].ProxyProvider;
+  //     return firstProvider === lastProxyProvider;
+  // }
+  return true;
+};
+
+export const GetAlternateProxyProviderName = async (
+  details: any,
+  providerId: any,
+) => {
+  if (details && details.length > 0) {
+    const linkedProvider = details.find((x) => x.proxyProvider == providerId);
+    return linkedProvider.method
+      ? `${linkedProvider.proxyProviderName} - ${linkedProvider.method}`
+      : `${linkedProvider.proxyProviderName}`;
+  }
+  return "";
 };
 
 /************************* PRIVATE FUNCTIONS *********************/
@@ -714,6 +831,9 @@ function getMappedDetails(product: any, fieldName: any) {
   }
   if (product.mvpDetails) {
     res = res + `MVP : ${product.mvpDetails[keyValue]}  | `;
+  }
+  if (product.triadDetails) {
+    res = res + `TRIAD : ${product.triadDetails[keyValue]}  | `;
   }
   return res;
 }
@@ -760,6 +880,9 @@ function getCommonEntityValue(item: any, keyType: any, checkAll: any) {
     if (item.mvp && item.mvp[keyType]) {
       return item.mvp[keyType];
     }
+    if (item.triad && item.triad[keyType]) {
+      return item.triad[keyType];
+    }
   } else if (checkAll == false) {
     if (item.tradent) {
       return item.tradent[keyType];
@@ -769,6 +892,9 @@ function getCommonEntityValue(item: any, keyType: any, checkAll: any) {
     }
     if (item.mvp) {
       return item.mvp[keyType];
+    }
+    if (item.triad) {
+      return item.triad[keyType];
     }
   }
   return null;
@@ -790,6 +916,9 @@ function getContextItem(product: any, key: any) {
   }
   if (product.firstDentDetails && !contextData) {
     contextData = product.firstDentDetails[key];
+  }
+  if (product.triadDetails && !contextData) {
+    contextData = product.triadDetails[key];
   }
   return contextData;
 }
@@ -814,9 +943,14 @@ function mapUserDataToDbData(userData: any, dbData: any, AuditInfo: any) {
   userData.nextCronTime = dbData.next_cron_time
     ? moment(dbData.next_cron_time).format("YYYY-MM-DD HH:mm:ss")
     : null;
-  userData.slowCronName = dbData.slowCronName;
-  userData.slowCronId = dbData.slowCronId;
-  userData.isSlowActivated = dbData.isSlowActivated;
+  userData.slowCronName =
+    userData.isSlowActivated == true ? dbData.slowCronName : null;
+  userData.slowCronId =
+    userData.isSlowActivated == true ? dbData.slowCronId : null;
+  userData.isSlowActivated =
+    userData.isSlowActivated == true
+      ? dbData.isSlowActivated
+      : userData.isSlowActivated;
   userData.lastUpdatedByUser = AuditInfo.UpdatedBy;
   userData.lastUpdatedOn = moment(AuditInfo.UpdatedOn).format(
     "YYYY-MM-DD HH:mm:ss",

@@ -209,7 +209,7 @@ export async function native_post(_url: any, payload: any) {
     },
     data: JSON.stringify(payload),
   };
-  await axios(config);
+  return await axios(config);
 }
 
 export async function recreateSlowCron(payload: any) {

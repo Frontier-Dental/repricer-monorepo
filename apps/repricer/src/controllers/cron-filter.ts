@@ -50,8 +50,50 @@ export async function GetFilterCron(req: Request, res: Response) {
       item,
       4,
     );
-    item.ThresholdReached = await MapperHelper.GetIsStepReached(item, 4);
-    item.CloseToThresholdReached = await MapperHelper.GetIsStepReached(item, 3);
+    item.ProxyProvider_5 = await MapperHelper.GetAlternateProxyProviderId(
+      item,
+      5,
+    );
+    item.ProxyProvider_6 = await MapperHelper.GetAlternateProxyProviderId(
+      item,
+      6,
+    );
+    item.ProxyProvider_1_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        item.ProxyProvider_1,
+      );
+    item.ProxyProvider_2_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        item.ProxyProvider_2,
+      );
+    item.ProxyProvider_3_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        item.ProxyProvider_3,
+      );
+    item.ProxyProvider_4_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        item.ProxyProvider_4,
+      );
+    item.ProxyProvider_5_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        item.ProxyProvider_5,
+      );
+    item.ProxyProvider_6_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        item.ProxyProvider_6,
+      );
+    item.ProxyProvider_Name = await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      item.ProxyProvider,
+    );
+    item.ThresholdReached = false; //await MapperHelper.GetIsStepReached(item, item.AlternateProxyProvider.length-1);
+    item.CloseToThresholdReached = false; //await MapperHelper.GetIsStepReached(item, item.AlternateProxyProvider.length - 2);
   }
   res.render("pages/filter/filteredList", {
     configItems: configItems,
@@ -208,6 +250,23 @@ export async function UpdateSlowCronExpression(req: Request, res: Response) {
   }
 
   if (updatedList.length > 0) {
+    let invalidUpdates = [];
+    for (const cronSetting of updatedList) {
+      const validationErrors =
+        await MapperHelper.ValidateAlternateProxyDetails(cronSetting);
+      if (validationErrors === false) {
+        invalidUpdates.push({
+          cronName: cronSetting.CronName,
+        });
+      }
+    }
+    if (invalidUpdates.length > 0) {
+      return res.json({
+        status: false,
+        message: `First & Last Alternate Proxy Providers are not the same for Cron : ${invalidUpdates.map((x) => x.cronName).join(", ")}`,
+      });
+    }
+
     const updateResponse = await mongoMiddleware.updateSlowCron(
       updatedList,
       req,

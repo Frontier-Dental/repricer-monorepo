@@ -50,6 +50,10 @@ export const MapProductDetailsList = async (payload: any) => {
               groupedList[parseInt(prodId)],
               "FIRSTDENT",
             ),
+            triadLinkInfo: await getLinkedInfoForVendor(
+              groupedList[parseInt(prodId)],
+              "TRIAD",
+            ),
             tradentDetails: await getMappedVendorDetails(
               groupedList[parseInt(prodId)],
               "TRADENT",
@@ -69,6 +73,10 @@ export const MapProductDetailsList = async (payload: any) => {
             firstDentDetails: await getMappedVendorDetails(
               groupedList[parseInt(prodId)],
               "FIRSTDENT",
+            ),
+            triadDetails: await getMappedVendorDetails(
+              groupedList[parseInt(prodId)],
+              "TRIAD",
             ),
           };
           mappedList.push(mappedProduct as any);

@@ -16,9 +16,21 @@ import * as SessionHelper from "../utility/session-helper";
 
 export async function showAllProducts(req: Request, res: Response) {
   let pgNo = 0;
+  let mpid = "";
+  let channelId = "";
+
+  // Handle search parameters
+  if (req.query.mpid) {
+    mpid = req.query.mpid as string;
+  }
+  if (req.query.channelId) {
+    channelId = req.query.channelId as string;
+  }
+
   if (req.query.pgno) {
     pgNo = (req.query.pgno as any) - 1;
   }
+
   let pageSize = 0,
     pageNumber = 0,
     totalDocs = 0,
@@ -28,25 +40,25 @@ export async function showAllProducts(req: Request, res: Response) {
   totalDocs = await mySqlHelper.GetNumberOfRepriceEligibleProductCount();
   totalPages = Math.ceil(totalDocs / pageSize);
   let masterItems: any[] = [];
-  if (req.query.tags) {
-    masterItems = await mySqlHelper.GetAllRepriceEligibleProductByTag(
-      req.query.tags,
-    );
+  if (req.query.mpid) {
+    masterItems = await mySqlHelper.GetAllRepriceEligibleProductByMpid(mpid);
     totalDocs = masterItems.length;
-    masterItems = spliceResult(masterItems, pageNumber, pageSize);
+    masterItems = await spliceResult(masterItems, pageNumber, pageSize);
+  } else if (req.query.channelId) {
+    masterItems =
+      await mySqlHelper.GetAllRepriceEligibleProductByChannelId(channelId);
+    totalDocs = masterItems.length;
+    masterItems = await spliceResult(masterItems, pageNumber, pageSize);
   } else {
     masterItems = await mySqlHelper.GetAllRepriceEligibleProductByFilter(
       pageNumber,
       pageSize,
     );
   }
-  //let cronSettings = await mongoMiddleware.GetCronSettingsList();
-  //const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
-  //cronSettings = _.concat(cronSettings, slowCronSettings);
+
   if (masterItems && masterItems.length > 0) {
     for (let prod of masterItems) {
       prod = mapper.MapBadgeIndicator(prod);
-      //prod = await mapper.MapCronName(prod, cronSettings);
     }
   }
   const productDetailsViewModel = mapper.MapV2(masterItems);
@@ -57,11 +69,51 @@ export async function showAllProducts(req: Request, res: Response) {
     pageSize,
     totalDocs,
     totalPages,
+    mpid,
+    channelId,
     tags: req.query.tags || "",
     groupName: "Products",
     userRole: (req as any).session.users_id?.userRole,
   });
 }
+
+// export async function updateProductQuantity(req: Request, res: Response) {
+//   const mpid = req.body.mpid;
+//   const vendorData = req.body.vendorData || [];
+
+//   try {
+//       const config = {
+//           method: 'POST',
+//           url: 'http://localhost:5001/data/UpdateProductQuantity',
+//           headers: {
+//               'Content-Type': 'application/json'
+//           },
+//           data: {
+//               mpid: mpid,
+//               vendorData: vendorData
+//           }
+//       };
+
+//       const response = await axios.post(config.url, config.data, {
+//           headers: config.headers,
+//           'axios-retry': {
+//               retries: 0
+//           }
+//       });
+
+//       return res.json({
+//           status: true,
+//           message: response.message,
+//           data: response.data
+//       });
+//   } catch (error) {
+//       console.error('Error calling API:', error);
+//       return res.status(500).json({
+//           status: false,
+//           message: error?.response?.data?.message || `Error updating product quantity for mpid ${mpid}`
+//       });
+//   }
+// });
 
 export async function collateProducts(req: Request, res: Response) {
   const _urlForActiveTradentProducts = apiMapping.find(
@@ -131,6 +183,7 @@ export async function updateProductDetails(req: Request, res: Response) {
     productDetails.mvpDetails = null;
     productDetails.firstDentDetails = null;
     productDetails.topDentDetails = null;
+    productDetails.triadDetails = null;
   }
   if (details.channel_name.toUpperCase() == "FRONTIER") {
     productDetails.frontierDetails = await mapper.MapUserResponse(
@@ -149,6 +202,7 @@ export async function updateProductDetails(req: Request, res: Response) {
     productDetails.mvpDetails = null;
     productDetails.firstDentDetails = null;
     productDetails.topDentDetails = null;
+    productDetails.triadDetails = null;
   }
   if (details.channel_name.toUpperCase() == "MVP") {
     productDetails.mvpDetails = await mapper.MapUserResponse(
@@ -167,6 +221,7 @@ export async function updateProductDetails(req: Request, res: Response) {
     productDetails.tradentDetails = null;
     productDetails.firstDentDetails = null;
     productDetails.topDentDetails = null;
+    productDetails.triadDetails = null;
   }
   if (details.channel_name.toUpperCase() == "FIRSTDENT") {
     productDetails.firstDentDetails = await mapper.MapUserResponse(
@@ -185,6 +240,7 @@ export async function updateProductDetails(req: Request, res: Response) {
     productDetails.tradentDetails = null;
     productDetails.mvpDetails = null;
     productDetails.topDentDetails = null;
+    productDetails.triadDetails = null;
   }
   if (details.channel_name.toUpperCase() == "TOPDENT") {
     productDetails.topDentDetails = await mapper.MapUserResponse(
@@ -203,6 +259,26 @@ export async function updateProductDetails(req: Request, res: Response) {
     productDetails.tradentDetails = null;
     productDetails.mvpDetails = null;
     productDetails.firstDentDetails = null;
+    productDetails.triadDetails = null;
+  }
+  if (details.channel_name.toUpperCase() == "TRIAD") {
+    productDetails.triadDetails = await mapper.MapUserResponse(
+      productDetails.triadDetails,
+      details,
+      cronSettingsResponse,
+    );
+    productDetails.triadDetails.isScrapeOnlyActivated =
+      productDetails.isScrapeOnlyActivated;
+    productDetails.triadDetails.scrapeOnlyCronId =
+      productDetails.scrapeOnlyCronId;
+    productDetails.triadDetails.scrapeOnlyCronName =
+      productDetails.scrapeOnlyCronName;
+    productDetails.triadDetails.isBadgeItem = productDetails.isBadgeItem;
+    productDetails.frontierDetails = null;
+    productDetails.tradentDetails = null;
+    productDetails.mvpDetails = null;
+    productDetails.firstDentDetails = null;
+    productDetails.topDentDetails = null;
   }
 
   await mapper.UpsertProductDetailsInSql(productDetails, details.mpid, req); //await mongoMiddleware.InsertOrUpdateProduct(_.first(productDetails), req);
@@ -585,6 +661,7 @@ export async function saveBranches(req: Request, res: Response) {
     mvpDetails,
     topDentDetails,
     firstDentDetails,
+    triadDetails,
   } = req.body;
 
   // Ensure only specific missing detail objects are initialized without overwriting existing objects
@@ -627,6 +704,13 @@ export async function saveBranches(req: Request, res: Response) {
     Object.keys(firstDentDetails).length > 0
   ) {
     updateInitialization.firstDentDetails = {};
+  }
+  if (
+    !existingProduct.triadDetails &&
+    triadDetails &&
+    Object.keys(triadDetails).length > 0
+  ) {
+    updateInitialization.triadDetails = {};
   }
 
   // if (Object.keys(updateInitialization).length > 0) {
@@ -708,6 +792,20 @@ export async function saveBranches(req: Request, res: Response) {
       mpidTrimmed,
       "FIRSTDENT",
       updateData["firstDentDetails"],
+    );
+  }
+
+  if (triadDetails && Object.keys(triadDetails).length > 0) {
+    updateData[`triadDetails`] = {};
+    for (const key in triadDetails) {
+      if (triadDetails[key] !== null && triadDetails[key] !== undefined) {
+        updateData[`triadDetails`][`${key}`] = triadDetails[key];
+      }
+    }
+    await mySqlHelper.UpdateBranchDataForVendor(
+      mpidTrimmed,
+      "TRIAD",
+      updateData["triadDetails"],
     );
   }
 
@@ -796,6 +894,12 @@ export async function exportItems(req: Request, res: Response) {
       val.firstDentDetails.isBadgeItem = val.isBadgeItem;
       AllItems.push(val.firstDentDetails);
     }
+    if (val.triadDetails && val.triadDetails != null) {
+      val.triadDetails.scrapeOnlyCronName = val.scrapeOnlyCronName;
+      val.triadDetails.isScrapeOnlyActivated = val.isScrapeOnlyActivated;
+      val.triadDetails.isBadgeItem = val.isBadgeItem;
+      AllItems.push(val.triadDetails);
+    }
   });
   AllItems.forEach(($item) => {
     $item.lastCronTime = $item.last_cron_time
@@ -839,7 +943,7 @@ export async function exportItems(req: Request, res: Response) {
   let worksheet = workbook.addWorksheet("ItemList", {
     views: [{ state: "frozen", ySplit: 1 }],
   });
-  worksheet.autoFilter = "A1:BE1";
+  worksheet.autoFilter = "A1:BK1";
   worksheet.columns = [
     { header: "Channel Name", key: "channelName", width: 20 },
     { header: "Active - Repricer", key: "activated", width: 20 },
@@ -864,7 +968,7 @@ export async function exportItems(req: Request, res: Response) {
     { header: "Net32 URl", key: "net32url", width: 20 },
     { header: "ExecutionPriority", key: "executionPriority", width: 20 },
     { header: "Data - Scrape", key: "isScrapeOnlyActivated", width: 20 },
-    { header: "ScrapeOnlyCronName", key: "scrapeOnlyCronName", width: 20 },
+    { header: "DataOnlyCronName", key: "scrapeOnlyCronName", width: 20 },
     { header: "Last CRON run at", key: "lastCronTime", width: 20 },
     { header: "Last run cron-type", key: "lastCronRun", width: 20 },
     { header: "Last updated at", key: "lastUpdateTime", width: 20 },
@@ -936,6 +1040,11 @@ export async function exportItems(req: Request, res: Response) {
     { header: "Triggered By Vendor", key: "triggeredByVendor", width: 20 },
     { header: "Ignore Phantom Q Break", key: "ignorePhantomQBreak", width: 20 },
     { header: "Own Vendor Threshold", key: "ownVendorThreshold", width: 20 },
+    { header: "Result", key: "repriceResult", width: 20 },
+    { header: "Get BB - Shipping", key: "getBBShipping", width: 20 },
+    { header: "Get BB - Shipping Value", key: "getBBShippingValue", width: 20 },
+    { header: "Get BB - Badge", key: "getBBBadge", width: 20 },
+    { header: "Get BB - Badge Value", key: "getBBBadgeValue", width: 20 },
   ];
   worksheet.addRows(AllItems);
   res.setHeader(

@@ -7,6 +7,7 @@ import * as mongoMiddleware from "../services/mongo";
 export async function GetConfigSetup(req: Request, res: Response) {
   let configItems = await mongoMiddleware.GetConfigurations(false);
 
+  configItems = _.filter(configItems, (x) => x.isDummy != true);
   await Promise.all(
     configItems.map(async (config: any) => {
       config.lastUpdatedBy = config.AuditInfo
