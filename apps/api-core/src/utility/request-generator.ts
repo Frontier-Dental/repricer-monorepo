@@ -27,6 +27,7 @@ export async function GetPrioritySequence(
   const _mvp = { name: VendorName.MVP, value: "mvpDetails" };
   const _topDent = { name: VendorName.TOPDENT, value: "topDentDetails" };
   const _firstDent = { name: VendorName.FIRSTDENT, value: "firstDentDetails" };
+  const _triad = { name: VendorName.TRIAD, value: "triadDetails" };
   let prioritySequence = [];
   const globalConfig = await dbHelper.GetGlobalConfig();
   const isOverrideEnabled = IsOverrideExecutionPriorityEnabled(globalConfig!);
@@ -46,6 +47,7 @@ export async function GetPrioritySequence(
       { details: productDetails.mvpDetails, obj: _mvp },
       { details: productDetails.topDentDetails, obj: _topDent },
       { details: productDetails.firstDentDetails, obj: _firstDent },
+      { details: productDetails.triadDetails, obj: _triad },
     ];
     for (const vendor of vendors) {
       if (

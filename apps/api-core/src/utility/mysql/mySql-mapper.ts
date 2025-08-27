@@ -23,6 +23,7 @@ export interface ProductDetailsListItem {
   mvpDetails: OwnVendorProductDetails | null;
   topDentDetails: OwnVendorProductDetails | null;
   firstDentDetails: OwnVendorProductDetails | null;
+  triadDetails: OwnVendorProductDetails | null;
   mpid?: string;
   secretKey?: SecretKeyEntry[];
   last_attempted_time?: Date;
@@ -91,6 +92,10 @@ export const MapProductDetailsList = (
         groupedList[parseInt(prodId)],
         VendorName.FIRSTDENT,
       ),
+      triadLinkInfo: getLinkedInfoForVendor(
+        groupedList[parseInt(prodId)],
+        VendorName.TRIAD,
+      ),
       tradentDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
         VendorName.TRADENT,
@@ -110,6 +115,10 @@ export const MapProductDetailsList = (
       firstDentDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
         VendorName.FIRSTDENT,
+      ),
+      triadDetails: getMappedVendorDetails(
+        groupedList[parseInt(prodId)],
+        VendorName.TRIAD,
       ),
     };
     mappedList.push(mappedProduct);

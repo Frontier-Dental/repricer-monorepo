@@ -461,6 +461,11 @@ export async function RepriceErrorItem(
       details.firstDentDetails.slowCronName = null;
       productUpdateNeeded = true;
     }
+    if (details.triadDetails) {
+      details.triadDetails.slowCronId = null;
+      details.triadDetails.slowCronName = null;
+      productUpdateNeeded = true;
+    }
     if (productUpdateNeeded == true) {
       details.isSlowActivated = false;
       await sqlHelper.UpdateCronForProductAsync(details); //await dbHelper.UpdateCronForProductAsync(details);
@@ -975,6 +980,9 @@ function getProductDetailsByVendor(details: any, contextVendor: string) {
   }
   if (contextVendor === VendorName.FIRSTDENT) {
     return details.firstDentDetails;
+  }
+  if (contextVendor == VendorName.TRIAD) {
+    return details.triadDetails;
   }
 }
 

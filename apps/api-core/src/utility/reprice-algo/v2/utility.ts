@@ -9,6 +9,7 @@ export function getAllOwnVendorNames() {
     { name: VendorName.MVP },
     { name: VendorName.TOPDENT },
     { name: VendorName.FIRSTDENT },
+    { name: VendorName.TRIAD },
   ];
 }
 
@@ -27,6 +28,7 @@ export function getAllOwnVendorIds() {
     VendorId.MVP,
     VendorId.TOPDENT,
     VendorId.FIRSTDENT,
+    VendorId.TRIAD,
   ];
 }
 
@@ -107,6 +109,19 @@ export function getInternalProducts(
               : 0,
             maxPrice: prod.topDentDetails?.maxPrice
               ? parseFloat(prod.topDentDetails.maxPrice as unknown as string)
+              : Infinity,
+            priority: i,
+          };
+        case VendorName.TRIAD:
+          return {
+            ...prod.triadDetails,
+            ownVendorId: VendorId.TRIAD,
+            ownVendorName: VendorName.TRIAD,
+            floorPrice: prod.triadDetails?.floorPrice
+              ? parseFloat(prod.triadDetails.floorPrice as unknown as string)
+              : 0,
+            maxPrice: prod.triadDetails?.maxPrice
+              ? parseFloat(prod.triadDetails.maxPrice as unknown as string)
               : Infinity,
             priority: i,
           };

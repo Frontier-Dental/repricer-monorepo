@@ -66,5 +66,6 @@ function getCronId(prod: ProductDetailsListItem) {
   if (prod.mvpDetails) return prod.mvpDetails.cronId;
   if (prod.topDentDetails) return prod.topDentDetails.cronId;
   if (prod.firstDentDetails) return prod.firstDentDetails.cronId;
+  if (prod.triadDetails) return prod.triadDetails.cronId;
   throw new Error("No cronId found");
 }

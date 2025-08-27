@@ -9,6 +9,7 @@ import * as mySqlHelper from "./mysql/mysql-helper";
 import { RepriceData, RepriceModel } from "../model/reprice-model";
 import { Net32PriceBreak, Net32Product } from "../types/net32";
 import { applicationConfig } from "./config";
+import { VendorName } from "@repricer-monorepo/shared";
 
 export async function Execute(
   mpId: number | string,
@@ -230,16 +231,18 @@ function getOwnVendorId(vendorName: string) {
   switch (
     vendorName.toUpperCase() //17357;20722;20755;20533;20727
   ) {
-    case "TRADENT":
+    case VendorName.TRADENT:
       return "17357";
-    case "FRONTIER":
+    case VendorName.FRONTIER:
       return "20722";
-    case "MVP":
+    case VendorName.MVP:
       return "20755";
-    case "TOPDENT":
+    case VendorName.TOPDENT:
       return "20533";
-    case "FIRSTDENT":
+    case VendorName.FIRSTDENT:
       return "20727";
+    case VendorName.TRIAD:
+      return "5";
     default:
       throw new Error(`Unknown vendor name: ${vendorName}`);
   }

@@ -4,6 +4,7 @@ export enum VendorId {
   MVP = 20755,
   TOPDENT = 20727,
   FIRSTDENT = 20533,
+  TRIAD = 5,
 }
 
 export enum VendorName {
@@ -12,6 +13,7 @@ export enum VendorName {
   TRADENT = "TRADENT",
   FIRSTDENT = "FIRSTDENT",
   TOPDENT = "TOPDENT",
+  TRIAD = "TRIAD",
 }
 
 export const VendorNameLookup: Record<number, VendorName> = {
@@ -20,6 +22,7 @@ export const VendorNameLookup: Record<number, VendorName> = {
   [VendorId.MVP]: VendorName.MVP,
   [VendorId.TOPDENT]: VendorName.TOPDENT,
   [VendorId.FIRSTDENT]: VendorName.FIRSTDENT,
+  [VendorId.TRIAD]: VendorName.TRIAD,
 };
 
 export const VendorIdLookup: Record<VendorName, VendorId> = {
@@ -28,6 +31,7 @@ export const VendorIdLookup: Record<VendorName, VendorId> = {
   [VendorName.MVP]: VendorId.MVP,
   [VendorName.TOPDENT]: VendorId.TOPDENT,
   [VendorName.FIRSTDENT]: VendorId.FIRSTDENT,
+  [VendorName.TRIAD]: VendorId.TRIAD,
 };
 
 export enum AlgoExecutionMode {
