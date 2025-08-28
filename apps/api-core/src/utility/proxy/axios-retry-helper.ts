@@ -10,6 +10,9 @@ import { applicationConfig } from "../config";
 axiosRetry(axios, {
   retries: applicationConfig.NO_OF_RETRIES, // number of retries
   retryDelay: (retryCount: number) => {
+    if (retryCount > 1) {
+      proxySwitchHelper.SwitchProxy();
+    }
     console.log(`retry attempt : ${retryCount} at ${new Date()}`);
     return retryCount * applicationConfig.RETRY_INTERVAL; // time interval between retries
   },
@@ -109,6 +112,11 @@ export async function getScrappingResponse(
   } catch (error: any) {
     console.log(`SmartProxy - Web Exception : ${error} || URL : ${_url}`);
     console.error("Error Stack: ", error.stack);
+    const errorMessage = getFormattedErrorMesage(error);
+
+    console.log(
+      `SmartProxy - Web Exception : ${errorMessage} || URL : ${_url}`,
+    );
     await proxySwitchHelper.ExecuteCounter(
       parseInt(proxyDetailsResponse.proxyProvider),
     );
@@ -116,6 +124,11 @@ export async function getScrappingResponse(
     if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible == true) {
       console.log(`ERROR (WITH RETRY) : ${error} `);
       console.log(`RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`);
+
+      if (retryCount > 1) {
+        await proxySwitchHelper.SwitchProxy();
+      }
+
       await delay(applicationConfig.RETRY_INTERVAL);
       return await getScrappingResponse(
         _url,
@@ -200,7 +213,8 @@ export async function getScrapingBeeResponse(
       return { data: JSON.parse(response) };
     }
   } catch (error: any) {
-    console.log(`Scraping Bee Exception : ${error} || URL : ${_url}`);
+    const errorMessage = getFormattedErrorMesage(error);
+    console.log(`Scraping Bee Exception : ${errorMessage} || URL : ${_url}`);
     await proxySwitchHelper.ExecuteCounter(
       parseInt(proxyDetailsResponse.proxyProvider),
     );
@@ -208,6 +222,11 @@ export async function getScrapingBeeResponse(
     if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible == true) {
       console.log(`ERROR (WITH RETRY) : ${error} `);
       console.log(`RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`);
+
+      if (retryCount > 1) {
+        await proxySwitchHelper.SwitchProxy();
+      }
+
       await delay(applicationConfig.RETRY_INTERVAL);
       return await getScrapingBeeResponse(
         _url,
@@ -242,4 +261,22 @@ async function retryConditionForAxios(error: any): Promise<boolean> {
     error.response.status == 400 ||
     error.response.status == 401
   );
+}
+
+function getFormattedErrorMesage(error: any): string {
+  let message = error.message || String(error);
+  if (!error.response) return message;
+
+  let responseDetails = "";
+  if (error.response.data)
+    responseDetails = JSON.stringify(error.response.data);
+  else if (error.response.status) {
+    responseDetails = String(error.response.status);
+  }
+
+  if (responseDetails) {
+    message = `${message} || Response: ${responseDetails}`;
+  }
+
+  return message;
 }
