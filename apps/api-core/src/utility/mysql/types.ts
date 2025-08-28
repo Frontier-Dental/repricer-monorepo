@@ -56,6 +56,14 @@ export interface StatusInfo {
   IsCompleted: number;
 }
 
+export interface ProxyNet32 {
+  id: number;
+  username: string;
+  password: string;
+  ipAddress: string;
+  port: string;
+}
+
 export interface UpdateProductPayload {
   lastCronRun: string;
   last_cron_message: string;
@@ -66,7 +74,7 @@ export interface UpdateProductPayload {
   lastSuggestedPrice: string;
   last_cron_time: string;
   last_attempted_time: string;
-  next_cron_time: string;
+  next_cron_time: string | null;
   last_update_time?: string;
   mpid: string | number;
 }

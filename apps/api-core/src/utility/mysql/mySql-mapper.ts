@@ -126,20 +126,17 @@ export const MapProductDetailsList = (
   return mappedList;
 };
 
-export const GetTriggeredByValue = (repriceModel: RepriceModel): string => {
-  let triggeredByVendorValue = "";
+export const GetTriggeredByValue = async (
+  repriceModel: RepriceModel,
+): Promise<string | null> => {
+  let triggeredByVendorValue = null;
 
-  if (
-    repriceModel.listOfRepriceDetails &&
-    repriceModel.listOfRepriceDetails.length > 0
-  ) {
-    triggeredByVendorValue = repriceModel.listOfRepriceDetails
-      .map((item) => `${item.minQty} @ ${item.triggeredByVendor}`)
-      .join(", ");
-  } else {
-    triggeredByVendorValue =
-      repriceModel.repriceDetails?.triggeredByVendor || "";
-  }
+  triggeredByVendorValue =
+    (repriceModel.listOfRepriceDetails ?? []).length > 0
+      ? (repriceModel.listOfRepriceDetails ?? [])
+          .map(($) => `${$.triggeredByVendor}`)
+          .join(", ")
+      : repriceModel.repriceDetails?.triggeredByVendor || null;
 
   return triggeredByVendorValue;
 };
@@ -168,4 +165,27 @@ function getVendorEntityDb(listOfItems: any[], vendorName: VendorName) {
   return listOfItems.find(
     (x) => x.ChannelName && x.ChannelName.toUpperCase() == vendorName,
   );
+}
+
+function hasPriceChanged(repriceModel: any) {
+  if ((repriceModel.listOfRepriceDetails ?? []).length > 0) {
+    const qty1PriceBreak = (repriceModel.listOfRepriceDetails ?? []).find(
+      (x: { minQty: number }) => x.minQty == 1,
+    );
+    if (
+      qty1PriceBreak &&
+      qty1PriceBreak.newPrice != null &&
+      qty1PriceBreak.newPrice != "N/A" &&
+      qty1PriceBreak.newPrice != ""
+    ) {
+      return true;
+    }
+  } else if (
+    repriceModel.repriceDetails?.newPrice != null &&
+    repriceModel.repriceDetails?.newPrice != "N/A" &&
+    repriceModel.repriceDetails?.newPrice != ""
+  ) {
+    return true;
+  }
+  return false;
 }

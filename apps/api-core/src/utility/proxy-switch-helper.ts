@@ -15,6 +15,7 @@ interface CronSettings {
   CronId: number;
   CronName: string;
   ProxyProvider: number;
+  SwitchSequence: number;
   AlternateProxyProvider?: AlternateProxyProvider[];
 }
 
@@ -154,6 +155,7 @@ async function updateProxyForCron(
   listOfCrons: CronSettings[],
   existingProxyProviderId: number,
   newProxyProvider: number,
+  sequence: number = -1,
 ): Promise<CronInfo | null> {
   let payloadForEmail: CronInfo | null = null;
   const existingProxyDetails = _.first(
@@ -177,6 +179,11 @@ async function updateProxyForCron(
         thresholdReached: true,
       };
       payloadForEmail = cronInfo;
+      await dbHelper.UpdateProxyDetailsByCronId(
+        cronSettings.CronId,
+        cronSettings.ProxyProvider,
+        -1,
+      );
     } else {
       const newProxyDetails = _.first(
         await dbHelper.GetProxyConfigByProviderId(newProxyProvider),
@@ -185,6 +192,7 @@ async function updateProxyForCron(
       await dbHelper.UpdateProxyDetailsByCronId(
         cronSettings.CronId as unknown as string,
         newProxyProvider,
+        sequence,
       );
 
       const cronInfo: CronInfo = {
@@ -253,9 +261,27 @@ async function executeProxySwitch(
       );
 
     if (existingAlternateProxyDetails) {
+      let existingSequence = existingAlternateProxyDetails.Sequence;
+      const availableMatchingAlternateProviders = _.filter(
+        cronDetails.AlternateProxyProvider,
+        (proxy) =>
+          proxy.ProxyProvider === existingProxyProvider &&
+          proxy.Sequence != cronDetails.SwitchSequence,
+      );
+      if (
+        availableMatchingAlternateProviders &&
+        availableMatchingAlternateProviders.length > 1
+      ) {
+        const sortedMatchingProviders = _.sortBy(
+          availableMatchingAlternateProviders,
+          (proxy) => proxy.Sequence,
+        );
+        existingSequence = sortedMatchingProviders[0].Sequence;
+      }
+
       const availableAlternateSolution = _.filter(
         cronDetails.AlternateProxyProvider,
-        (proxy) => proxy.Sequence > existingAlternateProxyDetails.Sequence,
+        (proxy) => proxy.Sequence > existingSequence,
       );
 
       if (availableAlternateSolution && availableAlternateSolution.length > 0) {
@@ -263,6 +289,7 @@ async function executeProxySwitch(
           [cronDetails],
           existingProxyProvider,
           _.first(availableAlternateSolution)!.ProxyProvider,
+          _.first(availableAlternateSolution)!.Sequence,
         );
       } else {
         payloadForEmail = await updateProxyForCron(
