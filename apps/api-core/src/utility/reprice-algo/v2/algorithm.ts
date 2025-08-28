@@ -1,5 +1,5 @@
 import { Decimal } from "decimal.js";
-import { Net32PriceBreak } from "../../../types/net32";
+import { Net32PriceBreak, Net32Product } from "../../../types/net32";
 import { V2AlgoSettingsData } from "../../mysql/v2-algo-settings";
 import { createHtmlFileContent } from "./html-builder";
 import {
@@ -45,6 +45,8 @@ export interface Net32AlgoSolution {
   rawTriggeredByVendor?: string;
   pushedToMax?: boolean;
   beforeLadder: Net32AlgoProductWrapperWithBuyBoxRank[];
+  lowestPrice: number | null;
+  lowestVendorId: number | null;
 }
 
 export interface Net32AlgoSolutionWithResult extends Net32AlgoSolution {
@@ -107,6 +109,8 @@ export function repriceProductV2(
     );
 
   const availableVendorIds = ourAvailableVendorProducts.map((v) => v.vendorId);
+
+  const lowestVendor = getLowestVendor(rawNet32Products);
 
   const solutions: Net32AlgoSolution[] = [];
 
@@ -204,6 +208,8 @@ export function repriceProductV2(
         pushedToMax,
         everyoneFromViewOfOwnVendorRanked,
         everyoneIncludingOwnVendorBefore,
+        lowestPrice: lowestVendor.lowestPrice,
+        lowestVendorId: lowestVendor.lowestVendorId,
       });
     }
   }
@@ -1155,4 +1161,29 @@ function getUniqueValidQuantityBreaks(net32Products: Net32AlgoProduct[]) {
   }
 
   return Array.from(quantityBreaks).toSorted((a, b) => a - b);
+}
+
+function getLowestVendor(net32Products: Net32AlgoProduct[]) {
+  const sortedByLowestPrice = net32Products
+    .filter((prod) => prod.priceBreaks.find((pb) => pb.minQty === 1))
+    .toSorted((a, b) => {
+      const aPrice = a.priceBreaks.find((pb) => pb.minQty === 1)!.unitPrice;
+      const bPrice = b.priceBreaks.find((pb) => pb.minQty === 1)!.unitPrice;
+      return aPrice - bPrice;
+    });
+  if (sortedByLowestPrice.length === 0) {
+    return {
+      lowestPrice: null,
+      lowestVendorId: null,
+    };
+  }
+  const lowestVendor = sortedByLowestPrice[0];
+  return {
+    lowestPrice: lowestVendor.priceBreaks.find((pb) => pb.minQty === 1)!
+      .unitPrice,
+    lowestVendorId:
+      typeof lowestVendor.vendorId === "number"
+        ? lowestVendor.vendorId
+        : parseInt(lowestVendor.vendorId as string),
+  };
 }

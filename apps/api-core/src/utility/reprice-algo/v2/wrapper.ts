@@ -103,6 +103,8 @@ export async function repriceProductV2Wrapper(
       new_price_breaks: result.priceList
         ? getPriceListFormatted(result.priceList)
         : null,
+      lowest_price: result.lowestPrice,
+      lowest_vendor_id: result.lowestVendorId,
     }));
 
     await insertMultipleV2AlgoResults(algoResults);

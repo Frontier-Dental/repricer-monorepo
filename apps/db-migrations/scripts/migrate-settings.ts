@@ -50,6 +50,163 @@ interface MigrationResult {
   updatedCount: number;
 }
 
+// Get vendor configurations - centralized to avoid duplication
+function getVendorConfigs(): VendorConfig[] {
+  return [
+    {
+      tableName: "table_firstDentDetails",
+      vendorId: 20533,
+      vendorName: "FirstDent",
+    },
+    {
+      tableName: "table_frontierDetails",
+      vendorId: 20722,
+      vendorName: "Frontier",
+    },
+    { tableName: "table_mvpDetails", vendorId: 20755, vendorName: "MVP" },
+    {
+      tableName: "table_topDentDetails",
+      vendorId: 20727,
+      vendorName: "TopDent",
+    },
+    {
+      tableName: "table_tradentDetails",
+      vendorId: 17357,
+      vendorName: "Tradent",
+    },
+    {
+      tableName: "table_triadDetails",
+      vendorId: 5,
+      vendorName: "Triad",
+    },
+  ];
+}
+
+// Transform vendor settings to v2_algo_settings format - centralized to avoid duplication
+function transformVendorSettings(
+  vendorSettings: any[],
+  vendorConfig: VendorConfig,
+) {
+  return vendorSettings.map((setting: any) => ({
+    mp_id: setting.MpId,
+    vendor_id: vendorConfig.vendorId,
+    enabled: setting.Activated === 1, // Map Activated to enabled
+    suppress_price_break_if_Q1_not_updated:
+      setting.SuppressPriceBreakForOne === 1,
+    suppress_price_break: setting.SuppressPriceBreak === 1,
+    compete_on_price_break_only: setting.BeatQPrice === 1,
+    up_down:
+      setting.RepricingRule === 2
+        ? AlgoPriceDirection.UP_DOWN
+        : AlgoPriceDirection.DOWN,
+    badge_indicator:
+      setting.BadgeIndicator === "BADGE_ONLY"
+        ? AlgoBadgeIndicator.BADGE
+        : AlgoBadgeIndicator.ALL,
+    execution_priority: setting.ExecutionPriority || 0,
+    reprice_up_percentage: setting.PercentageIncrease || -1,
+    compare_q2_with_q1: setting.CompareWithQ1 === 1,
+    compete_with_all_vendors: setting.CompeteAll === 1,
+    reprice_up_badge_percentage: setting.BadgePercentage || -1,
+    sister_vendor_ids: setting.SisterVendorId || "",
+    exclude_vendors: setting.ExcludedVendors || "",
+    inactive_vendor_id: setting.InactiveVendorId || "",
+    handling_time_group: setting.HandlingTimeFilter || "",
+    keep_position: setting.KeepPosition === 1,
+    inventory_competition_threshold: setting.InventoryThreshold || 1,
+    reprice_down_percentage:
+      Number(setting.PercentageDown) !== 0
+        ? Number(setting.PercentageDown) * 100
+        : -1,
+    floor_price: setting.FloorPrice || 0,
+    max_price: setting.MaxPrice || 99999999.99,
+    reprice_down_badge_percentage:
+      Number(setting.BadgePercentageDown) !== 0
+        ? Number(setting.BadgePercentageDown) * 100
+        : -1,
+    floor_compete_with_next: setting.CompeteWithNext === 1,
+    own_vendor_threshold: setting.OwnVendorThreshold || 1,
+    not_cheapest: setting.IsNCNeeded === 1,
+    target_price: setting.UnitPrice || null,
+  }));
+}
+
+// Perform batch upsert operations - centralized to avoid duplication
+async function performBatchUpsert(
+  db: any,
+  transformedSettings: any[],
+  vendorConfig: VendorConfig,
+): Promise<{ insertedCount: number; updatedCount: number }> {
+  let insertedCount = 0;
+  let updatedCount = 0;
+
+  try {
+    // Get existing records to determine what needs to be inserted vs updated
+    const existingRecords = await db("v2_algo_settings")
+      .whereIn(
+        ["mp_id", "vendor_id"],
+        transformedSettings.map((s) => [s.mp_id, s.vendor_id]),
+      )
+      .select("mp_id", "vendor_id");
+
+    // Create a map for quick lookup
+    const existingMap = new Map(
+      existingRecords.map((r) => [`${r.mp_id}-${r.vendor_id}`, true]),
+    );
+
+    // Separate records into insert and update batches
+    const toInsert: typeof transformedSettings = [];
+    const toUpdate: typeof transformedSettings = [];
+
+    for (const setting of transformedSettings) {
+      const key = `${setting.mp_id}-${setting.vendor_id}`;
+      const existing = existingMap.get(key);
+
+      if (existing) {
+        toUpdate.push(setting);
+      } else {
+        toInsert.push(setting);
+      }
+    }
+
+    // Perform batch insert for new records
+    if (toInsert.length > 0) {
+      await db("v2_algo_settings").insert(toInsert);
+      insertedCount = toInsert.length;
+      console.log(
+        `✅ Batch inserted ${toInsert.length} new settings for ${vendorConfig.vendorName}`,
+      );
+    }
+
+    // Perform batch updates for existing records
+    if (toUpdate.length > 0) {
+      // Use a transaction for batch updates
+      await db.transaction(async (trx) => {
+        for (const setting of toUpdate) {
+          await trx("v2_algo_settings")
+            .where({
+              mp_id: setting.mp_id,
+              vendor_id: setting.vendor_id,
+            })
+            .update(setting);
+        }
+      });
+      updatedCount = toUpdate.length;
+      console.log(
+        `🔄 Batch updated ${toUpdate.length} existing settings for ${vendorConfig.vendorName}`,
+      );
+    }
+  } catch (error) {
+    console.error(
+      `❌ Error during batch operations for ${vendorConfig.vendorName}:`,
+      error,
+    );
+    throw error;
+  }
+
+  return { insertedCount, updatedCount };
+}
+
 async function migrateVendorSettings(vendorConfig: VendorConfig) {
   const db = createKnexInstance();
 
@@ -89,115 +246,17 @@ async function migrateVendorSettings(vendorConfig: VendorConfig) {
     }
 
     // Transform all settings for upsert
-    const transformedSettings = vendorSettings.map((setting: any) => ({
-      mp_id: setting.MpId,
-      vendor_id: vendorConfig.vendorId,
-      enabled: setting.Activated === 1, // Map Activated to enabled
-      suppress_price_break_if_Q1_not_updated:
-        setting.SuppressPriceBreakForOne === 1,
-      suppress_price_break: setting.SuppressPriceBreak === 1,
-      compete_on_price_break_only: setting.BeatQPrice === 1,
-      up_down:
-        setting.RepricingRule === 2
-          ? AlgoPriceDirection.UP_DOWN
-          : AlgoPriceDirection.DOWN,
-      badge_indicator:
-        setting.BadgeIndicator === "BADGE_ONLY"
-          ? AlgoBadgeIndicator.BADGE
-          : AlgoBadgeIndicator.ALL,
-      execution_priority: setting.ExecutionPriority || 0,
-      reprice_up_percentage: setting.PercentageIncrease || -1,
-      compare_q2_with_q1: setting.CompareWithQ1 === 1,
-      compete_with_all_vendors: setting.CompeteAll === 1,
-      reprice_up_badge_percentage: setting.BadgePercentage || -1,
-      sister_vendor_ids: setting.SisterVendorId || "",
-      exclude_vendors: setting.ExcludedVendors || "",
-      inactive_vendor_id: setting.InactiveVendorId || "",
-      handling_time_group: setting.HandlingTimeFilter || "",
-      keep_position: setting.KeepPosition === 1,
-      inventory_competition_threshold: setting.InventoryThreshold || 1,
-      reprice_down_percentage:
-        Number(setting.PercentageDown) !== 0
-          ? Number(setting.PercentageDown) * 100
-          : -1,
-      floor_price: setting.FloorPrice || 0,
-      max_price: setting.MaxPrice || 99999999.99,
-      reprice_down_badge_percentage:
-        Number(setting.PercentageDown) !== 0
-          ? Number(setting.PercentageDown) * 100
-          : -1,
-      floor_compete_with_next: setting.CompeteWithNext === 1,
-      own_vendor_threshold: setting.OwnVendorThreshold || 1,
-      not_cheapest: setting.IsNCNeeded === 1,
-    }));
+    const transformedSettings = transformVendorSettings(
+      vendorSettings,
+      vendorConfig,
+    );
 
     // Perform batch operations
-    let insertedCount = 0;
-    let updatedCount = 0;
-
-    try {
-      // Get existing records to determine what needs to be inserted vs updated
-      const existingRecords = await db("v2_algo_settings")
-        .whereIn(
-          ["mp_id", "vendor_id"],
-          transformedSettings.map((s) => [s.mp_id, s.vendor_id]),
-        )
-        .select("mp_id", "vendor_id");
-
-      // Create a map for quick lookup
-      const existingMap = new Map(
-        existingRecords.map((r) => [`${r.mp_id}-${r.vendor_id}`, true]),
-      );
-
-      // Separate records into insert and update batches
-      const toInsert: typeof transformedSettings = [];
-      const toUpdate: typeof transformedSettings = [];
-
-      for (const setting of transformedSettings) {
-        const key = `${setting.mp_id}-${setting.vendor_id}`;
-        const existing = existingMap.get(key);
-
-        if (existing) {
-          toUpdate.push(setting);
-        } else {
-          toInsert.push(setting);
-        }
-      }
-
-      // Perform batch insert for new records
-      if (toInsert.length > 0) {
-        await db("v2_algo_settings").insert(toInsert);
-        insertedCount = toInsert.length;
-        console.log(
-          `✅ Batch inserted ${toInsert.length} new settings for ${vendorConfig.vendorName}`,
-        );
-      }
-
-      // Perform batch updates for existing records
-      if (toUpdate.length > 0) {
-        // Use a transaction for batch updates
-        await db.transaction(async (trx) => {
-          for (const setting of toUpdate) {
-            await trx("v2_algo_settings")
-              .where({
-                mp_id: setting.mp_id,
-                vendor_id: setting.vendor_id,
-              })
-              .update(setting);
-          }
-        });
-        updatedCount = toUpdate.length;
-        console.log(
-          `🔄 Batch updated ${toUpdate.length} existing settings for ${vendorConfig.vendorName}`,
-        );
-      }
-    } catch (error) {
-      console.error(
-        `❌ Error during batch operations for ${vendorConfig.vendorName}:`,
-        error,
-      );
-      throw error;
-    }
+    const { insertedCount, updatedCount } = await performBatchUpsert(
+      db,
+      transformedSettings,
+      vendorConfig,
+    );
 
     console.log(
       `✅ Successfully migrated ${transformedSettings.length} ${vendorConfig.vendorName} settings to v2_algo_settings`,
@@ -232,29 +291,7 @@ async function migrateVendorSettings(vendorConfig: VendorConfig) {
 }
 
 async function migrateAllVendors() {
-  const vendorConfigs: VendorConfig[] = [
-    {
-      tableName: "table_firstDentDetails",
-      vendorId: 20533,
-      vendorName: "FirstDent",
-    },
-    {
-      tableName: "table_frontierDetails",
-      vendorId: 20722,
-      vendorName: "Frontier",
-    },
-    { tableName: "table_mvpDetails", vendorId: 20755, vendorName: "MVP" },
-    {
-      tableName: "table_topDentDetails",
-      vendorId: 20727,
-      vendorName: "TopDent",
-    },
-    {
-      tableName: "table_tradentDetails",
-      vendorId: 17357,
-      vendorName: "Tradent",
-    },
-  ];
+  const vendorConfigs = getVendorConfigs();
 
   console.log("🚀 Starting sequential migration of all vendor settings...");
   console.log(
@@ -307,29 +344,7 @@ async function migrateAllVendors() {
 }
 
 async function syncSingleMpId(mpId: number) {
-  const vendorConfigs: VendorConfig[] = [
-    {
-      tableName: "table_firstDentDetails",
-      vendorId: 20533,
-      vendorName: "FirstDent",
-    },
-    {
-      tableName: "table_frontierDetails",
-      vendorId: 20722,
-      vendorName: "Frontier",
-    },
-    { tableName: "table_mvpDetails", vendorId: 20755, vendorName: "MVP" },
-    {
-      tableName: "table_topDentDetails",
-      vendorId: 20727,
-      vendorName: "TopDent",
-    },
-    {
-      tableName: "table_tradentDetails",
-      vendorId: 17357,
-      vendorName: "Tradent",
-    },
-  ];
+  const vendorConfigs = getVendorConfigs();
 
   console.log(`🔄 Starting sync for single MP ID: ${mpId}`);
   console.log(
@@ -430,82 +445,17 @@ async function syncVendorSettingsForMpId(
     }
 
     // Transform settings for upsert
-    const transformedSettings = vendorSettings.map((setting: any) => ({
-      mp_id: setting.MpId,
-      vendor_id: vendorConfig.vendorId,
-      enabled: setting.Activated === 1,
-      suppress_price_break_if_Q1_not_updated:
-        setting.SuppressPriceBreakForOne === 1,
-      suppress_price_break: setting.SuppressPriceBreak === 1,
-      compete_on_price_break_only: setting.BeatQPrice === 1,
-      up_down:
-        setting.RepricingRule === 2
-          ? AlgoPriceDirection.UP_DOWN
-          : AlgoPriceDirection.DOWN,
-      badge_indicator:
-        setting.BadgeIndicator === "BADGE_ONLY"
-          ? AlgoBadgeIndicator.BADGE
-          : AlgoBadgeIndicator.ALL,
-      execution_priority: setting.ExecutionPriority || 0,
-      reprice_up_percentage: setting.PercentageIncrease || -1,
-      compare_q2_with_q1: setting.CompareWithQ1 === 1,
-      compete_with_all_vendors: setting.CompeteAll === 1,
-      reprice_up_badge_percentage: setting.BadgePercentage || -1,
-      sister_vendor_ids: setting.SisterVendorId || "",
-      exclude_vendors: setting.ExcludedVendors || "",
-      inactive_vendor_id: setting.InactiveVendorId || "",
-      handling_time_group: setting.HandlingTimeFilter || "",
-      keep_position: setting.KeepPosition === 1,
-      inventory_competition_threshold: setting.InventoryThreshold || 1,
-      reprice_down_percentage:
-        Number(setting.PercentageDown) !== 0
-          ? Number(setting.PercentageDown) * 100
-          : -1,
-      floor_price: setting.FloorPrice || 0,
-      max_price: setting.MaxPrice || 99999999.99,
-      reprice_down_badge_percentage:
-        Number(setting.BadgePercentageDown) !== 0
-          ? Number(setting.BadgePercentageDown) * 100
-          : -1,
-      floor_compete_with_next: setting.CompeteWithNext === 1,
-      own_vendor_threshold: setting.OwnVendorThreshold || 1,
-      not_cheapest: setting.IsNCNeeded === 1,
-    }));
+    const transformedSettings = transformVendorSettings(
+      vendorSettings,
+      vendorConfig,
+    );
 
-    // Perform upsert operation
-    let insertedCount = 0;
-    let updatedCount = 0;
-
-    for (const setting of transformedSettings) {
-      // Check if record already exists
-      const existingRecord = await db("v2_algo_settings")
-        .where({
-          mp_id: setting.mp_id,
-          vendor_id: setting.vendor_id,
-        })
-        .first();
-
-      if (existingRecord) {
-        // Update existing record
-        await db("v2_algo_settings")
-          .where({
-            mp_id: setting.mp_id,
-            vendor_id: setting.vendor_id,
-          })
-          .update(setting);
-        updatedCount++;
-        console.log(
-          `🔄 Updated: MP ID ${setting.mp_id} for ${vendorConfig.vendorName}`,
-        );
-      } else {
-        // Insert new record
-        await db("v2_algo_settings").insert(setting);
-        insertedCount++;
-        console.log(
-          `✅ Inserted: MP ID ${setting.mp_id} for ${vendorConfig.vendorName}`,
-        );
-      }
-    }
+    // Perform batch operations
+    const { insertedCount, updatedCount } = await performBatchUpsert(
+      db,
+      transformedSettings,
+      vendorConfig,
+    );
 
     console.log(
       `✅ Successfully synced ${vendorConfig.vendorName} settings for MP ID ${mpId}`,

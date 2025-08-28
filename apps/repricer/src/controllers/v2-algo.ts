@@ -14,6 +14,7 @@ import {
   getAllProductsWithAlgoData,
   toggleV2AlgoEnabled,
   getNet32Url,
+  syncAllVendorSettings,
 } from "../services/algo_v2/settings";
 
 // Cache for products data
@@ -362,4 +363,19 @@ export async function getNet32UrlController(
       error: "Internal server error while fetching net32 URL",
     });
   }
+}
+
+export async function syncAllVendorSettingsController(
+  req: Request,
+  res: Response,
+) {
+  console.log("🚀 Starting sync of all vendor settings and channel IDs...");
+
+  const result = await syncAllVendorSettings();
+
+  return res.json({
+    success: true,
+    message: "Successfully synced all vendor settings and channel IDs",
+    data: result,
+  });
 }

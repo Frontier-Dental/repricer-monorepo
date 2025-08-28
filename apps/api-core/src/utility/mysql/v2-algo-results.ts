@@ -15,6 +15,8 @@ export interface V2AlgoResultData {
   q_break_valid: boolean;
   price_update_result?: string | null;
   new_price_breaks?: string | null;
+  lowest_price: number | null;
+  lowest_vendor_id: number | null;
 }
 
 export async function insertMultipleV2AlgoResults(

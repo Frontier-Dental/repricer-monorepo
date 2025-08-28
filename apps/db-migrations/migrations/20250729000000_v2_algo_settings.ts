@@ -66,6 +66,7 @@ export async function up(knex: Knex): Promise<void> {
     table.integer("own_vendor_threshold").unsigned().notNullable().defaultTo(1);
     table.boolean("not_cheapest").notNullable().defaultTo(false);
     table.boolean("enabled").notNullable().defaultTo(false);
+    table.decimal("target_price", 10, 2);
   });
 }
 
