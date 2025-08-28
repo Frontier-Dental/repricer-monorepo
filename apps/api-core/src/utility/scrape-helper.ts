@@ -1,5 +1,5 @@
 import _ from "lodash";
-import uuid from "uuid";
+import { v4 as uuid } from "uuid";
 import moment from "moment";
 import * as axiosHelper from "./axios-helper";
 import * as mySqlHelper from "./mysql/mysql-helper";
@@ -9,6 +9,7 @@ import { ProductInfo } from "../model/sql-models/product-info";
 import { PriceBreakInfo } from "../model/sql-models/price-break-info";
 import { RunCompletionStatus } from "../model/sql-models/run-completion-status";
 import { applicationConfig } from "./config";
+import { HistoryModel } from "../model/sql-models/history";
 
 export async function Execute(
   productList: any[],
@@ -37,10 +38,12 @@ async function executeScrapeLogic(
   productList: any[],
   cronSetting: any,
 ): Promise<void> {
+  const runId: string = uuid();
+
   let runInfo = new RunInfo(
     cronSetting.CronName,
     cronSetting.CronId,
-    uuid.v4().toString().replaceAll("-", ""),
+    runId.replaceAll("-", ""),
     keyGen,
     "SCRAPE_ONLY",
     productList.length,
@@ -49,7 +52,7 @@ async function executeScrapeLogic(
     0,
   );
   const ownVendorListEnv = applicationConfig.OWN_VENDOR_LIST || "";
-  const onwVendorList = ownVendorListEnv.split(";");
+  const ownVendorList = ownVendorListEnv.split(";");
   const runInfoResult = await mySqlHelper.InsertRunInfo(runInfo);
   if (runInfoResult && (runInfoResult as any).insertId) {
     for (let prod of productList) {
@@ -66,41 +69,139 @@ async function executeScrapeLogic(
           prod.MpId,
           moment(scrapeStartTime).format("YYYY-MM-DD HH:mm:ss"),
         );
-        for (const [index, resp] of net32resp.data.entries()) {
-          const isOwnVendor = _.includes(
-            onwVendorList,
-            resp.vendorId.toString(),
-          );
-          const productInfo = new ProductInfo(
-            prod.MpId,
-            resp,
-            (runInfoResult as any).insertId,
-            index + 1,
-            isOwnVendor,
-          );
-          productInfo.addStartTime(scrapeStartTime);
-          productInfo.addEndTime(new Date());
-          const productInfoResult =
-            await mySqlHelper.InsertProductInfo(productInfo);
+        const allowHistoryLoggingEnv =
+          process.env.SCRAPE_ONLY_LOGGING || "false";
+        const allowRunInfoLoggingEnv =
+          process.env.SCRAPE_RUN_LOGGING || "false";
+        if (JSON.parse(allowHistoryLoggingEnv) == true) {
           console.log(
-            `SCRAPE-ONLY : ${cronSetting.CronName} : ${keyGen} : Inserted Product Info for MPID : ${prod.MpId} | VENDOR : ${productInfo.VendorId}`,
+            `SCRAPE-ONLY : Logging in history for ${prod.MpId} started at ${scrapeStartTime}`,
           );
-          if (
-            productInfoResult &&
-            productInfoResult.insertId &&
-            resp.priceBreaks
-          ) {
-            for (const pb of resp.priceBreaks) {
-              const priceBreakInfo = new PriceBreakInfo(
-                productInfoResult.insertId,
-                pb,
-              );
-              await mySqlHelper.InsertPriceBreakInfo(priceBreakInfo);
+          const apiResponseLinkedId =
+            await mySqlHelper.InsertHistoricalApiResponse(
+              net32resp.data,
+              scrapeStartTime,
+            );
+          let historyList: any[] = [];
+          if (prod.LinkedTradentDetailsInfo > 0) {
+            historyList = historyList.concat(
+              await GetHistoryModel(
+                prod,
+                net32resp.data,
+                apiResponseLinkedId,
+                scrapeStartTime,
+                "TRADENT",
+              ),
+            );
+          }
+          if (prod.LinkedFrontiersDetailsInfo > 0) {
+            historyList = historyList.concat(
+              await GetHistoryModel(
+                prod,
+                net32resp.data,
+                apiResponseLinkedId,
+                scrapeStartTime,
+                "FRONTIER",
+              ),
+            );
+          }
+          if (prod.LinkedMvpDetailsInfo > 0) {
+            historyList = historyList.concat(
+              await GetHistoryModel(
+                prod,
+                net32resp.data,
+                apiResponseLinkedId,
+                scrapeStartTime,
+                "MVP",
+              ),
+            );
+          }
+          if (prod.LinkedTopDentDetailsInfo > 0) {
+            historyList = historyList.concat(
+              await GetHistoryModel(
+                prod,
+                net32resp.data,
+                apiResponseLinkedId,
+                scrapeStartTime,
+                "TOPDENT",
+              ),
+            );
+          }
+          if (prod.LinkedFirstDentDetailsInfo > 0) {
+            historyList = historyList.concat(
+              await GetHistoryModel(
+                prod,
+                net32resp.data,
+                apiResponseLinkedId,
+                scrapeStartTime,
+                "FIRSTDENT",
+              ),
+            );
+          }
+          if (prod.LinkedTriadDetailsInfo > 0) {
+            historyList = historyList.concat(
+              await GetHistoryModel(
+                prod,
+                net32resp.data,
+                apiResponseLinkedId,
+                scrapeStartTime,
+                "TRIAD",
+              ),
+            );
+          }
+          if (historyList && historyList.length > 0) {
+            for (const historyItem of historyList) {
+              await mySqlHelper.InsertHistory(historyItem, scrapeStartTime);
+            }
+          }
+        }
+        if (JSON.parse(allowRunInfoLoggingEnv) === true) {
+          console.log(
+            `SCRAPE-ONLY : Logging in run info for ${prod.MpId} started at ${scrapeStartTime}`,
+          );
+          for (const [index, resp] of net32resp.data.entries()) {
+            const isOwnVendor = _.includes(
+              ownVendorList,
+              resp.vendorId.toString(),
+            );
+            const productInfo = new ProductInfo(
+              prod.MpId,
+              resp,
+              runInfoResult.insertId,
+              index + 1,
+              isOwnVendor,
+            );
+            productInfo.addStartTime(scrapeStartTime);
+            productInfo.addEndTime(new Date());
+            const productInfoResult =
+              await mySqlHelper.InsertProductInfo(productInfo);
+            console.log(
+              `SCRAPE-ONLY : ${cronSetting.CronName} : ${keyGen} : Inserted Product Info for MPID : ${prod.MpId} | VENDOR : ${productInfo.VendorId}`,
+            );
+            if (
+              productInfoResult &&
+              productInfoResult.insertId &&
+              resp.priceBreaks
+            ) {
+              for (const pb of resp.priceBreaks) {
+                const priceBreakInfo = new PriceBreakInfo(
+                  productInfoResult.insertId,
+                  pb,
+                );
+                await mySqlHelper.InsertPriceBreakInfo(priceBreakInfo);
+              }
             }
           }
         }
         runInfo.UpdateSuccessCount();
       }
+      await mySqlHelper.UpdateRunInfo(
+        runInfo.GetCompletedProductCountQuery(
+          productCounter,
+          runInfoResult.insertId,
+        ),
+      );
+      productCounter++;
     }
     runInfo.UpdateFailureCount(
       runInfo.EligibleCount - runInfo.ScrapedSuccessCount,
@@ -124,3 +225,120 @@ async function executeScrapeLogic(
 const IsChunkNeeded = async (list: any[]): Promise<boolean> => {
   return list.length > 2000;
 };
+
+async function GetHistoryModel(
+  vendorDetails: any,
+  apiResponse: any,
+  apiResponseLinkedId: any,
+  refTime: any,
+  vendorName: string,
+): Promise<any[]> {
+  let listOfHistory: any[] = [];
+  const ownVendorProductId = getOwnVendorId(vendorName);
+  if (!ownVendorProductId) {
+    console.log(`No own vendor found for ${vendorName}`);
+    return listOfHistory;
+  }
+  const ownVendorDetails = apiResponse.find((x: any) => {
+    return x.vendorId.toString() == ownVendorProductId;
+  });
+  if (!ownVendorDetails) {
+    console.log(`No own vendor details found for ${vendorName}`);
+    return listOfHistory;
+  }
+  if (ownVendorDetails.priceBreaks && ownVendorDetails.priceBreaks.length > 0) {
+    ownVendorDetails.priceBreaks = _.sortBy(ownVendorDetails.priceBreaks, [
+      "minQty",
+    ]);
+    _.forEach(ownVendorDetails.priceBreaks, (priceBreak) => {
+      const contextMinQty = parseInt(priceBreak.minQty);
+      const existingPrice = parseFloat(priceBreak.unitPrice);
+
+      let eligibleVendors: any[] = [];
+      apiResponse.forEach(
+        (element: { priceBreaks: any[]; inStock: boolean }) => {
+          if (element.priceBreaks) {
+            element.priceBreaks.forEach((p: { minQty: number }) => {
+              if (p.minQty == contextMinQty) {
+                eligibleVendors.push(element);
+              }
+            });
+          }
+        },
+      );
+      const rank: number = eligibleVendors.findIndex(
+        (vendor) => vendor.vendorId.toString() == ownVendorProductId,
+      );
+      eligibleVendors = _.sortBy(eligibleVendors, [
+        (prod) => {
+          const match = _.find(
+            prod.priceBreaks,
+            (x) => x?.minQty === contextMinQty,
+          );
+          return match ? match.unitPrice : Infinity;
+        },
+      ]);
+      const lowestPrice =
+        _.first(eligibleVendors)?.priceBreaks?.find(
+          (x: { minQty: number }) => x.minQty === contextMinQty,
+        )?.unitPrice ?? null;
+      const maxVendorPrice =
+        _.last(eligibleVendors)?.priceBreaks?.find(
+          (x: { minQty: number }) => x.minQty === contextMinQty,
+        )?.unitPrice ?? null;
+      const history = {
+        vendorName: vendorName,
+        existingPrice: existingPrice,
+        minQty: contextMinQty,
+        rank: rank,
+        lowestVendor: _.first(eligibleVendors)?.vendorName ?? null,
+        lowestPrice: lowestPrice,
+        suggestedPrice: "N/A",
+        repriceComment: "N/A",
+        maxVendor: _.last(eligibleVendors)?.vendorName ?? null,
+        maxVendorPrice: maxVendorPrice,
+        otherVendorList: "N/A",
+        contextCronName: "SCRAPE-ONLY",
+        apiResponse: apiResponse,
+      };
+      listOfHistory.push(
+        new HistoryModel(
+          history,
+          vendorDetails.MpId,
+          refTime,
+          apiResponseLinkedId,
+        ),
+      );
+    });
+  }
+  return listOfHistory;
+}
+
+function getOwnVendorId(vendorName: string): string | null {
+  let vendorId = null;
+  switch (
+    vendorName.toUpperCase() //17357;20722;20755;20533;20727
+  ) {
+    case "TRADENT":
+      vendorId = "17357";
+      break;
+    case "FRONTIER":
+      vendorId = "20722";
+      break;
+    case "MVP":
+      vendorId = "20755";
+      break;
+    case "TOPDENT":
+      vendorId = "20533";
+      break;
+    case "FIRSTDENT":
+      vendorId = "20727";
+      break;
+    case "TRIAD":
+      vendorId = "5";
+      break;
+    default:
+      break;
+  }
+  return vendorId;
+}

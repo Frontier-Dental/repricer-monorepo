@@ -5,10 +5,20 @@ import xml2js from "xml2js";
 import fetch from "node-fetch";
 import { applicationConfig } from "../config";
 
+const STATUS_CODE_OK = 200;
+const STATUS_CODE_MULTIPLE_CHOICES = 300;
+const STATUS_CODE_UNPROCESSABLE_ENTITY = 422;
+const STATUS_CODE_INTERNAL_SERVER_ERROR = 500;
 interface ProxyDetailsResponse {
   hostUrl: string;
   userName: string;
   proxyProvider?: string;
+}
+
+interface ScrapflyError extends Error {
+  response?: {
+    statusCode: number;
+  };
 }
 
 export async function fetchData(
@@ -19,10 +29,12 @@ export async function fetchData(
   retryCount = 0,
 ): Promise<any> {
   try {
-    const scrappingLog = renderJs
+    const scrapingLog = renderJs
       ? "Scrapfly - JS Rendering"
       : "Scrapfly - Non JS Rendering";
-    console.log(`SCRAPE STARTED : ${scrappingLog} : ${url} || ${seqString}`);
+    console.log(
+      `SCRAPE STARTED : ${scrapingLog} : ${url} || ${seqString} || ${new Date()} || ${retryCount}`,
+    );
 
     const { responseContent, timeTaken } = await scrape(
       url,
@@ -32,11 +44,12 @@ export async function fetchData(
     );
     return await handleResponse(
       responseContent,
-      scrappingLog,
+      scrapingLog,
       url,
       seqString,
       renderJs,
       timeTaken,
+      retryCount,
     );
   } catch (error) {
     return handleRetry(
@@ -63,21 +76,50 @@ async function scrape(
   const response = await fetch(fetchUrl, options);
   const timeTaken = parseHrtimeToSeconds(process.hrtime(startTime));
   const data = await response.json();
+  validateResponse(data, response.status);
   const responseContent = data.result.content;
   return { responseContent, timeTaken };
 }
 
+function validateResponse(data: any, httpStatusCode: number): void {
+  if (!data) {
+    const error = new Error(
+      "Scrapfly response did not return any data",
+    ) as ScrapflyError;
+    error.response = { statusCode: STATUS_CODE_INTERNAL_SERVER_ERROR };
+    throw error;
+  }
+
+  if (httpStatusCode !== STATUS_CODE_OK) {
+    const message = data?.result?.error?.message
+      ? data.result.error.message
+      : `${JSON.stringify(data)}`;
+    const error = new Error(message) as ScrapflyError;
+    error.response = { statusCode: httpStatusCode };
+    throw error;
+  }
+
+  if (!data.result || !data.result.content) {
+    const error = new Error(
+      "Scrapfly response did not return the result.content parameter",
+    ) as ScrapflyError;
+    error.response = { statusCode: STATUS_CODE_INTERNAL_SERVER_ERROR };
+    throw error;
+  }
+}
+
 async function handleResponse(
   response: string,
-  scrappingLog: string,
+  scrapingLog: string,
   url: string,
   seqString: string | null,
   renderJs: boolean,
   timeTaken: string,
+  retryCount: number,
 ): Promise<any> {
   const formatResponse = applicationConfig.FORMAT_RESPONSE_CUSTOM;
   console.log(
-    `SCRAPE COMPLETED : ${scrappingLog} : ${url} || TimeTaken  :  ${timeTaken} seconds || ${seqString}`,
+    `SCRAPE COMPLETED : ${scrapingLog} : ${url} || TimeTaken  :  ${timeTaken} seconds || ${seqString} || retry count : ${retryCount}`,
   );
   if (formatResponse) {
     return await getFormattedResponse(response);
@@ -134,8 +176,16 @@ async function handleRetry(
   const retryEligible = await retryCondition(error);
 
   if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible) {
-    console.log(`ERROR (WITH RETRY) : ${error} `);
-    console.log(`RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`);
+    console.log(`REPRICER CORE | SCRAPFLY | : ERROR (WITH RETRY) : ${error} `);
+
+    console.log(
+      `REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
+      `REPRICER CORE | SCRAPFLY | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`,
+    );
+
+    if (retryCount > 1) {
+      await proxySwitchHelper.SwitchProxy();
+    }
 
     await delay(applicationConfig.RETRY_INTERVAL);
     return await fetchData(
@@ -157,14 +207,9 @@ function parseHrtimeToSeconds(hrtime: [number, number]): string {
 
 async function retryCondition(error: any): Promise<boolean> {
   return (
-    (error.response &&
-      (error.response.statusCode == 503 ||
-        error.response.statusCode == 500 ||
-        error.response.statusCode == 429 ||
-        error.response.statusCode == 408 ||
-        error.response.statusCode == 400 ||
-        error.response.statusCode == 401)) ||
-    error.message == "Error: ESOCKETTIMEDOUT"
+    (error.response?.statusCode >= STATUS_CODE_MULTIPLE_CHOICES &&
+      error.response?.statusCode !== STATUS_CODE_UNPROCESSABLE_ENTITY) ||
+    error.message === "Error: ESOCKETTIMEDOUT"
   );
 }
 

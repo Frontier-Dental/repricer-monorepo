@@ -162,7 +162,7 @@ export function ApplyMultiPriceBreakRule(repriceResult: RepriceModel) {
             success = false;
           }
         }
-        if (success === true) {
+        if (success) {
           if (repriceResult.listOfRepriceDetails[idx].oldPrice !== 0) {
             _eval_.push(repriceResult.listOfRepriceDetails[idx]);
           } else if (
@@ -216,7 +216,7 @@ export function ApplySuppressPriceBreakRule(
     minQty,
     isOverrideEnabled,
   );
-  if (isOverrideEnabled == true) {
+  if (isOverrideEnabled) {
     _.remove($eval.listOfRepriceDetails, (rp) => rp.oldPrice == 0);
   }
   if ($eval.listOfRepriceDetails && $eval.listOfRepriceDetails.length > 0) {
@@ -225,7 +225,7 @@ export function ApplySuppressPriceBreakRule(
         $.minQty != minQty &&
         $.newPrice != "N/A" &&
         parseFloat($.newPrice as unknown as string) != $.oldPrice &&
-        isOneQtyChanged == false
+        !isOneQtyChanged
       ) {
         $.goToPrice = $.newPrice;
         $.newPrice = "N/A";
@@ -321,9 +321,9 @@ export function ApplyDeactivateQPriceBreakRule(
           $.minQty as unknown as number,
         );
         if (
-          isContextQtyDeactivated == true &&
-          isOneQtyChanged != true &&
-          abortDeactivatingQPriceBreak != false
+          isContextQtyDeactivated &&
+          !isOneQtyChanged &&
+          abortDeactivatingQPriceBreak
         ) {
           $.goToPrice = $.newPrice;
           $.newPrice = "N/A";
@@ -526,8 +526,9 @@ export async function ApplyRepriceDownBadgeCheckRule(
   let $eval = repriceResult;
   let tempProductItem = _.cloneDeep(productItem);
   const $ = await globalParam.GetInfo(productItem.mpid, productItem);
-  const excludedVendors =
-    productItem.competeAll == true ? [] : $.EXCLUDED_VENDOR_ID.split(";");
+  const excludedVendors = productItem.competeAll
+    ? []
+    : $.EXCLUDED_VENDOR_ID.split(";");
   const ownVendorItem = net32Result.find(
     (x: any) => x.vendorId.toString() == productItem.ownVendorId!.toString(),
   );
@@ -604,7 +605,7 @@ export async function ApplyRepriceDownBadgeCheckRule(
                   $.goToPrice = null;
                   $.newPrice = effectivePrice;
                   $.explained = `${$.explained} #RepriceDownBadge%`;
-                  $.triggeredByVendor = `${_.first(sortedAuthVendors).vendorId}-${_.first(sortedAuthVendors).vendorName}`;
+                  $.triggeredByVendor = `1 @ ${_.first(sortedAuthVendors).vendorId}-${_.first(sortedAuthVendors).vendorName}`;
                 }
               });
             } else if ($eval.repriceDetails) {
@@ -613,7 +614,7 @@ export async function ApplyRepriceDownBadgeCheckRule(
                 $eval.repriceDetails.newPrice =
                   effectivePrice as unknown as string;
                 $eval.repriceDetails.explained = `${$eval.repriceDetails.explained} #RepriceDownBadge%`;
-                $eval.repriceDetails.triggeredByVendor = `${_.first(sortedAuthVendors).vendorId}-${_.first(sortedAuthVendors).vendorName}`;
+                $eval.repriceDetails.triggeredByVendor = `1 @ ${_.first(sortedAuthVendors).vendorId}-${_.first(sortedAuthVendors).vendorName}`;
               }
             }
           }
@@ -639,7 +640,7 @@ export async function ApplyRepriceDownBadgeCheckRule(
               $eval.repriceDetails.newPrice =
                 effectivePrice as unknown as string;
               $eval.repriceDetails.explained = `${$eval.repriceDetails.explained} #RepriceDownBadge%`;
-              $eval.repriceDetails.triggeredByVendor = `${_.first(sortedAuthVendors).vendorId}-${_.first(sortedAuthVendors).vendorName}`;
+              $eval.repriceDetails.triggeredByVendor = `1 @ ${_.first(sortedAuthVendors).vendorId}-${_.first(sortedAuthVendors).vendorName}`;
             }
           }
         }
@@ -774,13 +775,61 @@ export async function ApplySisterComparisonCheck(
   return $eval;
 }
 
+export function OverrideRepriceResultForExpressCron(repriceResult: any): any {
+  let $eval = repriceResult;
+  if ($eval.listOfRepriceDetails && $eval.listOfRepriceDetails.length > 0) {
+    $eval.listOfRepriceDetails.forEach(($: any) => {
+      $.goToPrice = $.newPrice;
+      $.newPrice = "N/A";
+      $.isRepriced = false;
+      $.explained = $.explained + "_#INEXPRESSCRON";
+    });
+  } else if ($eval.repriceDetails) {
+    $eval.repriceDetails.goToPrice = $eval.repriceDetails.newPrice;
+    $eval.repriceDetails.newPrice = "N/A";
+    $eval.repriceDetails.isRepriced = false;
+    $eval.repriceDetails.explained =
+      $eval.repriceDetails.explained + "_#INEXPRESSCRON";
+  }
+  return $eval;
+}
+
+export async function AlignIsRepriced(repriceResult: any) {
+  let $eval = repriceResult;
+  try {
+    if ($eval.listOfRepriceDetails && $eval.listOfRepriceDetails.length > 0) {
+      $eval.listOfRepriceDetails.forEach(($: any) => {
+        if (
+          $.newPrice != "N/A" &&
+          parseFloat($.newPrice) == parseFloat($.oldPrice) &&
+          $.active != 0
+        ) {
+          $.isRepriced = false;
+          $.explained = $.explained + "_IGNORED_#SAMEPRICESUGGESTED";
+        }
+      });
+    } else if (
+      $eval.repriceDetails &&
+      $eval.repriceDetails.newPrice != "N/A" &&
+      parseFloat($eval.newPrice) == parseFloat($eval.oldPrice)
+    ) {
+      $eval.repriceDetails.isRepriced = false;
+      $eval.repriceDetails.explained =
+        $eval.repriceDetails.explained + "_IGNORED_#SAMEPRICESUGGESTED";
+    }
+  } catch (exception) {
+    console.log(`Exception while AlignIsRepriced : ${exception}`);
+  }
+  return $eval;
+}
+
 // Helper functions (not exported)
 function validateQtyReprice(
   listOfRepriceDetails: any[],
   minQty: number,
   isOverrideEnabled: boolean,
 ): boolean {
-  if (isOverrideEnabled == true) return true;
+  if (isOverrideEnabled) return true;
   const contextPriceBreak = listOfRepriceDetails.find(
     (x: any) => x.minQty == minQty,
   );
@@ -875,7 +924,7 @@ function getSuggestedPriceForMinQty(
 }
 
 function GetShippingPrice(item: any): number {
-  if (item != null && item.priceBreaks && item.priceBreaks.length > 0) {
+  if (item?.priceBreaks && item?.priceBreaks.length > 0) {
     const thresholdPrice =
       item.freeShippingThreshold != null && item.freeShippingThreshold >= 0
         ? item.freeShippingThreshold
