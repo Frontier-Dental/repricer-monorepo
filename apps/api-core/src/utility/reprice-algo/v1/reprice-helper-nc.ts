@@ -191,6 +191,8 @@ export async function Reprice(
           sortedPayload[i].priceBreaks,
           1,
           floorPrice,
+          GetShippingPrice(sortedPayload[i]),
+          true,
         ) == true
       ) {
         nextIndex++;
@@ -364,6 +366,8 @@ export async function Reprice(
                 sortedPayload[i].priceBreaks,
                 1,
                 floorPrice,
+                GetShippingPrice(sortedPayload[i]),
+                true,
               ) === true
             ) {
               nextIndex++;
@@ -499,6 +503,8 @@ export async function Reprice(
                 sortedPayload[i].priceBreaks,
                 1,
                 floorPrice,
+                GetShippingPrice(sortedPayload[i]),
+                true,
               ) == true
             ) {
               nextIndex++;
@@ -998,6 +1004,8 @@ export async function RepriceIndividualPriceBreak(
           sortedPayload[i].priceBreaks,
           priceBreak.minQty,
           floorPrice,
+          GetShippingPrice(sortedPayload[i]),
+          true,
         ) == true
       ) {
         nextIndex++;
@@ -1198,6 +1206,8 @@ export async function RepriceIndividualPriceBreak(
                 sortedPayload[i].priceBreaks,
                 priceBreak.minQty,
                 floorPrice,
+                GetShippingPrice(sortedPayload[i]),
+                true,
               ) == true
             ) {
               nextIndex++;
@@ -1277,6 +1287,8 @@ export async function RepriceIndividualPriceBreak(
                 sortedPayload[i].priceBreaks,
                 priceBreak.minQty,
                 floorPrice,
+                GetShippingPrice(sortedPayload[i]),
+                true,
               ) == true
             ) {
               nextIndex++;

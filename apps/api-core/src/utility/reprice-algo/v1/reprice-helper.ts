@@ -30,7 +30,9 @@ export async function Reprice(
     (x) => x.minQty == 1,
   )!.unitPrice;
   repriceModel.repriceDetails!.oldPrice = existingPrice;
-  const maxPrice = productItem.maxPrice ? productItem.maxPrice : 99999;
+  const maxPrice = productItem.maxPrice
+    ? parseFloat(productItem.maxPrice)
+    : 99999;
   const floorPrice = productItem.floorPrice
     ? parseFloat(productItem.floorPrice)
     : 0;
@@ -173,6 +175,8 @@ export async function Reprice(
           sortedPayload[i].priceBreaks,
           1,
           floorPrice,
+          0,
+          false,
         )) === true
       ) {
         nextIndex++;
@@ -389,6 +393,8 @@ export async function Reprice(
                 sortedPayload[i].priceBreaks,
                 1,
                 floorPrice,
+                0,
+                false,
               )) === true
             ) {
               nextIndex++;
@@ -509,6 +515,8 @@ export async function Reprice(
                 sortedPayload[i].priceBreaks,
                 1,
                 floorPrice,
+                0,
+                false,
               ) == true
             ) {
               nextIndex++;
@@ -861,6 +869,8 @@ export async function RepriceIndividualPriceBreak(
           sortedPayload[i].priceBreaks,
           priceBreak.minQty,
           floorPrice,
+          0,
+          false,
         ) == true
       ) {
         nextIndex++;
@@ -1051,6 +1061,8 @@ export async function RepriceIndividualPriceBreak(
               sortedPayload[i].priceBreaks,
               priceBreak.minQty,
               floorPrice,
+              0,
+              false,
             ) == true
           ) {
             nextIndex++;
@@ -1177,7 +1189,10 @@ export async function RepriceIndividualPriceBreak(
           _.first(sortedPayload)!.vendorId as unknown as string,
           priceBreak.minQty,
         );
-      } else if (offsetPrice <= floorPrice) {
+      } else if (
+        offsetPrice <= floorPrice &&
+        repriceModel.repriceDetails.isRepriced !== true
+      ) {
         repriceModel.repriceDetails!.goToPrice =
           offsetPrice as unknown as string;
         repriceModel.repriceDetails!.newPrice = "N/A";

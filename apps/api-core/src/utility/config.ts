@@ -46,13 +46,13 @@ const envSchema = z.object({
     .default("sp_GetProductDetailsByCronAndId"),
   SQL_SP_GET_REGULAR_CRON_PRODUCTS_BY_CRON: z
     .string()
-    .default("sp_GetActiveFullProductDetailsListByCronV2"),
+    .default("sp_GetActiveFullProductDetailsListByCronV3"),
   SQL_SP_GET_SLOW_CRON_PRODUCTS_BY_CRON: z
     .string()
-    .default("sp_GetActiveFullProductDetailsListBySlowCronV2"),
+    .default("sp_GetActiveFullProductDetailsListBySlowCronV3"),
   SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID: z
     .string()
-    .default("sp_GetFullProductDetailsByIdV2"),
+    .default("sp_GetFullProductDetailsByIdV3"),
   SQL_TRADENT_DETAILS: z.string().default("table_tradentDetails"),
   SQL_FRONTIER_DETAILS: z.string().default("table_frontierDetails"),
   SQL_MVP_DETAILS: z.string().default("table_mvpDetails"),
@@ -62,7 +62,7 @@ const envSchema = z.object({
   SQL_HISTORY: z.string().default("table_history"),
   SQL_SP_FILTER_ELIGIBLE_PRODUCT: z
     .string()
-    .default("sp_GetFilterEligibleProductsByFilterDate"),
+    .default("sp_GetFilterEligibleProductsByFilterDateV3"),
   // App
   PORT: z.coerce.number().default(5001),
   OFFSET: z.coerce.number().default(0.01),

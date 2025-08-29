@@ -273,17 +273,22 @@ export function AppendPriceFactorTag(strValue: string, objType: string) {
   else return strValue;
 }
 
-export function IsVendorFloorPrice(
-  priceBreakList: Net32PriceBreak[],
-  minQty: number,
-  floorPrice: number,
+export async function isVendorFloorPrice(
+  priceBreakList: any,
+  minQty: any,
+  floorPrice: any,
+  shippingCharge: any,
+  isNc: any,
 ) {
-  const contextPriceBreak = priceBreakList.find((x) => x.minQty == minQty);
-  if (
-    contextPriceBreak &&
-    parseFloat(contextPriceBreak.unitPrice as unknown as string) <= floorPrice
-  )
-    return true;
+  const contextPriceBreak = priceBreakList.find((x: any) => x.minQty == minQty);
+  const shippingPrice = shippingCharge ? parseFloat(shippingCharge) : 0;
+  if (contextPriceBreak) {
+    const contextPrice = isNc
+      ? parseFloat(contextPriceBreak.unitPrice) +
+        parseFloat(shippingPrice as unknown as string)
+      : parseFloat(contextPriceBreak.unitPrice);
+    return contextPrice <= floorPrice ? true : false;
+  }
   return false;
 }
 
