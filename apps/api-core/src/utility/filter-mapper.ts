@@ -10,6 +10,7 @@ import { RepriceModel } from "../model/reprice-model";
 import { FrontierProduct } from "../types/frontier";
 import { Net32PriceBreak, Net32Product } from "../types/net32";
 import { applicationConfig } from "./config";
+import Decimal from "decimal.js";
 
 export async function FilterProducts(filterCronDetails: any) {
   const filterDuration = parseInt(filterCronDetails.filterValue);
@@ -249,7 +250,7 @@ export function GetContextPrice(
   minQty: number,
 ): { Price: number; Type: string } {
   let returnObj: { Price: number; Type: string } = {
-    Price: nextLowestPrice - processOffset,
+    Price: new Decimal(nextLowestPrice).minus(processOffset).toNumber(),
     Type: "OFFSET",
   };
   if (percentageDown != 0 && minQty == 1) {

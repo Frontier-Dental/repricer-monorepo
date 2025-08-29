@@ -334,6 +334,7 @@ export async function Reprice(
       allowCompeteWithNextForFloor === true ||
       productItem.repricingRule === 2
     ) {
+      rawDataForSisterCheck = _.cloneDeep(sortedPayload);
       sortedPayload = await filterMapper.FilterBasedOnParams(
         sortedPayload,
         productItem,
@@ -362,7 +363,7 @@ export async function Reprice(
         const floorSisterResult = await filterMapper.VerifyFloorWithSister(
           productItem,
           refProduct,
-          sortedPayload,
+          rawDataForSisterCheck,
           excludedVendors,
           $.VENDOR_ID,
           1,
@@ -499,6 +500,11 @@ export async function Reprice(
             // }
           }
         } else if (sortedPayload[1]) {
+          if (
+            allowCompeteWithNextForFloor == true &&
+            floorSisterResult !== false
+          )
+            return floorSisterResult;
           let nextIndex = 1;
           for (let i = nextIndex; i < sortedPayload.length; i++) {
             if (
@@ -1037,7 +1043,7 @@ export async function RepriceIndividualPriceBreak(
         const floorSisterResult = await filterMapper.VerifyFloorWithSister(
           productItem,
           refProduct,
-          sortedPayload,
+          rawDataForSisterCheck,
           excludedVendors,
           $.VENDOR_ID,
           priceBreak.minQty,
