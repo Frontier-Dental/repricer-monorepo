@@ -49,7 +49,7 @@ export async function getAlgoResultsWithExecutionData(
       "r.vendor_id",
       "r.mp_id",
       "r.cron_name",
-      "r.created_at",
+      "r.created_at as run_time",
       "r.q_break_valid",
       "r.price_update_result",
       "r.new_price_breaks",

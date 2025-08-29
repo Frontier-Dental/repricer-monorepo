@@ -23,6 +23,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import {
+  AlgoHandlingTimeGroup,
+  AlgoPriceStrategy,
+  AlgoPriceDirection,
+  AlgoBadgeIndicator,
+} from "@repricer-monorepo/shared";
 
 // Zod schema for the settings form
 const settingsSchema = z.object({
@@ -32,8 +38,8 @@ const settingsSchema = z.object({
   suppress_price_break_if_Q1_not_updated: z.boolean(),
   suppress_price_break: z.boolean(),
   compete_on_price_break_only: z.boolean(),
-  up_down: z.enum(["UP", "UP/DOWN", "DOWN"]),
-  badge_indicator: z.enum(["ALL", "BADGE"]),
+  up_down: z.enum(AlgoPriceDirection),
+  badge_indicator: z.enum(AlgoBadgeIndicator),
   execution_priority: z.number().min(0),
   reprice_up_percentage: z.number().min(-1),
   compare_q2_with_q1: z.boolean(),
@@ -42,12 +48,7 @@ const settingsSchema = z.object({
   sister_vendor_ids: z.string(),
   exclude_vendors: z.string(),
   inactive_vendor_id: z.string(),
-  handling_time_group: z.enum([
-    "ALL",
-    "FAST_SHIPPING",
-    "STOCKED",
-    "LONG_HANDLING",
-  ]),
+  handling_time_group: z.enum(AlgoHandlingTimeGroup),
   keep_position: z.boolean(),
   inventory_competition_threshold: z.number().min(0),
   reprice_down_percentage: z.number().min(-1).max(100),
@@ -56,7 +57,7 @@ const settingsSchema = z.object({
   reprice_down_badge_percentage: z.number().min(-1).max(100),
   floor_compete_with_next: z.boolean(),
   own_vendor_threshold: z.number().min(0),
-  not_cheapest: z.boolean(),
+  price_strategy: z.enum(AlgoPriceStrategy),
   enabled: z.boolean(),
 });
 
@@ -69,8 +70,8 @@ interface V2AlgoSettings {
   suppress_price_break_if_Q1_not_updated: boolean;
   suppress_price_break: boolean;
   compete_on_price_break_only: boolean;
-  up_down: "UP" | "UP/DOWN" | "DOWN";
-  badge_indicator: "ALL" | "BADGE";
+  up_down: AlgoPriceDirection;
+  badge_indicator: AlgoBadgeIndicator;
   execution_priority: number;
   reprice_up_percentage: number;
   compare_q2_with_q1: boolean;
@@ -79,7 +80,7 @@ interface V2AlgoSettings {
   sister_vendor_ids: string;
   exclude_vendors: string;
   inactive_vendor_id: string;
-  handling_time_group: "ALL" | "FAST_SHIPPING" | "STOCKED" | "LONG_HANDLING";
+  handling_time_group: AlgoHandlingTimeGroup;
   keep_position: boolean;
   inventory_competition_threshold: number;
   reprice_down_percentage: number;
@@ -88,7 +89,7 @@ interface V2AlgoSettings {
   reprice_down_badge_percentage: number;
   floor_compete_with_next: boolean;
   own_vendor_threshold: number;
-  not_cheapest: boolean;
+  price_strategy: AlgoPriceStrategy;
   enabled: boolean;
 }
 
@@ -586,18 +587,32 @@ export function V2AlgoSettingsForm({
 
             <FormField
               control={form.control}
-              name="not_cheapest"
+              name="price_strategy"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Not Cheapest</FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
+                <FormItem>
+                  <FormLabel>Price Strategy</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={AlgoPriceStrategy.UNIT}>
+                        UNIT
+                      </SelectItem>
+                      <SelectItem value={AlgoPriceStrategy.TOTAL}>
+                        TOTAL
+                      </SelectItem>
+                      <SelectItem value={AlgoPriceStrategy.BUY_BOX}>
+                        BUY_BOX
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
                 </FormItem>
               )}
             />

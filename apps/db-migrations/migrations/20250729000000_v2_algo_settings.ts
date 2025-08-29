@@ -1,5 +1,8 @@
 import type { Knex } from "knex";
-import { AlgoPriceDirection } from "@repricer-monorepo/shared";
+import {
+  AlgoPriceDirection,
+  AlgoPriceStrategy,
+} from "@repricer-monorepo/shared";
 import { AlgoBadgeIndicator } from "@repricer-monorepo/shared";
 import { AlgoHandlingTimeGroup } from "@repricer-monorepo/shared";
 
@@ -64,7 +67,14 @@ export async function up(knex: Knex): Promise<void> {
       .defaultTo(-1);
     table.boolean("floor_compete_with_next").notNullable().defaultTo(false);
     table.integer("own_vendor_threshold").unsigned().notNullable().defaultTo(1);
-    table.boolean("not_cheapest").notNullable().defaultTo(false);
+    table
+      .enum("price_strategy", [
+        AlgoPriceStrategy.UNIT,
+        AlgoPriceStrategy.TOTAL,
+        AlgoPriceStrategy.BUY_BOX,
+      ])
+      .notNullable()
+      .defaultTo(AlgoPriceStrategy.UNIT);
     table.boolean("enabled").notNullable().defaultTo(false);
     table.decimal("target_price", 10, 2);
   });

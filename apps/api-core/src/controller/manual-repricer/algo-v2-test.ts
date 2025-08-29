@@ -13,7 +13,12 @@ import { repriceProductV2Wrapper } from "../../utility/reprice-algo/v2/wrapper";
 import { v4 } from "uuid";
 
 export async function v2AlgoTest(
-  req: Request<{ mpid: string }, { products: Net32Product[] }, any, any>,
+  req: Request<
+    { mpid: string },
+    { products: Net32Product[]; isSlowCron: boolean },
+    any,
+    any
+  >,
   res: Response,
 ): Promise<void> {
   const errors = validationResult(req);
@@ -38,6 +43,7 @@ export async function v2AlgoTest(
     prod,
     getAllOwnVendorNames(),
     "MANUAL",
+    req.body.isSlowCron,
   );
 
   res.status(StatusCodes.OK).json(results);

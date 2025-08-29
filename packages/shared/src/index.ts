@@ -58,3 +58,9 @@ export enum AlgoHandlingTimeGroup {
   STOCKED = "STOCKED",
   LONG_HANDLING = "LONG_HANDLING",
 }
+
+export enum AlgoPriceStrategy {
+  UNIT = "UNIT",
+  TOTAL = "TOTAL",
+  BUY_BOX = "BUY_BOX",
+}

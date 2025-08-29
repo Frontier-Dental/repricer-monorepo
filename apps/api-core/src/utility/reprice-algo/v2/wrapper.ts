@@ -37,6 +37,7 @@ export async function repriceProductV2Wrapper(
   prod: any,
   vendorNameList: { name: VendorName }[],
   cronName: string,
+  isSlowCron: boolean,
 ) {
   const jobId = v4();
   const mpId = prod.mpId;
@@ -69,6 +70,7 @@ export async function repriceProductV2Wrapper(
       getAllOwnVendorIds(),
       vendorSettings,
       jobId,
+      isSlowCron,
     );
 
     const uniqueVendorIds = [

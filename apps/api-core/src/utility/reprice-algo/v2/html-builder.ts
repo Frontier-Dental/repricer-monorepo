@@ -183,7 +183,7 @@ function buildBeforeLadderTable(beforeLadder: {
       const vendorName =
         product.vendorName + (badge ? ' <span title="Badge">🏅</span>' : "");
 
-      // Check if this is one of our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT)
+      // Check if this is one of our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT, TRIAD)
       const isOurVendor = Object.values(VendorId).includes(product.vendorId);
       const rowStyle = isOurVendor ? ' style="background: #ffff99;"' : "";
 
@@ -279,7 +279,7 @@ function buildSourceCombinationsTable(solution: Net32AlgoSolution) {
     !solution.postSolutionInsertBoard ||
     solution.postSolutionInsertBoard.length === 0
   ) {
-    return "<p>No source combination available for this solution. This was a permutated solution, not from a specific board configuration.</p>";
+    return "<p>No source combination available for this solution. </p>";
   }
 
   const rows = solution.postSolutionInsertBoard
@@ -295,7 +295,6 @@ function buildSourceCombinationsTable(solution: Net32AlgoSolution) {
         product,
         solution.quantity,
         unitPrice,
-        false,
       );
       const badge = hasBadge(product);
       const vendorName =
@@ -321,7 +320,7 @@ function buildSourceCombinationsTable(solution: Net32AlgoSolution) {
       <tr><th>Vendor Name</th><th>Unit Price</th><th>Shipping Cost</th><th>Total</th><th>Free Shipping Threshold</th><th>Shipping Time</th><th>Inventory</th><th>Existing Price Breaks</th></tr>
     </thead>
     <tbody>${rows}</tbody>
-  </table><div><i>Shows the source combination used for this solution. Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT).</i></div>`;
+  </table><div><i>Shows the source combination used for this solution. Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT, TRIAD).</i></div>`;
 }
 
 function buildVendorViewOfBoardTable(solution: Net32AlgoSolution) {
@@ -341,7 +340,7 @@ function buildVendorViewOfBoardTable(solution: Net32AlgoSolution) {
       const vendorName =
         product.vendorName + (badge ? ' <span title="Badge">🏅</span>' : "");
 
-      // Check if this is one of our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT)
+      // Check if this is one of our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT, TRIAD)
       const isOurVendor = Object.values(VendorId).includes(product.vendorId);
       const rowStyle = isOurVendor ? ' style="background: #ffff99;"' : "";
 
@@ -361,7 +360,7 @@ function buildVendorViewOfBoardTable(solution: Net32AlgoSolution) {
       <tr><th>Vendor Name</th><th>Unit Price</th><th>Shipping Cost</th><th>Total</th><th>Free Shipping Threshold</th><th>Shipping Time</th><th>Inventory</th><th>Existing Price Breaks</th><th>Buy Box Rank</th></tr>
     </thead>
     <tbody>${rows}</tbody>
-  </table><div><i>Shows the competitors and sisters ranked by their position in the board for this solution. Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT).</i></div>`;
+  </table><div><i>Shows the competitors and sisters ranked by their position in the board for this solution. Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT, TRIAD).</i></div>`;
 }
 
 function buildResultsTable(solution: Net32AlgoSolutionWithQBreakValid) {
@@ -443,7 +442,7 @@ function buildVendorSettingsTableSingleVendor(
       key: "own_vendor_threshold",
       label: "Own Vendor Threshold",
     },
-    { key: "not_cheapest", label: "Not Cheapest" },
+    { key: "price_strategy", label: "Price Strategy" },
   ];
 
   // Create rows for each setting

@@ -2,6 +2,7 @@ import {
   AlgoBadgeIndicator,
   AlgoHandlingTimeGroup,
   AlgoPriceDirection,
+  AlgoPriceStrategy,
   VendorNameLookup,
 } from "@repricer-monorepo/shared";
 import { getKnexInstance } from "../knex-wrapper";
@@ -32,7 +33,7 @@ export interface V2AlgoSettings {
   reprice_down_badge_percentage: number;
   floor_compete_with_next: boolean;
   own_vendor_threshold: number;
-  not_cheapest: boolean;
+  price_strategy: AlgoPriceStrategy;
 }
 
 export interface V2AlgoSettingsDb {
@@ -62,7 +63,7 @@ export interface V2AlgoSettingsDb {
   reprice_down_badge_percentage: string;
   floor_compete_with_next: number;
   own_vendor_threshold: number;
-  not_cheapest: number;
+  price_strategy: AlgoPriceStrategy;
 }
 
 export async function getV2AlgoSettingsByMpId(
@@ -231,7 +232,10 @@ export async function syncVendorSettingsForMpId(
             : -1,
         floor_compete_with_next: setting.CompeteWithNext === 1,
         own_vendor_threshold: setting.OwnVendorThreshold || 1,
-        not_cheapest: setting.IsNCNeeded === 1,
+        price_strategy:
+          setting.IsNCNeeded === 1
+            ? AlgoPriceStrategy.TOTAL
+            : AlgoPriceStrategy.UNIT,
       }));
 
       let insertedCount = 0;
@@ -378,7 +382,7 @@ export async function getAllProductsWithAlgoData(): Promise<any[]> {
       // V2 algo settings fields (main table)
       "vas.floor_price",
       "vas.max_price",
-      "vas.not_cheapest",
+      "vas.price_strategy",
       "vas.enabled",
       "vas.vendor_id",
       "vas.mp_id",
@@ -531,7 +535,10 @@ function transformVendorSettings(vendorSettings: any[], vendorConfig: any) {
         : -1,
     floor_compete_with_next: setting.CompeteWithNext === 1,
     own_vendor_threshold: setting.OwnVendorThreshold || 1,
-    not_cheapest: setting.IsNCNeeded === 1,
+    price_strategy:
+      setting.IsNCNeeded === 1
+        ? AlgoPriceStrategy.TOTAL
+        : AlgoPriceStrategy.UNIT,
     target_price: setting.UnitPrice || null,
   }));
 }

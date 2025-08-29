@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import {
   AlgoBadgeIndicator,
   AlgoPriceDirection,
+  AlgoPriceStrategy,
 } from "@repricer-monorepo/shared";
 
 // Load environment variables
@@ -126,7 +127,10 @@ function transformVendorSettings(
         : -1,
     floor_compete_with_next: setting.CompeteWithNext === 1,
     own_vendor_threshold: setting.OwnVendorThreshold || 1,
-    not_cheapest: setting.IsNCNeeded === 1,
+    price_strategy:
+      setting.IsNCNeeded === 1
+        ? AlgoPriceStrategy.TOTAL
+        : AlgoPriceStrategy.UNIT,
     target_price: setting.UnitPrice || null,
   }));
 }

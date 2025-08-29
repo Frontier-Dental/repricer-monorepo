@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, ExternalLink, Eye, Globe, Bell } from "lucide-react";
+import { AlgoPriceStrategy } from "@repricer-monorepo/shared";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/data-table";
@@ -202,7 +203,7 @@ interface ProductWithAlgoData {
   last_suggested_price: number | null;
   floor_price: number | null;
   max_price: number | null;
-  not_cheapest: number;
+  price_strategy: AlgoPriceStrategy;
   suppress_price_break_if_Q1_not_updated: number;
   triggered_by_vendor: string | null;
   result: string | null;
@@ -400,15 +401,13 @@ export function ProductsPage() {
       },
     },
     {
-      accessorKey: "not_cheapest",
-      header: "Not Cheapest",
+      accessorKey: "price_strategy",
+      header: "Price Strategy",
       cell: ({ row }) => {
-        const notCheapest = row.getValue("not_cheapest") as number;
-        return (
-          <Badge variant={notCheapest === 1 ? "default" : "secondary"}>
-            {notCheapest === 1 ? "Yes" : "No"}
-          </Badge>
-        );
+        const priceStrategy = row.getValue(
+          "price_strategy",
+        ) as AlgoPriceStrategy;
+        return <Badge variant="outline">{priceStrategy}</Badge>;
       },
     },
     {
