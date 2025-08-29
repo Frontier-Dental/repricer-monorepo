@@ -198,7 +198,6 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
-  NODE_ENV: z.string().default("development"),
   SCRAPE_RUN_LOGGING: z
     .string()
     .toLowerCase()
