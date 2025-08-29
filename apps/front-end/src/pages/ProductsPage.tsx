@@ -25,6 +25,7 @@ import {
   SortingState,
   VisibilityState,
   ColumnFiltersState,
+  ColumnPinningState,
 } from "@tanstack/react-table";
 
 // Utility to format "ago" time
@@ -222,6 +223,10 @@ export function ProductsPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnPinning, setColumnPinning] = useState<ColumnPinningState>({
+    left: ["channel_name", "mp_id"],
+    right: [],
+  });
 
   // Define the columns for the data table
   const columns: ColumnDef<ProductWithAlgoData>[] = [
@@ -507,14 +512,22 @@ export function ProductsPage() {
       sorting,
       columnVisibility,
       columnFilters,
+      columnPinning,
     },
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
     onColumnFiltersChange: setColumnFilters,
+    onColumnPinningChange: setColumnPinning,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    initialState: {
+      columnPinning: {
+        left: ["channel_name", "mp_id"],
+        right: [],
+      },
+    },
   });
 
   interface ApiResponse {

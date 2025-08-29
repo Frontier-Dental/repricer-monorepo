@@ -118,3 +118,41 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Sticky column pinning styles */
+.table-container {
+  overflow: auto;
+  position: relative;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+th,
+td {
+  position: relative;
+  background-color: var(--background);
+}
+
+th[style*="position: sticky"],
+td[style*="position: sticky"] {
+  background-color: var(--background) !important;
+}
+
+/* Ensure sticky columns have proper z-index and shadows */
+th[style*="position: sticky"] {
+  z-index: 2;
+}
+
+td[style*="position: sticky"] {
+  z-index: 1;
+}
+
+/* Additional sticky positioning support */
+.table-container th[style*="position: sticky"],
+.table-container td[style*="position: sticky"] {
+  position: sticky !important;
+}
