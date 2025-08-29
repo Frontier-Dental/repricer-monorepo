@@ -9,11 +9,15 @@ import { VendorName } from "@repricer-monorepo/shared";
 import {
   PriceBreakInfo,
   ProductInfo,
+  ProxyNet32,
   RunInfo,
   StatusInfo,
   UpdateCronForProductPayload,
   UpdateProductPayload,
 } from "./types";
+import { RepriceResultEnum } from "../../model/enumerations";
+import * as filterMapper from "../filter-mapper";
+import { GetTriggeredByVendor } from "../filter-mapper";
 
 export async function InsertRunInfo(runInfo: RunInfo) {
   const knex = getKnexInstance();
@@ -230,29 +234,7 @@ export async function UpdateProductAsync(
   contextVendor: string,
 ) {
   const knex = getKnexInstance();
-  let contextTableName: string | null = null;
-  switch (contextVendor) {
-    case VendorName.TRADENT:
-      contextTableName = applicationConfig.SQL_TRADENT_DETAILS!;
-      break;
-    case VendorName.FRONTIER:
-      contextTableName = applicationConfig.SQL_FRONTIER_DETAILS!;
-      break;
-    case VendorName.MVP:
-      contextTableName = applicationConfig.SQL_MVP_DETAILS!;
-      break;
-    case VendorName.TOPDENT:
-      contextTableName = applicationConfig.SQL_TOPDENT_DETAILS!;
-      break;
-    case VendorName.FIRSTDENT:
-      contextTableName = applicationConfig.SQL_FIRSTDENT_DETAILS!;
-      break;
-    case VendorName.TRIAD:
-      contextTableName = applicationConfig.SQL_TRIAD_DETAILS!;
-      break;
-    default:
-      break;
-  }
+  let contextTableName = getContextTableNameByVendorName(contextVendor);
 
   // Build the update object
   const updateObj: Record<string, any> = {
@@ -270,7 +252,7 @@ export async function UpdateProductAsync(
   if (payload.next_cron_time && payload.next_cron_time !== "") {
     updateObj.NextCronTime = payload.next_cron_time;
   }
-  if (isPriceUpdated === true) {
+  if (isPriceUpdated) {
     updateObj.LastUpdateTime = payload.last_update_time ?? "";
   }
 
@@ -339,6 +321,8 @@ export async function InsertHistory(history: HistoryModel, refTime: Date) {
     OtherVendorList: history.OtherVendorList,
     LinkedApiResponse: history.LinkedApiResponse,
     ContextCronName: history.ContextCronName,
+    TriggeredByVendor: history.TriggeredByVendor,
+    RepriceResult: history.RepriceResult,
   };
   const insertResult = await knex(applicationConfig.SQL_HISTORY!).insert(
     insertObj,
@@ -349,34 +333,32 @@ export async function InsertHistory(history: HistoryModel, refTime: Date) {
 export async function UpdateTriggeredByVendor(
   payload: any,
   contextVendor: string,
-  mpid: string | number,
+  mpid: string,
 ) {
   const knex = getKnexInstance();
-  let contextTableName: string | null = null;
-  switch (contextVendor) {
-    case VendorName.TRADENT:
-      contextTableName = applicationConfig.SQL_TRADENT_DETAILS!;
-      break;
-    case VendorName.FRONTIER:
-      contextTableName = applicationConfig.SQL_FRONTIER_DETAILS!;
-      break;
-    case VendorName.MVP:
-      contextTableName = applicationConfig.SQL_MVP_DETAILS!;
-      break;
-    case VendorName.TOPDENT:
-      contextTableName = applicationConfig.SQL_TOPDENT_DETAILS!;
-      break;
-    case VendorName.FIRSTDENT:
-      contextTableName = applicationConfig.SQL_FIRSTDENT_DETAILS!;
-      break;
-    default:
-      break;
+  let triggeredByValue = null;
+  let contextTableName = getContextTableNameByVendorName(contextVendor);
+  triggeredByValue = await filterMapper.GetTriggeredByVendor(
+    payload,
+    mpid,
+    contextVendor,
+  );
+
+  if (triggeredByValue != null && triggeredByValue.updateRequired) {
+    const updateResult = await knex(contextTableName!)
+      .update({ TriggeredByVendor: triggeredByValue })
+      .where("MpId", parseInt(mpid as string));
+
+    console.debug(
+      `TriggeredByVendor Updated || MPID : ${mpid} || ${contextVendor} || ${triggeredByValue.resultStr}`,
+    );
+  } else {
+    console.log(
+      `Skipped Updating TriggeredByVendor value for MPID: ${mpid} || ${contextVendor}`,
+    );
   }
-  const updateValue = GetTriggeredByValue(payload);
-  const updateResult = await knex(contextTableName!)
-    .update({ TriggeredByVendor: updateValue })
-    .where("MpId", parseInt(mpid as string));
-  return updateResult;
+
+  return triggeredByValue;
 }
 
 export async function UpdateHistoryWithMessage(
@@ -579,6 +561,101 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
   return MapProductDetailsList(result[0]);
 }
 
+export async function UpdateRepriceResultStatus(
+  repriceResultStatus: RepriceResultEnum,
+  mpid: string,
+  contextVendor: any,
+) {
+  let contextTableName = getContextTableNameByVendorName(contextVendor);
+  const db = await SqlConnectionPool.getConnection();
+  try {
+    const updateQuery = `UPDATE ${contextTableName} SET RepriceResult=? WHERE MpId =?`;
+    await db.query(updateQuery, [
+      repriceResultStatus,
+      parseInt(mpid as string),
+    ]);
+  } catch (exception) {
+    console.log(`Exception while UpdateRepriceResultStatus : ${exception}`);
+  } finally {
+    SqlConnectionPool.releaseConnection(db);
+  }
+}
+
+export async function GetProxiesNet32(
+  usernames: string[],
+): Promise<ProxyNet32[]> {
+  let proxyList: ProxyNet32[] = [];
+  const db = await SqlConnectionPool.getConnection();
+  try {
+    if (usernames.length === 0) {
+      return [];
+    }
+
+    const placeholders = usernames.map(() => "?").join(",");
+    const query = `SELECT * FROM ${process.env.SQL_PROXY_NET_32} WHERE username IN (${placeholders})`;
+    const [rows] = await db.query(query, usernames);
+    proxyList = rows as ProxyNet32[];
+  } catch (exception) {
+    console.log(`Exception while GetProxiesNet32: ${exception}`);
+  } finally {
+    SqlConnectionPool.releaseConnection(db);
+  }
+  return proxyList;
+}
+
+export async function GetVendorKeys(
+  vendors: string[],
+): Promise<Map<string, string | null> | null> {
+  const db = await SqlConnectionPool.getConnection();
+  try {
+    if (vendors.length === 0) {
+      return new Map<string, string | null>();
+    }
+
+    const placeholders = vendors.map(() => "?").join(",");
+    const query = `
+      SELECT vendor, value 
+      FROM ${process.env.SQL_VENDOR_KEYS || "table_vendorKeys"} 
+      WHERE vendor IN (${placeholders}) 
+        AND is_primary = 1 
+        AND is_active = 1
+    `;
+
+    const [rows] = await db.query(query, vendors);
+    const vendorKeyMap = new Map<string, string | null>();
+
+    for (const vendor of vendors) {
+      const match = (rows as any[]).find((row) => row.vendor === vendor);
+      const value = match?.value ?? null;
+      vendorKeyMap.set(vendor, value);
+    }
+
+    return vendorKeyMap;
+  } catch (exception) {
+    console.error("Error in GetVendorKeys:", exception);
+    return null;
+  } finally {
+    SqlConnectionPool.releaseConnection(db);
+  }
+}
+
+export async function ExecuteQuery(_query: string, _params: any) {
+  try {
+    let noOfRecords = null;
+    const db = await SqlConnectionPool.getConnection();
+    try {
+      [noOfRecords] = await db.execute(_query, _params);
+    } catch (exception) {
+      console.log(`Exception while ExecuteQuery : ${exception}`);
+    } finally {
+      SqlConnectionPool.releaseConnection(db);
+    }
+    return noOfRecords;
+  } catch (exception) {
+    return null;
+  }
+}
+
 /**************************** PRIVATE FUNCTIONS ***********************************/
 async function getContextItemByKey(payload: any, key: string): Promise<any> {
   if (payload.tradentDetails != null) return payload.tradentDetails[key];
@@ -587,4 +664,22 @@ async function getContextItemByKey(payload: any, key: string): Promise<any> {
   if (payload.topDentDetails != null) return payload.topDentDetails[key];
   if (payload.firstDentDetails != null) return payload.firstDentDetails[key];
   if (payload.triadDetails != null) return payload.triadDetails[key];
+}
+
+function getContextTableNameByVendorName(contextVendor: string) {
+  let contextTableName: string | null = null;
+  if (contextVendor === "TRADENT") {
+    contextTableName = process.env.SQL_TRADENT_DETAILS!;
+  } else if (contextVendor === "FRONTIER") {
+    contextTableName = process.env.SQL_FRONTIER_DETAILS!;
+  } else if (contextVendor === "MVP") {
+    contextTableName = process.env.SQL_MVP_DETAILS!;
+  } else if (contextVendor === "TOPDENT") {
+    contextTableName = process.env.SQL_TOPDENT_DETAILS!;
+  } else if (contextVendor === "FIRSTDENT") {
+    contextTableName = process.env.SQL_FIRSTDENT_DETAILS!;
+  } else if (contextVendor === "TRIAD") {
+    contextTableName = process.env.SQL_TRIAD_DETAILS!;
+  }
+  return contextTableName;
 }
