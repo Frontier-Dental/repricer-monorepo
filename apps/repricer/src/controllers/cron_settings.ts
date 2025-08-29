@@ -166,7 +166,7 @@ export async function getCronSettings(req: Request, res: Response) {
   cronSettingsResponse.custom.ProxyProvider_Name =
     await MapperHelper.GetAlternateProxyProviderName(
       configItems,
-      hiddenCronDetails.ProxyProvider,
+      hiddenCronDetails!.ProxyProvider,
     );
   cronSettingsResponse.custom.ThresholdReached = false; //await MapperHelper.GetIsStepReached(hiddenCronDetails, hiddenCronDetails.AlternateProxyProvider.length-1);
   cronSettingsResponse.custom.CloseToThresholdReached = false; // await MapperHelper.GetIsStepReached(hiddenCronDetails, hiddenCronDetails.AlternateProxyProvider.length - 2);
@@ -315,27 +315,7 @@ export async function updateCronSettings(req: Request, res: Response) {
     }
   }
   if (listOfUpdates.length > 0) {
-    let invalidUpdates = [];
-    for (const cronSetting of listOfUpdates) {
-      const validationErrors =
-        await MapperHelper.ValidateAlternateProxyDetails(cronSetting);
-      if (validationErrors === false) {
-        invalidUpdates.push({
-          cronName: cronSetting.CronName,
-        });
-      }
-    }
-    if (invalidUpdates.length > 0) {
-      return res.json({
-        status: false,
-        message: `First & Last Alternate Proxy Providers are not the same for Cron : ${invalidUpdates.map((x) => x.cronName).join(", ")}`,
-      });
-    }
-
-    const response = await mongoMiddleware.UpdateCronSettingsList(
-      listOfUpdates,
-      req,
-    );
+    await mongoMiddleware.UpdateCronSettingsList(listOfUpdates, req);
     if (listOfUpdatedCronKey.length > 0) {
       const cronRecreateResponse =
         await httpMiddleware.recreateCron(listOfUpdatedCronKey);

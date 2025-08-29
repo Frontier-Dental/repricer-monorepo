@@ -777,8 +777,7 @@ if ($("#update_product_form_triad").length > 0) {
         },
         is_nc_needed: {
           required: false,
-        }
-
+        },
       },
       messages: {
         channel_name: "Please enter Channel Name",
@@ -801,7 +800,7 @@ if ($("#update_product_form_triad").length > 0) {
           beforeSend: function () {
             $(".addItemButton").prop("disabled", true);
             $(".addItemButton").html(
-              '<i class="ace-icon fa fa-spinner fa-spin bigger-125"></i> Please wait...'
+              '<i class="ace-icon fa fa-spinner fa-spin bigger-125"></i> Please wait...',
             );
             showLoadingToast("Processing...");
           },

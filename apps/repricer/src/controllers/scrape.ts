@@ -182,24 +182,6 @@ export const UpdateScrapeCronExp = async (req: Request, res: Response) => {
       req,
     );
 
-    let invalidUpdates = [];
-    for (const cronSetting of updatedList) {
-      const validationErrors =
-        await MapperHelper.ValidateAlternateProxyDetails(cronSetting);
-      if (validationErrors === false) {
-        invalidUpdates.push({
-          cronName: cronSetting.CronName,
-        });
-      }
-    }
-
-    if (invalidUpdates.length > 0) {
-      return res.json({
-        status: false,
-        message: `First & Last Alternate Proxy Providers are not the same for Cron : ${invalidUpdates.map((x) => x.cronName).join(", ")}`,
-      });
-    }
-
     if (updateResponse) {
       if (listOfUpdatedCronKey.length > 0) {
         for (const jobName of listOfUpdatedCronKey) {

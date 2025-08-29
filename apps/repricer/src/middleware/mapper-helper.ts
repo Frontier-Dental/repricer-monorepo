@@ -796,22 +796,14 @@ export const UpsertProductDetailsInSql = async (
     new MySqlProduct(payload, sqlProductDetails, mpid, AuditInfo),
   );
 };
-
-export const ValidateAlternateProxyDetails = async (cronSettings) => {
-  // if (cronSettings.AlternateProxyProvider && cronSettings.AlternateProxyProvider.length > 0) {
-  //     const firstProvider = cronSettings.AlternateProxyProvider[0].ProxyProvider;
-  //     const lastProxyProvider = cronSettings.AlternateProxyProvider[cronSettings.AlternateProxyProvider.length - 1].ProxyProvider;
-  //     return firstProvider === lastProxyProvider;
-  // }
-  return true;
-};
-
 export const GetAlternateProxyProviderName = async (
   details: any,
   providerId: any,
 ) => {
   if (details && details.length > 0) {
-    const linkedProvider = details.find((x) => x.proxyProvider == providerId);
+    const linkedProvider = details.find(
+      (x: any) => x.proxyProvider == providerId,
+    );
     return linkedProvider.method
       ? `${linkedProvider.proxyProviderName} - ${linkedProvider.method}`
       : `${linkedProvider.proxyProviderName}`;

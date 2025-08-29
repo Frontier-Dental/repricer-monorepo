@@ -250,23 +250,6 @@ export async function UpdateSlowCronExpression(req: Request, res: Response) {
   }
 
   if (updatedList.length > 0) {
-    let invalidUpdates = [];
-    for (const cronSetting of updatedList) {
-      const validationErrors =
-        await MapperHelper.ValidateAlternateProxyDetails(cronSetting);
-      if (validationErrors === false) {
-        invalidUpdates.push({
-          cronName: cronSetting.CronName,
-        });
-      }
-    }
-    if (invalidUpdates.length > 0) {
-      return res.json({
-        status: false,
-        message: `First & Last Alternate Proxy Providers are not the same for Cron : ${invalidUpdates.map((x) => x.cronName).join(", ")}`,
-      });
-    }
-
     const updateResponse = await mongoMiddleware.updateSlowCron(
       updatedList,
       req,

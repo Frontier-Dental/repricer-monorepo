@@ -17,6 +17,7 @@ export default class MySqlProduct {
   LinkedMvpDetailsInfo: string;
   LinkedFirstDentDetailsInfo: string;
   LinkedTopDentDetailsInfo: string;
+  LinkedTriadDetailsInfo: string;
   IsBadgeItem: boolean;
   constructor(
     payload: any,
