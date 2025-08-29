@@ -561,16 +561,16 @@ function getSolutionResult(
     }
   }
 
-  const keepPosition = applyKeepPosition(vendorSetting, isSlowCron);
-  if (keepPosition) {
-    return {
-      algoResult: keepPosition,
-      suggestedPrice: suggestedPrice.toNumber(),
-      comment: "Keep position is on.",
-      triggeredByVendor: null,
-      rawTriggeredByVendor: solution.rawTriggeredByVendor,
-    };
-  }
+  // const keepPosition = applyKeepPosition(vendorSetting, isSlowCron);
+  // if (keepPosition) {
+  //   return {
+  //     algoResult: keepPosition,
+  //     suggestedPrice: suggestedPrice.toNumber(),
+  //     comment: "Keep position is on.",
+  //     triggeredByVendor: null,
+  //     rawTriggeredByVendor: solution.rawTriggeredByVendor,
+  //   };
+  // }
 
   // Okay now we know we can make a change as everything else has been ruled out.
   if (!existingPriceBreak) {
