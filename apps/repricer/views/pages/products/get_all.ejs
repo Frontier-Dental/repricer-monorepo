@@ -189,6 +189,7 @@
                                                     <th class="t-head long-txt">Apply Buy Box</th>
                                                     <th class="t-head long-txt">Apply NC For Buy Box</th>
                                                     <th class="t-head">Triggered By Vendor</th>
+                                                    <th class="t-head">Algo Mode</th>
                                                     
                                                 </tr>
                                             </thead>
@@ -209,6 +210,7 @@
                                                                 &nbsp;<br>
                                                                 <a onclick="removeFrom422ById('<%= item.mpid%>');"><i class="fas fa-bell" style="cursor: pointer;color: red;"></i></a>
                                                         </td>
+
                                                         <td>
                                                             <span class="tr-row">
                                                             <% if(item.tradent==null){ %>
@@ -1086,7 +1088,9 @@
                                                                             <% } %>
                                                             </span>
                                                         </td>
-                                                        
+                                                        <td>
+                                                            <%= item.algo_execution_mode %>
+                                                        </td>
                                                     </tr>
                                                     <% }); %>
                                             </tbody>

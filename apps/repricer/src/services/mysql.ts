@@ -280,29 +280,248 @@ export async function GetAllRepriceEligibleProductByFilter(
   pageNumber: any,
   pageSize: any,
 ) {
-  let scrapeDetails: any = null;
-  const db = await SqlConnectionPool.getConnection();
-  const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_PRODUCT_LIST_BY_FILTERV2}(?,?)`;
-  const [rows] = await db.query(queryToCall, [pageNumber, pageSize]);
-  if (rows != null && (rows as any)[0] != null) {
-    scrapeDetails = (rows as any)[0];
+  const knex = getKnexInstance();
+
+  // Calculate offset for pagination
+  const offset = pageNumber * pageSize;
+
+  // Common select fields for all queries
+  const selectFields = [
+    "pl.Id as ProductIdentifier",
+    "pl.MpId as ProductId",
+    "pl.ProductName",
+    "pl.Net32Url",
+    "pl.IsActive as ScrapeOnlyActive",
+    "pl.LinkedCronName as LinkedScrapeOnlyCron",
+    "pl.LinkedCronId as LinkedScrapeOnlyCronId",
+    "pl.RegularCronName",
+    "pl.RegularCronId",
+    "pl.SlowCronName",
+    "pl.SlowCronId",
+    "pl.IsSlowActivated",
+    "pl.IsBadgeItem",
+    "pl.algo_execution_mode",
+  ];
+
+  // Get paginated MpIds first
+  const paginatedMpIds = await knex("table_scrapeProductList")
+    .select("MpId")
+    .whereNotNull("RegularCronName")
+    .orderBy("Id", "desc")
+    .limit(pageSize)
+    .offset(offset);
+
+  const mpIds = paginatedMpIds.map((row) => row.MpId);
+
+  if (mpIds.length === 0) {
+    return [];
   }
-  return await SqlMapper.MapProductDetailsList(scrapeDetails);
+
+  // Build subqueries for each table join
+  const tradentQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "tdl.*"])
+    .leftJoin(
+      "table_tradentDetails as tdl",
+      "tdl.id",
+      "pl.LinkedTradentDetailsInfo",
+    )
+    .whereIn("pl.MpId", mpIds);
+
+  const frontierQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "fdl.*"])
+    .leftJoin(
+      "table_frontierDetails as fdl",
+      "fdl.id",
+      "pl.LinkedFrontiersDetailsInfo",
+    )
+    .whereIn("pl.MpId", mpIds);
+
+  const mvpQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "mdl.*"])
+    .leftJoin("table_mvpDetails as mdl", "mdl.id", "pl.LinkedMvpDetailsInfo")
+    .whereIn("pl.MpId", mpIds);
+
+  const firstDentQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "firstDl.*"])
+    .leftJoin(
+      "table_firstDentDetails as firstDl",
+      "firstDl.id",
+      "pl.LinkedFirstDentDetailsInfo",
+    )
+    .whereIn("pl.MpId", mpIds);
+
+  const topDentQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "topDl.*"])
+    .leftJoin(
+      "table_topDentDetails as topDl",
+      "topDl.id",
+      "pl.LinkedTopDentDetailsInfo",
+    )
+    .whereIn("pl.MpId", mpIds);
+
+  const triadQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "triadDl.*"])
+    .leftJoin(
+      "table_triadDetails as triadDl",
+      "triadDl.id",
+      "pl.LinkedTriadDetailsInfo",
+    )
+    .whereIn("pl.MpId", mpIds);
+
+  // Combine all queries using UNION
+  const result = await knex
+    .union([
+      tradentQuery,
+      frontierQuery,
+      mvpQuery,
+      firstDentQuery,
+      topDentQuery,
+      triadQuery,
+    ])
+    .orderBy("ProductId");
+
+  return SqlMapper.MapProductDetailsList(result);
 }
 
 export async function GetAllRepriceEligibleProductByTag(filterTag: any) {
-  let scrapeDetails: any = null;
-  const db = await SqlConnectionPool.getConnection();
-  const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_PRODUCT_LIST_BY_TAGV2}(?)`;
-  const [rows] = await db.query(queryToCall, [filterTag]);
-  if (rows != null && (rows as any)[0] != null) {
-    scrapeDetails = (rows as any)[0];
+  const knex = getKnexInstance();
+
+  // Create search pattern for LIKE queries
+  const searchPattern = `%${filterTag}%`;
+
+  // Common select fields for all queries
+  const selectFields = [
+    "pl.Id as ProductIdentifier",
+    "pl.MpId as ProductId",
+    "pl.ProductName",
+    "pl.Net32Url",
+    "pl.IsActive as ScrapeOnlyActive",
+    "pl.LinkedCronName as LinkedScrapeOnlyCron",
+    "pl.LinkedCronId as LinkedScrapeOnlyCronId",
+    "pl.RegularCronName",
+    "pl.RegularCronId",
+    "pl.SlowCronName",
+    "pl.SlowCronId",
+    "pl.IsSlowActivated",
+    "pl.IsBadgeItem",
+    "pl.algo_execution_mode",
+  ];
+
+  // Get matching MpIds from all vendor tables
+  const matchingMpIds = await knex
+    .union([
+      knex("table_tradentDetails")
+        .select("MpId")
+        .where(function () {
+          this.where("MpId", "like", searchPattern)
+            .orWhere("FocusId", "like", searchPattern)
+            .orWhere("ChannelId", "like", searchPattern);
+        }),
+      knex("table_frontierDetails")
+        .select("MpId")
+        .where(function () {
+          this.where("MpId", "like", searchPattern)
+            .orWhere("FocusId", "like", searchPattern)
+            .orWhere("ChannelId", "like", searchPattern);
+        }),
+      knex("table_mvpDetails")
+        .select("MpId")
+        .where(function () {
+          this.where("MpId", "like", searchPattern)
+            .orWhere("FocusId", "like", searchPattern)
+            .orWhere("ChannelId", "like", searchPattern);
+        }),
+      knex("table_firstDentDetails")
+        .select("MpId")
+        .where(function () {
+          this.where("MpId", "like", searchPattern)
+            .orWhere("FocusId", "like", searchPattern)
+            .orWhere("ChannelId", "like", searchPattern);
+        }),
+      knex("table_topDentDetails")
+        .select("MpId")
+        .where(function () {
+          this.where("MpId", "like", searchPattern)
+            .orWhere("FocusId", "like", searchPattern)
+            .orWhere("ChannelId", "like", searchPattern);
+        }),
+    ])
+    .distinct();
+
+  const mpIds = matchingMpIds.map((row) => row.MpId);
+
+  if (mpIds.length === 0) {
+    return [];
   }
-  return await SqlMapper.MapProductDetailsList(scrapeDetails);
+
+  // Build subqueries for each table join
+  const tradentQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "tdl.*"])
+    .leftJoin(
+      "table_tradentDetails as tdl",
+      "tdl.id",
+      "pl.LinkedTradentDetailsInfo",
+    )
+    .whereIn("pl.MpId", mpIds);
+
+  const frontierQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "fdl.*"])
+    .leftJoin(
+      "table_frontierDetails as fdl",
+      "fdl.id",
+      "pl.LinkedFrontiersDetailsInfo",
+    )
+    .whereIn("pl.MpId", mpIds);
+
+  const mvpQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "mdl.*"])
+    .leftJoin("table_mvpDetails as mdl", "mdl.id", "pl.LinkedMvpDetailsInfo")
+    .whereIn("pl.MpId", mpIds);
+
+  const firstDentQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "firstDl.*"])
+    .leftJoin(
+      "table_firstDentDetails as firstDl",
+      "firstDl.id",
+      "pl.LinkedFirstDentDetailsInfo",
+    )
+    .whereIn("pl.MpId", mpIds);
+
+  const topDentQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "topDl.*"])
+    .leftJoin(
+      "table_topDentDetails as topDl",
+      "topDl.id",
+      "pl.LinkedTopDentDetailsInfo",
+    )
+    .whereIn("pl.MpId", mpIds);
+
+  const triadQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "triadDl.*"])
+    .leftJoin(
+      "table_triadDetails as triadDl",
+      "triadDl.id",
+      "pl.LinkedTriadDetailsInfo",
+    )
+    .whereIn("pl.MpId", mpIds);
+
+  // Combine all queries using UNION
+  const result = await knex
+    .union([
+      tradentQuery,
+      frontierQuery,
+      mvpQuery,
+      firstDentQuery,
+      topDentQuery,
+      triadQuery,
+    ])
+    .whereNotNull("ChannelName")
+    .orderBy("ProductId");
+
+  return SqlMapper.MapProductDetailsList(result);
 }
 
 export async function GetFullProductDetailsById(mpid: any) {
-  console.log("GetFullProductDetailsById", mpid);
   let scrapeDetails: any = null;
   const db = await SqlConnectionPool.getConnection();
   const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID}(?)`;
@@ -310,7 +529,7 @@ export async function GetFullProductDetailsById(mpid: any) {
   if (rows != null && (rows as any)[0] != null) {
     scrapeDetails = (rows as any)[0];
   }
-  return await SqlMapper.MapProductDetailsList(scrapeDetails);
+  return SqlMapper.MapProductDetailsList(scrapeDetails);
 }
 
 export async function UpdateVendorData(payload: any, vendorName: any) {

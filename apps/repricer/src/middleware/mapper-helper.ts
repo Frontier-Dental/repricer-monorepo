@@ -17,6 +17,7 @@ export function MapV2(productDetails: any[]) {
     item.frontier = p.frontierDetails;
     item.firstDent = p.firstDentDetails;
     item.topDent = p.topDentDetails;
+    item.triad = p.triadDetails;
     item.mvp = p.mvpDetails;
     item.cronName = getCommonEntityValue(item, "cronName", false);
     item.cronId = getCommonEntityValue(item, "cronId", false);
@@ -24,6 +25,7 @@ export function MapV2(productDetails: any[]) {
     item.slowCronName = getCommonEntityValue(item, "slowCronName", true);
     item.isScrapeOnlyActive = p.isScrapeOnlyActivated;
     item.isBadgeItem = p.isBadgeItem;
+    item.algo_execution_mode = p.algo_execution_mode;
     if (item.tradent) {
       item.tradent.updatedAt = item.tradent.updatedAt
         ? moment(item.tradent.updatedAt).format("DD-MM-YY HH:mm:ss")
@@ -99,11 +101,26 @@ export function MapV2(productDetails: any[]) {
         : item.firstDent.last_attempted_time;
       item.firstDent.tags = removeBackslashes(item.firstDent.tags);
     }
+    if (item.triad) {
+      item.triad.updatedAt = item.triad.updatedAt
+        ? moment(item.triad.updatedAt).format("DD-MM-YY HH:mm:ss")
+        : item.triad.updatedAt;
+      item.triad.lastCronTime = item.triad.last_cron_time
+        ? moment(item.triad.last_cron_time).format("DD-MM-YY HH:mm:ss")
+        : item.triad.last_cron_time;
+      item.triad.lastUpdateTime = item.triad.last_update_time
+        ? moment(item.triad.last_update_time).format("DD-MM-YY HH:mm:ss")
+        : item.triad.last_update_time;
+      item.triad.lastAttemptedTime = item.triad.last_attempted_time
+        ? moment(item.triad.last_attempted_time).format("DD-MM-YY HH:mm:ss")
+        : item.triad.last_attempted_time;
+      item.triad.tags = removeBackslashes(item.triad.tags);
+    }
     return item;
   });
 }
 
-export const MapBadgeIndicator = async (product: any) => {
+export function MapBadgeIndicator(product: any) {
   if (product.tradentDetails) {
     product.tradentDetails.badge_indicator = parseBadgeIndicator(
       product.tradentDetails.badgeIndicator,
@@ -135,7 +152,7 @@ export const MapBadgeIndicator = async (product: any) => {
     );
   }
   return product;
-};
+}
 
 export const MapCronName = async (prod: any, cronSettings: any) => {
   if (prod.tradentDetails && prod.tradentDetails.cronId) {
