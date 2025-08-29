@@ -187,7 +187,7 @@ export async function Reprice(
       ) {
         nextIndex++;
       } else if (
-        filterMapper.IsVendorFloorPrice(
+        filterMapper.isVendorFloorPrice(
           sortedPayload[i].priceBreaks,
           1,
           floorPrice,

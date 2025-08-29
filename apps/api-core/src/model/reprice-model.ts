@@ -85,6 +85,7 @@ export class RepriceModel {
   isMultiplePriceBreakAvailable: boolean;
   repriceDetails: RepriceData | null;
   listOfRepriceDetails: RepriceData[];
+  triggeredByVendor: any;
 
   constructor(
     sourceId: string,

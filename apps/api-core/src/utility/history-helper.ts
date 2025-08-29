@@ -125,6 +125,8 @@ export async function getHistoricalPrice(
     eligibleList,
     contextVendor,
     contextCronName,
+    triggeredByVendor,
+    repriceResult,
   );
 }
 

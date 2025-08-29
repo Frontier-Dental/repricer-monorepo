@@ -1,9 +1,7 @@
 import { getAxiosProxyInstance } from "./proxyAxiosInstance";
-import {
-  GetProxiesNet32,
-  GetVendorKeys,
-  ProxyNet32,
-} from "../mysql/mysql-helper";
+import { GetProxiesNet32, GetVendorKeys } from "../mysql/mysql-helper";
+
+import { ProxyNet32 } from "../mysql/types";
 
 const HTTP_STATUS = {
   OK: 200,

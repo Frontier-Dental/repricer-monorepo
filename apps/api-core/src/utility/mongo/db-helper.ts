@@ -598,8 +598,9 @@ export async function GetLinkedCronSettingsByProviderId(
 }
 
 export async function UpdateProxyDetailsByCronId(
-  cronId: string,
-  proxyProvider: number,
+  cronId: any,
+  proxyProvider: any,
+  sequence: number,
 ) {
   const dbo = await getMongoDb();
   await dbo
@@ -609,7 +610,8 @@ export async function UpdateProxyDetailsByCronId(
       {
         $set: {
           UpdatedTime: new Date(),
-          ProxyProvider: proxyProvider,
+          ProxyProvider: parseInt(proxyProvider),
+          SwitchSequence: sequence,
           AuditInfo: {
             UpdatedBy: "AUTO-SWITCH",
             UpdatedOn: new Date(),
