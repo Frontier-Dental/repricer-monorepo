@@ -68,10 +68,10 @@ export const MapProductDetailsList = (
         _.first(groupedList[parseInt(prodId)])?.ScrapeOnlyActive == 1
           ? true
           : false,
-      scrapeOnlyCronId:
-        _.first(groupedList[parseInt(prodId)])?.LinkedScrapeOnlyCronId || 0,
-      scrapeOnlyCronName:
-        _.first(groupedList[parseInt(prodId)])?.LinkedScrapeOnlyCron || "",
+      scrapeOnlyCronId: _.first(groupedList[parseInt(prodId)])
+        ?.LinkedScrapeOnlyCronId as any,
+      scrapeOnlyCronName: _.first(groupedList[parseInt(prodId)])
+        ?.LinkedScrapeOnlyCron as any,
       tradentLinkInfo: getLinkedInfoForVendor(
         groupedList[parseInt(prodId)],
         VendorName.TRADENT,
