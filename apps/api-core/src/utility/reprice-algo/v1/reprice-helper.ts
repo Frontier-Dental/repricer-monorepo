@@ -30,7 +30,9 @@ export async function Reprice(
     (x) => x.minQty == 1,
   )!.unitPrice;
   repriceModel.repriceDetails!.oldPrice = existingPrice;
-  const maxPrice = productItem.maxPrice ? productItem.maxPrice : 99999;
+  const maxPrice = productItem.maxPrice
+    ? parseFloat(productItem.maxPrice)
+    : 99999;
   const floorPrice = productItem.floorPrice
     ? parseFloat(productItem.floorPrice)
     : 0;
@@ -173,6 +175,8 @@ export async function Reprice(
           sortedPayload[i].priceBreaks,
           1,
           floorPrice,
+          0,
+          false,
         )) === true
       ) {
         nextIndex++;
@@ -330,6 +334,7 @@ export async function Reprice(
       allowCompeteWithNextForFloor === true ||
       productItem.repricingRule === 2
     ) {
+      rawDataForSisterCheck = _.cloneDeep(sortedPayload);
       sortedPayload = await filterMapper.FilterBasedOnParams(
         sortedPayload,
         productItem,
@@ -358,7 +363,7 @@ export async function Reprice(
         const floorSisterResult = await filterMapper.VerifyFloorWithSister(
           productItem,
           refProduct,
-          sortedPayload,
+          rawDataForSisterCheck,
           excludedVendors,
           $.VENDOR_ID,
           1,
@@ -389,6 +394,8 @@ export async function Reprice(
                 sortedPayload[i].priceBreaks,
                 1,
                 floorPrice,
+                0,
+                false,
               )) === true
             ) {
               nextIndex++;
@@ -493,6 +500,11 @@ export async function Reprice(
             // }
           }
         } else if (sortedPayload[1]) {
+          if (
+            allowCompeteWithNextForFloor == true &&
+            floorSisterResult !== false
+          )
+            return floorSisterResult;
           let nextIndex = 1;
           for (let i = nextIndex; i < sortedPayload.length; i++) {
             if (
@@ -509,6 +521,8 @@ export async function Reprice(
                 sortedPayload[i].priceBreaks,
                 1,
                 floorPrice,
+                0,
+                false,
               ) == true
             ) {
               nextIndex++;
@@ -810,7 +824,7 @@ export async function RepriceIndividualPriceBreak(
         !_.includes(excludedVendors, x.vendorId.toString()),
     );
     if (nonSisterVendorDetails.length === 0) {
-      repriceModel.repriceDetails!.newPrice = 0 as unknown as string;
+      repriceModel.repriceDetails!.newPrice = existingPrice;
       repriceModel.repriceDetails!.isRepriced = true;
       repriceModel.repriceDetails!.active = 0 as unknown as boolean;
       repriceModel.repriceDetails!.explained =
@@ -861,6 +875,8 @@ export async function RepriceIndividualPriceBreak(
           sortedPayload[i].priceBreaks,
           priceBreak.minQty,
           floorPrice,
+          0,
+          false,
         ) == true
       ) {
         nextIndex++;
@@ -1027,7 +1043,7 @@ export async function RepriceIndividualPriceBreak(
         const floorSisterResult = await filterMapper.VerifyFloorWithSister(
           productItem,
           refProduct,
-          sortedPayload,
+          rawDataForSisterCheck,
           excludedVendors,
           $.VENDOR_ID,
           priceBreak.minQty,
@@ -1051,6 +1067,8 @@ export async function RepriceIndividualPriceBreak(
               sortedPayload[i].priceBreaks,
               priceBreak.minQty,
               floorPrice,
+              0,
+              false,
             ) == true
           ) {
             nextIndex++;
@@ -1128,7 +1146,7 @@ export async function RepriceIndividualPriceBreak(
           );
         } else {
           if (priceBreak.minQty != 1) {
-            repriceModel.repriceDetails!.newPrice = 0 as unknown as string;
+            repriceModel.repriceDetails.newPrice = existingPrice;
             repriceModel.repriceDetails!.isRepriced = true;
             repriceModel.repriceDetails!.active = 0 as unknown as boolean;
             repriceModel.repriceDetails!.explained =
@@ -1177,7 +1195,10 @@ export async function RepriceIndividualPriceBreak(
           _.first(sortedPayload)!.vendorId as unknown as string,
           priceBreak.minQty,
         );
-      } else if (offsetPrice <= floorPrice) {
+      } else if (
+        offsetPrice <= floorPrice &&
+        repriceModel.repriceDetails.isRepriced !== true
+      ) {
         repriceModel.repriceDetails!.goToPrice =
           offsetPrice as unknown as string;
         repriceModel.repriceDetails!.newPrice = "N/A";

@@ -47,8 +47,12 @@ export async function getSamePriceBreakDetails(
   let result: Net32Product[] = [];
   for (let out of outputList) {
     const $ = await globalParam.GetInfo(out.vendorId, productItem);
+    let excludedVendors = productItem.competeAll
+      ? []
+      : $.EXCLUDED_VENDOR_ID.split(";");
     if (
       out.vendorId != $.VENDOR_ID &&
+      !_.includes(excludedVendors, out.vendorId.toString()) &&
       out.priceBreaks &&
       out.priceBreaks.length > 0
     ) {
@@ -63,10 +67,7 @@ export async function getSamePriceBreakDetails(
 }
 
 export function notQ2VsQ1(minQty: number, compareWithQ1: boolean) {
-  if (minQty == 2 && compareWithQ1 == true) {
-    return false;
-  }
-  return true;
+  return !(minQty == 2 && compareWithQ1 == true);
 }
 
 export async function getSecretKey(cronId: string, contextVendor: string) {

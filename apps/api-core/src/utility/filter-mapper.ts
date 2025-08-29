@@ -10,6 +10,7 @@ import { RepriceModel } from "../model/reprice-model";
 import { FrontierProduct } from "../types/frontier";
 import { Net32PriceBreak, Net32Product } from "../types/net32";
 import { applicationConfig } from "./config";
+import Decimal from "decimal.js";
 
 export async function FilterProducts(filterCronDetails: any) {
   const filterDuration = parseInt(filterCronDetails.filterValue);
@@ -249,7 +250,7 @@ export function GetContextPrice(
   minQty: number,
 ): { Price: number; Type: string } {
   let returnObj: { Price: number; Type: string } = {
-    Price: nextLowestPrice - processOffset,
+    Price: new Decimal(nextLowestPrice).minus(processOffset).toNumber(),
     Type: "OFFSET",
   };
   if (percentageDown != 0 && minQty == 1) {
@@ -273,17 +274,22 @@ export function AppendPriceFactorTag(strValue: string, objType: string) {
   else return strValue;
 }
 
-export function IsVendorFloorPrice(
-  priceBreakList: Net32PriceBreak[],
-  minQty: number,
-  floorPrice: number,
+export async function isVendorFloorPrice(
+  priceBreakList: any,
+  minQty: any,
+  floorPrice: any,
+  shippingCharge: any,
+  isNc: any,
 ) {
-  const contextPriceBreak = priceBreakList.find((x) => x.minQty == minQty);
-  if (
-    contextPriceBreak &&
-    parseFloat(contextPriceBreak.unitPrice as unknown as string) <= floorPrice
-  )
-    return true;
+  const contextPriceBreak = priceBreakList.find((x: any) => x.minQty == minQty);
+  const shippingPrice = shippingCharge ? parseFloat(shippingCharge) : 0;
+  if (contextPriceBreak) {
+    const contextPrice = isNc
+      ? parseFloat(contextPriceBreak.unitPrice) +
+        parseFloat(shippingPrice as unknown as string)
+      : parseFloat(contextPriceBreak.unitPrice);
+    return contextPrice <= floorPrice ? true : false;
+  }
   return false;
 }
 

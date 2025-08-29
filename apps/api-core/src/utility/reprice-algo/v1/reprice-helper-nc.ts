@@ -191,6 +191,8 @@ export async function Reprice(
           sortedPayload[i].priceBreaks,
           1,
           floorPrice,
+          GetShippingPrice(sortedPayload[i]),
+          true,
         ) == true
       ) {
         nextIndex++;
@@ -364,6 +366,8 @@ export async function Reprice(
                 sortedPayload[i].priceBreaks,
                 1,
                 floorPrice,
+                GetShippingPrice(sortedPayload[i]),
+                true,
               ) === true
             ) {
               nextIndex++;
@@ -499,6 +503,8 @@ export async function Reprice(
                 sortedPayload[i].priceBreaks,
                 1,
                 floorPrice,
+                GetShippingPrice(sortedPayload[i]),
+                true,
               ) == true
             ) {
               nextIndex++;
@@ -958,7 +964,7 @@ export async function RepriceIndividualPriceBreak(
         !_.includes(excludedVendors, x.vendorId.toString()),
     );
     if (nonSisterVendorDetails.length === 0) {
-      repriceModel.repriceDetails!.newPrice = 0 as unknown as string;
+      repriceModel.repriceDetails!.newPrice = unitPrice;
       repriceModel.repriceDetails!.isRepriced = true;
       repriceModel.repriceDetails!.active = 0 as unknown as boolean;
       repriceModel.repriceDetails!.explained =
@@ -998,6 +1004,8 @@ export async function RepriceIndividualPriceBreak(
           sortedPayload[i].priceBreaks,
           priceBreak.minQty,
           floorPrice,
+          GetShippingPrice(sortedPayload[i]),
+          true,
         ) == true
       ) {
         nextIndex++;
@@ -1173,7 +1181,7 @@ export async function RepriceIndividualPriceBreak(
       //SET: Do Nothing
       if (offsetPrice <= floorPrice) {
         if (priceBreak.minQty != 1 && existingPrice != 0) {
-          repriceModel.repriceDetails!.newPrice = 0 as unknown as string;
+          repriceModel.repriceDetails!.newPrice = unitPrice;
           repriceModel.repriceDetails!.isRepriced = true;
           repriceModel.repriceDetails!.active = 0 as unknown as boolean;
           repriceModel.repriceDetails!.explained =
@@ -1198,6 +1206,8 @@ export async function RepriceIndividualPriceBreak(
                 sortedPayload[i].priceBreaks,
                 priceBreak.minQty,
                 floorPrice,
+                GetShippingPrice(sortedPayload[i]),
+                true,
               ) == true
             ) {
               nextIndex++;
@@ -1277,6 +1287,8 @@ export async function RepriceIndividualPriceBreak(
                 sortedPayload[i].priceBreaks,
                 priceBreak.minQty,
                 floorPrice,
+                GetShippingPrice(sortedPayload[i]),
+                true,
               ) == true
             ) {
               nextIndex++;
@@ -1304,7 +1316,7 @@ export async function RepriceIndividualPriceBreak(
                 allowCompeteWithNextForFloor == true)
             ) {
               const contextPriceResult = filterMapper.GetContextPrice(
-                parseFloat(secondLowestPrice.unitPrice as unknown as string),
+                parseFloat(nextLowestPriceForNRank as unknown as string),
                 processOffset,
                 floorPrice,
                 parseFloat(productItem.percentageDown),
