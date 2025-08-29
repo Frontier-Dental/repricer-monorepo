@@ -223,6 +223,8 @@ async function isPriceUpdateRequired(repriceResult: any, isRepriceOn: any) {
     repriceResult.listOfRepriceDetails.forEach(($rp: any) => {
       if ($rp.newPrice != "N/A" && $rp.newPrice != $rp.oldPrice) {
         $eval = true;
+      } else if ($rp.active == false || $rp.active == 0) {
+        $eval = true;
       }
     });
     return $eval;

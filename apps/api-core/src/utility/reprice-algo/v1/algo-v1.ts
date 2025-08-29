@@ -449,57 +449,33 @@ export async function repriceProduct(
       historyIdentifier: historyIdentifier,
     };
   }
-  let priceUpdatedRequest: any = {};
-  priceUpdatedRequest.secretKey = await getSecretKey(
-    productItem.cronId,
+
+  // Reprice is needed
+
+  const isWaitingForNextRun = await filterMapper.IsWaitingForNextRun(
+    req.params.id,
     contextVendor,
+    productItem,
   );
-  const priceUpdateUrl = apiMapping.find(
-    (x) => x.vendor === contextVendor.toUpperCase(),
-  )?.priceUpdateUrl;
-  let priceUpdatedResponse = null;
-  const priceChangeAllowed =
-    productItem.algo_execution_mode === AlgoExecutionMode.V1_ONLY ||
-    productItem.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY;
-  if (repriceResult.isMultiplePriceBreakAvailable !== true) {
-    priceUpdatedRequest.payload = new UpdateRequest(
-      mpid,
-      repriceResult.repriceDetails!.newPrice,
-      1,
-      productItem.cronName,
+
+  if (!isWaitingForNextRun) {
+    let priceUpdatedRequest: any = {};
+    priceUpdatedRequest.secretKey = await getSecretKey(
+      productItem.cronId,
+      contextVendor,
     );
-    if (isDev === false && priceChangeAllowed) {
-      priceUpdatedResponse = await axiosHelper.postAsync(
-        priceUpdatedRequest,
-        priceUpdateUrl!,
+    const priceUpdateUrl = apiMapping.find(
+      (x: any) => x.vendor === contextVendor.toUpperCase(),
+    )?.priceUpdateUrl;
+    let priceUpdatedResponse = null;
+    if (repriceResult.isMultiplePriceBreakAvailable !== true) {
+      priceUpdatedRequest.payload = new UpdateRequest(
+        req.params.id,
+        repriceResult.repriceDetails.newPrice,
+        1,
+        productItem.cronName,
       );
-    } else {
-      priceUpdatedResponse = {
-        data: { status: "SUCCESS", type: "dummy", url: priceUpdateUrl },
-      };
-    }
-  } else {
-    priceUpdatedRequest.payload = new UpdateRequest(
-      mpid,
-      0,
-      1,
-      productItem.cronName,
-    );
-    priceUpdatedRequest.payload.priceList = [];
-    repriceResult.listOfRepriceDetails.forEach(($rpBreak) => {
-      if ($rpBreak.isRepriced === true) {
-        if ($rpBreak.active === false) {
-          priceUpdatedRequest.payload.priceList.push(
-            new PriceList($rpBreak.oldPrice, $rpBreak.minQty, 0),
-          );
-        } else {
-          priceUpdatedRequest.payload.priceList.push(
-            new PriceList($rpBreak.newPrice, $rpBreak.minQty),
-          );
-        }
-      }
-    });
-    if (priceUpdatedRequest.payload.priceList.length > 0) {
+
       if (isDev === false && priceChangeAllowed) {
         priceUpdatedResponse = await axiosHelper.postAsync(
           priceUpdatedRequest,
@@ -514,75 +490,128 @@ export async function repriceProduct(
           },
         };
       }
-    }
-  }
-  if (priceUpdatedResponse && priceUpdatedResponse.data) {
-    if (
-      priceUpdatedResponse.data.message &&
-      (JSON.stringify(priceUpdatedResponse.data.message).indexOf("ERROR:422") >
-        -1 ||
-        JSON.stringify(priceUpdatedResponse.data.message).indexOf("ERROR:429") >
-          -1 ||
-        JSON.stringify(priceUpdatedResponse.data.message).indexOf("ERROR:404") >
-          -1 ||
-        JSON.stringify(priceUpdatedResponse.data.message).indexOf("ERROR:") >
-          -1)
-    ) {
-      if (
-        outputResponse.repriceData &&
-        outputResponse.repriceData.isMultiplePriceBreakAvailable === true &&
-        outputResponse.repriceData.listOfRepriceDetails
-      ) {
-        outputResponse.repriceData.listOfRepriceDetails.forEach(($lp) => {
-          if ($lp.isRepriced === true) {
-            $lp.explained = `${$lp.explained}:FAILED(ERROR:${JSON.stringify(priceUpdatedResponse.data.message)})`;
-            $lp.isRepriced = false;
-          }
-        });
-      } else if (
-        outputResponse.repriceData &&
-        outputResponse.repriceData.isMultiplePriceBreakAvailable === false &&
-        outputResponse.repriceData.repriceDetails
-      ) {
-        outputResponse.repriceData.repriceDetails.explained = `${outputResponse.repriceData.repriceDetails.explained}:FAILED(ERROR:${JSON.stringify(priceUpdatedResponse.data.message)})`;
-        outputResponse.repriceData.repriceDetails.isRepriced = false;
-      }
-      //return res.status(_codes.StatusCodes.OK).json({ "cronResponse": outputResponse, "priceUpdateResponse": null });
-    } else if (priceUpdatedResponse.data) {
-      // Update $UP or $DOWN if Price Update is Successful.
-      if (
-        outputResponse.repriceData &&
-        outputResponse.repriceData.isMultiplePriceBreakAvailable == true &&
-        outputResponse.repriceData.listOfRepriceDetails
-      ) {
-        for (let $lp of outputResponse.repriceData.listOfRepriceDetails) {
-          if ($lp.explained!.indexOf("#NEW") < 0) {
-            const priceStepValue = await getPriceStepValue($lp);
-            $lp.explained = `${$lp.explained} | ${priceStepValue}`;
+    } else {
+      priceUpdatedRequest.payload = new UpdateRequest(
+        req.params.id,
+        0,
+        1,
+        productItem.cronName,
+      );
+      priceUpdatedRequest.payload.priceList = [];
+      repriceResult.listOfRepriceDetails.forEach(($rpBreak: any) => {
+        if ($rpBreak.isRepriced === true) {
+          if ($rpBreak.active === false || $rpBreak.active === 0) {
+            priceUpdatedRequest.payload.priceList.push(
+              new PriceList($rpBreak.oldPrice, $rpBreak.minQty, 0),
+            );
+          } else {
+            priceUpdatedRequest.payload.priceList.push(
+              new PriceList($rpBreak.newPrice, $rpBreak.minQty),
+            );
           }
         }
-      } else if (
-        outputResponse.repriceData &&
-        outputResponse.repriceData.isMultiplePriceBreakAvailable == false &&
-        outputResponse.repriceData.repriceDetails
+      });
+      if (priceUpdatedRequest.payload.priceList.length > 0) {
+        if (isDev === false && priceChangeAllowed) {
+          priceUpdatedResponse = await axiosHelper.postAsync(
+            priceUpdatedRequest,
+            priceUpdateUrl!,
+          );
+        } else {
+          priceUpdatedResponse = {
+            data: {
+              status: "SUCCESS",
+              type: "dummy",
+              url: priceUpdateUrl,
+              message: "ERROR:422 : CUSTOM ERROR",
+            },
+          };
+        }
+      }
+    }
+    if (priceUpdatedResponse && priceUpdatedResponse.data) {
+      if (
+        priceUpdatedResponse.data.message &&
+        (JSON.stringify(priceUpdatedResponse.data.message).indexOf(
+          "ERROR:422",
+        ) > -1 ||
+          JSON.stringify(priceUpdatedResponse.data.message).indexOf(
+            "ERROR:429",
+          ) > -1 ||
+          JSON.stringify(priceUpdatedResponse.data.message).indexOf(
+            "ERROR:404",
+          ) > -1 ||
+          JSON.stringify(priceUpdatedResponse.data.message).indexOf("ERROR:") >
+            -1)
       ) {
         if (
-          outputResponse.repriceData.repriceDetails!.explained!.indexOf(
-            "#NEW",
-          ) < 0
+          outputResponse.repriceData &&
+          outputResponse.repriceData.isMultiplePriceBreakAvailable === true &&
+          outputResponse.repriceData.listOfRepriceDetails
         ) {
-          const priceStepValue = await getPriceStepValue(
-            outputResponse.repriceData.repriceDetails,
+          outputResponse.repriceData.listOfRepriceDetails.forEach(
+            ($lp: any) => {
+              if ($lp.isRepriced === true) {
+                $lp.explained = `${$lp.explained}:FAILED(ERROR:${JSON.stringify(priceUpdatedResponse.data.message)})`;
+                $lp.isRepriced = false;
+              }
+            },
           );
-          outputResponse.repriceData.repriceDetails.explained = `${outputResponse.repriceData.repriceDetails.explained} | ${priceStepValue}`;
+        } else if (
+          outputResponse.repriceData &&
+          outputResponse.repriceData.isMultiplePriceBreakAvailable === false &&
+          outputResponse.repriceData.repriceDetails
+        ) {
+          outputResponse.repriceData.repriceDetails.explained = `${outputResponse.repriceData.repriceDetails.explained}:FAILED(ERROR:${JSON.stringify(priceUpdatedResponse.data.message)})`;
+          outputResponse.repriceData.repriceDetails.isRepriced = false;
+        }
+        //return res.status(_codes.StatusCodes.OK).json({ "cronResponse": outputResponse, "priceUpdateResponse": null });
+      } else if (priceUpdatedResponse.data) {
+        // Update $UP or $DOWN if Price Update is Successful.
+        if (
+          outputResponse.repriceData &&
+          outputResponse.repriceData.isMultiplePriceBreakAvailable == true &&
+          outputResponse.repriceData.listOfRepriceDetails
+        ) {
+          for (let $lp of outputResponse.repriceData.listOfRepriceDetails) {
+            if ($lp.explained.indexOf("#NEW") < 0) {
+              const priceStepValue = await getPriceStepValue($lp);
+              $lp.explained = `${$lp.explained} | ${priceStepValue}`;
+            }
+          }
+        } else if (
+          outputResponse.repriceData &&
+          outputResponse.repriceData.isMultiplePriceBreakAvailable == false &&
+          outputResponse.repriceData.repriceDetails
+        ) {
+          if (
+            outputResponse.repriceData.repriceDetails.explained.indexOf(
+              "#NEW",
+            ) < 0
+          ) {
+            const priceStepValue = await getPriceStepValue(
+              outputResponse.repriceData.repriceDetails,
+            );
+            outputResponse.repriceData.repriceDetails.explained = `${outputResponse.repriceData.repriceDetails.explained} | ${priceStepValue}`;
+          }
         }
       }
     }
 
-    return {
-      cronResponse: outputResponse,
-      priceUpdateResponse: priceUpdatedResponse.data,
-      historyIdentifier: historyIdentifier,
-    };
+    const repriceResultStatus = await ResultParser.Parse(repriceResult);
+    await mySqlHelper.UpdateRepriceResultStatus(
+      repriceResultStatus,
+      req.params.id,
+      contextVendor,
+    );
+  } else {
+    repriceResult =
+      await Rule.OverrideRepriceResultForExpressCron(repriceResult);
   }
+
+  return {
+    cronResponse: outputResponse,
+    priceUpdateResponse: priceUpdatedResponse.data,
+    historyIdentifier: historyIdentifier,
+  };
 }

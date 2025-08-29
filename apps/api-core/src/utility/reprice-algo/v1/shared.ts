@@ -63,10 +63,7 @@ export async function getSamePriceBreakDetails(
 }
 
 export function notQ2VsQ1(minQty: number, compareWithQ1: boolean) {
-  if (minQty == 2 && compareWithQ1 == true) {
-    return false;
-  }
-  return true;
+  return !(minQty == 2 && compareWithQ1 == true);
 }
 
 export async function getSecretKey(cronId: string, contextVendor: string) {
