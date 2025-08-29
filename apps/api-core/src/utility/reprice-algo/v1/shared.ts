@@ -47,8 +47,12 @@ export async function getSamePriceBreakDetails(
   let result: Net32Product[] = [];
   for (let out of outputList) {
     const $ = await globalParam.GetInfo(out.vendorId, productItem);
+    let excludedVendors = productItem.competeAll
+      ? []
+      : $.EXCLUDED_VENDOR_ID.split(";");
     if (
       out.vendorId != $.VENDOR_ID &&
+      !_.includes(excludedVendors, out.vendorId.toString()) &&
       out.priceBreaks &&
       out.priceBreaks.length > 0
     ) {

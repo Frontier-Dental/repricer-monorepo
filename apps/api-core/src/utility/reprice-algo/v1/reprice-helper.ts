@@ -824,7 +824,7 @@ export async function RepriceIndividualPriceBreak(
         !_.includes(excludedVendors, x.vendorId.toString()),
     );
     if (nonSisterVendorDetails.length === 0) {
-      repriceModel.repriceDetails!.newPrice = 0 as unknown as string;
+      repriceModel.repriceDetails!.newPrice = existingPrice;
       repriceModel.repriceDetails!.isRepriced = true;
       repriceModel.repriceDetails!.active = 0 as unknown as boolean;
       repriceModel.repriceDetails!.explained =
@@ -1146,7 +1146,7 @@ export async function RepriceIndividualPriceBreak(
           );
         } else {
           if (priceBreak.minQty != 1) {
-            repriceModel.repriceDetails!.newPrice = 0 as unknown as string;
+            repriceModel.repriceDetails.newPrice = existingPrice;
             repriceModel.repriceDetails!.isRepriced = true;
             repriceModel.repriceDetails!.active = 0 as unknown as boolean;
             repriceModel.repriceDetails!.explained =
