@@ -160,12 +160,68 @@ export async function GetActiveProductListByCronId(
 }
 
 export async function GetItemListById(mpId: string | number) {
-  // Stored procedure, must use raw
   const knex = getKnexInstance();
-  const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID}(?)`;
-  const [rows] = await knex.raw(queryToCall, [parseInt(mpId as string)]);
-  const productList = (rows as any)[0] as FullProductDetailsV2[];
-  return _.first(MapProductDetailsList(productList));
+
+  // Common select fields for all queries - use explicit column names
+  const selectFields = [
+    "pl.Id as ProductIdentifier",
+    "pl.MpId as ProductId",
+    "pl.ProductName",
+    "pl.Net32Url",
+    "pl.IsActive as ScrapeOnlyActive",
+    "pl.LinkedCronName as LinkedScrapeOnlyCron",
+    "pl.LinkedCronId as LinkedScrapeOnlyCronId",
+    "pl.RegularCronName",
+    "pl.RegularCronId",
+    "pl.SlowCronName",
+    "pl.SlowCronId",
+    "pl.IsSlowActivated",
+    "pl.IsBadgeItem",
+    "pl.algo_execution_mode",
+  ];
+
+  // Helper function to build each subquery
+  const buildSubquery = (tableAlias: string, linkedField: string) => {
+    return knex("table_scrapeProductList as pl")
+      .select([...selectFields, `${tableAlias}.*`])
+      .leftJoin(
+        `table_${tableAlias}Details as ${tableAlias}`,
+        `${tableAlias}.id`,
+        `pl.${linkedField}`,
+      )
+      .where("pl.MpId", mpId)
+      .whereExists(function () {
+        this.select(1)
+          .from(`table_${tableAlias}Details`)
+          .whereNotNull("ChannelName")
+          .andWhere("MpId", mpId);
+      });
+  };
+
+  // Build all subqueries
+  const tradentQuery = buildSubquery("tradent", "LinkedTradentDetailsInfo");
+  const frontierQuery = buildSubquery("frontier", "LinkedFrontiersDetailsInfo");
+  const mvpQuery = buildSubquery("mvp", "LinkedMvpDetailsInfo");
+  const firstDentQuery = buildSubquery(
+    "firstDent",
+    "LinkedFirstDentDetailsInfo",
+  );
+  const topDentQuery = buildSubquery("topDent", "LinkedTopDentDetailsInfo");
+  const triadQuery = buildSubquery("triad", "LinkedTriadDetailsInfo");
+
+  // Combine all queries using UNION
+  const result = await knex.union([
+    tradentQuery,
+    frontierQuery,
+    mvpQuery,
+    firstDentQuery,
+    topDentQuery,
+    triadQuery,
+  ]);
+  // .whereNotNull("ChannelName");
+
+  const productList = (result as any)[0] as FullProductDetailsV2;
+  return _.first(MapProductDetailsList([productList]));
 }
 
 export async function UpdateProductAsync(

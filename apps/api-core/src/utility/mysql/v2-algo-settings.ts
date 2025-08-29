@@ -2,6 +2,7 @@ import {
   AlgoBadgeIndicator,
   AlgoHandlingTimeGroup,
   AlgoPriceDirection,
+  AlgoPriceStrategy,
 } from "@repricer-monorepo/shared";
 import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
 
@@ -31,7 +32,7 @@ export interface V2AlgoSettingsData {
   reprice_down_badge_percentage: number;
   floor_compete_with_next: boolean;
   own_vendor_threshold: number;
-  not_cheapest: boolean;
+  price_strategy: AlgoPriceStrategy;
 }
 
 export async function findV2AlgoSettings(
@@ -78,7 +79,7 @@ export async function createV2AlgoSettings(
     reprice_down_badge_percentage: -1,
     floor_compete_with_next: false,
     own_vendor_threshold: 1,
-    not_cheapest: false,
+    price_strategy: AlgoPriceStrategy.UNIT,
   };
 
   const [insertId] = await knex("v2_algo_settings").insert(defaultSettings);

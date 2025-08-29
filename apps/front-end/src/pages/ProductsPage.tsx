@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, ExternalLink, Eye, Globe, Bell } from "lucide-react";
+import { AlgoPriceStrategy } from "@repricer-monorepo/shared";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/data-table";
@@ -202,7 +203,7 @@ interface ProductWithAlgoData {
   last_suggested_price: number | null;
   floor_price: number | null;
   max_price: number | null;
-  not_cheapest: number;
+  price_strategy: AlgoPriceStrategy;
   suppress_price_break_if_Q1_not_updated: number;
   triggered_by_vendor: string | null;
   result: string | null;
@@ -217,6 +218,7 @@ export function ProductsPage() {
   const [cacheTimestamp, setCacheTimestamp] = useState<string | null>(null);
   const [isCached, setIsCached] = useState<boolean>(false);
   const [isRemoving422, setIsRemoving422] = useState(false);
+  const [isSyncingSettings, setIsSyncingSettings] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -367,6 +369,22 @@ export function ProductsPage() {
       },
     },
     {
+      accessorKey: "lowest_price",
+      header: "Lowest Vendor Price",
+      cell: ({ row }) => {
+        const price = row.getValue("lowest_price") as number;
+        return <div className="text-sm">{price ? `$${price}` : "N/A"}</div>;
+      },
+    },
+    {
+      accessorKey: "target_price",
+      header: "Target Price",
+      cell: ({ row }) => {
+        const price = row.getValue("target_price") as number;
+        return <div className="text-sm">{price ? `$${price}` : "N/A"}</div>;
+      },
+    },
+    {
       accessorKey: "floor_price",
       header: "Floor Price",
       cell: ({ row }) => {
@@ -383,15 +401,13 @@ export function ProductsPage() {
       },
     },
     {
-      accessorKey: "not_cheapest",
-      header: "Not Cheapest",
+      accessorKey: "price_strategy",
+      header: "Price Strategy",
       cell: ({ row }) => {
-        const notCheapest = row.getValue("not_cheapest") as number;
-        return (
-          <Badge variant={notCheapest === 1 ? "default" : "secondary"}>
-            {notCheapest === 1 ? "Yes" : "No"}
-          </Badge>
-        );
+        const priceStrategy = row.getValue(
+          "price_strategy",
+        ) as AlgoPriceStrategy;
+        return <Badge variant="outline">{priceStrategy}</Badge>;
       },
     },
     {
@@ -563,6 +579,45 @@ export function ProductsPage() {
     }
   };
 
+  const handleSyncAllSettings = async () => {
+    setIsSyncingSettings(true);
+    try {
+      const response = await fetch("/v2-algo/sync_all_vendor_settings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Show success message with summary
+
+        toast.success(
+          <div>
+            <div className="font-semibold">Sync completed successfully!</div>
+          </div>,
+          { duration: 5000 },
+        );
+
+        // Refresh the products data to show updated information
+        await fetchProducts(true);
+      } else {
+        toast.error(result.message || "Failed to sync settings");
+      }
+    } catch (error) {
+      console.error("Error syncing all settings:", error);
+      toast.error("Failed to sync all settings. Please try again.");
+    } finally {
+      setIsSyncingSettings(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-10">
       <div className="mb-8">
@@ -585,6 +640,14 @@ export function ProductsPage() {
             disabled={isLoading}
           >
             {isLoading ? "Refreshing..." : "Refresh Data"}
+          </Button>
+          <Button
+            variant="default"
+            onClick={handleSyncAllSettings}
+            disabled={isSyncingSettings}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            {isSyncingSettings ? "Syncing..." : "Sync All Settings"}
           </Button>
           <Button
             variant="destructive"

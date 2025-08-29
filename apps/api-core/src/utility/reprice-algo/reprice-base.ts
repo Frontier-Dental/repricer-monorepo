@@ -103,6 +103,7 @@ export async function Execute(
             prod,
             prioritySequence,
             cronSetting ? cronSetting.CronName : "MANUAL",
+            isSlowCronRun,
           );
         }
         if (

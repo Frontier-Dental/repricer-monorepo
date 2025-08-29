@@ -1,5 +1,6 @@
 import { Net32PriceBreak } from "../../../types/net32";
 import { Decimal } from "decimal.js";
+import { AlgoPriceStrategy } from "@repricer-monorepo/shared";
 
 export interface Net32AlgoProduct {
   vendorId: number;
@@ -29,6 +30,7 @@ export interface Net32AlgoProductWrapper {
 
 export interface Net32AlgoProductWrapperWithBuyBoxRank
   extends Net32AlgoProductWrapper {
+  priceStrategy: AlgoPriceStrategy;
   buyBoxRank: number;
 }
 

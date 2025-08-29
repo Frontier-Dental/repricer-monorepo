@@ -37,6 +37,7 @@ export async function repriceProductV2Wrapper(
   prod: any,
   vendorNameList: { name: VendorName }[],
   cronName: string,
+  isSlowCron: boolean,
 ) {
   const jobId = v4();
   const mpId = prod.mpId;
@@ -69,6 +70,7 @@ export async function repriceProductV2Wrapper(
       getAllOwnVendorIds(),
       vendorSettings,
       jobId,
+      isSlowCron,
     );
 
     const uniqueVendorIds = [
@@ -103,6 +105,8 @@ export async function repriceProductV2Wrapper(
       new_price_breaks: result.priceList
         ? getPriceListFormatted(result.priceList)
         : null,
+      lowest_price: result.lowestPrice,
+      lowest_vendor_id: result.lowestVendorId,
     }));
 
     await insertMultipleV2AlgoResults(algoResults);

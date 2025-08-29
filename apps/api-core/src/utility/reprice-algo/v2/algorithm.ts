@@ -1,12 +1,18 @@
+import {
+  AlgoPriceDirection,
+  AlgoPriceStrategy,
+} from "@repricer-monorepo/shared";
 import { Decimal } from "decimal.js";
+import uniqBy from "lodash/uniqBy";
 import { Net32PriceBreak } from "../../../types/net32";
 import { V2AlgoSettingsData } from "../../mysql/v2-algo-settings";
 import { createHtmlFileContent } from "./html-builder";
 import {
   applyCompeteOnPriceBreaksOnly,
-  applyOwnVendorThreshold,
   applyCompetitionFilters,
   applyFloorCompeteWithNext,
+  applyKeepPosition,
+  applyOwnVendorThreshold,
   applySuppressPriceBreakFilter,
   applySuppressQBreakIfQ1NotUpdated,
   applyUpDownPercentage,
@@ -14,14 +20,13 @@ import {
 } from "./settings";
 import {
   AlgoResult,
+  ChangeResult,
   InternalProduct,
   Net32AlgoProduct,
   Net32AlgoProductWithBestPrice,
   Net32AlgoProductWrapperWithBuyBoxRank,
-  ChangeResult,
   QbreakInvalidReason,
 } from "./types";
-import uniqBy from "lodash/uniqBy";
 
 export interface QuantitySolution {
   quantity: number;
@@ -45,6 +50,8 @@ export interface Net32AlgoSolution {
   rawTriggeredByVendor?: string;
   pushedToMax?: boolean;
   beforeLadder: Net32AlgoProductWrapperWithBuyBoxRank[];
+  lowestPrice: number | null;
+  lowestVendorId: number | null;
 }
 
 export interface Net32AlgoSolutionWithResult extends Net32AlgoSolution {
@@ -87,6 +94,7 @@ export function repriceProductV2(
   ownVendorIds: number[],
   vendorSettings: V2AlgoSettingsData[],
   jobId: string,
+  isSlowCron: boolean,
 ) {
   const net32url = availableInternalProducts[0].net32url;
   if (!net32url) {
@@ -107,6 +115,8 @@ export function repriceProductV2(
     );
 
   const availableVendorIds = ourAvailableVendorProducts.map((v) => v.vendorId);
+
+  const lowestVendor = getLowestVendor(rawNet32Products);
 
   const solutions: Net32AlgoSolution[] = [];
 
@@ -137,12 +147,13 @@ export function repriceProductV2(
     for (const quantity of competitorQuantityBreaks) {
       const competeQuantity = getCompeteQuantity(vendorSetting, quantity);
 
-      const rawCompetitorsRankedByBuyBox = getProductsSortedByBuyBoxRank(
+      const rawCompetitorsRanked = getProductsSortedWithRank(
         competitorProducts,
         competeQuantity,
+        vendorSetting.price_strategy,
       );
 
-      const beforeLadder = getProductsSortedByBuyBoxRank(
+      const beforeLadder = getProductsSortedWithRank(
         uniqBy(
           [
             ...filteredCompetitors,
@@ -157,6 +168,7 @@ export function repriceProductV2(
           (p) => p.vendorId,
         ),
         quantity,
+        AlgoPriceStrategy.BUY_BOX,
       );
 
       const {
@@ -167,7 +179,7 @@ export function repriceProductV2(
         everyoneFromViewOfOwnVendorRanked,
         everyoneIncludingOwnVendorBefore,
       } = getOptimalSolutionForBoard(
-        rawCompetitorsRankedByBuyBox.map((x) => x.product),
+        rawCompetitorsRanked.map((x) => x.product),
         ourVendor,
         competeQuantity,
         vendorSetting,
@@ -175,26 +187,28 @@ export function repriceProductV2(
       );
 
       const solutionId = `Q${quantity}-${vendorSolution.vendorName}@${vendorSolution.bestPrice?.toNumber()}`;
-      const buyBoxRank = vendorSolution.bestPrice
-        ? getExpectedBuyBoxRank(
+      const rank = vendorSolution.bestPrice
+        ? getExpectedRank(
             vendorSolution,
             competitorsFromViewOfOwnVendorRanked,
             competeQuantity,
-            vendorSetting.not_cheapest,
+            vendorSetting.price_strategy,
           )
         : Infinity;
 
-      const postSolutionInsertBoard = getProductsSortedByBuyBoxRank(
+      const postSolutionInsertBoard = getProductsSortedWithRank(
         [
           vendorSolution,
           ...everyoneFromViewOfOwnVendorRanked.map((x) => x.product),
         ],
         // If Compare Q2 on Q1, we are still inserting on Q2, eventhough we are ranking on Q1.
         quantity,
+        vendorSetting.price_strategy,
       );
+
       solutions.push({
         quantity,
-        buyBoxRank,
+        buyBoxRank: rank,
         vendor: vendorSolution,
         vendorSettings: vendorSetting,
         postSolutionInsertBoard: postSolutionInsertBoard.map((x) => x.product),
@@ -204,6 +218,8 @@ export function repriceProductV2(
         pushedToMax,
         everyoneFromViewOfOwnVendorRanked,
         everyoneIncludingOwnVendorBefore,
+        lowestPrice: lowestVendor.lowestPrice,
+        lowestVendorId: lowestVendor.lowestVendorId,
       });
     }
   }
@@ -228,6 +244,7 @@ export function repriceProductV2(
       s,
       existingPriceBreaks,
       availableVendorIds,
+      isSlowCron,
     );
     const pushedToMax = s.pushedToMax;
     return {
@@ -236,8 +253,10 @@ export function repriceProductV2(
       comment: baseResult.comment + (pushedToMax ? " Pushed to max." : ""),
     };
   });
-  const solutionResultsWithQBreakValid =
-    removeUnnecessaryQuantityBreaks(solutionResults);
+  const solutionResultsWithQBreakValid = removeUnnecessaryQuantityBreaks(
+    solutionResults,
+    isSlowCron,
+  );
 
   const htmlFiles = availableVendorIds.map((vendorId) => {
     const html = createHtmlFileContent(
@@ -281,10 +300,13 @@ function getCompeteQuantity(
 
 function removeUnnecessaryQuantityBreaks(
   solutionResults: Net32AlgoSolutionWithResult[],
+  isSlowCron: boolean,
 ): Net32AlgoSolutionWithQBreakValid[] {
   const invalidQuantityBreaks = removeInvalidQuantityBreaks(solutionResults);
-  const suppressQBreakIfQ1NotUpdated =
-    applySuppressQBreakIfQ1NotUpdated(solutionResults);
+  const suppressQBreakIfQ1NotUpdated = applySuppressQBreakIfQ1NotUpdated(
+    solutionResults,
+    isSlowCron,
+  );
   // TODO: More advanced filtering if we are already beating all competitors on a lower Q break
   return solutionResults.map((s, i) => {
     const invalidReasons: QbreakInvalidReason[] = [];
@@ -357,6 +379,7 @@ function getSolutionResult(
   solution: Net32AlgoSolution,
   existingPriceBreaks: QuantitySolution[],
   availableVendorIds: number[],
+  isSlowCron: boolean,
 ) {
   const vendorSetting = solution.vendorSettings;
   const existingPriceBreak = existingPriceBreaks.find(
@@ -449,6 +472,7 @@ function getSolutionResult(
   const floorCompeteWithNext = applyFloorCompeteWithNext(
     solution,
     vendorSetting,
+    isSlowCron,
   );
   if (floorCompeteWithNext) {
     return {
@@ -491,13 +515,14 @@ function getSolutionResult(
   const upDownRestriction = applyUpDownRestriction(
     suggestedPrice,
     vendorSetting,
+    isSlowCron,
     existingPriceBreak,
   );
   if (upDownRestriction) {
     let comment;
-    if (vendorSetting.up_down === "UP") {
+    if (vendorSetting.up_down === AlgoPriceDirection.UP) {
       comment = "Set to only price up and trying to price down.";
-    } else if (vendorSetting.up_down === "DOWN") {
+    } else if (vendorSetting.up_down === AlgoPriceDirection.DOWN) {
       comment = "Set to only price down and trying to price up.";
     } else {
       throw new Error(
@@ -535,6 +560,18 @@ function getSolutionResult(
       };
     }
   }
+
+  const keepPosition = applyKeepPosition(vendorSetting, isSlowCron);
+  if (keepPosition) {
+    return {
+      algoResult: keepPosition,
+      suggestedPrice: suggestedPrice.toNumber(),
+      comment: "Keep position is on.",
+      triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
+    };
+  }
+
   // Okay now we know we can make a change as everything else has been ruled out.
   if (!existingPriceBreak) {
     return {
@@ -596,17 +633,19 @@ function getOptimalSolutionForBoard(
     vendorSetting,
   );
 
-  const competitorsRankedByBuyBox = getProductsSortedByBuyBoxRank(
+  const competitorsRanked = getProductsSortedWithRank(
     competitorsView,
     quantity,
+    vendorSetting.price_strategy,
   );
 
-  const everyoneFromViewOfOwnVendor = getProductsSortedByBuyBoxRank(
+  const everyoneFromViewOfOwnVendor = getProductsSortedWithRank(
     applyCompetitionFilters([...competitors, ...sisterVendors], vendorSetting),
     quantity,
+    vendorSetting.price_strategy,
   );
 
-  const everyoneIncludingOwnVendorBefore = getProductsSortedByBuyBoxRank(
+  const everyoneIncludingOwnVendorBefore = getProductsSortedWithRank(
     [
       ...applyCompetitionFilters(
         [...competitors, ...sisterVendors],
@@ -615,11 +654,12 @@ function getOptimalSolutionForBoard(
       ownVendor,
     ],
     quantity,
+    vendorSetting.price_strategy,
   );
 
   const bestCompetitivePrice = getBestCompetitivePrice(
     ownVendor,
-    competitorsRankedByBuyBox.map((x) => x.product),
+    competitorsRanked.map((x) => x.product),
     quantity,
     vendorSetting,
   );
@@ -628,7 +668,7 @@ function getOptimalSolutionForBoard(
       ...ownVendor,
       bestPrice: bestCompetitivePrice.price,
     },
-    competitorsFromViewOfOwnVendorRanked: competitorsRankedByBuyBox.map(
+    competitorsFromViewOfOwnVendorRanked: competitorsRanked.map(
       (x) => x.product,
     ),
     rawTriggeredByVendor: bestCompetitivePrice.triggeredByVendor,
@@ -638,21 +678,112 @@ function getOptimalSolutionForBoard(
   };
 }
 
-function getExpectedBuyBoxRank(
+function getBestCompetitivePrice(
+  ourProduct: Net32AlgoProduct,
+  competitorsSorted: Net32AlgoProduct[],
+  quantity: number,
+  ownVendorSetting: V2AlgoSettingsData,
+) {
+  switch (ownVendorSetting.price_strategy) {
+    case AlgoPriceStrategy.UNIT:
+      return getBestCompetitivePriceByUnitPrice(
+        competitorsSorted,
+        quantity,
+        ownVendorSetting,
+      );
+    case AlgoPriceStrategy.TOTAL:
+      return getBestCompetitivePriceByTotalPrice(
+        ourProduct,
+        competitorsSorted,
+        quantity,
+        ownVendorSetting,
+        false,
+      );
+    case AlgoPriceStrategy.BUY_BOX:
+      return getBestCompetitivePriceByTotalPrice(
+        ourProduct,
+        competitorsSorted,
+        quantity,
+        ownVendorSetting,
+        true,
+      );
+    default:
+      throw new Error(
+        `Invalid price strategy: ${ownVendorSetting.price_strategy}`,
+      );
+  }
+}
+
+function getExpectedRank(
   ownProduct: Net32AlgoProductWithBestPrice,
   competitors: Net32AlgoProduct[],
   quantity: number,
-  notCheapest: boolean,
+  priceStrategy: AlgoPriceStrategy,
+) {
+  switch (priceStrategy) {
+    case AlgoPriceStrategy.UNIT:
+      return getExpectedRankByUnitPrice(ownProduct, competitors, quantity);
+    case AlgoPriceStrategy.TOTAL:
+      return getExpectedRankByTotalPrice(
+        ownProduct,
+        competitors,
+        quantity,
+        priceStrategy,
+      );
+    case AlgoPriceStrategy.BUY_BOX:
+      return getExpectedRankByBuyBox(
+        ownProduct,
+        competitors,
+        quantity,
+        priceStrategy,
+      );
+    default:
+      throw new Error(`Invalid price strategy: ${priceStrategy}`);
+  }
+}
+
+function getExpectedRankByUnitPrice(
+  ownProduct: Net32AlgoProductWithBestPrice,
+  competitors: Net32AlgoProduct[],
+  quantity: number,
 ) {
   if (!ownProduct.bestPrice) {
     throw new Error("Own product has no best price. This is an error");
   }
-  const competitorsSortedByBuyBoxRank = getProductsSortedByBuyBoxRank(
+  const competitorsSorted = getProductsSortedWithRank(
     competitors,
     quantity,
+    AlgoPriceStrategy.UNIT,
   );
-  for (let i = 0; i < competitorsSortedByBuyBoxRank.length; i++) {
-    const competitor = competitorsSortedByBuyBoxRank[i];
+  for (let i = 0; i < competitorsSorted.length; i++) {
+    const competitor = competitorsSorted[i];
+    const competitorUnitPrice = getHighestPriceBreakLessThanOrEqualTo(
+      competitor.product,
+      quantity,
+    ).unitPrice;
+    if (ownProduct.bestPrice!.lt(competitorUnitPrice)) {
+      return i;
+    }
+  }
+  return competitors.length;
+}
+
+function getExpectedRankByTotalPrice(
+  ownProduct: Net32AlgoProductWithBestPrice,
+  competitors: Net32AlgoProduct[],
+  quantity: number,
+  priceStrategy: AlgoPriceStrategy,
+) {
+  if (!ownProduct.bestPrice) {
+    throw new Error("Own product has no best price. This is an error");
+  }
+  const competitorsSorted = getProductsSortedWithRank(
+    competitors,
+    quantity,
+    priceStrategy,
+  );
+  for (let i = 0; i < competitorsSorted.length; i++) {
+    const competitor = competitorsSorted[i];
     const competitorTotalCost = getTotalCostForQuantity(
       competitor.product,
       quantity,
@@ -661,7 +792,38 @@ function getExpectedBuyBoxRank(
       ownProduct,
       quantity,
       ownProduct.bestPrice,
-      notCheapest,
+    );
+    if (ourTotalCost.lt(competitorTotalCost)) {
+      return i;
+    }
+  }
+  return competitors.length;
+}
+
+function getExpectedRankByBuyBox(
+  ownProduct: Net32AlgoProductWithBestPrice,
+  competitors: Net32AlgoProduct[],
+  quantity: number,
+  priceStrategy: AlgoPriceStrategy,
+) {
+  if (!ownProduct.bestPrice) {
+    throw new Error("Own product has no best price. This is an error");
+  }
+  const competitorsSorted = getProductsSortedWithRank(
+    competitors,
+    quantity,
+    priceStrategy,
+  );
+  for (let i = 0; i < competitorsSorted.length; i++) {
+    const competitor = competitorsSorted[i];
+    const competitorTotalCost = getTotalCostForQuantity(
+      competitor.product,
+      quantity,
+    );
+    const ourTotalCost = getTotalCostForQuantityWithUnitPriceOverride(
+      ownProduct,
+      quantity,
+      ownProduct.bestPrice,
     );
     const beatingCompetitor = isBeatingCompetitorOnBuyBoxRules(
       ownProduct,
@@ -680,7 +842,6 @@ function computeTargetUnitPrice(
   undercutTotalCost: Decimal,
   ourProduct: Net32AlgoProduct,
   quantity: number,
-  notCheapest: boolean,
 ) {
   // Consider both solutions if target unit price is above or below threshold
   const undercutUnitPriceAboveThreshold = undercutTotalCost.div(quantity);
@@ -691,7 +852,7 @@ function computeTargetUnitPrice(
   // If the target price is above the threshold,
   // then there's no shipping, so we can use that
   // OR if NC is set -> we ignore our own shipping cost
-  if (undercutTotalCost.gte(ourProduct.freeShippingThreshold) || notCheapest) {
+  if (undercutTotalCost.gte(ourProduct.freeShippingThreshold)) {
     return undercutUnitPriceAboveThreshold;
   } else {
     // If it's below, then we know we have to have shipping, so we use the solution with shipping
@@ -699,32 +860,33 @@ function computeTargetUnitPrice(
   }
 }
 
-function getBestCompetitivePrice(
+function getBestCompetitivePriceByTotalPrice(
   ourProduct: Net32AlgoProduct,
-  competitorsSortedByBuyBoxRank: Net32AlgoProduct[],
+  competitorsSorted: Net32AlgoProduct[],
   quantity: number,
   ownVendorSetting: V2AlgoSettingsData,
+  applyBuyBoxRules: boolean,
 ) {
   // If there's no competitors, we should just price to max
-  if (competitorsSortedByBuyBoxRank.length === 0) {
+  if (competitorsSorted.length === 0) {
     return {
       price: new Decimal(ownVendorSetting.max_price),
       pushedToMax: true,
     };
   }
-  for (const competitor of competitorsSortedByBuyBoxRank) {
+  for (const competitor of competitorsSorted) {
     const competitorTotalCost = getTotalCostForQuantity(competitor, quantity);
     const undercutTotalCost = getUndercutPriceToCompete(
       competitorTotalCost,
       ourProduct,
       competitor,
+      applyBuyBoxRules,
     );
 
     const undercutUnitPrice = computeTargetUnitPrice(
       undercutTotalCost,
       ourProduct,
       quantity,
-      ownVendorSetting.not_cheapest,
     );
 
     if (undercutUnitPrice.gt(ownVendorSetting.max_price)) {
@@ -742,14 +904,12 @@ function getBestCompetitivePrice(
       ourProduct,
       quantity,
       undercutUnitPriceRoundUp,
-      ownVendorSetting.not_cheapest,
     );
     const resultingTotalRoundDown =
       getTotalCostForQuantityWithUnitPriceOverride(
         ourProduct,
         quantity,
         undercutUnitPriceRoundDown,
-        ownVendorSetting.not_cheapest,
       );
 
     // Prefer the higher price if it's within the range and
@@ -771,6 +931,44 @@ function getBestCompetitivePrice(
       return {
         triggeredByVendor: `${competitor.vendorId}-${competitor.vendorName}`,
         price: undercutUnitPriceRoundDown,
+      };
+    }
+  }
+  return { price: null };
+}
+
+function getBestCompetitivePriceByUnitPrice(
+  competitorsSorted: Net32AlgoProduct[],
+  quantity: number,
+  ownVendorSetting: V2AlgoSettingsData,
+) {
+  // If there's no competitors, we should just price to max
+  if (competitorsSorted.length === 0) {
+    return {
+      price: new Decimal(ownVendorSetting.max_price),
+      pushedToMax: true,
+    };
+  }
+  for (const competitor of competitorsSorted) {
+    const competitorUnitPrice = new Decimal(
+      getHighestPriceBreakLessThanOrEqualTo(competitor, quantity).unitPrice,
+    );
+    const undercutUnitPrice = competitorUnitPrice.sub(0.01);
+
+    if (undercutUnitPrice.gt(ownVendorSetting.max_price)) {
+      return {
+        triggeredByVendor: `${competitor.vendorId}-${competitor.vendorName}`,
+        price: new Decimal(ownVendorSetting.max_price),
+        pushedToMax: true,
+      };
+    }
+    if (
+      undercutUnitPrice.gte(ownVendorSetting.floor_price) &&
+      undercutUnitPrice.lte(ownVendorSetting.max_price)
+    ) {
+      return {
+        triggeredByVendor: `${competitor.vendorId}-${competitor.vendorName}`,
+        price: undercutUnitPrice,
       };
     }
   }
@@ -842,7 +1040,11 @@ function getStrictlyLessThanUndercutPriceToCompete(
   targetPrice: Decimal,
   ourProduct: Net32AlgoProduct,
   targetProduct: Net32AlgoProduct,
+  applyBuyBoxRules: boolean,
 ) {
+  if (!applyBuyBoxRules) {
+    return targetPrice;
+  }
   // Here we have to subtract another penny when undercutting
   // to make sure we are less than the threshold
   const targetHasBadge = hasBadge(targetProduct);
@@ -887,12 +1089,14 @@ function getUndercutPriceToCompete(
   targetPrice: Decimal,
   ourProduct: Net32AlgoProduct,
   targetProduct: Net32AlgoProduct,
+  applyBuyBoxRules: boolean,
 ) {
   const strictlyLessThanPriceToCompete =
     getStrictlyLessThanUndercutPriceToCompete(
       targetPrice,
       ourProduct,
       targetProduct,
+      applyBuyBoxRules,
     );
   // Here we round down as the price has to be strictly less than the target price
   // Example would be $10.02 * 0.9 = $9.018, which we round down to $9.01 as $9.02 would not pass the undercut rules
@@ -906,7 +1110,7 @@ function getUndercutPriceToCompete(
   return roundedUndercutPriceToCompete;
 }
 
-function sortBasedOnBuyBoxRulesV2(
+function sortBasedOnBuyBoxRules(
   a: {
     totalCost: Decimal;
     hasBadge: boolean;
@@ -971,31 +1175,103 @@ function sortBasedOnBuyBoxRulesV2(
   return 0;
 }
 
+function sortByUnitPrice(
+  a: { effectiveUnitPrice: Decimal | null | undefined },
+  b: { effectiveUnitPrice: Decimal | null | undefined },
+) {
+  const unitPriceA = a.effectiveUnitPrice
+    ? a.effectiveUnitPrice
+    : new Decimal(Infinity);
+  const unitPriceB = b.effectiveUnitPrice
+    ? b.effectiveUnitPrice
+    : new Decimal(Infinity);
+  return unitPriceA.cmp(unitPriceB);
+}
+
+function sortByTotalCost(a: { totalCost: Decimal }, b: { totalCost: Decimal }) {
+  return a.totalCost.cmp(b.totalCost);
+}
+
+function getProductsSortedByUnitPrice(
+  net32Products: (Net32AlgoProduct | Net32AlgoProductWithBestPrice)[],
+  quantity: number,
+) {
+  const wrappers = getWrapperForProduct(net32Products, quantity);
+  return wrappers.toSorted(sortByUnitPrice);
+}
+
+function getProductsSortedByTotalCost(
+  net32Products: (Net32AlgoProduct | Net32AlgoProductWithBestPrice)[],
+  quantity: number,
+) {
+  const wrappers = getWrapperForProduct(net32Products, quantity);
+  return wrappers.toSorted(sortByTotalCost);
+}
+
 function getProductsSortedByBuyBoxRank(
   net32Products: (Net32AlgoProduct | Net32AlgoProductWithBestPrice)[],
   quantity: number,
-): Net32AlgoProductWrapperWithBuyBoxRank[] {
-  const productInfos = net32Products
-    .map((prod) => {
-      const unitPrice = (prod as Net32AlgoProductWithBestPrice).bestPrice
-        ? (prod as Net32AlgoProductWithBestPrice).bestPrice
-        : new Decimal(
-            getHighestPriceBreakLessThanOrEqualTo(prod, quantity).unitPrice,
-          );
-      return {
-        product: prod,
-        totalCost: getTotalCostForQuantity(prod, quantity),
-        effectiveUnitPrice: unitPrice,
-        hasBadge: hasBadge(prod),
-        shippingBucket: getShippingBucket(prod.shippingTime),
-      };
-    })
-    .filter((p) => (p.effectiveUnitPrice ? p.effectiveUnitPrice.gt(0) : true));
-  // It's possible there is no Q1 which would result in a unit price of 0, which is invalid.
+) {
+  const wrappers = getWrapperForProduct(net32Products, quantity);
+  return wrappers.toSorted(sortBasedOnBuyBoxRules);
+}
 
-  const sortedProducts = productInfos.toSorted((a, b) =>
-    sortBasedOnBuyBoxRulesV2(a, b),
-  );
+function getWrapperForProduct(
+  net32Products: (Net32AlgoProduct | Net32AlgoProductWithBestPrice)[],
+  quantity: number,
+) {
+  return net32Products.map((prod) => {
+    const unitPrice = (prod as Net32AlgoProductWithBestPrice).bestPrice
+      ? (prod as Net32AlgoProductWithBestPrice).bestPrice
+      : new Decimal(
+          getHighestPriceBreakLessThanOrEqualTo(prod, quantity).unitPrice,
+        );
+    return {
+      product: prod,
+      totalCost: getTotalCostForQuantity(prod, quantity),
+      effectiveUnitPrice: unitPrice,
+      hasBadge: hasBadge(prod),
+      shippingBucket: getShippingBucket(prod.shippingTime),
+    };
+  });
+}
+
+function getProductsSorted(
+  net32Products: (Net32AlgoProduct | Net32AlgoProductWithBestPrice)[],
+  quantity: number,
+  sortMethod: AlgoPriceStrategy,
+) {
+  switch (sortMethod) {
+    case AlgoPriceStrategy.UNIT:
+      return getProductsSortedByUnitPrice(net32Products, quantity);
+    case AlgoPriceStrategy.TOTAL:
+      return getProductsSortedByTotalCost(net32Products, quantity);
+    case AlgoPriceStrategy.BUY_BOX:
+      return getProductsSortedByBuyBoxRank(net32Products, quantity);
+    default:
+      throw new Error(`Invalid sort method: ${sortMethod}`);
+  }
+}
+
+function getSortMethod(sortMethod: AlgoPriceStrategy) {
+  switch (sortMethod) {
+    case AlgoPriceStrategy.UNIT:
+      return sortByUnitPrice;
+    case AlgoPriceStrategy.TOTAL:
+      return sortByTotalCost;
+    case AlgoPriceStrategy.BUY_BOX:
+      return sortBasedOnBuyBoxRules;
+    default:
+      throw new Error(`Invalid sort method: ${sortMethod}`);
+  }
+}
+
+function getProductsSortedWithRank(
+  net32Products: (Net32AlgoProduct | Net32AlgoProductWithBestPrice)[],
+  quantity: number,
+  sortMethod: AlgoPriceStrategy,
+) {
+  const sortedProducts = getProductsSorted(net32Products, quantity, sortMethod);
 
   // Assign buy box ranks, handling ties
   let currentRank = 0;
@@ -1008,7 +1284,7 @@ function getProductsSortedByBuyBoxRank(
     // If this is the first product or if it's different from the previous one
     if (
       i === 0 ||
-      sortBasedOnBuyBoxRulesV2(sortedProducts[i - 1], product) !== 0
+      getSortMethod(sortMethod)(sortedProducts[i - 1], product) !== 0
     ) {
       currentRank = i;
       currentRankCount = 1;
@@ -1020,22 +1296,18 @@ function getProductsSortedByBuyBoxRank(
     productsWithRank.push({
       ...product,
       buyBoxRank: currentRank,
+      priceStrategy: sortMethod,
     });
   }
 
   return productsWithRank;
 }
-
 export function getTotalCostForQuantityWithUnitPriceOverride(
   net32Product: Net32AlgoProduct,
   quantity: number,
   unitPriceOverride: Decimal,
-  ignoreShipping: boolean,
 ) {
   const totalCost = unitPriceOverride.mul(quantity);
-  if (ignoreShipping) {
-    return totalCost;
-  }
   if (totalCost.lt(net32Product.freeShippingThreshold)) {
     return totalCost.add(net32Product.standardShipping);
   } else {
@@ -1085,7 +1357,7 @@ export function getHighestPriceBreakLessThanOrEqualTo(
       }
       return max;
     },
-    { minQty: 0, unitPrice: 0 },
+    { minQty: 0, unitPrice: Infinity },
   );
 }
 
@@ -1155,4 +1427,29 @@ function getUniqueValidQuantityBreaks(net32Products: Net32AlgoProduct[]) {
   }
 
   return Array.from(quantityBreaks).toSorted((a, b) => a - b);
+}
+
+function getLowestVendor(net32Products: Net32AlgoProduct[]) {
+  const sortedByLowestPrice = net32Products
+    .filter((prod) => prod.priceBreaks.find((pb) => pb.minQty === 1))
+    .toSorted((a, b) => {
+      const aPrice = a.priceBreaks.find((pb) => pb.minQty === 1)!.unitPrice;
+      const bPrice = b.priceBreaks.find((pb) => pb.minQty === 1)!.unitPrice;
+      return aPrice - bPrice;
+    });
+  if (sortedByLowestPrice.length === 0) {
+    return {
+      lowestPrice: null,
+      lowestVendorId: null,
+    };
+  }
+  const lowestVendor = sortedByLowestPrice[0];
+  return {
+    lowestPrice: lowestVendor.priceBreaks.find((pb) => pb.minQty === 1)!
+      .unitPrice,
+    lowestVendorId:
+      typeof lowestVendor.vendorId === "number"
+        ? lowestVendor.vendorId
+        : parseInt(lowestVendor.vendorId as string),
+  };
 }

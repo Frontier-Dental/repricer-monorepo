@@ -2,6 +2,7 @@ import {
   AlgoBadgeIndicator,
   AlgoHandlingTimeGroup,
   AlgoPriceDirection,
+  AlgoPriceStrategy,
   VendorNameLookup,
 } from "@repricer-monorepo/shared";
 import { getKnexInstance } from "../knex-wrapper";
@@ -32,7 +33,7 @@ export interface V2AlgoSettings {
   reprice_down_badge_percentage: number;
   floor_compete_with_next: boolean;
   own_vendor_threshold: number;
-  not_cheapest: boolean;
+  price_strategy: AlgoPriceStrategy;
 }
 
 export interface V2AlgoSettingsDb {
@@ -62,7 +63,7 @@ export interface V2AlgoSettingsDb {
   reprice_down_badge_percentage: string;
   floor_compete_with_next: number;
   own_vendor_threshold: number;
-  not_cheapest: number;
+  price_strategy: AlgoPriceStrategy;
 }
 
 export async function getV2AlgoSettingsByMpId(
@@ -231,7 +232,10 @@ export async function syncVendorSettingsForMpId(
             : -1,
         floor_compete_with_next: setting.CompeteWithNext === 1,
         own_vendor_threshold: setting.OwnVendorThreshold || 1,
-        not_cheapest: setting.IsNCNeeded === 1,
+        price_strategy:
+          setting.IsNCNeeded === 1
+            ? AlgoPriceStrategy.TOTAL
+            : AlgoPriceStrategy.UNIT,
       }));
 
       let insertedCount = 0;
@@ -350,6 +354,7 @@ export async function getAllProductsWithAlgoData(): Promise<any[]> {
           "suggested_price",
           "result",
           "triggered_by_vendor",
+          "lowest_price",
         )
           .from("v2_algo_results as var2")
           .whereIn(["mp_id", "vendor_id", "created_at"], function () {
@@ -377,11 +382,12 @@ export async function getAllProductsWithAlgoData(): Promise<any[]> {
       // V2 algo settings fields (main table)
       "vas.floor_price",
       "vas.max_price",
-      "vas.not_cheapest",
+      "vas.price_strategy",
       "vas.enabled",
       "vas.vendor_id",
       "vas.mp_id",
       "vas.suppress_price_break_if_Q1_not_updated",
+      "vas.target_price",
       // Channel IDs fields
       "ci.channel_id",
       // Scrape product list fields (if they exist)
@@ -400,6 +406,7 @@ export async function getAllProductsWithAlgoData(): Promise<any[]> {
       "latest_cron_run.suggested_price as last_suggested_price",
       "latest_cron_run.result",
       "latest_cron_run.triggered_by_vendor",
+      "latest_cron_run.lowest_price",
     )
     .orderBy(["vas.mp_id", "vas.vendor_id"]);
 
@@ -454,4 +461,465 @@ export async function getNet32Url(mpId: number): Promise<string | null> {
     .first();
 
   return result?.Net32Url || null;
+}
+
+// Vendor configurations - centralized to avoid duplication
+const VENDOR_CONFIGS = [
+  {
+    tableName: "table_firstDentDetails",
+    vendorId: 20533,
+    vendorName: "FirstDent",
+  },
+  {
+    tableName: "table_frontierDetails",
+    vendorId: 20722,
+    vendorName: "Frontier",
+  },
+  { tableName: "table_mvpDetails", vendorId: 20755, vendorName: "MVP" },
+  {
+    tableName: "table_topDentDetails",
+    vendorId: 20727,
+    vendorName: "TopDent",
+  },
+  {
+    tableName: "table_tradentDetails",
+    vendorId: 17357,
+    vendorName: "Tradent",
+  },
+  {
+    tableName: "table_triadDetails",
+    vendorId: 5,
+    vendorName: "Triad",
+  },
+];
+
+// Transform vendor settings to v2_algo_settings format
+function transformVendorSettings(vendorSettings: any[], vendorConfig: any) {
+  return vendorSettings.map((setting: any) => ({
+    mp_id: setting.MpId,
+    vendor_id: vendorConfig.vendorId,
+    enabled: setting.Activated === 1,
+    suppress_price_break_if_Q1_not_updated:
+      setting.SuppressPriceBreakForOne === 1,
+    suppress_price_break: setting.SuppressPriceBreak === 1,
+    compete_on_price_break_only: setting.BeatQPrice === 1,
+    up_down:
+      setting.RepricingRule === 2
+        ? AlgoPriceDirection.UP_DOWN
+        : AlgoPriceDirection.DOWN,
+    badge_indicator:
+      setting.BadgeIndicator === "BADGE_ONLY"
+        ? AlgoBadgeIndicator.BADGE
+        : AlgoBadgeIndicator.ALL,
+    execution_priority: setting.ExecutionPriority || 0,
+    reprice_up_percentage: setting.PercentageIncrease || -1,
+    compare_q2_with_q1: setting.CompareWithQ1 === 1,
+    compete_with_all_vendors: setting.CompeteAll === 1,
+    reprice_up_badge_percentage: setting.BadgePercentage || -1,
+    sister_vendor_ids: setting.SisterVendorId || "",
+    exclude_vendors: setting.ExcludedVendors || "",
+    inactive_vendor_id: setting.InactiveVendorId || "",
+    handling_time_group:
+      setting.HandlingTimeFilter || AlgoHandlingTimeGroup.ALL,
+    keep_position: setting.KeepPosition === 1,
+    inventory_competition_threshold: setting.InventoryThreshold || 1,
+    reprice_down_percentage:
+      Number(setting.PercentageDown) !== 0
+        ? Number(setting.PercentageDown) * 100
+        : -1,
+    floor_price: setting.FloorPrice || 0,
+    max_price: setting.MaxPrice || 99999999.99,
+    reprice_down_badge_percentage:
+      Number(setting.BadgePercentageDown) !== 0
+        ? Number(setting.BadgePercentageDown) * 100
+        : -1,
+    floor_compete_with_next: setting.CompeteWithNext === 1,
+    own_vendor_threshold: setting.OwnVendorThreshold || 1,
+    price_strategy:
+      setting.IsNCNeeded === 1
+        ? AlgoPriceStrategy.TOTAL
+        : AlgoPriceStrategy.UNIT,
+    target_price: setting.UnitPrice || null,
+  }));
+}
+
+// Perform batch delete-then-insert operations
+async function performBatchDeleteThenInsert(
+  knex: any,
+  transformedSettings: any[],
+  vendorConfig: any,
+): Promise<{ insertedCount: number }> {
+  let insertedCount = 0;
+
+  try {
+    console.log(
+      `🔍 Starting batch delete-then-insert for ${vendorConfig.vendorName} with ${transformedSettings.length} settings`,
+    );
+
+    // Use a transaction for the entire operation
+    await knex.transaction(async (trx: any) => {
+      console.log(`🔄 Transaction started for ${vendorConfig.vendorName}...`);
+
+      // Delete all existing records for this vendor
+      console.log(
+        `🗑️  Deleting all existing records for ${vendorConfig.vendorName}...`,
+      );
+      const deletedCount = await trx("v2_algo_settings")
+        .where("vendor_id", vendorConfig.vendorId)
+        .del();
+
+      console.log(
+        `🗑️  Deleted ${deletedCount} existing records for ${vendorConfig.vendorName}`,
+      );
+
+      // Insert all new records
+      if (transformedSettings.length > 0) {
+        console.log(
+          `💾 Inserting ${transformedSettings.length} new records for ${vendorConfig.vendorName}...`,
+        );
+        await trx("v2_algo_settings").insert(transformedSettings);
+        insertedCount = transformedSettings.length;
+        console.log(
+          `✅ Inserted ${transformedSettings.length} new records for ${vendorConfig.vendorName}`,
+        );
+      } else {
+        console.log(`⏭️  No records to insert for ${vendorConfig.vendorName}`);
+      }
+
+      console.log(`🔄 Transaction completed for ${vendorConfig.vendorName}`);
+    });
+
+    console.log(
+      `✅ Batch delete-then-insert completed for ${vendorConfig.vendorName}: ${insertedCount} inserted`,
+    );
+  } catch (error) {
+    console.error(
+      `❌ Error during batch operations for ${vendorConfig.vendorName}:`,
+      error,
+    );
+    throw error;
+  }
+
+  return { insertedCount };
+}
+
+// Transform channel ID settings for insertion
+function transformChannelIdSettings(vendorSettings: any[], vendorConfig: any) {
+  return vendorSettings.map((setting: any) => ({
+    vendor_id: vendorConfig.vendorId,
+    mp_id: setting.MpId,
+    channel_id: setting.ChannelId,
+  }));
+}
+
+// Perform batch delete-then-insert operations for channel IDs
+async function performChannelIdBatchDeleteThenInsert(
+  knex: any,
+  transformedSettings: any[],
+  vendorConfig: any,
+): Promise<{ insertedCount: number }> {
+  let insertedCount = 0;
+
+  try {
+    console.log(
+      `🔍 Starting channel ID batch delete-then-insert for ${vendorConfig.vendorName} with ${transformedSettings.length} settings`,
+    );
+
+    // Use a transaction for the entire operation
+    await knex.transaction(async (trx: any) => {
+      console.log(
+        `🔄 Channel ID transaction started for ${vendorConfig.vendorName}...`,
+      );
+
+      // Delete all existing records for this vendor
+      console.log(
+        `🗑️  Deleting all existing channel ID records for ${vendorConfig.vendorName}...`,
+      );
+      const deletedCount = await trx("channel_ids")
+        .where("vendor_id", vendorConfig.vendorId)
+        .del();
+
+      console.log(
+        `🗑️  Deleted ${deletedCount} existing channel ID records for ${vendorConfig.vendorName}`,
+      );
+
+      // Insert all new records
+      if (transformedSettings.length > 0) {
+        console.log(
+          `💾 Inserting ${transformedSettings.length} new channel ID records for ${vendorConfig.vendorName}...`,
+        );
+        await trx("channel_ids").insert(transformedSettings);
+        insertedCount = transformedSettings.length;
+        console.log(
+          `✅ Inserted ${transformedSettings.length} new channel ID records for ${vendorConfig.vendorName}`,
+        );
+      } else {
+        console.log(
+          `⏭️  No channel ID records to insert for ${vendorConfig.vendorName}`,
+        );
+      }
+
+      console.log(
+        `🔄 Channel ID transaction completed for ${vendorConfig.vendorName}`,
+      );
+    });
+
+    console.log(
+      `✅ Channel ID batch delete-then-insert completed for ${vendorConfig.vendorName}: ${insertedCount} inserted`,
+    );
+  } catch (error) {
+    console.error(
+      `❌ Error during channel ID batch operations for ${vendorConfig.vendorName}:`,
+      error,
+    );
+    throw error;
+  }
+
+  return { insertedCount };
+}
+
+// Sync channel IDs for a single vendor
+async function syncVendorChannelIds(knex: any, vendorConfig: any) {
+  try {
+    console.log(`🔄 Starting ${vendorConfig.vendorName} channel ID sync...`);
+
+    // Check if vendor table exists
+    const vendorTableExists = await knex.schema.hasTable(
+      vendorConfig.tableName,
+    );
+    if (!vendorTableExists) {
+      console.log(`❌ ${vendorConfig.tableName} table does not exist`);
+      return { insertedCount: 0, updatedCount: 0, skippedCount: 0 };
+    }
+
+    // Check if ChannelId column exists
+    const hasChannelIdColumn = await knex.schema.hasColumn(
+      vendorConfig.tableName,
+      "ChannelId",
+    );
+
+    if (!hasChannelIdColumn) {
+      console.log(
+        `⚠️  ${vendorConfig.tableName} table does not have ChannelId column`,
+      );
+      return { insertedCount: 0, updatedCount: 0, skippedCount: 0 };
+    }
+
+    // Get all vendor settings with ChannelId
+    const vendorSettings = await knex(vendorConfig.tableName)
+      .select("MpId", "ChannelId")
+      .whereNotNull("ChannelId")
+      .where("ChannelId", "!=", "");
+
+    console.log(
+      `📊 Found ${vendorSettings.length} ${vendorConfig.vendorName} settings with channel IDs to sync`,
+    );
+
+    if (vendorSettings.length === 0) {
+      console.log(
+        `ℹ️  No ${vendorConfig.vendorName} settings with channel IDs found to sync`,
+      );
+      return { insertedCount: 0, updatedCount: 0, skippedCount: 0 };
+    }
+
+    // Transform settings for insertion
+    const transformedSettings = transformChannelIdSettings(
+      vendorSettings,
+      vendorConfig,
+    );
+
+    // Perform batch operations
+    const { insertedCount } = await performChannelIdBatchDeleteThenInsert(
+      knex,
+      transformedSettings,
+      vendorConfig,
+    );
+
+    console.log(`✅ Completed ${vendorConfig.vendorName} channel ID sync`);
+    console.log(`✅ ${vendorConfig.vendorName}: ${insertedCount} inserted`);
+
+    return { insertedCount };
+  } catch (error) {
+    console.error(
+      `❌ Error during ${vendorConfig.vendorName} channel ID sync:`,
+      error,
+    );
+    throw error;
+  }
+}
+
+export async function syncAllVendorSettings(): Promise<{
+  totalInserted: number;
+  totalUpdated: number;
+  vendorResults: Array<{
+    vendorName: string;
+    insertedCount: number;
+    updatedCount: number;
+    success: boolean;
+  }>;
+  channelIdResults: {
+    totalInserted: number;
+    totalUpdated: number;
+    totalSkipped: number;
+    vendorResults: Array<{
+      vendorName: string;
+      insertedCount: number;
+      updatedCount: number;
+      skippedCount: number;
+      success: boolean;
+    }>;
+  };
+}> {
+  const knex = getKnexInstance();
+
+  console.log("🚀 Starting sync of all vendor settings...");
+  console.log(
+    `📋 Vendors to sync: ${VENDOR_CONFIGS.map((v) => v.vendorName).join(", ")}`,
+  );
+
+  // Process vendors one at a time
+  let totalInserted = 0;
+  let totalUpdated = 0;
+  const vendorResults: Array<{
+    vendorName: string;
+    insertedCount: number;
+    updatedCount: number;
+    success: boolean;
+  }> = [];
+
+  for (const vendorConfig of VENDOR_CONFIGS) {
+    console.log(`\n${"=".repeat(60)}`);
+    console.log(`🔄 Starting ${vendorConfig.vendorName} sync...`);
+
+    // Check if vendor table exists
+    const vendorTableExists = await knex.schema.hasTable(
+      vendorConfig.tableName,
+    );
+    if (!vendorTableExists) {
+      console.log(`❌ ${vendorConfig.tableName} table does not exist`);
+      vendorResults.push({
+        vendorName: vendorConfig.vendorName,
+        insertedCount: 0,
+        updatedCount: 0,
+        success: false,
+      });
+      continue;
+    }
+
+    // Get all vendor settings
+    const vendorSettings = await knex(vendorConfig.tableName).select("*");
+
+    console.log(
+      `📊 Found ${vendorSettings.length} ${vendorConfig.vendorName} settings to sync`,
+    );
+
+    if (vendorSettings.length === 0) {
+      console.log(`ℹ️  No ${vendorConfig.vendorName} settings found to sync`);
+      vendorResults.push({
+        vendorName: vendorConfig.vendorName,
+        insertedCount: 0,
+        updatedCount: 0,
+        success: true,
+      });
+      continue;
+    }
+
+    // Transform settings for upsert
+    const transformedSettings = transformVendorSettings(
+      vendorSettings,
+      vendorConfig,
+    );
+
+    // Perform batch operations
+    const { insertedCount } = await performBatchDeleteThenInsert(
+      knex,
+      transformedSettings,
+      vendorConfig,
+    );
+
+    console.log(`✅ Completed ${vendorConfig.vendorName} sync`);
+    console.log(
+      `✅ ${vendorConfig.vendorName}: ${insertedCount} records inserted`,
+    );
+
+    totalInserted += insertedCount;
+
+    vendorResults.push({
+      vendorName: vendorConfig.vendorName,
+      insertedCount,
+      updatedCount: 0,
+      success: true,
+    });
+  }
+
+  console.log(`\n${"=".repeat(60)}`);
+  console.log("🎉 Sync Summary:");
+  console.log(`📊 Overall Summary:`);
+  console.log(
+    `✅ Total Affected Rows: ${totalInserted + totalUpdated} (inserts + updates)`,
+  );
+  console.log(`📊 Total Processed: ${totalInserted + totalUpdated}`);
+
+  // Now sync channel IDs
+  console.log(`\n${"=".repeat(60)}`);
+  console.log("🔄 Starting channel ID synchronization...");
+  console.log(
+    `📋 Vendors to sync channel IDs: ${VENDOR_CONFIGS.map((v) => v.vendorName).join(", ")}`,
+  );
+
+  let channelIdTotalInserted = 0;
+  let channelIdTotalUpdated = 0;
+  let channelIdTotalSkipped = 0;
+  const channelIdVendorResults: Array<{
+    vendorName: string;
+    insertedCount: number;
+    updatedCount: number;
+    skippedCount: number;
+    success: boolean;
+  }> = [];
+
+  for (const vendorConfig of VENDOR_CONFIGS) {
+    console.log(`\n${"-".repeat(40)}`);
+    console.log(`🔄 Starting ${vendorConfig.vendorName} channel ID sync...`);
+
+    const result = await syncVendorChannelIds(knex, vendorConfig);
+
+    console.log(`✅ Completed ${vendorConfig.vendorName} channel ID sync`);
+
+    const inserted = result.insertedCount || 0;
+
+    console.log(`✅ ${vendorConfig.vendorName}: ${inserted} records inserted`);
+
+    channelIdTotalInserted += inserted;
+
+    channelIdVendorResults.push({
+      vendorName: vendorConfig.vendorName,
+      insertedCount: inserted,
+      updatedCount: 0,
+      skippedCount: 0,
+      success: true,
+    });
+  }
+
+  console.log(`\n${"=".repeat(60)}`);
+  console.log("🎉 Channel ID Sync Summary:");
+  console.log(`📊 Overall Summary:`);
+  console.log(
+    `✅ Total Affected Rows: ${channelIdTotalInserted + channelIdTotalUpdated} (inserts + updates)`,
+  );
+  console.log(
+    `📊 Total Processed: ${channelIdTotalInserted + channelIdTotalUpdated + channelIdTotalSkipped}`,
+  );
+
+  return {
+    totalInserted,
+    totalUpdated,
+    vendorResults,
+    channelIdResults: {
+      totalInserted: channelIdTotalInserted,
+      totalUpdated: channelIdTotalUpdated,
+      totalSkipped: channelIdTotalSkipped,
+      vendorResults: channelIdVendorResults,
+    },
+  };
 }

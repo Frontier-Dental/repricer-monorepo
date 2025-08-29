@@ -17,6 +17,7 @@ export function MapV2(productDetails: any[]) {
     item.frontier = p.frontierDetails;
     item.firstDent = p.firstDentDetails;
     item.topDent = p.topDentDetails;
+    item.triad = p.triadDetails;
     item.mvp = p.mvpDetails;
     item.triad = p.triadDetails;
     item.cronName = getCommonEntityValue(item, "cronName", false);
@@ -25,6 +26,7 @@ export function MapV2(productDetails: any[]) {
     item.slowCronName = getCommonEntityValue(item, "slowCronName", true);
     item.isScrapeOnlyActive = p.isScrapeOnlyActivated;
     item.isBadgeItem = p.isBadgeItem;
+    item.algo_execution_mode = p.algo_execution_mode;
     if (item.tradent) {
       item.tradent.updatedAt = item.tradent.updatedAt
         ? moment(item.tradent.updatedAt).format("DD-MM-YY HH:mm:ss")
@@ -119,7 +121,7 @@ export function MapV2(productDetails: any[]) {
   });
 }
 
-export const MapBadgeIndicator = async (product: any) => {
+export function MapBadgeIndicator(product: any) {
   if (product.tradentDetails) {
     product.tradentDetails.badge_indicator = parseBadgeIndicator(
       product.tradentDetails.badgeIndicator,
@@ -158,7 +160,7 @@ export const MapBadgeIndicator = async (product: any) => {
     );
   }
   return product;
-};
+}
 
 export const MapCronName = async (prod: any, cronSettings: any) => {
   if (prod.tradentDetails && prod.tradentDetails.cronId) {

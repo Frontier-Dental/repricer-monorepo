@@ -16,7 +16,14 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Cross2Icon } from "@radix-ui/react-icons";
-import { VendorNameLookup, VendorId } from "@repricer-monorepo/shared";
+import {
+  VendorNameLookup,
+  VendorId,
+  AlgoPriceStrategy,
+  AlgoPriceDirection,
+  AlgoHandlingTimeGroup,
+  AlgoBadgeIndicator,
+} from "@repricer-monorepo/shared";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import type { ColumnDef, Row } from "@tanstack/react-table";
 import { ArrowUpDown, Download } from "lucide-react";
@@ -51,8 +58,8 @@ interface V2AlgoSettings {
   suppress_price_break_if_Q1_not_updated: boolean;
   suppress_price_break: boolean;
   compete_on_price_break_only: boolean;
-  up_down: "UP" | "UP/DOWN" | "DOWN";
-  badge_indicator: "ALL" | "BADGE";
+  up_down: AlgoPriceDirection;
+  badge_indicator: AlgoBadgeIndicator;
   execution_priority: number;
   reprice_up_percentage: number;
   compare_q2_with_q1: boolean;
@@ -61,7 +68,7 @@ interface V2AlgoSettings {
   sister_vendor_ids: string;
   exclude_vendors: string;
   inactive_vendor_id: string;
-  handling_time_group: "ALL" | "FAST_SHIPPING" | "STOCKED" | "LONG_HANDLING";
+  handling_time_group: AlgoHandlingTimeGroup;
   keep_position: boolean;
   inventory_competition_threshold: number;
   reprice_down_percentage: number;
@@ -70,7 +77,7 @@ interface V2AlgoSettings {
   reprice_down_badge_percentage: number;
   floor_compete_with_next: boolean;
   own_vendor_threshold: number;
-  not_cheapest: boolean;
+  price_strategy: AlgoPriceStrategy;
   enabled: boolean;
 }
 
@@ -285,8 +292,8 @@ export function ProductDetailPage() {
     suppress_price_break_if_Q1_not_updated: false,
     suppress_price_break: false,
     compete_on_price_break_only: false,
-    up_down: "UP/DOWN",
-    badge_indicator: "ALL",
+    up_down: AlgoPriceDirection.UP_DOWN,
+    badge_indicator: AlgoBadgeIndicator.ALL,
     execution_priority: 0,
     reprice_up_percentage: -1,
     compare_q2_with_q1: false,
@@ -295,7 +302,7 @@ export function ProductDetailPage() {
     sister_vendor_ids: "",
     exclude_vendors: "",
     inactive_vendor_id: "",
-    handling_time_group: "ALL",
+    handling_time_group: AlgoHandlingTimeGroup.ALL,
     keep_position: false,
     inventory_competition_threshold: 1,
     reprice_down_percentage: -1,
@@ -304,7 +311,7 @@ export function ProductDetailPage() {
     reprice_down_badge_percentage: -1,
     floor_compete_with_next: false,
     own_vendor_threshold: 1,
-    not_cheapest: false,
+    price_strategy: AlgoPriceStrategy.UNIT,
     enabled: false,
   });
 

@@ -7,7 +7,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string("job_id", 36).notNullable().index();
     table.decimal("suggested_price", 10, 2);
     table.decimal("lowest_price", 10, 2);
-    table.decimal("lowest_vendor_id").unsigned();
+    table.integer("lowest_vendor_id").unsigned();
     table.text("comment").notNullable();
     table.string("triggered_by_vendor", 255);
     table.string("result", 255).notNullable().index();

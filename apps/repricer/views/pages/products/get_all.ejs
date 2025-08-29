@@ -177,6 +177,8 @@
                                                     <th class="t-head long-txt">Apply NC For Buy Box</th>
                                                     <th class="t-head">Triggered By Vendor</th>
                                                     <th class="t-head">Result</th>
+                                                    <th class="t-head">Algo Mode</th>
+                                                    
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -198,6 +200,7 @@
                                                                 &nbsp;<br>
                                                                 <a onclick="updateProductQuantity('<%= item.mpid%>');"><i class="fas fa-sort-amount-up" style="cursor: pointer;"></i></a>
                                                         </td>
+
                                                         <td>
                                                             <span class="tr-row">
                                                             <% if(item.tradent==null){ %>
@@ -1306,6 +1309,9 @@
                                                                                                                 
                                                                                                                 
                                                                                                                 </td>
+                                                        <td>
+                                                            <%= item.algo_execution_mode %>
+                                                        </td>
                                                     </tr>
                                                     <% }); %>
                                             </tbody>

@@ -14,6 +14,7 @@ import {
   getAllProductsWithAlgoData,
   toggleV2AlgoEnabled,
   getNet32Url,
+  syncAllVendorSettings,
 } from "../services/algo_v2/settings";
 
 // Cache for products data
@@ -113,7 +114,6 @@ export async function getV2AlgoSettings(
       suppress_price_break_if_Q1_not_updated:
         setting.suppress_price_break_if_Q1_not_updated === 1,
       compete_with_all_vendors: setting.compete_with_all_vendors === 1,
-      not_cheapest: setting.not_cheapest === 1,
       enabled: setting.enabled === 1,
     };
   });
@@ -362,4 +362,19 @@ export async function getNet32UrlController(
       error: "Internal server error while fetching net32 URL",
     });
   }
+}
+
+export async function syncAllVendorSettingsController(
+  req: Request,
+  res: Response,
+) {
+  console.log("🚀 Starting sync of all vendor settings and channel IDs...");
+
+  const result = await syncAllVendorSettings();
+
+  return res.json({
+    success: true,
+    message: "Successfully synced all vendor settings and channel IDs",
+    data: result,
+  });
 }

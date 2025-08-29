@@ -12,6 +12,7 @@ import {
   getAllProductsWithAlgoDataController,
   toggleV2AlgoEnabledController,
   getNet32UrlController,
+  syncAllVendorSettingsController,
 } from "../controllers/v2-algo";
 export const v2AlgoRouter = express.Router();
 
@@ -57,3 +58,6 @@ v2AlgoRouter.put(
 
 // Get net32 URL from table_scrapeProductList
 v2AlgoRouter.get("/get_net32_url/:mpId", getNet32UrlController);
+
+// Sync all vendor settings and channel IDs across all tables
+v2AlgoRouter.post("/sync_all_vendor_settings", syncAllVendorSettingsController);
