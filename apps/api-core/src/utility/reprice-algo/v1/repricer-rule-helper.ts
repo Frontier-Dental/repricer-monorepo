@@ -395,7 +395,7 @@ export function ApplyFloorCheckRule(
 ) {
   let $eval = repriceResult;
   if ($eval.listOfRepriceDetails && $eval.listOfRepriceDetails.length > 0) {
-    $eval.listOfRepriceDetails.forEach(($) => {
+    $eval.listOfRepriceDetails.forEach(($: any) => {
       if ($.active == false || $.active === 0) {
         //do nothing as it means Deactivating a price Break
       } else if (($.newPrice as unknown as number) <= floorPrice) {

@@ -200,7 +200,7 @@ export async function repriceProduct(
     ) {
       let copiedRepriceResult = _.cloneDeep(repriceResult);
       copiedRepriceResult!.listOfRepriceDetails = [];
-      for (const $eval of repriceResult?.listOfRepriceDetails) {
+      for (const $eval of repriceResult!.listOfRepriceDetails) {
         const isFloorReached = await getIsFloorReached($eval);
         if (isFloorReached) {
           const contextPriceBreak = ownProduct.priceBreaks.find(

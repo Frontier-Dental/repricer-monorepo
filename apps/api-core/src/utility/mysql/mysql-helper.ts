@@ -567,17 +567,13 @@ export async function UpdateRepriceResultStatus(
   contextVendor: any,
 ) {
   let contextTableName = getContextTableNameByVendorName(contextVendor);
-  const db = await SqlConnectionPool.getConnection();
+  const knex = getKnexInstance();
   try {
-    const updateQuery = `UPDATE ${contextTableName} SET RepriceResult=? WHERE MpId =?`;
-    await db.query(updateQuery, [
-      repriceResultStatus,
-      parseInt(mpid as string),
-    ]);
+    await knex(contextTableName!)
+      .where("MpId", parseInt(mpid as string))
+      .update({ RepriceResult: repriceResultStatus });
   } catch (exception) {
     console.log(`Exception while UpdateRepriceResultStatus : ${exception}`);
-  } finally {
-    SqlConnectionPool.releaseConnection(db);
   }
 }
 
@@ -585,20 +581,17 @@ export async function GetProxiesNet32(
   usernames: string[],
 ): Promise<ProxyNet32[]> {
   let proxyList: ProxyNet32[] = [];
-  const db = await SqlConnectionPool.getConnection();
+  const knex = getKnexInstance();
   try {
     if (usernames.length === 0) {
       return [];
     }
 
-    const placeholders = usernames.map(() => "?").join(",");
-    const query = `SELECT * FROM ${process.env.SQL_PROXY_NET_32} WHERE username IN (${placeholders})`;
-    const [rows] = await db.query(query, usernames);
-    proxyList = rows as ProxyNet32[];
+    proxyList = await knex(process.env.SQL_PROXY_NET_32!)
+      .whereIn("username", usernames)
+      .select("*");
   } catch (exception) {
     console.log(`Exception while GetProxiesNet32: ${exception}`);
-  } finally {
-    SqlConnectionPool.releaseConnection(db);
   }
   return proxyList;
 }
@@ -606,26 +599,22 @@ export async function GetProxiesNet32(
 export async function GetVendorKeys(
   vendors: string[],
 ): Promise<Map<string, string | null> | null> {
-  const db = await SqlConnectionPool.getConnection();
+  const knex = getKnexInstance();
   try {
     if (vendors.length === 0) {
       return new Map<string, string | null>();
     }
 
-    const placeholders = vendors.map(() => "?").join(",");
-    const query = `
-      SELECT vendor, value 
-      FROM ${process.env.SQL_VENDOR_KEYS || "table_vendorKeys"} 
-      WHERE vendor IN (${placeholders}) 
-        AND is_primary = 1 
-        AND is_active = 1
-    `;
+    const rows = await knex(process.env.SQL_VENDOR_KEYS || "table_vendorKeys")
+      .whereIn("vendor", vendors)
+      .where("is_primary", 1)
+      .where("is_active", 1)
+      .select("vendor", "value");
 
-    const [rows] = await db.query(query, vendors);
     const vendorKeyMap = new Map<string, string | null>();
 
     for (const vendor of vendors) {
-      const match = (rows as any[]).find((row) => row.vendor === vendor);
+      const match = rows.find((row) => row.vendor === vendor);
       const value = match?.value ?? null;
       vendorKeyMap.set(vendor, value);
     }
@@ -634,24 +623,16 @@ export async function GetVendorKeys(
   } catch (exception) {
     console.error("Error in GetVendorKeys:", exception);
     return null;
-  } finally {
-    SqlConnectionPool.releaseConnection(db);
   }
 }
 
 export async function ExecuteQuery(_query: string, _params: any) {
   try {
-    let noOfRecords = null;
-    const db = await SqlConnectionPool.getConnection();
-    try {
-      [noOfRecords] = await db.execute(_query, _params);
-    } catch (exception) {
-      console.log(`Exception while ExecuteQuery : ${exception}`);
-    } finally {
-      SqlConnectionPool.releaseConnection(db);
-    }
-    return noOfRecords;
+    const knex = getKnexInstance();
+    const result = await knex.raw(_query, _params);
+    return result[0];
   } catch (exception) {
+    console.log(`Exception while ExecuteQuery : ${exception}`);
     return null;
   }
 }
