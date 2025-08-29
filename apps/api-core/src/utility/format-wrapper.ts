@@ -185,13 +185,17 @@ export async function SetOwnVendorThreshold(
 ) {
   const $ = await globalParam.GetInfo(productItem.mpid, productItem);
   return net32Result.map((x) => {
+    if (x.vendorId !== $.VENDOR_ID) {
+      return { ...x };
+    }
+
     if (
-      x.vendorId == $.VENDOR_ID &&
       parseInt(x.inventory as unknown as string) >=
-        productItem.ownVendorThreshold
+      productItem.ownVendorThreshold
     ) {
       return { ...x, inStock: true };
+    } else {
+      return { ...x, inStock: false };
     }
-    return { ...x };
   });
 }
