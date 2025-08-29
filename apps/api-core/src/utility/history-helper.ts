@@ -3,13 +3,14 @@ import path from "path";
 import fsExtra from "fs-extra";
 import uuid from "uuid";
 import { HistoricalLogs, HistoricalPrice } from "../model/history";
-import * as globalParam from "../model/global-param";
+// import * as globalParam from "../model/global-param";
 import { HistoryModel } from "../model/sql-models/history";
 import * as mySqlHelper from "./mysql/mysql-helper";
 import { RepriceData, RepriceModel } from "../model/reprice-model";
 import { Net32PriceBreak, Net32Product } from "../types/net32";
 import { applicationConfig } from "./config";
 import { VendorName } from "@repricer-monorepo/shared";
+import * as ResultParser from "./repriceResultParser";
 
 export async function Execute(
   mpId: number | string,
@@ -19,7 +20,9 @@ export async function Execute(
   contextVendor?: string,
   contextCronName?: string,
 ) {
+  let insertIdLists: { minQty: any; historyIdentifier: any }[] = [];
   let historicalLogs = new HistoricalLogs([]);
+  const repriceResult = await ResultParser.Parse(repriceModel);
   if (
     repriceModel.listOfRepriceDetails &&
     repriceModel.listOfRepriceDetails.length > 0
@@ -45,6 +48,8 @@ export async function Execute(
       mpId,
       contextVendor!,
       contextCronName!,
+      repriceModel.triggeredByVendor,
+      repriceResult,
     );
     historicalLogs.SetHistoricalPrice(priceHistory);
   }
@@ -70,6 +75,8 @@ export async function getHistoricalPrice(
   mpId: number | string,
   contextVendor: string,
   contextCronName: string,
+  triggeredByVendor: any,
+  repriceResult: any,
 ): Promise<HistoricalPrice> {
   const minQty =
     repriceDetails && repriceDetails.minQty ? repriceDetails.minQty : 1;
@@ -88,6 +95,8 @@ export async function getHistoricalPrice(
       eligibleList,
       contextVendor,
       contextCronName,
+      triggeredByVendor,
+      repriceResult,
     );
   }
 
@@ -251,7 +260,7 @@ function getOwnVendorId(vendorName: string) {
 }
 
 async function writeFileToSql(data: HistoricalLogs, mpId: string | number) {
-  let insertId;
+  let insertIdList = [];
   if (data.historicalPrice && data.historicalPrice.length > 0) {
     const apiResponseLinkedId = await mySqlHelper.InsertHistoricalApiResponse(
       data.historicalPrice[0].apiResponse,
@@ -264,8 +273,17 @@ async function writeFileToSql(data: HistoricalLogs, mpId: string | number) {
         data.refTime,
         apiResponseLinkedId,
       );
-      insertId = await mySqlHelper.InsertHistory(sqlModelHistory, data.refTime);
+
+      const insertId = await mySqlHelper.InsertHistory(
+        sqlModelHistory,
+        data.refTime,
+      );
+
+      insertIdList.push({
+        minQty: history.minQty,
+        historyIdentifier: insertId,
+      });
     }
   }
-  return insertId;
+  return insertIdList;
 }
