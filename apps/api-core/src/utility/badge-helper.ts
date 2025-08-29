@@ -133,7 +133,7 @@ export async function ReCalculatePriceForNc(
             repriceModel.repriceDetails.explained =
               repriceModel.repriceDetails.explained +
               RepriceRenewedMessageEnum.PRICE_CHANGE_BADGE_PERCENTAGE;
-            repriceModel.repriceDetails.triggeredByVendor = `${_minQty} @ ${_.first(sortedBadgedItems).vendorId}-${_.first(sortedBadgedItems).vendorName}`;
+            repriceModel.repriceDetails.triggeredByVendor = `${_minQty} @ ${_.first(sortedBadgedItems)!.vendorId}-${_.first(sortedBadgedItems)!.vendorName}`;
           } else {
             // Mark Floor Hit and Ignore Price Change
             repriceModel.repriceDetails.newPrice = "N/A";
