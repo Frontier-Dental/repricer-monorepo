@@ -652,7 +652,7 @@ export function ProductsPage() {
             onClick={handleRefresh}
             disabled={isLoading}
           >
-            {isLoading ? "Refreshing..." : "Refresh Data"}
+            {isLoading ? "Refreshing..." : "Refresh Data (Ignore Cache)"}
           </Button>
           <Button
             variant="default"

@@ -285,6 +285,37 @@ export function V2AlgoSettingsForm({
           <div className="grid grid-cols-3 gap-3">
             <FormField
               control={form.control}
+              name="price_strategy"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price Strategy</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={AlgoPriceStrategy.UNIT}>
+                        UNIT
+                      </SelectItem>
+                      <SelectItem value={AlgoPriceStrategy.TOTAL}>
+                        TOTAL
+                      </SelectItem>
+                      <SelectItem value={AlgoPriceStrategy.BUY_BOX}>
+                        BUY_BOX
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="inventory_competition_threshold"
               render={({ field }) => (
                 <FormItem>
@@ -323,6 +354,9 @@ export function V2AlgoSettingsForm({
                 </FormItem>
               )}
             />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
             <FormField
               control={form.control}
               name="reprice_down_percentage"
@@ -343,9 +377,6 @@ export function V2AlgoSettingsForm({
                 </FormItem>
               )}
             />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
             <FormField
               control={form.control}
               name="reprice_up_badge_percentage"
@@ -386,6 +417,9 @@ export function V2AlgoSettingsForm({
                 </FormItem>
               )}
             />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
             <FormField
               control={form.control}
               name="floor_price"
@@ -406,9 +440,6 @@ export function V2AlgoSettingsForm({
                 </FormItem>
               )}
             />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
             <FormField
               control={form.control}
               name="max_price"
@@ -445,6 +476,9 @@ export function V2AlgoSettingsForm({
                 </FormItem>
               )}
             />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
             <FormField
               control={form.control}
               name="exclude_vendors"
@@ -461,9 +495,6 @@ export function V2AlgoSettingsForm({
                 </FormItem>
               )}
             />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
             <FormField
               control={form.control}
               name="inactive_vendor_id"
@@ -480,28 +511,27 @@ export function V2AlgoSettingsForm({
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="own_vendor_threshold"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Own Vendor Threshold</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      {...field}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value === "" ? "" : Number(value));
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
-
-          <FormField
-            control={form.control}
-            name="own_vendor_threshold"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Own Vendor Threshold</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    {...field}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      field.onChange(value === "" ? "" : Number(value));
-                    }}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
           {/* Boolean Settings */}
           <div className="grid grid-cols-3 gap-3">
@@ -567,6 +597,25 @@ export function V2AlgoSettingsForm({
           <div className="grid grid-cols-3 gap-3">
             <FormField
               control={form.control}
+              name="floor_compete_with_next"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">
+                      Floor Compete with Next
+                    </FormLabel>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="compete_with_all_vendors"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
@@ -581,38 +630,6 @@ export function V2AlgoSettingsForm({
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="price_strategy"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Price Strategy</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={AlgoPriceStrategy.UNIT}>
-                        UNIT
-                      </SelectItem>
-                      <SelectItem value={AlgoPriceStrategy.TOTAL}>
-                        TOTAL
-                      </SelectItem>
-                      <SelectItem value={AlgoPriceStrategy.BUY_BOX}>
-                        BUY_BOX
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -645,28 +662,6 @@ export function V2AlgoSettingsForm({
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">Keep Position</FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <FormField
-              control={form.control}
-              name="floor_compete_with_next"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">
-                      Floor Compete with Next
-                    </FormLabel>
                   </div>
                   <FormControl>
                     <Switch
