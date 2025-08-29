@@ -52,6 +52,7 @@ export interface Net32AlgoSolution {
   beforeLadder: Net32AlgoProductWrapperWithBuyBoxRank[];
   lowestPrice: number | null;
   lowestVendorId: number | null;
+  preJsonPosition: number;
 }
 
 export interface Net32AlgoSolutionWithResult extends Net32AlgoSolution {
@@ -129,6 +130,10 @@ export function repriceProductV2(
         `No vendor settings found for vendor ${ourVendor.vendorId}`,
       );
     }
+    const preJsonPosition = rawNet32Products.findIndex(
+      (p) => p.vendorId === ourVendor.vendorId,
+    );
+
     const filteredCompetitors = applyCompetitionFilters(
       [
         ...competitorProducts,
@@ -220,6 +225,7 @@ export function repriceProductV2(
         everyoneIncludingOwnVendorBefore,
         lowestPrice: lowestVendor.lowestPrice,
         lowestVendorId: lowestVendor.lowestVendorId,
+        preJsonPosition,
       });
     }
   }
@@ -561,7 +567,11 @@ function getSolutionResult(
     }
   }
 
-  const keepPosition = applyKeepPosition(vendorSetting, isSlowCron);
+  const keepPosition = applyKeepPosition(
+    vendorSetting,
+    isSlowCron,
+    solution.preJsonPosition,
+  );
   if (keepPosition) {
     return {
       algoResult: keepPosition,

@@ -3,6 +3,7 @@
 import {
   ColumnDef,
   SortingState,
+  Table as TableInstance,
   VisibilityState,
   flexRender,
   getCoreRowModel,
@@ -12,18 +13,17 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-  Table as TableInstance,
 } from "@tanstack/react-table";
 import * as React from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-  Table,
 } from "@/components/ui/table";
 
 import { DataTablePagination } from "./data-table-pagination";
@@ -48,6 +48,30 @@ function SkeletonRow({ columnCount }: { columnCount: number }) {
     </TableRow>
   );
 }
+
+// Get common pinning styles for sticky positioning
+const getCommonPinningStyles = (column: any): React.CSSProperties => {
+  const isPinned = column.getIsPinned();
+  const isLastLeftPinnedColumn =
+    isPinned === "left" && column.getIsLastColumn("left");
+  const isFirstRightPinnedColumn =
+    isPinned === "right" && column.getIsFirstColumn("right");
+
+  return {
+    boxShadow: isLastLeftPinnedColumn
+      ? "-4px 0 4px -4px rgba(0, 0, 0, 0.1) inset"
+      : isFirstRightPinnedColumn
+        ? "4px 0 4px -4px rgba(0, 0, 0, 0.1) inset"
+        : undefined,
+    left: isPinned === "left" ? `${column.getStart("left")}px` : undefined,
+    right: isPinned === "right" ? `${column.getAfter("right")}px` : undefined,
+    opacity: isPinned ? 0.95 : 1,
+    position: isPinned ? "sticky" : "relative",
+    width: column.getSize(),
+    zIndex: isPinned ? 1 : 0,
+    backgroundColor: isPinned ? "var(--background)" : undefined,
+  };
+};
 
 export function DataTable<TData, TValue>({
   columns,
@@ -92,14 +116,21 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border">
-        <Table>
+      <DataTablePagination table={table} />
+
+      <div className="table-container rounded-md border">
+        <Table style={{ width: table.getTotalSize() }}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
+                  const { column } = header;
                   return (
-                    <TableHead key={header.id} colSpan={header.colSpan}>
+                    <TableHead
+                      key={header.id}
+                      colSpan={header.colSpan}
+                      style={getCommonPinningStyles(column)}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -124,14 +155,20 @@ export function DataTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const { column } = cell;
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        style={getCommonPinningStyles(column)}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (
@@ -147,7 +184,6 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <DataTablePagination table={table} />
     </div>
   );
 }

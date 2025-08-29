@@ -215,11 +215,13 @@ export function applyUpDownRestriction(
 export function applyKeepPosition(
   vendorSetting: V2AlgoSettingsData,
   isSlowCron: boolean,
+  preJsonPosition: number,
 ) {
   if (isSlowCron) {
     return null;
   }
-  if (vendorSetting.keep_position) {
+  // We are already first in the array, so do nothing regardless of if there is an incoming change.
+  if (vendorSetting.keep_position && preJsonPosition === 0) {
     return AlgoResult.IGNORE_SETTINGS;
   } else {
     return null;
