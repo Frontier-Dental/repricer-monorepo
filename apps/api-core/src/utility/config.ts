@@ -111,7 +111,7 @@ const envSchema = z.object({
     .toLowerCase()
     .transform(JSON.parse as any)
     .pipe(z.boolean())
-    .default(false),
+    .default(true),
   REPRICER_UI_CACHE_CLEAR: z
     .string()
     .default("http://localhost:3000/cache/flush_repricer_all"),
@@ -199,12 +199,6 @@ const envSchema = z.object({
     .pipe(z.boolean())
     .default(true),
   SCRAPE_RUN_LOGGING: z
-    .string()
-    .toLowerCase()
-    .transform(JSON.parse as any)
-    .pipe(z.boolean())
-    .default(true),
-  START_CRONS: z
     .string()
     .toLowerCase()
     .transform(JSON.parse as any)
