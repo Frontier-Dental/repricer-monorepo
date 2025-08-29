@@ -26,6 +26,9 @@ import {
   notQ2VsQ1,
 } from "./shared";
 import { AlgoExecutionMode } from "@repricer-monorepo/shared";
+import * as ResultParser from "../utility/repriceResultParser";
+import * as filterMapper from "../utility/filterMapper";
+import * as buyBoxHelper from "../utility/buyBoxHelper";
 
 export async function repriceProduct(
   mpid: string,
@@ -94,10 +97,7 @@ export async function repriceProduct(
     2,
   );
 
-  if (
-    productItem.compareWithQ1 === true &&
-    isMinQty2PriceBreakExists === false
-  ) {
+  if (productItem.compareWithQ1 && !isMinQty2PriceBreakExists) {
     ownProduct.priceBreaks.push({
       minQty: 2,
       unitPrice: 0,
@@ -108,10 +108,9 @@ export async function repriceProduct(
   if (productItem && ownProduct && ownProduct.inStock) {
     if (
       ownProduct.priceBreaks &&
-      (ownProduct.priceBreaks.length === 1 ||
-        productItem.suppressPriceBreak === true)
+      (ownProduct.priceBreaks.length === 1 || productItem.suppressPriceBreak)
     ) {
-      if (productItem.is_nc_needed && productItem.is_nc_needed === true) {
+      if (productItem.is_nc_needed && productItem.is_nc_needed) {
         repriceResult = await repriceHelperNc.Reprice(
           ownProduct,
           output,
@@ -144,7 +143,7 @@ export async function repriceProduct(
         );
 
         let indRepriceResult: RepriceModel;
-        if (productItem.is_nc_needed && productItem.is_nc_needed === true) {
+        if (productItem.is_nc_needed && productItem.is_nc_needed) {
           indRepriceResult = await repriceHelperNc.RepriceIndividualPriceBreak(
             ownProduct,
             output,
@@ -201,9 +200,9 @@ export async function repriceProduct(
     ) {
       let copiedRepriceResult = _.cloneDeep(repriceResult);
       copiedRepriceResult!.listOfRepriceDetails = [];
-      for (const $eval of repriceResult!.listOfRepriceDetails) {
+      for (const $eval of repriceResult?.listOfRepriceDetails) {
         const isFloorReached = await getIsFloorReached($eval);
-        if (isFloorReached === true) {
+        if (isFloorReached) {
           const contextPriceBreak = ownProduct.priceBreaks.find(
             (x) => x.minQty == $eval.minQty,
           );
@@ -225,7 +224,7 @@ export async function repriceProduct(
         }
       }
       repriceResult = copiedRepriceResult;
-    } else if (repriceResult!.repriceDetails) {
+    } else if (repriceResult?.repriceDetails) {
       const isFloorReached = await getIsFloorReached(
         repriceResult!.repriceDetails,
       );
@@ -247,8 +246,9 @@ export async function repriceProduct(
     productItem.override_bulk_update,
   );
 
-  const isNcToBeApplied =
-    isNcForBuyBoxApplied === true ? true : productItem.is_nc_needed;
+  const isNcToBeApplied = isNcForBuyBoxApplied
+    ? true
+    : productItem.is_nc_needed;
 
   if (productItem.repricingRule != null && isOverrideEnabled === false) {
     repriceResult = Rule.ApplyRule(
@@ -278,7 +278,7 @@ export async function repriceProduct(
   repriceResult = Rule.ApplyMultiPriceBreakRule(repriceResult);
 
   //Apply Beat Q Price(MinQty #1) Rule
-  if (productItem.beatQPrice != null && productItem.beatQPrice === true) {
+  if (productItem.beatQPrice != null && productItem.beatQPrice) {
     repriceResult = Rule.ApplyBeatQPriceRule(repriceResult);
   }
 
@@ -294,12 +294,12 @@ export async function repriceProduct(
   }
 
   // Apply Buy Box Logic post all execution
-  if (productItem.applyBuyBoxLogic && productItem.applyBuyBoxLogic === true) {
+  if (productItem.applyBuyBoxLogic) {
     repriceResult = Rule.ApplyBuyBoxRule(repriceResult, result);
   }
 
   //Apply Keep Position Logic
-  if (productItem.keepPosition && productItem.keepPosition === true) {
+  if (productItem.keepPosition) {
     repriceResult = Rule.ApplyKeepPositionLogic(
       repriceResult,
       result,
@@ -308,11 +308,7 @@ export async function repriceProduct(
   }
 
   //Apply Suppress_Price_Break_For_One Rule
-  if (
-    isOverrideEnabled === true ||
-    (productItem.suppressPriceBreakForOne != null &&
-      productItem.suppressPriceBreakForOne === true)
-  ) {
+  if (isOverrideEnabled || productItem.suppressPriceBreakForOne) {
     repriceResult = Rule.ApplySuppressPriceBreakRule(
       repriceResult!,
       1,
@@ -332,8 +328,8 @@ export async function repriceProduct(
     productItem.inventoryThreshold > 0
   ) {
     if (
-      repriceResult.listOfRepriceDetails &&
-      repriceResult.listOfRepriceDetails.length > 0
+      repriceResult?.listOfRepriceDetails &&
+      repriceResult?.listOfRepriceDetails.length > 0
     ) {
       repriceResult.listOfRepriceDetails.forEach(($) => {
         $.explained = `${$.explained} #InvThreshold`;
@@ -357,12 +353,63 @@ export async function repriceProduct(
   // Append $NEW for New Price Break Activation
   repriceResult = Rule.AppendNewPriceBreakActivation(repriceResult);
 
-  //Last Reprice Check for Identical Sister Price
+  //Apply Shipping BuyBox Rule
+  if (
+    productItem.getBBShipping === true &&
+    repriceResult.listOfRepriceDetails.length === 0
+  ) {
+    repriceResult = await buyBoxHelper.parseShippingBuyBox(
+      repriceResult,
+      result,
+      productItem,
+    );
+  }
+
+  //Apply Badge BuyBox Rule
+  if (
+    productItem.getBBBadge === true &&
+    repriceResult.listOfRepriceDetails.length === 0
+  ) {
+    repriceResult = await buyBoxHelper.parseBadgeBuyBox(
+      repriceResult,
+      result,
+      productItem,
+    );
+  }
+
+  //Apply Shipping BuyBox Rule
+  if (
+    productItem.getBBShipping === true &&
+    repriceResult.listOfRepriceDetails.length === 0
+  ) {
+    repriceResult = await buyBoxHelper.parseShippingBuyBox(
+      repriceResult,
+      result,
+      productItem,
+    );
+  }
+
+  //Apply Badge BuyBox Rule
+  if (
+    productItem.getBBBadge === true &&
+    repriceResult.listOfRepriceDetails.length === 0
+  ) {
+    repriceResult = await buyBoxHelper.parseBadgeBuyBox(
+      repriceResult,
+      result,
+      productItem,
+    );
+  }
+
+  // Last Reprice Check for Identical Sister Price
   repriceResult = await Rule.ApplySisterComparisonCheck(
     repriceResult,
     result,
     productItem,
   );
+
+  // Align IsRepriced Field Based on Price Suggestion
+  repriceResult = await Rule.AlignIsRepriced(repriceResult);
 
   //Update TriggeredByVendor
   await mySqlHelper.UpdateTriggeredByVendor(repriceResult, contextVendor, mpid);
@@ -375,6 +422,14 @@ export async function repriceProduct(
     isNcToBeApplied,
     contextVendor,
     productItem.contextCronName,
+  );
+
+  //Update Reprice Result Status
+  const repriceResultStatus = await ResultParser.Parse(repriceResult);
+  await mySqlHelper.UpdateRepriceResultStatus(
+    repriceResultStatus,
+    req.params.id,
+    contextVendor,
   );
 
   output = productItem.scrapeOn === true ? output : [];
