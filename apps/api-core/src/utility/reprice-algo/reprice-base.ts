@@ -18,6 +18,7 @@ import * as requestGenerator from "../request-generator";
 import { repriceProduct } from "./v1/algo-v1";
 import { AlgoExecutionMode, VendorName } from "@repricer-monorepo/shared";
 import { repriceProductV2Wrapper } from "./v2/wrapper";
+import * as filterMapper from "../filter-mapper";
 
 export async function Execute(
   jobId: string,
@@ -221,7 +222,10 @@ export async function RepriceErrorItem(
     for (const seq of prioritySequence) {
       if (isPriceUpdatedForVendor == false) {
         const contextVendor = seq.name;
-        let prod = await getProductDetailsByVendor(details, contextVendor);
+        let prod = await filterMapper.GetProductDetailsByVendor(
+          details,
+          contextVendor,
+        );
         let tempProd = _.cloneDeep(prod);
         prod.last_cron_time = new Date();
         let isPriceUpdated = false;
@@ -390,22 +394,30 @@ export async function RepriceErrorItem(
             ]);
           }
           // Add Last_Cron_Reprice_Message
-          prod.last_cron_message = getLastCronMessage(repriceResult as any);
+          prod.last_cron_message = filterMapper.GetLastCronMessageSimple(
+            repriceResult as any,
+          );
 
           // Update History With Proper Message
           if (
             repriceResult &&
             repriceResult.data &&
             repriceResult.data.historyIdentifier &&
-            repriceResult.data.historyIdentifier != null
+            repriceResult.data.historyIdentifier.length > 0
           ) {
-            await sqlHelper.UpdateHistoryWithMessage(
-              repriceResult.data.historyIdentifier,
-              prod.last_cron_message,
-            );
-            console.log(
-              `History Updated for ${prod.mpid} with Identifier : ${repriceResult.data.historyIdentifier} and Message : ${prod.last_cron_message}`,
-            );
+            for (const histItem of repriceResult.data.historyIdentifier) {
+              const errorMessage = await getErrorMessage(
+                repriceResult,
+                histItem.minQty,
+              );
+              await sqlHelper.UpdateHistoryWithMessage(
+                histItem.historyIdentifier,
+                prod.last_cron_message,
+              );
+              console.log(
+                `History Updated for ${prod.mpid} with Identifier : ${histItem.historyIdentifier} and Message : ${prod.last_cron_message}`,
+              );
+            }
           }
           prod = updateLowestVendor(repriceResult as any, prod);
           prod = updateCronBasedDetails(repriceResult, prod, false);
@@ -675,7 +687,7 @@ export async function UpdateToMax(
     });
   }
   // Add Last_Cron_Reprice_Message
-  prod.last_cron_message = await getLastCronMessage(repriceResult as any);
+  prod.last_cron_message = filterMapper.GetLastCronMessageSimple(repriceResult);
   prod.last_cron_message = prod.last_cron_message + " #MANUAL";
   prod = await updateLowestVendor((repriceResult as any)!, prod);
   prod = await updateCronBasedDetails(repriceResult, prod, false);
@@ -814,7 +826,7 @@ async function repriceSingleVendor(
   }
 
   // Add Last_Cron_Reprice_Message
-  prod.last_cron_message = getLastCronMessage(repriceResult);
+  prod.last_cron_message = filterMapper.GetLastCronMessageSimple(repriceResult);
   if (isManualRun == true) {
     prod.last_cron_message = prod.last_cron_message + " #MANUAL";
   }
@@ -823,62 +835,37 @@ async function repriceSingleVendor(
   if (
     repriceResult &&
     repriceResult.historyIdentifier &&
-    repriceResult.historyIdentifier != null
+    (repriceResult.historyIdentifier as unknown as any[]).length > 0 &&
+    prod.last_cron_message.indexOf("ERROR:") > -1
   ) {
-    await sqlHelper.UpdateHistoryWithMessage(
-      repriceResult.historyIdentifier,
-      prod.last_cron_message,
-    );
-    console.log(
-      `History Updated for ${prod.mpid} with Identifier : ${repriceResult.historyIdentifier} and Message : ${prod.last_cron_message}`,
-    );
-  }
-  prod = updateLowestVendor(repriceResult!, prod);
-  prod = updateCronBasedDetails(repriceResult, prod, false);
-  await sqlHelper.UpdateProductAsync(
-    prod as any,
-    isPriceUpdated,
-    contextVendor,
-  ); //await dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
-  return {
-    cronLogs: cronLogs,
-    prod: prod,
-    isPriceUpdated: isPriceUpdated,
-    skipNextVendor: skipNextVendor,
-  };
-}
-
-function getLastCronMessage(
-  repriceResult:
-    | {
-        cronResponse: RepriceAsyncResponse;
-        priceUpdateResponse: any;
-        historyIdentifier: any;
-      }
-    | undefined,
-) {
-  let resultStr = "";
-  if (
-    repriceResult &&
-    repriceResult.cronResponse &&
-    repriceResult.cronResponse.repriceData
-  ) {
-    if (repriceResult.cronResponse.repriceData.repriceDetails) {
-      resultStr =
-        repriceResult.cronResponse.repriceData.repriceDetails.explained || "";
-    } else if (
-      repriceResult.cronResponse.repriceData.listOfRepriceDetails &&
-      repriceResult.cronResponse.repriceData.listOfRepriceDetails.length > 0
-    ) {
-      for (const rep of repriceResult.cronResponse.repriceData
-        .listOfRepriceDetails) {
-        resultStr += `${rep.minQty}@${rep.explained}/`;
-      }
+    for (const histItem of (repriceResult as unknown as any)
+      .historyIdentifier) {
+      const errorMessage = await getErrorMessage(
+        repriceResult,
+        histItem.minQty,
+      );
+      await sqlHelper.UpdateHistoryWithMessage(
+        histItem.historyIdentifier,
+        errorMessage,
+      );
+      console.log(
+        `History Updated for ${prod.mpid} with Identifier : ${histItem.historyIdentifier} and Message : ${errorMessage}`,
+      );
     }
-  } else {
-    resultStr = `Reprice Result is empty`;
+    prod = updateLowestVendor(repriceResult!, prod);
+    prod = updateCronBasedDetails(repriceResult, prod, false);
+    await sqlHelper.UpdateProductAsync(
+      prod as any,
+      isPriceUpdated,
+      contextVendor,
+    ); //await dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
+    return {
+      cronLogs: cronLogs,
+      prod: prod,
+      isPriceUpdated: isPriceUpdated,
+      skipNextVendor: skipNextVendor,
+    };
   }
-  return resultStr;
 }
 
 function updateLowestVendor(
@@ -1099,4 +1086,30 @@ function scanDeltaListOfProducts(productList: any[], deltaList: any[]) {
     }
   });
   return filterDeltaProducts;
+}
+
+async function getErrorMessage(repriceResult: any, minQty: any) {
+  let resultStr = "";
+  if (
+    repriceResult &&
+    repriceResult.data &&
+    repriceResult.data.cronResponse &&
+    repriceResult.data.cronResponse.repriceData
+  ) {
+    if (repriceResult.data.cronResponse.repriceData.repriceDetails) {
+      resultStr =
+        repriceResult.data.cronResponse.repriceData.repriceDetails.explained;
+    } else if (
+      repriceResult.data.cronResponse.repriceData.listOfRepriceDetails &&
+      repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.length >
+        0
+    ) {
+      const contextData =
+        repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.find(
+          (x: { minQty: any }) => x.minQty === minQty,
+        );
+      resultStr = contextData.explained;
+    }
+  }
+  return resultStr;
 }

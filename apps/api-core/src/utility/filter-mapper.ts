@@ -2,7 +2,7 @@ import _ from "lodash";
 import moment from "moment";
 import * as dbHelper from "./mongo/db-helper";
 import * as sqlHelper from "./mysql/mysql-helper";
-import { FilterCronItem, FilterCronLog } from "../model/filterCronLog";
+import { FilterCronItem, FilterCronLog } from "../model/filter-cron-log";
 import { Generate } from "./job-id-helper";
 import { RepriceRenewedMessageEnum } from "../model/reprice-renewed-message";
 import { GetInfo } from "../model/global-param";
@@ -62,6 +62,29 @@ export async function FilterProducts(filterCronDetails: any) {
   }
 }
 
+export function GetLastCronMessageSimple(repriceResult: any): string {
+  let resultStr = "";
+  if (
+    repriceResult &&
+    repriceResult.data &&
+    repriceResult.data.cronResponse &&
+    repriceResult.data.cronResponse.repriceData
+  ) {
+    const repriceResultInfo = repriceResult.data.cronResponse.repriceData;
+    if (
+      repriceResultInfo.listOfRepriceDetails &&
+      repriceResultInfo.listOfRepriceDetails.length > 0
+    ) {
+      for (const rep of repriceResultInfo.listOfRepriceDetails) {
+        resultStr += `${rep.minQty}@${rep.explained}/`;
+      }
+    } else if (repriceResultInfo.repriceDetails) {
+      resultStr += repriceResultInfo.repriceDetails.explained;
+    } else resultStr = `Reprice Result is empty`;
+  }
+  return resultStr;
+}
+
 export async function FilterBasedOnParams(
   inputResult: Net32Product[],
   productItem: FrontierProduct,
@@ -85,14 +108,16 @@ export async function FilterBasedOnParams(
       if (productItem.includeInactiveVendors == true) {
         outputResult = _.filter(inputResult, (item) => {
           return (
-            parseInt(item.inventory) >= parseInt(productItem.inventoryThreshold)
+            parseInt(item.inventory as unknown as string) >=
+            parseInt(productItem.inventoryThreshold as unknown as string)
           );
         });
       } else {
         outputResult = inputResult.filter((item) => {
           return (
             item.inStock == true &&
-            parseInt(item.inventory) >= parseInt(productItem.inventoryThreshold)
+            parseInt(item.inventory as unknown as string) >=
+              parseInt(productItem.inventoryThreshold as unknown as string)
           );
         });
       }
@@ -150,7 +175,7 @@ export async function FilterBasedOnParams(
         }
         if (
           !badgedItems.find(($bi) => {
-            return $bi.vendorId == $.VENDOR_ID;
+            return ($bi as any).vendorId == $.VENDOR_ID;
           })
         ) {
           let itemToAdd = inputResult.find(($bi) => {
@@ -160,7 +185,7 @@ export async function FilterBasedOnParams(
             badgedItems.push(itemToAdd);
           }
         }
-        outputResult = badgedItems;
+        outputResult = badgedItems as any;
       } else if (_.isEqual(productItem.badgeIndicator, "NON_BADGE_ONLY")) {
         let nonBadgedItems = [];
         if (productItem.includeInactiveVendors == true) {
@@ -327,6 +352,7 @@ export async function VerifyFloorWithSister(
     model.updateTriggeredBy(
       _.first(aboveFloorVendors).vendorName,
       _.first(aboveFloorVendors).vendorId,
+      1,
     );
     return model;
   } else return false;
@@ -444,6 +470,7 @@ function getLastUpdateTime(product: any) {
   }
   return str;
 }
+
 export function subtractPercentage(originalNumber: number, percentage: number) {
   return parseFloat(
     (
@@ -474,6 +501,142 @@ export async function GetProductDetailsByVendor(
   if (contextVendor == "TRIAD") {
     return details.triadDetails;
   }
+}
+
+export async function GetTriggeredByVendor(
+  repriceResult: any,
+  mpId: string,
+  contextVendor: string,
+): Promise<{ resultStr: string; updateRequired: boolean }> {
+  const productDetails = await sqlHelper.GetItemListById(mpId);
+  let updateRequired = hasPriceChanged(repriceResult);
+  let resultStr = "";
+  if (productDetails && repriceResult) {
+    const contextVendorDetails = await GetProductDetailsByVendor(
+      productDetails,
+      contextVendor,
+    );
+    if (contextVendorDetails) {
+      const existingTriggeredByVendorValue =
+        contextVendorDetails.triggeredByVendor;
+      if (
+        existingTriggeredByVendorValue != null ||
+        existingTriggeredByVendorValue != ""
+      ) {
+        if (repriceResult.repriceDetails) {
+          resultStr = repriceResult.repriceDetails.isRepriced
+            ? repriceResult.repriceDetails.triggeredByVendor
+            : existingTriggeredByVendorValue;
+        } else if (
+          repriceResult.listOfRepriceDetails &&
+          repriceResult.listOfRepriceDetails.length > 0
+        ) {
+          const existingSegregatedMessage: any = await flattenExistingValue(
+            existingTriggeredByVendorValue,
+            ",",
+            /^(\d+)\s*@\s*(.+)$/,
+          );
+          const repricedPriceBreak = _.filter(
+            repriceResult.listOfRepriceDetails,
+            (rp: any) => rp.isRepriced === true,
+          );
+          if (repricedPriceBreak && repricedPriceBreak.length > 0) {
+            let recordsOfMessages = [];
+            //If Existing Price breaks are Available
+            for (let record of existingSegregatedMessage) {
+              if (record) {
+                const priceUpdaterPriceBreak = repricedPriceBreak.find(
+                  (x: any) => x.minQty === record.minQty,
+                );
+                if (priceUpdaterPriceBreak)
+                  recordsOfMessages.push({
+                    minQty: record.minQty,
+                    message: priceUpdaterPriceBreak.triggeredByVendor,
+                    isExistingMessage: false,
+                  });
+                else recordsOfMessages.push(record);
+              }
+            }
+            //If New Price breaks are Added
+            for (let pb of repricedPriceBreak) {
+              const hasPriceBreak = existingSegregatedMessage?.some(
+                (item: { minQty: any }) => item.minQty === pb.minQty,
+              );
+              if (!hasPriceBreak) {
+                recordsOfMessages.push({
+                  minQty: pb.minQty,
+                  message: pb.triggeredByVendor,
+                  isExistingMessage: false,
+                });
+              }
+            }
+            if (recordsOfMessages.length > 0) {
+              for (const rep of recordsOfMessages) {
+                let cleanMessage = cleanRepeatedPrefix(rep.message);
+                cleanMessage = stripPrefix(cleanMessage, /^\d+\s*@\s*/);
+                resultStr += `${rep.minQty} @ ${cleanMessage},`;
+              }
+            }
+          } else {
+            resultStr = existingTriggeredByVendorValue;
+          }
+        } else resultStr = `TriggeredByVendorValue is empty`;
+      } else if (repriceResult.repriceDetails) {
+        resultStr = repriceResult.repriceDetails.triggeredByVendor;
+      } else if (
+        repriceResult.listOfRepriceDetails &&
+        repriceResult.listOfRepriceDetails.length > 0
+      ) {
+        for (const rep of repriceResult.listOfRepriceDetails) {
+          resultStr += `${rep.triggeredByVendor},`;
+        }
+      } else {
+        resultStr = `TriggeredByVendorValue is empty`;
+      }
+    }
+  }
+  return { resultStr, updateRequired };
+}
+
+async function flattenExistingValue(
+  existingLastCronMessage: string,
+  delimiter: string,
+  pattern: RegExp,
+): Promise<
+  Array<{ minQty: number; message: string; isExistingMessage: true }>
+> {
+  const segments = existingLastCronMessage
+    .split(delimiter)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  return segments.flatMap((segment) => {
+    const match = segment.match(pattern);
+    if (!match || match.length < 3) return [];
+
+    const minQty = parseInt(match[1], 10);
+    const message = match[2];
+    return [{ minQty, message, isExistingMessage: true }];
+  });
+}
+
+function cleanRepeatedPrefix(input: string): string {
+  return input.replace(/^(\d+@)+/, (match) => {
+    const first = match.match(/^(\d+)@/);
+    return first ? first[0] : match;
+  });
+}
+
+function hasPriceChanged(repriceResult: any): boolean {
+  if ((repriceResult.listOfRepriceDetails ?? []).length > 0) {
+    return (repriceResult.listOfRepriceDetails ?? []).some(
+      (x: { isRepriced: boolean }) => x.isRepriced,
+    );
+  } else return repriceResult.repriceDetails?.isRepriced;
+}
+
+function stripPrefix(input: string, regex: RegExp): string {
+  return input.replace(regex, "");
 }
 
 async function flattenExistingMessages(

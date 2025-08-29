@@ -7,21 +7,18 @@ import { RepriceModel } from "../../model/reprice-model";
 import { UpdateRequest } from "../../model/update-request";
 import { apiMapping } from "../../resources/api-mapping";
 import * as axiosHelper from "../../utility/axios-helper";
-import * as dbHelper from "../../utility/mongo/db-helper";
+import { applicationConfig } from "../../utility/config";
 import * as formatter from "../../utility/format-wrapper";
 import * as HistoryHelper from "../../utility/history-helper";
+import * as dbHelper from "../../utility/mongo/db-helper";
 import * as repriceHelper from "../../utility/reprice-algo/v1/reprice-helper";
-import * as responseUtility from "../../utility/response-utility";
-import * as ResultParser from "../utility/repriceResultParser";
-import * as filterMapper from "../utility/filterMapper";
-import * as buyBoxHelper from "../utility/buyBoxHelper";
 import {
   delay,
   getPriceStepValue,
   getSecretKey,
   isPriceUpdateRequired,
 } from "../../utility/reprice-algo/v1/shared";
-import { applicationConfig } from "../../utility/config";
+import * as responseUtility from "../../utility/response-utility";
 
 export async function repriceProductToMax(
   req: Request,

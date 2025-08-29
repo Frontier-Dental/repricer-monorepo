@@ -31,7 +31,9 @@ async function scrapeProductListForProduct(
   cronSettingsResponse: ScrapeCronDetail,
   productId: string,
 ) {
-  const scrapeProductList = await mySqlHelper.GetItemListById(productId);
+  const scrapeProductList = (await mySqlHelper.GetItemListById(
+    productId,
+  )) as any;
   if (scrapeProductList) {
     scrapeProductList.MpId = scrapeProductList.mpId;
     scrapeProductList.LinkedTradentDetailsInfo =

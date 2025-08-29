@@ -28,7 +28,6 @@ const envSchema = z.object({
     .string()
     .default("proxySwitcherCronSettings"),
   // SQL
-  SQL_TRIAD_DETAILS: z.string().default("table_triadDetails"),
   SQL_HOSTNAME: z.string(),
   SQL_PORT: z.coerce.number(),
   SQL_USERNAME: z.string(),

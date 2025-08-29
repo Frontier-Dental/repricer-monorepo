@@ -1,17 +1,16 @@
 import { Request, Response } from "express";
-import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import * as _codes from "http-status-codes";
 import { ErrorItemModel } from "../../model/error-item";
 import * as filterMapper from "../../utility/filter-mapper";
+import * as mongoHelper from "../../utility/mongo/mongo-helper";
 
+import { applicationConfig } from "../../utility/config";
 import {
   calculateNextCronTime,
-  getLastCronMessage,
   getNextCronTime,
   updateCronBasedDetails,
   updateLowestVendor,
 } from "./shared";
-import { applicationConfig } from "../../utility/config";
 
 export async function updateProductManualHandler(
   req: Request,

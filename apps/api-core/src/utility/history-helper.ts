@@ -32,6 +32,8 @@ export async function Execute(
         mpId,
         contextVendor!,
         contextCronName!,
+        $rp.triggeredByVendor,
+        repriceResult,
       );
       historicalLogs.SetHistoricalPrice(priceHistory);
     }

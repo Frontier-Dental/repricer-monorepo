@@ -218,8 +218,8 @@ export class OwnVendorProductDetails {
     this.ownVendorThreshold = sqlEntity["OwnVendorThreshold"] || 0;
     this.getBBBadgeValue = sqlEntity["GetBBBadgeValue"] || 0;
     this.getBBShippingValue = sqlEntity["GetBBShippingValue"] || 0;
-    this.getBBBadge = sqlEntity["GetBBBadge"] == 1 ? true : false;
-    this.getBBShipping = sqlEntity["GetBBShipping"] == 1 ? true : false;
+    this.getBBBadge = sqlEntity["GetBBBadge"] || 0;
+    this.getBBShipping = sqlEntity["GetBBShipping"] || 0;
   }
 }
 
