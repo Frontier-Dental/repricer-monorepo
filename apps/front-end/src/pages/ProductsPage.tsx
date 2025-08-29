@@ -597,15 +597,10 @@ export function ProductsPage() {
 
       if (result.success) {
         // Show success message with summary
-        const { data } = result;
-        const settingsSummary = `Settings: ${data.totalInserted} inserted, ${data.totalUpdated} updated`;
-        const channelIdSummary = `Channel IDs: ${data.channelIdResults.totalInserted} inserted, ${data.channelIdResults.totalUpdated} updated, ${data.channelIdResults.totalSkipped} skipped`;
 
         toast.success(
           <div>
             <div className="font-semibold">Sync completed successfully!</div>
-            <div className="text-sm">{settingsSummary}</div>
-            <div className="text-sm">{channelIdSummary}</div>
           </div>,
           { duration: 5000 },
         );

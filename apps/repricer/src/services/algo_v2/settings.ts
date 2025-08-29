@@ -543,130 +543,54 @@ function transformVendorSettings(vendorSettings: any[], vendorConfig: any) {
   }));
 }
 
-// Perform batch upsert operations
-async function performBatchUpsert(
+// Perform batch delete-then-insert operations
+async function performBatchDeleteThenInsert(
   knex: any,
   transformedSettings: any[],
   vendorConfig: any,
-): Promise<{ insertedCount: number; updatedCount: number }> {
+): Promise<{ insertedCount: number }> {
   let insertedCount = 0;
-  let updatedCount = 0;
 
   try {
     console.log(
-      `🔍 Starting batch upsert for ${vendorConfig.vendorName} with ${transformedSettings.length} settings`,
+      `🔍 Starting batch delete-then-insert for ${vendorConfig.vendorName} with ${transformedSettings.length} settings`,
     );
 
-    // Get existing records to determine what needs to be inserted vs updated
-    console.log(
-      `📊 Querying existing records for ${vendorConfig.vendorName}...`,
-    );
-    const existingRecords = await knex("v2_algo_settings")
-      .whereIn(
-        ["mp_id", "vendor_id"],
-        transformedSettings.map((s) => [s.mp_id, s.vendor_id]),
-      )
-      .select("mp_id", "vendor_id");
+    // Use a transaction for the entire operation
+    await knex.transaction(async (trx: any) => {
+      console.log(`🔄 Transaction started for ${vendorConfig.vendorName}...`);
 
-    console.log(
-      `📊 Found ${existingRecords.length} existing records for ${vendorConfig.vendorName}`,
-    );
+      // Delete all existing records for this vendor
+      console.log(
+        `🗑️  Deleting all existing records for ${vendorConfig.vendorName}...`,
+      );
+      const deletedCount = await trx("v2_algo_settings")
+        .where("vendor_id", vendorConfig.vendorId)
+        .del();
 
-    // Create a map for quick lookup
-    console.log(`🗺️  Creating lookup map for ${vendorConfig.vendorName}...`);
-    const existingMap = new Map(
-      existingRecords.map((r: any) => [`${r.mp_id}-${r.vendor_id}`, true]),
-    );
-    console.log(
-      `🗺️  Lookup map created with ${existingMap.size} entries for ${vendorConfig.vendorName}`,
-    );
+      console.log(
+        `🗑️  Deleted ${deletedCount} existing records for ${vendorConfig.vendorName}`,
+      );
 
-    // Separate records into insert and update batches
-    console.log(
-      `📋 Separating records into insert/update batches for ${vendorConfig.vendorName}...`,
-    );
-    const toInsert: typeof transformedSettings = [];
-    const toUpdate: typeof transformedSettings = [];
-
-    for (const setting of transformedSettings) {
-      const key = `${setting.mp_id}-${setting.vendor_id}`;
-      const existing = existingMap.get(key);
-
-      if (existing) {
-        toUpdate.push(setting);
+      // Insert all new records
+      if (transformedSettings.length > 0) {
+        console.log(
+          `💾 Inserting ${transformedSettings.length} new records for ${vendorConfig.vendorName}...`,
+        );
+        await trx("v2_algo_settings").insert(transformedSettings);
+        insertedCount = transformedSettings.length;
+        console.log(
+          `✅ Inserted ${transformedSettings.length} new records for ${vendorConfig.vendorName}`,
+        );
       } else {
-        toInsert.push(setting);
+        console.log(`⏭️  No records to insert for ${vendorConfig.vendorName}`);
       }
-    }
+
+      console.log(`🔄 Transaction completed for ${vendorConfig.vendorName}`);
+    });
 
     console.log(
-      `📋 Batch separation complete for ${vendorConfig.vendorName}: ${toInsert.length} to insert, ${toUpdate.length} to update`,
-    );
-
-    // Perform batch insert for new records
-    if (toInsert.length > 0) {
-      console.log(
-        `💾 Starting batch insert for ${vendorConfig.vendorName} with ${toInsert.length} records...`,
-      );
-      await knex("v2_algo_settings").insert(toInsert);
-      insertedCount = toInsert.length;
-      console.log(
-        `✅ Batch inserted ${toInsert.length} new settings for ${vendorConfig.vendorName}`,
-      );
-    } else {
-      console.log(`⏭️  No records to insert for ${vendorConfig.vendorName}`);
-    }
-
-    // Perform batch updates for existing records
-    if (toUpdate.length > 0) {
-      console.log(
-        `🔄 Starting batch update for ${vendorConfig.vendorName} with ${toUpdate.length} records...`,
-      );
-      console.log(
-        `🔄 Using transaction for batch updates for ${vendorConfig.vendorName}...`,
-      );
-
-      // Use a transaction for batch updates
-      await knex.transaction(async (trx: any) => {
-        console.log(
-          `🔄 Transaction started for ${vendorConfig.vendorName}, processing ${toUpdate.length} updates...`,
-        );
-
-        for (let i = 0; i < toUpdate.length; i++) {
-          const setting = toUpdate[i];
-          console.log(
-            `🔄 Updating record ${i + 1}/${toUpdate.length} for ${vendorConfig.vendorName}: mp_id=${setting.mp_id}, vendor_id=${setting.vendor_id}`,
-          );
-
-          await trx("v2_algo_settings")
-            .where({
-              mp_id: setting.mp_id,
-              vendor_id: setting.vendor_id,
-            })
-            .update(setting);
-
-          if ((i + 1) % 100 === 0 || i === toUpdate.length - 1) {
-            console.log(
-              `🔄 Progress: ${i + 1}/${toUpdate.length} updates completed for ${vendorConfig.vendorName}`,
-            );
-          }
-        }
-
-        console.log(
-          `🔄 All updates completed in transaction for ${vendorConfig.vendorName}`,
-        );
-      });
-
-      updatedCount = toUpdate.length;
-      console.log(
-        `🔄 Batch updated ${toUpdate.length} existing settings for ${vendorConfig.vendorName}`,
-      );
-    } else {
-      console.log(`⏭️  No records to update for ${vendorConfig.vendorName}`);
-    }
-
-    console.log(
-      `✅ Batch upsert completed for ${vendorConfig.vendorName}: ${insertedCount} inserted, ${updatedCount} updated`,
+      `✅ Batch delete-then-insert completed for ${vendorConfig.vendorName}: ${insertedCount} inserted`,
     );
   } catch (error) {
     console.error(
@@ -676,7 +600,7 @@ async function performBatchUpsert(
     throw error;
   }
 
-  return { insertedCount, updatedCount };
+  return { insertedCount };
 }
 
 // Transform channel ID settings for insertion
@@ -688,147 +612,60 @@ function transformChannelIdSettings(vendorSettings: any[], vendorConfig: any) {
   }));
 }
 
-// Perform batch upsert operations for channel IDs
-async function performChannelIdBatchUpsert(
+// Perform batch delete-then-insert operations for channel IDs
+async function performChannelIdBatchDeleteThenInsert(
   knex: any,
   transformedSettings: any[],
   vendorConfig: any,
-): Promise<{
-  insertedCount: number;
-  updatedCount: number;
-  skippedCount: number;
-}> {
+): Promise<{ insertedCount: number }> {
   let insertedCount = 0;
-  let updatedCount = 0;
-  let skippedCount = 0;
 
   try {
     console.log(
-      `🔍 Starting channel ID batch upsert for ${vendorConfig.vendorName} with ${transformedSettings.length} settings`,
+      `🔍 Starting channel ID batch delete-then-insert for ${vendorConfig.vendorName} with ${transformedSettings.length} settings`,
     );
 
-    // Get existing records to determine what needs to be inserted vs updated
-    const existingRecords = await knex("channel_ids")
-      .whereIn(
-        ["vendor_id", "mp_id"],
-        transformedSettings.map((s) => [s.vendor_id, s.mp_id]),
-      )
-      .select("vendor_id", "mp_id", "channel_id");
+    // Use a transaction for the entire operation
+    await knex.transaction(async (trx: any) => {
+      console.log(
+        `🔄 Channel ID transaction started for ${vendorConfig.vendorName}...`,
+      );
 
-    console.log(
-      `📊 Found ${existingRecords.length} existing channel ID records for ${vendorConfig.vendorName}`,
-    );
+      // Delete all existing records for this vendor
+      console.log(
+        `🗑️  Deleting all existing channel ID records for ${vendorConfig.vendorName}...`,
+      );
+      const deletedCount = await trx("channel_ids")
+        .where("vendor_id", vendorConfig.vendorId)
+        .del();
 
-    // Create a map for quick lookup
-    const existingMap = new Map(
-      existingRecords.map((r: any) => [
-        `${r.vendor_id}-${r.mp_id}`,
-        r.channel_id,
-      ]),
-    );
-    console.log(
-      `🗺️  Channel ID lookup map created with ${existingMap.size} entries for ${vendorConfig.vendorName}`,
-    );
+      console.log(
+        `🗑️  Deleted ${deletedCount} existing channel ID records for ${vendorConfig.vendorName}`,
+      );
 
-    // Separate records into insert and update batches
-    const toInsert: typeof transformedSettings = [];
-    const toUpdate: typeof transformedSettings = [];
-    const toSkip: typeof transformedSettings = [];
-
-    for (const setting of transformedSettings) {
-      const key = `${setting.vendor_id}-${setting.mp_id}`;
-      const existingChannelId = existingMap.get(key);
-
-      if (existingChannelId !== undefined) {
-        if (existingChannelId !== setting.channel_id) {
-          toUpdate.push(setting);
-        } else {
-          toSkip.push(setting);
-        }
+      // Insert all new records
+      if (transformedSettings.length > 0) {
+        console.log(
+          `💾 Inserting ${transformedSettings.length} new channel ID records for ${vendorConfig.vendorName}...`,
+        );
+        await trx("channel_ids").insert(transformedSettings);
+        insertedCount = transformedSettings.length;
+        console.log(
+          `✅ Inserted ${transformedSettings.length} new channel ID records for ${vendorConfig.vendorName}`,
+        );
       } else {
-        toInsert.push(setting);
+        console.log(
+          `⏭️  No channel ID records to insert for ${vendorConfig.vendorName}`,
+        );
       }
-    }
+
+      console.log(
+        `🔄 Channel ID transaction completed for ${vendorConfig.vendorName}`,
+      );
+    });
 
     console.log(
-      `📋 Channel ID batch separation complete for ${vendorConfig.vendorName}: ${toInsert.length} to insert, ${toUpdate.length} to update, ${toSkip.length} to skip`,
-    );
-
-    // Perform batch insert for new records
-    if (toInsert.length > 0) {
-      console.log(
-        `💾 Starting channel ID batch insert for ${vendorConfig.vendorName} with ${toInsert.length} records...`,
-      );
-      await knex("channel_ids").insert(toInsert);
-      insertedCount = toInsert.length;
-      console.log(
-        `✅ Batch inserted ${toInsert.length} new channel ID records for ${vendorConfig.vendorName}`,
-      );
-    } else {
-      console.log(
-        `⏭️  No channel ID records to insert for ${vendorConfig.vendorName}`,
-      );
-    }
-
-    // Perform batch updates for existing records with different channel IDs
-    if (toUpdate.length > 0) {
-      console.log(
-        `🔄 Starting channel ID batch update for ${vendorConfig.vendorName} with ${toUpdate.length} records...`,
-      );
-      console.log(
-        `🔄 Using transaction for channel ID batch updates for ${vendorConfig.vendorName}...`,
-      );
-
-      // Use a transaction for batch updates
-      await knex.transaction(async (trx: any) => {
-        console.log(
-          `🔄 Channel ID transaction started for ${vendorConfig.vendorName}, processing ${toUpdate.length} updates...`,
-        );
-
-        for (let i = 0; i < toUpdate.length; i++) {
-          const setting = toUpdate[i];
-          console.log(
-            `🔄 Updating channel ID record ${i + 1}/${toUpdate.length} for ${vendorConfig.vendorName}: mp_id=${setting.mp_id}, vendor_id=${setting.vendor_id}`,
-          );
-
-          await trx("channel_ids")
-            .where({
-              vendor_id: setting.vendor_id,
-              mp_id: setting.mp_id,
-            })
-            .update({ channel_id: setting.channel_id });
-
-          if ((i + 1) % 100 === 0 || i === toUpdate.length - 1) {
-            console.log(
-              `🔄 Channel ID Progress: ${i + 1}/${toUpdate.length} updates completed for ${vendorConfig.vendorName}`,
-            );
-          }
-        }
-
-        console.log(
-          `🔄 All channel ID updates completed in transaction for ${vendorConfig.vendorName}`,
-        );
-      });
-
-      updatedCount = toUpdate.length;
-      console.log(
-        `🔄 Batch updated ${toUpdate.length} existing channel ID records for ${vendorConfig.vendorName}`,
-      );
-    } else {
-      console.log(
-        `⏭️  No channel ID records to update for ${vendorConfig.vendorName}`,
-      );
-    }
-
-    skippedCount = toSkip.length;
-    if (toSkip.length > 0) {
-      console.log(
-        `⏭️  Skipped ${toSkip.length} records that already have the same channel ID for ${vendorConfig.vendorName}`,
-      );
-    }
-
-    console.log(
-      `✅ Channel ID batch upsert completed for ${vendorConfig.vendorName}: ${insertedCount} inserted, ${updatedCount} updated, ${skippedCount} skipped`,
+      `✅ Channel ID batch delete-then-insert completed for ${vendorConfig.vendorName}: ${insertedCount} inserted`,
     );
   } catch (error) {
     console.error(
@@ -838,7 +675,7 @@ async function performChannelIdBatchUpsert(
     throw error;
   }
 
-  return { insertedCount, updatedCount, skippedCount };
+  return { insertedCount };
 }
 
 // Sync channel IDs for a single vendor
@@ -892,19 +729,16 @@ async function syncVendorChannelIds(knex: any, vendorConfig: any) {
     );
 
     // Perform batch operations
-    const { insertedCount, updatedCount, skippedCount } =
-      await performChannelIdBatchUpsert(
-        knex,
-        transformedSettings,
-        vendorConfig,
-      );
-
-    console.log(`✅ Completed ${vendorConfig.vendorName} channel ID sync`);
-    console.log(
-      `✅ ${vendorConfig.vendorName}: ${insertedCount} inserted, ${updatedCount} updated, ${skippedCount} skipped`,
+    const { insertedCount } = await performChannelIdBatchDeleteThenInsert(
+      knex,
+      transformedSettings,
+      vendorConfig,
     );
 
-    return { insertedCount, updatedCount, skippedCount };
+    console.log(`✅ Completed ${vendorConfig.vendorName} channel ID sync`);
+    console.log(`✅ ${vendorConfig.vendorName}: ${insertedCount} inserted`);
+
+    return { insertedCount };
   } catch (error) {
     console.error(
       `❌ Error during ${vendorConfig.vendorName} channel ID sync:`,
@@ -997,7 +831,7 @@ export async function syncAllVendorSettings(): Promise<{
     );
 
     // Perform batch operations
-    const { insertedCount, updatedCount } = await performBatchUpsert(
+    const { insertedCount } = await performBatchDeleteThenInsert(
       knex,
       transformedSettings,
       vendorConfig,
@@ -1005,16 +839,15 @@ export async function syncAllVendorSettings(): Promise<{
 
     console.log(`✅ Completed ${vendorConfig.vendorName} sync`);
     console.log(
-      `✅ ${vendorConfig.vendorName}: ${insertedCount} affected rows (inserts + updates)`,
+      `✅ ${vendorConfig.vendorName}: ${insertedCount} records inserted`,
     );
 
     totalInserted += insertedCount;
-    totalUpdated += updatedCount;
 
     vendorResults.push({
       vendorName: vendorConfig.vendorName,
       insertedCount,
-      updatedCount,
+      updatedCount: 0,
       success: true,
     });
   }
@@ -1054,22 +887,16 @@ export async function syncAllVendorSettings(): Promise<{
     console.log(`✅ Completed ${vendorConfig.vendorName} channel ID sync`);
 
     const inserted = result.insertedCount || 0;
-    const updated = result.updatedCount || 0;
-    const skipped = result.skippedCount || 0;
 
-    console.log(
-      `✅ ${vendorConfig.vendorName}: ${inserted} affected rows (inserts + updates)`,
-    );
+    console.log(`✅ ${vendorConfig.vendorName}: ${inserted} records inserted`);
 
     channelIdTotalInserted += inserted;
-    channelIdTotalUpdated += updated;
-    channelIdTotalSkipped += skipped;
 
     channelIdVendorResults.push({
       vendorName: vendorConfig.vendorName,
       insertedCount: inserted,
-      updatedCount: updated,
-      skippedCount: skipped,
+      updatedCount: 0,
+      skippedCount: 0,
       success: true,
     });
   }
