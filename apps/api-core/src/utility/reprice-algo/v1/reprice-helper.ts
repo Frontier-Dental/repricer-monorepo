@@ -39,6 +39,7 @@ export async function Reprice(
   let excludedVendors =
     productItem.competeAll == true ? [] : $.EXCLUDED_VENDOR_ID.split(";");
   const allowCompeteWithNextForFloor = productItem.competeWithNext;
+  let rawDataForSisterCheck = [];
 
   let eligibleList: Net32Product[] = [];
   // Get eligible List of Products where minQty is 1
@@ -108,18 +109,6 @@ export async function Reprice(
     }
   }
 
-  //Remove Sister Vendor if Both UP & DOWN selected or Compete with Next is true
-  if (
-    allowCompeteWithNextForFloor === true ||
-    productItem.repricingRule === 2
-  ) {
-    sortedPayload = await filterMapper.FilterBasedOnParams(
-      sortedPayload,
-      productItem,
-      "SISTER_VENDOR_EXCLUSION",
-    );
-  }
-
   //Set the Lowest Price
   _.first(sortedPayload)!.priceBreaks.forEach((price) => {
     if (price.minQty == 1 && price.active == true) {
@@ -149,10 +138,22 @@ export async function Reprice(
       model.updateTriggeredBy(
         _.first(sortedPayload)!.vendorName,
         _.first(sortedPayload)!.vendorId as unknown as string,
+        1,
       );
       return model;
     }
 
+    if (
+      allowCompeteWithNextForFloor === true ||
+      productItem.repricingRule === 2
+    ) {
+      rawDataForSisterCheck = _.cloneDeep(sortedPayload);
+      sortedPayload = await filterMapper.FilterBasedOnParams(
+        sortedPayload,
+        productItem,
+        "SISTER_VENDOR_EXCLUSION",
+      );
+    }
     // if next in list is in Excluded Vendor, go to next
     let nextIndex = 1;
     if (
@@ -268,6 +269,7 @@ export async function Reprice(
       repriceModel.updateTriggeredBy(
         sortedPayload[nextIndex].vendorName,
         sortedPayload[nextIndex].vendorId as unknown as string,
+        1,
       );
     }
     if (!sortedPayload[nextIndex]) {
@@ -284,6 +286,7 @@ export async function Reprice(
       repriceModel.updateTriggeredBy(
         _.first(sortedPayload)!.vendorName,
         _.first(sortedPayload)!.vendorId as unknown as string,
+        1,
       );
     }
     repriceModel.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
@@ -317,8 +320,21 @@ export async function Reprice(
       model.updateTriggeredBy(
         _.first(sortedPayload)!.vendorName,
         _.first(sortedPayload)!.vendorId as unknown as string,
+        1,
       );
       return model;
+    }
+
+    //Remove Sister Vendor if Both UP & DOWN selected or Compete with Next is true
+    if (
+      allowCompeteWithNextForFloor === true ||
+      productItem.repricingRule === 2
+    ) {
+      sortedPayload = await filterMapper.FilterBasedOnParams(
+        sortedPayload,
+        productItem,
+        "SISTER_VENDOR_EXCLUSION",
+      );
     }
 
     // Check the Lowest Price
@@ -368,6 +384,7 @@ export async function Reprice(
             ) {
               nextIndex++;
             } else if (
+              sortedPayload[i] &&
               (await filterMapper.IsVendorFloorPrice(
                 sortedPayload[i].priceBreaks,
                 1,
@@ -394,6 +411,7 @@ export async function Reprice(
             model.updateTriggeredBy(
               _.first(sortedPayload)!.vendorName,
               _.first(sortedPayload)!.vendorId as unknown as string,
+              1,
             );
             return model;
           }
@@ -443,6 +461,7 @@ export async function Reprice(
                 model.updateTriggeredBy(
                   sortedPayload[nextIndex].vendorName,
                   sortedPayload[nextIndex].vendorId as unknown as string,
+                  1,
                 );
                 return model;
               }
@@ -464,6 +483,7 @@ export async function Reprice(
               model.updateTriggeredBy(
                 sortedPayload[nextIndex].vendorName,
                 sortedPayload[nextIndex].vendorId as unknown as string,
+                1,
               );
               return model;
             }
@@ -496,40 +516,99 @@ export async function Reprice(
               break;
             }
           }
-          const secondLowestPrice = sortedPayload[nextIndex].priceBreaks.find(
-            (x: any) => x.minQty == 1 && x.active == true,
-          );
-          if (
-            (secondLowestPrice as any) > floorPrice &&
-            ((secondLowestPrice as any) >= existingPrice ||
-              allowCompeteWithNextForFloor === true)
-          ) {
-            const contextPriceResult = filterMapper.GetContextPrice(
-              parseFloat(secondLowestPrice!.unitPrice as unknown as string),
-              processOffset,
-              floorPrice,
-              parseFloat(productItem.percentageDown),
+          if (sortedPayload[nextIndex] != null) {
+            const secondLowestPrice = sortedPayload[nextIndex].priceBreaks.find(
+              (x: any) => x.minQty == 1 && x.active == true,
+            );
+            if (
+              secondLowestPrice &&
+              secondLowestPrice.unitPrice > floorPrice &&
+              (secondLowestPrice.unitPrice >= existingPrice ||
+                allowCompeteWithNextForFloor === true)
+            ) {
+              const contextPriceResult = filterMapper.GetContextPrice(
+                parseFloat(secondLowestPrice.unitPrice as unknown as string),
+                processOffset,
+                floorPrice,
+                parseFloat(productItem.percentageDown),
+                1,
+              );
+              repriceModel = new RepriceModel(
+                sourceId,
+                refProduct,
+                productItem.productName,
+                parseFloat(productItem.maxPrice),
+                true,
+                false,
+                [],
+                RepriceRenewedMessageEnum.PRICE_MAXED,
+              );
+            }
+            repriceModel.updateLowest(
+              _.first(sortedPayload)!.vendorName,
+              lowestPrice,
+            );
+            repriceModel.updateTriggeredBy(
+              sortedPayload[nextIndex].vendorName,
+              sortedPayload[nextIndex].vendorId,
               1,
             );
+          } else {
+            const model = new RepriceModel(
+              sourceId,
+              refProduct,
+              productItem.productName,
+              parseFloat(productItem.maxPrice),
+              true,
+              false,
+              [],
+              RepriceRenewedMessageEnum.PRICE_MAXED,
+            );
+            model.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
+            model.updateTriggeredBy(
+              _.first(sortedPayload)!.vendorName,
+              _.first(sortedPayload)!.vendorId,
+              1,
+            );
+            return model;
+          }
+        }
+        //1. If the Offset Price is greater than Floor Price
+        //2. If the Offset Price is less than Max Price
+        //SET: Offset Price
+        if (offsetPrice > floorPrice) {
+          if (offsetPrice < (maxPrice as unknown as number)) {
             repriceModel = new RepriceModel(
               sourceId,
               refProduct,
               productItem.productName,
-              contextPriceResult.Price,
+              offsetPrice,
               true,
               false,
               [],
-              filterMapper.AppendPriceFactorTag(
-                RepriceRenewedMessageEnum.PRICE_UP_SECOND_FLOOR_HIT,
+              await filterMapper.AppendPriceFactorTag(
+                RepriceRenewedMessageEnum.PRICE_UP_NEXT,
                 contextPriceResult.Type,
               ),
             );
+          } else {
+            repriceModel = new RepriceModel(
+              sourceId,
+              refProduct,
+              productItem.productName,
+              maxPrice,
+              true,
+              false,
+              [],
+              RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL,
+            );
           }
           repriceModel.updateTriggeredBy(
-            sortedPayload[nextIndex].vendorName,
-            sortedPayload[nextIndex].vendorId as unknown as string,
+            _.first(sortedPayload)!.vendorName,
+            _.first(sortedPayload)!.vendorId as unknown as string,
+            1,
           );
-        } else {
+        } else if (repriceModel.repriceDetails!.isRepriced !== true) {
           repriceModel = new RepriceModel(
             sourceId,
             refProduct,
@@ -538,36 +617,17 @@ export async function Reprice(
             false,
             false,
             [],
-            RepriceRenewedMessageEnum.IGNORE_OWN,
+            RepriceRenewedMessageEnum.OFFSET_LESS_THAN_FLOOR,
           );
+          repriceModel.repriceDetails!.goToPrice =
+            offsetPrice as unknown as string;
           repriceModel.updateTriggeredBy(
             _.first(sortedPayload)!.vendorName,
             _.first(sortedPayload)!.vendorId as unknown as string,
+            1,
           );
         }
-      }
-      //1. If the Offset Price is greater than Floor Price
-      //2. If the Offset Price is less than Max Price
-      //SET: Offset Price
-      if (offsetPrice > floorPrice) {
-        repriceModel = new RepriceModel(
-          sourceId,
-          refProduct,
-          productItem.productName,
-          offsetPrice,
-          true,
-          false,
-          [],
-          filterMapper.AppendPriceFactorTag(
-            RepriceRenewedMessageEnum.PRICE_UP_NEXT,
-            contextPriceResult.Type,
-          ),
-        );
-        repriceModel.updateTriggeredBy(
-          _.first(sortedPayload)!.vendorName,
-          _.first(sortedPayload)!.vendorId as unknown as string,
-        );
-      } else if (repriceModel.repriceDetails!.isRepriced !== true) {
+      } else {
         repriceModel = new RepriceModel(
           sourceId,
           refProduct,
@@ -576,52 +636,39 @@ export async function Reprice(
           false,
           false,
           [],
-          RepriceRenewedMessageEnum.OFFSET_LESS_THAN_FLOOR,
+          RepriceRenewedMessageEnum.DEFAULT,
         );
-        repriceModel.repriceDetails!.goToPrice =
-          offsetPrice as unknown as string;
         repriceModel.updateTriggeredBy(
           _.first(sortedPayload)!.vendorName,
           _.first(sortedPayload)!.vendorId as unknown as string,
+          1,
         );
       }
-    } else {
-      repriceModel = new RepriceModel(
-        sourceId,
-        refProduct,
-        productItem.productName,
-        existingPrice,
-        false,
-        false,
-        [],
-        RepriceRenewedMessageEnum.DEFAULT,
-      );
-      repriceModel.updateTriggeredBy(
+      repriceModel.updateLowest(
         _.first(sortedPayload)!.vendorName,
-        _.first(sortedPayload)!.vendorId as unknown as string,
+        lowestPrice,
       );
     }
-    repriceModel.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
-  }
 
-  if (isTieScenario === true) {
-    repriceModel.repriceDetails!.explained =
-      repriceModel.repriceDetails!.explained + "#TIE";
-  }
+    if (isTieScenario === true) {
+      repriceModel.repriceDetails!.explained =
+        repriceModel.repriceDetails!.explained + "#TIE";
+    }
 
-  // For Applying Badge Percentage Scenario
-  if (
-    _.isEqual(productItem.badgeIndicator, "ALL_PERCENTAGE") &&
-    productItem.badgePercentage > 0
-  ) {
-    repriceModel = await badgeHelper.ReCalculatePrice(
-      repriceModel,
-      productItem,
-      eligibleList,
-      1,
-    );
+    // For Applying Badge Percentage Scenario
+    if (
+      _.isEqual(productItem.badgeIndicator, "ALL_PERCENTAGE") &&
+      productItem.badgePercentage > 0
+    ) {
+      repriceModel = await badgeHelper.ReCalculatePrice(
+        repriceModel,
+        productItem,
+        eligibleList,
+        1,
+      );
+    }
+    return repriceModel;
   }
-  return repriceModel;
 }
 
 export async function RepriceIndividualPriceBreak(
@@ -655,6 +702,7 @@ export async function RepriceIndividualPriceBreak(
     productItem.competeAll === true ? [] : $.EXCLUDED_VENDOR_ID.split(";");
   const allowCompeteWithNextForFloor = productItem.competeWithNext;
   let eligibleList: Net32Product[] = [];
+  let rawDataForSisterCheck = [];
   // Get eligible List of Products where minQty is equal to minQty of the parameter
   payload.forEach((element) => {
     if (element.priceBreaks) {
@@ -747,17 +795,6 @@ export async function RepriceIndividualPriceBreak(
     }
   }
 
-  //Remove Sister Vendor if Both UP & DOWN selected or Compete with Next is true
-  if (
-    allowCompeteWithNextForFloor === true ||
-    productItem.repricingRule === 2
-  ) {
-    sortedPayload = await filterMapper.FilterBasedOnParams(
-      sortedPayload,
-      productItem,
-      "SISTER_VENDOR_EXCLUSION",
-    );
-  }
   //Set the Lowest Price
   _.first(sortedPayload)!.priceBreaks.forEach((price) => {
     if (price.minQty == priceBreak.minQty && price.active == true) {
@@ -785,6 +822,7 @@ export async function RepriceIndividualPriceBreak(
       repriceModel.updateTriggeredBy(
         _.first(sortedPayload)!.vendorName,
         _.first(sortedPayload)!.vendorId as unknown as string,
+        priceBreak.minQty,
       );
       return repriceModel;
     }
@@ -792,6 +830,18 @@ export async function RepriceIndividualPriceBreak(
   //If the Lowest Price is of Self-Vendor
   if (_.first(sortedPayload)!.vendorId == $.VENDOR_ID) {
     // if next in list is in Excluded Vendor, go to next
+    //Remove Sister Vendor if Both UP & DOWN selected or Compete with Next is true
+    if (
+      allowCompeteWithNextForFloor === true ||
+      productItem.repricingRule === 2
+    ) {
+      rawDataForSisterCheck = _.cloneDeep(sortedPayload);
+      sortedPayload = await filterMapper.FilterBasedOnParams(
+        sortedPayload,
+        productItem,
+        "SISTER_VENDOR_EXCLUSION",
+      );
+    }
     let nextIndex = 1;
     if (
       sortedPayload[nextIndex] &&
@@ -897,6 +947,7 @@ export async function RepriceIndividualPriceBreak(
       repriceModel.updateTriggeredBy(
         sortedPayload[nextIndex].vendorName,
         sortedPayload[nextIndex].vendorId as unknown as string,
+        priceBreak,
       );
     } else {
       repriceModel.repriceDetails!.newPrice = productItem.maxPrice
@@ -908,6 +959,7 @@ export async function RepriceIndividualPriceBreak(
       repriceModel.updateTriggeredBy(
         _.first(sortedPayload)!.vendorName,
         _.first(sortedPayload)!.vendorId as unknown as string,
+        priceBreak,
       );
     }
     repriceModel.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
@@ -936,8 +988,22 @@ export async function RepriceIndividualPriceBreak(
       repriceModel.updateTriggeredBy(
         _.first(sortedPayload)!.vendorName,
         _.first(sortedPayload)!.vendorId as unknown as string,
+        priceBreak.minQty,
       );
       return repriceModel;
+    }
+
+    //Remove Sister Vendor if Both UP & DOWN selected or Compete with Next is true
+    if (
+      allowCompeteWithNextForFloor === true ||
+      productItem.repricingRule === 2
+    ) {
+      rawDataForSisterCheck = _.cloneDeep(sortedPayload);
+      sortedPayload = await filterMapper.FilterBasedOnParams(
+        sortedPayload,
+        productItem,
+        "SISTER_VENDOR_EXCLUSION",
+      );
     }
 
     // Check the Lowest Price
@@ -1058,6 +1124,7 @@ export async function RepriceIndividualPriceBreak(
           repriceModel.updateTriggeredBy(
             sortedPayload[nextIndex].vendorName,
             sortedPayload[nextIndex].vendorId as unknown as string,
+            priceBreak.minQty,
           );
         } else {
           if (priceBreak.minQty != 1) {
@@ -1066,7 +1133,9 @@ export async function RepriceIndividualPriceBreak(
             repriceModel.repriceDetails!.active = 0 as unknown as boolean;
             repriceModel.repriceDetails!.explained =
               RepriceRenewedMessageEnum.SHUT_DOWN_FLOOR_REACHED;
-          } else {
+          } else if (
+            productItem.maxPrice != (existingPrice as unknown as string)
+          ) {
             repriceModel.repriceDetails!.newPrice = productItem.maxPrice
               ? productItem.maxPrice
               : "N/A";
@@ -1077,6 +1146,7 @@ export async function RepriceIndividualPriceBreak(
           repriceModel.updateTriggeredBy(
             _.first(sortedPayload)!.vendorName,
             _.first(sortedPayload)!.vendorId as unknown as string,
+            priceBreak.minQty,
           );
         }
       }
@@ -1091,9 +1161,21 @@ export async function RepriceIndividualPriceBreak(
         repriceModel.repriceDetails!.isRepriced = true;
         repriceModel.repriceDetails!.explained =
           RepriceRenewedMessageEnum.REPRICE_DEFAULT;
+        if (offsetPrice < (maxPrice as unknown as number)) {
+          repriceModel.repriceDetails!.newPrice = offsetPrice.toFixed(2);
+          repriceModel.repriceDetails!.isRepriced = true;
+          repriceModel.repriceDetails!.explained =
+            RepriceRenewedMessageEnum.REPRICE_DEFAULT;
+        } else {
+          repriceModel.repriceDetails!.newPrice = maxPrice;
+          repriceModel.repriceDetails!.isRepriced = true;
+          repriceModel.repriceDetails!.explained =
+            RepriceRenewedMessageEnum.PRICE_MAXED;
+        }
         repriceModel.updateTriggeredBy(
           _.first(sortedPayload)!.vendorName,
           _.first(sortedPayload)!.vendorId as unknown as string,
+          priceBreak.minQty,
         );
       } else if (offsetPrice <= floorPrice) {
         repriceModel.repriceDetails!.goToPrice =
@@ -1105,6 +1187,7 @@ export async function RepriceIndividualPriceBreak(
         repriceModel.updateTriggeredBy(
           _.first(sortedPayload)!.vendorName,
           _.first(sortedPayload)!.vendorId as unknown as string,
+          priceBreak.minQty,
         );
       }
 
