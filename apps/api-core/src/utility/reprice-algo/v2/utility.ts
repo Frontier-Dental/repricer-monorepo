@@ -1,6 +1,7 @@
 import { VendorId, VendorName } from "@repricer-monorepo/shared";
 import { ProductDetailsListItem } from "../../mysql/mySql-mapper";
 import { AlgoResult } from "./types";
+import { Net32PriceBreak } from "../../../types/net32";
 
 export function getAllOwnVendorNames() {
   return [
@@ -11,6 +12,16 @@ export function getAllOwnVendorNames() {
     { name: VendorName.FIRSTDENT },
     { name: VendorName.TRIAD },
   ];
+}
+
+export function isShortExpiryProduct(
+  priceBreaks: Net32PriceBreak[],
+  quantity: number,
+) {
+  const priceBreakForQuantity = priceBreaks.find(
+    (pb) => pb.minQty === quantity,
+  );
+  return priceBreakForQuantity?.promoAddlDescr?.includes("EXP");
 }
 
 export function isChangeResult(result: AlgoResult) {

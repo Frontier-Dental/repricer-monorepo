@@ -27,6 +27,7 @@ import {
   Net32AlgoProductWrapperWithBuyBoxRank,
   QbreakInvalidReason,
 } from "./types";
+import { isShortExpiryProduct } from "./utility";
 
 export interface QuantitySolution {
   quantity: number;
@@ -421,6 +422,16 @@ function getSolutionResult(
     };
   }
 
+  if (isShortExpiryProduct(solution.vendor.priceBreaks, solution.quantity)) {
+    return {
+      algoResult: AlgoResult.IGNORE_SHORT_EXPIRY,
+      suggestedPrice: suggestedPrice.toNumber(),
+      comment: "Short expiry product.",
+      triggeredByVendor: null,
+      rawTriggeredByVendor: solution.rawTriggeredByVendor,
+    };
+  }
+
   // Check if a sister is already in the buy box position
   // from the perspective of this vendor.
   const sisterInBuyBox = solution.everyoneIncludingOwnVendorBefore.find(
@@ -641,6 +652,7 @@ function getOptimalSolutionForBoard(
       ...(vendorSetting.compete_with_all_vendors ? sisterVendors : []),
     ],
     vendorSetting,
+    quantity,
   );
 
   const competitorsRanked = getProductsSortedWithRank(
@@ -650,7 +662,11 @@ function getOptimalSolutionForBoard(
   );
 
   const everyoneFromViewOfOwnVendor = getProductsSortedWithRank(
-    applyCompetitionFilters([...competitors, ...sisterVendors], vendorSetting),
+    applyCompetitionFilters(
+      [...competitors, ...sisterVendors],
+      vendorSetting,
+      quantity,
+    ),
     quantity,
     vendorSetting.price_strategy,
   );
@@ -660,6 +676,7 @@ function getOptimalSolutionForBoard(
       ...applyCompetitionFilters(
         [...competitors, ...sisterVendors],
         vendorSetting,
+        quantity,
       ),
       ownVendor,
     ],

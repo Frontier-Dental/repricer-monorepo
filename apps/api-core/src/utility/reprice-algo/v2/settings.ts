@@ -10,7 +10,7 @@ import {
   QuantitySolution,
 } from "./algorithm";
 import { AlgoResult, Net32AlgoProduct } from "./types";
-import { isChangeResult } from "./utility";
+import { isChangeResult, isShortExpiryProduct } from "./utility";
 import {
   AlgoBadgeIndicator,
   AlgoHandlingTimeGroup,
@@ -20,13 +20,25 @@ import {
 export function applyCompetitionFilters(
   products: Net32AlgoProduct[],
   ourVendorSettings: V2AlgoSettingsData,
+  quantity?: number,
 ) {
   return flow(
     (products) => applyVendorExclusionFilter(products, ourVendorSettings),
     (products) => applyMinQuantityFilter(products, ourVendorSettings),
     (products) => applyHandlingTimeGroup(products, ourVendorSettings),
     (products) => applyBadgeIndicatorFilter(products, ourVendorSettings),
+    (products) => applyShortExpiryFilter(products, quantity),
   )(products);
+}
+
+export function applyShortExpiryFilter(
+  products: Net32AlgoProduct[],
+  quantity?: number,
+) {
+  if (quantity === undefined) {
+    return products;
+  }
+  return products.filter((c) => !isShortExpiryProduct(c.priceBreaks, quantity));
 }
 
 export function applyBadgeIndicatorFilter(
