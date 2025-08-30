@@ -54,6 +54,7 @@ async function executeScrapeLogic(
   const ownVendorListEnv = applicationConfig.OWN_VENDOR_LIST || "";
   const ownVendorList = ownVendorListEnv.split(";");
   const runInfoResult = await mySqlHelper.InsertRunInfo(runInfo);
+  let productCounter = 0;
   if (runInfoResult && (runInfoResult as any).insertId) {
     for (let prod of productList) {
       console.log(`SCRAPE-ONLY : Scraping started for ${prod.MpId}`);
@@ -167,7 +168,7 @@ async function executeScrapeLogic(
             const productInfo = new ProductInfo(
               prod.MpId,
               resp,
-              runInfoResult.insertId,
+              (runInfoResult as any).insertId,
               index + 1,
               isOwnVendor,
             );
@@ -198,7 +199,7 @@ async function executeScrapeLogic(
       await mySqlHelper.UpdateRunInfo(
         runInfo.GetCompletedProductCountQuery(
           productCounter,
-          runInfoResult.insertId,
+          (runInfoResult as any).insertId,
         ),
       );
       productCounter++;
@@ -300,6 +301,9 @@ async function GetHistoryModel(
         otherVendorList: "N/A",
         contextCronName: "SCRAPE-ONLY",
         apiResponse: apiResponse,
+        triggeredByVendor: null,
+        repriceResult: null, // Merging with repricer-api-core - is this correct?
+        getOtherVendorList: () => "N/A", // Merging with repricer-api-core - is this correct?
       };
       listOfHistory.push(
         new HistoryModel(
