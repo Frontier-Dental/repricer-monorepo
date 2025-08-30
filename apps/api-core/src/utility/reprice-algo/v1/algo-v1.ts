@@ -26,9 +26,9 @@ import {
   notQ2VsQ1,
 } from "./shared";
 import { AlgoExecutionMode } from "@repricer-monorepo/shared";
-import * as ResultParser from "../utility/repriceResultParser";
-import * as filterMapper from "../utility/filterMapper";
-import * as buyBoxHelper from "../utility/buyBoxHelper";
+import * as ResultParser from "../../../utility/repriceResultParser";
+import * as filterMapper from "../../../utility/filter-mapper";
+import * as buyBoxHelper from "../../../utility/buy-box-helper";
 
 export async function repriceProduct(
   mpid: string,
@@ -368,7 +368,7 @@ export async function repriceProduct(
   //Apply Badge BuyBox Rule
   if (
     productItem.getBBBadge === true &&
-    repriceResult.listOfRepriceDetails.length === 0
+    repriceResult?.listOfRepriceDetails.length === 0
   ) {
     repriceResult = await buyBoxHelper.parseBadgeBuyBox(
       repriceResult,
@@ -380,7 +380,7 @@ export async function repriceProduct(
   //Apply Shipping BuyBox Rule
   if (
     productItem.getBBShipping === true &&
-    repriceResult.listOfRepriceDetails.length === 0
+    repriceResult?.listOfRepriceDetails.length === 0
   ) {
     repriceResult = await buyBoxHelper.parseShippingBuyBox(
       repriceResult,
@@ -392,7 +392,7 @@ export async function repriceProduct(
   //Apply Badge BuyBox Rule
   if (
     productItem.getBBBadge === true &&
-    repriceResult.listOfRepriceDetails.length === 0
+    repriceResult?.listOfRepriceDetails.length === 0
   ) {
     repriceResult = await buyBoxHelper.parseBadgeBuyBox(
       repriceResult,
@@ -428,7 +428,7 @@ export async function repriceProduct(
   const repriceResultStatus = await ResultParser.Parse(repriceResult);
   await mySqlHelper.UpdateRepriceResultStatus(
     repriceResultStatus,
-    req.params.id,
+    mpid,
     contextVendor,
   );
 
@@ -453,7 +453,7 @@ export async function repriceProduct(
   // Reprice is needed
 
   const isWaitingForNextRun = await filterMapper.IsWaitingForNextRun(
-    req.params.id,
+    mpid,
     contextVendor,
     productItem,
   );
@@ -468,10 +468,15 @@ export async function repriceProduct(
       (x: any) => x.vendor === contextVendor.toUpperCase(),
     )?.priceUpdateUrl;
     let priceUpdatedResponse = null;
-    if (repriceResult.isMultiplePriceBreakAvailable !== true) {
+
+    const priceChangeAllowed =
+      productItem.algo_execution_mode === AlgoExecutionMode.V1_ONLY ||
+      productItem.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY;
+
+    if (repriceResult?.isMultiplePriceBreakAvailable !== true) {
       priceUpdatedRequest.payload = new UpdateRequest(
-        req.params.id,
-        repriceResult.repriceDetails.newPrice,
+        mpid,
+        repriceResult?.repriceDetails?.newPrice,
         1,
         productItem.cronName,
       );
@@ -492,7 +497,7 @@ export async function repriceProduct(
       }
     } else {
       priceUpdatedRequest.payload = new UpdateRequest(
-        req.params.id,
+        mpid,
         0,
         1,
         productItem.cronName,
@@ -574,7 +579,7 @@ export async function repriceProduct(
           outputResponse.repriceData.listOfRepriceDetails
         ) {
           for (let $lp of outputResponse.repriceData.listOfRepriceDetails) {
-            if ($lp.explained.indexOf("#NEW") < 0) {
+            if ($lp.explained && $lp.explained.indexOf("#NEW") < 0) {
               const priceStepValue = await getPriceStepValue($lp);
               $lp.explained = `${$lp.explained} | ${priceStepValue}`;
             }
@@ -585,6 +590,7 @@ export async function repriceProduct(
           outputResponse.repriceData.repriceDetails
         ) {
           if (
+            outputResponse.repriceData.repriceDetails.explained &&
             outputResponse.repriceData.repriceDetails.explained.indexOf(
               "#NEW",
             ) < 0
@@ -599,19 +605,20 @@ export async function repriceProduct(
     }
 
     const repriceResultStatus = await ResultParser.Parse(repriceResult);
+
     await mySqlHelper.UpdateRepriceResultStatus(
       repriceResultStatus,
-      req.params.id,
+      mpid,
       contextVendor,
     );
+
+    return {
+      cronResponse: outputResponse,
+      priceUpdateResponse: priceUpdatedResponse?.data,
+      historyIdentifier: historyIdentifier,
+    };
   } else {
     repriceResult =
       await Rule.OverrideRepriceResultForExpressCron(repriceResult);
   }
-
-  return {
-    cronResponse: outputResponse,
-    priceUpdateResponse: priceUpdatedResponse.data,
-    historyIdentifier: historyIdentifier,
-  };
 }

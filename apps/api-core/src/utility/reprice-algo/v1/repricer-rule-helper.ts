@@ -653,7 +653,7 @@ export async function ApplyRepriceDownBadgeCheckRule(
 }
 
 export async function ApplySisterComparisonCheck(
-  repriceResult: RepriceModel,
+  repriceResult: any,
   net32Result: Net32Product[],
   productItem: FrontierProduct,
 ): Promise<RepriceModel> {

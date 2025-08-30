@@ -72,4 +72,6 @@ export interface FrontierProduct {
   contextCronName: string;
   contextMinQty?: number;
   algo_execution_mode?: AlgoExecutionMode;
+  getBBShipping?: any;
+  getBBBadge?: any;
 }
