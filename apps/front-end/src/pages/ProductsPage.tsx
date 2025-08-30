@@ -632,7 +632,7 @@ export function ProductsPage() {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="container mx-auto py-10 px-4 max-w-[95vw]">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">
           Products with Algorithm Data
@@ -682,12 +682,14 @@ export function ProductsPage() {
         </div>
       </div>
       <DataTableToolbar table={table} />
-      <DataTable
-        columns={columns}
-        data={data}
-        isLoading={isLoading}
-        table={table}
-      />
+      <div className="w-full overflow-x-auto">
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={isLoading}
+          table={table}
+        />
+      </div>
       {error && (
         <div className="mt-4 rounded-md bg-red-50 p-4">
           <div className="flex">

@@ -114,7 +114,11 @@ export function repriceProductV2(
     .filter((p) => ownVendorIds.includes(p.vendorId))
     .filter((p) =>
       availableInternalProducts.find((vp) => vp.ownVendorId === p.vendorId),
-    );
+    )
+    .filter((p) => {
+      const setting = vendorSettings.find((v) => v.vendor_id === p.vendorId);
+      return setting?.enabled;
+    });
 
   const availableVendorIds = ourAvailableVendorProducts.map((v) => v.vendorId);
 

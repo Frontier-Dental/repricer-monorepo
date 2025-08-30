@@ -33,6 +33,7 @@ export interface V2AlgoSettingsData {
   floor_compete_with_next: boolean;
   own_vendor_threshold: number;
   price_strategy: AlgoPriceStrategy;
+  enabled: boolean;
 }
 
 export async function findV2AlgoSettings(
@@ -80,6 +81,7 @@ export async function createV2AlgoSettings(
     floor_compete_with_next: false,
     own_vendor_threshold: 1,
     price_strategy: AlgoPriceStrategy.UNIT,
+    enabled: true,
   };
 
   const [insertId] = await knex("v2_algo_settings").insert(defaultSettings);

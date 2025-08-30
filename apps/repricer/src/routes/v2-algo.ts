@@ -1,7 +1,6 @@
 import express from "express";
 import { authMiddleware } from "../middleware/auth-middleware";
 import {
-  getAllProducts,
   getAlgoResultsWithExecution,
   getV2AlgoSettings,
   updateV2AlgoSettings,
@@ -18,7 +17,6 @@ export const v2AlgoRouter = express.Router();
 
 v2AlgoRouter.use(authMiddleware);
 
-v2AlgoRouter.get("/get_all_products_for_cron", getAllProducts);
 v2AlgoRouter.get(
   "/get_algo_results_with_execution/:mpId",
   getAlgoResultsWithExecution,

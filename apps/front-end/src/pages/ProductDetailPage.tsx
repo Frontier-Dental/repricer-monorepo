@@ -804,12 +804,7 @@ export function ProductDetailPage() {
         </div>
       </div>
 
-      <Tabs
-        defaultValue={Object.values(VendorId)
-          .filter((x) => typeof x === "number")[0]
-          .toString()}
-        className="w-full"
-      >
+      <Tabs defaultValue="" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           {Object.values(VendorId)
             .filter((x) => typeof x === "number")
@@ -836,6 +831,23 @@ export function ProductDetailPage() {
               );
             })}
         </TabsList>
+
+        {/* Default tab content when no vendor is selected */}
+        <TabsContent value="" className="mt-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Select a Vendor
+                </h3>
+                <p className="text-gray-600">
+                  Choose a vendor from the tabs above to view and configure
+                  their algorithm settings.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {Object.values(VendorId).map((vendorId) => {
           const vendorIdNumber = Number(vendorId);

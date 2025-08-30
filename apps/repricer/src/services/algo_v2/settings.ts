@@ -152,6 +152,11 @@ export async function syncVendorSettingsForMpId(
       vendorId: 17357,
       vendorName: "Tradent",
     },
+    {
+      tableName: "table_triadDetails",
+      vendorId: 5,
+      vendorName: "Triad",
+    },
   ];
 
   let totalInserted = 0;
@@ -165,6 +170,7 @@ export async function syncVendorSettingsForMpId(
 
   // Process each vendor in parallel
   const syncPromises = vendorConfigs.map(async (vendorConfig) => {
+    console.log("vendorConfig", vendorConfig);
     try {
       // Check if vendor table exists
       const vendorTableExists = await knex.schema.hasTable(
@@ -183,6 +189,8 @@ export async function syncVendorSettingsForMpId(
       const vendorSettings = await knex(vendorConfig.tableName)
         .where("MpId", mpId)
         .select("*");
+
+      // console.log("vendorSettings", vendorSettings);
 
       if (vendorSettings.length === 0) {
         return {
