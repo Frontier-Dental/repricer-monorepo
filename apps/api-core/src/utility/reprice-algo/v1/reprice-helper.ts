@@ -41,7 +41,7 @@ export async function Reprice(
   let excludedVendors =
     productItem.competeAll == true ? [] : $.EXCLUDED_VENDOR_ID.split(";");
   const allowCompeteWithNextForFloor = productItem.competeWithNext;
-  let rawDataForSisterCheck = [];
+  let rawDataForSisterCheck: any = [];
 
   let eligibleList: Net32Product[] = [];
   // Get eligible List of Products where minQty is 1
@@ -517,13 +517,13 @@ export async function Reprice(
             ) {
               nextIndex++;
             } else if (
-              filterMapper.IsVendorFloorPrice(
+              (await filterMapper.IsVendorFloorPrice(
                 sortedPayload[i].priceBreaks,
                 1,
                 floorPrice,
                 0,
                 false,
-              ) == true
+              )) == true
             ) {
               nextIndex++;
             } else {
@@ -716,7 +716,7 @@ export async function RepriceIndividualPriceBreak(
     productItem.competeAll === true ? [] : $.EXCLUDED_VENDOR_ID.split(";");
   const allowCompeteWithNextForFloor = productItem.competeWithNext;
   let eligibleList: Net32Product[] = [];
-  let rawDataForSisterCheck = [];
+  let rawDataForSisterCheck: any = [];
   // Get eligible List of Products where minQty is equal to minQty of the parameter
   payload.forEach((element) => {
     if (element.priceBreaks) {
@@ -871,13 +871,13 @@ export async function RepriceIndividualPriceBreak(
       ) {
         nextIndex++;
       } else if (
-        filterMapper.IsVendorFloorPrice(
+        (await filterMapper.IsVendorFloorPrice(
           sortedPayload[i].priceBreaks,
           priceBreak.minQty,
           floorPrice,
           0,
           false,
-        ) == true
+        )) == true
       ) {
         nextIndex++;
       } else {
@@ -1063,13 +1063,13 @@ export async function RepriceIndividualPriceBreak(
           ) {
             nextIndex++;
           } else if (
-            filterMapper.IsVendorFloorPrice(
+            (await filterMapper.IsVendorFloorPrice(
               sortedPayload[i].priceBreaks,
               priceBreak.minQty,
               floorPrice,
               0,
               false,
-            ) == true
+            )) == true
           ) {
             nextIndex++;
           } else {
@@ -1146,7 +1146,7 @@ export async function RepriceIndividualPriceBreak(
           );
         } else {
           if (priceBreak.minQty != 1) {
-            repriceModel.repriceDetails.newPrice = existingPrice;
+            repriceModel.repriceDetails!.newPrice = existingPrice;
             repriceModel.repriceDetails!.isRepriced = true;
             repriceModel.repriceDetails!.active = 0 as unknown as boolean;
             repriceModel.repriceDetails!.explained =
@@ -1197,7 +1197,7 @@ export async function RepriceIndividualPriceBreak(
         );
       } else if (
         offsetPrice <= floorPrice &&
-        repriceModel.repriceDetails.isRepriced !== true
+        repriceModel.repriceDetails!.isRepriced !== true
       ) {
         repriceModel.repriceDetails!.goToPrice =
           offsetPrice as unknown as string;
