@@ -274,7 +274,7 @@ export function AppendPriceFactorTag(strValue: string, objType: string) {
   else return strValue;
 }
 
-export async function isVendorFloorPrice(
+export async function IsVendorFloorPrice(
   priceBreakList: any,
   minQty: any,
   floorPrice: any,

@@ -187,13 +187,13 @@ export async function Reprice(
       ) {
         nextIndex++;
       } else if (
-        filterMapper.isVendorFloorPrice(
+        (await filterMapper.IsVendorFloorPrice(
           sortedPayload[i].priceBreaks,
           1,
           floorPrice,
           GetShippingPrice(sortedPayload[i]),
           true,
-        ) == true
+        )) == true
       ) {
         nextIndex++;
       } else {
@@ -362,13 +362,13 @@ export async function Reprice(
               nextIndex++;
             } else if (
               sortedPayload[i] &&
-              filterMapper.IsVendorFloorPrice(
+              (await filterMapper.IsVendorFloorPrice(
                 sortedPayload[i].priceBreaks,
                 1,
                 floorPrice,
                 GetShippingPrice(sortedPayload[i]),
                 true,
-              ) === true
+              )) === true
             ) {
               nextIndex++;
             } else {
@@ -499,13 +499,13 @@ export async function Reprice(
             ) {
               nextIndex++;
             } else if (
-              filterMapper.IsVendorFloorPrice(
+              (await filterMapper.IsVendorFloorPrice(
                 sortedPayload[i].priceBreaks,
                 1,
                 floorPrice,
                 GetShippingPrice(sortedPayload[i]),
                 true,
-              ) == true
+              )) == true
             ) {
               nextIndex++;
             } else {
@@ -1000,13 +1000,13 @@ export async function RepriceIndividualPriceBreak(
       ) {
         nextIndex++;
       } else if (
-        filterMapper.IsVendorFloorPrice(
+        (await filterMapper.IsVendorFloorPrice(
           sortedPayload[i].priceBreaks,
           priceBreak.minQty,
           floorPrice,
           GetShippingPrice(sortedPayload[i]),
           true,
-        ) == true
+        )) == true
       ) {
         nextIndex++;
       } else {
@@ -1202,13 +1202,13 @@ export async function RepriceIndividualPriceBreak(
             ) {
               nextIndex++;
             } else if (
-              filterMapper.IsVendorFloorPrice(
+              (await filterMapper.IsVendorFloorPrice(
                 sortedPayload[i].priceBreaks,
                 priceBreak.minQty,
                 floorPrice,
                 GetShippingPrice(sortedPayload[i]),
                 true,
-              ) == true
+              )) == true
             ) {
               nextIndex++;
             } else {
@@ -1283,13 +1283,13 @@ export async function RepriceIndividualPriceBreak(
             ) {
               nextIndex++;
             } else if (
-              filterMapper.IsVendorFloorPrice(
+              (await filterMapper.IsVendorFloorPrice(
                 sortedPayload[i].priceBreaks,
                 priceBreak.minQty,
                 floorPrice,
                 GetShippingPrice(sortedPayload[i]),
                 true,
-              ) == true
+              )) == true
             ) {
               nextIndex++;
             } else {
