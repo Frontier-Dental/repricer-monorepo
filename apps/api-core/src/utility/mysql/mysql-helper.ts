@@ -224,8 +224,7 @@ export async function GetItemListById(mpId: string | number) {
   ]);
   // .whereNotNull("ChannelName");
 
-  const productList = (result as any)[0] as FullProductDetailsV2;
-  return _.first(MapProductDetailsList([productList]));
+  return _.first(MapProductDetailsList(result));
 }
 
 export async function UpdateProductAsync(

@@ -109,9 +109,15 @@ function transformVendorSettings(
     compare_q2_with_q1: setting.CompareWithQ1 === 1,
     compete_with_all_vendors: setting.CompeteAll === 1,
     reprice_up_badge_percentage: setting.BadgePercentage || -1,
-    sister_vendor_ids: setting.SisterVendorId || "",
-    exclude_vendors: setting.ExcludedVendors || "",
-    inactive_vendor_id: setting.InactiveVendorId || "",
+    sister_vendor_ids: setting.SisterVendorId
+      ? setting.SisterVendorId.split(";").join(",")
+      : "",
+    exclude_vendors: setting.ExcludedVendors
+      ? setting.ExcludedVendors.split(";").join(",")
+      : "",
+    inactive_vendor_id: setting.InactiveVendorId
+      ? setting.InactiveVendorId.split(";").join(",")
+      : "",
     handling_time_group: setting.HandlingTimeFilter || "",
     keep_position: setting.KeepPosition === 1,
     inventory_competition_threshold: setting.InventoryThreshold || 1,

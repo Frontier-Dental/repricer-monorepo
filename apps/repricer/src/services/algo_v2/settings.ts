@@ -170,7 +170,6 @@ export async function syncVendorSettingsForMpId(
 
   // Process each vendor in parallel
   const syncPromises = vendorConfigs.map(async (vendorConfig) => {
-    console.log("vendorConfig", vendorConfig);
     try {
       // Check if vendor table exists
       const vendorTableExists = await knex.schema.hasTable(
@@ -189,8 +188,6 @@ export async function syncVendorSettingsForMpId(
       const vendorSettings = await knex(vendorConfig.tableName)
         .where("MpId", mpId)
         .select("*");
-
-      // console.log("vendorSettings", vendorSettings);
 
       if (vendorSettings.length === 0) {
         return {
@@ -222,9 +219,15 @@ export async function syncVendorSettingsForMpId(
         compare_q2_with_q1: setting.CompareWithQ1 === 1,
         compete_with_all_vendors: setting.CompeteAll === 1,
         reprice_up_badge_percentage: setting.BadgePercentage || -1,
-        sister_vendor_ids: setting.SisterVendorId || "",
-        exclude_vendors: setting.ExcludedVendors || "",
-        inactive_vendor_id: setting.InactiveVendorId || "",
+        sister_vendor_ids: setting.SisterVendorId
+          ? setting.SisterVendorId.split(";").join(",")
+          : "",
+        exclude_vendors: setting.ExcludedVendors
+          ? setting.ExcludedVendors.split(";").join(",")
+          : "",
+        inactive_vendor_id: setting.InactiveVendorId
+          ? setting.InactiveVendorId.split(";").join(",")
+          : "",
         handling_time_group: setting.HandlingTimeFilter || "ALL",
         keep_position: setting.KeepPosition === 1,
         inventory_competition_threshold: setting.InventoryThreshold || 1,
@@ -524,9 +527,15 @@ function transformVendorSettings(vendorSettings: any[], vendorConfig: any) {
     compare_q2_with_q1: setting.CompareWithQ1 === 1,
     compete_with_all_vendors: setting.CompeteAll === 1,
     reprice_up_badge_percentage: setting.BadgePercentage || -1,
-    sister_vendor_ids: setting.SisterVendorId || "",
-    exclude_vendors: setting.ExcludedVendors || "",
-    inactive_vendor_id: setting.InactiveVendorId || "",
+    sister_vendor_ids: setting.SisterVendorId
+      ? setting.SisterVendorId.split(";").join(",")
+      : "",
+    exclude_vendors: setting.ExcludedVendors
+      ? setting.ExcludedVendors.split(";").join(",")
+      : "",
+    inactive_vendor_id: setting.InactiveVendorId
+      ? setting.InactiveVendorId.split(";").join(",")
+      : "",
     handling_time_group:
       setting.HandlingTimeFilter || AlgoHandlingTimeGroup.ALL,
     keep_position: setting.KeepPosition === 1,
