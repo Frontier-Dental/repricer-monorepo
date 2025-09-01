@@ -406,6 +406,7 @@ export async function getAllProductsWithAlgoData(): Promise<any[]> {
       "spl.RegularCronName as cron_name",
       "spl.SlowCronName as slow_cron_name",
       "spl.algo_execution_mode",
+      "spl.IsActive product_active",
       // Latest successful algo results fields (if they exist)
       "latest_updated_result.cron_name as last_updated_cron_name",
       "latest_updated_result.created_at as last_updated_at",

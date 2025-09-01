@@ -28,20 +28,6 @@ import {
   ColumnPinningState,
 } from "@tanstack/react-table";
 
-// Utility to format "ago" time
-function timeAgo(date: Date | string | number) {
-  const now = new Date();
-  const then = new Date(date);
-  const seconds = Math.floor((now.getTime() - then.getTime()) / 1000);
-  if (seconds < 60) return `${seconds} seconds ago`;
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : ""} ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
-  const days = Math.floor(hours / 24);
-  return `${days} day${days === 1 ? "" : "s"} ago`;
-}
-
 // Action button component
 function ActionButton({
   productId,
@@ -95,20 +81,20 @@ function ActionButton({
         variant="ghost"
         size="sm"
         onClick={handleView}
-        className="cursor-pointer"
+        className="cursor-pointer h-7 w-7 p-0"
         title="View product details in new tab"
       >
-        <Eye className="h-4 w-4" />
+        <Eye className="h-3 w-3" />
       </Button>
       {net32Url && (
         <Button
           variant="ghost"
           size="sm"
           onClick={handleOpenNet32}
-          className="cursor-pointer"
+          className="cursor-pointer h-7 w-7 p-0"
           title="Open Net32 URL in new tab"
         >
-          <Globe className="h-4 w-4" />
+          <Globe className="h-3 w-3" />
         </Button>
       )}
       <Button
@@ -116,10 +102,10 @@ function ActionButton({
         size="sm"
         onClick={handleRemoveFrom422}
         disabled={isRemovingFrom422 || !net32Url}
-        className="cursor-pointer"
+        className="cursor-pointer h-7 w-7 p-0"
         title="Remove product from 422"
       >
-        <Bell className="h-4 w-4" />
+        <Bell className="h-3 w-3" />
       </Button>
     </div>
   );
@@ -174,7 +160,7 @@ function AlgoExecutionModeSelect({
   return (
     <div className="flex items-center space-x-2">
       <Select value={value} onValueChange={handleChange} disabled={isUpdating}>
-        <SelectTrigger className="w-[180px]">
+        <SelectTrigger className="w-[120px] h-7 text-xs">
           <SelectValue placeholder="Select mode" />
         </SelectTrigger>
         <SelectContent>
@@ -233,6 +219,7 @@ export function ProductsPage() {
     {
       id: "actions",
       header: "",
+      size: 80,
       cell: ({ row }) => {
         const mpId = row.getValue("mp_id") as number;
         const net32Url = row.getValue("net32_url") as string | null;
@@ -246,23 +233,34 @@ export function ProductsPage() {
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 text-xs"
           >
-            Channel Name
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            Channel
+            <ArrowUpDown className="ml-1 h-3 w-3" />
           </Button>
         );
       },
+      size: 100,
       cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("channel_name")}</div>
+        <div
+          className="font-medium text-xs truncate"
+          title={row.getValue("channel_name") as string}
+        >
+          {row.getValue("channel_name")}
+        </div>
       ),
     },
     {
       accessorKey: "enabled",
       header: "Enabled",
+      size: 70,
       cell: ({ row }) => {
         const enabled = row.getValue("enabled") as number;
         return (
-          <Badge variant={enabled === 1 ? "default" : "secondary"}>
+          <Badge
+            variant={enabled === 1 ? "default" : "secondary"}
+            className="text-xs px-1 py-0"
+          >
             {enabled === 1 ? "Yes" : "No"}
           </Badge>
         );
@@ -275,14 +273,16 @@ export function ProductsPage() {
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 text-xs"
           >
             MP ID
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            <ArrowUpDown className="ml-1 h-3 w-3" />
           </Button>
         );
       },
+      size: 80,
       cell: ({ row }) => (
-        <div className="font-mono">{row.getValue("mp_id")}</div>
+        <div className="font-mono text-xs">{row.getValue("mp_id")}</div>
       ),
       filterFn: (row, columnId, filterValue) => {
         if (!filterValue) return true;
@@ -293,137 +293,195 @@ export function ProductsPage() {
     },
     {
       accessorKey: "channel_id",
-      header: "Channel ID",
+      header: "Ch ID",
+      size: 80,
       cell: ({ row }) => (
-        <div className="font-mono text-sm">
+        <div
+          className="font-mono text-xs truncate"
+          title={row.getValue("channel_id") as string}
+        >
           {row.getValue("channel_id") || "N/A"}
         </div>
       ),
     },
     {
       accessorKey: "cron_name",
-      header: "Cron Name",
+      header: "Cron",
+      size: 90,
       cell: ({ row }) => (
-        <div className="font-mono text-sm">
+        <div
+          className="font-mono text-xs truncate"
+          title={row.getValue("cron_name") as string}
+        >
           {row.getValue("cron_name") || "N/A"}
         </div>
       ),
     },
     {
       accessorKey: "slow_cron_name",
-      header: "Slow Cron Name",
+      header: "Slow Cron",
+      size: 90,
       cell: ({ row }) => (
-        <div className="font-mono text-sm">
+        <div
+          className="font-mono text-xs truncate"
+          title={row.getValue("slow_cron_name") as string}
+        >
           {row.getValue("slow_cron_name") || "N/A"}
         </div>
       ),
     },
     {
       accessorKey: "last_cron_run_at",
-      header: "Last Cron Run",
+      header: "Last Run",
+      size: 120,
       cell: ({ row }) => {
         const date = row.getValue("last_cron_run_at") as string;
+        if (!date) return <div className="text-xs">Never</div>;
+
+        const dateObj = new Date(date);
+        const dateStr = dateObj.toLocaleDateString();
+        const timeStr = dateObj.toLocaleTimeString();
+
         return (
-          <div className="text-sm">
-            {date ? new Date(date).toLocaleString() : "Never"}
+          <div className="text-xs">
+            <div>{dateStr}</div>
+            <div className="text-muted-foreground">{timeStr}</div>
           </div>
         );
       },
     },
     {
       accessorKey: "last_cron_run_name",
-      header: "Last Cron Run Name",
+      header: "Run Name",
+      size: 100,
       cell: ({ row }) => (
-        <div className="font-mono text-sm">
+        <div
+          className="font-mono text-xs truncate"
+          title={row.getValue("last_cron_run_name") as string}
+        >
           {row.getValue("last_cron_run_name") || "N/A"}
         </div>
       ),
     },
     {
       accessorKey: "last_updated_at",
-      header: "Last Updated",
+      header: "Updated",
+      size: 100,
       cell: ({ row }) => {
         const date = row.getValue("last_updated_at") as string;
-        return <div className="text-sm">{date ? timeAgo(date) : "Never"}</div>;
+        if (!date) return <div className="text-xs">Never</div>;
+
+        const dateObj = new Date(date);
+        const dateStr = dateObj.toLocaleDateString();
+        const timeStr = dateObj.toLocaleTimeString();
+
+        return (
+          <div className="text-xs">
+            <div>{dateStr}</div>
+            <div className="text-muted-foreground">{timeStr}</div>
+          </div>
+        );
       },
     },
     {
       accessorKey: "last_updated_cron_name",
-      header: "Last Updated Cron",
+      header: "Update Cron",
+      size: 100,
       cell: ({ row }) => (
-        <div className="font-mono text-sm">
+        <div
+          className="font-mono text-xs truncate"
+          title={row.getValue("last_updated_cron_name") as string}
+        >
           {row.getValue("last_updated_cron_name") || "N/A"}
         </div>
       ),
     },
     {
       accessorKey: "last_reprice_comment",
-      header: "Last Reprice Comment",
+      header: "Comment",
+      size: 150,
       cell: ({ row }) => (
-        <div className="text-sm max-w-[200px] truncate">
+        <div
+          className="text-xs truncate"
+          title={row.getValue("last_reprice_comment") as string}
+        >
           {row.getValue("last_reprice_comment") || "N/A"}
         </div>
       ),
     },
     {
       accessorKey: "last_suggested_price",
-      header: "Last Suggested Price",
+      header: "Suggested",
+      size: 80,
       cell: ({ row }) => {
         const price = row.getValue("last_suggested_price") as number;
-        return <div className="text-sm">{price ? `$${price}` : "N/A"}</div>;
+        return <div className="text-xs">{price ? `$${price}` : "N/A"}</div>;
       },
     },
     {
       accessorKey: "lowest_price",
-      header: "Lowest Vendor Price",
+      header: "Lowest",
+      size: 70,
       cell: ({ row }) => {
         const price = row.getValue("lowest_price") as number;
-        return <div className="text-sm">{price ? `$${price}` : "N/A"}</div>;
+        return <div className="text-xs">{price ? `$${price}` : "N/A"}</div>;
       },
     },
     {
       accessorKey: "target_price",
-      header: "Target Price",
+      header: "Target",
+      size: 70,
       cell: ({ row }) => {
         const price = row.getValue("target_price") as number;
-        return <div className="text-sm">{price ? `$${price}` : "N/A"}</div>;
+        return <div className="text-xs">{price ? `$${price}` : "N/A"}</div>;
       },
     },
     {
       accessorKey: "floor_price",
-      header: "Floor Price",
+      header: "Floor",
+      size: 70,
       cell: ({ row }) => {
         const price = row.getValue("floor_price") as number;
-        return <div className="text-sm">{price ? `$${price}` : "N/A"}</div>;
+        return <div className="text-xs">{price ? `$${price}` : "N/A"}</div>;
       },
     },
     {
       accessorKey: "max_price",
-      header: "Max Price",
+      header: "Max",
+      size: 70,
       cell: ({ row }) => {
         const price = row.getValue("max_price") as number;
-        return <div className="text-sm">{price ? `$${price}` : "N/A"}</div>;
+        return <div className="text-xs">{price ? `$${price}` : "N/A"}</div>;
       },
     },
     {
       accessorKey: "price_strategy",
-      header: "Price Strategy",
+      header: "Strategy",
+      size: 100,
       cell: ({ row }) => {
         const priceStrategy = row.getValue(
           "price_strategy",
         ) as AlgoPriceStrategy;
-        return <Badge variant="outline">{priceStrategy}</Badge>;
+        return (
+          <Badge variant="outline" className="text-xs px-1 py-0">
+            {priceStrategy}
+          </Badge>
+        );
       },
     },
     {
       accessorKey: "suppress_price_break_if_Q1_not_updated",
-      header: "Suppress PB if Q1 not updated",
+      header: "Suppress PB",
+      size: 90,
       cell: ({ row }) => {
         const suppress = row.getValue(
           "suppress_price_break_if_Q1_not_updated",
         ) as number;
         return (
-          <Badge variant={suppress === 1 ? "default" : "secondary"}>
+          <Badge
+            variant={suppress === 1 ? "default" : "secondary"}
+            className="text-xs px-1 py-0"
+          >
             {suppress === 1 ? "Yes" : "No"}
           </Badge>
         );
@@ -431,9 +489,13 @@ export function ProductsPage() {
     },
     {
       accessorKey: "triggered_by_vendor",
-      header: "Triggered By",
+      header: "Triggered",
+      size: 100,
       cell: ({ row }) => (
-        <div className="text-sm">
+        <div
+          className="text-xs truncate"
+          title={row.getValue("triggered_by_vendor") as string}
+        >
           {row.getValue("triggered_by_vendor") || "N/A"}
         </div>
       ),
@@ -441,9 +503,10 @@ export function ProductsPage() {
     {
       accessorKey: "result",
       header: "Result",
+      size: 120,
       cell: ({ row }) => {
         const result = row.getValue("result") as string;
-        if (!result) return <div className="text-sm">N/A</div>;
+        if (!result) return <div className="text-xs">N/A</div>;
 
         const getBadgeVariant = (result: string) => {
           if (result.includes("SUCCESS") || result.includes("OK"))
@@ -453,12 +516,21 @@ export function ProductsPage() {
           return "secondary";
         };
 
-        return <Badge variant={getBadgeVariant(result)}>{result}</Badge>;
+        return (
+          <Badge
+            variant={getBadgeVariant(result)}
+            className="text-xs px-1 py-0 truncate"
+            title={result}
+          >
+            {result}
+          </Badge>
+        );
       },
     },
     {
       accessorKey: "algo_execution_mode",
-      header: "Execution Mode",
+      header: "Exec Mode",
+      size: 140,
       cell: ({ row }) => {
         const mpId = row.getValue("mp_id") as number;
         const algoExecutionMode = row.getValue("algo_execution_mode") as string;
@@ -481,22 +553,23 @@ export function ProductsPage() {
     },
     {
       accessorKey: "net32_url",
-      header: "Net32 URL",
+      header: "Net32",
+      size: 80,
       cell: ({ row }) => {
         const url = row.getValue("net32_url") as string;
         return (
-          <div className="max-w-[200px]">
+          <div>
             {url ? (
               <a
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
               >
-                View Product <ExternalLink className="h-3 w-3" />
+                View <ExternalLink className="h-3 w-3" />
               </a>
             ) : (
-              <div className="text-sm text-muted-foreground">N/A</div>
+              <div className="text-xs text-muted-foreground">N/A</div>
             )}
           </div>
         );
@@ -672,7 +745,10 @@ export function ProductsPage() {
           <div className="flex flex-col items-end text-xs text-muted-foreground">
             {cacheTimestamp && (
               <>
-                <span>Last updated: {timeAgo(cacheTimestamp)}</span>
+                <span>
+                  Last updated: {new Date(cacheTimestamp).toLocaleDateString()}
+                </span>
+                <span>{new Date(cacheTimestamp).toLocaleTimeString()}</span>
                 {isCached && (
                   <span className="text-blue-600">(from cache)</span>
                 )}
