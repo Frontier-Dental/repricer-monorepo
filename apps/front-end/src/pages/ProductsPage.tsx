@@ -250,12 +250,13 @@ export function ProductsPage() {
         </div>
       ),
     },
+
     {
-      accessorKey: "enabled",
-      header: "Reprice Enabled",
+      accessorKey: "product_active",
+      header: "Prod Active",
       size: 70,
       cell: ({ row }) => {
-        const enabled = row.getValue("enabled") as number;
+        const enabled = row.getValue("product_active") as number;
         return (
           <Badge
             variant={enabled === 1 ? "default" : "secondary"}
@@ -267,11 +268,11 @@ export function ProductsPage() {
       },
     },
     {
-      accessorKey: "product_active",
-      header: "Prod Active",
+      accessorKey: "enabled",
+      header: "Reprice Enabled",
       size: 70,
       cell: ({ row }) => {
-        const enabled = row.getValue("product_active") as number;
+        const enabled = row.getValue("enabled") as number;
         return (
           <Badge
             variant={enabled === 1 ? "default" : "secondary"}

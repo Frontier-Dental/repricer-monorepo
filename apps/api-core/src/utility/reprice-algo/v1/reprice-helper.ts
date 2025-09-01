@@ -294,6 +294,7 @@ export async function Reprice(
       );
     }
     repriceModel.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
+    return repriceModel;
   }
   // For Other Vendors
   else {

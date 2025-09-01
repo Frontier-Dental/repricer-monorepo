@@ -563,17 +563,13 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
 export async function UpdateRepriceResultStatus(
   repriceResultStatus: RepriceResultEnum,
   mpid: string,
-  contextVendor: any,
+  contextVendor: string,
 ) {
   let contextTableName = getContextTableNameByVendorName(contextVendor);
   const knex = getKnexInstance();
-  try {
-    await knex(contextTableName!)
-      .where("MpId", parseInt(mpid as string))
-      .update({ RepriceResult: repriceResultStatus });
-  } catch (exception) {
-    console.log(`Exception while UpdateRepriceResultStatus : ${exception}`);
-  }
+  await knex(contextTableName!)
+    .where("MpId", parseInt(mpid as string))
+    .update({ RepriceResult: repriceResultStatus });
 }
 
 export async function GetProxiesNet32(
@@ -581,17 +577,13 @@ export async function GetProxiesNet32(
 ): Promise<ProxyNet32[]> {
   let proxyList: ProxyNet32[] = [];
   const knex = getKnexInstance();
-  try {
-    if (usernames.length === 0) {
-      return [];
-    }
-
-    proxyList = await knex(process.env.SQL_PROXY_NET_32!)
-      .whereIn("username", usernames)
-      .select("*");
-  } catch (exception) {
-    console.log(`Exception while GetProxiesNet32: ${exception}`);
+  if (usernames.length === 0) {
+    return [];
   }
+
+  proxyList = await knex(applicationConfig.SQL_PROXY_NET_32!)
+    .whereIn("username", usernames)
+    .select("*");
   return proxyList;
 }
 
@@ -599,41 +591,31 @@ export async function GetVendorKeys(
   vendors: string[],
 ): Promise<Map<string, string | null> | null> {
   const knex = getKnexInstance();
-  try {
-    if (vendors.length === 0) {
-      return new Map<string, string | null>();
-    }
-
-    const rows = await knex(process.env.SQL_VENDOR_KEYS || "table_vendorKeys")
-      .whereIn("vendor", vendors)
-      .where("is_primary", 1)
-      .where("is_active", 1)
-      .select("vendor", "value");
-
-    const vendorKeyMap = new Map<string, string | null>();
-
-    for (const vendor of vendors) {
-      const match = rows.find((row) => row.vendor === vendor);
-      const value = match?.value ?? null;
-      vendorKeyMap.set(vendor, value);
-    }
-
-    return vendorKeyMap;
-  } catch (exception) {
-    console.error("Error in GetVendorKeys:", exception);
-    return null;
+  if (vendors.length === 0) {
+    return new Map<string, string | null>();
   }
+
+  const rows = await knex(applicationConfig.SQL_VENDOR_KEYS)
+    .whereIn("vendor", vendors)
+    .where("is_primary", 1)
+    .where("is_active", 1)
+    .select("vendor", "value");
+
+  const vendorKeyMap = new Map<string, string | null>();
+
+  for (const vendor of vendors) {
+    const match = rows.find((row) => row.vendor === vendor);
+    const value = match?.value ?? null;
+    vendorKeyMap.set(vendor, value);
+  }
+
+  return vendorKeyMap;
 }
 
 export async function ExecuteQuery(_query: string, _params: any) {
-  try {
-    const knex = getKnexInstance();
-    const result = await knex.raw(_query, _params);
-    return result[0];
-  } catch (exception) {
-    console.log(`Exception while ExecuteQuery : ${exception}`);
-    return null;
-  }
+  const knex = getKnexInstance();
+  const result = await knex.raw(_query, _params);
+  return result[0];
 }
 
 /**************************** PRIVATE FUNCTIONS ***********************************/
@@ -648,18 +630,18 @@ async function getContextItemByKey(payload: any, key: string): Promise<any> {
 
 function getContextTableNameByVendorName(contextVendor: string) {
   let contextTableName: string | null = null;
-  if (contextVendor === "TRADENT") {
-    contextTableName = process.env.SQL_TRADENT_DETAILS!;
-  } else if (contextVendor === "FRONTIER") {
-    contextTableName = process.env.SQL_FRONTIER_DETAILS!;
-  } else if (contextVendor === "MVP") {
-    contextTableName = process.env.SQL_MVP_DETAILS!;
-  } else if (contextVendor === "TOPDENT") {
-    contextTableName = process.env.SQL_TOPDENT_DETAILS!;
-  } else if (contextVendor === "FIRSTDENT") {
-    contextTableName = process.env.SQL_FIRSTDENT_DETAILS!;
-  } else if (contextVendor === "TRIAD") {
-    contextTableName = process.env.SQL_TRIAD_DETAILS!;
+  if (contextVendor === VendorName.TRADENT) {
+    contextTableName = applicationConfig.SQL_TRADENT_DETAILS;
+  } else if (contextVendor === VendorName.FRONTIER) {
+    contextTableName = applicationConfig.SQL_FRONTIER_DETAILS;
+  } else if (contextVendor === VendorName.MVP) {
+    contextTableName = applicationConfig.SQL_MVP_DETAILS;
+  } else if (contextVendor === VendorName.TOPDENT) {
+    contextTableName = applicationConfig.SQL_TOPDENT_DETAILS;
+  } else if (contextVendor === VendorName.FIRSTDENT) {
+    contextTableName = applicationConfig.SQL_FIRSTDENT_DETAILS;
+  } else if (contextVendor === VendorName.TRIAD) {
+    contextTableName = applicationConfig.SQL_TRIAD_DETAILS;
   }
   return contextTableName;
 }

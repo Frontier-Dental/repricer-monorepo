@@ -179,6 +179,7 @@ const envSchema = z.object({
   CRON_NAME_422: z.string().default("Cron-422"),
   VENDOR_ID: z.coerce.number().default(17357),
   VENDOR_COUNT: z.coerce.number().default(6),
+  SQL_VENDOR_KEYS: z.string().default("table_vendorKeys"),
   OWN_VENDOR_LIST: z.string().default("17357;20722;20755;20533;20727;5"),
   EXCLUDED_VENDOR_ID: z.string().default("20722;20755"),
   OVERRIDE_DELAY: z.coerce.number().default(15000),

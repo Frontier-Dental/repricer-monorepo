@@ -24,7 +24,6 @@ export async function repriceProductToMax(
   req: Request,
   res: Response,
 ): Promise<any> {
-  let adHocUpdateQuery = `Update ${process.env.SQL_HISTORY}`;
   let productItem = req.body.prod;
   const contextVendor = req.body.contextVendor;
   await delay(await dbHelper.GetDelay());

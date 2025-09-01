@@ -228,12 +228,16 @@ export function applyKeepPosition(
   vendorSetting: V2AlgoSettingsData,
   isSlowCron: boolean,
   preJsonPosition: number,
+  lowestVendorPosition: number | null,
 ) {
   if (isSlowCron) {
     return null;
   }
-  // We are already first in the array, so do nothing regardless of if there is an incoming change.
-  if (vendorSetting.keep_position && preJsonPosition === 0) {
+  if (
+    vendorSetting.keep_position &&
+    lowestVendorPosition !== null &&
+    lowestVendorPosition > preJsonPosition
+  ) {
     return AlgoResult.IGNORE_SETTINGS;
   } else {
     return null;

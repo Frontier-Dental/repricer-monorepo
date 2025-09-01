@@ -369,7 +369,7 @@ export async function IsWaitingForNextRun(
   contextVendor: string,
   prod: any,
 ) {
-  if (prod.cronName == process.env.CRON_NAME_422) return false; // If the product is Express Cron, no need to check for waiting status
+  if (prod.cronName == applicationConfig.CRON_NAME_422) return false; // If the product is Express Cron, no need to check for waiting status
   const dbResult = await dbHelper.FindErrorItemByIdAndStatus(
     parseInt(mpId),
     true,

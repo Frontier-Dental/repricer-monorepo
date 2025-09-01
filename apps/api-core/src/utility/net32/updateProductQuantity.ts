@@ -2,6 +2,7 @@ import { getAxiosProxyInstance } from "./proxyAxiosInstance";
 import { GetProxiesNet32, GetVendorKeys } from "../mysql/mysql-helper";
 
 import { ProxyNet32 } from "../mysql/types";
+import { applicationConfig } from "../config";
 
 const HTTP_STATUS = {
   OK: 200,
@@ -155,7 +156,7 @@ const updateProductQuantity = async (
   proxy: ProxyNet32,
 ) => {
   const axios = getAxiosProxyInstance(
-    process.env.NET32_UPDATE_QUANTITY_URL!,
+    applicationConfig.NET32_UPDATE_QUANTITY_URL,
     { "Subscription-Key": vendorKey },
     proxy.ipAddress,
     proxy.username,

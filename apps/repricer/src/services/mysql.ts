@@ -870,7 +870,7 @@ export async function GetAllRepriceEligibleProductByMpid(mpid: any) {
   let scrapeDetails = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GET_PRODUCT_BY_MPID}(?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_PRODUCT_BY_MPID}(?)`;
     const [rows] = await db.query(queryToCall, [mpid]);
     if (rows != null && (rows as any)[0] != null) {
       scrapeDetails = (rows as any)[0];
@@ -889,7 +889,7 @@ export async function GetAllRepriceEligibleProductByChannelId(channelId: any) {
   let scrapeDetails = null;
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${process.env.SQL_SP_GET_PRODUCT_BY_CHANNEL_ID}(?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_PRODUCT_BY_CHANNEL_ID}(?)`;
     const [rows] = await db.query(queryToCall, [channelId]);
     if (rows != null && (rows as any)[0] != null) {
       scrapeDetails = (rows as any)[0];

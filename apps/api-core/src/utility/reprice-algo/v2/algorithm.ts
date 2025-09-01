@@ -53,6 +53,7 @@ export interface Net32AlgoSolution {
   beforeLadder: Net32AlgoProductWrapperWithBuyBoxRank[];
   lowestPrice: number | null;
   lowestVendorId: number | null;
+  lowestVendorPosition: number | null;
   preJsonPosition: number;
 }
 
@@ -230,6 +231,7 @@ export function repriceProductV2(
         everyoneIncludingOwnVendorBefore,
         lowestPrice: lowestVendor.lowestPrice,
         lowestVendorId: lowestVendor.lowestVendorId,
+        lowestVendorPosition: lowestVendor.lowestVendorPosition,
         preJsonPosition,
       });
     }
@@ -586,6 +588,7 @@ function getSolutionResult(
     vendorSetting,
     isSlowCron,
     solution.preJsonPosition,
+    solution.lowestVendorPosition,
   );
   if (keepPosition) {
     return {
@@ -1472,6 +1475,7 @@ function getLowestVendor(net32Products: Net32AlgoProduct[]) {
     return {
       lowestPrice: null,
       lowestVendorId: null,
+      lowestVendorPosition: null,
     };
   }
   const lowestVendor = sortedByLowestPrice[0];
@@ -1482,5 +1486,8 @@ function getLowestVendor(net32Products: Net32AlgoProduct[]) {
       typeof lowestVendor.vendorId === "number"
         ? lowestVendor.vendorId
         : parseInt(lowestVendor.vendorId as string),
+    lowestVendorPosition: net32Products.findIndex(
+      (v) => v.vendorId === lowestVendor.vendorId,
+    ),
   };
 }

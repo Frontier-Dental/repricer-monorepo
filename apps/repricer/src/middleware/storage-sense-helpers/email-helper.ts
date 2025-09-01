@@ -22,7 +22,7 @@ export async function TriggerEmail(
   var client = new postmark.ServerClient(applicationConfig.SMTP_USER);
   await client.sendEmail({
     From: fromEmail,
-    To: process.env.TO_EMAIL,
+    To: applicationConfig.TO_EMAIL,
     Subject: subject,
     HtmlBody: body,
   });

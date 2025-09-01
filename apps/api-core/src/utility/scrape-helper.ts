@@ -70,11 +70,9 @@ async function executeScrapeLogic(
           prod.MpId,
           moment(scrapeStartTime).format("YYYY-MM-DD HH:mm:ss"),
         );
-        const allowHistoryLoggingEnv =
-          process.env.SCRAPE_ONLY_LOGGING || "false";
-        const allowRunInfoLoggingEnv =
-          process.env.SCRAPE_RUN_LOGGING || "false";
-        if (JSON.parse(allowHistoryLoggingEnv) == true) {
+        const allowHistoryLoggingEnv = applicationConfig.SCRAPE_ONLY_LOGGING;
+        const allowRunInfoLoggingEnv = applicationConfig.SCRAPE_RUN_LOGGING;
+        if (allowHistoryLoggingEnv) {
           console.log(
             `SCRAPE-ONLY : Logging in history for ${prod.MpId} started at ${scrapeStartTime}`,
           );
@@ -156,7 +154,7 @@ async function executeScrapeLogic(
             }
           }
         }
-        if (JSON.parse(allowRunInfoLoggingEnv) === true) {
+        if (allowRunInfoLoggingEnv) {
           console.log(
             `SCRAPE-ONLY : Logging in run info for ${prod.MpId} started at ${scrapeStartTime}`,
           );

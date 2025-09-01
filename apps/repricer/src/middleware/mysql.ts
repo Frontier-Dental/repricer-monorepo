@@ -268,7 +268,7 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
 export async function UpsertProductDetailsV2(payload: any) {
   let upsertResult: any = null;
   const db = await SqlConnectionPool.getConnection();
-  const queryToCall = `CALL ${process.env.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+  const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
   const slowCronId =
     payload.IsSlowActivated == true ? payload.SlowCronId : null;
   const slowCronName =
