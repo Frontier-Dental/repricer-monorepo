@@ -17,7 +17,7 @@ import { v4 } from "uuid";
 import { AlgoExecutionMode } from "@repricer-monorepo/shared";
 
 export async function manualRepriceHandler(
-  req: Request<{ id: string }, any, any, { isV2Algorithm: string }>,
+  req: Request<{ id: string }, any, any, any>,
   res: Response,
 ): Promise<any> {
   const mpid = req.params.id;

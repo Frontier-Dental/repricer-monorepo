@@ -67,11 +67,10 @@ export function GetLastCronMessageSimple(repriceResult: any): string {
   let resultStr = "";
   if (
     repriceResult &&
-    repriceResult.data &&
-    repriceResult.data.cronResponse &&
-    repriceResult.data.cronResponse.repriceData
+    repriceResult.cronResponse &&
+    repriceResult.cronResponse.repriceData
   ) {
-    const repriceResultInfo = repriceResult.data.cronResponse.repriceData;
+    const repriceResultInfo = repriceResult.cronResponse.repriceData;
     if (
       repriceResultInfo.listOfRepriceDetails &&
       repriceResultInfo.listOfRepriceDetails.length > 0

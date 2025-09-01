@@ -835,37 +835,29 @@ async function repriceSingleVendor(
   if (
     repriceResult &&
     repriceResult.historyIdentifier &&
-    (repriceResult.historyIdentifier as unknown as any[]).length > 0 &&
-    prod.last_cron_message.indexOf("ERROR:") > -1
+    repriceResult.historyIdentifier != null
   ) {
-    for (const histItem of (repriceResult as unknown as any)
-      .historyIdentifier) {
-      const errorMessage = await getErrorMessage(
-        repriceResult,
-        histItem.minQty,
-      );
-      await sqlHelper.UpdateHistoryWithMessage(
-        histItem.historyIdentifier,
-        errorMessage,
-      );
-      console.log(
-        `History Updated for ${prod.mpid} with Identifier : ${histItem.historyIdentifier} and Message : ${errorMessage}`,
-      );
-    }
-    prod = updateLowestVendor(repriceResult!, prod);
-    prod = updateCronBasedDetails(repriceResult, prod, false);
-    await sqlHelper.UpdateProductAsync(
-      prod as any,
-      isPriceUpdated,
-      contextVendor,
-    ); //await dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
-    return {
-      cronLogs: cronLogs,
-      prod: prod,
-      isPriceUpdated: isPriceUpdated,
-      skipNextVendor: skipNextVendor,
-    };
+    // await sqlHelper.UpdateHistoryWithMessage(
+    //   repriceResult.historyIdentifier,
+    //   prod.last_cron_message,
+    // );
+    console.log(
+      `History Updated for ${prod.mpid} with Identifier : ${repriceResult.historyIdentifier} and Message : ${prod.last_cron_message}`,
+    );
   }
+  prod = updateLowestVendor(repriceResult!, prod);
+  prod = await updateCronBasedDetails(repriceResult, prod, false);
+  await sqlHelper.UpdateProductAsync(
+    prod as any,
+    isPriceUpdated,
+    contextVendor,
+  );
+  return {
+    cronLogs: cronLogs,
+    prod: prod,
+    isPriceUpdated: isPriceUpdated,
+    skipNextVendor: skipNextVendor,
+  };
 }
 
 function updateLowestVendor(
