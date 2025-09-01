@@ -2,8 +2,6 @@ import _ from "lodash";
 import { RepriceModel } from "../model/reprice-model";
 import { RepriceRenewedMessageEnum } from "../model/reprice-renewed-message";
 
-const _enum_new = RepriceRenewedMessageEnum;
-
 export async function parseShippingBuyBox(
   repriceResult: any,
   net32Result: any,
@@ -31,7 +29,7 @@ export async function parseShippingBuyBox(
       false,
       false,
       [],
-      _enum_new.DEFAULT,
+      RepriceRenewedMessageEnum.DEFAULT,
     );
   } else if (buyBoxVendor && getBBShippingValue > 0) {
     try {
@@ -44,7 +42,8 @@ export async function parseShippingBuyBox(
         return repriceResult;
       else if (buyBoxVendorShippingTime < ownVendorShippingTime) {
         repriceResult.repriceDetails.isRepriced = true;
-        repriceResult.repriceDetails.explained = _enum_new.BB_SHIPPING;
+        repriceResult.repriceDetails.explained =
+          RepriceRenewedMessageEnum.BB_SHIPPING;
         const comparablePrice =
           buyBoxVendor.priceBreaks.find((x: any) => x.minQty == 1)?.unitPrice ||
           0;
@@ -96,11 +95,11 @@ export async function parseBadgeBuyBox(
       false,
       false,
       [],
-      _enum_new.DEFAULT,
+      RepriceRenewedMessageEnum.DEFAULT,
     );
   } else if (buyBoxVendor && getBBBadgeValue > 0 && buyBoxVendor.badgeId > 0) {
     repriceResult.repriceDetails.isRepriced = true;
-    repriceResult.repriceDetails.explained = _enum_new.BB_BADGE;
+    repriceResult.repriceDetails.explained = RepriceRenewedMessageEnum.BB_BADGE;
     const comparablePrice =
       buyBoxVendor.priceBreaks.find((x: any) => x.minQty == 1)?.unitPrice || 0;
     repriceResult.repriceDetails.newPrice = await subtractPercentage(

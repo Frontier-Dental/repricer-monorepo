@@ -34,4 +34,6 @@ export enum RepriceRenewedMessageEnum {
   IGNORE_KEEP_POSITION = `IGNORE : #KeepPosition`,
   PRICE_MAXED_MANUAL = `CHANGE: Price is MAXED`,
   IGNORED_Q2_VS_Q1_SISTER = `IGNORE : Q2_VS_Q1_SISTER`,
+  BB_SHIPPING = `CHANGE: #BB_SHIPPING`,
+  BB_BADGE = `CHANGE: #BB_BADGE`,
 }
