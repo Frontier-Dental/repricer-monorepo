@@ -383,11 +383,11 @@ export async function GetAllRepriceEligibleProductByFilter(
   return SqlMapper.MapProductDetailsList(result);
 }
 
-export async function GetAllRepriceEligibleProductByTag(filterTag: any) {
+export async function GetAllRepriceEligibleProductByTag(
+  mpId: any,
+  channelId: any,
+) {
   const knex = getKnexInstance();
-
-  // Create search pattern for LIKE queries
-  const searchPattern = `%${filterTag}%`;
 
   // Common select fields for all queries
   const selectFields = [
@@ -413,37 +413,44 @@ export async function GetAllRepriceEligibleProductByTag(filterTag: any) {
       knex("table_tradentDetails")
         .select("MpId")
         .where(function () {
-          this.where("MpId", "like", searchPattern)
-            .orWhere("FocusId", "like", searchPattern)
-            .orWhere("ChannelId", "like", searchPattern);
+          this.where("MpId", "like", mpId)
+            .orWhere("FocusId", "like", mpId)
+            .orWhere("ChannelId", "like", channelId);
         }),
       knex("table_frontierDetails")
         .select("MpId")
         .where(function () {
-          this.where("MpId", "like", searchPattern)
-            .orWhere("FocusId", "like", searchPattern)
-            .orWhere("ChannelId", "like", searchPattern);
+          this.where("MpId", "like", mpId)
+            .orWhere("FocusId", "like", mpId)
+            .orWhere("ChannelId", "like", channelId);
         }),
       knex("table_mvpDetails")
         .select("MpId")
         .where(function () {
-          this.where("MpId", "like", searchPattern)
-            .orWhere("FocusId", "like", searchPattern)
-            .orWhere("ChannelId", "like", searchPattern);
+          this.where("MpId", "like", mpId)
+            .orWhere("FocusId", "like", mpId)
+            .orWhere("ChannelId", "like", channelId);
         }),
       knex("table_firstDentDetails")
         .select("MpId")
         .where(function () {
-          this.where("MpId", "like", searchPattern)
-            .orWhere("FocusId", "like", searchPattern)
-            .orWhere("ChannelId", "like", searchPattern);
+          this.where("MpId", "like", mpId)
+            .orWhere("FocusId", "like", mpId)
+            .orWhere("ChannelId", "like", channelId);
         }),
       knex("table_topDentDetails")
         .select("MpId")
         .where(function () {
-          this.where("MpId", "like", searchPattern)
-            .orWhere("FocusId", "like", searchPattern)
-            .orWhere("ChannelId", "like", searchPattern);
+          this.where("MpId", "like", mpId)
+            .orWhere("FocusId", "like", mpId)
+            .orWhere("ChannelId", "like", channelId);
+        }),
+      knex("table_triadDetails")
+        .select("MpId")
+        .where(function () {
+          this.where("MpId", "like", mpId)
+            .orWhere("FocusId", "like", mpId)
+            .orWhere("ChannelId", "like", channelId);
         }),
     ])
     .distinct();
@@ -515,7 +522,7 @@ export async function GetAllRepriceEligibleProductByTag(filterTag: any) {
       topDentQuery,
       triadQuery,
     ])
-    .whereNotNull("ChannelName")
+    // .whereNotNull("ChannelName")
     .orderBy("ProductId");
 
   return SqlMapper.MapProductDetailsList(result);

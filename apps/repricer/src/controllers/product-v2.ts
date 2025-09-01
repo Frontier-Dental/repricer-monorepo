@@ -16,52 +16,37 @@ import * as SessionHelper from "../utility/session-helper";
 
 export async function showAllProducts(req: Request, res: Response) {
   let pgNo = 0;
-  let mpid = "";
-  let channelId = "";
-
-  // Handle search parameters
-  if (req.query.mpid) {
-    mpid = req.query.mpid as string;
-  }
-  if (req.query.channelId) {
-    channelId = req.query.channelId as string;
-  }
-
   if (req.query.pgno) {
     pgNo = (req.query.pgno as any) - 1;
   }
-
   let pageSize = 0,
     pageNumber = 0,
     totalDocs = 0,
     totalPages = 0;
   pageSize = applicationConfig.CRON_PAGESIZE;
   pageNumber = pgNo || 0;
-  totalDocs = await mySqlHelper.GetNumberOfRepriceEligibleProductCount();
+  totalDocs = await mySqlHelper.GetNumberOfRepriceEligibleProductCount(); //await mongoMiddleware.GetProductCount(query);
   totalPages = Math.ceil(totalDocs / pageSize);
-  let masterItems: any[] = [];
-  if (req.query.mpid) {
-    masterItems = await mySqlHelper.GetAllRepriceEligibleProductByMpid(mpid);
+  let masterItems = [];
+  if (req.query.mpid || req.query.channelId) {
+    masterItems = await mySqlHelper.GetAllRepriceEligibleProductByTag(
+      req.query.mpid,
+      req.query.channelId,
+    );
     totalDocs = masterItems.length;
-    masterItems = await spliceResult(masterItems, pageNumber, pageSize);
-  } else if (req.query.channelId) {
-    masterItems =
-      await mySqlHelper.GetAllRepriceEligibleProductByChannelId(channelId);
-    totalDocs = masterItems.length;
-    masterItems = await spliceResult(masterItems, pageNumber, pageSize);
+    masterItems = spliceResult(masterItems, pageNumber, pageSize);
   } else {
     masterItems = await mySqlHelper.GetAllRepriceEligibleProductByFilter(
       pageNumber,
       pageSize,
     );
   }
-
   if (masterItems && masterItems.length > 0) {
     for (let prod of masterItems) {
-      prod = mapper.MapBadgeIndicator(prod);
+      prod = await mapper.MapBadgeIndicator(prod);
     }
   }
-  const productDetailsViewModel = mapper.MapV2(masterItems);
+  const productDetailsViewModel = mapper.MapV2(masterItems || []);
 
   res.render("pages/products/get_all", {
     items: productDetailsViewModel,
@@ -69,11 +54,8 @@ export async function showAllProducts(req: Request, res: Response) {
     pageSize,
     totalDocs,
     totalPages,
-    mpid,
-    channelId,
-    tags: req.query.tags || "",
     groupName: "Products",
-    userRole: (req as any).session.users_id?.userRole,
+    userRole: (req.session as any).users_id?.userRole,
   });
 }
 
@@ -154,7 +136,7 @@ export async function editItemView(req: Request, res: Response) {
   res.render("pages/products/index", {
     model: _.first(productDetails),
     groupName: "Products",
-    userRole: (req as any).session.users_id.userRole,
+    userRole: (req as any).session.users_id?.userRole,
   });
 }
 
