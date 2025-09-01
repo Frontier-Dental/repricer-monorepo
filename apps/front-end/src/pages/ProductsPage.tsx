@@ -252,10 +252,26 @@ export function ProductsPage() {
     },
     {
       accessorKey: "enabled",
-      header: "Enabled",
+      header: "Reprice Enabled",
       size: 70,
       cell: ({ row }) => {
         const enabled = row.getValue("enabled") as number;
+        return (
+          <Badge
+            variant={enabled === 1 ? "default" : "secondary"}
+            className="text-xs px-1 py-0"
+          >
+            {enabled === 1 ? "Yes" : "No"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "product_active",
+      header: "Prod Active",
+      size: 70,
+      cell: ({ row }) => {
+        const enabled = row.getValue("product_active") as number;
         return (
           <Badge
             variant={enabled === 1 ? "default" : "secondary"}
