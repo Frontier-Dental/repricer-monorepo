@@ -33,6 +33,5 @@ export enum RepriceRenewedMessageEnum {
   IGNORE_BUY_BOX = `IGNORE : #HasBuyBox`,
   IGNORE_KEEP_POSITION = `IGNORE : #KeepPosition`,
   PRICE_MAXED_MANUAL = `CHANGE: Price is MAXED`,
-  BB_SHIPPING = `CHANGE: Buy Box Shipping Time is better than own vendor #BBSHIPPING`,
-  BB_BADGE = `CHANGE: Buy Box Badge #BBBADGE`,
+  IGNORED_Q2_VS_Q1_SISTER = `IGNORE : Q2_VS_Q1_SISTER`,
 }

@@ -191,9 +191,8 @@ export async function repriceProduct(
   }
 
   let isNcForBuyBoxApplied = false;
-
   //Apply NC Buy Box
-  if (productItem.applyNcForBuyBox) {
+  if (productItem.applyNcForBuyBox && productItem.applyNcForBuyBox === true) {
     if (
       repriceResult!.listOfRepriceDetails &&
       repriceResult!.listOfRepriceDetails.length > 0
@@ -202,9 +201,9 @@ export async function repriceProduct(
       copiedRepriceResult!.listOfRepriceDetails = [];
       for (const $eval of repriceResult!.listOfRepriceDetails) {
         const isFloorReached = await getIsFloorReached($eval);
-        if (isFloorReached) {
+        if (isFloorReached === true) {
           const contextPriceBreak = ownProduct.priceBreaks.find(
-            (x) => x.minQty == $eval.minQty,
+            (x: any) => x.minQty == $eval.minQty,
           );
           let overridingRepriceResult =
             await repriceHelperNc.RepriceIndividualPriceBreak(
@@ -212,7 +211,7 @@ export async function repriceProduct(
               output,
               productItem,
               mpid,
-              contextPriceBreak as Net32PriceBreak,
+              contextPriceBreak,
             );
           overridingRepriceResult.repriceDetails!.explained = `${overridingRepriceResult.repriceDetails!.explained} #NCBuyBox`;
           copiedRepriceResult!.listOfRepriceDetails.push(
@@ -224,7 +223,7 @@ export async function repriceProduct(
         }
       }
       repriceResult = copiedRepriceResult;
-    } else if (repriceResult?.repriceDetails) {
+    } else if (repriceResult!.repriceDetails) {
       const isFloorReached = await getIsFloorReached(
         repriceResult!.repriceDetails,
       );
@@ -235,7 +234,7 @@ export async function repriceProduct(
           productItem,
           mpid,
         );
-        repriceResult.repriceDetails!.explained = `${repriceResult.repriceDetails!.explained} #NCBuyBox`;
+        repriceResult!.repriceDetails!.explained = `${repriceResult!.repriceDetails!.explained} #NCBuyBox`;
         isNcForBuyBoxApplied = true;
       }
     }
@@ -245,13 +244,10 @@ export async function repriceProduct(
   const isOverrideEnabled = await isOverrideEnabledForProduct(
     productItem.override_bulk_update,
   );
-
-  const isNcToBeApplied = isNcForBuyBoxApplied
-    ? true
-    : productItem.is_nc_needed;
-
+  const isNcToBeApplied =
+    isNcForBuyBoxApplied === true ? true : productItem.is_nc_needed;
   if (productItem.repricingRule != null && isOverrideEnabled === false) {
-    repriceResult = Rule.ApplyRule(
+    repriceResult = await Rule.ApplyRule(
       repriceResult!,
       productItem.repricingRule,
       isNcToBeApplied,
@@ -260,7 +256,7 @@ export async function repriceProduct(
   }
 
   if (isOverrideEnabled === true) {
-    repriceResult = Rule.ApplyRule(
+    repriceResult = await Rule.ApplyRule(
       repriceResult!,
       productItem.override_bulk_rule,
       isNcToBeApplied,
@@ -269,17 +265,17 @@ export async function repriceProduct(
   }
 
   //Apply Rule for Do Not Deactivate Q PriceBreak
-  repriceResult = Rule.ApplyDeactivateQPriceBreakRule(
+  repriceResult = await Rule.ApplyDeactivateQPriceBreakRule(
     repriceResult!,
     productItem.abortDeactivatingQPriceBreak,
   );
 
   // Apply MultiPrice Rule Check
-  repriceResult = Rule.ApplyMultiPriceBreakRule(repriceResult);
+  repriceResult = await Rule.ApplyMultiPriceBreakRule(repriceResult);
 
   //Apply Beat Q Price(MinQty #1) Rule
-  if (productItem.beatQPrice != null && productItem.beatQPrice) {
-    repriceResult = Rule.ApplyBeatQPriceRule(repriceResult);
+  if (productItem.beatQPrice != null && productItem.beatQPrice === true) {
+    repriceResult = await Rule.ApplyBeatQPriceRule(repriceResult);
   }
 
   //Apply Percentage Up Rule
@@ -287,38 +283,42 @@ export async function repriceProduct(
     productItem.percentageIncrease != null &&
     productItem.percentageIncrease > 0
   ) {
-    repriceResult = Rule.ApplyPercentagePriceRule(
+    repriceResult = await Rule.ApplyPercentagePriceRule(
       repriceResult,
       productItem.percentageIncrease,
     );
   }
 
   // Apply Buy Box Logic post all execution
-  if (productItem.applyBuyBoxLogic) {
-    repriceResult = Rule.ApplyBuyBoxRule(repriceResult, result);
+  if (productItem.applyBuyBoxLogic && productItem.applyBuyBoxLogic === true) {
+    repriceResult = await Rule.ApplyBuyBoxRule(repriceResult, result);
   }
 
   //Apply Keep Position Logic
-  if (productItem.keepPosition) {
-    repriceResult = Rule.ApplyKeepPositionLogic(
+  if (productItem.keepPosition && productItem.keepPosition === true) {
+    repriceResult = await Rule.ApplyKeepPositionLogic(
       repriceResult,
       result,
-      parseInt(productItem.ownVendorId || "0") as unknown as string,
+      productItem.ownVendorId!,
     );
   }
 
   //Apply Suppress_Price_Break_For_One Rule
-  if (isOverrideEnabled || productItem.suppressPriceBreakForOne) {
-    repriceResult = Rule.ApplySuppressPriceBreakRule(
-      repriceResult!,
+  if (
+    isOverrideEnabled === true ||
+    (productItem.suppressPriceBreakForOne != null &&
+      productItem.suppressPriceBreakForOne === true)
+  ) {
+    repriceResult = await Rule.ApplySuppressPriceBreakRule(
+      repriceResult,
       1,
       isOverrideEnabled,
     );
   }
 
   //Apply Floor Check Rule
-  repriceResult = Rule.ApplyFloorCheckRule(
-    repriceResult!,
+  repriceResult = await Rule.ApplyFloorCheckRule(
+    repriceResult,
     parseFloat(productItem.floorPrice),
   );
 
@@ -328,10 +328,10 @@ export async function repriceProduct(
     productItem.inventoryThreshold > 0
   ) {
     if (
-      repriceResult?.listOfRepriceDetails &&
-      repriceResult?.listOfRepriceDetails.length > 0
+      repriceResult.listOfRepriceDetails &&
+      repriceResult.listOfRepriceDetails.length > 0
     ) {
-      repriceResult.listOfRepriceDetails.forEach(($) => {
+      repriceResult.listOfRepriceDetails.forEach(($: any) => {
         $.explained = `${$.explained} #InvThreshold`;
       });
     } else if (repriceResult.repriceDetails) {
@@ -348,68 +348,17 @@ export async function repriceProduct(
   );
 
   // Apply MultiPrice Rule Check after Badge % as well to restrict Price Change due to %
-  repriceResult = Rule.ApplyMultiPriceBreakRule(repriceResult!);
+  repriceResult = await Rule.ApplyMultiPriceBreakRule(repriceResult);
 
   // Append $NEW for New Price Break Activation
-  repriceResult = Rule.AppendNewPriceBreakActivation(repriceResult);
+  repriceResult = await Rule.AppendNewPriceBreakActivation(repriceResult);
 
-  //Apply Shipping BuyBox Rule
-  if (
-    productItem.getBBShipping === true &&
-    repriceResult.listOfRepriceDetails.length === 0
-  ) {
-    repriceResult = await buyBoxHelper.parseShippingBuyBox(
-      repriceResult,
-      result,
-      productItem,
-    );
-  }
-
-  //Apply Badge BuyBox Rule
-  if (
-    productItem.getBBBadge === true &&
-    repriceResult?.listOfRepriceDetails.length === 0
-  ) {
-    repriceResult = await buyBoxHelper.parseBadgeBuyBox(
-      repriceResult,
-      result,
-      productItem,
-    );
-  }
-
-  //Apply Shipping BuyBox Rule
-  if (
-    productItem.getBBShipping === true &&
-    repriceResult?.listOfRepriceDetails.length === 0
-  ) {
-    repriceResult = await buyBoxHelper.parseShippingBuyBox(
-      repriceResult,
-      result,
-      productItem,
-    );
-  }
-
-  //Apply Badge BuyBox Rule
-  if (
-    productItem.getBBBadge === true &&
-    repriceResult?.listOfRepriceDetails.length === 0
-  ) {
-    repriceResult = await buyBoxHelper.parseBadgeBuyBox(
-      repriceResult,
-      result,
-      productItem,
-    );
-  }
-
-  // Last Reprice Check for Identical Sister Price
+  //Last Reprice Check for Identical Sister Price
   repriceResult = await Rule.ApplySisterComparisonCheck(
     repriceResult,
     result,
     productItem,
   );
-
-  // Align IsRepriced Field Based on Price Suggestion
-  repriceResult = await Rule.AlignIsRepriced(repriceResult);
 
   //Update TriggeredByVendor
   await mySqlHelper.UpdateTriggeredByVendor(repriceResult, contextVendor, mpid);
@@ -417,21 +366,12 @@ export async function repriceProduct(
   // Update History
   const historyIdentifier = await HistoryHelper.Execute(
     mpid,
-    repriceResult!,
+    repriceResult,
     output,
     isNcToBeApplied,
     contextVendor,
     productItem.contextCronName,
   );
-
-  //Update Reprice Result Status
-  const repriceResultStatus = await ResultParser.Parse(repriceResult);
-  await mySqlHelper.UpdateRepriceResultStatus(
-    repriceResultStatus,
-    mpid,
-    contextVendor,
-  );
-
   output = productItem.scrapeOn === true ? output : [];
 
   let outputResponse = new RepriceAsyncResponse(repriceResult!, output);

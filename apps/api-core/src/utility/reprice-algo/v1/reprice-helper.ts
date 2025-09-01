@@ -10,9 +10,9 @@ import { applicationConfig } from "../../config";
 
 //<!-- MODULE FUNCTIONS -->
 export async function Reprice(
-  refProduct: Net32Product,
-  payload: Net32Product[],
-  productItem: FrontierProduct,
+  refProduct: any,
+  payload: any,
+  productItem: any,
   sourceId: string,
 ) {
   const $ = await globalParam.GetInfo(productItem.mpid, productItem);
@@ -20,15 +20,15 @@ export async function Reprice(
     sourceId,
     refProduct,
     productItem.productName,
-    0 as unknown as string,
+    0,
     false,
     false,
     [],
     RepriceRenewedMessageEnum.DEFAULT,
   );
   const existingPrice = refProduct.priceBreaks.find(
-    (x) => x.minQty == 1,
-  )!.unitPrice;
+    (x: any) => x.minQty == 1,
+  ).unitPrice;
   repriceModel.repriceDetails!.oldPrice = existingPrice;
   const maxPrice = productItem.maxPrice
     ? parseFloat(productItem.maxPrice)
@@ -43,291 +43,85 @@ export async function Reprice(
   const allowCompeteWithNextForFloor = productItem.competeWithNext;
   let rawDataForSisterCheck: any = [];
 
-  let eligibleList: Net32Product[] = [];
-  // Get eligible List of Products where minQty is 1
-  payload.forEach((element) => {
-    if (element.priceBreaks) {
-      element.priceBreaks.forEach((p) => {
-        if (
-          p.minQty == 1 &&
-          p.active == true &&
-          isNotShortExpiryProduct(p, element.priceBreaks, 1) &&
-          !eligibleList.find((x) => x.vendorId == element.vendorId)
-        ) {
-          eligibleList.push(element);
-        }
-      });
-    }
-  });
-  //Update Eligible List based on Excluded Vendor List defined by User
-  eligibleList = await filterMapper.FilterBasedOnParams(
-    eligibleList,
-    productItem,
-    "EXCLUDED_VENDOR",
-  );
-
-  //Update Eligible List based on Inventory Threshold defined by User
-  eligibleList = await filterMapper.FilterBasedOnParams(
-    eligibleList,
-    productItem,
-    "INVENTORY_THRESHOLD",
-  );
-
-  //Update Eligible List based on HandlingTimeFilter
-  eligibleList = await filterMapper.FilterBasedOnParams(
-    eligibleList,
-    productItem,
-    "HANDLING_TIME",
-  );
-  //eligibleList = await getEligibleListBasedOnHandlingTimeFilter(eligibleList, productItem);
-
-  // Update Eligible List based on badgeIndicator
-  eligibleList = await filterMapper.FilterBasedOnParams(
-    eligibleList,
-    productItem,
-    "BADGE_INDICATOR",
-  );
-  //eligibleList = await getEligibleListBasedOnBadgeIndicator(eligibleList, productItem);
-
-  //Clean Eligible List based on Duplicate PricePoint
-  let tempEligibleList = await filterEligibleList(eligibleList, 1);
-
-  //Sort the eligible list of Products based on minQty=1 Price
-  let sortedPayload = _.sortBy(tempEligibleList, [
-    (prod) => {
-      return prod.priceBreaks.find((x) => x.minQty == 1 && x.active == true)!
-        .unitPrice;
-    },
-  ]);
-  if (!sortedPayload || (sortedPayload && sortedPayload.length < 1)) {
-    return repriceModel;
-  }
-  //Check if first 2 are tie
-  const isTieScenario = await IsTie(sortedPayload, 1);
-  if (isTieScenario === true) {
-    const tieWithSister = await IsTieWithSister(sortedPayload, 1, productItem);
-    if (tieWithSister !== true) {
-      excludedVendors = [];
-    }
-  }
-
-  //Set the Lowest Price
-  _.first(sortedPayload)!.priceBreaks.forEach((price) => {
-    if (price.minQty == 1 && price.active == true) {
-      lowestPrice = price.unitPrice;
-    }
-  });
-
-  //If the Lowest Price is of Self-Vendor
-  if (_.first(sortedPayload)!.vendorId == parseInt($.VENDOR_ID)) {
-    // If no Competitor found
-    if (sortedPayload.length == 1) {
-      const newPrice =
-        productItem.maxPrice && lowestPrice != parseFloat(productItem.maxPrice)
-          ? productItem.maxPrice
-          : "N/A";
-      const model = new RepriceModel(
-        sourceId,
-        refProduct,
-        productItem.productName,
-        newPrice,
-        newPrice != "N/A",
-        false,
-        [],
-        RepriceRenewedMessageEnum.NO_COMPETITOR,
-      );
-      model.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
-      model.updateTriggeredBy(
-        _.first(sortedPayload)!.vendorName,
-        _.first(sortedPayload)!.vendorId as unknown as string,
-        1,
-      );
-      return model;
-    }
-
-    if (
-      allowCompeteWithNextForFloor === true ||
-      productItem.repricingRule === 2
-    ) {
-      rawDataForSisterCheck = _.cloneDeep(sortedPayload);
-      sortedPayload = await filterMapper.FilterBasedOnParams(
-        sortedPayload,
-        productItem,
-        "SISTER_VENDOR_EXCLUSION",
-      );
-    }
-    // if next in list is in Excluded Vendor, go to next
-    let nextIndex = 1;
-    if (
-      sortedPayload[nextIndex] &&
-      _.includes(excludedVendors, sortedPayload[nextIndex].vendorId.toString())
-    ) {
-      nextIndex++;
-    }
-    for (let i = nextIndex; i < sortedPayload.length; i++) {
-      if (
-        sortedPayload[i] &&
-        _.includes(excludedVendors, sortedPayload[i].vendorId.toString())
-      ) {
-        nextIndex++;
-      } else if (
-        (await filterMapper.IsVendorFloorPrice(
-          sortedPayload[i].priceBreaks,
-          1,
-          floorPrice,
-          0,
-          false,
-        )) === true
-      ) {
-        nextIndex++;
-      } else {
-        break;
-      }
-    }
-    if (sortedPayload[nextIndex]) {
-      // Check the next Lowest Price
-      const nextLowestPrice = sortedPayload[nextIndex].priceBreaks.find(
-        (x) => x.minQty == 1 && x.active == true,
-      )!.unitPrice;
-      if (nextLowestPrice > floorPrice && nextLowestPrice >= existingPrice) {
-        const contextPriceResult = filterMapper.GetContextPrice(
-          parseFloat(nextLowestPrice as unknown as string),
-          processOffset,
-          floorPrice,
-          parseFloat(productItem.percentageDown),
-          1,
-        );
-        const contextPrice = contextPriceResult.Price;
-        if (nextLowestPrice > contextPrice) {
+  try {
+    let eligibleList: any[] = [];
+    // Get eligible List of Products where minQty is 1
+    payload.forEach((element: any) => {
+      if (element.priceBreaks) {
+        element.priceBreaks.forEach((p: any) => {
           if (
-            (contextPrice as unknown as number) <=
-            (maxPrice as unknown as number)
+            p.minQty == 1 &&
+            p.active == true &&
+            isNotShortExpiryProduct(p, element.priceBreaks, 1) &&
+            !eligibleList.find((x) => x.vendorId == element.vendorId)
           ) {
-            if (contextPrice.toFixed(2) !== existingPrice.toFixed(2)) {
-              repriceModel = new RepriceModel(
-                sourceId,
-                refProduct,
-                productItem.productName,
-                contextPrice as unknown as string,
-                true,
-                false,
-                [],
-                filterMapper.AppendPriceFactorTag(
-                  RepriceRenewedMessageEnum.PRICE_UP_NEXT,
-                  contextPriceResult.Type,
-                ),
-              );
-            }
-          } else {
-            repriceModel = new RepriceModel(
-              sourceId,
-              refProduct,
-              productItem.productName,
-              productItem.maxPrice,
-              true,
-              false,
-              [],
-              RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL,
-            );
+            eligibleList.push(element);
           }
-        } else {
-          repriceModel = new RepriceModel(
-            sourceId,
-            refProduct,
-            productItem.productName,
-            existingPrice,
-            false,
-            false,
-            [],
-            RepriceRenewedMessageEnum.IGNORE_OWN,
-          );
-          repriceModel.repriceDetails!.goToPrice =
-            contextPrice as unknown as string;
-        }
+        });
       }
-      //1. If Next Lowest price is Greater Than Floor Price
-      //2. Floor Price is Not Equal to Existing Price
-      //SET: Floor Price
-      else if (nextLowestPrice > floorPrice && floorPrice != existingPrice) {
-        //repriceModel = new RepriceModel(sourceId, refProduct, productItem.productName, floorPrice, true, false, [], _enum.PRICE_UP_SECOND_FLOOR);
-      }
-      //1. If Next Lowest price is Greater Than Max Price
-      //2. Max Price is Not Equal to Existing Price
-      //SET: Max Price
-      else if (
-        nextLowestPrice > (productItem.maxPrice as unknown as number) &&
-        productItem.maxPrice != (existingPrice as unknown as string)
-      ) {
-        repriceModel = new RepriceModel(
-          sourceId,
-          refProduct,
-          productItem.productName,
-          productItem.maxPrice,
-          true,
-          false,
-          [],
-          RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX,
-        );
-      }
+    });
+    //Update Eligible List based on Excluded Vendor List defined by User
+    eligibleList = await filterMapper.FilterBasedOnParams(
+      eligibleList,
+      productItem,
+      "EXCLUDED_VENDOR",
+    );
 
-      repriceModel.updateTriggeredBy(
-        sortedPayload[nextIndex].vendorName,
-        sortedPayload[nextIndex].vendorId as unknown as string,
-        1,
-      );
+    //Update Eligible List based on Inventory Threshold defined by User
+    eligibleList = await filterMapper.FilterBasedOnParams(
+      eligibleList,
+      productItem,
+      "INVENTORY_THRESHOLD",
+    );
+
+    //Update Eligible List based on HandlingTimeFilter
+    eligibleList = await filterMapper.FilterBasedOnParams(
+      eligibleList,
+      productItem,
+      "HANDLING_TIME",
+    );
+    //eligibleList = await getEligibleListBasedOnHandlingTimeFilter(eligibleList, productItem);
+
+    // Update Eligible List based on badgeIndicator
+    eligibleList = await filterMapper.FilterBasedOnParams(
+      eligibleList,
+      productItem,
+      "BADGE_INDICATOR",
+    );
+    //eligibleList = await getEligibleListBasedOnBadgeIndicator(eligibleList, productItem);
+
+    //Clean Eligible List based on Duplicate PricePoint
+    let tempEligibleList = await filterEligibleList(eligibleList, 1);
+
+    //Sort the eligible list of Products based on minQty=1 Price
+    let sortedPayload = _.sortBy(tempEligibleList, [
+      (prod) => {
+        return (
+          _.find(prod.priceBreaks, (x) => {
+            if (x.minQty == 1 && x.active == true) return true;
+          })! as any
+        ).unitPrice;
+      },
+    ]);
+    if (!sortedPayload || (sortedPayload && sortedPayload.length < 1)) {
+      return repriceModel;
     }
-    if (!sortedPayload[nextIndex]) {
-      repriceModel = new RepriceModel(
-        sourceId,
-        refProduct,
-        productItem.productName,
-        productItem.maxPrice,
-        true,
-        false,
-        [],
-        RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL,
-      );
-      repriceModel.updateTriggeredBy(
-        _.first(sortedPayload)!.vendorName,
-        _.first(sortedPayload)!.vendorId as unknown as string,
-        1,
-      );
-    }
-    repriceModel.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
-    return repriceModel;
-  }
-  // For Other Vendors
-  else {
-    //Check if the lowest price is of the same parent company
-    if (
-      _.includes(excludedVendors, _.first(sortedPayload)!.vendorId.toString())
-    ) {
-      let model = new RepriceModel(
-        sourceId,
-        refProduct,
-        productItem.productName,
-        existingPrice,
-        false,
-        false,
-        [],
-        RepriceRenewedMessageEnum.NO_COMPETITOR_SISTER_VENDOR,
-      );
-      model.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
-      const contextPriceResult = filterMapper.GetContextPrice(
-        parseFloat(lowestPrice as any),
-        processOffset,
-        floorPrice,
-        parseFloat(productItem.percentageDown),
-        1,
-      );
-      const contextPrice = contextPriceResult.Price;
-      model.repriceDetails!.goToPrice = contextPrice.toFixed(2);
-      model.updateTriggeredBy(
-        _.first(sortedPayload)!.vendorName,
-        _.first(sortedPayload)!.vendorId as unknown as string,
-        1,
-      );
-      return model;
+    //Check if first 2 are tie
+    const isTieScenario = await IsTie(sortedPayload, 1);
+    if (isTieScenario === true) {
+      try {
+        const tieWithSister = await IsTieWithSister(
+          sortedPayload,
+          1,
+          productItem,
+        );
+        if (tieWithSister !== true) {
+          excludedVendors = [];
+        }
+      } catch (exception) {
+        console.log(`Exception in TIE Scenario for ${productItem.mpid}`);
+        console.log(exception);
+      }
     }
 
     //Remove Sister Vendor if Both UP & DOWN selected or Compete with Next is true
@@ -343,142 +137,287 @@ export async function Reprice(
       );
     }
 
-    // Check the Lowest Price
-    const prodPriceWithMinQty = _.first(sortedPayload)!.priceBreaks.find(
-      (x: any) => x.minQty == 1 && x.active == true,
-    );
-    if (prodPriceWithMinQty) {
-      const lowestPrice = prodPriceWithMinQty.unitPrice;
-      const contextPriceResult = filterMapper.GetContextPrice(
-        parseFloat(lowestPrice as unknown as string),
-        processOffset,
-        floorPrice,
-        parseFloat(productItem.percentageDown),
-        1,
-      );
-      const offsetPrice = contextPriceResult.Price;
-      //1. If the Offset Price is less than Floor Price
-      //SET: Do Nothing
-      if (offsetPrice <= floorPrice) {
-        //If Lowest is below Floor and competing with others and Sister is already Lowest
-        const floorSisterResult = await filterMapper.VerifyFloorWithSister(
-          productItem,
-          refProduct,
-          rawDataForSisterCheck,
-          excludedVendors,
-          $.VENDOR_ID,
-          1,
-          sourceId,
-        );
-        //if (floorSisterResult != false) return floorSisterResult;
+    //Set the Lowest Price
+    _.first(sortedPayload)!.priceBreaks.forEach((price: any) => {
+      if (price.minQty == 1 && price.active == true) {
+        lowestPrice = price.unitPrice;
+      }
+    });
 
-        //If Own vendor is 2nd Lowest
+    //If the Lowest Price is of Self-Vendor
+    if (_.first(sortedPayload)!.vendorId == parseInt($.VENDOR_ID)) {
+      // If no Competitor found
+      if (sortedPayload.length == 1) {
+        const newPrice =
+          productItem.maxPrice &&
+          lowestPrice != parseFloat(productItem.maxPrice)
+            ? productItem.maxPrice
+            : "N/A";
+        const model = new RepriceModel(
+          sourceId,
+          refProduct,
+          productItem.productName,
+          newPrice,
+          newPrice != "N/A",
+          false,
+          [],
+          RepriceRenewedMessageEnum.NO_COMPETITOR,
+        );
+        model.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
+        model.updateTriggeredBy(
+          _.first(sortedPayload)!.vendorName,
+          _.first(sortedPayload)!.vendorId,
+          1,
+        );
+        return model;
+      }
+
+      // if next in list is in Excluded Vendor, go to next
+      let nextIndex = 1;
+      if (
+        sortedPayload[nextIndex] &&
+        _.includes(
+          excludedVendors,
+          sortedPayload[nextIndex].vendorId.toString(),
+        )
+      ) {
+        nextIndex++;
+      }
+      for (let i = nextIndex; i < sortedPayload.length; i++) {
         if (
-          sortedPayload[1] &&
-          (sortedPayload[1].vendorId == $.VENDOR_ID ||
-            _.includes(excludedVendors, sortedPayload[1].vendorId.toString()))
+          sortedPayload[i] &&
+          _.includes(excludedVendors, sortedPayload[i].vendorId.toString())
         ) {
-          let nextIndex = 2;
-          for (let i = nextIndex; i < sortedPayload.length; i++) {
-            if (
-              sortedPayload[i] &&
-              (_.includes(
-                excludedVendors,
-                sortedPayload[i].vendorId.toString(),
-              ) ||
-                sortedPayload[i].vendorId == $.VENDOR_ID)
-            ) {
-              nextIndex++;
-            } else if (
-              sortedPayload[i] &&
-              (await filterMapper.IsVendorFloorPrice(
-                sortedPayload[i].priceBreaks,
-                1,
-                floorPrice,
-                0,
-                false,
-              )) === true
-            ) {
-              nextIndex++;
-            } else {
-              break;
+          nextIndex++;
+        } else if (
+          (await filterMapper.IsVendorFloorPrice(
+            sortedPayload[i].priceBreaks,
+            1,
+            floorPrice,
+            0,
+            false,
+          )) === true
+        ) {
+          nextIndex++;
+        } else {
+          break;
+        }
+      }
+      if (sortedPayload[nextIndex]) {
+        // Check the next Lowest Price
+        const nextLowestPrice = (
+          _.find(sortedPayload[nextIndex].priceBreaks, (price) => {
+            if (price.minQty == 1 && price.active == true) {
+              return true;
             }
-          }
-          if (!sortedPayload[nextIndex]) {
-            const model = new RepriceModel(
-              sourceId,
-              refProduct,
-              productItem.productName,
-              productItem.maxPrice,
-              true,
-              false,
-              [],
-              RepriceRenewedMessageEnum.PRICE_MAXED,
-            );
-            model.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
-            model.updateTriggeredBy(
-              _.first(sortedPayload)!.vendorName,
-              _.first(sortedPayload)!.vendorId as unknown as string,
-              1,
-            );
-            return model;
-          }
-          const nextLowestPrice = sortedPayload[nextIndex].priceBreaks.find(
-            (x) => x.minQty == 1 && x.active == true,
-          )!.unitPrice;
-          if (
-            nextLowestPrice > floorPrice &&
-            (nextLowestPrice >= existingPrice ||
-              allowCompeteWithNextForFloor === true)
-          ) {
-            //&& nextLowestPrice >= existingPrice
-            const contextPriceResult = filterMapper.GetContextPrice(
-              parseFloat(nextLowestPrice as unknown as string),
-              processOffset,
-              floorPrice,
-              parseFloat(productItem.percentageDown),
-              1,
-            );
-            const contextPrice = contextPriceResult.Price;
-            if (contextPrice < existingPrice && floorSisterResult !== false) {
-              //Check for Sister Being lowest only while going Down
-              return floorSisterResult;
-            }
-            if (
-              nextLowestPrice > contextPrice &&
-              contextPrice <= (maxPrice as unknown as number)
-            ) {
+          })! as any
+        ).unitPrice;
+        if (nextLowestPrice > floorPrice && nextLowestPrice >= existingPrice) {
+          const contextPriceResult = await filterMapper.GetContextPrice(
+            parseFloat(nextLowestPrice),
+            processOffset,
+            floorPrice,
+            parseFloat(productItem.percentageDown),
+            1,
+          );
+          const contextPrice = contextPriceResult.Price;
+          if (nextLowestPrice > contextPrice) {
+            if (contextPrice <= maxPrice) {
               if (contextPrice.toFixed(2) !== existingPrice.toFixed(2)) {
-                const model = new RepriceModel(
+                repriceModel = new RepriceModel(
                   sourceId,
                   refProduct,
                   productItem.productName,
-                  contextPrice as unknown as string,
+                  contextPrice,
                   true,
                   false,
                   [],
-                  filterMapper.AppendPriceFactorTag(
-                    RepriceRenewedMessageEnum.PRICE_UP_SECOND_FLOOR_HIT,
+                  await filterMapper.AppendPriceFactorTag(
+                    RepriceRenewedMessageEnum.PRICE_UP_NEXT,
                     contextPriceResult.Type,
                   ),
                 );
-                model.updateLowest(
-                  _.first(sortedPayload)!.vendorName,
-                  lowestPrice,
-                );
-                model.updateTriggeredBy(
-                  sortedPayload[nextIndex].vendorName,
-                  sortedPayload[nextIndex].vendorId as unknown as string,
-                  1,
-                );
-                return model;
               }
             } else {
+              repriceModel = new RepriceModel(
+                sourceId,
+                refProduct,
+                productItem.productName,
+                productItem.maxPrice,
+                true,
+                false,
+                [],
+                RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL,
+              );
+            }
+          } else {
+            repriceModel = new RepriceModel(
+              sourceId,
+              refProduct,
+              productItem.productName,
+              existingPrice,
+              false,
+              false,
+              [],
+              RepriceRenewedMessageEnum.IGNORE_OWN,
+            );
+            repriceModel.repriceDetails!.goToPrice = contextPrice;
+          }
+        }
+        //1. If Next Lowest price is Greater Than Floor Price
+        //2. Floor Price is Not Equal to Existing Price
+        //SET: Floor Price
+        else if (nextLowestPrice > floorPrice && floorPrice != existingPrice) {
+          //repriceModel = new RepriceModel(sourceId, refProduct, productItem.productName, floorPrice, true, false, [], _enum.PRICE_UP_SECOND_FLOOR);
+        }
+        //1. If Next Lowest price is Greater Than Max Price
+        //2. Max Price is Not Equal to Existing Price
+        //SET: Max Price
+        else if (
+          nextLowestPrice > productItem.maxPrice &&
+          productItem.maxPrice != existingPrice
+        ) {
+          repriceModel = new RepriceModel(
+            sourceId,
+            refProduct,
+            productItem.productName,
+            productItem.maxPrice,
+            true,
+            false,
+            [],
+            RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX,
+          );
+        }
+
+        repriceModel.updateTriggeredBy(
+          sortedPayload[nextIndex].vendorName,
+          sortedPayload[nextIndex].vendorId,
+          1,
+        );
+      }
+      if (!sortedPayload[nextIndex]) {
+        repriceModel = new RepriceModel(
+          sourceId,
+          refProduct,
+          productItem.productName,
+          productItem.maxPrice,
+          true,
+          false,
+          [],
+          RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL,
+        );
+        repriceModel.updateTriggeredBy(
+          _.first(sortedPayload)!.vendorName,
+          _.first(sortedPayload)!.vendorId,
+          1,
+        );
+      }
+      repriceModel.updateLowest(
+        _.first(sortedPayload)!.vendorName,
+        lowestPrice,
+      );
+    }
+    // For Other Vendors
+    else {
+      //Check if the lowest price is of the same parent company
+      if (
+        _.includes(excludedVendors, _.first(sortedPayload)!.vendorId.toString())
+      ) {
+        let model = new RepriceModel(
+          sourceId,
+          refProduct,
+          productItem.productName,
+          existingPrice,
+          false,
+          false,
+          [],
+          RepriceRenewedMessageEnum.NO_COMPETITOR_SISTER_VENDOR,
+        );
+        model.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
+        const contextPriceResult = await filterMapper.GetContextPrice(
+          parseFloat(lowestPrice as any),
+          processOffset,
+          floorPrice,
+          parseFloat(productItem.percentageDown),
+          1,
+        );
+        const contextPrice = contextPriceResult.Price;
+        model.repriceDetails!.goToPrice = contextPrice.toFixed(2);
+        model.updateTriggeredBy(
+          _.first(sortedPayload)!.vendorName,
+          _.first(sortedPayload)!.vendorId,
+          1,
+        );
+        return model;
+      }
+
+      // Check the Lowest Price
+      const prodPriceWithMinQty = _.first(sortedPayload)!.priceBreaks.find(
+        (x: any) => x.minQty == 1 && x.active == true,
+      );
+      if (prodPriceWithMinQty) {
+        const lowestPrice = prodPriceWithMinQty.unitPrice;
+        const contextPriceResult = await filterMapper.GetContextPrice(
+          parseFloat(lowestPrice as any),
+          processOffset,
+          floorPrice,
+          parseFloat(productItem.percentageDown),
+          1,
+        );
+        const offsetPrice = contextPriceResult.Price;
+        //1. If the Offset Price is less than Floor Price
+        //SET: Do Nothing
+        if (offsetPrice <= floorPrice) {
+          //If Lowest is below Floor and competing with others and Sister is already Lowest
+          const floorSisterResult = await filterMapper.VerifyFloorWithSister(
+            productItem,
+            refProduct,
+            rawDataForSisterCheck,
+            excludedVendors,
+            $.VENDOR_ID,
+            1,
+            sourceId,
+          );
+
+          //if (floorSisterResult != false) return floorSisterResult;
+
+          //If Own vendor is 2nd Lowest
+          if (
+            sortedPayload[1] &&
+            (sortedPayload[1].vendorId == $.VENDOR_ID ||
+              _.includes(excludedVendors, sortedPayload[1].vendorId.toString()))
+          ) {
+            let nextIndex = 2;
+            for (let i = nextIndex; i < sortedPayload.length; i++) {
+              if (
+                sortedPayload[i] &&
+                (_.includes(
+                  excludedVendors,
+                  sortedPayload[i].vendorId.toString(),
+                ) ||
+                  sortedPayload[i].vendorId == $.VENDOR_ID)
+              ) {
+                nextIndex++;
+              } else if (
+                (await filterMapper.IsVendorFloorPrice(
+                  sortedPayload[i].priceBreaks,
+                  1,
+                  floorPrice,
+                  0,
+                  false,
+                )) === true
+              ) {
+                nextIndex++;
+              } else {
+                break;
+              }
+            }
+            if (!sortedPayload[nextIndex]) {
               const model = new RepriceModel(
                 sourceId,
                 refProduct,
                 productItem.productName,
-                parseFloat(productItem.maxPrice) as unknown as string,
+                productItem.maxPrice,
                 true,
                 false,
                 [],
@@ -489,60 +428,132 @@ export async function Reprice(
                 lowestPrice,
               );
               model.updateTriggeredBy(
-                sortedPayload[nextIndex].vendorName,
-                sortedPayload[nextIndex].vendorId as unknown as string,
+                _.first(sortedPayload)!.vendorName,
+                _.first(sortedPayload)!.vendorId,
                 1,
               );
               return model;
             }
-            // else {
-            //     repriceModel = new RepriceModel(sourceId, refProduct, productItem.productName, existingPrice, false, false, [], _enum_new.IGNORE_OWN);
-            //     repriceModel.repriceDetails.goToPrice = nextLowestPrice - processOffset;
-            // }
-          }
-        } else if (sortedPayload[1]) {
-          if (
-            allowCompeteWithNextForFloor == true &&
-            floorSisterResult !== false
-          )
-            return floorSisterResult;
-          let nextIndex = 1;
-          for (let i = nextIndex; i < sortedPayload.length; i++) {
+            const nextLowestPrice = (
+              _.find(sortedPayload[nextIndex].priceBreaks, (price) => {
+                if (price.minQty == 1 && price.active == true) {
+                  return true;
+                }
+              })! as any
+            ).unitPrice;
             if (
-              sortedPayload[i] &&
-              (_.includes(
-                excludedVendors,
-                sortedPayload[i].vendorId.toString(),
-              ) ||
-                sortedPayload[i].vendorId == $.VENDOR_ID)
+              nextLowestPrice > floorPrice &&
+              (nextLowestPrice >= existingPrice ||
+                allowCompeteWithNextForFloor === true)
             ) {
-              nextIndex++;
-            } else if (
-              (await filterMapper.IsVendorFloorPrice(
-                sortedPayload[i].priceBreaks,
-                1,
+              //&& nextLowestPrice >= existingPrice
+              const contextPriceResult = await filterMapper.GetContextPrice(
+                parseFloat(nextLowestPrice),
+                processOffset,
                 floorPrice,
-                0,
-                false,
-              )) == true
-            ) {
-              nextIndex++;
-            } else {
-              break;
+                parseFloat(productItem.percentageDown),
+                1,
+              );
+              const contextPrice = contextPriceResult.Price;
+              if (contextPrice < existingPrice && floorSisterResult !== false) {
+                //Check for Sister Being lowest only while going Down
+                return floorSisterResult;
+              }
+              if (nextLowestPrice > contextPrice && contextPrice <= maxPrice) {
+                if (contextPrice.toFixed(2) !== existingPrice.toFixed(2)) {
+                  const model = new RepriceModel(
+                    sourceId,
+                    refProduct,
+                    productItem.productName,
+                    contextPrice,
+                    true,
+                    false,
+                    [],
+                    await filterMapper.AppendPriceFactorTag(
+                      RepriceRenewedMessageEnum.PRICE_UP_SECOND_FLOOR_HIT,
+                      contextPriceResult.Type,
+                    ),
+                  );
+                  model.updateLowest(
+                    _.first(sortedPayload)!.vendorName,
+                    lowestPrice,
+                  );
+                  model.updateTriggeredBy(
+                    sortedPayload[nextIndex].vendorName,
+                    sortedPayload[nextIndex].vendorId,
+                    1,
+                  );
+                  return model;
+                }
+              } else {
+                const model = new RepriceModel(
+                  sourceId,
+                  refProduct,
+                  productItem.productName,
+                  parseFloat(productItem.maxPrice),
+                  true,
+                  false,
+                  [],
+                  RepriceRenewedMessageEnum.PRICE_MAXED,
+                );
+                model.updateLowest(
+                  _.first(sortedPayload)!.vendorName,
+                  lowestPrice,
+                );
+                model.updateTriggeredBy(
+                  sortedPayload[nextIndex].vendorName,
+                  sortedPayload[nextIndex].vendorId,
+                  1,
+                );
+                return model;
+              }
+              // else {
+              //     repriceModel = new RepriceModel(sourceId, refProduct, productItem.productName, existingPrice, false, false, [], _enum_new.IGNORE_OWN);
+              //     repriceModel.repriceDetails.goToPrice = nextLowestPrice - processOffset;
+              // }
             }
-          }
-          if (sortedPayload[nextIndex] != null) {
-            const secondLowestPrice = sortedPayload[nextIndex].priceBreaks.find(
-              (x: any) => x.minQty == 1 && x.active == true,
-            );
+          } else if (sortedPayload[1]) {
+            if (
+              allowCompeteWithNextForFloor == true &&
+              floorSisterResult !== false
+            )
+              return floorSisterResult;
+            let nextIndex = 1;
+            for (let i = nextIndex; i < sortedPayload.length; i++) {
+              if (
+                sortedPayload[i] &&
+                (_.includes(
+                  excludedVendors,
+                  sortedPayload[i].vendorId.toString(),
+                ) ||
+                  sortedPayload[i].vendorId == $.VENDOR_ID)
+              ) {
+                nextIndex++;
+              } else if (
+                (await filterMapper.IsVendorFloorPrice(
+                  sortedPayload[i].priceBreaks,
+                  1,
+                  floorPrice,
+                  0,
+                  false,
+                )) == true
+              ) {
+                nextIndex++;
+              } else {
+                break;
+              }
+            }
+            const secondLowestPrice = sortedPayload[
+              nextIndex
+            ]!.priceBreaks!.find((x: any) => x.minQty == 1 && x.active == true);
             if (
               secondLowestPrice &&
               secondLowestPrice.unitPrice > floorPrice &&
               (secondLowestPrice.unitPrice >= existingPrice ||
                 allowCompeteWithNextForFloor === true)
             ) {
-              const contextPriceResult = filterMapper.GetContextPrice(
-                parseFloat(secondLowestPrice.unitPrice as unknown as string),
+              const contextPriceResult = await filterMapper.GetContextPrice(
+                parseFloat(secondLowestPrice.unitPrice as any),
                 processOffset,
                 floorPrice,
                 parseFloat(productItem.percentageDown),
@@ -552,75 +563,59 @@ export async function Reprice(
                 sourceId,
                 refProduct,
                 productItem.productName,
-                parseFloat(productItem.maxPrice),
+                contextPriceResult.Price,
                 true,
                 false,
                 [],
-                RepriceRenewedMessageEnum.PRICE_MAXED,
+                await filterMapper.AppendPriceFactorTag(
+                  RepriceRenewedMessageEnum.PRICE_UP_SECOND_FLOOR_HIT,
+                  contextPriceResult.Type,
+                ),
               );
             }
-            repriceModel.updateLowest(
-              _.first(sortedPayload)!.vendorName,
-              lowestPrice,
-            );
             repriceModel.updateTriggeredBy(
               sortedPayload[nextIndex].vendorName,
               sortedPayload[nextIndex].vendorId,
               1,
             );
           } else {
-            const model = new RepriceModel(
+            repriceModel = new RepriceModel(
               sourceId,
               refProduct,
               productItem.productName,
-              parseFloat(productItem.maxPrice),
-              true,
+              existingPrice,
+              false,
               false,
               [],
-              RepriceRenewedMessageEnum.PRICE_MAXED,
+              RepriceRenewedMessageEnum.IGNORE_OWN,
             );
-            model.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
-            model.updateTriggeredBy(
+            repriceModel.updateTriggeredBy(
               _.first(sortedPayload)!.vendorName,
               _.first(sortedPayload)!.vendorId,
               1,
             );
-            return model;
           }
         }
         //1. If the Offset Price is greater than Floor Price
         //2. If the Offset Price is less than Max Price
         //SET: Offset Price
         if (offsetPrice > floorPrice) {
-          if (offsetPrice < (maxPrice as unknown as number)) {
-            repriceModel = new RepriceModel(
-              sourceId,
-              refProduct,
-              productItem.productName,
-              offsetPrice,
-              true,
-              false,
-              [],
-              await filterMapper.AppendPriceFactorTag(
-                RepriceRenewedMessageEnum.PRICE_UP_NEXT,
-                contextPriceResult.Type,
-              ),
-            );
-          } else {
-            repriceModel = new RepriceModel(
-              sourceId,
-              refProduct,
-              productItem.productName,
-              maxPrice,
-              true,
-              false,
-              [],
-              RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL,
-            );
-          }
+          repriceModel = new RepriceModel(
+            sourceId,
+            refProduct,
+            productItem.productName,
+            offsetPrice,
+            true,
+            false,
+            [],
+            await filterMapper.AppendPriceFactorTag(
+              RepriceRenewedMessageEnum.PRICE_UP_NEXT,
+              contextPriceResult.Type,
+            ),
+          );
           repriceModel.updateTriggeredBy(
             _.first(sortedPayload)!.vendorName,
-            _.first(sortedPayload)!.vendorId as unknown as string,
+            _.first(sortedPayload)!.vendorId,
             1,
           );
         } else if (repriceModel.repriceDetails!.isRepriced !== true) {
@@ -634,11 +629,10 @@ export async function Reprice(
             [],
             RepriceRenewedMessageEnum.OFFSET_LESS_THAN_FLOOR,
           );
-          repriceModel.repriceDetails!.goToPrice =
-            offsetPrice as unknown as string;
+          repriceModel.repriceDetails!.goToPrice = offsetPrice;
           repriceModel.updateTriggeredBy(
             _.first(sortedPayload)!.vendorName,
-            _.first(sortedPayload)!.vendorId as unknown as string,
+            _.first(sortedPayload)!.vendorId,
             1,
           );
         }
@@ -655,7 +649,7 @@ export async function Reprice(
         );
         repriceModel.updateTriggeredBy(
           _.first(sortedPayload)!.vendorName,
-          _.first(sortedPayload)!.vendorId as unknown as string,
+          _.first(sortedPayload)!.vendorId,
           1,
         );
       }
@@ -682,16 +676,20 @@ export async function Reprice(
         1,
       );
     }
-    return repriceModel;
+  } catch (exception) {
+    console.log(
+      `Error in Reprice for mpid : ${productItem.mpid} || Error : ${exception}`,
+    );
   }
+  return repriceModel;
 }
 
 export async function RepriceIndividualPriceBreak(
-  refProduct: Net32Product,
-  payload: Net32Product[],
-  productItem: FrontierProduct,
+  refProduct: any,
+  payload: any,
+  productItem: any,
   sourceId: string,
-  priceBreak: Net32PriceBreak,
+  priceBreak: any,
 ) {
   const $ = await globalParam.GetInfo(productItem.mpid, productItem);
   const existingPrice = priceBreak.unitPrice;
@@ -716,135 +714,112 @@ export async function RepriceIndividualPriceBreak(
   let excludedVendors =
     productItem.competeAll === true ? [] : $.EXCLUDED_VENDOR_ID.split(";");
   const allowCompeteWithNextForFloor = productItem.competeWithNext;
-  let eligibleList: Net32Product[] = [];
   let rawDataForSisterCheck: any = [];
-  // Get eligible List of Products where minQty is equal to minQty of the parameter
-  payload.forEach((element) => {
-    if (element.priceBreaks) {
-      element.priceBreaks.forEach((p) => {
-        if (
-          p.minQty == priceBreak.minQty &&
-          p.active == true &&
-          isNotShortExpiryProduct(p, element.priceBreaks, priceBreak.minQty) &&
-          !eligibleList.find((x) => x.vendorId == element.vendorId)
-        ) {
-          eligibleList.push(element);
-        }
-      });
-    }
-  });
+  try {
+    let eligibleList: any[] = [];
+    // Get eligible List of Products where minQty is equal to minQty of the parameter
+    payload.forEach((element: any) => {
+      if (element.priceBreaks) {
+        element.priceBreaks.forEach((p: any) => {
+          if (
+            p.minQty == priceBreak.minQty &&
+            p.active == true &&
+            isNotShortExpiryProduct(
+              p,
+              element.priceBreaks,
+              priceBreak.minQty,
+            ) &&
+            !eligibleList.find((x) => x.vendorId == element.vendorId)
+          ) {
+            eligibleList.push(element);
+          }
+        });
+      }
+    });
 
-  //Update Eligible List based on Inventory Availability for Price Break
-  if (productItem.ignorePhantomQBreak === true) {
-    productItem.contextMinQty = priceBreak.minQty;
+    //Update Eligible List based on Inventory Availability for Price Break
+    if (productItem.ignorePhantomQBreak === true) {
+      productItem.contextMinQty = priceBreak.minQty;
+      eligibleList = await filterMapper.FilterBasedOnParams(
+        eligibleList,
+        productItem,
+        "PHANTOM_PRICE_BREAK",
+      );
+    }
+
+    if (eligibleList.length === 0) {
+      repriceModel.repriceDetails!.explained =
+        RepriceRenewedMessageEnum.NO_COMPETITOR;
+      return repriceModel;
+    }
+
+    //Update Eligible List based on Excluded Vendor List defined by User
     eligibleList = await filterMapper.FilterBasedOnParams(
       eligibleList,
       productItem,
-      "PHANTOM_PRICE_BREAK",
+      "EXCLUDED_VENDOR",
     );
-  }
 
-  if (eligibleList.length === 0) {
-    repriceModel.repriceDetails!.explained =
-      RepriceRenewedMessageEnum.NO_COMPETITOR;
-    return repriceModel;
-  }
-
-  //Update Eligible List based on Excluded Vendor List defined by User
-  eligibleList = await filterMapper.FilterBasedOnParams(
-    eligibleList,
-    productItem,
-    "EXCLUDED_VENDOR",
-  );
-
-  //Update Eligible List based on Inventory Threshold defined by User
-  eligibleList = await filterMapper.FilterBasedOnParams(
-    eligibleList,
-    productItem,
-    "INVENTORY_THRESHOLD",
-  );
-
-  //Update Eligible List based on HandlingTimeFilter
-  eligibleList = await filterMapper.FilterBasedOnParams(
-    eligibleList,
-    productItem,
-    "HANDLING_TIME",
-  );
-  //eligibleList = await getEligibleListBasedOnHandlingTimeFilter(eligibleList, productItem);
-
-  // Update Eligible List based on badgeIndicator
-  eligibleList = await filterMapper.FilterBasedOnParams(
-    eligibleList,
-    productItem,
-    "BADGE_INDICATOR",
-  );
-  //eligibleList = await getEligibleListBasedOnBadgeIndicator(eligibleList, productItem);
-
-  //Clean Eligible List based on Duplicate PricePoint
-  let tempEligibleList = await filterEligibleList(
-    eligibleList,
-    priceBreak.minQty,
-  );
-
-  //Sort the eligible list of Products based on minQty=minQty of the parameter Price
-  let sortedPayload = _.sortBy(tempEligibleList, [
-    (prod) => {
-      return prod.priceBreaks.find(
-        (x) => x.minQty == priceBreak.minQty && x.active == true,
-      )!.unitPrice;
-    },
-  ]);
-  if (!sortedPayload || (sortedPayload && sortedPayload.length < 1)) {
-    return repriceModel;
-  }
-  //Check if first 2 are tie
-  const isTieScenario = await IsTie(sortedPayload, priceBreak.minQty);
-  if (isTieScenario === true) {
-    const tieWithSister = await IsTieWithSister(
-      sortedPayload,
-      priceBreak.minQty,
+    //Update Eligible List based on Inventory Threshold defined by User
+    eligibleList = await filterMapper.FilterBasedOnParams(
+      eligibleList,
       productItem,
+      "INVENTORY_THRESHOLD",
     );
-    if (tieWithSister !== true) {
-      excludedVendors = [];
-    }
-  }
 
-  //Set the Lowest Price
-  _.first(sortedPayload)!.priceBreaks.forEach((price) => {
-    if (price.minQty == priceBreak.minQty && price.active == true) {
-      lowestPrice = price.unitPrice;
-    }
-  });
-
-  // If only Own Vendor or Sister Vendor is available, Shut down the Price Break
-  if (priceBreak.minQty != 1) {
-    const nonSisterVendorDetails = sortedPayload.filter(
-      (x) =>
-        x.vendorId != $.VENDOR_ID &&
-        !_.includes(excludedVendors, x.vendorId.toString()),
+    //Update Eligible List based on HandlingTimeFilter
+    eligibleList = await filterMapper.FilterBasedOnParams(
+      eligibleList,
+      productItem,
+      "HANDLING_TIME",
     );
-    if (nonSisterVendorDetails.length === 0) {
-      repriceModel.repriceDetails!.newPrice = existingPrice;
-      repriceModel.repriceDetails!.isRepriced = true;
-      repriceModel.repriceDetails!.active = 0 as unknown as boolean;
-      repriceModel.repriceDetails!.explained =
-        RepriceRenewedMessageEnum.SHUT_DOWN_FLOOR_REACHED;
-      repriceModel.updateLowest(
-        _.first(sortedPayload)!.vendorName,
-        lowestPrice,
-      );
-      repriceModel.updateTriggeredBy(
-        _.first(sortedPayload)!.vendorName,
-        _.first(sortedPayload)!.vendorId as unknown as string,
-        priceBreak.minQty,
-      );
+    //eligibleList = await getEligibleListBasedOnHandlingTimeFilter(eligibleList, productItem);
+
+    // Update Eligible List based on badgeIndicator
+    eligibleList = await filterMapper.FilterBasedOnParams(
+      eligibleList,
+      productItem,
+      "BADGE_INDICATOR",
+    );
+    //eligibleList = await getEligibleListBasedOnBadgeIndicator(eligibleList, productItem);
+
+    //Clean Eligible List based on Duplicate PricePoint
+    let tempEligibleList = await filterEligibleList(
+      eligibleList,
+      priceBreak.minQty,
+    );
+
+    //Sort the eligible list of Products based on minQty=minQty of the parameter Price
+    let sortedPayload = _.sortBy(tempEligibleList, [
+      (prod) => {
+        return (
+          _.find(prod.priceBreaks, (x) => {
+            if (x.minQty == priceBreak.minQty && x.active == true) return true;
+          })! as any
+        ).unitPrice;
+      },
+    ]);
+    if (!sortedPayload || (sortedPayload && sortedPayload.length < 1)) {
       return repriceModel;
     }
-  }
-  //If the Lowest Price is of Self-Vendor
-  if (_.first(sortedPayload)!.vendorId == $.VENDOR_ID) {
-    // if next in list is in Excluded Vendor, go to next
+    //Check if first 2 are tie
+    const isTieScenario = await IsTie(sortedPayload, priceBreak.minQty);
+    if (isTieScenario === true) {
+      try {
+        const tieWithSister = await IsTieWithSister(
+          sortedPayload,
+          priceBreak.minQty,
+          productItem,
+        );
+        if (tieWithSister !== true) {
+          excludedVendors = [];
+        }
+      } catch (exception) {
+        console.log(`Exception in TIE Scenario for ${productItem.mpid}`);
+        console.log(exception);
+      }
+    }
+
     //Remove Sister Vendor if Both UP & DOWN selected or Compete with Next is true
     if (
       allowCompeteWithNextForFloor === true ||
@@ -857,383 +832,408 @@ export async function RepriceIndividualPriceBreak(
         "SISTER_VENDOR_EXCLUSION",
       );
     }
-    let nextIndex = 1;
-    if (
-      sortedPayload[nextIndex] &&
-      _.includes(excludedVendors, sortedPayload[nextIndex].vendorId.toString())
-    ) {
-      nextIndex++;
-    }
+    //Set the Lowest Price
+    _.first(sortedPayload)!.priceBreaks.forEach((price: any) => {
+      if (price.minQty == priceBreak.minQty && price.active == true) {
+        lowestPrice = price.unitPrice;
+      }
+    });
 
-    for (let i = nextIndex; i < sortedPayload.length; i++) {
-      if (
-        sortedPayload[i] &&
-        _.includes(excludedVendors, sortedPayload[i].vendorId.toString())
-      ) {
-        nextIndex++;
-      } else if (
-        (await filterMapper.IsVendorFloorPrice(
-          sortedPayload[i].priceBreaks,
+    // If only Own Vendor or Sister Vendor is available, Shut down the Price Break
+    if (priceBreak.minQty != 1) {
+      const nonSisterVendorDetails = sortedPayload.filter(
+        (x) =>
+          x.vendorId != $.VENDOR_ID &&
+          !_.includes(excludedVendors, x.vendorId.toString()),
+      );
+      if (nonSisterVendorDetails.length === 0) {
+        repriceModel.repriceDetails!.newPrice = existingPrice;
+        repriceModel.repriceDetails!.isRepriced = true;
+        repriceModel.repriceDetails!.active = 0 as unknown as boolean;
+        repriceModel.repriceDetails!.explained =
+          RepriceRenewedMessageEnum.SHUT_DOWN_FLOOR_REACHED;
+        repriceModel.updateLowest(
+          _.first(sortedPayload)!.vendorName,
+          lowestPrice,
+        );
+        repriceModel.updateTriggeredBy(
+          _.first(sortedPayload)!.vendorName,
+          _.first(sortedPayload)!.vendorId,
           priceBreak.minQty,
-          floorPrice,
-          0,
-          false,
-        )) == true
-      ) {
-        nextIndex++;
-      } else {
-        break;
+        );
+        return repriceModel;
       }
     }
-
-    if (sortedPayload[nextIndex]) {
-      // Check the next Lowest Price
-      const nextLowestPrice = sortedPayload[nextIndex].priceBreaks.find(
-        (x) => x.minQty == priceBreak.minQty && x.active == true,
-      )!.unitPrice;
+    //If the Lowest Price is of Self-Vendor
+    if (_.first(sortedPayload)!.vendorId == $.VENDOR_ID) {
+      // if next in list is in Excluded Vendor, go to next
+      let nextIndex = 1;
       if (
-        nextLowestPrice > floorPrice &&
-        (nextLowestPrice >= existingPrice ||
-          allowCompeteWithNextForFloor === true)
+        sortedPayload[nextIndex] &&
+        _.includes(
+          excludedVendors,
+          sortedPayload[nextIndex].vendorId.toString(),
+        )
       ) {
-        //&& nextLowestPrice >= existingPrice
-        const contextPriceResult = filterMapper.GetContextPrice(
-          parseFloat(nextLowestPrice as unknown as string),
+        nextIndex++;
+      }
+
+      for (let i = nextIndex; i < sortedPayload.length; i++) {
+        if (
+          sortedPayload[i] &&
+          _.includes(excludedVendors, sortedPayload[i].vendorId.toString())
+        ) {
+          nextIndex++;
+        } else if (
+          (await filterMapper.IsVendorFloorPrice(
+            sortedPayload[i].priceBreaks,
+            priceBreak.minQty,
+            floorPrice,
+            0,
+            false,
+          )) == true
+        ) {
+          nextIndex++;
+        } else {
+          break;
+        }
+      }
+
+      if (sortedPayload[nextIndex]) {
+        // Check the next Lowest Price
+        const nextLowestPrice = (
+          _.find(sortedPayload[nextIndex].priceBreaks, (price) => {
+            if (price.minQty == priceBreak.minQty && price.active == true) {
+              return true;
+            }
+          })! as any
+        ).unitPrice;
+        if (
+          nextLowestPrice > floorPrice &&
+          (nextLowestPrice >= existingPrice ||
+            allowCompeteWithNextForFloor === true)
+        ) {
+          //&& nextLowestPrice >= existingPrice
+          const contextPriceResult = await filterMapper.GetContextPrice(
+            parseFloat(nextLowestPrice),
+            processOffset,
+            floorPrice,
+            parseFloat(productItem.percentageDown),
+            priceBreak.minQty,
+          );
+          const contextPrice = contextPriceResult.Price;
+          if (nextLowestPrice > contextPrice) {
+            if (contextPrice <= maxPrice) {
+              if (contextPrice.toFixed(2) !== existingPrice.toFixed(2)) {
+                repriceModel.repriceDetails!.newPrice = contextPrice.toFixed(2);
+                repriceModel.repriceDetails!.isRepriced = true;
+                repriceModel.repriceDetails!.explained =
+                  await filterMapper.AppendPriceFactorTag(
+                    RepriceRenewedMessageEnum.PRICE_UP_SECOND,
+                    contextPriceResult.Type,
+                  );
+              }
+            } else {
+              repriceModel.repriceDetails!.newPrice =
+                productItem.maxPrice.toFixed(2);
+              repriceModel.repriceDetails!.isRepriced = true;
+              repriceModel.repriceDetails!.explained =
+                RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL;
+            }
+          } else if (existingPrice === 0) {
+            //Create new Reprice Point
+            repriceModel.repriceDetails!.newPrice = contextPrice.toFixed(2);
+            repriceModel.repriceDetails!.isRepriced = true;
+            repriceModel.repriceDetails!.explained =
+              await filterMapper.AppendPriceFactorTag(
+                RepriceRenewedMessageEnum.IGNORE_OWN,
+                contextPriceResult.Type,
+              );
+          }
+        }
+        //1. If Next Lowest price is Greater Than Floor Price
+        //2. Floor Price is Not Equal to Existing Price
+        //SET: Floor Price
+        else if (nextLowestPrice > floorPrice && floorPrice != existingPrice) {
+          // repriceModel.repriceDetails.newPrice = floorPrice.toFixed(2);
+          // repriceModel.repriceDetails.isRepriced = true;
+          // repriceModel.repriceDetails.explained = _enum.PRICE_UP_SECOND_FLOOR;
+        }
+        //1. If Next Lowest price is Greater Than Max Price
+        //2. Max Price is Not Equal to Existing Price
+        //SET: Max Price
+        else if (
+          nextLowestPrice > productItem.maxPrice &&
+          productItem.maxPrice != existingPrice
+        ) {
+          repriceModel.repriceDetails!.newPrice =
+            productItem.maxPrice.toFixed(2);
+          repriceModel.repriceDetails!.isRepriced = true;
+          repriceModel.repriceDetails!.explained =
+            RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX;
+        }
+        repriceModel.updateTriggeredBy(
+          sortedPayload[nextIndex].vendorName,
+          sortedPayload[nextIndex].vendorId,
+          priceBreak.minQty,
+        );
+      } else {
+        repriceModel.repriceDetails!.newPrice = productItem.maxPrice
+          ? productItem.maxPrice
+          : "N/A";
+        repriceModel.repriceDetails!.isRepriced = true;
+        repriceModel.repriceDetails!.explained =
+          RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX;
+        repriceModel.updateTriggeredBy(
+          _.first(sortedPayload)!.vendorName,
+          _.first(sortedPayload)!.vendorId,
+          priceBreak.minQty,
+        );
+      }
+      repriceModel.updateLowest(
+        _.first(sortedPayload)!.vendorName,
+        lowestPrice,
+      );
+    }
+    // For Other Vendors
+    else {
+      // Check if the lowest price is of the same parent company
+      if (
+        _.includes(excludedVendors, _.first(sortedPayload)!.vendorId.toString())
+      ) {
+        repriceModel.repriceDetails!.explained =
+          RepriceRenewedMessageEnum.NO_COMPETITOR_SISTER_VENDOR;
+        repriceModel.updateLowest(
+          _.first(sortedPayload)!.vendorName,
+          lowestPrice,
+        );
+        const contextPriceResult = await filterMapper.GetContextPrice(
+          parseFloat(lowestPrice as any),
           processOffset,
           floorPrice,
           parseFloat(productItem.percentageDown),
           priceBreak.minQty,
         );
-        const contextPrice = contextPriceResult.Price;
-        if (nextLowestPrice > contextPrice) {
-          if (
-            (contextPrice as unknown as number) <=
-            (maxPrice as unknown as number)
-          ) {
-            if (contextPrice.toFixed(2) !== existingPrice.toFixed(2)) {
-              repriceModel.repriceDetails!.newPrice = contextPrice.toFixed(2);
-              repriceModel.repriceDetails!.isRepriced = true;
-              repriceModel.repriceDetails!.explained =
-                filterMapper.AppendPriceFactorTag(
-                  RepriceRenewedMessageEnum.PRICE_UP_SECOND,
-                  contextPriceResult.Type,
-                );
-            }
-          } else {
-            repriceModel.repriceDetails!.newPrice =
-              typeof productItem.maxPrice === "number"
-                ? (productItem.maxPrice as unknown as number).toFixed(2)
-                : productItem.maxPrice;
-            repriceModel.repriceDetails!.isRepriced = true;
-            repriceModel.repriceDetails!.explained =
-              RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL;
-          }
-        } else if (existingPrice === 0) {
-          //Create new Reprice Point
-          repriceModel.repriceDetails!.newPrice = contextPrice.toFixed(2);
-          repriceModel.repriceDetails!.isRepriced = true;
-          repriceModel.repriceDetails!.explained =
-            filterMapper.AppendPriceFactorTag(
-              RepriceRenewedMessageEnum.IGNORE_OWN,
-              contextPriceResult.Type,
-            );
-        }
-      }
-      //1. If Next Lowest price is Greater Than Floor Price
-      //2. Floor Price is Not Equal to Existing Price
-      //SET: Floor Price
-      else if (nextLowestPrice > floorPrice && floorPrice != existingPrice) {
-        // repriceModel.repriceDetails.newPrice = floorPrice.toFixed(2);
-        // repriceModel.repriceDetails.isRepriced = true;
-        // repriceModel.repriceDetails.explained = _enum.PRICE_UP_SECOND_FLOOR;
-      }
-      //1. If Next Lowest price is Greater Than Max Price
-      //2. Max Price is Not Equal to Existing Price
-      //SET: Max Price
-      else if (
-        nextLowestPrice > (productItem.maxPrice as unknown as number) &&
-        productItem.maxPrice != (existingPrice as unknown as string)
-      ) {
-        repriceModel.repriceDetails!.newPrice = (
-          productItem.maxPrice as unknown as number
-        ).toFixed(2);
-        repriceModel.repriceDetails!.isRepriced = true;
-        repriceModel.repriceDetails!.explained =
-          RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX;
-      }
-      repriceModel.updateTriggeredBy(
-        sortedPayload[nextIndex].vendorName,
-        sortedPayload[nextIndex].vendorId as unknown as string,
-        priceBreak,
-      );
-    } else {
-      repriceModel.repriceDetails!.newPrice = productItem.maxPrice
-        ? productItem.maxPrice
-        : "N/A";
-      repriceModel.repriceDetails!.isRepriced = true;
-      repriceModel.repriceDetails!.explained =
-        RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX;
-      repriceModel.updateTriggeredBy(
-        _.first(sortedPayload)!.vendorName,
-        _.first(sortedPayload)!.vendorId as unknown as string,
-        priceBreak,
-      );
-    }
-    repriceModel.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
-  }
-  // For Other Vendors
-  else {
-    // Check if the lowest price is of the same parent company
-    if (
-      _.includes(excludedVendors, _.first(sortedPayload)!.vendorId.toString())
-    ) {
-      repriceModel.repriceDetails!.explained =
-        RepriceRenewedMessageEnum.NO_COMPETITOR_SISTER_VENDOR;
-      repriceModel.updateLowest(
-        _.first(sortedPayload)!.vendorName,
-        lowestPrice,
-      );
-      const contextPriceResult = filterMapper.GetContextPrice(
-        parseFloat(lowestPrice as any),
-        processOffset,
-        floorPrice,
-        parseFloat(productItem.percentageDown),
-        priceBreak.minQty,
-      );
-      repriceModel.repriceDetails!.goToPrice =
-        contextPriceResult.Price.toFixed(2);
-      repriceModel.updateTriggeredBy(
-        _.first(sortedPayload)!.vendorName,
-        _.first(sortedPayload)!.vendorId as unknown as string,
-        priceBreak.minQty,
-      );
-      return repriceModel;
-    }
-
-    //Remove Sister Vendor if Both UP & DOWN selected or Compete with Next is true
-    if (
-      allowCompeteWithNextForFloor === true ||
-      productItem.repricingRule === 2
-    ) {
-      rawDataForSisterCheck = _.cloneDeep(sortedPayload);
-      sortedPayload = await filterMapper.FilterBasedOnParams(
-        sortedPayload,
-        productItem,
-        "SISTER_VENDOR_EXCLUSION",
-      );
-    }
-
-    // Check the Lowest Price
-    const prodPriceWithMinQty = _.first(sortedPayload)!.priceBreaks.find(
-      (x: any) => x.minQty == priceBreak.minQty && x.active == true,
-    );
-    if (prodPriceWithMinQty) {
-      const lowestPrice = prodPriceWithMinQty.unitPrice;
-      const contextPriceResult = filterMapper.GetContextPrice(
-        parseFloat(lowestPrice as unknown as string),
-        processOffset,
-        floorPrice,
-        parseFloat(productItem.percentageDown),
-        priceBreak.minQty,
-      );
-      let offsetPrice = contextPriceResult.Price;
-      //1. If the Offset Price is less than Floor Price
-      //SET: Do Nothing
-      if (offsetPrice <= floorPrice) {
-        //If Lowest is below Floor and competing with others and Sister is already Lowest
-        const floorSisterResult = await filterMapper.VerifyFloorWithSister(
-          productItem,
-          refProduct,
-          rawDataForSisterCheck,
-          excludedVendors,
-          $.VENDOR_ID,
+        repriceModel.repriceDetails!.goToPrice =
+          contextPriceResult.Price.toFixed(2);
+        repriceModel.updateTriggeredBy(
+          _.first(sortedPayload)!.vendorName,
+          _.first(sortedPayload)!.vendorId,
           priceBreak.minQty,
-          sourceId,
         );
-        //if (floorSisterResult != false) return floorSisterResult;
-        //do nothing
-        let nextIndex = 1;
-        for (let i = nextIndex; i < sortedPayload.length; i++) {
+        return repriceModel;
+      }
+
+      // Check the Lowest Price
+      const prodPriceWithMinQty = _.first(sortedPayload)!.priceBreaks.find(
+        (x: any) => x.minQty == priceBreak.minQty && x.active == true,
+      );
+      if (prodPriceWithMinQty) {
+        const lowestPrice = prodPriceWithMinQty.unitPrice;
+        const contextPriceResult = await filterMapper.GetContextPrice(
+          parseFloat(lowestPrice as any),
+          processOffset,
+          floorPrice,
+          parseFloat(productItem.percentageDown),
+          priceBreak.minQty,
+        );
+        let offsetPrice = contextPriceResult.Price;
+        //1. If the Offset Price is less than Floor Price
+        //SET: Do Nothing
+        if (offsetPrice <= floorPrice) {
+          //If Lowest is below Floor and competing with others and Sister is already Lowest
+          const floorSisterResult = await filterMapper.VerifyFloorWithSister(
+            productItem,
+            refProduct,
+            rawDataForSisterCheck,
+            excludedVendors,
+            $.VENDOR_ID,
+            priceBreak.minQty,
+            sourceId,
+          );
+
+          //if (floorSisterResult != false) return floorSisterResult;
+          //do nothing
+          let nextIndex = 1;
+          for (let i = nextIndex; i < sortedPayload.length; i++) {
+            if (
+              sortedPayload[i] &&
+              (_.includes(
+                excludedVendors,
+                sortedPayload[i].vendorId.toString(),
+              ) ||
+                sortedPayload[i].vendorId == $.VENDOR_ID)
+            ) {
+              nextIndex++;
+            } else if (
+              (await filterMapper.IsVendorFloorPrice(
+                sortedPayload[i].priceBreaks,
+                priceBreak.minQty,
+                floorPrice,
+                0,
+                false,
+              )) == true
+            ) {
+              nextIndex++;
+            } else {
+              break;
+            }
+          }
           if (
-            sortedPayload[i] &&
+            sortedPayload[nextIndex] &&
             (_.includes(
               excludedVendors,
-              sortedPayload[i].vendorId.toString(),
+              sortedPayload[nextIndex].vendorId.toString(),
             ) ||
-              sortedPayload[i].vendorId == $.VENDOR_ID)
+              sortedPayload[nextIndex].vendorId == $.VENDOR_ID)
           ) {
             nextIndex++;
-          } else if (
-            (await filterMapper.IsVendorFloorPrice(
-              sortedPayload[i].priceBreaks,
-              priceBreak.minQty,
-              floorPrice,
-              0,
-              false,
-            )) == true
-          ) {
-            nextIndex++;
-          } else {
-            break;
           }
-        }
-        if (
-          sortedPayload[nextIndex] &&
-          (_.includes(
-            excludedVendors,
-            sortedPayload[nextIndex].vendorId.toString(),
-          ) ||
-            sortedPayload[nextIndex].vendorId == $.VENDOR_ID)
-        ) {
-          nextIndex++;
-        }
-        if (sortedPayload[nextIndex]) {
-          const nextLowestPriceBreak = sortedPayload[
-            nextIndex
-          ].priceBreaks.find(
-            (x) => x.minQty == priceBreak.minQty && x.active == true,
-          )!;
-          if (nextLowestPriceBreak) {
-            const nextLowestPrice = nextLowestPriceBreak.unitPrice;
-            if (
-              nextLowestPrice > floorPrice &&
-              (nextLowestPrice >= existingPrice ||
-                allowCompeteWithNextForFloor === true)
-            ) {
-              //&& nextLowestPrice >= existingPrice
-              const contextPriceResult = filterMapper.GetContextPrice(
-                parseFloat(nextLowestPrice as unknown as string),
-                processOffset,
-                floorPrice,
-                parseFloat(productItem.percentageDown),
-                priceBreak.minQty,
-              );
-              const contextPrice = contextPriceResult.Price;
-              if (contextPrice < existingPrice && floorSisterResult !== false) {
-                //Check for Sister Being lowest only while going Down
-                return floorSisterResult;
-              }
+          if (sortedPayload[nextIndex]) {
+            const nextLowestPriceBreak = _.find(
+              sortedPayload[nextIndex].priceBreaks,
+              (price) => {
+                if (price.minQty == priceBreak.minQty && price.active == true) {
+                  return true;
+                }
+              },
+            );
+            if (nextLowestPriceBreak) {
+              const nextLowestPrice = (nextLowestPriceBreak as any).unitPrice;
               if (
-                nextLowestPrice > contextPrice &&
-                contextPrice <= (maxPrice as unknown as number)
+                nextLowestPrice > floorPrice &&
+                (nextLowestPrice >= existingPrice ||
+                  allowCompeteWithNextForFloor === true)
               ) {
-                if (contextPrice.toFixed(2) !== existingPrice.toFixed(2)) {
+                //&& nextLowestPrice >= existingPrice
+                const contextPriceResult = await filterMapper.GetContextPrice(
+                  parseFloat(nextLowestPrice),
+                  processOffset,
+                  floorPrice,
+                  parseFloat(productItem.percentageDown),
+                  priceBreak.minQty,
+                );
+                const contextPrice = contextPriceResult.Price;
+                if (
+                  contextPrice < existingPrice &&
+                  floorSisterResult !== false
+                ) {
+                  //Check for Sister Being lowest only while going Down
+                  return floorSisterResult;
+                }
+                if (
+                  nextLowestPrice > contextPrice &&
+                  contextPrice <= maxPrice
+                ) {
+                  if (contextPrice.toFixed(2) !== existingPrice.toFixed(2)) {
+                    repriceModel.repriceDetails!.newPrice =
+                      contextPrice.toFixed(2);
+                    repriceModel.repriceDetails!.isRepriced = true;
+                    repriceModel.repriceDetails!.explained =
+                      await filterMapper.AppendPriceFactorTag(
+                        RepriceRenewedMessageEnum.PRICE_UP_SECOND_FLOOR_HIT,
+                        contextPriceResult.Type,
+                      );
+                    offsetPrice = contextPrice;
+                  }
+                } else if (existingPrice === 0) {
+                  //Create new Reprice Point
                   repriceModel.repriceDetails!.newPrice =
                     contextPrice.toFixed(2);
                   repriceModel.repriceDetails!.isRepriced = true;
                   repriceModel.repriceDetails!.explained =
-                    filterMapper.AppendPriceFactorTag(
-                      RepriceRenewedMessageEnum.PRICE_UP_SECOND_FLOOR_HIT,
+                    await filterMapper.AppendPriceFactorTag(
+                      RepriceRenewedMessageEnum.NEW_PRICE_BREAK,
                       contextPriceResult.Type,
                     );
-                  offsetPrice = contextPrice;
                 }
-              } else if (existingPrice === 0) {
-                //Create new Reprice Point
-                repriceModel.repriceDetails!.newPrice = contextPrice.toFixed(2);
-                repriceModel.repriceDetails!.isRepriced = true;
-                repriceModel.repriceDetails!.explained =
-                  filterMapper.AppendPriceFactorTag(
-                    RepriceRenewedMessageEnum.NEW_PRICE_BREAK,
-                    contextPriceResult.Type,
-                  );
               }
             }
+            repriceModel.updateTriggeredBy(
+              sortedPayload[nextIndex].vendorName,
+              sortedPayload[nextIndex].vendorId,
+              priceBreak.minQty,
+            );
+          } else {
+            if (priceBreak.minQty != 1) {
+              repriceModel.repriceDetails!.newPrice = existingPrice;
+              repriceModel.repriceDetails!.isRepriced = true;
+              repriceModel.repriceDetails!.active = 0 as unknown as boolean;
+              repriceModel.repriceDetails!.explained =
+                RepriceRenewedMessageEnum.SHUT_DOWN_FLOOR_REACHED;
+            } else {
+              repriceModel.repriceDetails!.newPrice = productItem.maxPrice
+                ? productItem.maxPrice
+                : "N/A";
+              repriceModel.repriceDetails!.isRepriced = true;
+              repriceModel.repriceDetails!.explained =
+                RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX;
+            }
+            repriceModel.updateTriggeredBy(
+              _.first(sortedPayload)!.vendorName,
+              _.first(sortedPayload)!.vendorId,
+              priceBreak.minQty,
+            );
           }
-          repriceModel.updateTriggeredBy(
-            sortedPayload[nextIndex].vendorName,
-            sortedPayload[nextIndex].vendorId as unknown as string,
-            priceBreak.minQty,
-          );
-        } else {
-          if (priceBreak.minQty != 1) {
-            repriceModel.repriceDetails!.newPrice = existingPrice;
-            repriceModel.repriceDetails!.isRepriced = true;
-            repriceModel.repriceDetails!.active = 0 as unknown as boolean;
-            repriceModel.repriceDetails!.explained =
-              RepriceRenewedMessageEnum.SHUT_DOWN_FLOOR_REACHED;
-          } else if (
-            productItem.maxPrice != (existingPrice as unknown as string)
-          ) {
-            repriceModel.repriceDetails!.newPrice = productItem.maxPrice
-              ? productItem.maxPrice
-              : "N/A";
-            repriceModel.repriceDetails!.isRepriced = true;
-            repriceModel.repriceDetails!.explained =
-              RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX;
-          }
-          repriceModel.updateTriggeredBy(
-            _.first(sortedPayload)!.vendorName,
-            _.first(sortedPayload)!.vendorId as unknown as string,
-            priceBreak.minQty,
-          );
         }
-      }
-      //1. If the Offset Price is greater than Floor Price
-      //2. If the Offset Price is less than Max Price
-      //SET: Offset Price
-      if (
-        offsetPrice > floorPrice &&
-        repriceModel.repriceDetails!.isRepriced !== true
-      ) {
-        repriceModel.repriceDetails!.newPrice = offsetPrice.toFixed(2);
-        repriceModel.repriceDetails!.isRepriced = true;
-        repriceModel.repriceDetails!.explained =
-          RepriceRenewedMessageEnum.REPRICE_DEFAULT;
-        if (offsetPrice < (maxPrice as unknown as number)) {
+        //1. If the Offset Price is greater than Floor Price
+        //2. If the Offset Price is less than Max Price
+        //SET: Offset Price
+        if (
+          offsetPrice > floorPrice &&
+          repriceModel.repriceDetails!.isRepriced !== true
+        ) {
           repriceModel.repriceDetails!.newPrice = offsetPrice.toFixed(2);
           repriceModel.repriceDetails!.isRepriced = true;
           repriceModel.repriceDetails!.explained =
             RepriceRenewedMessageEnum.REPRICE_DEFAULT;
-        } else {
-          repriceModel.repriceDetails!.newPrice = maxPrice;
-          repriceModel.repriceDetails!.isRepriced = true;
+          repriceModel.updateTriggeredBy(
+            _.first(sortedPayload)!.vendorName,
+            _.first(sortedPayload)!.vendorId,
+            priceBreak.minQty,
+          );
+        } else if (
+          offsetPrice <= floorPrice &&
+          repriceModel.repriceDetails!.isRepriced !== true
+        ) {
+          repriceModel.repriceDetails!.goToPrice = offsetPrice;
+          repriceModel.repriceDetails!.newPrice = "N/A";
+          repriceModel.repriceDetails!.isRepriced = false;
           repriceModel.repriceDetails!.explained =
-            RepriceRenewedMessageEnum.PRICE_MAXED;
+            RepriceRenewedMessageEnum.IGNORED_FLOOR_REACHED;
+          repriceModel.updateTriggeredBy(
+            _.first(sortedPayload)!.vendorName,
+            _.first(sortedPayload)!.vendorId,
+            priceBreak.minQty,
+          );
         }
-        repriceModel.updateTriggeredBy(
+
+        repriceModel.updateLowest(
           _.first(sortedPayload)!.vendorName,
-          _.first(sortedPayload)!.vendorId as unknown as string,
-          priceBreak.minQty,
-        );
-      } else if (
-        offsetPrice <= floorPrice &&
-        repriceModel.repriceDetails!.isRepriced !== true
-      ) {
-        repriceModel.repriceDetails!.goToPrice =
-          offsetPrice as unknown as string;
-        repriceModel.repriceDetails!.newPrice = "N/A";
-        repriceModel.repriceDetails!.isRepriced = false;
-        repriceModel.repriceDetails!.explained =
-          RepriceRenewedMessageEnum.IGNORED_FLOOR_REACHED;
-        repriceModel.updateTriggeredBy(
-          _.first(sortedPayload)!.vendorName,
-          _.first(sortedPayload)!.vendorId as unknown as string,
-          priceBreak.minQty,
+          lowestPrice,
         );
       }
+    }
+    if (isTieScenario === true) {
+      repriceModel.repriceDetails!.explained =
+        repriceModel.repriceDetails!.explained + " #TIE";
+    }
 
-      repriceModel.updateLowest(
-        _.first(sortedPayload)!.vendorName,
-        lowestPrice,
+    // For Applying Badge Percentage Scenario
+    if (
+      _.isEqual(productItem.badgeIndicator, "ALL_PERCENTAGE") &&
+      productItem.badgePercentage > 0
+    ) {
+      repriceModel = await badgeHelper.ReCalculatePrice(
+        repriceModel,
+        productItem,
+        eligibleList,
+        priceBreak.minQty,
       );
     }
-  }
-  if (isTieScenario === true) {
-    repriceModel.repriceDetails!.explained =
-      repriceModel.repriceDetails!.explained + " #TIE";
-  }
-
-  // For Applying Badge Percentage Scenario
-  if (
-    _.isEqual(productItem.badgeIndicator, "ALL_PERCENTAGE") &&
-    productItem.badgePercentage > 0
-  ) {
-    repriceModel = await badgeHelper.ReCalculatePrice(
-      repriceModel,
-      productItem,
-      eligibleList,
-      priceBreak.minQty,
+  } catch (exception) {
+    console.log(
+      `Error in Reprice for mpid : ${productItem.mpid} || Error : ${exception}`,
     );
   }
   return repriceModel;

@@ -241,28 +241,33 @@ export async function FilterBasedOnParams(
   return outputResult;
 }
 
-export function GetContextPrice(
-  nextLowestPrice: number,
-  processOffset: number,
-  floorPrice: number,
-  percentageDown: number,
-  minQty: number,
-): { Price: number; Type: string } {
-  let returnObj: { Price: number; Type: string } = {
-    Price: new Decimal(nextLowestPrice).minus(processOffset).toNumber(),
-    Type: "OFFSET",
-  };
-  if (percentageDown != 0 && minQty == 1) {
-    const percentageDownPrice = subtractPercentage(
-      nextLowestPrice,
-      percentageDown,
-    );
-    if (percentageDownPrice > floorPrice) {
-      returnObj.Price = percentageDownPrice;
-      returnObj.Type = "PERCENTAGE";
-    } else if (percentageDownPrice <= floorPrice) {
-      returnObj.Type = "FLOOR_OFFSET";
+export async function GetContextPrice(
+  nextLowestPrice: any,
+  processOffset: any,
+  floorPrice: any,
+  percentageDown: any,
+  minQty: any,
+): Promise<any> {
+  let returnObj: any = {};
+  returnObj.Price = new Decimal(nextLowestPrice)
+    .minus(processOffset)
+    .toNumber(); // Math.trunc((nextLowestPrice - processOffset) * 100) / 100 ;
+  returnObj.Type = "OFFSET";
+  try {
+    if (percentageDown != 0 && minQty == 1) {
+      const percentageDownPrice = subtractPercentage(
+        nextLowestPrice,
+        percentageDown,
+      );
+      if (percentageDownPrice > floorPrice) {
+        returnObj.Price = percentageDownPrice;
+        returnObj.Type = "PERCENTAGE";
+      } else if (percentageDownPrice <= floorPrice) {
+        returnObj.Type = "FLOOR_OFFSET";
+      }
     }
+  } catch (exception) {
+    console.log(`Exception while getting ContextPrice : ${exception}`);
   }
   return returnObj;
 }
@@ -273,7 +278,7 @@ export function AppendPriceFactorTag(strValue: string, objType: string) {
   else return strValue;
 }
 
-export async function IsVendorFloorPrice(
+export function IsVendorFloorPrice(
   priceBreakList: any,
   minQty: any,
   floorPrice: any,
@@ -293,13 +298,13 @@ export async function IsVendorFloorPrice(
 }
 
 export async function VerifyFloorWithSister(
-  productItem: FrontierProduct,
-  refProduct: Net32Product,
-  sortedPayload: Net32Product[],
-  excludedVendors: string[],
-  ownVendorId: number,
-  minQty: number,
-  sourceId: string,
+  productItem: any,
+  refProduct: any,
+  sortedPayload: any,
+  excludedVendors: any,
+  ownVendorId: any,
+  minQty: any,
+  sourceId: any,
 ): Promise<any> {
   let aboveFloorVendors: any[] = [];
   const processOffset = applicationConfig.OFFSET;
@@ -307,16 +312,18 @@ export async function VerifyFloorWithSister(
     ? parseFloat(productItem.floorPrice)
     : 0;
   const existingPrice = refProduct.priceBreaks.find(
-    (x) => x.minQty == minQty,
-  )!.unitPrice;
+    (x: any) => x.minQty == minQty,
+  ).unitPrice;
   for (let k = 1; k <= sortedPayload.length; k++) {
     if (sortedPayload[k] && sortedPayload[k].priceBreaks) {
       if (sortedPayload[k].vendorId == ownVendorId) continue;
-      const pbPrice = sortedPayload[k].priceBreaks.find(
-        (x) => x.minQty == minQty && x.active == true,
-      )!.unitPrice;
-      const updatePrice = GetContextPrice(
-        parseFloat(pbPrice as unknown as string),
+      const pbPrice = _.find(sortedPayload[k].priceBreaks, (price) => {
+        if (price.minQty == minQty && price.active == true) {
+          return true;
+        }
+      }).unitPrice;
+      const updatePrice = await GetContextPrice(
+        parseFloat(pbPrice),
         processOffset,
         floorPrice,
         parseFloat(productItem.percentageDown),
@@ -345,7 +352,7 @@ export async function VerifyFloorWithSister(
       (x: any) => x.minQty == 1 && x.active == true,
     ).unitPrice;
     model.updateLowest(_.first(aboveFloorVendors).vendorName, effectiveLowest);
-    const contextPriceResult = GetContextPrice(
+    const contextPriceResult = await GetContextPrice(
       parseFloat(effectiveLowest),
       processOffset,
       floorPrice,
