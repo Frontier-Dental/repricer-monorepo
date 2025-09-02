@@ -222,7 +222,7 @@ export function ProductsPage() {
       size: 80,
       cell: ({ row }) => {
         const mpId = row.getValue("mp_id") as number;
-        const net32Url = row.getValue("net32_url") as string | null;
+        const net32Url = row.original.net32_url as string | null;
         return <ActionButton productId={mpId.toString()} net32Url={net32Url} />;
       },
     },
@@ -565,30 +565,6 @@ export function ProductsPage() {
               setData(updatedData);
             }}
           />
-        );
-      },
-    },
-    {
-      accessorKey: "net32_url",
-      header: "Net32",
-      size: 80,
-      cell: ({ row }) => {
-        const url = row.getValue("net32_url") as string;
-        return (
-          <div>
-            {url ? (
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
-              >
-                View <ExternalLink className="h-3 w-3" />
-              </a>
-            ) : (
-              <div className="text-xs text-muted-foreground">N/A</div>
-            )}
-          </div>
         );
       },
     },

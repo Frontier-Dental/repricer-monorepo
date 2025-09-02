@@ -805,104 +805,118 @@ export function ProductDetailPage() {
       </div>
 
       <Tabs defaultValue="" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          {Object.values(VendorId)
-            .filter((x) => typeof x === "number")
-            .map((vendorId) => {
-              console.log(vendorId);
+        <div className="flex gap-6">
+          {/* Left sidebar with vertical tabs */}
+          <div className="w-64 flex-shrink-0">
+            <TabsList className="flex flex-col h-auto w-full bg-transparent p-0">
+              {Object.values(VendorId)
+                .filter((x) => typeof x === "number")
+                .map((vendorId) => {
+                  console.log(vendorId);
+                  const vendorIdNumber = Number(vendorId);
+                  const vendorSettings = settingsData.find(
+                    (s) => s.vendor_id === vendorIdNumber,
+                  );
+                  const isEnabled = vendorSettings?.enabled || false;
+
+                  return (
+                    <TabsTrigger
+                      key={vendorId}
+                      value={vendorId.toString()}
+                      className={`w-full justify-start h-auto p-3 mb-2 ${
+                        isEnabled
+                          ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200 data-[state=active]:bg-green-200"
+                          : "bg-red-100 text-red-800 border-red-300 hover:bg-red-200 data-[state=active]:bg-red-200"
+                      }`}
+                    >
+                      {
+                        VendorNameLookup[
+                          vendorId as keyof typeof VendorNameLookup
+                        ]
+                      }
+                    </TabsTrigger>
+                  );
+                })}
+            </TabsList>
+          </div>
+
+          {/* Right content area */}
+          <div className="flex-1">
+            {/* Default tab content when no vendor is selected */}
+            <TabsContent value="" className="mt-0">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Select a Vendor
+                    </h3>
+                    <p className="text-gray-600">
+                      Choose a vendor from the tabs on the left to view and
+                      configure their algorithm settings.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {Object.values(VendorId).map((vendorId) => {
               const vendorIdNumber = Number(vendorId);
               const vendorSettings = settingsData.find(
                 (s) => s.vendor_id === vendorIdNumber,
               );
-              const isEnabled = vendorSettings?.enabled || false;
+
+              // Use existing settings or create default settings
+              const settings =
+                vendorSettings || createDefaultSettings(vendorIdNumber);
 
               return (
-                <TabsTrigger
+                <TabsContent
                   key={vendorId}
                   value={vendorId.toString()}
-                  className={`${
-                    isEnabled
-                      ? "bg-green-100 text-green-800 border-green-300 hover:bg-green-200 data-[state=active]:bg-green-200"
-                      : "bg-red-100 text-red-800 border-red-300 hover:bg-red-200 data-[state=active]:bg-red-200"
-                  }`}
+                  className="mt-0"
                 >
-                  {VendorNameLookup[vendorId as keyof typeof VendorNameLookup]}
-                </TabsTrigger>
+                  <V2AlgoSettingsForm
+                    mpId={parseInt(mpId)}
+                    vendorId={vendorIdNumber}
+                    vendorName={
+                      VendorNameLookup[
+                        vendorId as keyof typeof VendorNameLookup
+                      ]
+                    }
+                    initialSettings={settings}
+                    onSave={handleSaveSettings}
+                    onToggleEnabled={async (enabled: boolean) => {
+                      try {
+                        const response = await fetch(
+                          `/v2-algo/toggle_enabled/${mpId}/${vendorIdNumber}`,
+                          {
+                            method: "PUT",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                          },
+                        );
+
+                        if (response.ok) {
+                          // Refresh settings to get updated data
+                          await fetchSettings();
+                          toast.success(
+                            `Vendor ${enabled ? "enabled" : "disabled"} successfully`,
+                          );
+                        } else {
+                          toast.error("Failed to toggle vendor status");
+                        }
+                      } catch (error) {
+                        console.error("Error toggling vendor status:", error);
+                        toast.error("Failed to toggle vendor status");
+                      }
+                    }}
+                  />
+                </TabsContent>
               );
             })}
-        </TabsList>
-
-        {/* Default tab content when no vendor is selected */}
-        <TabsContent value="" className="mt-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Select a Vendor
-                </h3>
-                <p className="text-gray-600">
-                  Choose a vendor from the tabs above to view and configure
-                  their algorithm settings.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {Object.values(VendorId).map((vendorId) => {
-          const vendorIdNumber = Number(vendorId);
-          const vendorSettings = settingsData.find(
-            (s) => s.vendor_id === vendorIdNumber,
-          );
-
-          // Use existing settings or create default settings
-          const settings =
-            vendorSettings || createDefaultSettings(vendorIdNumber);
-
-          return (
-            <TabsContent
-              key={vendorId}
-              value={vendorId.toString()}
-              className="mt-6"
-            >
-              <V2AlgoSettingsForm
-                mpId={parseInt(mpId)}
-                vendorId={vendorIdNumber}
-                vendorName={
-                  VendorNameLookup[vendorId as keyof typeof VendorNameLookup]
-                }
-                initialSettings={settings}
-                onSave={handleSaveSettings}
-                onToggleEnabled={async (enabled: boolean) => {
-                  try {
-                    const response = await fetch(
-                      `/v2-algo/toggle_enabled/${mpId}/${vendorIdNumber}`,
-                      {
-                        method: "PUT",
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
-                      },
-                    );
-
-                    if (response.ok) {
-                      // Refresh settings to get updated data
-                      await fetchSettings();
-                      toast.success(
-                        `Vendor ${enabled ? "enabled" : "disabled"} successfully`,
-                      );
-                    } else {
-                      toast.error("Failed to toggle vendor status");
-                    }
-                  } catch (error) {
-                    console.error("Error toggling vendor status:", error);
-                    toast.error("Failed to toggle vendor status");
-                  }
-                }}
-              />
-            </TabsContent>
-          );
-        })}
+          </div>
+        </div>
       </Tabs>
     </div>
   );
