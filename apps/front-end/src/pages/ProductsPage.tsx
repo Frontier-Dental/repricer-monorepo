@@ -1,14 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowUpDown, ExternalLink, Eye, Globe, Bell } from "lucide-react";
-import { AlgoPriceStrategy } from "@repricer-monorepo/shared";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/data-table";
 import { DataTableToolbar } from "@/components/data-table-toolbar";
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -16,17 +11,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AlgoPriceStrategy } from "@repricer-monorepo/shared";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
-  useReactTable,
+  ColumnFiltersState,
+  ColumnPinningState,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   SortingState,
+  useReactTable,
   VisibilityState,
-  ColumnFiltersState,
-  ColumnPinningState,
 } from "@tanstack/react-table";
+import { ArrowUpDown, Bell, Eye, Globe } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 // Action button component
 function ActionButton({
