@@ -320,7 +320,6 @@ function removeUnnecessaryQuantityBreaks(
     solutionResults,
     isSlowCron,
   );
-  // TODO: More advanced filtering if we are already beating all competitors on a lower Q break
   return solutionResults.map((s, i) => {
     const invalidReasons: QbreakInvalidReason[] = [];
     if (!invalidQuantityBreaks[i].qBreakValid) {
@@ -329,15 +328,37 @@ function removeUnnecessaryQuantityBreaks(
     if (!suppressQBreakIfQ1NotUpdated[i].qBreakValid) {
       invalidReasons.push(QbreakInvalidReason.SUPPRESS_BECAUSE_Q1_NOT_UPDATED);
     }
+    const qBreakValid =
+      invalidQuantityBreaks[i].qBreakValid &&
+      suppressQBreakIfQ1NotUpdated[i].qBreakValid;
     return {
       ...s,
-      qBreakValid:
-        invalidQuantityBreaks[i].qBreakValid &&
-        suppressQBreakIfQ1NotUpdated[i].qBreakValid,
+      qBreakValid,
       qBreakInvalidReason:
         invalidReasons.length > 0 ? invalidReasons : undefined,
+      comment: getNewComment(
+        s.comment,
+        invalidQuantityBreaks[i].qBreakValid === false,
+        suppressQBreakIfQ1NotUpdated[i].qBreakValid === false,
+      ),
+      algoResult: qBreakValid ? s.algoResult : AlgoResult.IGNORE_SETTINGS,
     };
   });
+}
+
+function getNewComment(
+  oldComment: string,
+  qBreakUnneccessary: boolean,
+  qBreakSuppressed: boolean,
+) {
+  let comment = oldComment;
+  if (qBreakUnneccessary) {
+    comment += " This quantity break is unnecessary.";
+  }
+  if (qBreakSuppressed) {
+    comment += " This quantity break is suppressed because Q1 is not updated.";
+  }
+  return comment;
 }
 
 function removeInvalidQuantityBreaks(
@@ -606,7 +627,7 @@ function getSolutionResult(
       algoResult: AlgoResult.CHANGE_NEW,
       suggestedPrice: suggestedPrice.toNumber(),
       comment: "New price break.",
-      triggeredByVendor: null,
+      triggeredByVendor: solution.rawTriggeredByVendor || null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
   } else if (suggestedPrice.lt(existingPriceBreak.unitPrice)) {

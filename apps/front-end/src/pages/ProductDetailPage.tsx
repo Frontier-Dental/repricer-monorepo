@@ -486,14 +486,6 @@ export function ProductDetailPage() {
       cell: ({ row }) => <div>{row.getValue("new_price_breaks")}</div>,
     },
     {
-      accessorKey: "sister_position_check",
-      header: "Sister Position Check",
-      cell: ({ row }) => {
-        const result = row.getValue("sister_position_check") as string;
-        return <Badge variant={getResultBadgeVariant(result)}>{result}</Badge>;
-      },
-    },
-    {
       accessorKey: "q_break_valid",
       header: "Q-Break Valid",
       cell: ({ row }) => {

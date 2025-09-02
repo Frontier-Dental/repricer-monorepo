@@ -84,24 +84,28 @@ export async function updateV2AlgoSettings(
 ): Promise<number> {
   const knex = getKnexInstance();
 
-  if (settings.id) {
+  // Check if settings exist based on mp_id and vendor_id
+  const existingSettings = await knex("v2_algo_settings")
+    .where({
+      mp_id: settings.mp_id,
+      vendor_id: settings.vendor_id,
+    })
+    .first();
+
+  if (existingSettings) {
     // Update existing settings
-    await knex("v2_algo_settings").where("id", settings.id).update(settings);
-    return settings.id;
+    await knex("v2_algo_settings")
+      .where({
+        mp_id: settings.mp_id,
+        vendor_id: settings.vendor_id,
+      })
+      .update(settings);
+    return existingSettings.id;
   } else {
     // Insert new settings
     const [insertId] = await knex("v2_algo_settings").insert(settings);
     return insertId;
   }
-}
-
-export async function createV2AlgoSettings(
-  settings: V2AlgoSettings,
-): Promise<number> {
-  const knex = getKnexInstance();
-
-  const [insertId] = await knex("v2_algo_settings").insert(settings);
-  return insertId;
 }
 
 interface VendorConfig {
@@ -438,7 +442,6 @@ export async function toggleV2AlgoEnabled(
   // First, check if settings exist
   const currentSetting = await knex("v2_algo_settings")
     .where({ mp_id: mpId, vendor_id: vendorId })
-    .select("enabled")
     .first();
 
   if (!currentSetting) {

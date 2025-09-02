@@ -133,9 +133,10 @@ export function V2AlgoSettingsForm({
   const onSubmit = async (data: SettingsFormData) => {
     setIsLoading(true);
     try {
-      // Ensure the enabled value is preserved from the current state
+      // Ensure the enabled value is preserved from the current state and vendor_id is explicitly set
       const settingsWithEnabled = {
         ...data,
+        vendor_id: vendorId, // Explicitly set vendor_id from props
         enabled: isEnabled,
       };
 

@@ -97,6 +97,13 @@ export async function updateV2AlgoSettings(
     });
   }
 
+  // Validate required fields
+  if (!settingsData.vendor_id) {
+    return res.status(400).json({
+      error: "vendor_id is required in request body",
+    });
+  }
+
   // Ensure mp_id matches the URL parameter
   if (settingsData.mp_id !== mpIdNumber) {
     return res.status(400).json({
