@@ -126,9 +126,9 @@ export const MapProductDetailsList = (
   return mappedList;
 };
 
-export const GetTriggeredByValue = async (
+export const GetTriggeredByValue = (
   repriceModel: RepriceModel,
-): Promise<string | null> => {
+): string | null => {
   let triggeredByVendorValue = null;
 
   triggeredByVendorValue =

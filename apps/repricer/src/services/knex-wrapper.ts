@@ -17,6 +17,7 @@ export function getKnexInstance(): Knex {
         database: applicationConfig.SQL_DATABASE,
       },
       pool: { min: 0 },
+      asyncStackTraces: true, // Enable async stack traces
     });
     return knexInstance;
   }
