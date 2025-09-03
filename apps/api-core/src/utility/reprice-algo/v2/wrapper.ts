@@ -38,7 +38,6 @@ export async function repriceProductV2Wrapper(
   const mpId = prod.mpId;
   try {
     const active422CronItems = await mongoHelper.GetErrorItemsByMpId(prod.mpId);
-    console.log("active422CronItems", active422CronItems);
     const ownVendorIds = getAllOwnVendorIds();
     const availableVendorIds = ownVendorIds.filter(
       (id) =>
@@ -227,6 +226,8 @@ async function updatePricesIfNecessary(
     .filter((s) => s.vendor.bestPrice !== undefined)
     .filter(priceIsWithinBounariesSafeguard);
 
+  const invalidQBreaks = solutionResults.filter((s) => s.qBreakValid === false);
+
   const solutionVendorIds = [
     ...new Set(validSolutionsWithChanges.map((s) => s.vendor.vendorId)),
   ];
@@ -244,6 +245,17 @@ async function updatePricesIfNecessary(
         );
       }
 
+      const existingQuantityBreaksBeforeChange =
+        updatesForVendor[0].vendor.priceBreaks;
+
+      const invalidQBreaksForVendor = invalidQBreaks.filter(
+        (s) => s.vendor.vendorId === vendorId,
+      );
+
+      const invalidQBreaksToRemove = existingQuantityBreaksBeforeChange.filter(
+        (s) => invalidQBreaksForVendor.some((v) => v.quantity === s.minQty),
+      );
+
       const proxyConfig = proxyConfigs.find(
         (config) => config.vendor_id === vendorId,
       );
@@ -258,21 +270,16 @@ async function updatePricesIfNecessary(
         validSolutionsWithChanges,
       );
 
-      const existingQuantityBreaksBeforeChange =
-        updatesForVendor[0].vendor.priceBreaks;
-
       const newlyValidQbreaks = updatesForVendor.map((s) => ({
         minQty: s.quantity,
         price: s.vendor.bestPrice!.toNumber(),
         activeCd: 1,
       }));
 
-      const newlyInvalidQBreaks = existingQuantityBreaksBeforeChange
-        .filter((q) => !newlyValidQbreaks.some((v) => v.minQty === q.minQty))
-        .map((q) => ({
-          minQty: q.minQty,
-          activeCd: 0,
-        }));
+      const newlyInvalidQBreaks = invalidQBreaksToRemove.map((q) => ({
+        minQty: q.minQty,
+        activeCd: 0,
+      }));
 
       const qBreakDelta: {
         minQty: number;
