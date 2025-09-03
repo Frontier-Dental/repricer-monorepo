@@ -492,11 +492,13 @@ function getSolutionResult(
     };
   }
 
+  // If we are already in the buybox, and we are only set to down, then there is nothing to do.
   if (
     solution.everyoneIncludingOwnVendorBefore.find(
       (s) =>
         s.buyBoxRank === 0 && s.product.vendorId === solution.vendor.vendorId,
-    )
+    ) &&
+    vendorSetting.up_down === AlgoPriceDirection.DOWN
   ) {
     return {
       algoResult: AlgoResult.IGNORE_LOWEST,
@@ -583,7 +585,7 @@ function getSolutionResult(
       return {
         algoResult: AlgoResult.IGNORE_LOWEST,
         suggestedPrice: suggestedPrice.toNumber(),
-        comment: "Already winning buy box.",
+        comment: "Already winning buy box and suggested price is the same.",
         triggeredByVendor: null,
         rawTriggeredByVendor: solution.rawTriggeredByVendor,
       };
