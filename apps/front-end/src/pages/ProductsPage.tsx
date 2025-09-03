@@ -266,26 +266,9 @@ export function ProductsPage() {
         </div>
       ),
     },
-
-    {
-      accessorKey: "product_active",
-      header: "Prod Active",
-      size: 70,
-      cell: ({ row }) => {
-        const enabled = row.getValue("product_active") as number;
-        return (
-          <Badge
-            variant={enabled === 1 ? "default" : "secondary"}
-            className="text-xs px-1 py-0"
-          >
-            {enabled === 1 ? "Yes" : "No"}
-          </Badge>
-        );
-      },
-    },
     {
       accessorKey: "enabled",
-      header: "Reprice Enabled",
+      header: "Active - Repricer",
       size: 70,
       cell: ({ row }) => {
         const enabled = row.getValue("enabled") as number;
@@ -299,6 +282,23 @@ export function ProductsPage() {
         );
       },
     },
+    {
+      accessorKey: "product_active",
+      header: "Data - Scrape",
+      size: 70,
+      cell: ({ row }) => {
+        const enabled = row.getValue("product_active") as number;
+        return (
+          <Badge
+            variant={enabled === 1 ? "default" : "secondary"}
+            className="text-xs px-1 py-0"
+          >
+            {enabled === 1 ? "Yes" : "No"}
+          </Badge>
+        );
+      },
+    },
+
     {
       accessorKey: "mp_id",
       header: ({ column }) => {
