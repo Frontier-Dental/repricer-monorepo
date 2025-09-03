@@ -74,7 +74,7 @@ export interface Net32AlgoSolutionWithQBreakValid
 export interface Net32AlgoSolutionWithChangeResult
   extends Net32AlgoSolutionWithQBreakValid {
   changeResult: ChangeResult | null;
-  priceList: { minQty: number; price: number }[] | null;
+  priceList: { minQty: number; activeCd: number; price?: number }[] | null;
 }
 
 export interface Net32AlgoSolutionWithCombination {
@@ -147,10 +147,9 @@ export function repriceProductV2(
       vendorSetting,
     );
 
-    const competitorQuantityBreaks =
-      getUniqueValidQuantityBreaks(filteredCompetitors);
+    const allQuantityBreaks = getUniqueValidQuantityBreaks(validProducts);
 
-    for (const quantity of competitorQuantityBreaks) {
+    for (const quantity of allQuantityBreaks) {
       const competeQuantity = getCompeteQuantity(vendorSetting, quantity);
 
       const rawCompetitorsRanked = getProductsSortedWithRank(
@@ -265,7 +264,7 @@ export function repriceProductV2(
         baseResult.comment +
         (pushedToMax ? " Pushed to max." : "") +
         (hitMax ? " Hit max." : "") +
-        (isSlowCron ? " (Slow cron)" : ""),
+        (isSlowCron ? " (Slow cron)." : ""),
     };
   });
   const solutionResultsWithQBreakValid = removeUnnecessaryQuantityBreaks(
@@ -317,7 +316,7 @@ function removeUnnecessaryQuantityBreaks(
   solutionResults: Net32AlgoSolutionWithResult[],
   isSlowCron: boolean,
 ): Net32AlgoSolutionWithQBreakValid[] {
-  const invalidQuantityBreaks = removeInvalidQuantityBreaks(solutionResults);
+  const invalidQuantityBreaks = getInvalidQuantityBreaks(solutionResults);
   const suppressQBreakIfQ1NotUpdated = applySuppressQBreakIfQ1NotUpdated(
     solutionResults,
     isSlowCron,
@@ -363,7 +362,7 @@ function getNewComment(
   return comment;
 }
 
-function removeInvalidQuantityBreaks(
+function getInvalidQuantityBreaks(
   solutionResults: Net32AlgoSolutionWithResult[],
 ): Net32AlgoSolutionWithQBreakValid[] {
   const uniqueVendorIds = [

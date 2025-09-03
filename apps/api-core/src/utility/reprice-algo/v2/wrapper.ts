@@ -258,10 +258,23 @@ async function updatePricesIfNecessary(
         validSolutionsWithChanges,
       );
 
-      const priceList = updatesForVendor.map((s) => ({
+      const existingQuantityBreaksBeforeChange =
+        updatesForVendor[0].vendor.priceBreaks;
+
+      const newlyValidQbreaks = updatesForVendor.map((s) => ({
         minQty: s.quantity,
         price: s.vendor.bestPrice!.toNumber(),
+        activeCd: 1,
       }));
+
+      const newlyInvalidQBreaks = existingQuantityBreaksBeforeChange
+        .filter((q) => !newlyValidQbreaks.some((v) => v.minQty === q.minQty))
+        .map((q) => ({
+          minQty: q.minQty,
+          activeCd: 0,
+        }));
+
+      const qBreakDelta = [...newlyValidQbreaks, ...newlyInvalidQBreaks];
 
       try {
         // Create axios config with proxy settings
@@ -277,7 +290,7 @@ async function updatePricesIfNecessary(
           },
         };
 
-        console.log("Price changes in net32 format: ", priceList);
+        console.log("Price changes in net32 format: ", qBreakDelta);
 
         if (isDev) {
           console.log("We are in dev mode, not executing actual change.");
@@ -293,40 +306,48 @@ async function updatePricesIfNecessary(
             proxyConfig.subscription_key,
             {
               vpCode: vpCode, // Assuming this is the vendor product code
-              priceList: priceList.map((pl) => ({ ...pl, activeCd: 1 })),
+              priceList: qBreakDelta,
             },
             axiosConfig,
           );
           console.log(`Successfully updated price for vendor ${vendorId}`);
-          return { vendorId, changeResult: ChangeResult.OK, priceList };
+          return {
+            vendorId,
+            changeResult: ChangeResult.OK,
+            priceList: qBreakDelta,
+          };
         } else if (hasExecutionPriority && !isDev && !priceChangeAllowed) {
           return {
             vendorId,
             changeResult: ChangeResult.CHANGE_PREVENTED_V2_DISABLED,
-            priceList,
+            priceList: qBreakDelta,
           };
         } else if (hasExecutionPriority && isDev) {
           return {
             vendorId,
             changeResult: ChangeResult.CHANGE_PREVENTED_DEV,
-            priceList,
+            priceList: qBreakDelta,
           };
         } else {
           return {
             vendorId,
             changeResult: ChangeResult.NOT_EXECUTION_PRIORITY,
-            priceList,
+            priceList: qBreakDelta,
           };
         }
       } catch (error) {
         if (error instanceof AxiosError && error.response?.status === 422) {
-          return { vendorId, changeResult: ChangeResult.ERROR_422, priceList };
+          return {
+            vendorId,
+            changeResult: ChangeResult.ERROR_422,
+            priceList: qBreakDelta,
+          };
         }
         console.error(`Failed to update price for vendor ${vendorId}:`, error);
         return {
           vendorId,
           changeResult: ChangeResult.UNKNOWN_ERROR,
-          priceList,
+          priceList: qBreakDelta,
         };
       }
     }),

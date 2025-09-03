@@ -44,9 +44,14 @@ export function getAllOwnVendorIds() {
 }
 
 export function getPriceListFormatted(
-  priceList: { minQty: number; price: number }[],
+  priceList: { minQty: number; activeCd: number; price?: number }[],
 ) {
-  return priceList.map((p) => `Q${p.minQty}@${p.price.toFixed(2)}`).join(", ");
+  return priceList
+    .map(
+      (p) =>
+        `Q${p.minQty}@${p.price ? p.price.toFixed(2) : ""}${p.activeCd === 0 ? "REMOVED" : ""}`,
+    )
+    .join(", ");
 }
 
 export function getInternalProducts(
