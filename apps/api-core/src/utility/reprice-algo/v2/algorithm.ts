@@ -474,7 +474,7 @@ function getSolutionResult(
   }
   const simulatedSisterVendorIds = vendorSetting.sister_vendor_ids
     .split(",")
-    .map(parseInt)
+    .map((x) => parseInt(x, 10))
     .filter((x) => !isNaN(x));
   const simulatedSisterInBuyBox =
     solution.everyoneIncludingOwnVendorBefore.find(

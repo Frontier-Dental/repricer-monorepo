@@ -76,10 +76,8 @@ export function applyVendorExclusionFilter(
 ) {
   return competitors.filter((c) => {
     if (ourVendorSettings.exclude_vendors !== "") {
-      const excludedVendors = ourVendorSettings.exclude_vendors
-        .split(",")
-        .map(parseInt);
-      return excludedVendors.includes(c.vendorId) === false;
+      const excludedVendors = ourVendorSettings.exclude_vendors.split(",");
+      return excludedVendors.includes(c.vendorId.toString()) === false;
     } else {
       return true;
     }
@@ -134,11 +132,9 @@ export function applyMinQuantityFilter(
   competitors: Net32AlgoProduct[],
   ourVendorSettings: V2AlgoSettingsData,
 ) {
-  const inactiveVendorId = ourVendorSettings.inactive_vendor_id
-    .split(",")
-    .map(parseInt);
+  const inactiveVendorId = ourVendorSettings.inactive_vendor_id.split(",");
   return competitors.filter((c) => {
-    if (inactiveVendorId.includes(c.vendorId)) {
+    if (inactiveVendorId.includes(c.vendorId.toString())) {
       return true;
     }
     return c.inventory >= ourVendorSettings.inventory_competition_threshold;

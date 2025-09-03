@@ -81,7 +81,7 @@ export async function createV2AlgoSettings(
     floor_compete_with_next: false,
     own_vendor_threshold: 1,
     price_strategy: AlgoPriceStrategy.UNIT,
-    enabled: true,
+    enabled: false,
   };
 
   const [insertId] = await knex("v2_algo_settings").insert(defaultSettings);
