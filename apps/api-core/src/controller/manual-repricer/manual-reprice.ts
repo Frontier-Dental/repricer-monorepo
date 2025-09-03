@@ -77,7 +77,6 @@ export async function manualRepriceHandler(
       await repriceProductV2Wrapper(
         net32resp.data,
         prod,
-        prioritySequence,
         "MANUAL",
         isSlowCronRun,
       );

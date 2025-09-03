@@ -687,6 +687,20 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
   }
 }
 
+export async function getNet32UrlById(mpId: number) {
+  try {
+    const knex = getKnexInstance();
+    const result = await knex("table_scrapeProductList")
+      .where("MpId", mpId)
+      .select("Net32Url")
+      .first();
+    return result?.Net32Url || null;
+  } catch (error) {
+    console.log("Error in getNet32UrlById", mpId, error);
+    throw error;
+  }
+}
+
 export async function UpdateRepriceResultStatus(
   repriceResultStatus: RepriceResultEnum,
   mpid: string,

@@ -41,7 +41,6 @@ export async function v2AlgoTest(
   const results = await repriceProductV2Wrapper(
     net32Products,
     prod,
-    getAllOwnVendorNames(),
     "MANUAL",
     req.body.isSlowCron,
   );

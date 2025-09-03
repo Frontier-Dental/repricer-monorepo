@@ -485,6 +485,15 @@ export async function ExecuteProductUpdate(mpid: any, setVal: any) {
     );
 }
 
+export async function GetErrorItemsByMpId(mpId: number): Promise<ErrorItem[]> {
+  const dbo = await getMongoDb();
+  const result = await dbo
+    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
+    .find({ mpId: mpId, active: true })
+    .toArray();
+  return result as ErrorItem[];
+}
+
 export async function GetEligibleContextErrorItems(
   _activeStatus: any,
   _mpId: any,

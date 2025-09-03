@@ -93,35 +93,29 @@ export interface BuyBoxPosition {
 export function repriceProductV2(
   mpId: number,
   rawNet32Products: Net32AlgoProduct[],
-  availableInternalProducts: InternalProduct[],
-  ownVendorIds: number[],
+  non422VendorIds: number[],
+  allOwnVendorIds: number[],
   vendorSettings: V2AlgoSettingsData[],
   jobId: string,
   isSlowCron: boolean,
+  net32url: string,
 ) {
-  const net32url = availableInternalProducts[0].net32url;
-  if (!net32url) {
-    throw new Error("No net32url found for own vendor");
-  }
   const validProducts = rawNet32Products.filter((p) =>
     Array.isArray(p.priceBreaks),
   );
 
   const competitorProducts = validProducts.filter(
-    (p) => !ownVendorIds.includes(p.vendorId),
+    (p) => !allOwnVendorIds.includes(p.vendorId),
   );
   // All products that we have available to use to make changes.
   const ourAvailableVendorProducts = validProducts
-    .filter((p) => ownVendorIds.includes(p.vendorId))
-    .filter((p) =>
-      availableInternalProducts.find((vp) => vp.ownVendorId === p.vendorId),
-    )
+    .filter((p) => non422VendorIds.find((id) => id === p.vendorId))
     .filter((p) => {
-      const setting = vendorSettings.find((v) => v.vendor_id === p.vendorId);
+      const setting = vendorSettings.find((s) => s.vendor_id === p.vendorId);
       return setting?.enabled;
     });
 
-  const availableVendorIds = ourAvailableVendorProducts.map((v) => v.vendorId);
+  const availableProducts = ourAvailableVendorProducts.map((v) => v.vendorId);
 
   const lowestVendor = getLowestVendor(rawNet32Products);
 
@@ -256,7 +250,7 @@ export function repriceProductV2(
     const baseResult = getSolutionResult(
       s,
       existingPriceBreaks,
-      availableVendorIds,
+      availableProducts,
       isSlowCron,
     );
     const pushedToMax = s.pushedToMax;
@@ -271,7 +265,7 @@ export function repriceProductV2(
     isSlowCron,
   );
 
-  const htmlFiles = availableVendorIds.map((vendorId) => {
+  const htmlFiles = availableProducts.map((vendorId) => {
     const html = createHtmlFileContent(
       mpId,
       rawNet32Products,

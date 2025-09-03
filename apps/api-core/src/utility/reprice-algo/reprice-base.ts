@@ -102,7 +102,6 @@ export async function Execute(
           await repriceProductV2Wrapper(
             net32resp.data,
             prod,
-            prioritySequence,
             cronSetting ? cronSetting.CronName : "MANUAL",
             isSlowCronRun,
           );

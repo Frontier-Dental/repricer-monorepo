@@ -1,12 +1,18 @@
+import { AlgoExecutionMode, VendorNameLookup } from "@repricer-monorepo/shared";
 import { AxiosError, AxiosRequestConfig } from "axios";
 import moment from "moment";
+import { v4 } from "uuid";
+import { calculateNextCronTime } from "../../../controller/main-cron/shared";
+import { ErrorItemModel } from "../../../model/error-item";
 import { Net32Product } from "../../../types/net32";
 import { applicationConfig } from "../../config";
+import * as mongoHelper from "../../mongo/db-helper";
+import { getNet32UrlById } from "../../mysql/mysql-helper";
 import { findTinyproxyConfigsByVendorIds } from "../../mysql/tinyproxy-configs";
+import { insertV2AlgoError } from "../../mysql/v2-algo-error";
 import { insertV2AlgoExecution } from "../../mysql/v2-algo-execution";
 import { insertMultipleV2AlgoResults } from "../../mysql/v2-algo-results";
 import { findOrCreateV2AlgoSettingsForVendors } from "../../mysql/v2-algo-settings";
-import { insertV2AlgoError } from "../../mysql/v2-algo-error";
 import { updateProductInfo } from "../../net32/reprice";
 import {
   Net32AlgoSolution,
@@ -18,43 +24,35 @@ import { getShippingThreshold } from "./shipping-threshold";
 import { ChangeResult } from "./types";
 import {
   getAllOwnVendorIds,
-  getInternalProducts,
   getPriceListFormatted,
   isChangeResult,
 } from "./utility";
-import { v4 } from "uuid";
-import { ErrorItemModel } from "../../../model/error-item";
-import { calculateNextCronTime } from "../../../controller/main-cron/shared";
-import * as mongoHelper from "../../mongo/db-helper";
-import {
-  AlgoExecutionMode,
-  VendorName,
-  VendorNameLookup,
-} from "@repricer-monorepo/shared";
 
 export async function repriceProductV2Wrapper(
   net32Products: Net32Product[],
   prod: any,
-  vendorNameList: { name: VendorName }[],
   cronName: string,
   isSlowCron: boolean,
 ) {
   const jobId = v4();
   const mpId = prod.mpId;
   try {
-    const internalProducts = getInternalProducts(prod, vendorNameList);
+    const active422CronItems = await mongoHelper.GetErrorItemsByMpId(prod.mpId);
+    console.log("active422CronItems", active422CronItems);
+    const ownVendorIds = getAllOwnVendorIds();
+    const availableVendorIds = ownVendorIds.filter(
+      (id) =>
+        !active422CronItems.some(
+          (item) => item.vendorName === VendorNameLookup[id],
+        ),
+    );
 
-    if (internalProducts.length === 0) {
-      console.log(`No vendors configured found for product ${prod.mpId}`);
-      return;
-    }
-    // Get all unique vendor IDs from net32Products
-    const allVendorIds = internalProducts.map((p) => p.ownVendorId);
+    const net32Url = await getNet32UrlById(prod.mpId);
 
     // Fetch or create v2_algo_settings for each vendor
     const vendorSettings = await findOrCreateV2AlgoSettingsForVendors(
       mpId,
-      allVendorIds,
+      ownVendorIds,
     );
 
     const solutionResults = repriceProductV2(
@@ -66,11 +64,12 @@ export async function repriceProductV2Wrapper(
           parseInt(p.vendorId as string),
         ),
       })),
-      internalProducts,
+      availableVendorIds,
       getAllOwnVendorIds(),
       vendorSettings,
       jobId,
       isSlowCron,
+      net32Url,
     );
 
     const uniqueVendorIds = [
