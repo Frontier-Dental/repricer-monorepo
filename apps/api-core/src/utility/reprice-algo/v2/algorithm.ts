@@ -638,7 +638,7 @@ function getSolutionResult(
     return {
       algoResult: AlgoResult.CHANGE_UP,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "Pricing up to just undercut a competitor.",
+      comment: "Pricing up to undercut a competitor.",
       triggeredByVendor: solution.rawTriggeredByVendor || null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
