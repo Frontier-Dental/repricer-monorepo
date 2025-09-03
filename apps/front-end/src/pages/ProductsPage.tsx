@@ -433,14 +433,23 @@ export function ProductsPage() {
       accessorKey: "last_reprice_comment",
       header: "Comment",
       size: 200,
-      cell: ({ row }) => (
-        <div
-          className="text-xs break-words whitespace-normal max-w-[150px]"
-          title={row.getValue("last_reprice_comment") as string}
-        >
-          {row.getValue("last_reprice_comment") || "N/A"}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const comment = row.getValue("last_reprice_comment") as string;
+        const formattedComment = comment
+          ? comment
+              .split(",")
+              .map((part) => part.trim())
+              .join(",\n")
+          : "N/A";
+        return (
+          <div
+            className="text-xs break-words whitespace-pre-line max-w-[200px]"
+            title={comment}
+          >
+            {formattedComment}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "last_suggested_price",
@@ -448,12 +457,18 @@ export function ProductsPage() {
       size: 120,
       cell: ({ row }) => {
         const price = row.getValue("last_suggested_price") as string;
+        const formattedPrice = price
+          ? price
+              .split(",")
+              .map((part) => part.trim())
+              .join(",\n")
+          : "N/A";
         return (
           <div
-            className="text-xs break-words whitespace-normal max-w-[120px]"
+            className="text-xs break-words whitespace-pre-line max-w-[120px]"
             title={price}
           >
-            {price || "N/A"}
+            {formattedPrice}
           </div>
         );
       },
@@ -531,27 +546,45 @@ export function ProductsPage() {
       accessorKey: "triggered_by_vendor",
       header: "Triggered",
       size: 120,
-      cell: ({ row }) => (
-        <div
-          className="text-xs break-words whitespace-normal max-w-[120px]"
-          title={row.getValue("triggered_by_vendor") as string}
-        >
-          {row.getValue("triggered_by_vendor") || "N/A"}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const triggered = row.getValue("triggered_by_vendor") as string;
+        const formattedTriggered = triggered
+          ? triggered
+              .split(",")
+              .map((part) => part.trim())
+              .join(",\n")
+          : "N/A";
+        return (
+          <div
+            className="text-xs break-words whitespace-pre-line max-w-[120px]"
+            title={triggered}
+          >
+            {formattedTriggered}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "result",
       header: "Result",
       size: 120,
-      cell: ({ row }) => (
-        <div
-          className="text-xs break-words whitespace-normal max-w-[120px]"
-          title={row.getValue("result") as string}
-        >
-          {row.getValue("result") || "N/A"}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const result = row.getValue("result") as string;
+        const formattedResult = result
+          ? result
+              .split(",")
+              .map((part) => part.trim())
+              .join(",\n")
+          : "N/A";
+        return (
+          <div
+            className="text-xs break-words whitespace-pre-line max-w-[120px]"
+            title={result}
+          >
+            {formattedResult}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "algo_execution_mode",
