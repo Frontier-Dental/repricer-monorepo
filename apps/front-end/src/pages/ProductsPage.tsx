@@ -176,26 +176,42 @@ function AlgoExecutionModeSelect({
 
 // Define the type for products with algo data
 interface ProductWithAlgoData {
-  channel_name: string;
-  enabled: number;
-  mp_id: number;
-  channel_id: string | null;
-  cron_name: string | null;
-  slow_cron_name: string | null;
-  last_cron_run_at: string | null;
-  last_cron_run_name: string | null;
-  last_updated_at: string | null;
-  last_updated_cron_name: string | null;
-  last_reprice_comment: string | null;
-  last_suggested_price: number | null;
+  // V2 algo settings fields
   floor_price: number | null;
   max_price: number | null;
   price_strategy: AlgoPriceStrategy;
+  enabled: number;
+  vendor_id: number;
+  mp_id: number;
   suppress_price_break_if_Q1_not_updated: number;
-  triggered_by_vendor: string | null;
-  result: string | null;
+  target_price: number | null;
+
+  // Channel IDs fields
+  channel_id: string | null;
+
+  // Scrape product list fields
   net32_url: string | null;
+  cron_name: string | null;
+  slow_cron_name: string | null;
   algo_execution_mode: string | null;
+  product_active: number | null;
+
+  // Latest successful algo results fields
+  last_updated_cron_name: string | null;
+  last_updated_at: string | null;
+
+  // Latest cron run fields (regardless of status)
+  last_cron_run_at: string | null;
+  last_cron_run_name: string | null;
+  last_reprice_comment: string | null;
+  last_suggested_price: string | null;
+  result: string | null;
+  triggered_by_vendor: string | null;
+  lowest_price: number | null;
+  quantity: number | null;
+
+  // Computed field
+  channel_name: string;
 }
 
 export function ProductsPage() {
@@ -416,10 +432,10 @@ export function ProductsPage() {
     {
       accessorKey: "last_reprice_comment",
       header: "Comment",
-      size: 150,
+      size: 200,
       cell: ({ row }) => (
         <div
-          className="text-xs truncate"
+          className="text-xs break-words whitespace-normal max-w-[150px]"
           title={row.getValue("last_reprice_comment") as string}
         >
           {row.getValue("last_reprice_comment") || "N/A"}
@@ -429,10 +445,17 @@ export function ProductsPage() {
     {
       accessorKey: "last_suggested_price",
       header: "Suggested",
-      size: 80,
+      size: 120,
       cell: ({ row }) => {
-        const price = row.getValue("last_suggested_price") as number;
-        return <div className="text-xs">{price ? `$${price}` : "N/A"}</div>;
+        const price = row.getValue("last_suggested_price") as string;
+        return (
+          <div
+            className="text-xs break-words whitespace-normal max-w-[120px]"
+            title={price}
+          >
+            {price || "N/A"}
+          </div>
+        );
       },
     },
     {
@@ -507,10 +530,10 @@ export function ProductsPage() {
     {
       accessorKey: "triggered_by_vendor",
       header: "Triggered",
-      size: 100,
+      size: 120,
       cell: ({ row }) => (
         <div
-          className="text-xs truncate"
+          className="text-xs break-words whitespace-normal max-w-[120px]"
           title={row.getValue("triggered_by_vendor") as string}
         >
           {row.getValue("triggered_by_vendor") || "N/A"}
@@ -521,28 +544,14 @@ export function ProductsPage() {
       accessorKey: "result",
       header: "Result",
       size: 120,
-      cell: ({ row }) => {
-        const result = row.getValue("result") as string;
-        if (!result) return <div className="text-xs">N/A</div>;
-
-        const getBadgeVariant = (result: string) => {
-          if (result.includes("SUCCESS") || result.includes("OK"))
-            return "default";
-          if (result.includes("ERROR") || result.includes("FAIL"))
-            return "destructive";
-          return "secondary";
-        };
-
-        return (
-          <Badge
-            variant={getBadgeVariant(result)}
-            className="text-xs px-1 py-0 truncate"
-            title={result}
-          >
-            {result}
-          </Badge>
-        );
-      },
+      cell: ({ row }) => (
+        <div
+          className="text-xs break-words whitespace-normal max-w-[120px]"
+          title={row.getValue("result") as string}
+        >
+          {row.getValue("result") || "N/A"}
+        </div>
+      ),
     },
     {
       accessorKey: "algo_execution_mode",

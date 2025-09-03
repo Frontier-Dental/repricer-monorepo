@@ -313,7 +313,48 @@ export async function syncVendorSettingsForMpId(
   };
 }
 
-export async function getAllProductsWithAlgoData(): Promise<any[]> {
+export interface ProductWithAlgoData {
+  // V2 algo settings fields
+  floor_price: string;
+  max_price: string;
+  price_strategy: AlgoPriceStrategy;
+  enabled: number;
+  vendor_id: number;
+  mp_id: number;
+  suppress_price_break_if_Q1_not_updated: number;
+  target_price: string | null;
+
+  // Channel IDs fields
+  channel_id: string | null;
+
+  // Scrape product list fields
+  net32_url: string | null;
+  cron_name: string | null;
+  slow_cron_name: string | null;
+  algo_execution_mode: string | null;
+  product_active: number | null;
+
+  // Latest successful algo results fields
+  last_updated_cron_name: string | null;
+  last_updated_at: string | null;
+
+  // Latest cron run fields (regardless of status)
+  last_cron_run_at: string | null;
+  last_cron_run_name: string | null;
+  last_reprice_comment: string | null;
+  last_suggested_price: string | null;
+  result: string | null;
+  triggered_by_vendor: string | null;
+  lowest_price: string | null;
+  quantity: number | null;
+
+  // Computed field
+  channel_name: string;
+}
+
+export async function getAllProductsWithAlgoData(): Promise<
+  ProductWithAlgoData[]
+> {
   const knex = getKnexInstance();
 
   const query = knex("v2_algo_settings as vas")
@@ -370,6 +411,7 @@ export async function getAllProductsWithAlgoData(): Promise<any[]> {
           "result",
           "triggered_by_vendor",
           "lowest_price",
+          "quantity",
         )
           .from("v2_algo_results as var2")
           .whereIn(["mp_id", "vendor_id", "created_at"], function () {
@@ -403,19 +445,14 @@ export async function getAllProductsWithAlgoData(): Promise<any[]> {
       "vas.mp_id",
       "vas.suppress_price_break_if_Q1_not_updated",
       "vas.target_price",
-      // Channel IDs fields
       "ci.channel_id",
-      // Scrape product list fields (if they exist)
       "spl.Net32Url as net32_url",
       "spl.RegularCronName as cron_name",
       "spl.SlowCronName as slow_cron_name",
       "spl.algo_execution_mode",
       "spl.IsActive as product_active",
-      // Latest successful algo results fields (if they exist)
       "latest_updated_result.cron_name as last_updated_cron_name",
       "latest_updated_result.created_at as last_updated_at",
-      // Latest cron run fields (regardless of status)
-      // "latest_cron_run.*",
       "latest_cron_run.created_at as last_cron_run_at",
       "latest_cron_run.cron_name as last_cron_run_name",
       "latest_cron_run.comment as last_reprice_comment",
@@ -423,14 +460,17 @@ export async function getAllProductsWithAlgoData(): Promise<any[]> {
       "latest_cron_run.result",
       "latest_cron_run.triggered_by_vendor",
       "latest_cron_run.lowest_price",
+      "latest_cron_run.quantity",
     )
     .orderBy(["vas.mp_id", "vas.vendor_id"]);
 
-  return results.map((result) => ({
-    ...result,
-    channel_name:
-      VendorNameLookup[result.vendor_id] || `Vendor ${result.vendor_id}`,
-  }));
+  return results.map(
+    (result): ProductWithAlgoData => ({
+      ...result,
+      channel_name:
+        VendorNameLookup[result.vendor_id] || `Vendor ${result.vendor_id}`,
+    }),
+  );
 }
 
 export async function toggleV2AlgoEnabled(

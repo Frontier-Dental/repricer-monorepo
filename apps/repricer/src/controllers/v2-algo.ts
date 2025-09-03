@@ -1,20 +1,19 @@
-import { AlgoExecutionMode, VendorNameLookup } from "@repricer-monorepo/shared";
+import { AlgoExecutionMode } from "@repricer-monorepo/shared";
 import { Request, Response } from "express";
 import { getAllV2AlgoErrors } from "../services/algo_v2/errors";
 import {
   getAlgoExecutionMode,
-  getAllProductDetails,
   updateAlgoExecutionMode,
 } from "../services/algo_v2/products";
 import { getAlgoResultsWithExecutionData } from "../services/algo_v2/results";
 import {
-  getV2AlgoSettingsByMpId,
-  syncVendorSettingsForMpId,
-  updateV2AlgoSettings as updateSettings,
   getAllProductsWithAlgoData,
-  toggleV2AlgoEnabled,
   getNet32Url,
+  getV2AlgoSettingsByMpId,
   syncAllVendorSettings,
+  syncVendorSettingsForMpId,
+  toggleV2AlgoEnabled,
+  updateV2AlgoSettings as updateSettings,
 } from "../services/algo_v2/settings";
 
 export async function getAlgoResultsWithExecution(
@@ -255,15 +254,80 @@ export async function getAllProductsWithAlgoDataController(
 
   const products = await getAllProductsWithAlgoData();
 
+  const groupedProducts = Object.groupBy(
+    products,
+    (p) => `${p.mp_id}-${p.vendor_id}`,
+  );
+
+  // Process grouped products to concatenate fields within each column
+  const processedProducts = Object.values(groupedProducts).map((group) => {
+    if (!group) {
+      return [];
+    }
+    if (group.length === 1) {
+      return group[0];
+    }
+
+    // For multiple entries, concatenate values within each column
+    const baseProduct = group[0];
+
+    // Concatenate last_suggested_price with quantity prefix
+    const concatenatedSuggestedPrice = group
+      .filter((p) => p.last_suggested_price)
+      .map((p) =>
+        p.quantity
+          ? ` [Q${p.quantity}] ${p.last_suggested_price}`
+          : p.last_suggested_price,
+      )
+      .join("");
+
+    // Concatenate triggered_by_vendor with quantity prefix
+    const concatenatedTriggeredByVendor = group
+      .filter((p) => p.triggered_by_vendor)
+      .map((p) =>
+        p.quantity
+          ? ` [Q${p.quantity}] ${p.triggered_by_vendor}`
+          : p.triggered_by_vendor,
+      )
+      .join("");
+
+    // Concatenate result with quantity prefix
+    const concatenatedResult = group
+      .filter((p) => p.result)
+      .map((p) => (p.quantity ? ` [Q${p.quantity}] ${p.result}` : p.result))
+      .join("");
+
+    // Concatenate last_reprice_comment with quantity prefix
+    const concatenatedComment = group
+      .filter((p) => p.last_reprice_comment)
+      .map((p) =>
+        p.quantity
+          ? ` [Q${p.quantity}] ${p.last_reprice_comment}`
+          : p.last_reprice_comment,
+      )
+      .join("");
+
+    return {
+      ...baseProduct,
+      last_suggested_price:
+        concatenatedSuggestedPrice || baseProduct.last_suggested_price,
+      triggered_by_vendor:
+        concatenatedTriggeredByVendor || baseProduct.triggered_by_vendor,
+      result: concatenatedResult || baseProduct.result,
+      last_reprice_comment:
+        concatenatedComment || baseProduct.last_reprice_comment,
+    };
+  });
+
   // Update cache
-  productsWithAlgoCache = products;
+  productsWithAlgoCache = processedProducts;
   productsWithAlgoCacheTime = now;
 
   console.log(
-    `Updated products with algo cache with ${products.length} records`,
+    `Updated products with algo cache with ${processedProducts.length} records`,
   );
   return res.json({
-    data: products,
+    data: processedProducts,
     cacheTimestamp: now.toISOString(),
     isCached: false,
   });
