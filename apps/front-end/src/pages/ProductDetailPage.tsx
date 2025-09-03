@@ -421,60 +421,104 @@ export function ProductDetailPage() {
     {
       accessorKey: "id",
       header: "ID",
+      size: 60,
       cell: ({ row }) => (
-        <div className="font-medium">#{row.getValue("id")}</div>
+        <div className="font-mono text-xs">#{row.getValue("id")}</div>
       ),
     },
     {
       accessorKey: "job_id",
       header: "Job ID",
+      size: 100,
       cell: ({ row }) => (
-        <div className="font-mono text-xs">{row.getValue("job_id")}</div>
+        <div
+          className="font-mono text-xs truncate"
+          title={row.getValue("job_id") as string}
+        >
+          {row.getValue("job_id")}
+        </div>
       ),
     },
     {
       accessorKey: "vendor_id",
       header: "Vendor ID",
-      cell: ({ row }) => <div>{row.getValue("vendor_id")}</div>,
+      size: 80,
+      cell: ({ row }) => (
+        <div className="text-xs">{row.getValue("vendor_id")}</div>
+      ),
     },
     {
       accessorKey: "vendor_name",
-      header: "Vendor Name",
-      cell: ({ row }) => <div>{row.getValue("vendor_name")}</div>,
+      header: "Vendor",
+      size: 100,
+      cell: ({ row }) => (
+        <div
+          className="text-xs truncate"
+          title={row.getValue("vendor_name") as string}
+        >
+          {row.getValue("vendor_name")}
+        </div>
+      ),
     },
     {
       accessorKey: "quantity",
-      header: "Quantity",
-      cell: ({ row }) => <div>{row.getValue("quantity")}</div>,
+      header: "Qty",
+      size: 50,
+      cell: ({ row }) => (
+        <div className="text-xs">{row.getValue("quantity")}</div>
+      ),
     },
     {
       accessorKey: "suggested_price",
-      header: "Suggested Price",
+      header: "Suggested",
+      size: 80,
       cell: ({ row }) => {
         const price = row.getValue("suggested_price") as number | null;
-        return <div>{price ? formatPrice(price) : "N/A"}</div>;
+        return (
+          <div className="text-xs">{price ? formatPrice(price) : "N/A"}</div>
+        );
       },
     },
     {
       accessorKey: "result",
       header: "Result",
+      size: 100,
       cell: ({ row }) => {
         const result = row.getValue("result") as string;
-        return <Badge variant={getResultBadgeVariant(result)}>{result}</Badge>;
+        return (
+          <Badge
+            variant={getResultBadgeVariant(result)}
+            className="text-xs px-1 py-0"
+          >
+            {result}
+          </Badge>
+        );
       },
     },
     {
       accessorKey: "triggered_by_vendor",
-      header: "Triggered By Vendor",
-      cell: ({ row }) => <div>{row.getValue("triggered_by_vendor")}</div>,
+      header: "Triggered",
+      size: 100,
+      cell: ({ row }) => (
+        <div
+          className="text-xs truncate"
+          title={row.getValue("triggered_by_vendor") as string}
+        >
+          {row.getValue("triggered_by_vendor") || "N/A"}
+        </div>
+      ),
     },
     {
       accessorKey: "price_update_result",
-      header: "Price Update Result",
+      header: "Update Result",
+      size: 100,
       cell: ({ row }) => {
         const result = row.getValue("price_update_result") as string | null;
         return (
-          <Badge variant={getPriceUpdateResultBadgeVariant(result)}>
+          <Badge
+            variant={getPriceUpdateResultBadgeVariant(result)}
+            className="text-xs px-1 py-0"
+          >
             {result || "N/A"}
           </Badge>
         );
@@ -482,16 +526,37 @@ export function ProductDetailPage() {
     },
     {
       accessorKey: "new_price_breaks",
-      header: "Resulting Price Breaks",
-      cell: ({ row }) => <div>{row.getValue("new_price_breaks")}</div>,
+      header: "Price Breaks",
+      size: 120,
+      cell: ({ row }) => {
+        const priceBreaks = row.getValue("new_price_breaks") as string;
+        const formattedPriceBreaks = priceBreaks
+          ? priceBreaks
+              .split(",")
+              .map((part) => part.trim())
+              .join(",\n")
+          : "N/A";
+        return (
+          <div
+            className="text-xs break-words whitespace-pre-line max-w-[120px]"
+            title={priceBreaks}
+          >
+            {formattedPriceBreaks}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "q_break_valid",
-      header: "Q-Break Valid",
+      header: "Q-Break",
+      size: 70,
       cell: ({ row }) => {
         const isValid = row.getValue("q_break_valid") as boolean;
         return (
-          <Badge variant={isValid ? "default" : "secondary"}>
+          <Badge
+            variant={isValid ? "default" : "secondary"}
+            className="text-xs px-1 py-0"
+          >
             {isValid ? "Valid" : "Invalid"}
           </Badge>
         );
@@ -499,9 +564,15 @@ export function ProductDetailPage() {
     },
     {
       accessorKey: "cron_name",
-      header: "Cron Name",
+      header: "Cron",
+      size: 90,
       cell: ({ row }) => (
-        <div className="text-sm">{row.getValue("cron_name")}</div>
+        <div
+          className="font-mono text-xs truncate"
+          title={row.getValue("cron_name") as string}
+        >
+          {row.getValue("cron_name")}
+        </div>
       ),
     },
     {
@@ -511,17 +582,23 @@ export function ProductDetailPage() {
           <Button
             variant="ghost"
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="h-8 px-2 text-xs"
           >
             Run Time
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            <ArrowUpDown className="ml-1 h-3 w-3" />
           </Button>
         );
       },
+      size: 120,
       cell: ({ row }) => {
         const runTime = row.getValue("run_time") as string;
+        const dateObj = new Date(runTime);
+        const dateStr = dateObj.toLocaleDateString();
+        const timeStr = dateObj.toLocaleTimeString();
         return (
-          <div className="flex flex-col">
-            <span className="font-medium">{formatDate(runTime)}</span>
+          <div className="text-xs">
+            <div>{dateStr}</div>
+            <div className="text-muted-foreground">{timeStr}</div>
           </div>
         );
       },
@@ -531,11 +608,15 @@ export function ProductDetailPage() {
     {
       accessorKey: "comment",
       header: "Comment",
+      size: 200,
       cell: ({ row }) => {
         const comment = row.getValue("comment") as string;
         return (
-          <div className="max-w-md">
-            <p className="text-sm">{truncateComment(comment)}</p>
+          <div
+            className="text-xs break-words whitespace-normal max-w-[200px]"
+            title={comment}
+          >
+            {truncateComment(comment, 80)}
           </div>
         );
       },
@@ -543,6 +624,7 @@ export function ProductDetailPage() {
     {
       id: "actions",
       header: "",
+      size: 80,
       cell: ({ row }) => {
         const record = row.original;
         return (
@@ -552,10 +634,10 @@ export function ProductDetailPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => openHtmlInNewTab(record.chain_of_thought_html!)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 h-7 text-xs px-2"
               >
-                <Download className="h-4 w-4" />
-                View HTML
+                <Download className="h-3 w-3" />
+                HTML
               </Button>
             ) : (
               <span className="text-xs text-muted-foreground">No HTML</span>
