@@ -18,7 +18,7 @@ export async function startSpecificSlowCronHandler(
       .send(`Cron not found: ${cronName}`);
   }
 
-  await runCoreCronLogic(cronDetail);
+  await runCoreCronLogic(cronDetail, true);
   return res
     .status(_codes.StatusCodes.OK)
     .send(`Executed ${cronName} at ${new Date()}.`);

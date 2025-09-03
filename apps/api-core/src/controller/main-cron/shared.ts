@@ -217,7 +217,7 @@ export function setCronAndStart(
     cronString,
     async () => {
       try {
-        await runCoreCronLogic(cronSetting);
+        await runCoreCronLogic(cronSetting, false);
       } catch (error) {
         console.error(`Error running ${cronName}:`, error);
       }
@@ -234,6 +234,7 @@ export function setCronAndStart(
 
 export async function runCoreCronLogic(
   cronSettingsResponse: CronSettingsDetail,
+  isSlowCron: boolean,
 ) {
   console.log(`Running cron execution for ${cronSettingsResponse.CronName}`);
   const initTime = new Date();
@@ -250,7 +251,13 @@ export async function runCoreCronLogic(
       applicationConfig.BATCH_SIZE,
     );
     for (let chunk of chunkedList) {
-      await repriceBase.Execute(jobId, chunk, new Date(), cronSettingsResponse);
+      await repriceBase.Execute(
+        jobId,
+        chunk,
+        new Date(),
+        cronSettingsResponse,
+        isSlowCron,
+      );
     }
   } else {
     await logBlankCronDetailsV3(cronSettingsResponse.CronId);

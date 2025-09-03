@@ -35,7 +35,7 @@ export async function startSlowCronLogic() {
           cronExpression,
           async () => {
             try {
-              await runCoreCronLogic(cronDetail);
+              await runCoreCronLogic(cronDetail, true);
             } catch (error) {
               console.error(`Error running ${cronDetail.CronName}:`, error);
             }

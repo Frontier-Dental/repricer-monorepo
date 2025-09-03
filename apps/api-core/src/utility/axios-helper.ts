@@ -43,75 +43,73 @@ export async function getAsync(
   }
   const proxyDetailsResponse = await ProxyHelper.GetProxyDetailsById(cronId);
   let proxyProvider = _.first(proxyDetailsResponse)?.ProxyProvider;
-  if (proxyDetailsResponse && proxyDetailsResponse.length > 0) {
-    const proxyConfigDetails =
-      await dbHelper.GetProxyConfigByProviderId(proxyProvider);
+  const proxyConfigDetails =
+    await dbHelper.GetProxyConfigByProviderId(proxyProvider);
 
-    switch (proxyProvider) {
-      case 0:
-        responseData = await axiosRetryHelper.getScrapingBeeResponse(
-          _url,
-          _.first(proxyConfigDetails),
-          seqString,
-          false,
+  switch (proxyProvider) {
+    case 0:
+      responseData = await axiosRetryHelper.getScrapingBeeResponse(
+        _url,
+        _.first(proxyConfigDetails),
+        seqString,
+        false,
+      );
+      break;
+    case 2:
+      responseData = await brightDataHelper.fetchData(
+        _url,
+        _.first(proxyConfigDetails),
+      );
+      break;
+    case 3:
+      responseData = await axiosRetryHelper.getScrappingResponse(
+        _url,
+        _.first(proxyConfigDetails),
+        seqString,
+      );
+      break;
+    case 4:
+      responseData = await brightDataHelper.fetchDataV2(
+        _url,
+        _.first(proxyConfigDetails),
+      );
+      break;
+    case 5:
+      responseData = await axiosRetryHelper.getScrapingBeeResponse(
+        _url,
+        _.first(proxyConfigDetails),
+        seqString,
+        true,
+      );
+      break;
+    case 8:
+      responseData = await scrapflyHelper.fetchData(
+        _url,
+        _.first(proxyConfigDetails) as any,
+        null,
+        true,
+      );
+      break;
+    case 9:
+      responseData = await scrapflyHelper.fetchData(
+        _url,
+        _.first(proxyConfigDetails) as any,
+        null,
+        false,
+      );
+      break;
+    default:
+      const proxy = await ProxyHelper.GetProxy(cronName!);
+      if (proxy?.host == (await mongoHelper.GetRotatingProxyUrl())) {
+        responseData = await fetchGetAsync(proxy, _url);
+      } else {
+        var startTime = process.hrtime();
+        responseData = await axios.get(_url, proxy);
+        console.log(
+          `SCRAPE : ${(_.first(proxyConfigDetails) as any).proxyProviderName} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || ${seqString}`,
         );
-        break;
-      case 2:
-        responseData = await brightDataHelper.fetchData(
-          _url,
-          _.first(proxyConfigDetails),
-        );
-        break;
-      case 3:
-        responseData = await axiosRetryHelper.getScrappingResponse(
-          _url,
-          _.first(proxyConfigDetails),
-          seqString,
-        );
-        break;
-      case 4:
-        responseData = await brightDataHelper.fetchDataV2(
-          _url,
-          _.first(proxyConfigDetails),
-        );
-        break;
-      case 5:
-        responseData = await axiosRetryHelper.getScrapingBeeResponse(
-          _url,
-          _.first(proxyConfigDetails),
-          seqString,
-          true,
-        );
-        break;
-      case 8:
-        responseData = await scrapflyHelper.fetchData(
-          _url,
-          _.first(proxyConfigDetails) as any,
-          null,
-          true,
-        );
-        break;
-      case 9:
-        responseData = await scrapflyHelper.fetchData(
-          _url,
-          _.first(proxyConfigDetails) as any,
-          null,
-          false,
-        );
-        break;
-      default:
-        const proxy = await ProxyHelper.GetProxy(cronName!);
-        if (proxy?.host == (await mongoHelper.GetRotatingProxyUrl())) {
-          responseData = await fetchGetAsync(proxy, _url);
-        } else {
-          var startTime = process.hrtime();
-          responseData = await axios.get(_url, proxy);
-          console.log(
-            `SCRAPE : ${(_.first(proxyConfigDetails) as any).proxyProviderName} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || ${seqString}`,
-          );
-        }
-        break;
-    }
+      }
+      break;
   }
   return responseData;
 }

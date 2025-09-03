@@ -32,7 +32,7 @@ export async function recreateSlowCronHandler(
     cronExpression,
     async () => {
       try {
-        await runCoreCronLogic(details);
+        await runCoreCronLogic(details, true);
       } catch (error) {
         console.error(`Error running ${details.CronName}:`, error);
       }

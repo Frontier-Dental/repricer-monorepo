@@ -21,7 +21,7 @@ export async function startSpecificCronHandler(
   if (cronDetails && cronDetails.IsHidden == true) {
     await runCoreCronLogicFor422();
   } else {
-    await runCoreCronLogic(cronDetails);
+    await runCoreCronLogic(cronDetails, false);
   }
   return res
     .status(_codes.StatusCodes.OK)
