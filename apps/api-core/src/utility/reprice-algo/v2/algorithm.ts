@@ -474,7 +474,7 @@ function getSolutionResult(
     return {
       algoResult: AlgoResult.IGNORE_SISTER_LOWEST,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "A sister is already in the buy box position.",
+      comment: "A sister is already in the winning position.",
       triggeredByVendor: null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
@@ -493,7 +493,7 @@ function getSolutionResult(
     return {
       algoResult: AlgoResult.IGNORE_SISTER_LOWEST,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "A simulated sister is already in the buy box position.",
+      comment: "A simulated sister is already in the winning position.",
       triggeredByVendor: null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
@@ -510,7 +510,7 @@ function getSolutionResult(
     return {
       algoResult: AlgoResult.IGNORE_LOWEST,
       suggestedPrice: suggestedPrice.toNumber(),
-      comment: "Already winning buy box.",
+      comment: "Already winning.",
       triggeredByVendor: null,
       rawTriggeredByVendor: solution.rawTriggeredByVendor,
     };
@@ -592,7 +592,7 @@ function getSolutionResult(
       return {
         algoResult: AlgoResult.IGNORE_LOWEST,
         suggestedPrice: suggestedPrice.toNumber(),
-        comment: "Already winning buy box and suggested price is the same.",
+        comment: "Already in winning position and suggested price is the same.",
         triggeredByVendor: null,
         rawTriggeredByVendor: solution.rawTriggeredByVendor,
       };
