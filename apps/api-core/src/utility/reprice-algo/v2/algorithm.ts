@@ -50,6 +50,7 @@ export interface Net32AlgoSolution {
   everyoneIncludingOwnVendorBefore: Net32AlgoProductWrapperWithBuyBoxRank[];
   rawTriggeredByVendor?: string;
   pushedToMax?: boolean;
+  hitMax?: boolean;
   beforeLadder: Net32AlgoProductWrapperWithBuyBoxRank[];
   lowestPrice: number | null;
   lowestVendorId: number | null;
@@ -183,6 +184,7 @@ export function repriceProductV2(
         pushedToMax,
         everyoneFromViewOfOwnVendorRanked,
         everyoneIncludingOwnVendorBefore,
+        hitMax,
       } = getOptimalSolutionForBoard(
         rawCompetitorsRanked.map((x) => x.product),
         ourVendor,
@@ -221,6 +223,7 @@ export function repriceProductV2(
         beforeLadder,
         rawTriggeredByVendor,
         pushedToMax,
+        hitMax,
         everyoneFromViewOfOwnVendorRanked,
         everyoneIncludingOwnVendorBefore,
         lowestPrice: lowestVendor.lowestPrice,
@@ -254,10 +257,15 @@ export function repriceProductV2(
       isSlowCron,
     );
     const pushedToMax = s.pushedToMax;
+    const hitMax = s.hitMax;
     return {
       ...s,
       ...baseResult,
-      comment: baseResult.comment + (pushedToMax ? " Pushed to max." : ""),
+      comment:
+        baseResult.comment +
+        (pushedToMax ? " Pushed to max." : "") +
+        (hitMax ? " Hit max." : "") +
+        (isSlowCron ? " (Slow cron)" : ""),
     };
   });
   const solutionResultsWithQBreakValid = removeUnnecessaryQuantityBreaks(
@@ -665,6 +673,7 @@ function getOptimalSolutionForBoard(
   everyoneIncludingOwnVendorBefore: Net32AlgoProductWrapperWithBuyBoxRank[];
   rawTriggeredByVendor?: string;
   pushedToMax?: boolean;
+  hitMax?: boolean;
 } {
   const sisterVendors = ourVendors.filter(
     (v) => v.vendorId !== ownVendor.vendorId,
@@ -724,6 +733,7 @@ function getOptimalSolutionForBoard(
     ),
     rawTriggeredByVendor: bestCompetitivePrice.triggeredByVendor,
     pushedToMax: bestCompetitivePrice.pushedToMax,
+    hitMax: bestCompetitivePrice.hitMax,
     everyoneFromViewOfOwnVendorRanked: everyoneFromViewOfOwnVendor,
     everyoneIncludingOwnVendorBefore,
   };
@@ -944,7 +954,7 @@ function getBestCompetitivePriceByTotalPrice(
       return {
         triggeredByVendor: `${competitor.vendorId}-${competitor.vendorName}`,
         price: new Decimal(ownVendorSetting.max_price),
-        pushedToMax: true,
+        hitMax: true,
       };
     }
 
@@ -1010,7 +1020,7 @@ function getBestCompetitivePriceByUnitPrice(
       return {
         triggeredByVendor: `${competitor.vendorId}-${competitor.vendorName}`,
         price: new Decimal(ownVendorSetting.max_price),
-        pushedToMax: true,
+        hitMax: true,
       };
     }
     if (
