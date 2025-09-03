@@ -279,7 +279,7 @@ export async function getAllProductsWithAlgoDataController(
           ? ` [Q${p.quantity}] ${p.last_suggested_price}`
           : p.last_suggested_price,
       )
-      .join("");
+      .join(",");
 
     // Concatenate triggered_by_vendor with quantity prefix
     const concatenatedTriggeredByVendor = group
@@ -289,13 +289,13 @@ export async function getAllProductsWithAlgoDataController(
           ? ` [Q${p.quantity}] ${p.triggered_by_vendor}`
           : p.triggered_by_vendor,
       )
-      .join("");
+      .join(",");
 
     // Concatenate result with quantity prefix
     const concatenatedResult = group
       .filter((p) => p.result)
       .map((p) => (p.quantity ? ` [Q${p.quantity}] ${p.result}` : p.result))
-      .join("");
+      .join(",");
 
     // Concatenate last_reprice_comment with quantity prefix
     const concatenatedComment = group
@@ -305,7 +305,7 @@ export async function getAllProductsWithAlgoDataController(
           ? ` [Q${p.quantity}] ${p.last_reprice_comment}`
           : p.last_reprice_comment,
       )
-      .join("");
+      .join(",");
 
     return {
       ...baseProduct,
