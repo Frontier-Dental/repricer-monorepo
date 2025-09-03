@@ -21,7 +21,7 @@ import {
   repriceProductV2,
 } from "./algorithm";
 import { getShippingThreshold } from "./shipping-threshold";
-import { ChangeResult } from "./types";
+import { AlgoResult, ChangeResult } from "./types";
 import {
   getAllOwnVendorIds,
   getPriceListFormatted,
@@ -274,7 +274,11 @@ async function updatePricesIfNecessary(
           activeCd: 0,
         }));
 
-      const qBreakDelta = [...newlyValidQbreaks, ...newlyInvalidQBreaks];
+      const qBreakDelta: {
+        minQty: number;
+        activeCd: number;
+        price?: number;
+      }[] = [...newlyValidQbreaks, ...newlyInvalidQBreaks];
 
       try {
         // Create axios config with proxy settings
@@ -354,10 +358,16 @@ async function updatePricesIfNecessary(
   );
   return solutionResults.map((s) => {
     const changeResult = results.find((r) => r.vendorId === s.vendor.vendorId);
+    const newlyInactiveQBreak = changeResult?.priceList?.find(
+      (q) => q.minQty === s.quantity && q.activeCd === 0,
+    );
     return {
       ...s,
       changeResult: changeResult ? changeResult.changeResult : null,
       priceList: changeResult ? changeResult.priceList : null,
+      algoResult: newlyInactiveQBreak
+        ? AlgoResult.CHANGE_REMOVED
+        : s.algoResult,
     };
   });
 }
