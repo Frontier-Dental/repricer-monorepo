@@ -118,8 +118,6 @@ export function repriceProductV2(
 
   const availableProducts = ourAvailableVendorProducts.map((v) => v.vendorId);
 
-  const lowestVendor = getLowestVendor(rawNet32Products);
-
   const solutions: Net32AlgoSolution[] = [];
 
   for (const ourVendor of ourAvailableVendorProducts) {
@@ -145,6 +143,11 @@ export function repriceProductV2(
           : []),
       ],
       vendorSetting,
+    );
+
+    const lowestCompetitor = getLowestVendor(
+      filteredCompetitors,
+      rawNet32Products,
     );
 
     const allQuantityBreaks = getUniqueValidQuantityBreaks(validProducts);
@@ -225,9 +228,9 @@ export function repriceProductV2(
         hitMax,
         everyoneFromViewOfOwnVendorRanked,
         everyoneIncludingOwnVendorBefore,
-        lowestPrice: lowestVendor.lowestPrice,
-        lowestVendorId: lowestVendor.lowestVendorId,
-        lowestVendorPosition: lowestVendor.lowestVendorPosition,
+        lowestPrice: lowestCompetitor.lowestPrice,
+        lowestVendorId: lowestCompetitor.lowestVendorId,
+        lowestVendorPosition: lowestCompetitor.lowestVendorPosition,
         preJsonPosition,
       });
     }
@@ -1489,7 +1492,10 @@ function getUniqueValidQuantityBreaks(net32Products: Net32AlgoProduct[]) {
   return Array.from(quantityBreaks).toSorted((a, b) => a - b);
 }
 
-function getLowestVendor(net32Products: Net32AlgoProduct[]) {
+function getLowestVendor(
+  net32Products: Net32AlgoProduct[],
+  masterList: Net32AlgoProduct[],
+) {
   const sortedByLowestPrice = net32Products
     .filter((prod) => prod.priceBreaks.find((pb) => pb.minQty === 1))
     .toSorted((a, b) => {
@@ -1512,7 +1518,7 @@ function getLowestVendor(net32Products: Net32AlgoProduct[]) {
       typeof lowestVendor.vendorId === "number"
         ? lowestVendor.vendorId
         : parseInt(lowestVendor.vendorId as string),
-    lowestVendorPosition: net32Products.findIndex(
+    lowestVendorPosition: masterList.findIndex(
       (v) => v.vendorId === lowestVendor.vendorId,
     ),
   };
