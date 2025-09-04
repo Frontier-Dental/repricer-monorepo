@@ -272,7 +272,7 @@ export function applyUpDownPercentage(
     ? setting.reprice_down_badge_percentage
     : setting.reprice_down_percentage;
   if (newPrice.gt(oldPrice) && upSetting > 0) {
-    let minimumPrice = oldPrice.mul(100 + upSetting / 100);
+    let minimumPrice = oldPrice.mul((100 + parseFloat(upSetting as any)) / 100);
     if (minimumPrice.gt(new Decimal(setting.max_price))) {
       minimumPrice = new Decimal(setting.max_price);
     }
@@ -282,7 +282,9 @@ export function applyUpDownPercentage(
       return minimumPrice;
     }
   } else if (newPrice.lt(oldPrice) && downSetting > 0) {
-    let maximumPrice = oldPrice.mul(100 - downSetting / 100);
+    let maximumPrice = oldPrice.mul(
+      (100 - parseFloat(downSetting as any)) / 100,
+    );
     if (maximumPrice.lt(new Decimal(setting.floor_price))) {
       // If we're below the floor, then we basically ignore this setting
       // by returning the original, unmodified proposed price.

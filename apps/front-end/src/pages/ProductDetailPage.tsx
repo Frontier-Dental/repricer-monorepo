@@ -360,17 +360,10 @@ export function ProductDetailPage() {
   };
 
   const getResultBadgeVariant = (result: string) => {
-    switch (result?.toUpperCase()) {
-      case "CHANGE_DOWN":
-        return "destructive";
-      case "CHANGE_UP":
-        return "default";
-      case "IGNORE_FLOOR":
-        return "secondary";
-      case "IGNORE_MAX":
-        return "secondary";
-      default:
-        return "outline";
+    if (result.includes("CHANGE")) {
+      return "default";
+    } else {
+      return "outline";
     }
   };
 
