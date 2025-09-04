@@ -354,12 +354,6 @@ export function ProductDetailPage() {
     fetchNet32Url();
   }, [mpId]);
 
-  const truncateComment = (comment: string, maxLength: number = 100) => {
-    if (!comment) return "No comment provided";
-    if (comment.length <= maxLength) return comment;
-    return comment.substring(0, maxLength) + "...";
-  };
-
   const formatPrice = (price: number | string) => {
     if (price === null || price === undefined || price === "") return "N/A";
     return `$${parseFloat(price.toString()).toFixed(2)}`;
@@ -610,7 +604,7 @@ export function ProductDetailPage() {
             className="text-xs break-words whitespace-normal max-w-[200px]"
             title={comment}
           >
-            {truncateComment(comment, 80)}
+            {comment}
           </div>
         );
       },
