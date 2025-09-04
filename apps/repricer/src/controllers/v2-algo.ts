@@ -15,7 +15,6 @@ import {
   toggleV2AlgoEnabled,
   updateV2AlgoSettings as updateSettings,
 } from "../services/algo_v2/settings";
-import { uniqBy } from "lodash";
 
 export async function getAlgoResultsWithExecution(
   req: Request<{ mpId: string }>,
@@ -255,82 +254,15 @@ export async function getAllProductsWithAlgoDataController(
 
   const products = await getAllProductsWithAlgoData();
 
-  const groupedProducts = Object.groupBy(
-    products,
-    (p) => `${p.mp_id}-${p.vendor_id}`,
-  );
-
-  // Process grouped products to concatenate fields within each column
-  const processedProducts = Object.values(groupedProducts).map((group) => {
-    if (!group) {
-      return [];
-    }
-    if (group.length === 1) {
-      return group[0];
-    }
-
-    // For multiple entries, concatenate values within each column
-    const baseProduct = group[0];
-
-    const uniqueByQuantity = uniqBy(group, (p) => p.quantity);
-
-    // Concatenate last_suggested_price with quantity prefix
-    const concatenatedSuggestedPrice = uniqueByQuantity
-      .filter((p) => p.last_suggested_price)
-      .map((p) =>
-        p.quantity
-          ? ` [Q${p.quantity}] ${p.last_suggested_price}`
-          : p.last_suggested_price,
-      )
-      .join(",");
-
-    // Concatenate triggered_by_vendor with quantity prefix
-    const concatenatedTriggeredByVendor = uniqueByQuantity
-      .filter((p) => p.triggered_by_vendor)
-      .map((p) =>
-        p.quantity
-          ? ` [Q${p.quantity}] ${p.triggered_by_vendor}`
-          : p.triggered_by_vendor,
-      )
-      .join(",");
-
-    // Concatenate result with quantity prefix
-    const concatenatedResult = uniqueByQuantity
-      .filter((p) => p.result)
-      .map((p) => (p.quantity ? ` [Q${p.quantity}] ${p.result}` : p.result))
-      .join(",");
-
-    // Concatenate last_reprice_comment with quantity prefix
-    const concatenatedComment = uniqueByQuantity
-      .filter((p) => p.last_reprice_comment)
-      .map((p) =>
-        p.quantity
-          ? ` [Q${p.quantity}] ${p.last_reprice_comment}`
-          : p.last_reprice_comment,
-      )
-      .join(",");
-
-    return {
-      ...baseProduct,
-      last_suggested_price:
-        concatenatedSuggestedPrice || baseProduct.last_suggested_price,
-      triggered_by_vendor:
-        concatenatedTriggeredByVendor || baseProduct.triggered_by_vendor,
-      result: concatenatedResult || baseProduct.result,
-      last_reprice_comment:
-        concatenatedComment || baseProduct.last_reprice_comment,
-    };
-  });
-
   // Update cache
-  productsWithAlgoCache = processedProducts;
+  productsWithAlgoCache = products;
   productsWithAlgoCacheTime = now;
 
   console.log(
-    `Updated products with algo cache with ${processedProducts.length} records`,
+    `Updated products with algo cache with ${products.length} records`,
   );
   return res.json({
-    data: processedProducts,
+    data: products,
     cacheTimestamp: now.toISOString(),
     isCached: false,
   });

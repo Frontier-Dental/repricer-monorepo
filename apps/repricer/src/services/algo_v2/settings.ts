@@ -348,9 +348,6 @@ export interface ProductWithAlgoData {
   lowest_price: string | null;
   quantity: number | null;
 
-  // Latest change result fields
-  triggered_by_date: string | null;
-
   // Computed field
   channel_name: string;
 }
@@ -376,12 +373,10 @@ export async function getAllProductsWithAlgoData(): Promise<
         this.select(
           "mp_id",
           "vendor_id",
-          "triggered_by_vendor",
-          "cron_name",
-          "created_at",
+          knex.raw("MAX(cron_name) as cron_name"),
+          knex.raw("MAX(created_at) as created_at"),
         )
           .from("v2_algo_results as var1")
-          .where("price_update_result", "=", "OK")
           .whereIn(["mp_id", "vendor_id", "created_at"], function () {
             this.select(
               "mp_id",
@@ -392,6 +387,7 @@ export async function getAllProductsWithAlgoData(): Promise<
               .where("price_update_result", "=", "OK")
               .groupBy("mp_id", "vendor_id");
           })
+          .groupBy("mp_id", "vendor_id")
           .as("latest_updated_result");
       },
       function () {
@@ -407,14 +403,39 @@ export async function getAllProductsWithAlgoData(): Promise<
         this.select(
           "mp_id",
           "vendor_id",
-          "created_at",
-          "cron_name",
-          "comment",
-          "suggested_price",
-          "result",
-          "triggered_by_vendor",
-          "lowest_price",
-          "quantity",
+          knex.raw("MAX(created_at) as created_at"),
+          knex.raw("MAX(cron_name) as cron_name"),
+          knex.raw("MAX(lowest_price) as lowest_price"),
+          knex.raw(`
+            GROUP_CONCAT(
+              CONCAT(
+                IF(quantity IS NOT NULL, CONCAT(' [Q', quantity, '] '), ''),
+                IFNULL(suggested_price, '')
+              ) 
+              ORDER BY quantity ASC 
+              SEPARATOR ','
+            ) as suggested_price
+          `),
+          knex.raw(`
+            GROUP_CONCAT(
+              CONCAT(
+                IF(quantity IS NOT NULL, CONCAT(' [Q', quantity, '] '), ''),
+                IFNULL(result, '')
+              ) 
+              ORDER BY quantity ASC 
+              SEPARATOR ','
+            ) as result
+          `),
+          knex.raw(`
+            GROUP_CONCAT(
+              CONCAT(
+                IF(quantity IS NOT NULL, CONCAT(' [Q', quantity, '] '), ''),
+                IFNULL(comment, '')
+              ) 
+              ORDER BY quantity ASC 
+              SEPARATOR ','
+            ) as comment
+          `),
         )
           .from("v2_algo_results as var2")
           .whereIn(["mp_id", "vendor_id", "created_at"], function () {
@@ -426,6 +447,7 @@ export async function getAllProductsWithAlgoData(): Promise<
               .from("v2_algo_results")
               .groupBy("mp_id", "vendor_id");
           })
+          .groupBy("mp_id", "vendor_id")
           .as("latest_cron_run");
       },
       function () {
@@ -438,9 +460,22 @@ export async function getAllProductsWithAlgoData(): Promise<
     )
     .leftJoin(
       function () {
-        this.select("mp_id", "vendor_id", "triggered_by_vendor", "created_at")
+        this.select(
+          "mp_id",
+          "vendor_id",
+          knex.raw(`
+          GROUP_CONCAT(
+            CONCAT(
+              IF(quantity IS NOT NULL, CONCAT(' [Q', quantity, '] '), ''),
+              IFNULL(triggered_by_vendor, '')
+            ) 
+            ORDER BY quantity ASC 
+            SEPARATOR ','
+          ) as triggered_by_vendor
+        `),
+          knex.raw("MAX(created_at) as created_at"),
+        )
           .from("v2_algo_results as var3")
-          .where("result", "LIKE", "%CHANGE%")
           .whereIn(["mp_id", "vendor_id", "created_at"], function () {
             this.select(
               "mp_id",
@@ -451,6 +486,8 @@ export async function getAllProductsWithAlgoData(): Promise<
               .where("result", "LIKE", "%CHANGE%")
               .groupBy("mp_id", "vendor_id");
           })
+          .whereNotNull("triggered_by_vendor")
+          .groupBy("mp_id", "vendor_id")
           .as("latest_change_result");
       },
       function () {
@@ -462,7 +499,7 @@ export async function getAllProductsWithAlgoData(): Promise<
       },
     );
 
-  const results = await query
+  const results = query
     .select(
       // V2 algo settings fields (main table)
       "vas.floor_price",
@@ -487,13 +524,14 @@ export async function getAllProductsWithAlgoData(): Promise<
       "latest_cron_run.suggested_price as last_suggested_price",
       "latest_cron_run.result",
       "latest_cron_run.lowest_price",
-      "latest_cron_run.quantity",
       "latest_change_result.triggered_by_vendor as triggered_by_vendor",
       "latest_change_result.created_at as triggered_by_date",
     )
     .orderBy(["vas.mp_id", "vas.vendor_id"]);
 
-  return results.map(
+  const executed = await results;
+
+  return executed.map(
     (result): ProductWithAlgoData => ({
       ...result,
       channel_name:
