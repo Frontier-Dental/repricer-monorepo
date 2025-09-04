@@ -487,6 +487,7 @@ export async function getAllProductsWithAlgoData(): Promise<
               .groupBy("mp_id", "vendor_id");
           })
           .whereNotNull("triggered_by_vendor")
+          .where("result", "LIKE", "%CHANGE%")
           .groupBy("mp_id", "vendor_id")
           .as("latest_change_result");
       },
