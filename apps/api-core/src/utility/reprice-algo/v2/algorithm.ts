@@ -18,7 +18,7 @@ import {
   applyUpDownPercentage,
   applyUpDownRestriction,
 } from "./settings";
-import { getShippingCost, getShippingThreshold } from "./shipping-threshold";
+import { VendorThreshold } from "./shipping-threshold";
 import {
   AlgoResult,
   ChangeResult,
@@ -100,6 +100,7 @@ export function repriceProductV2(
   jobId: string,
   isSlowCron: boolean,
   net32url: string,
+  vendorThresholds: VendorThreshold[],
 ) {
   const validProducts = rawNet32Products.filter((p) =>
     Array.isArray(p.priceBreaks),
@@ -149,6 +150,7 @@ export function repriceProductV2(
       filteredCompetitors,
       rawNet32Products,
       vendorSetting,
+      vendorThresholds,
     );
 
     const allQuantityBreaks = getUniqueValidQuantityBreaks(validProducts);
@@ -1527,6 +1529,7 @@ function getLowestVendor(
   net32Products: Net32AlgoProduct[],
   masterList: Net32AlgoProduct[],
   setting: V2AlgoSettingsData,
+  vendorThresholds: VendorThreshold[],
 ) {
   const sortedByPriceStrategy = net32Products
     .filter((prod) => prod.priceBreaks.find((pb) => pb.minQty === 1))
@@ -1536,19 +1539,35 @@ function getLowestVendor(
         const bPrice = b.priceBreaks.find((pb) => pb.minQty === 1)!.unitPrice;
         return aPrice - bPrice;
       } else if (setting.price_strategy === AlgoPriceStrategy.TOTAL) {
+        const aVendorThreshold = vendorThresholds.find(
+          (v) => v.vendorId === a.vendorId,
+        );
+        if (!aVendorThreshold) {
+          throw new Error(
+            `Vendor threshold not found for vendor ${a.vendorId}`,
+          );
+        }
+        const bVendorThreshold = vendorThresholds.find(
+          (v) => v.vendorId === b.vendorId,
+        );
+        if (!bVendorThreshold) {
+          throw new Error(
+            `Vendor threshold not found for vendor ${b.vendorId}`,
+          );
+        }
         const aUnitPrice = a.priceBreaks.find(
           (pb) => pb.minQty === 1,
         )!.unitPrice;
         const aTotalPrice =
-          aUnitPrice < getShippingThreshold(a.vendorId)
-            ? aUnitPrice + getShippingCost(a.vendorId)
+          aUnitPrice < aVendorThreshold.threshold
+            ? aUnitPrice + aVendorThreshold.standardShipping
             : aUnitPrice;
         const bUnitPrice = b.priceBreaks.find(
           (pb) => pb.minQty === 1,
         )!.unitPrice;
         const bTotalPrice =
-          bUnitPrice < getShippingThreshold(b.vendorId)
-            ? bUnitPrice + getShippingCost(b.vendorId)
+          bUnitPrice < bVendorThreshold.threshold
+            ? bUnitPrice + bVendorThreshold.standardShipping
             : bUnitPrice;
         return aTotalPrice - bTotalPrice;
       } else if (setting.price_strategy === AlgoPriceStrategy.BUY_BOX) {

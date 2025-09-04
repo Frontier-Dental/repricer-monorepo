@@ -20,7 +20,7 @@ import {
   Net32AlgoSolutionWithQBreakValid,
   repriceProductV2,
 } from "./algorithm";
-import { getShippingThreshold } from "./shipping-threshold";
+import { getVendorThresholds } from "./shipping-threshold";
 import { AlgoResult, ChangeResult } from "./types";
 import {
   getAllOwnVendorIds,
@@ -54,21 +54,36 @@ export async function repriceProductV2Wrapper(
       ownVendorIds,
     );
 
-    const solutionResults = repriceProductV2(
-      prod.mpId,
-      net32Products.map((p) => ({
+    const vendorThresholds = await getVendorThresholds(
+      net32Products.map((p) => parseInt(p.vendorId as string)),
+    );
+
+    const algoProducts = net32Products.map((p) => {
+      const vendorThreshold = vendorThresholds.find(
+        (v) => v.vendorId === parseInt(p.vendorId as string),
+      );
+      if (!vendorThreshold) {
+        throw new Error(
+          `Vendor shipping threshold not found for vendor ${p.vendorId}`,
+        );
+      }
+      return {
         ...p,
         vendorId: parseInt(p.vendorId as string),
-        freeShippingThreshold: getShippingThreshold(
-          parseInt(p.vendorId as string),
-        ),
-      })),
+        freeShippingThreshold: vendorThreshold.threshold,
+      };
+    });
+
+    const solutionResults = repriceProductV2(
+      prod.mpId,
+      algoProducts,
       availableVendorIds,
       getAllOwnVendorIds(),
       vendorSettings,
       jobId,
       isSlowCron,
       net32Url,
+      vendorThresholds,
     );
 
     const uniqueVendorIds = [
