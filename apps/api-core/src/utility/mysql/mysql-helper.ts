@@ -410,7 +410,7 @@ export async function InsertHistory(history: HistoryModel, refTime: Date) {
       Position: history.Position,
       LowestVendor: history.LowestVendor,
       LowestPrice: history.LowestPrice,
-      SuggestedPrice: history.SuggestedPrice,
+      SuggestedPrice: history.SuggestedPrice || null,
       RepriceComment: history.RepriceComment,
       MaxVendor: history.MaxVendor,
       MaxVendorPrice: history.MaxVendorPrice,
