@@ -348,6 +348,9 @@ export interface ProductWithAlgoData {
   lowest_price: string | null;
   quantity: number | null;
 
+  // Latest change result fields
+  triggered_by_date: string | null;
+
   // Computed field
   channel_name: string;
 }
@@ -432,6 +435,31 @@ export async function getAllProductsWithAlgoData(): Promise<
           "latest_cron_run.vendor_id",
         );
       },
+    )
+    .leftJoin(
+      function () {
+        this.select("mp_id", "vendor_id", "triggered_by_vendor", "created_at")
+          .from("v2_algo_results as var3")
+          .where("result", "LIKE", "%CHANGE%")
+          .whereIn(["mp_id", "vendor_id", "created_at"], function () {
+            this.select(
+              "mp_id",
+              "vendor_id",
+              knex.raw("MAX(created_at) as created_at"),
+            )
+              .from("v2_algo_results")
+              .where("result", "LIKE", "%CHANGE%")
+              .groupBy("mp_id", "vendor_id");
+          })
+          .as("latest_change_result");
+      },
+      function () {
+        this.on("vas.mp_id", "=", "latest_change_result.mp_id").andOn(
+          "vas.vendor_id",
+          "=",
+          "latest_change_result.vendor_id",
+        );
+      },
     );
 
   const results = await query
@@ -458,9 +486,10 @@ export async function getAllProductsWithAlgoData(): Promise<
       "latest_cron_run.comment as last_reprice_comment",
       "latest_cron_run.suggested_price as last_suggested_price",
       "latest_cron_run.result",
-      "latest_cron_run.triggered_by_vendor",
       "latest_cron_run.lowest_price",
       "latest_cron_run.quantity",
+      "latest_change_result.triggered_by_vendor as triggered_by_vendor",
+      "latest_change_result.created_at as triggered_by_date",
     )
     .orderBy(["vas.mp_id", "vas.vendor_id"]);
 

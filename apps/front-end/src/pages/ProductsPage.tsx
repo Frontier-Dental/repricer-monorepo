@@ -565,6 +565,26 @@ export function ProductsPage() {
       },
     },
     {
+      accessorKey: "triggered_by_date",
+      header: "Triggered By Date",
+      size: 120,
+      cell: ({ row }) => {
+        const date = row.getValue("triggered_by_date") as string;
+        if (!date) return <div className="text-xs">Never</div>;
+
+        const dateObj = new Date(date);
+        const dateStr = dateObj.toLocaleDateString();
+        const timeStr = dateObj.toLocaleTimeString();
+
+        return (
+          <div className="text-xs">
+            <div>{dateStr}</div>
+            <div className="text-muted-foreground">{timeStr}</div>
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "result",
       header: "Result",
       size: 120,

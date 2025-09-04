@@ -354,12 +354,6 @@ export function ProductDetailPage() {
     fetchNet32Url();
   }, [mpId]);
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
-  };
-
   const truncateComment = (comment: string, maxLength: number = 100) => {
     if (!comment) return "No comment provided";
     if (comment.length <= maxLength) return comment;

@@ -15,6 +15,7 @@ import {
   toggleV2AlgoEnabled,
   updateV2AlgoSettings as updateSettings,
 } from "../services/algo_v2/settings";
+import { uniqBy } from "lodash";
 
 export async function getAlgoResultsWithExecution(
   req: Request<{ mpId: string }>,
@@ -271,8 +272,10 @@ export async function getAllProductsWithAlgoDataController(
     // For multiple entries, concatenate values within each column
     const baseProduct = group[0];
 
+    const uniqueByQuantity = uniqBy(group, (p) => p.quantity);
+
     // Concatenate last_suggested_price with quantity prefix
-    const concatenatedSuggestedPrice = group
+    const concatenatedSuggestedPrice = uniqueByQuantity
       .filter((p) => p.last_suggested_price)
       .map((p) =>
         p.quantity
@@ -282,7 +285,7 @@ export async function getAllProductsWithAlgoDataController(
       .join(",");
 
     // Concatenate triggered_by_vendor with quantity prefix
-    const concatenatedTriggeredByVendor = group
+    const concatenatedTriggeredByVendor = uniqueByQuantity
       .filter((p) => p.triggered_by_vendor)
       .map((p) =>
         p.quantity
@@ -292,13 +295,13 @@ export async function getAllProductsWithAlgoDataController(
       .join(",");
 
     // Concatenate result with quantity prefix
-    const concatenatedResult = group
+    const concatenatedResult = uniqueByQuantity
       .filter((p) => p.result)
       .map((p) => (p.quantity ? ` [Q${p.quantity}] ${p.result}` : p.result))
       .join(",");
 
     // Concatenate last_reprice_comment with quantity prefix
-    const concatenatedComment = group
+    const concatenatedComment = uniqueByQuantity
       .filter((p) => p.last_reprice_comment)
       .map((p) =>
         p.quantity
