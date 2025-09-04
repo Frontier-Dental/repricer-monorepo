@@ -18,10 +18,10 @@ import {
   applyUpDownPercentage,
   applyUpDownRestriction,
 } from "./settings";
+import { getShippingCost, getShippingThreshold } from "./shipping-threshold";
 import {
   AlgoResult,
   ChangeResult,
-  InternalProduct,
   Net32AlgoProduct,
   Net32AlgoProductWithBestPrice,
   Net32AlgoProductWrapperWithBuyBoxRank,
@@ -148,12 +148,17 @@ export function repriceProductV2(
     const lowestCompetitor = getLowestVendor(
       filteredCompetitors,
       rawNet32Products,
+      vendorSetting,
     );
 
     const allQuantityBreaks = getUniqueValidQuantityBreaks(validProducts);
 
     for (const quantity of allQuantityBreaks) {
-      const competeQuantity = getCompeteQuantity(vendorSetting, quantity);
+      const competeQuantity = getCompeteQuantity(
+        vendorSetting,
+        filteredCompetitors,
+        quantity,
+      );
 
       const rawCompetitorsRanked = getProductsSortedWithRank(
         competitorProducts,
@@ -303,13 +308,39 @@ export function repriceProductV2(
 
 function getCompeteQuantity(
   vendorSetting: V2AlgoSettingsData,
+  competitorProducts: Net32AlgoProduct[],
   quantity: number,
 ) {
   if (quantity !== 2) {
     return quantity;
   }
-  if (vendorSetting.compare_q2_with_q1) {
-    return 1;
+  if (
+    vendorSetting.compare_q2_with_q1 &&
+    vendorSetting.price_strategy === AlgoPriceStrategy.TOTAL
+  ) {
+    const competitorsSortedQ1 = getProductsSortedWithRank(
+      competitorProducts,
+      1,
+      AlgoPriceStrategy.TOTAL,
+    );
+    const competitorsSortedQ2 = getProductsSortedWithRank(
+      competitorProducts,
+      2,
+      AlgoPriceStrategy.TOTAL,
+    );
+    if (competitorsSortedQ1.length === 0 || competitorsSortedQ2.length === 0) {
+      return 2;
+    }
+    const lowestUnitPriceQ1 = competitorsSortedQ1[0].effectiveUnitPrice;
+    const lowestUnitPriceQ2 = competitorsSortedQ2[0].effectiveUnitPrice;
+    if (!lowestUnitPriceQ1 || !lowestUnitPriceQ2) {
+      return 2;
+    }
+    if (lowestUnitPriceQ1.lt(lowestUnitPriceQ2)) {
+      return 1;
+    } else {
+      return 2;
+    }
   } else {
     return 2;
   }
@@ -1495,22 +1526,47 @@ function getUniqueValidQuantityBreaks(net32Products: Net32AlgoProduct[]) {
 function getLowestVendor(
   net32Products: Net32AlgoProduct[],
   masterList: Net32AlgoProduct[],
+  setting: V2AlgoSettingsData,
 ) {
-  const sortedByLowestPrice = net32Products
+  const sortedByPriceStrategy = net32Products
     .filter((prod) => prod.priceBreaks.find((pb) => pb.minQty === 1))
     .toSorted((a, b) => {
-      const aPrice = a.priceBreaks.find((pb) => pb.minQty === 1)!.unitPrice;
-      const bPrice = b.priceBreaks.find((pb) => pb.minQty === 1)!.unitPrice;
-      return aPrice - bPrice;
+      if (setting.price_strategy === AlgoPriceStrategy.UNIT) {
+        const aPrice = a.priceBreaks.find((pb) => pb.minQty === 1)!.unitPrice;
+        const bPrice = b.priceBreaks.find((pb) => pb.minQty === 1)!.unitPrice;
+        return aPrice - bPrice;
+      } else if (setting.price_strategy === AlgoPriceStrategy.TOTAL) {
+        const aUnitPrice = a.priceBreaks.find(
+          (pb) => pb.minQty === 1,
+        )!.unitPrice;
+        const aTotalPrice =
+          aUnitPrice < getShippingThreshold(a.vendorId)
+            ? aUnitPrice + getShippingCost(a.vendorId)
+            : aUnitPrice;
+        const bUnitPrice = b.priceBreaks.find(
+          (pb) => pb.minQty === 1,
+        )!.unitPrice;
+        const bTotalPrice =
+          bUnitPrice < getShippingThreshold(b.vendorId)
+            ? bUnitPrice + getShippingCost(b.vendorId)
+            : bUnitPrice;
+        return aTotalPrice - bTotalPrice;
+      } else if (setting.price_strategy === AlgoPriceStrategy.BUY_BOX) {
+        // If we are using price strategy buy box, then the "lowest vendor" is the
+        // vendor with the highest position in the array
+        return 0;
+      } else {
+        throw new Error(`Invalid price strategy: ${setting.price_strategy}`);
+      }
     });
-  if (sortedByLowestPrice.length === 0) {
+  if (sortedByPriceStrategy.length === 0) {
     return {
       lowestPrice: null,
       lowestVendorId: null,
       lowestVendorPosition: null,
     };
   }
-  const lowestVendor = sortedByLowestPrice[0];
+  const lowestVendor = sortedByPriceStrategy[0];
   return {
     lowestPrice: lowestVendor.priceBreaks.find((pb) => pb.minQty === 1)!
       .unitPrice,
