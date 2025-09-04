@@ -1,14 +1,6 @@
 import { Date } from "mongoose";
 import { getKnexInstance } from "../knex-wrapper";
-
-// Vendor name lookup mapping
-const VendorNameLookup: Record<number, string> = {
-  20722: "FRONTIER",
-  20755: "MVP",
-  17357: "TRADENT",
-  20727: "TOPDENT",
-  20533: "FIRSTDENT",
-};
+import { VendorNameLookup } from "@repricer-monorepo/shared";
 
 export interface V2AlgoResultWithExecution {
   // From v2_algo_results table
