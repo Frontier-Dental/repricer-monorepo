@@ -235,6 +235,25 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(false),
+  NET32_VENDOR_URL: z.string().default("https://www.net32.com/vendor"),
+  SHIPPING_THRESHOLD_SAVE_FILE: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(false),
+  SHIPPING_DATA_PROXY_SCRAPE_URL: z
+    .string()
+    .default(
+      "https://api.scrapfly.io/scrape?tags=player%2Cproject%3Adefault&asp=true&country=US",
+    ),
+  SHIPPING_DATA_PROXY_SCRAPE_API_KEY: z.string(),
+  RUN_SHIPPING_THRESHOLD_SCRAPE_ON_STARTUP: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(false),
 });
 
 export function validateConfig() {

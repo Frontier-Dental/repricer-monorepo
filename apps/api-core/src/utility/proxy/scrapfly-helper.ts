@@ -21,7 +21,7 @@ interface ScrapflyError extends Error {
   };
 }
 
-export async function fetchData(
+export async function scrapflyFetchData(
   url: string,
   proxyDetailsResponse: ProxyDetailsResponse,
   seqString: string | null,
@@ -36,7 +36,7 @@ export async function fetchData(
       `SCRAPE STARTED : ${scrapingLog} : ${url} || ${seqString} || ${new Date()} || ${retryCount}`,
     );
 
-    const { responseContent, timeTaken } = await scrape(
+    const { responseContent, timeTaken } = await scrapflyFetch(
       url,
       proxyDetailsResponse.hostUrl,
       proxyDetailsResponse.userName,
@@ -63,7 +63,7 @@ export async function fetchData(
   }
 }
 
-async function scrape(
+export async function scrapflyFetch(
   urlToScrape: string,
   proxyHostUrl: string,
   apiKey: string,
@@ -188,7 +188,7 @@ async function handleRetry(
     }
 
     await delay(applicationConfig.RETRY_INTERVAL);
-    return await fetchData(
+    return await scrapflyFetchData(
       url,
       proxyDetailsResponse,
       seqString,
