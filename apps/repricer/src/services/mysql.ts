@@ -408,8 +408,8 @@ export async function GetAllRepriceEligibleProductByTag(
     "pl.algo_execution_mode",
   ];
 
-  // Add wildcards for LIKE queries
-  const mpIdSearch = mpId ? `%${mpId}%` : null;
+  // Use exact matches for MPID, wildcards for channelId
+  const mpIdSearch = mpId ? mpId : null;
   const channelIdSearch = channelId ? `%${channelId}%` : null;
 
   // Get matching MpIds from all vendor tables
@@ -419,9 +419,9 @@ export async function GetAllRepriceEligibleProductByTag(
         .select("MpId")
         .where(function () {
           if (mpIdSearch) {
-            this.where("MpId", "like", mpIdSearch).orWhere(
+            this.where("MpId", "=", mpIdSearch).orWhere(
               "FocusId",
-              "like",
+              "=",
               mpIdSearch,
             );
           }
@@ -433,9 +433,9 @@ export async function GetAllRepriceEligibleProductByTag(
         .select("MpId")
         .where(function () {
           if (mpIdSearch) {
-            this.where("MpId", "like", mpIdSearch).orWhere(
+            this.where("MpId", "=", mpIdSearch).orWhere(
               "FocusId",
-              "like",
+              "=",
               mpIdSearch,
             );
           }
@@ -447,9 +447,9 @@ export async function GetAllRepriceEligibleProductByTag(
         .select("MpId")
         .where(function () {
           if (mpIdSearch) {
-            this.where("MpId", "like", mpIdSearch).orWhere(
+            this.where("MpId", "=", mpIdSearch).orWhere(
               "FocusId",
-              "like",
+              "=",
               mpIdSearch,
             );
           }
@@ -461,9 +461,9 @@ export async function GetAllRepriceEligibleProductByTag(
         .select("MpId")
         .where(function () {
           if (mpIdSearch) {
-            this.where("MpId", "like", mpIdSearch).orWhere(
+            this.where("MpId", "=", mpIdSearch).orWhere(
               "FocusId",
-              "like",
+              "=",
               mpIdSearch,
             );
           }
@@ -475,9 +475,9 @@ export async function GetAllRepriceEligibleProductByTag(
         .select("MpId")
         .where(function () {
           if (mpIdSearch) {
-            this.where("MpId", "like", mpIdSearch).orWhere(
+            this.where("MpId", "=", mpIdSearch).orWhere(
               "FocusId",
-              "like",
+              "=",
               mpIdSearch,
             );
           }
@@ -489,9 +489,9 @@ export async function GetAllRepriceEligibleProductByTag(
         .select("MpId")
         .where(function () {
           if (mpIdSearch) {
-            this.where("MpId", "like", mpIdSearch).orWhere(
+            this.where("MpId", "=", mpIdSearch).orWhere(
               "FocusId",
-              "like",
+              "=",
               mpIdSearch,
             );
           }
