@@ -407,50 +407,96 @@ export async function GetAllRepriceEligibleProductByTag(
     "pl.algo_execution_mode",
   ];
 
+  // Add wildcards for LIKE queries
+  const mpIdSearch = mpId ? `%${mpId}%` : null;
+  const channelIdSearch = channelId ? `%${channelId}%` : null;
+
   // Get matching MpIds from all vendor tables
   const matchingMpIds = await knex
     .union([
       knex("table_tradentDetails")
         .select("MpId")
         .where(function () {
-          this.where("MpId", "like", mpId)
-            .orWhere("FocusId", "like", mpId)
-            .orWhere("ChannelId", "like", channelId);
+          if (mpIdSearch) {
+            this.where("MpId", "like", mpIdSearch).orWhere(
+              "FocusId",
+              "like",
+              mpIdSearch,
+            );
+          }
+          if (channelIdSearch) {
+            this.orWhere("ChannelId", "like", channelIdSearch);
+          }
         }),
       knex("table_frontierDetails")
         .select("MpId")
         .where(function () {
-          this.where("MpId", "like", mpId)
-            .orWhere("FocusId", "like", mpId)
-            .orWhere("ChannelId", "like", channelId);
+          if (mpIdSearch) {
+            this.where("MpId", "like", mpIdSearch).orWhere(
+              "FocusId",
+              "like",
+              mpIdSearch,
+            );
+          }
+          if (channelIdSearch) {
+            this.orWhere("ChannelId", "like", channelIdSearch);
+          }
         }),
       knex("table_mvpDetails")
         .select("MpId")
         .where(function () {
-          this.where("MpId", "like", mpId)
-            .orWhere("FocusId", "like", mpId)
-            .orWhere("ChannelId", "like", channelId);
+          if (mpIdSearch) {
+            this.where("MpId", "like", mpIdSearch).orWhere(
+              "FocusId",
+              "like",
+              mpIdSearch,
+            );
+          }
+          if (channelIdSearch) {
+            this.orWhere("ChannelId", "like", channelIdSearch);
+          }
         }),
       knex("table_firstDentDetails")
         .select("MpId")
         .where(function () {
-          this.where("MpId", "like", mpId)
-            .orWhere("FocusId", "like", mpId)
-            .orWhere("ChannelId", "like", channelId);
+          if (mpIdSearch) {
+            this.where("MpId", "like", mpIdSearch).orWhere(
+              "FocusId",
+              "like",
+              mpIdSearch,
+            );
+          }
+          if (channelIdSearch) {
+            this.orWhere("ChannelId", "like", channelIdSearch);
+          }
         }),
       knex("table_topDentDetails")
         .select("MpId")
         .where(function () {
-          this.where("MpId", "like", mpId)
-            .orWhere("FocusId", "like", mpId)
-            .orWhere("ChannelId", "like", channelId);
+          if (mpIdSearch) {
+            this.where("MpId", "like", mpIdSearch).orWhere(
+              "FocusId",
+              "like",
+              mpIdSearch,
+            );
+          }
+          if (channelIdSearch) {
+            this.orWhere("ChannelId", "like", channelIdSearch);
+          }
         }),
       knex("table_triadDetails")
         .select("MpId")
         .where(function () {
-          this.where("MpId", "like", mpId)
-            .orWhere("FocusId", "like", mpId)
-            .orWhere("ChannelId", "like", channelId);
+          if (mpIdSearch) {
+            this.where("MpId", "like", mpIdSearch).orWhere(
+              "FocusId",
+              "like",
+              mpIdSearch,
+            );
+          }
+          if (channelIdSearch) {
+            this.orWhere("ChannelId", "like", channelIdSearch);
+          }
         }),
     ])
     .distinct();
