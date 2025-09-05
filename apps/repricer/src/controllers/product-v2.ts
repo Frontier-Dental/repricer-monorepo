@@ -468,6 +468,7 @@ export async function syncProductDetails(req: Request, res: Response) {
     "mvpDetails",
     "topDentDetails",
     "firstDentDetails",
+    "triadDetails",
   ];
   const productDetailsUrl = applicationConfig.PROD_SYNC_URL!.replace(
     "{productId}",

@@ -222,7 +222,7 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
 export async function UpsertProductDetailsV2(payload: any) {
   let upsertResult: any = null;
   const db = await SqlConnectionPool.getConnection();
-  const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+  const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
   upsertResult = await db.query(queryToCall, [
     payload.MpId,
     payload.IsActive,
@@ -243,6 +243,7 @@ export async function UpsertProductDetailsV2(payload: any) {
     payload.IsBadgeItem,
     payload.LinkedTopDentDetailsInfo,
     payload.LinkedFirstDentDetailsInfo,
+    payload.LinkedTriadDetailsInfo,
   ]);
   return upsertResult[0];
 }
@@ -632,7 +633,22 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
   if (!payload.ownVendorThreshold) {
     payload.ownVendorThreshold = 1;
   }
-  const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+  if (typeof payload.getBBBadge == "undefined" || payload.getBBBadge == null) {
+    payload.getBBBadge = false;
+  }
+  if (
+    typeof payload.getBBShipping == "undefined" ||
+    payload.getBBShipping == null
+  ) {
+    payload.getBBShipping = false;
+  }
+  if (!payload.getBBBadgeValue) {
+    payload.getBBBadgeValue = 0;
+  }
+  if (!payload.getBBShippingValue) {
+    payload.getBBShippingValue = 0;
+  }
+  const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
   var [rows] = await db.query(queryToCall, [
     parseInt(payload.mpid),
     payload.channelName,
@@ -690,6 +706,10 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
     payload.competeWithNext,
     payload.ignorePhantomQBreak,
     parseInt(payload.ownVendorThreshold),
+    payload.getBBBadge,
+    payload.getBBShipping,
+    parseFloat(payload.getBBBadgeValue),
+    parseFloat(payload.getBBShippingValue),
   ]);
   if (rows != null && (rows as any)[0] != null) {
     upsertResult = (rows as any)[0][0];
