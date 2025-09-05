@@ -245,7 +245,11 @@ export function applyFloorCompeteWithNext(
   vendorSetting: V2AlgoSettingsData,
   isSlowCron: boolean,
 ) {
-  if (vendorSetting.compare_q2_with_q1 && solution.buyBoxRank > 0) {
+  if (
+    solution.quantity === 2 &&
+    vendorSetting.compare_q2_with_q1 &&
+    solution.buyBoxRank > 0
+  ) {
     return AlgoResult.IGNORE_FLOOR;
   }
   if (isSlowCron) {
