@@ -1,8 +1,12 @@
+import {
+  AlgoBadgeIndicator,
+  AlgoHandlingTimeGroup,
+  AlgoPriceDirection,
+} from "@repricer-monorepo/shared";
 import Decimal from "decimal.js";
 import { flow } from "lodash/fp";
 import { V2AlgoSettingsData } from "../../mysql/v2-algo-settings";
 import {
-  getShippingBucket,
   hasBadge,
   Net32AlgoSolution,
   Net32AlgoSolutionWithQBreakValid,
@@ -11,11 +15,6 @@ import {
 } from "./algorithm";
 import { AlgoResult, Net32AlgoProduct } from "./types";
 import { isChangeResult, isShortExpiryProduct } from "./utility";
-import {
-  AlgoBadgeIndicator,
-  AlgoHandlingTimeGroup,
-  AlgoPriceDirection,
-} from "@repricer-monorepo/shared";
 
 export function applyCompetitionFilters(
   products: Net32AlgoProduct[],
@@ -259,50 +258,5 @@ export function applyFloorCompeteWithNext(
     return AlgoResult.IGNORE_FLOOR;
   } else {
     return null;
-  }
-}
-
-export function applyUpDownPercentage(
-  newPrice: Decimal,
-  setting: V2AlgoSettingsData,
-  hasBadge: boolean,
-  oldPrice?: Decimal,
-) {
-  // If there's nothing to compare to, then we can just return the new price
-  if (!oldPrice) {
-    return newPrice;
-  }
-  const upSetting = hasBadge
-    ? setting.reprice_up_badge_percentage
-    : setting.reprice_up_percentage;
-  const downSetting = hasBadge
-    ? setting.reprice_down_badge_percentage
-    : setting.reprice_down_percentage;
-  if (newPrice.gt(oldPrice) && upSetting > 0) {
-    let minimumPrice = oldPrice.mul((100 + parseFloat(upSetting as any)) / 100);
-    if (minimumPrice.gt(new Decimal(setting.max_price))) {
-      minimumPrice = new Decimal(setting.max_price);
-    }
-    if (newPrice.gte(minimumPrice)) {
-      return newPrice;
-    } else {
-      return minimumPrice;
-    }
-  } else if (newPrice.lt(oldPrice) && downSetting > 0) {
-    let maximumPrice = oldPrice.mul(
-      (100 - parseFloat(downSetting as any)) / 100,
-    );
-    if (maximumPrice.lt(new Decimal(setting.floor_price))) {
-      // If we're below the floor, then we basically ignore this setting
-      // by returning the original, unmodified proposed price.
-      return newPrice;
-    }
-    if (newPrice.lte(maximumPrice)) {
-      return newPrice;
-    } else {
-      return maximumPrice;
-    }
-  } else {
-    return newPrice;
   }
 }

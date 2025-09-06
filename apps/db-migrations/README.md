@@ -1,4 +1,4 @@
-# How to use
+# How to Deploy
 
 1. Create `.env.[environment]`
 2. `export ENIVRONMENT=[production,development]`

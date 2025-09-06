@@ -15,7 +15,6 @@ import {
   applyOwnVendorThreshold,
   applySuppressPriceBreakFilter,
   applySuppressQBreakIfQ1NotUpdated,
-  applyUpDownPercentage,
   applyUpDownRestriction,
 } from "./settings";
 import { VendorThreshold } from "./shipping-threshold";
@@ -468,12 +467,7 @@ function getSolutionResult(
     };
   }
 
-  const suggestedPrice = applyUpDownPercentage(
-    solution.vendor.bestPrice,
-    vendorSetting,
-    hasBadge(solution.vendor),
-    existingPriceBreak && new Decimal(existingPriceBreak.unitPrice),
-  ).toDecimalPlaces(2);
+  const suggestedPrice = solution.vendor.bestPrice;
 
   const ownVendorThreshold = applyOwnVendorThreshold(solution, vendorSetting);
   if (ownVendorThreshold) {
@@ -788,7 +782,7 @@ function getBestCompetitivePrice(
         ownVendorSetting,
       );
     case AlgoPriceStrategy.TOTAL:
-      return getBestCompetitivePriceByTotalPrice(
+      return getBestCompetitivePriceForBuyBox(
         ourProduct,
         competitorsSorted,
         quantity,
@@ -796,7 +790,7 @@ function getBestCompetitivePrice(
         false,
       );
     case AlgoPriceStrategy.BUY_BOX:
-      return getBestCompetitivePriceByTotalPrice(
+      return getBestCompetitivePriceForBuyBox(
         ourProduct,
         competitorsSorted,
         quantity,
@@ -956,7 +950,7 @@ function computeTargetUnitPrice(
   }
 }
 
-function getBestCompetitivePriceByTotalPrice(
+function getBestCompetitivePriceForBuyBox(
   ourProduct: Net32AlgoProduct,
   competitorsSorted: Net32AlgoProduct[],
   quantity: number,
@@ -972,12 +966,17 @@ function getBestCompetitivePriceByTotalPrice(
   }
   for (const competitor of competitorsSorted) {
     const competitorTotalCost = getTotalCostForQuantity(competitor, quantity);
-    const undercutTotalCost = getUndercutPriceToCompete(
-      competitorTotalCost,
-      ourProduct,
-      competitor,
-      applyBuyBoxRules,
-    );
+    const undercutTotalCost = applyBuyBoxRules
+      ? getUndercutPriceToCompeteOnBuyBox(
+          competitorTotalCost,
+          ourProduct,
+          competitor,
+        )
+      : getUndercutPriceOnPenny(
+          ownVendorSetting,
+          hasBadge(competitor),
+          competitorTotalCost,
+        );
 
     const undercutUnitPrice = computeTargetUnitPrice(
       undercutTotalCost,
@@ -1049,7 +1048,11 @@ function getBestCompetitivePriceByUnitPrice(
     const competitorUnitPrice = new Decimal(
       getHighestPriceBreakLessThanOrEqualTo(competitor, quantity).unitPrice,
     );
-    const undercutUnitPrice = competitorUnitPrice.sub(0.01);
+    const undercutUnitPrice = getUndercutPriceOnPenny(
+      ownVendorSetting,
+      hasBadge(competitor),
+      competitorUnitPrice,
+    );
 
     if (undercutUnitPrice.gt(ownVendorSetting.max_price)) {
       return {
@@ -1136,11 +1139,7 @@ function getStrictlyLessThanUndercutPriceToCompete(
   targetPrice: Decimal,
   ourProduct: Net32AlgoProduct,
   targetProduct: Net32AlgoProduct,
-  applyBuyBoxRules: boolean,
 ) {
-  if (!applyBuyBoxRules) {
-    return targetPrice;
-  }
   // Here we have to subtract another penny when undercutting
   // to make sure we are less than the threshold
   const targetHasBadge = hasBadge(targetProduct);
@@ -1181,18 +1180,16 @@ function getStrictlyLessThanUndercutPriceToCompete(
   }
 }
 
-function getUndercutPriceToCompete(
+function getUndercutPriceToCompeteOnBuyBox(
   targetPrice: Decimal,
   ourProduct: Net32AlgoProduct,
   targetProduct: Net32AlgoProduct,
-  applyBuyBoxRules: boolean,
 ) {
   const strictlyLessThanPriceToCompete =
     getStrictlyLessThanUndercutPriceToCompete(
       targetPrice,
       ourProduct,
       targetProduct,
-      applyBuyBoxRules,
     );
   // Here we round down as the price has to be strictly less than the target price
   // Example would be $10.02 * 0.9 = $9.018, which we round down to $9.01 as $9.02 would not pass the undercut rules
@@ -1597,4 +1594,52 @@ function getLowestVendor(
       (v) => v.vendorId === lowestVendor.vendorId,
     ),
   };
+}
+
+export function getUndercutPriceOnPenny(
+  setting: V2AlgoSettingsData,
+  competitorHasBadge: boolean,
+  competingVendorPrice: Decimal,
+) {
+  if (setting.price_strategy === AlgoPriceStrategy.BUY_BOX) {
+    throw new Error(
+      "Down percentage does not apply to buy box strategy. We should not be here.",
+    );
+  }
+  const downSetting = competitorHasBadge
+    ? setting.reprice_down_badge_percentage
+    : setting.reprice_down_percentage;
+  if (downSetting <= 0) {
+    return competingVendorPrice.sub(0.01);
+  }
+  if (setting.up_down !== AlgoPriceDirection.DOWN) {
+    // This setting only applies when the product is set to price down.
+    return competingVendorPrice.sub(0.01);
+  }
+  let proposedUndercutPrice = competingVendorPrice.mul(
+    (100 - parseFloat(downSetting as any)) / 100,
+  );
+  if (proposedUndercutPrice.lt(new Decimal(setting.floor_price))) {
+    // If we're below the floor, then we basically ignore this setting
+    // by returning the original, unmodified proposed price.
+    return competingVendorPrice.sub(0.01);
+  }
+  let proposedUndercutPriceRoundUp = proposedUndercutPrice.toDecimalPlaces(
+    2,
+    0,
+  );
+  let proposedUndercutPriceRoundDown = proposedUndercutPrice.toDecimalPlaces(
+    2,
+    1,
+  );
+  // First check the more expensive price.
+  if (proposedUndercutPriceRoundUp.lt(competingVendorPrice)) {
+    return proposedUndercutPriceRoundUp;
+  } else if (proposedUndercutPriceRoundDown.lt(competingVendorPrice)) {
+    return proposedUndercutPriceRoundDown;
+  } else {
+    // If the percentage down was too small and we're not even a penny cheaper
+    // effectively, then we just ignore this setting and return a penny less.
+    return competingVendorPrice.sub(0.01);
+  }
 }
