@@ -834,7 +834,7 @@ function syncProductItem($id) {
     // AJAX code to call page.
     $.ajax({
       type: "GET",
-      url: `/masteritem/sync_product/${productId}`,
+      url: `/productV2/sync_product/${productId}`,
       cache: false,
       beforeSend: function () {
         showLoadingToast("Processing...");

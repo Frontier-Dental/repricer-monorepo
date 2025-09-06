@@ -1443,7 +1443,7 @@ function runManualScrape(isProductPage, isV2Algorithm) {
           }, 1000);
         } else {
           location.replace(
-            `/productV2/show_all?tags=${payLoadForManualUpdate[0]}&search=true`,
+            `/productV2/show_all?mpid=${payLoadForManualUpdate[0]}`,
           );
         }
       },

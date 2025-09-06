@@ -56,6 +56,8 @@ export async function showAllProducts(req: Request, res: Response) {
     totalPages,
     groupName: "Products",
     userRole: (req.session as any).users_id?.userRole,
+    mpid: req.query.mpid || "",
+    channelId: req.query.channelId || "",
   });
 }
 
@@ -466,6 +468,7 @@ export async function syncProductDetails(req: Request, res: Response) {
     "mvpDetails",
     "topDentDetails",
     "firstDentDetails",
+    "triadDetails",
   ];
   const productDetailsUrl = applicationConfig.PROD_SYNC_URL!.replace(
     "{productId}",
