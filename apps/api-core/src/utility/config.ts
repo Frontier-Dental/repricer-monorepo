@@ -99,13 +99,7 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
-  // Proxy/Net32
-  NET32_PROXY_HOST: z.string().optional(),
-  NET32_PROXY_PORT: z.string().optional(),
-  NET32_PROXY_USERNAME: z.string().optional(),
-  NET32_PROXY_PASSWORD: z.string().optional(),
   ROTATING_PROXY_URL: z.string().default("gate.smartproxy.com"),
-  // Cron/URLs
   SCHEDULE_CRONS_ON_STARTUP: z
     .string()
     .toLowerCase()

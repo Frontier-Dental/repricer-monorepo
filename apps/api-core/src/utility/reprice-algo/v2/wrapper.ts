@@ -1,5 +1,5 @@
 import { AlgoExecutionMode, VendorNameLookup } from "@repricer-monorepo/shared";
-import { AxiosError, AxiosRequestConfig } from "axios";
+import axios, { AxiosError } from "axios";
 import moment from "moment";
 import { v4 } from "uuid";
 import { calculateNextCronTime } from "../../../controller/main-cron/shared";
@@ -13,7 +13,6 @@ import { insertV2AlgoError } from "../../mysql/v2-algo-error";
 import { insertV2AlgoExecution } from "../../mysql/v2-algo-execution";
 import { insertMultipleV2AlgoResults } from "../../mysql/v2-algo-results";
 import { findOrCreateV2AlgoSettingsForVendors } from "../../mysql/v2-algo-settings";
-import { updateProductInfo } from "../../net32/reprice";
 import {
   Net32AlgoSolution,
   Net32AlgoSolutionWithChangeResult,
@@ -27,6 +26,64 @@ import {
   getPriceListFormatted,
   isChangeResult,
 } from "./utility";
+
+// Custom proxy function for Net32 API calls
+async function updateProductInfoWithCustomProxy(
+  proxyConfig: any,
+  data: {
+    mpid: number;
+    priceList: {
+      minQty: number;
+      activeCd: number;
+      price?: number;
+    }[];
+  },
+  // subscriptionKey: string
+): Promise<any> {
+  const PROXY_URL = `http://${proxyConfig.ip}:${proxyConfig.port}`;
+  const USERNAME = proxyConfig.proxy_username;
+  const PASSWORD = proxyConfig.proxy_password;
+
+  const targetUrl = "https://api.net32.com/products/offers/update";
+
+  console.log("=== CUSTOM PROXY REQUEST ===");
+  console.log("Proxy URL:", PROXY_URL);
+  console.log("Target URL:", targetUrl);
+  console.log("Username:", USERNAME);
+  console.log("Request Data:", JSON.stringify(data, null, 2));
+  console.log("=============================");
+
+  const postResponse = await axios.post(
+    `${PROXY_URL}/proxy`,
+    {
+      url: targetUrl,
+      method: "POST",
+      data: data,
+      headers: {
+        "Content-Type": "application/json",
+        "Subscription-Key": proxyConfig.subscription_key,
+      },
+    },
+    {
+      auth: { username: USERNAME, password: PASSWORD },
+      headers: { "Content-Type": "application/json" },
+      timeout: 30000,
+    },
+  );
+
+  console.log("=== CUSTOM PROXY RESPONSE ===");
+  console.log("Status:", postResponse.status);
+  console.log("Response Data:", JSON.stringify(postResponse.data, null, 2));
+  console.log("==============================");
+
+  if (postResponse.data.statusCode !== 200) {
+    throw new Error(
+      `Failed to update price for vendor ${proxyConfig.vendor_id}: ${postResponse.data}. Code: ${postResponse.data.statusCode}`,
+    );
+  }
+
+  return postResponse.data;
+}
 
 export async function repriceProductV2Wrapper(
   net32Products: Net32Product[],
@@ -92,7 +149,7 @@ export async function repriceProductV2Wrapper(
 
     const finalResults = await updatePricesIfNecessary(
       solutionResults,
-      prod.vpCode,
+      prod.mpId,
       applicationConfig.IS_DEV,
       prod.algo_execution_mode,
     );
@@ -167,7 +224,7 @@ export async function repriceProductV2Wrapper(
         );
         await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
         console.log({
-          message: `V2 Algo: ${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
+          message: `V2 Algo: ${prod.mpId} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(priceUpdatedItem),
         });
       }
@@ -231,7 +288,7 @@ function isLowestExecutionPriority(
 
 async function updatePricesIfNecessary(
   solutionResults: Net32AlgoSolutionWithQBreakValid[],
-  vpCode: string,
+  mpId: number,
   isDev: boolean,
   algo_execution_mode: AlgoExecutionMode,
 ): Promise<Net32AlgoSolutionWithChangeResult[]> {
@@ -303,19 +360,6 @@ async function updatePricesIfNecessary(
       }[] = [...newlyValidQbreaks, ...newlyInvalidQBreaks];
 
       try {
-        // Create axios config with proxy settings
-        const axiosConfig: AxiosRequestConfig = {
-          proxy: {
-            host: proxyConfig.ip,
-            port: proxyConfig.port,
-            protocol: "http",
-            auth: {
-              username: proxyConfig.proxy_username,
-              password: proxyConfig.proxy_password,
-            },
-          },
-        };
-
         console.log("Price changes in net32 format: ", qBreakDelta);
 
         if (isDev) {
@@ -327,15 +371,11 @@ async function updatePricesIfNecessary(
           algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY;
 
         if (hasExecutionPriority && !isDev && priceChangeAllowed) {
-          // Execute the price update
-          await updateProductInfo(
-            proxyConfig.subscription_key,
-            {
-              vpCode: vpCode, // Assuming this is the vendor product code
-              priceList: qBreakDelta,
-            },
-            axiosConfig,
-          );
+          // Execute the price update using custom proxy
+          await updateProductInfoWithCustomProxy(proxyConfig, {
+            mpid: mpId, // Assuming this is the vendor product code
+            priceList: qBreakDelta,
+          });
           console.log(`Successfully updated price for vendor ${vendorId}`);
           return {
             vendorId,

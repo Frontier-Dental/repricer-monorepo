@@ -4,6 +4,7 @@ import { getKnexInstance } from "../../../model/sql-models/knex-wrapper";
 import fs from "fs";
 import path from "path";
 import * as cheerio from "cheerio";
+import * as cron from "node-cron";
 
 export interface ParsedVendorData {
   vendorId: number;
@@ -33,9 +34,6 @@ async function scrapeThresholdData() {
 }
 
 export async function scrapeAndStoreVendorData() {
-  if (!applicationConfig.RUN_SHIPPING_THRESHOLD_SCRAPE_ON_STARTUP) {
-    return;
-  }
   try {
     console.log("Scraping and parsing vendor data...");
 
@@ -47,6 +45,35 @@ export async function scrapeAndStoreVendorData() {
   } catch (error) {
     console.error("❌ Error scraping and storing vendor data:", error);
   }
+}
+
+export function scheduleDailyThresholdScraping() {
+  // Schedule to run every day at 2:00 AM
+  const cronExpression = "0 2 * * *";
+
+  const task = cron.schedule(
+    cronExpression,
+    async () => {
+      console.log("🕐 Running scheduled daily threshold scraping...");
+      await scrapeAndStoreVendorData();
+    },
+    {
+      scheduled: false, // Don't start immediately
+      timezone: "UTC",
+      runOnInit: applicationConfig.RUN_SHIPPING_THRESHOLD_SCRAPE_ON_STARTUP,
+    },
+  );
+
+  // Start the scheduled task
+  task.start();
+  console.log("📅 Daily threshold scraping scheduled for 2:00 AM UTC");
+
+  return task;
+}
+
+export function initializeThresholdScraping() {
+  // Always schedule for daily runs
+  scheduleDailyThresholdScraping();
 }
 
 export async function parseAndStoreVendorData(htmlContent?: string) {

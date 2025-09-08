@@ -29,7 +29,7 @@ import { startSlowCronLogic } from "./controller/slow-cron-group/start";
 import { startV2AlgoHtmlFileCleanupCron } from "./services/algo-html-file-cleanup";
 import { applicationConfig, validateConfig } from "./utility/config";
 import { errorMiddleware } from "./utility/error-middleware";
-import { scrapeAndStoreVendorData } from "./utility/reprice-algo/v2/threshold-scraping";
+import { initializeThresholdScraping } from "./utility/reprice-algo/v2/threshold-scraping";
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
@@ -90,7 +90,7 @@ nodeApp.use(errorMiddleware);
 nodeApp.listen(port, async () => {
   console.log(`Application server running on post ${port} at ${new Date()}`);
   console.log(`Application version: ${packageJson.version}`);
-  await scrapeAndStoreVendorData();
+  initializeThresholdScraping();
   if (applicationConfig.SCHEDULE_CRONS_ON_STARTUP) {
     console.log("Scheduling enabled crons on startup");
     await startAllCronLogic();
