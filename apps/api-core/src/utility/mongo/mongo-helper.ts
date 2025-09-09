@@ -224,6 +224,13 @@ export const UpsertHistoryDetails = async (payload: any): Promise<any> => {
   }
 };
 
+export async function getNet32KeysByCronName(cronName: string): Promise<any> {
+  const dbo = await getMongoDb();
+  return dbo
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
+    .findOne({ CronName: cronName });
+}
+
 export const GetRotatingProxyUrl = async (): Promise<any> => {
   const query = {
     $and: [

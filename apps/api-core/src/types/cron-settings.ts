@@ -1,3 +1,5 @@
+import { Document, WithId } from "mongodb";
+
 export interface SecretKeyEntry {
   vendorName: string;
   secretKey: string;
@@ -13,8 +15,7 @@ export interface AuditInfo {
   UpdatedOn?: string;
 }
 
-export interface CronSettings {
-  _id?: object;
+export interface CronSettings extends WithId<Document> {
   CronId: string;
   CronName: string;
   CronTimeUnit?: string;

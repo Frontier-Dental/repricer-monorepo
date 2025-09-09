@@ -185,6 +185,28 @@ export async function GetCronSettingsDetailsByName(
   return mongoResult;
 }
 
+export async function GetCronSettingsDetailsByCronName2(
+  cronName: string,
+): Promise<any> {
+  const query = {
+    CronName: cronName,
+  };
+  const dbo = await getMongoDb();
+  if (cronName.includes("SOC")) {
+    return dbo.collection(applicationConfig.SCRAPE_CRON_NAME).findOne(query);
+  } else if (cronName.includes("SCG")) {
+    return dbo
+      .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME)
+      .findOne(query);
+  } else if (cronName.includes("Cron")) {
+    return dbo
+      .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
+      .findOne(query);
+  } else {
+    throw new Error(`Invalid cron name: ${cronName}`);
+  }
+}
+
 export async function PushLogsAsync(payload: any) {
   const dbo = await getMongoDb();
   const { insertedId } = await dbo
@@ -335,6 +357,24 @@ export async function GetCronSettingsDetailsById(
       .toArray();
   }
   return mongoResult as CronSettings[];
+}
+
+export async function GetCronSettingsDetailsById2(
+  cronId: string,
+): Promise<any> {
+  const query = {
+    CronId: cronId,
+  };
+  const dbo = await getMongoDb();
+  let mongoResult = await dbo
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
+    .findOne(query);
+  if (!mongoResult) {
+    mongoResult = await dbo
+      .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME)
+      .findOne(query);
+  }
+  return mongoResult;
 }
 
 export async function GetProxyConfigByProviderId(providerId: any) {

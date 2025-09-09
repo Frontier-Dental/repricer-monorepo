@@ -30,6 +30,7 @@ import {
 // Custom proxy function for Net32 API calls
 async function updateProductInfoWithCustomProxy(
   proxyConfig: any,
+  subscriptionKey: string,
   data: {
     mpid: number;
     priceList: {
@@ -50,6 +51,7 @@ async function updateProductInfoWithCustomProxy(
   console.log("Proxy URL:", PROXY_URL);
   console.log("Target URL:", targetUrl);
   console.log("Username:", USERNAME);
+  console.log("Subscription Key:", subscriptionKey);
   console.log("Request Data:", JSON.stringify(data, null, 2));
   console.log("=============================");
 
@@ -61,7 +63,7 @@ async function updateProductInfoWithCustomProxy(
       data: data,
       headers: {
         "Content-Type": "application/json",
-        "Subscription-Key": proxyConfig.subscription_key,
+        "Subscription-Key": subscriptionKey,
       },
     },
     {
@@ -90,6 +92,7 @@ export async function repriceProductV2Wrapper(
   prod: any,
   cronName: string,
   isSlowCron: boolean,
+  contextCronId?: string,
 ) {
   const jobId = v4();
   const mpId = prod.mpId;
@@ -152,6 +155,8 @@ export async function repriceProductV2Wrapper(
       prod.mpId,
       applicationConfig.IS_DEV,
       prod.algo_execution_mode,
+      cronName,
+      contextCronId,
     );
 
     if (finalResults.length === 0) {
@@ -291,6 +296,8 @@ async function updatePricesIfNecessary(
   mpId: number,
   isDev: boolean,
   algo_execution_mode: AlgoExecutionMode,
+  cronName: string,
+  contextCronId?: string,
 ): Promise<Net32AlgoSolutionWithChangeResult[]> {
   const validSolutionsWithChanges = solutionResults
     .filter((s) => isChangeResult(s.algoResult))
@@ -306,6 +313,17 @@ async function updatePricesIfNecessary(
 
   const proxyConfigs = await findTinyproxyConfigsByVendorIds(solutionVendorIds);
 
+  const settings =
+    cronName === "MANUAL" && contextCronId
+      ? await mongoHelper.GetCronSettingsDetailsById2(contextCronId)
+      : await mongoHelper.GetCronSettingsDetailsByCronName2(cronName);
+
+  if (!settings) {
+    throw new Error(
+      `No settings found for cron name ${cronName} and context cron id ${contextCronId}`,
+    );
+  }
+
   const results = await Promise.all(
     solutionVendorIds.map(async (vendorId) => {
       const updatesForVendor = validSolutionsWithChanges.filter(
@@ -315,6 +333,14 @@ async function updatePricesIfNecessary(
         throw new Error(
           `No solution found for vendor ${vendorId}. We should not get here.`,
         );
+      }
+
+      const subscriptionKey = settings.SecretKey.find(
+        (s: any) => s.vendorName === VendorNameLookup[vendorId],
+      )?.secretKey;
+
+      if (!subscriptionKey) {
+        throw new Error(`No subscription key found for vendor ${vendorId}`);
       }
 
       const existingQuantityBreaksBeforeChange =
@@ -372,7 +398,7 @@ async function updatePricesIfNecessary(
 
         if (hasExecutionPriority && !isDev && priceChangeAllowed) {
           // Execute the price update using custom proxy
-          await updateProductInfoWithCustomProxy(proxyConfig, {
+          await updateProductInfoWithCustomProxy(proxyConfig, subscriptionKey, {
             mpid: mpId, // Assuming this is the vendor product code
             priceList: qBreakDelta,
           });

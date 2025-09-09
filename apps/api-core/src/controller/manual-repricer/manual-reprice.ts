@@ -79,6 +79,7 @@ export async function manualRepriceHandler(
         prod,
         "MANUAL",
         isSlowCronRun,
+        contextCronId,
       );
     }
     for (let idx = 0; idx < prioritySequence.length; idx++) {
