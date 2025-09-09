@@ -115,7 +115,7 @@ export const envSchema = z.object({
     .default(true),
   SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID: z
     .string()
-    .default("sp_GetFullProductDetailsByIdV2"),
+    .default("sp_GetFullProductDetailsByIdV3"),
   SQL_SP_UPDATE_TRADENT: z.string().default("sp_UpdateTradentDetailsById"),
   SQL_SP_UPDATE_FRONTIER: z.string().default("sp_UpdateFrontierDetailsById"),
   SQL_SP_UPDATE_MVP: z.string().default("sp_UpdateMvpDetailsById"),
