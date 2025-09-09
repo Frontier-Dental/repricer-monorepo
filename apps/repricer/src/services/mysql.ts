@@ -124,6 +124,9 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
     case "FIRSTDENT":
       contextSpName = applicationConfig.SQL_SP_UPSERT_FIRSTDENT;
       break;
+    case "TRIAD":
+      contextSpName = applicationConfig.SQL_SP_UPSERT_TRIAD;
+      break;
     default:
       break;
   }
@@ -151,7 +154,22 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
   if (!payload.ownVendorThreshold) {
     payload.ownVendorThreshold = 1;
   }
-  const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+  if (typeof payload.getBBBadge == "undefined" || payload.getBBBadge == null) {
+    payload.getBBBadge = false;
+  }
+  if (
+    typeof payload.getBBShipping == "undefined" ||
+    payload.getBBShipping == null
+  ) {
+    payload.getBBShipping = false;
+  }
+  if (!payload.getBBBadgeValue) {
+    payload.getBBBadgeValue = 0;
+  }
+  if (!payload.getBBShippingValue) {
+    payload.getBBShippingValue = 0;
+  }
+  const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
   var [rows] = await db.query(queryToCall, [
     parseInt(payload.mpid),
     payload.channelName,
@@ -210,6 +228,10 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
     payload.competeWithNext,
     payload.ignorePhantomQBreak,
     parseInt(payload.ownVendorThreshold),
+    payload.getBBBadge,
+    payload.getBBShipping,
+    parseFloat(payload.getBBBadgeValue),
+    parseFloat(payload.getBBShippingValue),
   ]);
   if (rows != null && (rows as any)[0] != null) {
     upsertResult = (rows as any)[0][0];
@@ -606,6 +628,9 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
     case "TOPDENT":
       contextSpName = applicationConfig.SQL_SP_UPDATE_TOPDENT;
       break;
+    case "TRIAD":
+      contextSpName = applicationConfig.SQL_SP_UPDATE_TRIAD;
+      break;
     default:
       break;
   }
@@ -735,6 +760,15 @@ export async function GetLinkedVendorDetails(mpId: any, vendorName: any) {
   if (vendorName == "MVP") {
     tableName = "table_mvpDetails";
   }
+  if (vendorName == "TOPDENT") {
+    tableName = "table_topDentDetails";
+  }
+  if (vendorName == "FIRSTDENT") {
+    tableName = "table_firstDentDetails";
+  }
+  if (vendorName == "TRIAD") {
+    tableName = "table_triadDetails";
+  }
   const queryToCall = `select Id from ${tableName} where MpId=${mpId}`;
   noOfRecords = await db.execute(queryToCall);
   return noOfRecords[0][0]["Id"];
@@ -792,6 +826,11 @@ export async function ChangeProductActivation(mpid: any, status: any) {
     `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
   );
   queryToCall = `update table_topDentDetails set Activated=? where MpId=?`;
+  noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
+  console.log(
+    `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
+  );
+  queryToCall = `update table_triadDetails set Activated=? where MpId=?`;
   noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
   console.log(
     `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
@@ -866,6 +905,9 @@ export async function UpdateBranchDataForVendor(
   }
   if (vendorName == "TOPDENT") {
     tableName = "table_topDentDetails";
+  }
+  if (vendorName == "TRIAD") {
+    tableName = "table_triadDetails";
   }
   const queryToCall = `Update ${tableName} set Activated=?,ChannelId=?,IsNCNeeded=?,BadgeIndicator=?,RepricingRule=?,FloorPrice=?,MaxPrice=?,UnitPrice=? where MpId=?`;
   noOfRecords = await db.execute(queryToCall, [

@@ -693,7 +693,10 @@ export async function addExcelData(req: Request, res: Response) {
       itemData.firstDentDetails.executionPriority = 5;
     }
     itemData.triadDetails = items.find(
-      (x) => x.channelName.toUpperCase() == "TRIAD" && x.mpid == pId,
+      (x: any) =>
+        x.channelName &&
+        x.channelName.toUpperCase() == "TRIAD" &&
+        x.mpid == pId,
     );
     if (
       itemData.triadDetails &&

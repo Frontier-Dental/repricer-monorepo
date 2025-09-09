@@ -294,6 +294,7 @@ export async function UpsertProductDetailsV2(payload: any) {
     payload.IsBadgeItem,
     payload.LinkedTopDentDetailsInfo,
     payload.LinkedFirstDentDetailsInfo,
+    payload.LinkedTriadDetailsInfo,
   ]);
   return upsertResult[0];
 }
