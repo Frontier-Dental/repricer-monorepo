@@ -105,7 +105,7 @@ const envSchema = z.object({
     .toLowerCase()
     .transform(JSON.parse as any)
     .pipe(z.boolean())
-    .default(false),
+    .default(true),
   REPRICER_UI_CACHE_CLEAR: z
     .string()
     .default("http://localhost:3000/cache/flush_repricer_all"),
@@ -228,7 +228,7 @@ const envSchema = z.object({
     .toLowerCase()
     .transform(JSON.parse as any)
     .pipe(z.boolean())
-    .default(false),
+    .default(true),
   NET32_VENDOR_URL: z.string().default("https://www.net32.com/vendor"),
   SHIPPING_THRESHOLD_SAVE_FILE: z
     .string()
