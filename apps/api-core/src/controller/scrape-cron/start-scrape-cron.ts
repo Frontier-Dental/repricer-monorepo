@@ -16,28 +16,27 @@ export async function startScrapeCron(
 export async function startScrapeCronLogic() {
   const scrapeCronDetails = await dbHelper.GetScrapeCronDetails();
   if (scrapeCronDetails && scrapeCronDetails.length > 0) {
-    for (var i = 0; i < scrapeCronDetails.length; i++) {}
-    if (scrapeCronDetails[i]) {
-      scrapeCrons[scrapeCronDetails[i].CronName] = cron.schedule(
-        responseUtility.GetCronGeneric(
-          scrapeCronDetails[i].CronTimeUnit,
-          scrapeCronDetails[i].CronTime,
-          parseInt(scrapeCronDetails[i].Offset),
-        ),
-        async () => {
-          try {
-            await scrapeProductList(scrapeCronDetails[i]);
-          } catch (error) {
-            console.error(
-              `Error running ${scrapeCronDetails[i].CronName}:`,
-              error,
-            );
-          }
-        },
-        { scheduled: JSON.parse(scrapeCronDetails[i].status) },
-      );
-      if (JSON.parse(scrapeCronDetails[i].status)) {
-        console.log(`Started ${scrapeCronDetails[i].CronName}`);
+    for (var i = 0; i < scrapeCronDetails.length; i++) {
+      if (scrapeCronDetails[i]) {
+        const cronDetail = scrapeCronDetails[i];
+        scrapeCrons[cronDetail.CronName] = cron.schedule(
+          responseUtility.GetCronGeneric(
+            cronDetail.CronTimeUnit,
+            cronDetail.CronTime,
+            parseInt(cronDetail.Offset),
+          ),
+          async () => {
+            try {
+              await scrapeProductList(cronDetail);
+            } catch (error) {
+              console.error(`Error running ${cronDetail.CronName}:`, error);
+            }
+          },
+          { scheduled: JSON.parse(cronDetail.status) },
+        );
+        if (JSON.parse(cronDetail.status)) {
+          console.log(`Started ${cronDetail.CronName}`);
+        }
       }
     }
   }

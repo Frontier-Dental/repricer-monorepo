@@ -55,7 +55,10 @@ async function executeScrapeLogic(
   const ownVendorList = ownVendorListEnv.split(";");
   const runInfoResult = await mySqlHelper.InsertRunInfo(runInfo);
   let productCounter = 0;
-  if (runInfoResult && (runInfoResult as any).insertId) {
+  const insertId = Array.isArray(runInfoResult)
+    ? runInfoResult[0]
+    : (runInfoResult as any)?.insertId;
+  if (runInfoResult) {
     for (let prod of productList) {
       console.log(`SCRAPE-ONLY : Scraping started for ${prod.MpId}`);
       const scrapeStartTime = new Date();
@@ -163,10 +166,24 @@ async function executeScrapeLogic(
               ownVendorList,
               resp.vendorId.toString(),
             );
+
+            // Conversion needs to be done from boolean to number for the InsertProductInfo function
+            if (
+              resp.isFulfillmentPolicyStock === "true" ||
+              resp.isFulfillmentPolicyStock === true
+            ) {
+              resp.isFulfillmentPolicyStock = 1;
+            } else if (
+              resp.isFulfillmentPolicyStock === "false" ||
+              resp.isFulfillmentPolicyStock === false
+            ) {
+              resp.isFulfillmentPolicyStock = 0;
+            }
+
             const productInfo = new ProductInfo(
               prod.MpId,
               resp,
-              (runInfoResult as any).insertId,
+              insertId,
               index + 1,
               isOwnVendor,
             );
@@ -195,10 +212,7 @@ async function executeScrapeLogic(
         runInfo.UpdateSuccessCount();
       }
       await mySqlHelper.UpdateRunInfo(
-        runInfo.GetCompletedProductCountQuery(
-          productCounter,
-          (runInfoResult as any).insertId,
-        ),
+        runInfo.GetCompletedProductCountQuery(productCounter, insertId),
       );
       productCounter++;
     }
@@ -206,15 +220,9 @@ async function executeScrapeLogic(
       runInfo.EligibleCount - runInfo.ScrapedSuccessCount,
     );
     runInfo.UpdateEndTime();
-    await mySqlHelper.UpdateRunInfo(
-      runInfo.GetSuccessCountQuery((runInfoResult as any).insertId),
-    );
-    await mySqlHelper.UpdateRunInfo(
-      runInfo.GetFailureCountQuery((runInfoResult as any).insertId),
-    );
-    await mySqlHelper.UpdateRunInfo(
-      runInfo.GetRunEndTimeQuery((runInfoResult as any).insertId),
-    );
+    await mySqlHelper.UpdateRunInfo(runInfo.GetSuccessCountQuery(insertId));
+    await mySqlHelper.UpdateRunInfo(runInfo.GetFailureCountQuery(insertId));
+    await mySqlHelper.UpdateRunInfo(runInfo.GetRunEndTimeQuery(insertId));
   }
   console.log(
     `SCRAPE-ONLY : Successfully scraped  ${runInfo.ScrapedSuccessCount} products || total Count : ${productList.length} || Cron Name : ${cronSetting.CronName} || KeyGen : ${keyGen}`,

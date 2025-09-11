@@ -70,10 +70,10 @@ export function GetCronGeneric(
       break;
     case "DAYS":
       off = offset >= 31 ? 1 : offset;
-      genericValue = `0 0 ${off}-31/${duration} * * `;
+      genericValue = `0 0 ${off}-31/${duration} * *`;
       break;
     case "SEC":
-      genericValue = `*/${duration} * * * * * `;
+      genericValue = `*/${duration} * * * * *`;
       break;
     default:
       break;
@@ -154,10 +154,10 @@ function getMinuteString(offset: number, duration: number) {
     offset == null || parseInt(offset as any) == 1 ? `1` : `${offset}`;
   let counterInit = parseInt(duration as any);
   for (let idx = 1; idx < 60; idx++) {
-    if (idx == 1 && parseInt(duration as any) + parseInt(offset as any) <= 60) {
+    if (idx == 1 && parseInt(duration as any) + parseInt(offset as any) < 60) {
       strOutput = `${strOutput},${parseInt(duration as any) + parseInt(offset as any)}`;
       counterInit = parseInt(duration as any) + parseInt(offset as any);
-    } else if (parseInt(counterInit as any) + parseInt(duration as any) <= 60) {
+    } else if (parseInt(counterInit as any) + parseInt(duration as any) < 60) {
       strOutput = `${strOutput},${parseInt(counterInit as any) + parseInt(duration as any)}`;
       counterInit = parseInt(counterInit as any) + parseInt(duration as any);
     } else {
