@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node-dev -r dotenv/config --respawn --transpile-only src/server.ts",
+    "dev": "ts-node-dev -r dotenv/config --respawn --transpile-only --ignore-watch node_modules --ignore-watch '../*/dist' src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "lint:ejs": "ejslint views",
