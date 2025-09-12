@@ -250,7 +250,7 @@ export async function updateMasterItemController(req: Request, res: Response) {
 
 export async function excelDownload(req: Request, res: Response) {
   // Use lean() to get plain objects instead of Mongoose documents (uses less memory)
-  let ItemCollection: any = await Item.find().lean();
+  let ItemCollection: any = await Item.find();
   const cronSettings = await mongoMiddleware.GetCronSettingsList();
   ItemCollection.forEach((_: any) => {
     if (_.cronId) {

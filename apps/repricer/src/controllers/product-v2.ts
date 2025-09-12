@@ -849,6 +849,7 @@ export async function updateToMax(req: Request, res: Response) {
 
 /****** PRIVATE FUNCTIONS ******/
 export async function exportItems(req: Request, res: Response) {
+  console.log("export items 1");
   //let ItemCollection = await mongoMiddleware.GetAllProductDetails();
   let ItemCollection = await mySqlHelper.GetCompleteProductDetails();
   const AllItems: any[] = [];
@@ -928,6 +929,7 @@ export async function exportItems(req: Request, res: Response) {
       : null;
   });
 
+  console.log("export items 2");
   const workbook = new excelJs.Workbook();
   let worksheet = workbook.addWorksheet("ItemList", {
     views: [{ state: "frozen", ySplit: 1 }],
@@ -1035,6 +1037,7 @@ export async function exportItems(req: Request, res: Response) {
     { header: "Get BB - Badge", key: "getBBBadge", width: 20 },
     { header: "Get BB - Badge Value", key: "getBBBadgeValue", width: 20 },
   ];
+  console.log("export items 3");
   worksheet.addRows(AllItems);
   res.setHeader(
     "Content-Type",
@@ -1045,7 +1048,9 @@ export async function exportItems(req: Request, res: Response) {
     "attachment; filename=" + "itemExcel.xlsx",
   );
 
+  console.log("export items 4");
   return workbook.xlsx.write(res).then(function () {
+    console.log("export items 5");
     res.status(200).end();
   });
 }

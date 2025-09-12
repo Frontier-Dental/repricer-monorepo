@@ -142,7 +142,7 @@ export const envSchema = z.object({
     .default("sp_GetFullProductDetailsListByFilterV2"),
   SQL_SP_GET_ALL_PRODUCT_DETAILS: z
     .string()
-    .default("sp_GetFullProductDetailsListV2"),
+    .default("sp_GetFullProductDetailsListV3"),
   HISTORY_EXPORT_URL_BY_ID: z
     .string()
     .default(
