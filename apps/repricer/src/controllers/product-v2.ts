@@ -1039,18 +1039,20 @@ export async function exportItems(req: Request, res: Response) {
   ];
   console.log("export items 3");
   worksheet.addRows(AllItems);
+  console.log("export items 4");
   res.setHeader(
     "Content-Type",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   );
+  console.log("export items 5");
   res.setHeader(
     "Content-Disposition",
     "attachment; filename=" + "itemExcel.xlsx",
   );
+  console.log("export items 6");
 
-  console.log("export items 4");
   return workbook.xlsx.write(res).then(function () {
-    console.log("export items 5");
+    console.log("export items 7");
     res.status(200).end();
   });
 }
