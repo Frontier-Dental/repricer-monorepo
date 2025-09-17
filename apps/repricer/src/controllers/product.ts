@@ -10,6 +10,7 @@ import * as mongoMiddleware from "../services/mongo";
 import Item from "../models/item";
 import { applicationConfig } from "../utility/config";
 import * as SessionHelper from "../utility/session-helper";
+import { ExcelExportService } from "../services/excel-export.service";
 
 export const getMasterItemController = async (req: Request, res: Response) => {
   let query: any = {};
@@ -249,125 +250,184 @@ export async function updateMasterItemController(req: Request, res: Response) {
 }
 
 export async function excelDownload(req: Request, res: Response) {
-  // Use lean() to get plain objects instead of Mongoose documents (uses less memory)
-  let ItemCollection: any = await Item.find();
-  const cronSettings = await mongoMiddleware.GetCronSettingsList();
-  ItemCollection.forEach((_: any) => {
-    if (_.cronId) {
-      _.cronName = cronSettings.find(
-        (x: any) => x.CronId == _.cronId,
-      )?.CronName;
+  try {
+    // Check if the Excel export service is available
+    const serviceAvailable = await ExcelExportService.checkServiceStatus();
+
+    if (serviceAvailable) {
+      // Use the new Excel export service
+      console.log("Using Excel export microservice");
+      const filters = {
+        tags: req.body.tags,
+        activated: req.body.activated,
+        cronId: req.body.cronId,
+        channelName: req.body.channelName,
+      };
+      await ExcelExportService.downloadExcel(filters, res);
+    } else {
+      // Fallback to the old implementation
+      console.log(
+        "Excel export service not available, using fallback implementation",
+      );
+
+      // Use lean() to get plain objects instead of Mongoose documents (uses less memory)
+      let ItemCollection: any = await Item.find();
+      const cronSettings = await mongoMiddleware.GetCronSettingsList();
+      ItemCollection.forEach((_: any) => {
+        if (_.cronId) {
+          _.cronName = cronSettings.find(
+            (x: any) => x.CronId == _.cronId,
+          )?.CronName;
+        }
+        if (_.tags) {
+          _.tags = _.tags.join(", ");
+        }
+      });
+      ItemCollection.forEach(($item: any) => {
+        $item.lastCronTime = $item.last_cron_time
+          ? moment($item.last_cron_time).format("LLL")
+          : $item.last_cron_time;
+        $item.lastUpdateTime = $item.last_update_time
+          ? moment($item.last_update_time).format("LLL")
+          : $item.last_update_time;
+        $item.lastAttemptedTime = $item.last_attempted_time
+          ? moment($item.last_attempted_time).format("LLL")
+          : $item.last_attempted_time;
+        $item.nextCronTime = $item.next_cron_time
+          ? moment($item.next_cron_time).format("LLL")
+          : $item.next_cron_time;
+        $item.badge_indicator = parseBadgeIndicator(
+          $item.badgeIndicator,
+          "KEY",
+        );
+      });
+
+      const workbook = new excelJs.Workbook();
+      const worksheet = workbook.addWorksheet("ItemList");
+
+      worksheet.columns = [
+        { header: "Channel Name", key: "channelName", width: 20 },
+        { header: "Active", key: "activated", width: 20 },
+        { header: "MPID", key: "mpid", width: 20 },
+        { header: "Channel ID", key: "channelId", width: 20 },
+        { header: "Last CRON run at", key: "lastCronTime", width: 20 },
+        { header: "Last run cron-type", key: "lastCronRun", width: 20 },
+        { header: "Last updated at", key: "lastUpdateTime", width: 20 },
+        { header: "Last updated cron-type", key: "lastUpdatedBy", width: 20 },
+        {
+          header: "Last Reprice Attempted",
+          key: "lastAttemptedTime",
+          width: 20,
+        },
+        { header: "Last Reprice Comment", key: "last_cron_message", width: 50 },
+        { header: "Lowest Vendor", key: "lowest_vendor", width: 50 },
+        {
+          header: "Lowest Vendor Price",
+          key: "lowest_vendor_price",
+          width: 50,
+        },
+        { header: "Last Existing Price", key: "lastExistingPrice", width: 50 },
+        {
+          header: "Last Suggested Price",
+          key: "lastSuggestedPrice",
+          width: 50,
+        },
+        { header: "Unit Price", key: "unitPrice", width: 20 },
+        { header: "Floor Price", key: "floorPrice", width: 20 },
+        { header: "NC", key: "is_nc_needed", width: 20 },
+        { header: "Up/Down", key: "repricingRule", width: 20 },
+        {
+          header: "Suppress Price Break",
+          key: "suppressPriceBreak",
+          width: 20,
+        },
+        {
+          header: "Suppress Price Break if Qty 1 not updated",
+          key: "suppressPriceBreakForOne",
+          width: 50,
+        },
+        {
+          header: "Compete On Price Breaks Only",
+          key: "beatQPrice",
+          width: 50,
+        },
+        { header: "Reprice Up %", key: "percentageIncrease", width: 20 },
+        { header: "Compare Q2 with Q1", key: "compareWithQ1", width: 20 },
+        { header: "Compete With All Vendors", key: "competeAll", width: 50 },
+        { header: "Badge Indicator", key: "badge_indicator", width: 20 },
+        {
+          header: "Reprice UP Badge Percentage %",
+          key: "badgePercentage",
+          width: 20,
+        },
+        { header: "Next Cron Time", key: "nextCronTime", width: 20 },
+        { header: "Product Name", key: "productName", width: 20 },
+        { header: "Cron Id", key: "cronId", width: 20 },
+        { header: "Cron Name", key: "cronName", width: 20 },
+        { header: "Request Interval", key: "requestInterval", width: 20 },
+        {
+          header: "Request Interval Unit",
+          key: "requestIntervalUnit",
+          width: 20,
+        },
+        { header: "Reprice - Scrape", key: "scrapeOn", width: 20 },
+        { header: "Reprice", key: "allowReprice", width: 20 },
+        { header: "Tags", key: "tags", width: 20 },
+        { header: "Priority", key: "priority", width: 20 },
+        {
+          header: "Do not scrape within 422 duration",
+          key: "wait_update_period",
+          width: 20,
+        },
+        { header: "Max Price", key: "maxPrice", width: 20 },
+        { header: "Focus ID", key: "focusId", width: 20 },
+        { header: "Net32 URl", key: "net32url", width: 20 },
+        {
+          header: "Do not Deactivate Q break when pricing down",
+          key: "abortDeactivatingQPriceBreak",
+          width: 20,
+        },
+        { header: "Own Vendor Id", key: "ownVendorId", width: 20 },
+        { header: "Sister Vendor Id", key: "sisterVendorId", width: 20 },
+        {
+          header: "Include Inactive Vendors",
+          key: "includeInactiveVendors",
+          width: 20,
+        },
+        { header: "Inactive Vendor Id", key: "inactiveVendorId", width: 20 },
+        {
+          header: "Override Bulk Update",
+          key: "override_bulk_update",
+          width: 20,
+        },
+        {
+          header: "Override Bulk Update Up/Down",
+          key: "override_bulk_rule",
+          width: 20,
+        },
+        { header: "Latest Price", key: "latest_price", width: 20 },
+      ];
+      worksheet.addRows(ItemCollection);
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      );
+      res.setHeader(
+        "Content-Disposition",
+        "attachment; filename=" + "itemExcel.xlsx",
+      );
+
+      return workbook.xlsx.write(res).then(function () {
+        res.status(200).end();
+      });
     }
-    if (_.tags) {
-      _.tags = _.tags.join(", ");
-    }
-  });
-  ItemCollection.forEach(($item: any) => {
-    $item.lastCronTime = $item.last_cron_time
-      ? moment($item.last_cron_time).format("LLL")
-      : $item.last_cron_time;
-    $item.lastUpdateTime = $item.last_update_time
-      ? moment($item.last_update_time).format("LLL")
-      : $item.last_update_time;
-    $item.lastAttemptedTime = $item.last_attempted_time
-      ? moment($item.last_attempted_time).format("LLL")
-      : $item.last_attempted_time;
-    $item.nextCronTime = $item.next_cron_time
-      ? moment($item.next_cron_time).format("LLL")
-      : $item.next_cron_time;
-    $item.badge_indicator = parseBadgeIndicator($item.badgeIndicator, "KEY");
-  });
-
-  const workbook = new excelJs.Workbook();
-  const worksheet = workbook.addWorksheet("ItemList");
-
-  worksheet.columns = [
-    { header: "Channel Name", key: "channelName", width: 20 },
-    { header: "Active", key: "activated", width: 20 },
-    { header: "MPID", key: "mpid", width: 20 },
-    { header: "Channel ID", key: "channelId", width: 20 },
-    { header: "Last CRON run at", key: "lastCronTime", width: 20 },
-    { header: "Last run cron-type", key: "lastCronRun", width: 20 },
-    { header: "Last updated at", key: "lastUpdateTime", width: 20 },
-    { header: "Last updated cron-type", key: "lastUpdatedBy", width: 20 },
-    { header: "Last Reprice Attempted", key: "lastAttemptedTime", width: 20 },
-    { header: "Last Reprice Comment", key: "last_cron_message", width: 50 },
-    { header: "Lowest Vendor", key: "lowest_vendor", width: 50 },
-    { header: "Lowest Vendor Price", key: "lowest_vendor_price", width: 50 },
-    { header: "Last Existing Price", key: "lastExistingPrice", width: 50 },
-    { header: "Last Suggested Price", key: "lastSuggestedPrice", width: 50 },
-    { header: "Unit Price", key: "unitPrice", width: 20 },
-    { header: "Floor Price", key: "floorPrice", width: 20 },
-    { header: "NC", key: "is_nc_needed", width: 20 },
-    { header: "Up/Down", key: "repricingRule", width: 20 },
-    { header: "Suppress Price Break", key: "suppressPriceBreak", width: 20 },
-    {
-      header: "Suppress Price Break if Qty 1 not updated",
-      key: "suppressPriceBreakForOne",
-      width: 50,
-    },
-    { header: "Compete On Price Breaks Only", key: "beatQPrice", width: 50 },
-    { header: "Reprice Up %", key: "percentageIncrease", width: 20 },
-    { header: "Compare Q2 with Q1", key: "compareWithQ1", width: 20 },
-    { header: "Compete With All Vendors", key: "competeAll", width: 50 },
-    { header: "Badge Indicator", key: "badge_indicator", width: 20 },
-    {
-      header: "Reprice UP Badge Percentage %",
-      key: "badgePercentage",
-      width: 20,
-    },
-    { header: "Next Cron Time", key: "nextCronTime", width: 20 },
-    { header: "Product Name", key: "productName", width: 20 },
-    { header: "Cron Id", key: "cronId", width: 20 },
-    { header: "Cron Name", key: "cronName", width: 20 },
-    { header: "Request Interval", key: "requestInterval", width: 20 },
-    { header: "Request Interval Unit", key: "requestIntervalUnit", width: 20 },
-    { header: "Reprice - Scrape", key: "scrapeOn", width: 20 },
-    { header: "Reprice", key: "allowReprice", width: 20 },
-    { header: "Tags", key: "tags", width: 20 },
-    { header: "Priority", key: "priority", width: 20 },
-    {
-      header: "Do not scrape within 422 duration",
-      key: "wait_update_period",
-      width: 20,
-    },
-    { header: "Max Price", key: "maxPrice", width: 20 },
-    { header: "Focus ID", key: "focusId", width: 20 },
-    { header: "Net32 URl", key: "net32url", width: 20 },
-    {
-      header: "Do not Deactivate Q break when pricing down",
-      key: "abortDeactivatingQPriceBreak",
-      width: 20,
-    },
-    { header: "Own Vendor Id", key: "ownVendorId", width: 20 },
-    { header: "Sister Vendor Id", key: "sisterVendorId", width: 20 },
-    {
-      header: "Include Inactive Vendors",
-      key: "includeInactiveVendors",
-      width: 20,
-    },
-    { header: "Inactive Vendor Id", key: "inactiveVendorId", width: 20 },
-    { header: "Override Bulk Update", key: "override_bulk_update", width: 20 },
-    {
-      header: "Override Bulk Update Up/Down",
-      key: "override_bulk_rule",
-      width: 20,
-    },
-    { header: "Latest Price", key: "latest_price", width: 20 },
-  ];
-  worksheet.addRows(ItemCollection);
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  );
-  res.setHeader(
-    "Content-Disposition",
-    "attachment; filename=" + "itemExcel.xlsx",
-  );
-
-  return workbook.xlsx.write(res).then(function () {
-    res.status(200).end();
-  });
+  } catch (error) {
+    console.error("Error in excelDownload:", error);
+    res.status(500).json({
+      error: "Failed to generate Excel file",
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
 }
 
 export async function runAllCron(req: Request, res: Response) {
