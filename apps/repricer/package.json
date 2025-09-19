@@ -4,9 +4,9 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "NODE_OPTIONS='--max-old-space-size=4096' ts-node-dev -r dotenv/config --respawn --transpile-only --ignore-watch node_modules --ignore-watch '../*/dist' src/server.ts",
+    "dev": "ts-node-dev -r dotenv/config --respawn --transpile-only --ignore-watch node_modules --ignore-watch '../*/dist' src/server.ts",
     "build": "tsc",
-    "start": "node --max-old-space-size=4096 dist/server.js",
+    "start": "node dist/server.js",
     "lint:ejs": "ejslint views",
     "format": "prettier --write \"**/*.{js,json,css,sql}\""
   },
