@@ -30,3 +30,19 @@ services:
     source_dir: .
     health_check:
       http_path: /health
+
+  - name: excel-export
+    dockerfile_path: ./apps/excel-export/Dockerfile
+    internal_ports:
+      - 3003
+    run_command: npm start
+    github:
+      repo: Frontier-Dental/repricer-monorepo
+      branch: dev
+      deploy_on_push: true
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    source_dir: .
+    health_check:
+      http_path: /health
+      port: 3003

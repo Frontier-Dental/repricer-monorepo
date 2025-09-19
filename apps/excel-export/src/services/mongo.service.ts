@@ -5,8 +5,7 @@ let cacheTimestamp: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export async function connectToDatabase(uri?: string) {
-  const mongoUri =
-    uri || process.env.MONGODB_URI || "mongodb://localhost:27017/repricer";
+  const mongoUri = process.env.MANAGED_MONGO_URL;
 
   try {
     await mongoose.connect(mongoUri);
