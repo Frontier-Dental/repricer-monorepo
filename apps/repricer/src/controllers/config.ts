@@ -1,0 +1,129 @@
+import { Request, Response } from "express";
+import _ from "lodash";
+import moment from "moment";
+import * as SessionHelper from "../utility/session-helper";
+import * as mongoMiddleware from "../services/mongo";
+
+export async function GetConfigSetup(req: Request, res: Response) {
+  let configItems = await mongoMiddleware.GetConfigurations(false);
+
+  configItems = _.filter(configItems, (x) => x.isDummy != true);
+  await Promise.all(
+    configItems.map(async (config: any) => {
+      config.lastUpdatedBy = config.AuditInfo
+        ? config.AuditInfo.UpdatedBy
+        : "-";
+      config.lastUpdatedOn = config.AuditInfo
+        ? moment(config.AuditInfo.UpdatedOn).format("DD-MM-YYYY HH:mm:ss")
+        : "-";
+      const proxyCrons = await mongoMiddleware.GetCronsByProxyProvider(
+        config.proxyProvider,
+      );
+      config.regularCrons = proxyCrons.regularCrons;
+      config.slowCrons = proxyCrons.slowCrons;
+      config.scrapeCrons = proxyCrons.scrapeCrons;
+      config.error422Crons = proxyCrons.error422Crons;
+    }),
+  );
+
+  let envData: any = await mongoMiddleware.GetEnvSettings();
+  envData.lastUpdatedBy = envData.AuditInfo ? envData.AuditInfo.UpdatedBy : "-";
+  envData.lastUpdatedOn = envData.AuditInfo
+    ? moment(envData.AuditInfo.UpdatedOn).format("DD-MM-YYYY HH:mm:ss")
+    : "-";
+  let configData: any = {};
+  configData.configDetails = configItems;
+  configData.envInfo = envData;
+  configData.totalProxies = configItems.length;
+
+  res.render("pages/config/index", {
+    userRole: (req as any).session.users_id.userRole,
+    config: configData,
+    groupName: "config",
+  });
+}
+
+export async function UpdateConfig(req: Request, res: Response) {
+  const payload = req.body;
+  let updatedConfigs: any[] = [];
+  let configSettingsResponse = await mongoMiddleware.GetConfigurations(false);
+
+  for (const $cr in payload.proxyProviderName) {
+    const ipTypeStr =
+      payload.ipTypeName[$cr] == "" || payload.ipTypeName[$cr] == " "
+        ? "N/A"
+        : payload.ipTypeName[$cr].trim();
+
+    const proxyNameStr = payload.proxyProviderName[$cr].split("_")[0].trim();
+    const methodStr = payload.proxyProviderName[$cr].split("_")[1].trim();
+    let contextConfig: any = null;
+    if (methodStr != null && methodStr != "") {
+      const contextConfigList = configSettingsResponse.filter(
+        (x: any) =>
+          x.proxyProviderName == proxyNameStr && x.ipTypeName == ipTypeStr,
+      );
+      if (contextConfigList && contextConfigList.length > 0) {
+        contextConfig = _.cloneDeep(
+          contextConfigList.find((t: any) => t.method == methodStr),
+        );
+      }
+    } else {
+      contextConfig = _.cloneDeep(
+        configSettingsResponse.find(
+          (x: any) =>
+            x.proxyProviderName == proxyNameStr && x.ipTypeName == ipTypeStr,
+        ),
+      );
+    }
+
+    if (contextConfig) {
+      contextConfig.userName = payload.userName[$cr];
+      contextConfig.password = payload.password[$cr];
+      contextConfig.hostUrl = payload.hostUrl[$cr];
+      contextConfig.port =
+        payload.port[$cr] != null && payload.port[$cr] != ""
+          ? parseInt(payload.port[$cr])
+          : payload.port[$cr];
+      contextConfig.active = payload.active[$cr] === "true" ? true : false;
+      //contextConfig.proxyPriority = parseInt(payload.proxyPriority[$cr]);
+      if (!_.isEqual(contextConfig, configSettingsResponse[$cr as any])) {
+        updatedConfigs.push(contextConfig as unknown as never);
+      }
+    }
+  }
+
+  await mongoMiddleware.UpdateConfiguration(updatedConfigs, req);
+  return res.json({
+    status: true,
+    message: "Configuration settings updated successfully.",
+  });
+}
+
+export async function UpdateEnvInfo(req: Request, res: Response) {
+  const {
+    globalDelay,
+    sourceType,
+    overrideValue,
+    execPriorityObj,
+    cronOverlapThreshold,
+    cronBatchSize,
+    cronInstanceLimit,
+  } = req.body;
+  const payload = {
+    $set: {
+      delay: globalDelay,
+      source: sourceType,
+      override_all: overrideValue,
+      override_execution_priority_details: execPriorityObj,
+      expressCronBatchSize: cronBatchSize,
+      expressCronOverlapThreshold: cronOverlapThreshold,
+      expressCronInstanceLimit: cronInstanceLimit,
+      AuditInfo: await SessionHelper.GetAuditInfo(req),
+    },
+  };
+  await mongoMiddleware.UpsertEnvSettings(payload);
+  return res.json({
+    status: true,
+    message: "Global settings updated successfully.",
+  });
+}

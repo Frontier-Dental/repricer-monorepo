@@ -1,0 +1,177 @@
+<%- include('../header') %>
+    <%- include('../left-sidebar') %>
+        <form method="post" autocomplete="off" id="form_configuration_settings">
+            <div class="page">
+                <div class="container-fluid">
+                    <div class="d-flex justify-content-between">
+                        <h1 class="commanHeading"><b>Configure Proxy Settings :</b></h1>
+                        <div class="d-flex"></div>
+                    </div>
+                    <div class="card">
+                        <div class="body table-responsive">
+                            <table id="configSetUp" class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Proxy Provider</th>
+                                        <!-- <th>Priority</th> -->
+                                        <th>UserName</th>
+                                        <th>Password</th>
+                                        <th>Host Url</th>
+                                        <th>Port</th>
+                                        <th>Last Modified By</th>
+                                        <th>Last Modified On</th>
+                                        <th>Active</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if(config.configDetails.length===0) { %>
+                                        <p>No items found !</p>
+                                        <% } else {let i=1 ; config.configDetails.forEach(function(item){ %>
+                                            <tr data-regular-crons='<%= JSON.stringify(item.regularCrons || []) %>'
+                                                data-slow-crons='<%= JSON.stringify(item.slowCrons || []) %>'
+                                                data-scrape-crons='<%= JSON.stringify(item.scrapeCrons || []) %>'
+                                                data-error422-crons='<%= JSON.stringify(item.error422Crons || []) %>'>
+                                                <td>
+                                                    <input type="text" class="form-control"
+                                                        value="<%= item.proxyProviderName %> _ <%= item.method %>"
+                                                        name="proxyProviderName" placeholder="Cron Name" readonly />
+                                                </td>
+                                                <!-- <td>
+                                                    <select class="form-control proxyPriority"
+                                                        id="proxyPriority<%= item._id %>" name="proxyPriority"
+                                                        onClick="savePreviousProxyPriority(this.value);"
+                                                        onChange="changeProxyPriority(this.id,this.value)">
+                                                        <% for(let i=0; i <=config.configDetails.length ; i++) { %>
+                                                            <option <%=i==item.proxyPriority ? 'selected' : '' %> >
+                                                                <%=i%>
+                                                            </option>
+                                                            <% } %>
+                                                    </select>
+
+                                                </td> -->
+                                                <!-- <td>
+                                                    <input type="text" class="form-control"
+                                                        value="<%= item.ipTypeName %>" name="ipTypeName"
+                                                        placeholder="-- blank --" readonly />
+                                                </td> -->
+                                                <td>
+                                                    <input type="text" class="form-control"
+                                                        value="<%= item.ipTypeName %>" name="ipTypeName"
+                                                        placeholder="-- blank --" hidden />
+                                                    <input type="text" class="form-control" value="<%= item.userName %>"
+                                                        name="userName" placeholder="User Name" />
+                                                </td>
+                                                <td>
+                                                    <input type="text" class="form-control" value="<%= item.password %>"
+                                                        name="password" placeholder="Password" />
+                                                </td>
+                                                <td>
+                                                    <input type="text" class="form-control" value="<%= item.hostUrl %>"
+                                                        name="hostUrl" placeholder="-- blank --" />
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control" value="<%= item.port %>"
+                                                        name="port" placeholder="Port" />
+                                                </td>
+                                                <td>
+                                                    <%= item.lastUpdatedBy %>
+                                                </td>
+                                                <td>
+                                                    <%= item.lastUpdatedOn %>
+                                                </td>
+                                                <td>
+                                                    <label class="switch">
+                                                        <input type="hidden" name="active" value="<%=item.active==true ? true : false%>" />
+                                                        <input type="checkbox" <%=item.active==true ? 'checked' : '' %> onchange="this.previousElementSibling.value = this.checked" />
+                                                        <span class="slider"></span>
+                                                    </label>
+                                                </td>
+                                            </tr>
+                                            <% }); } %>
+                                </tbody>
+                            </table>
+                            <input type="text" id="proxyPriorityPreviousValue" name="proxyPriorityPreviousValue"
+                                hidden />
+                            <a onClick="saveConfiguration()" class="btn btn-success mx-1" name="btn_submit_on_all"
+                                style="float: right;color: antiquewhite;"><i class="fa-solid fa-floppy-disk"></i>
+                                &nbsp;Save</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="container-fluid" id="envInfo_partial">
+                    <%- include('envView/envInfo.ejs') %>
+                </div>
+            </div>
+        </form>
+
+        <%- include("../footer"); %>
+            <style>
+                /* Basic Rules */
+                .switch input {
+                    display: none;
+                }
+
+                .switch {
+                    display: inline-block;
+                    width: 52px;
+                    height: 22px;
+                    margin: 8px;
+                    transform: translateY(50%);
+                    position: relative;
+                }
+
+                /* Style Wired */
+                .slider {
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    border-radius: 30px;
+                    box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+                    cursor: pointer;
+                    border: 4px solid transparent;
+                    overflow: hidden;
+                    transition: 0.4s;
+                }
+
+                .slider:before {
+                    position: absolute;
+                    content: "";
+                    width: 100%;
+                    height: 100%;
+                    background: #777;
+                    border-radius: 30px;
+                    transform: translateX(-30px);
+                    transition: 0.4s;
+                }
+
+                input:checked+.slider:before {
+                    transform: translateX(30px);
+                    background: limeGreen;
+                }
+
+                input:checked+.slider {
+                    box-shadow: 0 0 0 2px limeGreen, 0 0 2px limeGreen;
+                }
+
+                /* Style Flat */
+                .switch.flat .slider {
+                    box-shadow: none;
+                }
+
+                .switch.flat .slider:before {
+                    background: #fff;
+                }
+
+                .switch.flat input:checked+.slider:before {
+                    background: white;
+                }
+
+                .switch.flat input:checked+.slider {
+                    background: limeGreen;
+                }
+            </style>
+            <script src="/javascripts/dashboard.js"></script>
+            
+            <script src="/javascripts/configuration-proxy-cron-list.js"></script>

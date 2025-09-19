@@ -1,0 +1,32 @@
+# Digital Ocean App Platform specification
+name: repricer-dev
+region: nyc
+services:
+  - name: web
+    github:
+      repo: Frontier-Dental/repricer-monorepo
+      branch: dev
+      deploy_on_push: true
+    dockerfile_path: ./apps/repricer/Dockerfile
+    run_command: npm start
+    http_port: 3000
+    instance_count: 1
+    instance_size_slug: basic-xs
+    source_dir: .
+    health_check:
+      http_path: /health
+
+  - name: internal-service
+    dockerfile_path: ./apps/api-core/Dockerfile
+    internal_ports:
+      - 5001
+    run_command: npm start
+    github:
+      repo: Frontier-Dental/repricer-monorepo
+      branch: dev
+      deploy_on_push: true
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    source_dir: .
+    health_check:
+      http_path: /health

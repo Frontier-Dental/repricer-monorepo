@@ -1,0 +1,133 @@
+<div class="left_sidebar" id="printPageButton">
+  <nav class="sidebar" style="overflow-y: hidden">
+    <ul id="main-menu" class="metismenu">
+      <li>
+        <a href="/admin">
+          <span class="fa-sharp fa-solid fa-user"></span>
+          <span>&nbsp;Admin</span>
+        </a>
+      </li>
+      <li>
+        <a href="/productV2/show_all">
+          <span class="fa fa-bug" aria-hidden="true"></span>
+          <span>&nbsp;Products</span>
+        </a>
+      </li>
+      <li>
+        <a href="/vite">
+          <span class="fa fa-bug" aria-hidden="true"></span>
+          <span>&nbsp;V2 Algo</span>
+        </a>
+      </li>
+      <!-- <li class="<%=groupName == 'item' ? 'active' : ''%> mt-2">
+        <a href="/masteritem" class="">
+          <span class="fa-sharp fa-solid fa-sitemap"></span>
+          <span>&nbsp;Items</span>
+        </a>
+      </li> -->
+      <!-- <li class="<%=groupName == 'dashboard' ? 'active' : ''%> mt-2 <%= userRole=='User' ? '' : 'd-none' %>">
+        <a href="/dashboard" class="">
+          <span class="fa-sharp fa-solid fa-bars-progress"></span>
+          <span>&nbsp;Tasks</span>
+        </a>
+      </li> -->
+      <!-- <li class="<%=groupName == 'tasks' ? 'active' : ''%> mt-2">
+        <a href="/currentTasks" class="">
+          <span class="fa-sharp fa-solid fa-bars-progress"></span>
+          <span>&nbsp;Current Tasks (Beta )</span>
+        </a>
+      </li> -->
+      <li>
+        <a href="/dashboard/cronHistory" class="">
+          <span class="fa-sharp fa-solid fa-bars-progress"></span>
+          <span>&nbsp;Tasks</span>
+        </a>
+      </li>
+      <li>
+        <a href="/cronSettings">
+          <span class="fa-sharp fa-solid fa-gear"></span>
+          <span>&nbsp;Regular Cron</span>
+        </a>
+      </li>
+      <li>
+        <a href="/filter">
+          <span class="fa-sharp fa-solid fa-cogs"></span>
+          <span>&nbsp;Secondary Cron</span>
+        </a>
+      </li>
+      <li>
+        <a href="/scrape">
+          <span class="fa-sharp fa-solid fa-asterisk"></span>
+          <span>&nbsp;DataOnly Cron</span>
+        </a>
+      </li>
+      <!-- <li class="<%=groupName == 'ScrapeProducts' ? 'active' : ''%> mt-2 <%= userRole=='User' ? '' : 'd-none' %>">
+        <a href="/scrape/show_products">
+          <span class="fa fa-bug" aria-hidden="true"></span>
+          <span>&nbsp;ScrapeOnly Products</span>
+        </a>
+      </li>  -->
+      <!-- <li class="<%=groupName == 'ScrapeLogs' ? 'active' : ''%> mt-2 <%= userRole=='User' ? '' : 'd-none' %>">
+        <a href="/scrape/logs">
+          <span class="fa-sharp fa-solid fa-bars-progress" aria-hidden="true"></span>
+          <span>&nbsp;ScrapeOnly History</span>
+        </a>
+      </li> -->
+      <li>
+        <a href="/config">
+          <span class="fa-sharp fa-solid fa-wrench"></span>
+          <span>&nbsp;Global Configurations</span>
+        </a>
+      </li>
+      <li>
+        <a href="/history">
+          <span class="fa-sharp fa-solid fa-blog"></span>
+          <span>&nbsp;Item History</span>
+        </a>
+      </li>
+      <li>
+        <a href="/dashboard/downloads/list_downloads">
+          <span class="fa fa-download" aria-hidden="true"></span>
+          <span>&nbsp;Downloads</span>
+        </a>
+      </li>
+      <li>
+        <a href="/help/let_me_in">
+          <span class="fa fa-bug" aria-hidden="true"></span>
+          <span>&nbsp;Help</span>
+        </a>
+      </li>
+      <li>
+        <a href="/play/let_me_in">
+          <span class="fa fa-plug" aria-hidden="true"></span>
+          <span>&nbsp;PlayGround</span>
+        </a>
+      </li>
+
+      <li>
+        <a href="/logs?load_data=false">
+          <span class="fa fa-list-ul" aria-hidden="true"></span>
+          <span>&nbsp;Logs</span>
+        </a>
+      </li>
+
+      <li>
+        <button
+          type=""
+          id="goDown"
+          class="btn btn-dark rounded-circle text-white mx-1 p-3"
+        >
+          <i class="fa-solid fa-chevron-down"></i>
+        </button>
+      </li>
+    </ul>
+  </nav>
+</div>
+<style>
+  .metismenu {
+    height: 700px !important ;
+    width: auto;
+    overflow: auto;
+    scrollbar-width: none;
+  }
+</style>

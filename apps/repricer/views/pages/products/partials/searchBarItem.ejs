@@ -1,0 +1,25 @@
+<%
+// Parameters expected:
+// - fieldName: The input field name (e.g., 'mpid', 'channelId')
+// - fieldValue: The current value of the field
+// - placeholder: Placeholder text for the input
+// - otherFieldName: The other field to clear when this one is submitted
+%>
+<div class="col-lg-6 form-group mb-0" style="display: flex; align-items: center; padding-left: 15px; padding-right: 0;">
+    <div class="input-group" style="flex: 1;">
+        <input type="text" class="form-control" id="<%= fieldName %>" name="<%= fieldName %>"
+            value="<%= fieldValue %>" placeholder="<%= placeholder %>">
+        <div class="input-group-append">
+            <button type="submit" name="search" value="true"
+                class="btn btn-primary" style="border: none;"
+                onclick="document.getElementById('<%= otherFieldName %>').value = '';">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </div>
+    </div>
+    <% if (fieldValue !== '' ) { %>
+        <a href="/productV2/show_all" class="close-btn" style="margin-left: 10px; margin-bottom: 6px; color: #6c757d;">
+            <i class="fa-solid fa-xmark"></i>
+        </a>
+    <% } %>
+</div>

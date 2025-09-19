@@ -1,0 +1,188 @@
+<%- include('../header') %>
+    <%- include('../left-sidebar') %>
+ 
+<%
+    let pgno = pageNumber + 1
+    let upVal = 0, lowVal = 0
+    const pages = new Array(totalPages).fill(null).map((v, i) => i)
+    if (pageNumber <= 2) {
+      upVal = 0; lowVal = 5
+    } else if (pageNumber >= (totalPages - 3)) {
+      upVal = totalPages - 5; lowVal = totalPages
+    } else {
+      upVal = pageNumber - 2; lowVal = pageNumber + 3
+    }
+%>
+        <div class="page">
+            <div class="container-fluid">
+                    <div class="body">
+                        <h5> <b> Cron History</b></h5>
+                    
+                        </div>
+                    <div class="body table-responsive">
+                        <table id="example" class="table table-striped table-bordered" style="width: 100%">
+                           
+                            <thead>
+                                <tr>
+                                    <td>Start date</td>
+                                    <td>End date</td>
+                                    <td>Object Id</td>
+                                    <td>Cron Type</td>
+                                    <td>Total Count</td>
+                                    <td>Scraped Count</td>
+                                    <th class="t-head">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyCronLogsHistory">
+                                <% if(items){ items.forEach(function(item,idx){ %>
+                                    <tr>
+                                        <td>
+                                            <%= item.startTime %> 
+                                        </td>
+                                        <td>
+                                            <%= item.completionTime %>
+                                        </td>
+                                        <td>
+                                            <%= item._id %> ( <%= item.scrapeRunId %> )
+                                        </td>
+                                        <td>
+                                            <%= item.type %> 
+                                        </td>
+                                        <td>
+                                            <%= item.totalCount %>
+                                        </td>
+                                        <td>
+                                            <%= item.scrapedProductCount %>
+                                        </td>    
+                                        <td>
+                                            <a href="/scrape/logs_history_list/<%= item._id %>" target="_blank"><i
+                                                    class="ti-arrow-circle-right"></i></a>
+                                        </td>
+                                    </tr>
+                                    <% }); } %>
+                            </tbody>
+                        </table>
+                    </div>
+
+
+                    
+                    <!-- pagination -->
+                  <div class="card border-0 flex-column justify-content-between p-2 track-ccard-b bg-transparent">
+                      <div md="" class="col mt-4 text-center">
+                        <nav aria-label="" class="">
+                          <ul class="pagination  justify-content-center">
+                            <li class="page-item p-2">
+                              <a href="/scrape/logs_history_list?pgno=1 "><button class="btn tracknumlisting-pagination-button" >&laquo;</button></a>
+                            </li>
+                            <li class="page-item p-2">
+                              <a href="/scrape/logs_history_list?pgno=<%= Math.max(1, pageNumber) %>"><button class="btn tracknumlisting-pagination-button" >Previous</button></a>
+                            </li>
+                            <% pages.slice(upVal, lowVal).map(pg => {
+                              let active = (pg === pageNumber) ? '-active' : ''
+                              %>
+                                <li class="page-item p-2">
+                                  <a href="/scrape/logs_history_list?pgno=<%= (pg + 1) %>" ><button class="btn tracknumlisting-pagination-button" >
+                                    <%= (pg + 1) %>
+                                  </button></a>
+                                </li>
+                              
+                            <% }) %>
+                            <li class="page-item p-2">
+                              <a href="/scrape/logs_history_list?pgno=<%= Math.min(totalPages, Number(pageNumber) + 2) %>"><button class="btn tracknumlisting-pagination-button" >Next</button></a>
+                            </li>
+                            <li class="page-item p-2">
+                              <a href="/scrape/logs_history_list?pgno=<%= totalPages %>"><button class="btn tracknumlisting-pagination-button" >&raquo;</button></a>
+                            </li>
+                          </ul>
+                        </nav>
+                      </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+ 
+
+        <%- include("../footer"); %>
+        <style>
+                /* Basic Rules */
+                .switch input {
+                    display: none;
+                }
+
+                .switch {
+                    display: inline-block;
+                    width: 52px;
+                    height: 22px;
+                    margin: 8px;
+                    transform: translateY(50%);
+                    position: relative;
+                }
+
+                /* Style Wired */
+                .slider {
+                    position: absolute;
+                    top: 0;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    border-radius: 30px;
+                    box-shadow: 0 0 0 2px #777, 0 0 4px #777;
+                    cursor: pointer;
+                    border: 4px solid transparent;
+                    overflow: hidden;
+                    transition: 0.4s;
+                }
+
+                .slider:before {
+                    position: absolute;
+                    content: "";
+                    width: 100%;
+                    height: 100%;
+                    background: #777;
+                    border-radius: 30px;
+                    transform: translateX(-30px);
+                    transition: 0.4s;
+                }
+
+                input:checked+.slider:before {
+                    transform: translateX(30px);
+                    background: limeGreen;
+                }
+
+                input:checked+.slider {
+                    box-shadow: 0 0 0 2px limeGreen, 0 0 2px limeGreen;
+                }
+
+                /* Style Flat */
+                .switch.flat .slider {
+                    box-shadow: none;
+                }
+
+                .switch.flat .slider:before {
+                    background: #fff;
+                }
+
+                .switch.flat input:checked+.slider:before {
+                    background: white;
+                }
+
+                .switch.flat input:checked+.slider {
+                    background: limeGreen;
+                }
+                .t-head {
+                    position: sticky;
+                    top: 0px;
+                    left: 0px;
+                    z-index: 9;
+                    background-color: #fff;
+                    }
+                .table-responsive{
+                    max-height: 700px;
+                    margin: 15px;
+                    padding: 0 !important;
+                }
+            </style>
+<script src="/javascripts/dashboard.js"></script>

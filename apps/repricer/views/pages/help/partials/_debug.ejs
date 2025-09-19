@@ -1,0 +1,55 @@
+<br /><br />
+<div class="d-flex justify-content-between">
+  <h1 class="commanHeading">Ping IP and Test The Connectivity :<b> </b></h1>
+  <button
+    type="button"
+    onclick="pingIpAndTestAll()"
+    class="btn btn-success"
+    style="float: right"
+  >
+    <i class="fa-solid fa-play"></i>&nbsp;Test All
+  </button>
+</div>
+<hr />
+<div>
+  <input
+    type="hidden"
+    class="form-control"
+    id="ip_all_hdn"
+    name="ip_all_hdn_txt"
+    value="<%= model %>"
+  />
+  <div class="row">
+    <div class="form-group col-md-12">
+      <label for="ip_test" class="font-weight-bold">IP To Test</label>
+      <input
+        type="text"
+        class="form-control"
+        name="ip_test"
+        id="ip_test_txt"
+        placeholder="IPs to test. Use ; separated values for multiple entries"
+      /><br />
+      <button
+        type="button"
+        onclick="pingIpAndTest()"
+        class="btn btn-primary"
+        style="float: right"
+      >
+        TEST
+      </button>
+    </div>
+  </div>
+  <div class="row d-none" id="pingResponseDiv">
+    <div class="form-group col-md-12">
+      <label for="ip_test_response" class="font-weight-bold"
+        >Ping Response : </label
+      ><br />
+      <table
+        id="response_tbl"
+        class="table table-striped table-bordered"
+        style="width: 100%"
+      ></table>
+    </div>
+  </div>
+</div>
+<script src="/javascripts/dashboard.js"></script>

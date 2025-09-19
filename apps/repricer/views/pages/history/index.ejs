@@ -1,0 +1,146 @@
+<%- include('../header') %>
+<%- include('../left-sidebar') %>
+<form method="post" autocomplete="off" id="form_cron_settings">
+  <div class="page">
+    <div class="container-fluid">
+      <div class="d-flex justify-content-between">
+        <h1 class="commanHeading">Historical Data for Products :<b> </b></h1>
+      </div>
+      <hr />
+      <div class="card">
+        <div class="body table-responsive">
+          <table id="example" class="table table-striped table-bordered">
+            <thead>
+              <tr>
+                <th>Search by Criteria :</th>
+                <th>
+                  <input
+                    type="radio"
+                    id="radMpId"
+                    name="searchVal"
+                    value="srchMpId"
+                    onclick="radChanged(this)"
+                  />
+                  <label for="radMpId">MP ID</label>
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                  <input
+                    type="radio"
+                    id="radDate"
+                    name="searchVal"
+                    value="srchDate"
+                    onclick="radChanged(this)"
+                  />
+                  <label for="radDate">DATE</label>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr id="trMpId" class="d-none">
+                <td>Enter MPID to search :</td>
+                <td>
+                  <input
+                    type="text"
+                    placeholder="MPID to search"
+                    id="txtMpId"
+                  />
+                </td>
+              </tr>
+              <tr id="trStartDate" class="d-none">
+                <td>Select Start Date :</td>
+                <td><input type="date" id="dateFrom" /></td>
+              </tr>
+              <tr id="trEndDate" class="d-none">
+                <td>Select End Date :</td>
+                <td><input type="date" id="dateEnd" /></td>
+              </tr>
+              <!-- <tr id="trCounter" class="d-none">
+                                        <td>Batch Number <b style="color: red;">* (Batch Size : <%= model.batchLimit %> | Total Count : <%= model.totalCount %> | Max Batch Count : <%= model.maxCount %> )</b>: </td>
+                                        <td><input type="number" id="counterVal" min="1" value="1"></td>
+                                    </tr> -->
+            </tbody>
+          </table>
+          <a
+            onClick="exportHistory('<%=  model.maxCount %>')"
+            class="btn btn-success mx-1"
+            name="btn_submit_on_all"
+            style="float: right; color: antiquewhite"
+            ><i class="fa-solid fa-play"></i> &nbsp;Export</a
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+<%- include("../footer"); %>
+<style>
+  /* Basic Rules */
+  .switch input {
+    display: none;
+  }
+
+  .switch {
+    display: inline-block;
+    width: 52px;
+    height: 22px;
+    margin: 8px;
+    transform: translateY(50%);
+    position: relative;
+  }
+
+  /* Style Wired */
+  .slider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 30px;
+    box-shadow:
+      0 0 0 2px #777,
+      0 0 4px #777;
+    cursor: pointer;
+    border: 4px solid transparent;
+    overflow: hidden;
+    transition: 0.4s;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    width: 100%;
+    height: 100%;
+    background: #777;
+    border-radius: 30px;
+    transform: translateX(-30px);
+    transition: 0.4s;
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(30px);
+    background: limeGreen;
+  }
+
+  input:checked + .slider {
+    box-shadow:
+      0 0 0 2px limeGreen,
+      0 0 2px limeGreen;
+  }
+
+  /* Style Flat */
+  .switch.flat .slider {
+    box-shadow: none;
+  }
+
+  .switch.flat .slider:before {
+    background: #fff;
+  }
+
+  .switch.flat input:checked + .slider:before {
+    background: white;
+  }
+
+  .switch.flat input:checked + .slider {
+    background: limeGreen;
+  }
+</style>
+<script src="/javascripts/dashboard.j"></script>

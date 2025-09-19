@@ -1,0 +1,270 @@
+[
+  {
+    "cronId": "ae319c90d19e48cd9d70c71bd46c0546",
+    "cronVariable": "_E1Cron"
+  },
+  {
+    "cronId": "1659197d96d1453fbb8838f5680251bb",
+    "cronVariable": "_E2Cron"
+  },
+  {
+    "cronId": "7f0dc989293e4423af8e3ed1094e021e",
+    "cronVariable": "_E3Cron"
+  },
+  {
+    "cronId": "1db4872aea84450a8ae71e6462f31709",
+    "cronVariable": "_E4Cron"
+  },
+  {
+    "cronId": "bb511f693cdd452b942221b07ec0c7cb",
+    "cronVariable": "_E5Cron"
+  },
+  {
+    "cronId": "64895748ead0401381d16335bc0dfc43",
+    "cronVariable": "_E6Cron"
+  },
+  {
+    "cronId": "9df11fb931ef441892396d915c4c1a2d",
+    "cronVariable": "_E7Cron"
+  },
+  {
+    "cronId": "73ed3854de72400497d321439b0b4803",
+    "cronVariable": "_E8Cron"
+  },
+  {
+    "cronId": "84d5dc18092e41d0aefc5960526af7ac",
+    "cronVariable": "_E9Cron"
+  },
+  {
+    "cronId": "78691bb865f24729b9501177384e31be",
+    "cronVariable": "_E10Cron"
+  },
+  {
+    "cronId": "1a2d6e0e5b264fdd8a423144e08d0cba",
+    "cronVariable": "_E11Cron"
+  },
+  {
+    "cronId": "f0c11b8c21a841708b62b64ba74dc298",
+    "cronVariable": "_E12Cron"
+  },
+  {
+    "cronId": "ccd77cf843e44cd78dd7e51fae2133f2",
+    "cronVariable": "_E13Cron"
+  },
+  {
+    "cronId": "5bd70f3b3a694409b110b0e426f92bd0",
+    "cronVariable": "_E14Cron"
+  },
+  {
+    "cronId": "836eb36f0b97482ebf728e6c1e4b99da",
+    "cronVariable": "_E15Cron"
+  },
+  {
+    "cronId": "64424715186b479ea3b1a535e2b62a07",
+    "cronVariable": "_E16Cron"
+  },
+  {
+    "cronId": "e5231f07e1534cd29d526998e52d31a9",
+    "cronVariable": "_E17Cron"
+  },
+  {
+    "cronId": "abd1c42edba645e994d24fc4abb97ce7",
+    "cronVariable": "_E18Cron"
+  },
+  {
+    "cronId": "38637a51eed44503b22e0e1e9a7fc6e0",
+    "cronVariable": "_E19Cron"
+  },
+  {
+    "cronId": "c6f2e6256f174643bba07c2565b42443",
+    "cronVariable": "_E20Cron"
+  },
+  {
+    "cronId": "6c1fcd6d938149cf97e01e7dfba89617",
+    "cronVariable": "_E21Cron"
+  },
+  {
+    "cronId": "6e2fe8965f5040748912bb90080a2de5",
+    "cronVariable": "_E22Cron"
+  },
+  {
+    "cronId": "ff87ffb6e176414e973cf934cffc09fb",
+    "cronVariable": "_E23Cron"
+  },
+  {
+    "cronId": "36396ef228b74367a0c6252abb213f2c",
+    "cronVariable": "_E24Cron"
+  },
+  {
+    "cronId": "08718d34a2dc4db097f703ce0241009f",
+    "cronVariable": "_E25Cron"
+  },
+  {
+    "cronId": "6cdc6d03d5c44e69802ca2298b897e3c",
+    "cronVariable": "_E26Cron"
+  },
+  {
+    "cronId": "49775e6d50a14d9cba846a4b6be365d8",
+    "cronVariable": "_E27Cron"
+  },
+  {
+    "cronId": "d79d1e61793e4fb498a6358cddc3bda5",
+    "cronVariable": "_E28Cron"
+  },
+  {
+    "cronId": "8c61a7bd585f4d18b863094c876bcd38",
+    "cronVariable": "_E29Cron"
+  },
+  {
+    "cronId": "5e6c1a7ceead4f94a663b6e5595d1ae3",
+    "cronVariable": "_E30Cron"
+  },
+  {
+    "cronId": "505a170450804201a92ea79d3da25fb3",
+    "cronVariable": "_FC1Cron"
+  },
+  {
+    "cronId": "d9b4451352af4591a1ba17a52660d31d",
+    "cronVariable": "_FC2Cron"
+  },
+  {
+    "cronId": "728c95855c874ea7bb681d471aa4e2e8",
+    "cronVariable": "_FC3Cron"
+  },
+  {
+    "cronId": "DUMMY-422-Error",
+    "cronVariable": "_Error422Cron"
+  },
+  {
+    "cronId": "b597ffd1ce4d463088ce12a6f05b55d6",
+    "cronVariable": "_SCG1Cron"
+  },
+  {
+    "cronId": "a9d4e1de6e864b7f9edf9cd202559774",
+    "cronVariable": "_SCG2Cron"
+  },
+  {
+    "cronId": "0e2f70a1623f4f8d827fc44afd15215c",
+    "cronVariable": "_SCG3Cron"
+  },
+  {
+    "cronId": "7ee34de43346db9d85011efb84078321",
+    "cronVariable": "_SOC1Cron"
+  },
+  {
+    "cronId": "d4f8a3e7105c4b2a9f13e6d9b72f41ac",
+    "cronVariable": "_SOC2Cron"
+  },
+  {
+    "cronId": "e8c7a1b495de4f678b2f0c3d9a7e5f2b",
+    "cronVariable": "_SOC3Cron"
+  },
+  {
+    "cronId": "d11bccbbc99c78abdfca4c878d60638b",
+    "cronVariable": "_SOC4Cron"
+  },
+  {
+    "cronId": "087f132a4adc72f0093d262c79248e99",
+    "cronVariable": "_SOC5Cron"
+  },
+  {
+    "cronId": "861476ebdb6ce8bbd460d2db9d9029c4",
+    "cronVariable": "_SOC6Cron"
+  },
+  {
+    "cronId": "f0b5b9c21f707d6ef7f5334a956e6e96",
+    "cronVariable": "_SOC7Cron"
+  },
+  {
+    "cronId": "bed67282062cf1351fe21a6c4691047a",
+    "cronVariable": "_SOC8Cron"
+  },
+  {
+    "cronId": "e7a7adb93385d363b618a34912a51c23",
+    "cronVariable": "_SOC9Cron"
+  },
+  {
+    "cronId": "a0f86ae306428baa12a9f75ca893911b",
+    "cronVariable": "_SOC10Cron"
+  },
+  {
+    "cronId": "1c589f13174bad366197fae25adb5e04",
+    "cronVariable": "_SOC11Cron"
+  },
+  {
+    "cronId": "76e6533be027673f1bdd595e4bb51192",
+    "cronVariable": "_SOC12Cron"
+  },
+  {
+    "cronId": "8d01ef78f56f253b0f8cffee5255101c",
+    "cronVariable": "_SOC13Cron"
+  },
+  {
+    "cronId": "8e04965a2cff26b8127fc837944e836e",
+    "cronVariable": "_SOC14Cron"
+  },
+  {
+    "cronId": "c22f43385d57a0bdb37998bb4fb2756d",
+    "cronVariable": "_SOC15Cron"
+  },
+  {
+    "cronId": "932bafc5945b9aa87b3589e583d34a3b",
+    "cronVariable": "_SOC16Cron"
+  },
+  {
+    "cronId": "94bfc9fe3a8e7256a0bd0531f57d665b",
+    "cronVariable": "_SOC17Cron"
+  },
+  {
+    "cronId": "7d9935162afc63f9127ed51cdf208d09",
+    "cronVariable": "_SOC18Cron"
+  },
+  {
+    "cronId": "df927a2945aaf31c3646aed081bb00ac",
+    "cronVariable": "_SOC19Cron"
+  },
+  {
+    "cronId": "1c101b7222cd91352dd4f984aecc872c",
+    "cronVariable": "_SOC20Cron"
+  },
+  {
+    "cronId": "63dabe4c865709f66e68a13b15301391",
+    "cronVariable": "_SOC21Cron"
+  },
+  {
+    "cronId": "79c4c359ea7b26150105789cf62cc719",
+    "cronVariable": "_SOC22Cron"
+  },
+  {
+    "cronId": "6aa30db4516b2d4eec125fe2a09a1392",
+    "cronVariable": "_SOC23Cron"
+  },
+  {
+    "cronId": "4236542e770e0b9eb00b864b3459e08c",
+    "cronVariable": "_SOC24Cron"
+  },
+  {
+    "cronId": "d0da96ecb969224af99faf4bdb1c6d60",
+    "cronVariable": "_SOC25Cron"
+  },
+  {
+    "cronId": "d8caf711537506669eff61be7aeb9800",
+    "cronVariable": "_SOC26Cron"
+  },
+  {
+    "cronId": "47c815bcd9e3225a0b12f90dbfeeadde",
+    "cronVariable": "_SOC27Cron"
+  },
+  {
+    "cronId": "460c79e3983b43d9f3d3d67926b38508",
+    "cronVariable": "_SOC28Cron"
+  },
+  {
+    "cronId": "a138f80565da1a573b3830dc5b8c655d",
+    "cronVariable": "_SOC29Cron"
+  },
+  {
+    "cronId": "02fbec5e287c95ccd463ed1d9bb1e8b4",
+    "cronVariable": "_SOC30Cron"
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "name": "@repricer-monorepo/shared",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "Shared types and enums for the repricer monorepo"
+}

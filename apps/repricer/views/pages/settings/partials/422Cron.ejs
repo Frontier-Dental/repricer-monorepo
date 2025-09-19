@@ -1,0 +1,203 @@
+<div class="d-flex justify-content-between">
+    <h1 class="commanHeading">Configure Express Cron :<b>
+        </b></h1>
+</div>
+<div class="card cextend">
+    <div class="body table-responsive">
+        <table class="table table-striped table-bordered" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Cron Name</th>
+                    <th>Default Proxy Provider</th>
+                    <th>Alternate Provider List</th>
+                    <!-- <th>IP Type</th>
+                    <th>IP</th> -->
+                    <th style="width:70px">Cron Time</th>
+                    <th style="width:110px">Cron Time Unit</th>
+                    <th style="width:65px">Offset</th>
+                    <th style="width:125px">No. Of Products (422 Error) &nbsp;<a style="cursor: pointer;"
+                            onClick="show422Error('422_ERROR')"><i class="fa-sharp fa-solid fa-circle-info"></i></a>
+                    </th>
+                    <th style="width:136px">No. Of Products (Price Update) &nbsp;<a style="cursor: pointer;"
+                            onClick="show422Error('PRICE_UPDATE')"><i class="fa-sharp fa-solid fa-circle-info"></i></a>
+                    </th>
+                    <th style="width:88px">Eligible Products</th>
+                    <th>Last Modified By</th>
+                    <th>Last Modified On</th>
+                    <th style="text-align: left;">Cron On/Off</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr
+                    class="<%=settings.custom.ThresholdReached==true ? 'threshold':(settings.custom.CloseToThresholdReached==true?'closeThreshold':"")%>">
+                    <td>
+                        <input type="text" class="form-control form-pad" value="<%= settings.custom.CronName %>"
+                            name="cron_name_422" placeholder="Cron Name" readonly />
+                    </td>
+                    <td>
+                        <select class="form-select form-control form-pad" name="proxy_provider_422"
+                            aria-label="Default select example" disabled title="<%= settings.custom.ProxyProvider_Name %>">
+                            <% configItems.forEach(function(configItem) { %>
+                                <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider == settings.custom.ProxyProvider ? "selected" : "" %>>
+                                    <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
+                                </option>
+                            <% }); %>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select form-control form-pad" name="proxy_provider_422_alternate_1"
+                            aria-label="Default select example" disabled title="<%= settings.custom.ProxyProvider_1_Name %>">
+                            <% configItems.forEach(function(configItem) { %>
+                                <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider == settings.custom.ProxyProvider_1 ? "selected" : "" %>>
+                                    <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
+                                </option>
+                            <% }); %>
+                        </select>
+                        <br />
+                        <select class="form-select form-control form-pad" name="proxy_provider_422_alternate_2"
+                            aria-label="Default select example" disabled title="<%= settings.custom.ProxyProvider_2_Name %>">
+                            <% configItems.forEach(function(configItem) { %>
+                                <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider == settings.custom.ProxyProvider_2 ? "selected" : "" %>>
+                                    <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
+                                </option>
+                            <% }); %>
+                        </select>
+                        <br />
+                        <select class="form-select form-control form-pad" name="proxy_provider_422_alternate_3"
+                            aria-label="Default select example" disabled title="<%= settings.custom.ProxyProvider_3_Name %>">
+                            <% configItems.forEach(function(configItem) { %>
+                                <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider == settings.custom.ProxyProvider_3 ? "selected" : "" %>>
+                                    <%=configItem.proxyProviderName%><%= configItem.method ? ' - ' + configItem.method : '' %>
+                                </option>
+                            <% }); %>
+                        </select>
+                        <br />
+                        <select class="form-select form-control form-pad" name="proxy_provider_422_alternate_4"
+                            aria-label="Default select example" disabled title="<%= settings.custom.ProxyProvider_4_Name %>">
+                            <% configItems.forEach(function(configItem) { %>
+                                <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider==settings.custom.ProxyProvider_4
+                                    ? "selected" : "" %>>
+                                    <%=configItem.proxyProviderName%>
+                                        <%= configItem.method ? ' - ' + configItem.method : '' %>
+                                </option>
+                                <% }); %>
+                        </select>
+                        <br />
+                        <select class="form-select form-control form-pad" name="proxy_provider_422_alternate_5"
+                            aria-label="Default select example" disabled title="<%= settings.custom.ProxyProvider_5_Name %>">
+                            <% configItems.forEach(function(configItem) { %>
+                                <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider==settings.custom.ProxyProvider_5
+                                    ? "selected" : "" %>>
+                                    <%=configItem.proxyProviderName%>
+                                        <%= configItem.method ? ' - ' + configItem.method : '' %>
+                                </option>
+                                <% }); %>
+                        </select>
+                        <br />
+                        <select class="form-select form-control form-pad" name="proxy_provider_422_alternate_6"
+                            aria-label="Default select example" disabled title="<%= settings.custom.ProxyProvider_6_Name %>">
+                            <% configItems.forEach(function(configItem) { %>
+                                <option value="<%=configItem.proxyProvider%>" <%=configItem.proxyProvider==settings.custom.ProxyProvider_6
+                                    ? "selected" : "" %>>
+                                    <%=configItem.proxyProviderName%>
+                                        <%= configItem.method ? ' - ' + configItem.method : '' %>
+                                </option>
+                                <% }); %>
+                        </select>
+                        <br />
+                    </td>
+                    <!-- <td>
+                        <select class="form-select form-control form-pad" name="ip_type_<%=settings.custom.CronId %>"
+                            aria-label="Default select example" disabled
+                            onchange="enableIp(this,'<%= settings.custom.CronId %>')">
+                            <option <%=settings.custom.IpType==0 ? "selected" : "" %>
+                                value=0>Fixed</option>
+                            <option <%=(settings.custom.IpType==1 || settings.custom.IpType==3) ? "selected" : "" %>
+                                value=1>Rotating-Axios</option>
+                            <option <%=settings.custom.IpType==2 ? "selected" : "" %>
+                                value=2>Rotating-HTTP</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-pad" value="<%= settings.custom.FixedIp %>"
+                            name="fixed_ip_<%=settings.custom.CronId %>" placeholder="IP" readonly />
+                    </td> -->
+                    <td>
+                        <input type="number" class="form-control no-spinner form-pad"
+                            value="<%= settings.custom.CronTime %>" name="cron_time_422" placeholder="Cron Time"
+                            readonly />
+                    </td>
+                    <td>
+                        <select class="form-select form-control form-pad" name="cron_time_unit_422"
+                            aria-label="Default select example" disabled>
+                            <option <%=settings.custom.CronTimeUnit=="sec" ? "selected" : "" %>
+                                value="sec">Seconds</option>
+                            <option <%=settings.custom.CronTimeUnit=="min" ? "selected" : "" %>
+                                value="min">Minutes</option>
+                            <option <%=settings.custom.CronTimeUnit=="hours" ? "selected" : "" %>
+                                value="hours">Hours</option>
+                            <option <%=settings.custom.CronTimeUnit=="days" ? "selected" : "" %>
+                                value="days">Days</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-pad" value="<%= settings.custom.Offset %>"
+                            name="offset_422" placeholder="Offset" readonly />
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-pad" value="<%= settings.custom.NoOf422Products %>"
+                            name="cron_Products_422" placeholder="Cron Products" readonly />
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-pad"
+                            value="<%= settings.custom.NoOfPriceUpdateProducts %>" name="cron_Products_price_update"
+                            placeholder="Cron Products" readonly />
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-pad"
+                            value="<%= settings.custom.EligibleProductsCount %>" name="eligible_cron_Products_422"
+                            placeholder="Eligible Cron Products" readonly />
+                    </td>
+                    <td>
+                        <%= settings.custom.lastUpdatedBy %>
+                    </td>
+                    <td>
+                        <%= settings.custom.lastUpdatedOn %>
+                    </td>
+                    <td>
+                        <a onClick="start422Cron('<%= settings.custom.CronName %>')"
+                            class="<%= settings.custom.IsActive==true? 'btn btn-success mx-1 d-none':'btn btn-success mx-1'%>"
+                            name="btn_submit_on_all" style="color: antiquewhite;float:left;"><i
+                                class="fa-solid fa-play"></i>
+                            &nbsp;Start</a>
+                        <a onClick="stop422Cron('<%= settings.custom.CronName %>')"
+                            class="<%= settings.custom.IsActive==true? 'btn btn-danger mx-1':'btn btn-success mx-1 d-none'%>"
+                            name="btn_submit_off_All" style="color: antiquewhite;float: left;"><i
+                                class="fa-solid fa-stop"></i>
+                            &nbsp;Stop</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+</div>
+<style>
+    .cextend .body {
+        padding: 5px !important;
+    }
+
+    .no-spinner::-webkit-outer-spin-button,
+    .no-spinner::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .no-spinner[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    .form-pad {
+        padding: .35rem 0.50rem;
+    }
+</style>

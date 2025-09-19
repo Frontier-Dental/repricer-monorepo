@@ -1,0 +1,5 @@
+.cursor
+.turbo
+node_modules
+.env
+MYSQL

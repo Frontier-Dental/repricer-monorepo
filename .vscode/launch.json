@@ -1,0 +1,38 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug API",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["${workspaceFolder}/apps/api-core/src/main.ts"],
+      "cwd": "${workspaceFolder}/apps/api-core",
+      "envFile": "${workspaceFolder}/apps/api-core/.env"
+    },
+    {
+      "name": "Debug Web App",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": ["-r", "ts-node/register"],
+      "args": ["${workspaceFolder}/apps/repricer/src/server.ts"],
+      "cwd": "${workspaceFolder}/apps/repricer",
+      "envFile": "${workspaceFolder}/apps/repricer/.env"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Jest: current file",
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "args": ["${fileBasenameNoExtension}", "--config", "jest.config.js"],
+      "console": "integratedTerminal",
+      "sourceMaps": true,
+      "windows": {
+        "program": "${workspaceFolder}/node_modules/jest/bin/jest"
+      }
+    }
+  ]
+}
