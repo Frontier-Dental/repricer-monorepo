@@ -8,6 +8,10 @@ export const Parse = async (repriceResult: any): Promise<RepriceResultEnum> => {
   if (is422Error(repriceResult)) return RepriceResultEnum.SPECIAL_422;
   if (repriceResult == null) return RepriceResultEnum.DEFAULT;
   const hasPriceChangedResult = hasPriceChanged(repriceResult);
+
+  //If PriceBreak Deactivation is the Only change happening
+  if (isOnlyPriceBreakDeactivated(repriceResult))
+    return RepriceResultEnum.CHANGE_UP;
   // If Price Has Not Been Changed
   if (!hasPriceChangedResult) {
     const ignoreFloorPresent = checkPresenceOfComment(repriceResult, [
@@ -107,4 +111,14 @@ function is422Error(repriceResult: any): boolean {
     is422Error = true;
   }
   return is422Error;
+}
+
+function isOnlyPriceBreakDeactivated(repriceResult: any): boolean {
+  if (
+    !repriceResult.listOfRepriceDetails ||
+    repriceResult.listOfRepriceDetails.length === 0
+  )
+    return false;
+  const contextResult = getContextRepriceResult(repriceResult);
+  return contextResult?.active == 0;
 }
