@@ -105,7 +105,7 @@ export async function FilterBasedOnParams(
       });
       break;
     case "INVENTORY_THRESHOLD":
-      if (productItem.includeInactiveVendors == true) {
+      if (productItem.includeInactiveVendors) {
         outputResult = _.filter(inputResult, (item) => {
           return (
             parseInt(item.inventory as unknown as string) >=
@@ -115,7 +115,7 @@ export async function FilterBasedOnParams(
       } else {
         outputResult = inputResult.filter((item) => {
           return (
-            item.inStock == true &&
+            item.inStock &&
             parseInt(item.inventory as unknown as string) >=
               parseInt(productItem.inventoryThreshold as unknown as string)
           );
@@ -159,17 +159,14 @@ export async function FilterBasedOnParams(
     case "BADGE_INDICATOR":
       if (_.isEqual(productItem.badgeIndicator, "BADGE_ONLY")) {
         let badgedItems = [];
-        if (productItem.includeInactiveVendors == true) {
+        if (productItem.includeInactiveVendors) {
           badgedItems = _.filter(inputResult, (item) => {
             return item.badgeId && item.badgeId > 0 && item.badgeName;
           });
         } else {
           badgedItems = _.filter(inputResult, (item) => {
             return (
-              item.badgeId &&
-              item.badgeId > 0 &&
-              item.badgeName &&
-              item.inStock == true
+              item.badgeId && item.badgeId > 0 && item.badgeName && item.inStock
             );
           });
         }
@@ -188,13 +185,13 @@ export async function FilterBasedOnParams(
         outputResult = badgedItems as any;
       } else if (_.isEqual(productItem.badgeIndicator, "NON_BADGE_ONLY")) {
         let nonBadgedItems = [];
-        if (productItem.includeInactiveVendors == true) {
+        if (productItem.includeInactiveVendors) {
           nonBadgedItems = _.filter(inputResult, (item) => {
             return !item.badgeId || item.badgeId == 0;
           });
         } else {
           nonBadgedItems = _.filter(inputResult, (item) => {
-            return (!item.badgeId || item.badgeId == 0) && item.inStock == true;
+            return (!item.badgeId || item.badgeId == 0) && item.inStock;
           });
         }
         if (
@@ -216,7 +213,7 @@ export async function FilterBasedOnParams(
       if (parseInt(productItem.contextMinQty as unknown as string) != 1) {
         outputResult = inputResult.filter((item) => {
           return (
-            item.inStock == true &&
+            item.inStock &&
             item.inventory &&
             item.inventory >=
               parseInt(productItem.contextMinQty as unknown as string)
@@ -292,7 +289,7 @@ export function IsVendorFloorPrice(
       ? parseFloat(contextPriceBreak.unitPrice) +
         parseFloat(shippingPrice as unknown as string)
       : parseFloat(contextPriceBreak.unitPrice);
-    return contextPrice <= floorPrice ? true : false;
+    return contextPrice <= floorPrice;
   }
   return false;
 }

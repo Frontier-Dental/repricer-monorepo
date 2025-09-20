@@ -1451,7 +1451,8 @@ function isNotShortExpiryProduct(
     contextPriceBreaks.forEach((x) => {
       if (
         x.promoAddlDescr &&
-        x.promoAddlDescr.toUpperCase().indexOf("EXP") > -1
+        (x.promoAddlDescr.toUpperCase().indexOf("EXP") > -1 ||
+          x.promoAddlDescr.toUpperCase().indexOf("SHORT") > -1)
       ) {
         resultantEval = false;
       }
@@ -1459,7 +1460,10 @@ function isNotShortExpiryProduct(
     return resultantEval;
   }
   if (priceBreaks && priceBreaks.promoAddlDescr) {
-    return priceBreaks.promoAddlDescr.toUpperCase().indexOf("EXP") < 0;
+    return (
+      priceBreaks.promoAddlDescr.toUpperCase().indexOf("EXP") < 0 &&
+      priceBreaks.promoAddlDescr.toUpperCase().indexOf("SHORT") < 0
+    );
   }
   return true;
 }

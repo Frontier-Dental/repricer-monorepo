@@ -219,7 +219,7 @@ export async function RepriceErrorItem(
     );
     let isPriceUpdatedForVendor = false;
     for (const seq of prioritySequence) {
-      if (isPriceUpdatedForVendor == false) {
+      if (!isPriceUpdatedForVendor) {
         const contextVendor = seq.name;
         let prod = await filterMapper.GetProductDetailsByVendor(
           details,
@@ -478,7 +478,7 @@ export async function RepriceErrorItem(
       details.triadDetails.slowCronName = null;
       productUpdateNeeded = true;
     }
-    if (productUpdateNeeded == true) {
+    if (productUpdateNeeded) {
       details.isSlowActivated = false;
       await sqlHelper.UpdateCronForProductAsync(details); //await dbHelper.UpdateCronForProductAsync(details);
       console.log(`MOVEMENT(CRON-422) : Product : ${details.mpId}`);
@@ -770,8 +770,7 @@ async function repriceSingleVendor(
       });
       prod.last_update_time = new Date();
       isPriceUpdated = true;
-      prod.lastUpdatedBy =
-        isManualRun == true ? "Manual" : `${cronSetting.CronName}`;
+      prod.lastUpdatedBy = isManualRun ? "Manual" : `${cronSetting.CronName}`;
       if (prod.wait_update_period == true) {
         // Add the product to Error Item Table and update nextCronTime as +12 Hrs
         prod.next_cron_time = calculateNextCronTime(new Date(), 12);
@@ -826,7 +825,7 @@ async function repriceSingleVendor(
 
   // Add Last_Cron_Reprice_Message
   prod.last_cron_message = filterMapper.GetLastCronMessageSimple(repriceResult);
-  if (isManualRun == true) {
+  if (isManualRun) {
     prod.last_cron_message = prod.last_cron_message + " #MANUAL";
   }
 

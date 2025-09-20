@@ -21,7 +21,7 @@ export async function Execute(
       new RunCompletionStatus(keyGen, "SCRAPE_ONLY", false),
     );
     const isChunkNeeded = await IsChunkNeeded(productList);
-    if (isChunkNeeded == true) {
+    if (isChunkNeeded) {
       let chunkedList = _.chunk(productList, 2000);
       for (let chunk of chunkedList) {
         await executeScrapeLogic(keyGen, chunk, cronSetting);

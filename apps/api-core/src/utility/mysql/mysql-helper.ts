@@ -436,6 +436,7 @@ export async function UpdateTriggeredByVendor(
   mpid: string | number,
 ): Promise<any> {
   let updatedResult = null;
+  let triggeredByValue = null;
   const db = getKnexInstance();
   try {
     let contextTableName: string | null = null;
@@ -458,10 +459,10 @@ export async function UpdateTriggeredByVendor(
       default:
         break;
     }
-    const updateValue = GetTriggeredByValue(payload);
+    triggeredByValue = GetTriggeredByValue(payload);
     let updateQuery = `UPDATE ${contextTableName} SET TriggeredByVendor=? WHERE MpId =?`;
     updatedResult = await db.raw(updateQuery, [
-      updateValue,
+      triggeredByValue,
       parseInt(mpid as string),
     ]);
   } catch (exception) {
@@ -469,7 +470,7 @@ export async function UpdateTriggeredByVendor(
       `Exception while UpdateTriggeredByVendor : ${exception} for Vendor ${contextVendor} || MPID : ${payload.mpid}`,
     );
   }
-  return updatedResult?.[0];
+  return triggeredByValue;
 }
 
 export async function UpdateHistoryWithMessage(

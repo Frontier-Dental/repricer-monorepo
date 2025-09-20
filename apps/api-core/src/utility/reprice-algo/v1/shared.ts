@@ -30,6 +30,8 @@ export function isPriceUpdateRequired(
         ($rp.newPrice as unknown as number) !== $rp.oldPrice
       ) {
         $eval = true;
+      } else if ($rp.active == false) {
+        $eval = true;
       }
     });
     return $eval;
@@ -42,7 +44,7 @@ export async function getSamePriceBreakDetails(
   priceBreak: Net32PriceBreak,
   productItem: FrontierProduct,
 ) {
-  if (applicationConfig.FLAG_MULTI_PRICE_UPDATE === false) return outputList;
+  if (!applicationConfig.FLAG_MULTI_PRICE_UPDATE) return outputList;
   if (outputList.length == 1) return outputList;
   let result: Net32Product[] = [];
   for (let out of outputList) {
@@ -67,7 +69,7 @@ export async function getSamePriceBreakDetails(
 }
 
 export function notQ2VsQ1(minQty: number, compareWithQ1: boolean) {
-  return !(minQty == 2 && compareWithQ1 == true);
+  return !(minQty == 2 && compareWithQ1);
 }
 
 export async function getSecretKey(cronId: string, contextVendor: string) {
@@ -87,7 +89,7 @@ export async function getSecretKey(cronId: string, contextVendor: string) {
 export async function isOverrideEnabledForProduct(
   override_bulk_update: boolean,
 ): Promise<boolean> {
-  if (override_bulk_update == true) {
+  if (override_bulk_update) {
     const globalConfig = await dbHelper.GetGlobalConfig();
     if (globalConfig && globalConfig.override_all) {
       return JSON.parse(globalConfig.override_all);
