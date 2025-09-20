@@ -192,7 +192,7 @@ export async function repriceProduct(
 
   let isNcForBuyBoxApplied = false;
   //Apply NC Buy Box
-  if (productItem.applyNcForBuyBox && productItem.applyNcForBuyBox === true) {
+  if (productItem.applyNcForBuyBox && productItem.applyNcForBuyBox) {
     if (
       repriceResult!.listOfRepriceDetails &&
       repriceResult!.listOfRepriceDetails.length > 0
@@ -201,7 +201,7 @@ export async function repriceProduct(
       copiedRepriceResult!.listOfRepriceDetails = [];
       for (const $eval of repriceResult!.listOfRepriceDetails) {
         const isFloorReached = await getIsFloorReached($eval);
-        if (isFloorReached === true) {
+        if (isFloorReached) {
           const contextPriceBreak = ownProduct.priceBreaks.find(
             (x: any) => x.minQty == $eval.minQty,
           );
@@ -227,7 +227,7 @@ export async function repriceProduct(
       const isFloorReached = await getIsFloorReached(
         repriceResult!.repriceDetails,
       );
-      if (isFloorReached === true) {
+      if (isFloorReached) {
         repriceResult = await repriceHelperNc.Reprice(
           ownProduct,
           output,
@@ -244,9 +244,10 @@ export async function repriceProduct(
   const isOverrideEnabled = await isOverrideEnabledForProduct(
     productItem.override_bulk_update,
   );
-  const isNcToBeApplied =
-    isNcForBuyBoxApplied === true ? true : productItem.is_nc_needed;
-  if (productItem.repricingRule != null && isOverrideEnabled === false) {
+  const isNcToBeApplied = isNcForBuyBoxApplied
+    ? true
+    : productItem.is_nc_needed;
+  if (productItem.repricingRule != null && isOverrideEnabled) {
     repriceResult = await Rule.ApplyRule(
       repriceResult!,
       productItem.repricingRule,
@@ -255,7 +256,7 @@ export async function repriceProduct(
     );
   }
 
-  if (isOverrideEnabled === true) {
+  if (isOverrideEnabled) {
     repriceResult = await Rule.ApplyRule(
       repriceResult!,
       productItem.override_bulk_rule,
@@ -274,7 +275,7 @@ export async function repriceProduct(
   repriceResult = await Rule.ApplyMultiPriceBreakRule(repriceResult);
 
   //Apply Beat Q Price(MinQty #1) Rule
-  if (productItem.beatQPrice != null && productItem.beatQPrice === true) {
+  if (productItem.beatQPrice != null && productItem.beatQPrice) {
     repriceResult = await Rule.ApplyBeatQPriceRule(repriceResult);
   }
 
@@ -290,12 +291,12 @@ export async function repriceProduct(
   }
 
   // Apply Buy Box Logic post all execution
-  if (productItem.applyBuyBoxLogic && productItem.applyBuyBoxLogic === true) {
+  if (productItem.applyBuyBoxLogic && productItem.applyBuyBoxLogic) {
     repriceResult = await Rule.ApplyBuyBoxRule(repriceResult, result);
   }
 
   //Apply Keep Position Logic
-  if (productItem.keepPosition && productItem.keepPosition === true) {
+  if (productItem.keepPosition && productItem.keepPosition) {
     repriceResult = await Rule.ApplyKeepPositionLogic(
       repriceResult,
       result,
@@ -305,9 +306,9 @@ export async function repriceProduct(
 
   //Apply Suppress_Price_Break_For_One Rule
   if (
-    isOverrideEnabled === true ||
+    isOverrideEnabled ||
     (productItem.suppressPriceBreakForOne != null &&
-      productItem.suppressPriceBreakForOne === true)
+      productItem.suppressPriceBreakForOne)
   ) {
     repriceResult = await Rule.ApplySuppressPriceBreakRule(
       repriceResult,
@@ -353,6 +354,30 @@ export async function repriceProduct(
   // Append $NEW for New Price Break Activation
   repriceResult = await Rule.AppendNewPriceBreakActivation(repriceResult);
 
+  //Apply Shipping BuyBox Rule
+  if (
+    productItem.getBBShipping &&
+    repriceResult!.listOfRepriceDetails.length === 0
+  ) {
+    repriceResult = await buyBoxHelper.parseShippingBuyBox(
+      repriceResult,
+      result,
+      productItem,
+    );
+  }
+
+  //Apply Badge BuyBox Rule
+  if (
+    productItem.getBBBadge &&
+    repriceResult!.listOfRepriceDetails.length === 0
+  ) {
+    repriceResult = await buyBoxHelper.parseBadgeBuyBox(
+      repriceResult,
+      result,
+      productItem,
+    );
+  }
+
   //Last Reprice Check for Identical Sister Price
   repriceResult = await Rule.ApplySisterComparisonCheck(
     repriceResult,
@@ -360,19 +385,31 @@ export async function repriceProduct(
     productItem,
   );
 
+  // Align IsRepriced Field Based on Price Suggestion
+  repriceResult = await Rule.AlignIsRepriced(repriceResult);
+
   //Update TriggeredByVendor
   await mySqlHelper.UpdateTriggeredByVendor(repriceResult, contextVendor, mpid);
 
   // Update History
   const historyIdentifier = await HistoryHelper.Execute(
     mpid,
-    repriceResult,
+    repriceResult!,
     output,
     isNcToBeApplied,
     contextVendor,
     productItem.contextCronName,
   );
-  output = productItem.scrapeOn === true ? output : [];
+
+  //Update Reprice Result Status
+  const repriceResultStatus = await ResultParser.Parse(repriceResult);
+  await mySqlHelper.UpdateRepriceResultStatus(
+    repriceResultStatus,
+    mpid,
+    contextVendor,
+  );
+
+  output = productItem.scrapeOn ? output : [];
 
   let outputResponse = new RepriceAsyncResponse(repriceResult!, output);
 
@@ -421,7 +458,7 @@ export async function repriceProduct(
         productItem.cronName,
       );
 
-      if (isDev === false && priceChangeAllowed) {
+      if (!isDev && priceChangeAllowed) {
         priceUpdatedResponse = await axiosHelper.postAsync(
           priceUpdatedRequest,
           priceUpdateUrl!,
@@ -457,7 +494,7 @@ export async function repriceProduct(
         }
       });
       if (priceUpdatedRequest.payload.priceList.length > 0) {
-        if (isDev === false && priceChangeAllowed) {
+        if (!isDev && priceChangeAllowed) {
           priceUpdatedResponse = await axiosHelper.postAsync(
             priceUpdatedRequest,
             priceUpdateUrl!,
@@ -491,7 +528,7 @@ export async function repriceProduct(
       ) {
         if (
           outputResponse.repriceData &&
-          outputResponse.repriceData.isMultiplePriceBreakAvailable === true &&
+          outputResponse.repriceData.isMultiplePriceBreakAvailable &&
           outputResponse.repriceData.listOfRepriceDetails
         ) {
           outputResponse.repriceData.listOfRepriceDetails.forEach(
@@ -504,7 +541,7 @@ export async function repriceProduct(
           );
         } else if (
           outputResponse.repriceData &&
-          outputResponse.repriceData.isMultiplePriceBreakAvailable === false &&
+          !outputResponse.repriceData.isMultiplePriceBreakAvailable &&
           outputResponse.repriceData.repriceDetails
         ) {
           outputResponse.repriceData.repriceDetails.explained = `${outputResponse.repriceData.repriceDetails.explained}:FAILED(ERROR:${JSON.stringify(priceUpdatedResponse.data.message)})`;
@@ -515,7 +552,7 @@ export async function repriceProduct(
         // Update $UP or $DOWN if Price Update is Successful.
         if (
           outputResponse.repriceData &&
-          outputResponse.repriceData.isMultiplePriceBreakAvailable == true &&
+          outputResponse.repriceData.isMultiplePriceBreakAvailable &&
           outputResponse.repriceData.listOfRepriceDetails
         ) {
           for (let $lp of outputResponse.repriceData.listOfRepriceDetails) {
@@ -526,7 +563,7 @@ export async function repriceProduct(
           }
         } else if (
           outputResponse.repriceData &&
-          outputResponse.repriceData.isMultiplePriceBreakAvailable == false &&
+          !outputResponse.repriceData.isMultiplePriceBreakAvailable &&
           outputResponse.repriceData.repriceDetails
         ) {
           if (

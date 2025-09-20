@@ -105,11 +105,11 @@ export const SwitchProxy = async (): Promise<void> => {
         if (payloadForEmail && payloadForEmail.length > 0) {
           const payloadForProxyChange = _.filter(
             payloadForEmail,
-            (p) => p.thresholdReached == false,
+            (p) => !p.thresholdReached,
           );
           const payloadForThresholdReached = _.filter(
             payloadForEmail,
-            (p) => p.thresholdReached == true,
+            (p) => p.thresholdReached,
           );
 
           if (payloadForProxyChange && payloadForProxyChange.length > 0) {
