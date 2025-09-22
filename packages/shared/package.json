@@ -15,7 +15,7 @@
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "clean-windows": "rimraf dist",
-    "prebuild": "npm run clean"
+    "prebuild": "npm run clean-windows"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

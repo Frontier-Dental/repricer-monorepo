@@ -84,9 +84,9 @@ export const envSchema = z.object({
   SQL_HOSTNAME: z.string(),
   SQL_USERNAME: z.string(),
   SQL_PASSWORD: z.string(),
-  SQL_PORT: z.coerce.number(),
+  SQL_PORT: z.coerce.number().default(25060),
   SQL_SCRAPEPRODUCTLIST: z.string().default("table_scrapeProductList"),
-  SQL_DATABASE: z.string(),
+  SQL_DATABASE: z.string().default("repricerDb"),
   SQL_SP_GETRUN_INFO: z.string().default("sp_GetLatestRunInfoByLimit"),
   SQL_SP_GETRUN_INFO_BY_CRON: z
     .string()
@@ -248,6 +248,10 @@ export const envSchema = z.object({
     .default("http://159.89.121.57:3000/monitor/get_422_product"),
   _422_ERROR_MAX_COUNT: z.coerce.number().default(100),
   _422_ERROR_ELIGIBLE_MAX_COUNT: z.coerce.number().default(500),
+  CACHE_HOST_URL: z.string(),
+  CACHE_USERNAME: z.string(),
+  CACHE_PASSWORD: z.string(),
+  CACHE_PORT: z.coerce.number(),
 });
 
 export function validateConfig() {

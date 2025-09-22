@@ -1,9 +1,11 @@
 import { MongoClient, Db, ObjectId } from "mongodb";
 import _ from "lodash";
-import * as cacheHelper from "../utility/cache-helper";
-import cacheKeyEnum from "../../resources/cacheKeyName.json";
+// import * as cacheHelper from "../utility/cache-helper";
+// import cacheKeyEnum from "../../resources/cacheKeyName.json";
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
+import { CacheClient, GetCacheClientOptions } from "../client/cacheClient";
+import { CacheKey } from "@repricer-monorepo/shared";
 
 // --- MongoDB Singleton Helper ---
 let mongoClient: MongoClient | null = null;
@@ -306,14 +308,24 @@ export const PushManualCronLogAsync = async (payload: any) => {
 };
 
 export const GetCronSettingsList = async () => {
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
+  const cronSettingsList = await cacheClient.get<any>(
+    CacheKey.CRON_SETTINGS_LIST,
+  );
+  if (cronSettingsList != null) return cronSettingsList;
   const dbo = await getMongoDb();
-  return dbo
+  let dbResponse = await dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .find()
     .toArray();
+  if (dbResponse != null) {
+    await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, dbResponse);
+  }
+  return dbResponse;
 };
 
 export const UpdateCronSettingsList = async (payload: any, req: any) => {
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   for (const element of payload) {
@@ -337,14 +349,19 @@ export const UpdateCronSettingsList = async (payload: any, req: any) => {
         },
       );
   }
+  await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
+
   return mongoResult;
 };
 
 export const InsertCronSettings = async (payload: any) => {
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
   const dbo = await getMongoDb();
   const { insertedId } = await dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .insertOne(payload);
+  await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
+
   return insertedId.toString();
 };
 
@@ -354,6 +371,9 @@ export const ToggleCronStatus = async (
   req: any,
 ) => {
   const dbo = await getMongoDb();
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
+  await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
+
   return dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .findOneAndUpdate(
@@ -453,14 +473,26 @@ export const GetContextErrorItemsCount = async (_activeStatus: any) => {
 };
 
 export const GetConfigurations = async (activeOnly = true) => {
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
+  const configurationResult = await cacheClient.get<any>(CacheKey.GLOBAL_INFO);
+  if (configurationResult != null) return configurationResult;
   const dbo = await getMongoDb();
   const query = activeOnly ? { active: true } : {};
-  return dbo.collection(applicationConfig.IP_CONFIG).find(query).toArray();
+  const dbResult = await dbo
+    .collection(applicationConfig.IP_CONFIG)
+    .find(query)
+    .toArray();
+  if (dbResult != null) await cacheClient.set(CacheKey.GLOBAL_INFO, dbResult);
+
+  return dbResult;
 };
 
 export const UpdateConfiguration = async (payload: any, req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
+  await cacheClient.delete(CacheKey.GLOBAL_INFO);
+
   for (const element of payload) {
     mongoResult = await dbo
       .collection(applicationConfig.IP_CONFIG)
@@ -1015,20 +1047,27 @@ export const UpdateExecutionPriority = async (
 };
 
 export async function GetEnvSettings() {
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
+  const envSettingsResult = await cacheClient.get(CacheKey.ENV_SETTINGS);
+  if (envSettingsResult != null) return envSettingsResult;
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo.collection(applicationConfig.ENV_SETTINGS!).findOne();
+  if (mongoResult != null)
+    await cacheClient.set(CacheKey.ENV_SETTINGS, mongoResult);
+
   return mongoResult;
 }
 
 export const UpsertEnvSettings = async (payload: any) => {
   let mongoResult: any = null;
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
   const dbo = await getMongoDb();
   mongoResult = await dbo
     .collection(applicationConfig.ENV_SETTINGS!)
     .findOneAndUpdate({}, payload);
-  cacheHelper.DeleteExternalCache(cacheKeyEnum.EXTERNAL_GLOBAL_INFO);
-  cacheHelper.DeleteExternalCache(cacheKeyEnum.EXTERNAL_ENV_DELAY);
+  await cacheClient.delete(CacheKey.ENV_SETTINGS);
+
   return mongoResult;
 };
 
@@ -1044,17 +1083,17 @@ export const GetLogsBasedOnQuery = async (query: any) => {
 
 export const GetFilteredCrons = async () => {
   let mongoResult: any = null;
-  const cacheKey = cacheKeyEnum.FILTER_CRON_SETTINGS_LIST;
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
+  const filterCronDetails = await cacheClient.get(CacheKey.FILTER_CRON_DETAILS);
+  if (filterCronDetails != null) return filterCronDetails;
   const dbo = await getMongoDb();
-  if ((await cacheHelper.Has(cacheKey)) == true) {
-    mongoResult = await cacheHelper.Get(cacheKey);
-  } else {
-    mongoResult = await dbo
-      .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME!)
-      .find()
-      .toArray();
-    cacheHelper.Set(cacheKey, mongoResult);
-  }
+  mongoResult = await dbo
+    .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME!)
+    .find()
+    .toArray();
+  if (mongoResult != null)
+    await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, mongoResult);
+
   return mongoResult;
 };
 
@@ -1064,8 +1103,9 @@ export const UpdateFilterCronDetails = async (cronId: any, payload: any) => {
   mongoResult = await dbo
     .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME!)
     .findOneAndUpdate({ cronId: cronId }, payload);
-  cacheHelper.DeleteCacheByKey(cacheKeyEnum.FILTER_CRON_SETTINGS_LIST);
-  cacheHelper.DeleteExternalCache(cacheKeyEnum.EXTERNAL_FILTER_CRON_DETAILS);
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
+  await cacheClient.delete(CacheKey.FILTER_CRON_DETAILS);
+
   return mongoResult;
 };
 
@@ -1075,25 +1115,23 @@ export const UpdateSlowCronDetails = async (cronId: any, payload: any) => {
   mongoResult = await dbo
     .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME!)
     .findOneAndUpdate({ CronId: cronId }, payload);
-  cacheHelper.DeleteCacheByKey(cacheKeyEnum.SLOW_CRON_SETTINGS_LIST);
-  cacheHelper.DeleteExternalCache(cacheKeyEnum.EXTERNAL_SLOW_CRON_DETAILS);
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
+  await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
   return mongoResult;
 };
 
 export const GetSlowCronDetails = async () => {
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
+  const slowCronDetails = await cacheClient.get(CacheKey.SLOW_CRON_DETAILS);
+  if (slowCronDetails != null) return slowCronDetails;
   let mongoResult: any = null;
-  cacheHelper.DeleteCacheByKey(cacheKeyEnum.SLOW_CRON_SETTINGS_LIST);
-  const cacheKey = cacheKeyEnum.SLOW_CRON_SETTINGS_LIST;
   const dbo = await getMongoDb();
-  if ((await cacheHelper.Has(cacheKey)) == true) {
-    mongoResult = await cacheHelper.Get(cacheKey);
-  } else {
-    mongoResult = await dbo
-      .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME!)
-      .find()
-      .toArray();
-    cacheHelper.Set(cacheKey, mongoResult);
-  }
+  mongoResult = await dbo
+    .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME!)
+    .find()
+    .toArray();
+  if (mongoResult != null)
+    await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, mongoResult);
   return mongoResult;
 };
 
@@ -1120,8 +1158,8 @@ export const updateSlowCron = async (payload: any, req: any) => {
         },
       );
   }
-  cacheHelper.DeleteCacheByKey(cacheKeyEnum.SLOW_CRON_SETTINGS_LIST);
-  cacheHelper.DeleteExternalCache(cacheKeyEnum.EXTERNAL_SLOW_CRON_DETAILS);
+  const cacheClient = new CacheClient(GetCacheClientOptions(applicationConfig));
+  await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
   return mongoResult;
 };
 
@@ -1227,18 +1265,11 @@ export const InsertOrUpdateScrapeOnlyProduct = async (payload: any) => {
 
 export const GetScrapeCrons = async () => {
   let mongoResult: any = null;
-  const cacheKey = cacheKeyEnum.SCRAPE_CRON_SETTINGS_LIST;
-  // if (await cacheHelper.Has(cacheKey) == true) {
-  if (false) {
-    mongoResult = await cacheHelper.Get(cacheKey);
-  } else {
-    const dbo = await getMongoDb();
-    mongoResult = await dbo
-      .collection(applicationConfig.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
-      .find()
-      .toArray();
-    cacheHelper.Set(cacheKey, mongoResult);
-  }
+  const dbo = await getMongoDb();
+  mongoResult = await dbo
+    .collection(applicationConfig.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
+    .find()
+    .toArray();
   return mongoResult;
 };
 
@@ -1248,7 +1279,6 @@ export const UpdateScrapeCronDetails = async (cronId: any, payload: any) => {
   mongoResult = await dbo
     .collection(applicationConfig.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
     .findOneAndUpdate({ CronId: cronId }, payload);
-  cacheHelper.DeleteCacheByKey(cacheKeyEnum.SCRAPE_CRON_SETTINGS_LIST);
   return mongoResult;
 };
 
@@ -1275,7 +1305,6 @@ export const updateScrapeCron = async (payload: any, req: any) => {
         },
       );
   }
-  cacheHelper.DeleteCacheByKey(cacheKeyEnum.SCRAPE_CRON_SETTINGS_LIST);
   return mongoResult;
 };
 
