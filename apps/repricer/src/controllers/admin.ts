@@ -24,8 +24,8 @@ export async function getAdminSettings(req: Request, res: Response) {
     });
   }
   let cacheModel: any = [];
-  if (cacheResults && cacheResults.status == 200) {
-    cacheModel = cacheResults.data;
+  if (cacheResults != null) {
+    cacheModel = cacheResults;
   }
   let adminModel: any = {};
   adminModel.items = cronResults;

@@ -1,3 +1,8 @@
+/**
+ * IGNORED AND WILL BE DECOMMISSIONED
+ *
+ */
+
 import _ from "lodash";
 import express, { Request, Response } from "express";
 import * as _codes from "http-status-codes";
@@ -5,7 +10,7 @@ import * as _codes from "http-status-codes";
 import * as uuid from "uuid";
 import { apiMapping } from "../resources/api-mapping";
 import * as axiosHelper from "../utility/axios-helper";
-import * as mongoHelper from "../utility/mongo/mongo-helper";
+// import * as mongoHelper from "../utility/mongo/mongo-helper";
 import { applicationConfig } from "../utility/config";
 
 export const masterDataController = express.Router();
@@ -55,21 +60,21 @@ async function fetchAndLoad(mpid: string) {
     aggregatorResponse.data &&
     aggregatorResponse.data.length > 0
   ) {
-    const existingDetails = await mongoHelper.GetVendorDetails_ManagedService({
-      mpId: mpid,
-    });
+    const existingDetails: any[] = []; //await mongoHelper.GetVendorDetails_ManagedService({
+    //   mpId: mpid,
+    // });
     if (!existingDetails || existingDetails.length == 0) {
-      await mongoHelper.load_vendor_data({
-        mpId: mpid,
-        result: aggregatorResponse,
-        lastUpdated: new Date(),
-      });
-    } else {
-      await mongoHelper.update_vendor_data({
-        mpId: mpid,
-        result: aggregatorResponse,
-        lastUpdated: new Date(),
-      });
+      //   await mongoHelper.load_vendor_data({
+      //     mpId: mpid,
+      //     result: aggregatorResponse,
+      //     lastUpdated: new Date(),
+      //   });
+      // } else {
+      //   await mongoHelper.update_vendor_data({
+      //     mpId: mpid,
+      //     result: aggregatorResponse,
+      //     lastUpdated: new Date(),
+      //   });
     }
   }
 }
