@@ -11,7 +11,7 @@ services:
     run_command: npm start
     http_port: 3000
     instance_count: 1
-    instance_size_slug: basic-xs
+    instance_size_slug: basic-l
     source_dir: .
     health_check:
       http_path: /health
@@ -26,7 +26,7 @@ services:
       branch: main
       deploy_on_push: true
     instance_count: 1
-    instance_size_slug: basic-xxs
+    instance_size_slug: basic-xl
     source_dir: .
     health_check:
       http_path: /health
