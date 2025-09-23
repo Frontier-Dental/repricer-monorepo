@@ -1,5 +1,111 @@
-import Redis from "ioredis";
-import { readFileSync } from "fs";
+// src/utils/redisClient.ts
+import { createClient, RedisClientType } from "redis";
+
+class CacheClient {
+  private static instance: CacheClient;
+  private client: RedisClientType;
+
+  private constructor(option: CacheClientOptions | null = null) {
+    this.client = createClient({
+      socket: {
+        host: option?.host || "localhost",
+        port: Number(option?.port) || 25061,
+        tls: option?.useTLS || true,
+        connectTimeout: 20000, // increase timeout (20s)
+        reconnectStrategy: (retries) => {
+          if (retries > 2) {
+            console.error("❌ Too many Redis reconnect attempts");
+            return new Error("Redis reconnect failed");
+          }
+          console.warn(`⚡ Redis reconnecting... attempt #${retries}`);
+          return Math.min(retries * 500, 5000); // exponential backoff
+        },
+      },
+      username: option?.username || undefined, // optional, for ACL-based auth
+      password: option?.password || undefined,
+    });
+
+    this.client.on("error", (err) => {
+      console.error("❌ Redis Client Error:", err);
+    });
+
+    this.client.connect().then(() => {
+      console.info("✅ Redis connected successfully");
+    });
+  }
+
+  public static getInstance(
+    option: CacheClientOptions | null = null,
+  ): CacheClient {
+    if (!CacheClient.instance) {
+      CacheClient.instance = new CacheClient(option);
+    }
+    return CacheClient.instance;
+  }
+
+  public async set<T>(
+    key: string,
+    value: T,
+    ttlInSeconds?: number,
+  ): Promise<void> {
+    const serialized = JSON.stringify(value);
+    if (ttlInSeconds) {
+      await this.client.setEx(key, ttlInSeconds, serialized);
+    } else {
+      await this.client.set(key, serialized);
+    }
+  }
+
+  public async get<T>(key: string): Promise<T | null> {
+    const data = await this.client.get(key);
+    return data ? (JSON.parse(data) as T) : null;
+  }
+
+  public async delete(key: string): Promise<number> {
+    return this.client.del(key);
+  }
+
+  public async exists(key: string): Promise<boolean> {
+    const result = await this.client.exists(key);
+    return result === 1;
+  }
+
+  public async flushAll(): Promise<void> {
+    await this.client.flushAll();
+  }
+
+  // src/utils/redisClient.ts (add inside RedisClient class)
+
+  /**
+   * Get all keys (optionally with values).
+   */
+  public async getAllKeys(
+    withValues = false,
+  ): Promise<string[] | Record<string, unknown>> {
+    const keys: string[] = [];
+    let cursor = "0"; // must be string, not number
+
+    do {
+      const result = await this.client.scan(cursor, { COUNT: 100 });
+      cursor = result.cursor; // remains a string
+      keys.push(...result.keys);
+    } while (cursor !== "0");
+
+    if (!withValues) {
+      return keys;
+    }
+
+    const values: Record<string, unknown> = {};
+    for (const key of keys) {
+      const val = await this.client.get(key);
+      values[key] = val ? JSON.parse(val) : null;
+    }
+
+    return values;
+  }
+}
+
+export default CacheClient;
 
 interface CacheClientOptions {
   host: string;
@@ -8,69 +114,6 @@ interface CacheClientOptions {
   password?: string;
   useTLS?: boolean;
   caCertPath?: string;
-}
-
-export class CacheClient {
-  private readonly options: CacheClientOptions;
-
-  constructor(options: CacheClientOptions) {
-    this.options = options;
-  }
-
-  private createClient(): Redis {
-    const tlsConfig = this.options.useTLS
-      ? {
-          rejectUnauthorized: true,
-          ...(this.options.caCertPath && {
-            ca: readFileSync(this.options.caCertPath),
-          }),
-        }
-      : undefined;
-    const client = new Redis({
-      host: this.options.host,
-      port: this.options.port,
-      username: this.options.username,
-      password: this.options.password,
-      tls: tlsConfig,
-      maxRetriesPerRequest: 0, // or 0 to disable retries entirely
-      retryStrategy: (times) => Math.min(times * 100, 2000),
-    });
-    return client;
-  }
-
-  async set(key: string, value: unknown): Promise<"OK"> {
-    const client = this.createClient();
-    try {
-      const serialized =
-        typeof value === "string" ? value : JSON.stringify(value);
-      return await client.set(key, serialized);
-    } finally {
-      await client.quit();
-    }
-  }
-
-  async get<T = string>(key: string): Promise<T | null> {
-    const client = this.createClient();
-    try {
-      const raw = await client.get(key);
-      if (raw === null) return null;
-      return JSON.parse(raw) as T;
-    } catch (err) {
-      console.error(`Get failed for key "${key}":`, err);
-      return null;
-    } finally {
-      await client.quit();
-    }
-  }
-
-  async delete(key: string): Promise<number> {
-    const client = this.createClient();
-    try {
-      return await client.del(key);
-    } finally {
-      await client.quit();
-    }
-  }
 }
 
 export function GetCacheClientOptions(

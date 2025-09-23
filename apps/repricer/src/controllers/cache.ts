@@ -2,13 +2,14 @@ import axios from "axios";
 import * as cacheHelper from "../utility/cache-helper";
 import { Request, Response } from "express";
 import { applicationConfig } from "../utility/config";
+import CacheClient from "../client/cacheClient";
+import { GetCacheClientOptions } from "../client/cacheClient";
 
-export async function get_all_cache(req: Request, res: Response): Promise<any> {
-  const cacheResponse: any = await GetAllCacheItems();
-  return res.json({
-    status: true,
-    message: cacheResponse.data,
-  });
+export async function get_all_cache(): Promise<any> {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  return await cacheClient.getAllKeys(true);
 }
 
 export async function get_cache_item(
@@ -16,15 +17,14 @@ export async function get_cache_item(
   res: Response,
 ): Promise<any> {
   const _key = req.params.key;
-  const getCacheItemUrl = `${applicationConfig.REPRICER_API_BASE_URL}/cache/getCache/${_key}`;
-  const config = {
-    method: "get",
-    url: getCacheItemUrl,
-  };
-  const getResponse = await axios(config);
+  console.info(`Fetching cache item for key: ${_key}`);
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const value = await cacheClient.get<any>(_key);
   return res.json({
     status: true,
-    message: getResponse.data,
+    message: value,
   });
 }
 
@@ -33,15 +33,14 @@ export async function delete_cache_item(
   res: Response,
 ): Promise<any> {
   const _key = req.params.key;
-  const deleteCacheUrl = `${applicationConfig.REPRICER_API_BASE_URL}/cache/flush/${_key}`;
-  const config = {
-    method: "get",
-    url: deleteCacheUrl,
-  };
-  const getResponse = await axios(config);
+  console.info(`Deleting cache item for key: ${_key}`);
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const deleteCount = await cacheClient.delete(_key);
   return res.json({
     status: true,
-    message: getResponse.data,
+    message: `Deleted ${deleteCount} item(s) with key ${_key}`,
   });
 }
 
@@ -49,31 +48,30 @@ export async function flush_all_cache(
   req: Request,
   res: Response,
 ): Promise<any> {
-  const flushAllCacheUrl = `${applicationConfig.REPRICER_API_BASE_URL}/cache/flush`;
-  const config = {
-    method: "get",
-    url: flushAllCacheUrl,
-  };
-  const getResponse = await axios(config);
+  console.info("Flushing all cache items");
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  await cacheClient.flushAll();
   return res.json({
     status: true,
-    message: getResponse.data,
+    message: "All cache flushed successfully",
   });
 }
 
 export async function GetAllCacheItems(): Promise<any> {
-  const getAllCacheUrl = `${applicationConfig.REPRICER_API_BASE_URL}/cache/getall/`;
-  const config = {
-    method: "get",
-    url: getAllCacheUrl,
-  };
-  return await axios(config);
+  console.info("Fetching all cache items");
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  return await cacheClient.getAllKeys(false);
 }
 
 export async function ClearRepricerCache(
   req: Request,
   res: Response,
 ): Promise<any> {
+  console.info("Clearing all repricer cache items");
   await cacheHelper.FlushCache();
   return res.json({
     status: true,

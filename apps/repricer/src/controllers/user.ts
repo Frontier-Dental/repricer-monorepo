@@ -8,6 +8,11 @@ import { applicationConfig } from "../utility/config";
 export async function homePageHandler(req: Request, res: Response) {
   const isDowntimeOn = applicationConfig.DOWNTIME_ON;
   if (applicationConfig.AUTHENTICATION_DISABLED) {
+    (req as any).session.users_id = {
+      id: "dummySessionId",
+      userName: "dummyUserName",
+      userRole: "user", // Default role for now
+    };
     return res.redirect("/productV2/show_all");
   }
   if (isDowntimeOn) {
