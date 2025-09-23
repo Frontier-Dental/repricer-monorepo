@@ -186,7 +186,7 @@ const envSchema = z.object({
     .toLowerCase()
     .transform(JSON.parse as any)
     .pipe(z.boolean())
-    .default(false),
+    .default(true),
   SCRAPE_ONLY_LOGGING: z
     .string()
     .toLowerCase()
