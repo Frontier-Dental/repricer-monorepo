@@ -4,7 +4,7 @@ import * as _ from "lodash";
 import { applicationConfig } from "../../utility/config";
 import * as keyGenHelper from "../../utility/job-id-helper";
 import * as dbHelper from "../../utility/mongo/db-helper";
-import * as mongoHelper from "../../utility/mongo/mongo-helper";
+// import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import { startAllCronAsIs, stopAllMainCrons } from "./shared";
 
@@ -25,7 +25,7 @@ export async function startOverrideHandler(
   //Call stopAllCronV3()
   stopAllMainCrons();
   // Get List of Products with override_bulk_update == true
-  let listOfOverrideProducts = await mongoHelper.GetListOfOverrideProducts();
+  let listOfOverrideProducts = await dbHelper.GetListOfOverrideProducts();
   //Do logic same as Cron Method and Call Reprice V3
   if (listOfOverrideProducts && listOfOverrideProducts.length > 0) {
     const keyGen = keyGenHelper.Generate();

@@ -4,11 +4,18 @@ import { GlobalConfig } from "../../types/global-config";
 import { applicationConfig } from "../config";
 import { getMongoDb } from "./index";
 import { CronSettingsDetail, ScrapeCronDetail } from "./types";
+import { GetCacheClientOptions } from "../../client/cacheClient";
+import CacheClient from "../../client/cacheClient";
+import { CacheKey } from "@repricer-monorepo/shared";
 
 export async function UpdateProxyPriority(payload: {
   CronId: string;
   ProxyProvider: number;
 }) {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
   const dbo = await getMongoDb();
   const updateValue = {
     $set: {
@@ -48,76 +55,39 @@ export async function GetProxyConfigByPriority(proxyPriority: any) {
   return dbo.collection(applicationConfig.IP_CONFIG).find(query).toArray();
 }
 
-export async function GetActiveProductList(cronId: any, isSlowCron = false) {
-  let query = {
-    $and: [
-      {
-        $or: [
-          { "tradentDetails.activated": true },
-          { "mvpDetails.activated": true },
-          { "frontierDetails.activated": true },
-        ],
-      },
-      {
-        $or: [
-          { "tradentDetails.cronId": cronId },
-          { "mvpDetails.cronId": cronId },
-          { "frontierDetails.cronId": cronId },
-        ],
-      },
-      {
-        $or: [
-          { isSlowActivated: false },
-          { isSlowActivated: { $exists: false } },
-          { isSlowActivated: null },
-        ],
-      },
-    ],
-  };
-
-  if (isSlowCron == true) {
-    query = {
-      $and: [
-        {
-          $or: [
-            { "tradentDetails.activated": true },
-            { "mvpDetails.activated": true },
-            { "frontierDetails.activated": true },
-          ],
-        },
-        {
-          $or: [
-            { "tradentDetails.slowCronId": cronId },
-            { "mvpDetails.slowCronId": cronId },
-            { "frontierDetails.slowCronId": cronId },
-          ] as any,
-        },
-        { isSlowActivated: true } as any,
-      ],
-    };
-  }
-
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
-    .find(query)
-    .toArray();
-}
-
 export async function GetGlobalConfig() {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const envSettingsResult = await cacheClient.get<GlobalConfig>(
+    CacheKey.ENV_SETTINGS,
+  );
+  if (envSettingsResult != null) return envSettingsResult;
   const dbo = await getMongoDb();
   const mongoResult = await dbo
     .collection(applicationConfig.ENV_SETTINGS)
     .findOne();
+  if (mongoResult != null)
+    await cacheClient.set(CacheKey.ENV_SETTINGS, mongoResult);
   return mongoResult as GlobalConfig;
 }
 
 export async function GetCronSettings(): Promise<CronSettingsDetail[]> {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const cronSettingsList = await cacheClient.get<any>(
+    CacheKey.CRON_SETTINGS_LIST,
+  );
+  if (cronSettingsList != null) return cronSettingsList;
   const dbo = await getMongoDb();
   const result = await dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .find()
     .toArray();
+  if (result != null) {
+    await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, result);
+  }
   return result as CronSettingsDetail[];
 }
 
@@ -150,6 +120,11 @@ export async function UpdateCronStatusAsync(payload: any) {
 }
 
 export async function GetDelay() {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const envSettingsResult = await cacheClient.get<any>(CacheKey.ENV_SETTINGS);
+  if (envSettingsResult != null) return envSettingsResult.delay;
   const dbo = await getMongoDb();
   const dbResponse = await dbo
     .collection(applicationConfig.ENV_SETTINGS)
@@ -331,11 +306,21 @@ export async function UpdateProductAsync(
 }
 
 export async function GetCronSettingsList(): Promise<CronSettingsDetail[]> {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const cronSettingsList = await cacheClient.get<any>(
+    CacheKey.CRON_SETTINGS_LIST,
+  );
+  if (cronSettingsList != null) return cronSettingsList;
   const dbo = await getMongoDb();
   const result = await dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .find()
     .toArray();
+  if (result != null) {
+    await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, result);
+  }
   return result as CronSettingsDetail[];
 }
 
@@ -458,6 +443,10 @@ export async function UpdateCronDetailsByCronId(
   cronId: string,
   _status: boolean,
 ) {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
   const dbo = await getMongoDb();
   return dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
@@ -472,30 +461,12 @@ export async function UpdateCronDetailsByCronId(
     );
 }
 
-export async function GetListOfOverrideProducts() {
+export const GetListOfOverrideProducts = async (): Promise<any> => {
   const query = {
     $and: [
-      {
-        $or: [
-          { "tradentDetails.activated": true },
-          { "mvpDetails.activated": true },
-          { "frontierDetails.activated": true },
-        ],
-      },
-      {
-        $or: [
-          { "tradentDetails.override_bulk_update": true },
-          { "mvpDetails.override_bulk_update": true },
-          { "frontierDetails.override_bulk_update": true },
-        ],
-      },
-      {
-        $or: [
-          { "tradentDetails.scrapeOn": true },
-          { "mvpDetails.scrapeOn": true },
-          { "frontierDetails.scrapeOn": true },
-        ],
-      },
+      { activated: true },
+      { override_bulk_update: true },
+      { scrapeOn: true },
     ],
   };
   const dbo = await getMongoDb();
@@ -503,7 +474,7 @@ export async function GetListOfOverrideProducts() {
     .collection(applicationConfig.GET_PRICE_LIST_COLLECTION_NAME)
     .find(query)
     .toArray();
-}
+};
 
 export async function ExecuteProductQuery(query: any) {
   const dbo = await getMongoDb();
@@ -565,12 +536,23 @@ export async function GetEligibleContextErrorItems(
 export async function GetFilterCronDetails(
   ignoreCache = false,
 ): Promise<any[]> {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  if (!ignoreCache) {
+    const filterCronDetails = await cacheClient.get<any>(
+      CacheKey.FILTER_CRON_DETAILS,
+    );
+    if (filterCronDetails != null) return filterCronDetails;
+  }
   const dbo = await getMongoDb();
-  return dbo
+  const mongoResult = await dbo
     .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME)
     .find()
     .sort({ _id: 1 })
     .toArray();
+  await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, mongoResult);
+  return mongoResult;
 }
 
 export async function GetFilterCronDetailsByName(_cronName: any) {
@@ -623,12 +605,24 @@ export async function UpdateCronForProductAsync(payload: any) {
 }
 
 export async function GetSlowCronDetails(ignoreCache = false): Promise<any[]> {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  if (!ignoreCache) {
+    const slowCronDetails = await cacheClient.get<any[]>(
+      CacheKey.SLOW_CRON_DETAILS,
+    );
+    if (slowCronDetails != null) return slowCronDetails;
+  }
   const dbo = await getMongoDb();
-  return dbo
+  const mongoResult = await dbo
     .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME)
     .find()
     .sort({ _id: 1 })
     .toArray();
+  if (mongoResult != null)
+    await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, mongoResult);
+  return mongoResult;
 }
 
 export async function GetLinkedCronSettingsByProviderId(
@@ -813,3 +807,51 @@ export async function UpdateScrapeProducts(mpId: any) {
       },
     );
 }
+
+export const GetRotatingProxyUrl = async (): Promise<any> => {
+  const query = {
+    $and: [
+      {
+        proxyProvider: 1,
+      },
+      {
+        ipType: 1,
+      },
+    ],
+  };
+  const dbo = await getMongoDb();
+  const result = await dbo
+    .collection(applicationConfig.IP_CONFIG)
+    .findOne(query);
+  return result?.hostUrl;
+};
+
+export const GetContextErrorItems = async (
+  _activeStatus: any,
+): Promise<any> => {
+  const query = {
+    nextCronTime: {
+      $lte: new Date(),
+    },
+    active: _activeStatus,
+  };
+  const dbo = await getMongoDb();
+  return dbo
+    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
+    .find(query)
+    .toArray();
+};
+
+export const UpdateCronSettings = async (cronId: string): Promise<any> => {
+  const dbo = await getMongoDb();
+  return dbo
+    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
+    .findOneAndUpdate(
+      { CronId: cronId },
+      {
+        $set: {
+          UpdatedTime: new Date(),
+        },
+      },
+    );
+};

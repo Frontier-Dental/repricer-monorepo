@@ -11,7 +11,7 @@ import { Net32Product, Net32Response } from "../../types/net32";
 import { RepriceProductHttpResponse } from "../../types/reprice-product-http-response";
 import * as axiosHelper from "../axios-helper";
 import { applicationConfig } from "../config";
-import * as mongoHelper from "../mongo/db-helper";
+import * as dbHelper from "../mongo/db-helper";
 import * as sqlHelper from "../mysql/mysql-helper";
 import { ProductDetailsListItem } from "../mysql/mySql-mapper";
 import * as requestGenerator from "../request-generator";
@@ -62,7 +62,7 @@ export async function Execute(
     try {
       if (!cronSetting) {
         cronSetting = _.first(
-          await mongoHelper.GetCronSettingsDetailsByName(prod.cronName),
+          await dbHelper.GetCronSettingsDetailsByName(prod.cronName),
         );
       }
       let isProceed = true;
@@ -72,7 +72,7 @@ export async function Execute(
       if (!isProceed) break;
 
       _contextCronStatus.SetProductCount(cronProdCounter);
-      await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
+      await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
       const prioritySequence = await requestGenerator.GetPrioritySequence(
         prod,
         null,
@@ -174,14 +174,14 @@ export async function Execute(
   cronLogs.completionTime = new Date();
   cronLogs.EligibleCount = eligibleCount;
   cronLogs.RepricedProductCount = repricedProductCount;
-  const logInDb = await mongoHelper.PushLogsAsync(cronLogs);
+  const logInDb = await dbHelper.PushLogsAsync(cronLogs);
   if (logInDb) {
     console.log(
       `Successfully logged Cron Logs in DB at ${cronLogs.time} || Id : ${logInDb}`,
     );
   }
   _contextCronStatus.SetStatus("Complete");
-  await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
+  await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
 }
 
 export async function RepriceErrorItem(
@@ -196,7 +196,7 @@ export async function RepriceErrorItem(
     cronId: cronSetting.CronId,
     type: "422Error",
   };
-  const contextErrorDetails = await mongoHelper.GetEligibleContextErrorItems(
+  const contextErrorDetails = await dbHelper.GetEligibleContextErrorItems(
     true,
     details.mpId,
     _contextVendor,
@@ -290,7 +290,7 @@ export async function RepriceErrorItem(
                     "PRICE_UPDATE",
                     contextVendor,
                   );
-                  await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
+                  await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
                   console.log({
                     message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                     obj: JSON.stringify(priceUpdatedItem),
@@ -305,7 +305,7 @@ export async function RepriceErrorItem(
                     "IGNORE",
                     contextVendor,
                   );
-                  await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
+                  await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
                   console.log(`GHOST : ${prod.mpid} - ${contextVendor}`);
                 }
               } else if (
@@ -325,7 +325,7 @@ export async function RepriceErrorItem(
                   "422_ERROR",
                   contextVendor,
                 );
-                await mongoHelper.UpsertErrorItemLog(errorItem);
+                await dbHelper.UpsertErrorItemLog(errorItem);
                 console.log({
                   message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                   obj: JSON.stringify(errorItem),
@@ -349,7 +349,7 @@ export async function RepriceErrorItem(
                   "IGNORE",
                   contextVendor,
                 );
-                await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
+                await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
                 console.log(
                   `ERROR WHILE PRICE UPDATE : ${prod.mpid} - ${contextVendor}`,
                 );
@@ -364,7 +364,7 @@ export async function RepriceErrorItem(
                 `IGNORE`,
                 contextVendor,
               );
-              await mongoHelper.UpsertErrorItemLog(errorItem);
+              await dbHelper.UpsertErrorItemLog(errorItem);
               cronLogs.logs.push([
                 {
                   productId: prod.mpid,
@@ -383,7 +383,7 @@ export async function RepriceErrorItem(
               `IGNORE`,
               contextVendor,
             );
-            await mongoHelper.UpsertErrorItemLog(errorItem);
+            await dbHelper.UpsertErrorItemLog(errorItem);
             cronLogs.logs.push([
               {
                 productId: prod.mpid,
@@ -436,7 +436,7 @@ export async function RepriceErrorItem(
             "IGNORE",
             contextVendor,
           );
-          await mongoHelper.UpsertErrorItemLog(errorItem);
+          await dbHelper.UpsertErrorItemLog(errorItem);
           await sqlHelper.UpdateProductAsync(
             prod,
             isPriceUpdated,
@@ -560,15 +560,15 @@ export async function RepriceErrorItemV2(
       }
     }
     _contextCronStatus.SetProductCount(cronProdCounter);
-    await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
+    await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
     cronProdCounter++;
   }
   if (cronLogs.logs && cronLogs.logs.length > 0) {
     cronLogs.completionTime = new Date();
-    await mongoHelper.Push422LogsAsync(cronLogs);
+    await dbHelper.Push422LogsAsync(cronLogs);
   }
   _contextCronStatus.SetStatus("Complete");
-  await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
+  await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
   cleanActiveProductList(keyGen);
 }
 
@@ -626,7 +626,7 @@ export async function UpdateToMax(
             "PRICE_UPDATE",
             contextVendor,
           );
-          await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
+          await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
           console.log({
             message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
             obj: JSON.stringify(priceUpdatedItem),
@@ -648,7 +648,7 @@ export async function UpdateToMax(
           "422_ERROR",
           contextVendor,
         );
-        await mongoHelper.UpsertErrorItemLog(errorItem);
+        await dbHelper.UpsertErrorItemLog(errorItem);
         console.log({
           message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(errorItem),
@@ -700,12 +700,12 @@ export async function UpdateToMax(
 }
 
 async function initCronStatus(_contextCronStatus: any) {
-  await mongoHelper.InitCronStatusAsync(_contextCronStatus);
+  await dbHelper.InitCronStatusAsync(_contextCronStatus);
 }
 
 async function proceedWithExecution(cronId: string) {
-  let cronSettingDetails = await mongoHelper.GetCronSettingsList();
-  const slowCronDetails = await mongoHelper.GetSlowCronDetails();
+  let cronSettingDetails = await dbHelper.GetCronSettingsList();
+  const slowCronDetails = await dbHelper.GetSlowCronDetails();
   cronSettingDetails = _.concat(cronSettingDetails, slowCronDetails);
   if (cronSettingDetails) {
     const contextCron = cronSettingDetails.find((x: any) => x.CronId == cronId);
@@ -782,7 +782,7 @@ async function repriceSingleVendor(
           "PRICE_UPDATE",
           contextVendor,
         );
-        await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
+        await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
         console.log({
           message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(priceUpdatedItem),
@@ -802,7 +802,7 @@ async function repriceSingleVendor(
         "422_ERROR",
         contextVendor,
       );
-      await mongoHelper.UpsertErrorItemLog(errorItem);
+      await dbHelper.UpsertErrorItemLog(errorItem);
       console.log({
         message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
         obj: JSON.stringify(errorItem),
@@ -1006,7 +1006,7 @@ async function alignErrorItems(details: any, _contextVendor: string) {
       "IGNORE",
       _contextVendor,
     );
-    await mongoHelper.UpsertErrorItemLog(errorItem);
+    await dbHelper.UpsertErrorItemLog(errorItem);
   }
 }
 

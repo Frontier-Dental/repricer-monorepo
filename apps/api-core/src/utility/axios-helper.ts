@@ -7,7 +7,7 @@ import { apiMapping } from "../resources/api-mapping";
 import { CronSettings } from "../types/cron-settings";
 import { applicationConfig } from "./config";
 import * as dbHelper from "./mongo/db-helper";
-import * as mongoHelper from "./mongo/mongo-helper";
+// import * as mongoHelper from "./mongo/mongo-helper";
 import * as axiosRetryHelper from "./proxy/axios-retry-helper";
 import * as brightDataHelper from "./proxy/bright-data-helper";
 import * as scrapflyHelper from "./proxy/scrapfly-helper";
@@ -100,7 +100,7 @@ export async function getAsync(
       break;
     default:
       const proxy = await ProxyHelper.GetProxy(cronName!);
-      if (proxy?.host == (await mongoHelper.GetRotatingProxyUrl())) {
+      if (proxy?.host == (await dbHelper.GetRotatingProxyUrl())) {
         responseData = await fetchGetAsync(proxy, _url);
       } else {
         var startTime = process.hrtime();
@@ -179,7 +179,7 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings) {
         break;
       default:
         const proxy = await ProxyHelper.GetProxyV2(cronSetting, proxyProvider);
-        if (proxy.host == (await mongoHelper.GetRotatingProxyUrl())) {
+        if (proxy.host == (await dbHelper.GetRotatingProxyUrl())) {
           responseData = await fetchGetAsync(proxy, _url);
         } else {
           var startTime = process.hrtime();
@@ -272,7 +272,7 @@ export async function native_get(_url: string): Promise<any> {
 }
 
 export async function fetch_product_data(_url: string): Promise<any> {
-  const proxyConfigDetails = await mongoHelper.GetProxyConfigByProviderId(3);
+  const proxyConfigDetails = await dbHelper.GetProxyConfigByProviderId(3);
   return getScrappingResponse(_url, _.first(proxyConfigDetails));
 }
 

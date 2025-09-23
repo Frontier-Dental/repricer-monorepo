@@ -7,8 +7,9 @@ import { ErrorItemModel } from "../../model/error-item";
 import * as axiosHelper from "../../utility/axios-helper";
 import { applicationConfig } from "../../utility/config";
 import * as keyGenHelper from "../../utility/job-id-helper";
-import * as mongoHelper from "../../utility/mongo/mongo-helper";
+// import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import * as filterMapper from "../../utility/filter-mapper";
+import * as dbHelper from "../../utility/mongo/db-helper";
 import {
   calculateNextCronTime,
   getNextCronTime,
@@ -51,11 +52,11 @@ export async function startFeedCronHandler(
 }
 
 async function getFeedEligibleList() {
-  const globalConfig = await mongoHelper.GetGlobalConfig();
+  const globalConfig = await dbHelper.GetGlobalConfig();
   if (globalConfig && globalConfig.source != "FEED") {
     return [];
   }
-  return mongoHelper.GetItemList();
+  return []; //dbHelper.GetItemList();
 }
 
 async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
@@ -87,7 +88,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
     let isPriceUpdated = false;
     if (prod.scrapeOn == true) {
       _contextCronStatus.SetProductCount(cronProdCounter);
-      await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
+      await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
       const postUrl = applicationConfig.FEED_REPRICER_OWN_URL.replace(
         "{mpId}",
         prod.mpid,
@@ -128,7 +129,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
                 "PRICE_UPDATE",
                 undefined,
               );
-              await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
+              await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
               console.log({
                 message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                 obj: JSON.stringify(priceUpdatedItem),
@@ -149,7 +150,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
               "422_ERROR",
               undefined,
             );
-            await mongoHelper.UpsertErrorItemLog(errorItem);
+            await dbHelper.UpsertErrorItemLog(errorItem);
             console.log({
               message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
               obj: JSON.stringify(errorItem),
@@ -190,16 +191,16 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
       );
       prod = updateLowestVendor(repriceResult, prod);
       prod = updateCronBasedDetails(repriceResult, prod, isPriceUpdated);
-      await mongoHelper.UpdateProductAsync(prod, isPriceUpdated);
+      await dbHelper.UpdateProductAsync(prod, isPriceUpdated, "NULL");
       cronProdCounter++;
     }
   }
   //Update End Time
   cronLogs.completionTime = new Date();
-  const logInDb = await mongoHelper.PushLogsAsync(cronLogs);
+  const logInDb = await dbHelper.PushLogsAsync(cronLogs);
 
   _contextCronStatus.SetStatus("Complete");
-  await mongoHelper.UpdateCronStatusAsync(_contextCronStatus);
+  await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
 
   if (logInDb) {
     console.log(
@@ -209,5 +210,5 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
 }
 
 async function initCronStatus(_contextCronStatus: any) {
-  await mongoHelper.InitCronStatusAsync(_contextCronStatus);
+  await dbHelper.InitCronStatusAsync(_contextCronStatus);
 }

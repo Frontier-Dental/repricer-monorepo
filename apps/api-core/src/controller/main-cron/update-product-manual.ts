@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import * as _codes from "http-status-codes";
 import { ErrorItemModel } from "../../model/error-item";
 import * as filterMapper from "../../utility/filter-mapper";
-import * as mongoHelper from "../../utility/mongo/mongo-helper";
+import * as dbHelper from "../../utility/mongo/db-helper";
+// import * as mongoHelper from "../../utility/mongo/mongo-helper";
 
 import { applicationConfig } from "../../utility/config";
 import {
@@ -45,7 +46,7 @@ export async function updateProductManualHandler(
           "PRICE_UPDATE",
           undefined,
         );
-        await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
+        await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
         console.log({
           message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(priceUpdatedItem),
@@ -67,6 +68,6 @@ export async function updateProductManualHandler(
       "UNKNOWN",
     );
   }
-  await mongoHelper.UpdateProductAsync(prod, isPriceUpdated);
+  await dbHelper.UpdateProductAsync(prod, isPriceUpdated, "MANUAL-CRON");
   return res.status(_codes.StatusCodes.OK).send("Success!");
 }

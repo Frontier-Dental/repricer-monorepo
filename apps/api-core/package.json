@@ -40,6 +40,7 @@
     "node-cron": "^3.0.2",
     "node-fetch": "2.0",
     "puppeteer-core": "^22.3.0",
+    "redis": "^5.8.2",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
     "scrapingbee": "^1.7.4",

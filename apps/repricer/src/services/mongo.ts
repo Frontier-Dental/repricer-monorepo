@@ -486,7 +486,7 @@ export const GetConfigurations = async (activeOnly = true) => {
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
   );
-  const configurationResult = await cacheClient.get<any>(CacheKey.GLOBAL_INFO);
+  const configurationResult = await cacheClient.get<any>(CacheKey.IP_CONFIG);
   if (configurationResult != null) return configurationResult;
   const dbo = await getMongoDb();
   const query = activeOnly ? { active: true } : {};
@@ -494,7 +494,7 @@ export const GetConfigurations = async (activeOnly = true) => {
     .collection(applicationConfig.IP_CONFIG)
     .find(query)
     .toArray();
-  if (dbResult != null) await cacheClient.set(CacheKey.GLOBAL_INFO, dbResult);
+  if (dbResult != null) await cacheClient.set(CacheKey.IP_CONFIG, dbResult);
 
   return dbResult;
 };
@@ -505,7 +505,7 @@ export const UpdateConfiguration = async (payload: any, req: any) => {
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
   );
-  await cacheClient.delete(CacheKey.GLOBAL_INFO);
+  await cacheClient.delete(CacheKey.IP_CONFIG);
 
   for (const element of payload) {
     mongoResult = await dbo

@@ -8,7 +8,7 @@ import { UpdateRequest } from "../model/update-request";
 import * as axiosHelper from "../utility/axios-helper";
 import * as feedHelper from "../utility/feed-helper";
 import * as HistoryHelper from "../utility/history-helper";
-import * as mongoHelper from "../utility/mongo/mongo-helper";
+// import * as mongoHelper from "../utility/mongo/mongo-helper";
 import * as Rule from "../utility/reprice-algo/v1/repricer-rule-helper";
 import * as responseUtility from "../utility/response-utility";
 import { applicationConfig } from "../utility/config";
@@ -43,8 +43,8 @@ feedController.post(
       const existingPrice =
         await responseUtility.GetLastExistingPrice(productDetails);
       //2.Check for eligibility
-      const contextErrorItemsList =
-        await mongoHelper.GetContextErrorItems(true);
+      const contextErrorItemsList: any[] = [];
+      //await dbHelper.GetContextErrorItems(true);
       const isRepriceEligible = await responseUtility.IsEligibleForReprice(
         contextErrorItemsList,
         mpid,

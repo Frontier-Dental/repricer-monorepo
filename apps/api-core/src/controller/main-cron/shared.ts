@@ -6,7 +6,7 @@ import * as dbHelper from "../../utility/mongo/db-helper";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import * as mySqlHelper from "../../utility/mysql/mysql-helper";
 import * as feedHelper from "../../utility/feed-helper";
-import * as mongoHelper from "../../utility/mongo/mongo-helper";
+// import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import * as _ from "lodash";
 import { CacheKeyName } from "../../resources/cache-key-name";
 import * as cacheHelper from "../../utility/cache-helper";
@@ -147,11 +147,11 @@ async function get422EligibleProducts() {
     cronSettingDetailsResponse,
     slowCronDetails,
   );
-  const mongoResponse = await mongoHelper.GetContextErrorItems(true);
+  const mongoResponse = await dbHelper.GetContextErrorItems(true);
   let resultantOutput = [];
   if (mongoResponse && mongoResponse.length > 0) {
     for (const errItem of mongoResponse) {
-      let productDetails = await mySqlHelper.GetItemListById(errItem.mpId); //await mongoHelper.GetItemListById(errItem.mpId);
+      let productDetails = await mySqlHelper.GetItemListById(errItem.mpId);
       if (productDetails) {
         const contextCronId = await getContextCronId(
           productDetails,
@@ -270,7 +270,7 @@ export async function runCoreCronLogic(
 
 export async function logBlankCronDetailsV3(cronId: any) {
   let cronLogs = { time: new Date(), logs: [], cronId: cronId };
-  const logInDb = await mongoHelper.PushLogsAsync(cronLogs);
+  const logInDb = await dbHelper.PushLogsAsync(cronLogs);
   if (logInDb) {
     console.log(
       `Successfully logged blank reprice data at ${cronLogs.time} for cron ${cronId}`,
