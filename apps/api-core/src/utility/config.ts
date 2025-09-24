@@ -248,6 +248,10 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(false),
+  CACHE_HOST_URL: z.string(),
+  CACHE_USERNAME: z.string(),
+  CACHE_PASSWORD: z.string(),
+  CACHE_PORT: z.coerce.number(),
 });
 
 export function validateConfig() {
