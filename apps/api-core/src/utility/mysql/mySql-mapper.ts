@@ -98,26 +98,32 @@ export const MapProductDetailsList = (
       ),
       tradentDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
+        groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(),
         VendorName.TRADENT,
       ),
       frontierDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
+        groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(),
         VendorName.FRONTIER,
       ),
       mvpDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
+        groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(),
         VendorName.MVP,
       ),
       topDentDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
+        groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(),
         VendorName.TOPDENT,
       ),
       firstDentDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
+        groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(),
         VendorName.FIRSTDENT,
       ),
       triadDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
+        groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(),
         VendorName.TRIAD,
       ),
     };
@@ -145,12 +151,15 @@ export const GetTriggeredByValue = (
 
 function getMappedVendorDetails(
   listOfItems: any[],
+  algoExecutionMode: any,
   vendorName: VendorName,
 ): OwnVendorProductDetails | null {
   const linkedData = listOfItems.find(
     (x) => x.ChannelName && x.ChannelName.toUpperCase() == vendorName,
   );
-  return linkedData ? new OwnVendorProductDetails(linkedData) : null;
+  return linkedData
+    ? new OwnVendorProductDetails(linkedData, algoExecutionMode)
+    : null;
 }
 
 function getLinkedInfoForVendor(

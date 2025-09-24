@@ -142,8 +142,9 @@ export class OwnVendorProductDetails {
   getBBShippingValue?: number;
   getBBBadge?: number;
   getBBShipping?: number;
+  algo_execution_mode: string;
 
-  constructor(sqlEntity: SqlEntity) {
+  constructor(sqlEntity: SqlEntity, _algo_execution_mode: string) {
     this.channelName = sqlEntity["ChannelName"] || "";
     this.activated = sqlEntity["Activated"] == 1 ? true : false;
     this.mpid = sqlEntity["MpId"] || "";
@@ -220,6 +221,7 @@ export class OwnVendorProductDetails {
     this.getBBShippingValue = sqlEntity["GetBBShippingValue"] || 0;
     this.getBBBadge = sqlEntity["GetBBBadge"] || 0;
     this.getBBShipping = sqlEntity["GetBBShipping"] || 0;
+    this.algo_execution_mode = _algo_execution_mode;
   }
 }
 
