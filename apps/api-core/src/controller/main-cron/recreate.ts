@@ -15,7 +15,7 @@ export async function recreateCronHandler(
 ): Promise<any> {
   const jobNames = req.body;
   const cronDetails = (await dbHelper.GetCronSettings()).filter(
-    (x) => x.IsHidden !== true,
+    (x) => !x.IsHidden,
   );
   for (const jobName of jobNames) {
     if (jobName === "Cron-422") {
@@ -24,7 +24,7 @@ export async function recreateCronHandler(
     }
     const cronName = getMainCronNameFromJobName(jobName);
     if (!cronName) {
-      throw BadRequest(`Cron name corresonding to ${jobName} not found`);
+      throw BadRequest(`Cron name corresponding to ${jobName} not found`);
     }
     const settings = cronDetails.find((x) => x.CronName === cronName);
     if (!settings) {

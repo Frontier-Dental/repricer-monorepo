@@ -25,32 +25,33 @@ export function stopAllMainCrons() {
 }
 
 export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
-  const _422CronSetting = cronSettings.find(
-    (x) => x.CronName == applicationConfig.CRON_NAME_422,
-  );
-  if (!_422CronSetting) {
-    throw new Error("422 Cron setting not found");
-  }
-  const cronString = responseUtility.GetCronGeneric(
-    _422CronSetting.CronTimeUnit,
-    _422CronSetting.CronTime,
-    parseInt(_422CronSetting.Offset),
-  );
-
-  error422Cron = schedule(
-    cronString,
-    async () => {
-      try {
-        await runCoreCronLogicFor422();
-      } catch (error) {
-        console.error(`Error running 422 cron:`, error);
-      }
-    },
-    { scheduled: _422CronSetting.CronStatus ? true : false },
-  );
-  if (_422CronSetting.CronStatus) {
-    console.log("Started 422 cron.");
-  }
+  return;
+  // const _422CronSetting = cronSettings.find(
+  //   (x) => x.CronName == applicationConfig.CRON_NAME_422,
+  // );
+  // if (!_422CronSetting) {
+  //   throw new Error("422 Cron setting not found");
+  // }
+  // const cronString = responseUtility.GetCronGeneric(
+  //   _422CronSetting.CronTimeUnit,
+  //   _422CronSetting.CronTime,
+  //   parseInt(_422CronSetting.Offset),
+  // );
+  //
+  // error422Cron = schedule(
+  //   cronString,
+  //   async () => {
+  //     try {
+  //       await runCoreCronLogicFor422();
+  //     } catch (error) {
+  //       console.error(`Error running 422 cron:`, error);
+  //     }
+  //   },
+  //   { scheduled: _422CronSetting.CronStatus },
+  // );
+  // if (_422CronSetting.CronStatus) {
+  //   console.log("Started 422 cron.");
+  // }
 }
 
 async function IsCacheValid(cacheKey: any, sysTime: any) {
@@ -208,6 +209,7 @@ export function setCronAndStart(
   cronName: string,
   cronSetting: CronSettingsDetail,
 ) {
+  if (cronName != "Cron-18") return;
   const cronString = responseUtility.GetCronGeneric(
     cronSetting.CronTimeUnit,
     cronSetting.CronTime,
