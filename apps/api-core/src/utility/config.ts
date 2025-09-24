@@ -84,7 +84,7 @@ const envSchema = z.object({
     .toLowerCase()
     .transform(JSON.parse as any)
     .pipe(z.boolean())
-    .default(false),
+    .default(true),
   FILE_PATH: z.string().default("../test"),
   DEFAULT_DELAY: z.coerce.number().default(1500),
   FLAG_MULTI_PRICE_UPDATE: z

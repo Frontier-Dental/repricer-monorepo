@@ -6,12 +6,11 @@ import * as dbHelper from "../../utility/mongo/db-helper";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import * as mySqlHelper from "../../utility/mysql/mysql-helper";
 import * as feedHelper from "../../utility/feed-helper";
-// import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import * as _ from "lodash";
-import { CacheKeyName } from "../../resources/cache-key-name";
-import * as cacheHelper from "../../utility/cache-helper";
 import { VendorName } from "@repricer-monorepo/shared";
 import { applicationConfig } from "../../utility/config";
+import CacheClient, { GetCacheClientOptions } from "../../client/cacheClient";
+import { CacheKey } from "@repricer-monorepo/shared";
 
 const mainCrons: Record<string, ScheduledTask> = {};
 let error422Cron: ScheduledTask | null = null;
@@ -25,38 +24,42 @@ export function stopAllMainCrons() {
 }
 
 export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
-  return;
-  // const _422CronSetting = cronSettings.find(
-  //   (x) => x.CronName == applicationConfig.CRON_NAME_422,
-  // );
-  // if (!_422CronSetting) {
-  //   throw new Error("422 Cron setting not found");
-  // }
-  // const cronString = responseUtility.GetCronGeneric(
-  //   _422CronSetting.CronTimeUnit,
-  //   _422CronSetting.CronTime,
-  //   parseInt(_422CronSetting.Offset),
-  // );
-  //
-  // error422Cron = schedule(
-  //   cronString,
-  //   async () => {
-  //     try {
-  //       await runCoreCronLogicFor422();
-  //     } catch (error) {
-  //       console.error(`Error running 422 cron:`, error);
-  //     }
-  //   },
-  //   { scheduled: _422CronSetting.CronStatus },
-  // );
-  // if (_422CronSetting.CronStatus) {
-  //   console.log("Started 422 cron.");
-  // }
+  const _422CronSetting = cronSettings.find(
+    (x) => x.CronName == applicationConfig.CRON_NAME_422,
+  );
+  if (!_422CronSetting) {
+    throw new Error("422 Cron setting not found");
+  }
+  const cronString = responseUtility.GetCronGeneric(
+    _422CronSetting.CronTimeUnit,
+    _422CronSetting.CronTime,
+    parseInt(_422CronSetting.Offset),
+  );
+
+  error422Cron = schedule(
+    cronString,
+    async () => {
+      try {
+        await runCoreCronLogicFor422();
+      } catch (error) {
+        console.error(`Error running 422 cron:`, error);
+      }
+    },
+    { scheduled: _422CronSetting.CronStatus },
+  );
+  if (_422CronSetting.CronStatus) {
+    console.log("Started 422 cron.");
+  }
 }
 
 async function IsCacheValid(cacheKey: any, sysTime: any) {
-  if (cacheHelper.Has(cacheKey)) {
-    const result = cacheHelper.Get(cacheKey);
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const result = await cacheClient.get<any>(cacheKey);
+  if (result == null) {
+    return false;
+  } else {
     const differenceInTime = sysTime.getTime() - result.initTime.getTime();
     const differenceInMinutes = Math.round(differenceInTime / 60000);
     const envVariables = await dbHelper.GetGlobalConfig();
@@ -67,24 +70,22 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
     console.log(
       `Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date()}`,
     );
-    if (
-      typeof thresholdValue === "string"
-        ? parseFloat(thresholdValue!)
-        : thresholdValue < differenceInMinutes
-    )
-      return false;
-    else return true;
+    return !(typeof thresholdValue === "string"
+      ? parseFloat(thresholdValue!)
+      : thresholdValue < differenceInMinutes);
   }
-  return false;
 }
 
 export async function runCoreCronLogicFor422() {
-  const cacheKey = CacheKeyName._422_RUNNING_CACHE;
+  const cacheKey = CacheKey._422_RUNNING_CACHE;
   const isCacheValid = await IsCacheValid(cacheKey, new Date());
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
   if (!isCacheValid) {
     console.log(`Getting List of Eligible Products for Cron-422`);
     const runningCacheObj = { cronRunning: true, initTime: new Date() };
-    cacheHelper.Set(cacheKey, runningCacheObj);
+    await cacheClient.set(cacheKey, runningCacheObj);
     const eligibleProductList = await get422EligibleProducts();
     const keyGen = keyGenHelper.Generate();
     console.log(
@@ -112,9 +113,9 @@ export async function runCoreCronLogicFor422() {
         }
       }
     }
-    cacheHelper.DeleteCacheByKey(cacheKey);
+    await cacheClient.delete(cacheKey);
   } else {
-    const runningCronDetails = await cacheHelper.Get(cacheKey);
+    const runningCronDetails = await cacheClient.get<any>(cacheKey);
     console.log(
       `Skipped Cron-422 as another 422 cron is already running. CURR_TIME : ${new Date()} || RUNNING_CRON_TIME : ${runningCronDetails.initTime}`,
     );
@@ -209,7 +210,6 @@ export function setCronAndStart(
   cronName: string,
   cronSetting: CronSettingsDetail,
 ) {
-  if (cronName != "Cron-29") return;
   const cronString = responseUtility.GetCronGeneric(
     cronSetting.CronTimeUnit,
     cronSetting.CronTime,
@@ -281,14 +281,10 @@ export async function logBlankCronDetailsV3(cronId: any) {
 }
 
 export function IsChunkNeeded(list: any, envVariables: any, type: any) {
-  switch (type) {
-    case "EXPRESS":
-      if (envVariables && envVariables.expressCronBatchSize) {
-        return list.length > parseInt(envVariables.expressCronBatchSize);
-      }
-    default:
-      return list.length > applicationConfig.BATCH_SIZE;
+  if (type === "EXPRESS" && envVariables && envVariables.expressCronBatchSize) {
+    return list.length > parseInt(envVariables.expressCronBatchSize);
   }
+  return list.length > applicationConfig.BATCH_SIZE;
 }
 
 export async function getCronEligibleProductsV3(cronId: any) {
