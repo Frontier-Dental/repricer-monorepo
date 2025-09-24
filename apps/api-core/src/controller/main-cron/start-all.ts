@@ -15,9 +15,7 @@ export async function startAllCronLogic() {
   await dbHelper.ResetPendingCronLogs();
   stopAllMainCrons();
   const cronSettingsResponse = await dbHelper.GetCronSettings();
-  for (const cronSetting of cronSettingsResponse.filter(
-    (x) => x.IsHidden !== true,
-  )) {
+  for (const cronSetting of cronSettingsResponse.filter((x) => !x.IsHidden)) {
     const cronName = cronSetting.CronName;
     setCronAndStart(cronName, cronSetting);
   }
