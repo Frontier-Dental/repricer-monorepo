@@ -94,12 +94,12 @@ nodeApp.listen(port, async () => {
   if (applicationConfig.SCHEDULE_CRONS_ON_STARTUP) {
     console.log("Scheduling enabled crons on startup");
     await startAllCronLogic();
-    await start422Logic();
-    await startFilterCronLogic();
-    await startSlowCronLogic();
+    // await start422Logic();
+    // await startFilterCronLogic();
+    // await startSlowCronLogic();
     await startProxySwitchCronLogic();
     await startProxySwitchResetCronLogic();
-    await startScrapeCronLogic();
+    //await startScrapeCronLogic();
     startV2AlgoHtmlFileCleanupCron();
     console.log("All enabled crons started on startup");
   }
