@@ -1424,7 +1424,7 @@ function runManualScrape(isProductPage, isV2Algorithm) {
   if (payLoadForManualUpdate.length > 0) {
     $.ajax({
       type: "POST",
-      url: "/productV2/runManualCron",
+      url: "/runManualCron",
       data: { mpIds: payLoadForManualUpdate },
       dataType: "json",
       cache: false,
