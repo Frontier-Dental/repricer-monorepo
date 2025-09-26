@@ -31,6 +31,14 @@ export async function GetLatestRunInfoForCron(
   return result[0];
 }
 
+export async function GetRecentInProgressScrapeOnlyRuns() {
+  const db = getKnexInstance();
+  const result = await db.raw(
+    `CALL ${applicationConfig.SQL_SP_GET_RECENT_INPROGRESS_SCRAPE_RUNS}()`,
+  );
+  return result[0];
+}
+
 export async function GetNumberOfScrapeProducts() {
   let noOfRecords: any = null;
   const db = await SqlConnectionPool.getConnection();

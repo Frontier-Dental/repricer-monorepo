@@ -35,7 +35,11 @@ cronLogsRouter.get(
   "/get_filter_logs/:noOfLogs",
   cronLogsController.getFilterCronLogsByLimit,
 );
-// cronLogsRouter.get("/currentTasks", cronLogsController.getCurrentTasks);
+cronLogsRouter.get("/currentTasks", cronLogsController.getCurrentTasks);
+cronLogsRouter.get(
+  "/getInProgressScrapeCrons",
+  cronLogsController.getInProgressScrapeCrons,
+);
 cronLogsRouter.get("/cronHistory", cronLogsController.getCronHistoryLogs);
 
 // cronLogsRouter.post(

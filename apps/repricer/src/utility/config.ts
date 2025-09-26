@@ -91,6 +91,9 @@ export const envSchema = z.object({
   SQL_SP_GETRUN_INFO_BY_CRON: z
     .string()
     .default("sp_GetLatestRunInfoForCronByLimit"),
+  SQL_SP_GET_RECENT_INPROGRESS_SCRAPE_RUNS: z
+    .string()
+    .default("sp_GetRecentInProgressScrapeOnlyRuns"),
   SQL_SP_GET_SCRAPEPRODUCT_DETAILS: z
     .string()
     .default("sp_GetScrapeProductDetails"),
