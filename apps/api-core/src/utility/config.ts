@@ -84,7 +84,7 @@ const envSchema = z.object({
     .toLowerCase()
     .transform(JSON.parse as any)
     .pipe(z.boolean())
-    .default(true),
+    .default(false),
   FILE_PATH: z.string().default("../test"),
   DEFAULT_DELAY: z.coerce.number().default(1500),
   FLAG_MULTI_PRICE_UPDATE: z
@@ -186,7 +186,7 @@ const envSchema = z.object({
     .toLowerCase()
     .transform(JSON.parse as any)
     .pipe(z.boolean())
-    .default(false),
+    .default(true),
   SCRAPE_ONLY_LOGGING: z
     .string()
     .toLowerCase()
