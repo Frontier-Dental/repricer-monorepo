@@ -63,7 +63,7 @@
         <div class="d-flex justify-content-between align-items-center">
           <h5><b>Scrape Only (In-Progress)</b> Cron Status:</h5>
           <button type="button" class="btn btn-primary btn-sm" id="refreshScrapeCrons">
-            <i class="ti-reload"></i> Refresh
+            <i class="ti-reload"></i> Refresh test
           </button>
         </div>
         <hr />
@@ -161,11 +161,11 @@
           const row = `
             <tr>
               <td>${idx + 1}</td>
-              <td>${cron.cronTime || ''}</td>
-              <td>${cron.keyGenId || ''}</td>
-              <td>${cron.cronName || ''}</td>
-              <td>${cron.maximumProductCount || ''}</td>
-              <td>${cron.productsCount || ''}</td>
+              <td>${cron.cronTime}</td>
+              <td>${cron.keyGenId}</td>
+              <td>${cron.cronName}</td>
+              <td>${cron.eligibleCount}</td>
+              <td>${cron.productsCompleted}</td>
               <td>
                 <span style="color: ${statusColor}"><b>${cron.status || ''}</b></span>
               </td>

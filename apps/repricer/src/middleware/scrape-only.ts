@@ -25,18 +25,12 @@ export async function GetRunInfo(
 }
 
 export async function GetRecentInProgressScrapeRuns() {
-  let logResult: any[] = [];
   const sqlRunInfoResult =
     await sqlMiddleware.GetRecentInProgressScrapeOnlyRuns();
   if (sqlRunInfoResult && sqlRunInfoResult.length > 0) {
-    const sqlRunDetails: any = _.first(sqlRunInfoResult);
-    for (const [index, runInfo] of sqlRunDetails.entries()) {
-      logResult.push(
-        (await mapperHelper.MapSqlToCronLog(runInfo, index + 1)) as never,
-      );
-    }
+    return sqlRunInfoResult[0];
   }
-  return logResult;
+  return [];
 }
 
 export async function GetRunInfoByCron(

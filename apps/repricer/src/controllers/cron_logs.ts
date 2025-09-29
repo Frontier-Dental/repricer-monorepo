@@ -973,38 +973,25 @@ export async function getCurrentTasks(req: Request, res: Response) {
 
 export async function getInProgressScrapeCrons(req: Request, res: Response) {
   try {
-    // Get scrape cron settings
-    const scrapeCronSettings = await mongoMiddleware.GetScrapeCrons();
+    const scrapeCronStatus =
+      await scrapeOnlyMiddleware.GetRecentInProgressScrapeRuns();
 
-    // Get latest scrape cron status (in-progress ones)
-    let scrapeCronStatus = await mongoMiddleware.GetLatestCronStatus();
+    const enrichedCronStatus = scrapeCronStatus.map((item: any) => {
+      return {
+        cronTime: item.CronStartTime,
+        keyGenId: item.KeyGenId,
+        cronName: item.CronName,
+        eligibleCount: item.EligibleCount || 0,
+        productsCompleted: item.CompletedProductCount || 0,
+        status: item.Status,
+      };
+    });
 
-    // Filter for scrape-only crons
-    if (scrapeCronStatus && scrapeCronStatus.length > 0) {
-      scrapeCronStatus = scrapeCronStatus.filter((x: any) => {
-        const cronSetting = scrapeCronSettings.find(
-          (c: any) => c.cronId === x.cronId,
-        );
-        return cronSetting !== undefined;
-      });
-
-      // Add cron names
-      scrapeCronStatus.forEach((x: any) => {
-        if (x.cronId) {
-          try {
-            x.cronName =
-              scrapeCronSettings.find((t: any) => t.cronId === x.cronId)
-                ?.cronName || x.cronId;
-          } catch (ex) {
-            x.cronName = x.cronId;
-          }
-        }
-      });
-    }
+    console.log("enrichedCronStatus", enrichedCronStatus);
 
     return res.json({
       status: true,
-      scrapeCronStatus: scrapeCronStatus || [],
+      scrapeCronStatus: enrichedCronStatus || [],
     });
   } catch (error) {
     console.error("Error getting in-progress scrape crons:", error);
@@ -1017,6 +1004,7 @@ export async function getInProgressScrapeCrons(req: Request, res: Response) {
 }
 
 export async function getCronHistoryLogs(req: Request, res: Response) {
+  console.log("getCronHistoryLogs");
   let logViewModel: any = [];
   let pgNo = 0;
   let pgLimit = 10; // item per page - default
