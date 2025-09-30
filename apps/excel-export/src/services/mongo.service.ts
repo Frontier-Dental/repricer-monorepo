@@ -5,7 +5,7 @@ let cacheTimestamp: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export async function connectToDatabase(uri?: string) {
-  const mongoUri = process.env.MANAGED_MONGO_URL;
+  const mongoUri = process.env.MANAGED_MONGO_URL as string;
 
   try {
     await mongoose.connect(mongoUri);
