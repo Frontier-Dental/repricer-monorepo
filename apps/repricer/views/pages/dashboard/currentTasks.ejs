@@ -11,7 +11,12 @@
     <!-- Regular, Secondary, and Express Crons Table -->
     <div class="card">
       <div class="body table-responsive">
-        <h5><b>Regular, Secondary & Express (In-Progress)</b> Cron Status:</h5>
+        <div class="d-flex justify-content-between align-items-center">
+          <h5>Regular, Secondary & Express Cron Statuses:</h5>
+          <button type="button" class="btn btn-primary btn-sm" id="refreshRegularCrons">
+            <i class="ti-reload"></i> Refresh
+          </button>
+        </div>
         <hr />
         <table
           id="regularCronsTable"
@@ -61,9 +66,9 @@
     <div class="card">
       <div class="body table-responsive">
         <div class="d-flex justify-content-between align-items-center">
-          <h5><b>Scrape Only (In-Progress)</b> Cron Status:</h5>
+          <h5>DataOnly Cron Statuses:</h5>
           <button type="button" class="btn btn-primary btn-sm" id="refreshScrapeCrons">
-            <i class="ti-reload"></i> Refresh test
+            <i class="ti-reload"></i> Refresh
           </button>
         </div>
         <hr />
@@ -106,21 +111,72 @@
 <script src="/javascripts/dashboard.js"></script>
 <script>
   $(document).ready(function() {
-    // Handle refresh button click for scrape-only crons
+    $('#refreshRegularCrons').on('click', function() {
+      loadRegularCrons();
+    });
+scrape
     $('#refreshScrapeCrons').on('click', function() {
       loadScrapeCrons();
     });
 
+    function loadRegularCrons() {
+      $('#refreshRegularCrons').prop('disabled', true);
+
+      $.ajax({
+        url: '/dashboard/getInProgressRegularCrons',
+        method: 'GET',
+        success: function(response) {
+          if (response.status && response.cronStatus) {
+            displayRegularCrons(response.cronStatus);
+          } else {
+            displayRegularCrons([]);
+          }
+
+          $('#refreshRegularCrons').prop('disabled', false);
+        },
+        error: function(error) {
+          console.error('Error loading regular crons:', error);
+          alert('Error loading regular crons. Please try again.');
+          $('#refreshRegularCrons').prop('disabled', false);
+        }
+      });
+    }
+
+    function displayRegularCrons(crons) {
+      const tbody = $('#regularCronsTable tbody');
+      tbody.empty();
+
+      if (crons.length === 0) {
+        tbody.append(
+          '<tr><td colspan="7" class="text-center" style="color: brown">No In-Progress Crons found.</td></tr>'
+        );
+      } else {
+        crons.forEach(function(cron, idx) {
+          const statusColor = cron.status === 'Complete' ? 'green' : 'orangered';
+          const row = `
+            <tr>
+              <td>${idx + 1}</td>
+              <td>${cron.cronTime}</td>
+              <td>${cron.keyGenId}</td>
+              <td>${cron.cronName}</td>
+              <td>${cron.maximumProductCount}</td>
+              <td>${cron.productsCount}</td>
+              <td>
+                <span style="color: ${statusColor}"><b>${cron.status || ''}</b></span>
+              </td>
+            </tr>
+          `;
+          tbody.append(row);
+        });
+      }
+    }
+
     function loadScrapeCrons() {
-      // Hide initial message and show loading message
       $('#scrapeInitialMessage').hide();
       $('#scrapeCronsTable').hide();
       $('#scrapeLoadingMessage').show();
-
-      // Disable refresh button while loading
       $('#refreshScrapeCrons').prop('disabled', true);
 
-      // Make AJAX call to get scrape-only crons
       $.ajax({
         url: '/dashboard/getInProgressScrapeCrons',
         method: 'GET',
@@ -133,15 +189,12 @@
             displayScrapeCrons([]);
           }
 
-          // Re-enable refresh button
           $('#refreshScrapeCrons').prop('disabled', false);
         },
         error: function(error) {
           console.error('Error loading scrape crons:', error);
           $('#scrapeLoadingMessage').hide();
           $('#scrapeInitialMessage').text('Error loading scrape-only crons. Please try again.').show();
-
-          // Re-enable refresh button
           $('#refreshScrapeCrons').prop('disabled', false);
         }
       });
@@ -175,7 +228,6 @@
         });
       }
 
-      // Show the table
       $('#scrapeCronsTable').show();
     }
   });

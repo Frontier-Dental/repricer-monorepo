@@ -37,6 +37,10 @@ cronLogsRouter.get(
 );
 cronLogsRouter.get("/currentTasks", cronLogsController.getCurrentTasks);
 cronLogsRouter.get(
+  "/getInProgressRegularCrons",
+  cronLogsController.getInProgressRegularCrons,
+);
+cronLogsRouter.get(
   "/getInProgressScrapeCrons",
   cronLogsController.getInProgressScrapeCrons,
 );

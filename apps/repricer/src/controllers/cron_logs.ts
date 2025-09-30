@@ -943,12 +943,12 @@ export async function getFilterCronLogsByLimit(req: Request, res: Response) {
   });
 }
 
-export async function getCurrentTasks(req: Request, res: Response) {
+async function getInProgressRegularSecondaryAndExpressCrons() {
   let cronSettings = await mongoMiddleware.GetCronSettingsList();
   const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
   cronSettings = _.concat(cronSettings, slowCronSettings);
-
   let cronStatus = await mongoMiddleware.GetLatestCronStatus();
+
   if (cronStatus && cronStatus.length > 0) {
     cronStatus.forEach((x: any) => {
       if (x.cronId) {
@@ -963,8 +963,30 @@ export async function getCurrentTasks(req: Request, res: Response) {
     });
   }
 
+  return cronStatus;
+}
+
+export async function getInProgressRegularCrons(req: Request, res: Response) {
+  try {
+    const cronStatus = await getInProgressRegularSecondaryAndExpressCrons();
+
+    return res.json({
+      status: true,
+      cronStatus: cronStatus || [],
+    });
+  } catch (error) {
+    console.error("Error getting in-progress regular crons:", error);
+    return res.json({
+      status: false,
+      cronStatus: [],
+      error: error,
+    });
+  }
+}
+
+export async function getCurrentTasks(req: Request, res: Response) {
   let params = {
-    cronStatus: cronStatus,
+    cronStatus: await getInProgressRegularSecondaryAndExpressCrons(),
     groupName: "tasks",
     userRole: (req as any).session.users_id.userRole,
   };
@@ -986,8 +1008,6 @@ export async function getInProgressScrapeCrons(req: Request, res: Response) {
         status: item.Status,
       };
     });
-
-    console.log("enrichedCronStatus", enrichedCronStatus);
 
     return res.json({
       status: true,
