@@ -6,9 +6,9 @@ COPY . ./
 
 RUN npm ci
 
-WORKDIR /app/apps/excel-export
-
 RUN npm run build
+
+WORKDIR /app/apps/excel-export
 
 RUN npm prune --production
 
