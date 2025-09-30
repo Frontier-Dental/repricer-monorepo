@@ -4,7 +4,7 @@
   "description": "Excel export service for repricer",
   "main": "./dist/main.js",
   "scripts": {
-    "dev": "ts-node-dev -r dotenv/config --respawn --transpile-only --ignore-watch node_modules --ignore-watch '../*/dist' src/main.ts",
+    "dev": "tsx watch src/main.ts",
     "start": "node dist/main.js",
     "build": "tsc",
     "format": "prettier --write \"src/**/*.{js,ts}\"",
@@ -35,6 +35,7 @@
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.20.6",
     "typescript": "^5.8.3"
   }
 }
