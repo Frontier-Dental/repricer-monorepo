@@ -575,7 +575,7 @@ export const GetHistoryDetailsForIdByDate = async (
   const dbo = await getMongoDb();
   const query = {
     $and: [
-      { mpId: _mpId },
+      { mpId: parseInt(_mpId) },
       { "historicalLogs.refTime": { $gte: new Date(startDate) } },
       { "historicalLogs.refTime": { $lte: new Date(endDate) } },
     ],

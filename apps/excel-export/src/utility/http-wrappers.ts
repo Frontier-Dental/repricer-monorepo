@@ -1,0 +1,262 @@
+import axios from "axios";
+import { applicationConfig } from "./config";
+
+export async function updatePrice(request: any) {
+  var config = {
+    method: "post",
+    url: applicationConfig.NET32_UPDATE_PRICE_URL,
+    headers: {
+      "Subscription-Key": request.secretKey,
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(request.payload),
+  };
+  const response = await axios(config);
+  return response.data;
+}
+
+export const runCron = async () => {
+  const config = {
+    method: "get",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.CRON_RUN_ALL_ENDPOINT,
+  };
+  return axios(config);
+};
+
+export async function runManualCron(mpId: any, itemDetails: any, source: any) {
+  const config = {
+    method: "post",
+    url: await getManualCronUrl(mpId, source),
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(itemDetails),
+  };
+  return await axios(config);
+}
+
+export async function startCron(payload: any) {
+  const config = {
+    method: "post",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.CRON_START_ENDPOINT,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(payload),
+  };
+  return await axios(config);
+}
+
+export async function stopCron(payload: any) {
+  const config = {
+    method: "post",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.CRON_STOP_ENDPOINT,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(payload),
+  };
+  return await axios(config);
+}
+
+export async function recreateCron(cronDetails: any) {
+  const config = {
+    method: "post",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.RECREATE_CRON_ENDPOINT,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(cronDetails),
+  };
+  return await axios(config);
+}
+
+export async function updateProductManual(mpId: any, payload: any) {
+  const config = {
+    method: "post",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.MANUAL_PROD_UPDATE_ENDPOINT +
+      mpId,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(payload),
+  };
+  return await axios(config);
+}
+
+export async function stopAllCron() {
+  const config = {
+    method: "get",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.STOP_ALL_CRON_ENDPOINT,
+  };
+  return await axios(config);
+}
+
+export async function StartOverride() {
+  const config = {
+    method: "get",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.START_OVERRIDE_URL_ENDPOINT,
+  };
+  return await axios(config);
+}
+
+export async function native_get(_url: any) {
+  const config = {
+    method: "get",
+    url: _url,
+  };
+  return await axios(config);
+}
+
+export async function toggleFilterCron(payload: any) {
+  const config = {
+    method: "post",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.FILTER_CRON_TOGGLE_STATUS_ENDPOINT,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(payload),
+  };
+  return await axios(config);
+}
+
+export async function toggleScrapeCron(payload: any) {
+  const config = {
+    method: "post",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.SCRAPE_CRON_TOGGLE_STATUS_ENDPOINT,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(payload),
+  };
+  return await axios(config);
+}
+
+export async function toggleSlowCron(payload: any) {
+  const config = {
+    method: "post",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.SLOW_CRON_TOGGLE_STATUS_ENDPOINT,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(payload),
+  };
+  return await axios(config);
+}
+
+export async function recreateFilterCron(payload: any) {
+  const config = {
+    method: "post",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.FILTER_CRON_RECREATE_ENDPOINT,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(payload),
+  };
+  return await axios(config);
+}
+
+export async function native_post(_url: any, payload: any) {
+  const config = {
+    method: "post",
+    url: _url,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(payload),
+  };
+  return await axios(config);
+}
+
+export async function recreateSlowCron(payload: any) {
+  const config = {
+    method: "post",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.SLOW_CRON_RECREATE_ENDPOINT,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(payload),
+  };
+  return await axios(config);
+}
+
+export async function recreateScrapeCron(payload: any) {
+  const config = {
+    method: "post",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.SCRAPE_CRON_RECREATE_ENDPOINT,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(payload),
+  };
+  return await axios(config);
+}
+
+export async function native_get_V2(_url: any, _headers: any) {
+  const config = {
+    method: "get",
+    url: _url,
+    headers: _headers,
+  };
+  return await axios(config);
+}
+
+async function getManualCronUrl(mpid: any, source: any) {
+  const baseUri =
+    source == "FEED"
+      ? applicationConfig.FEED_REPRICER_ENDPOINT
+      : applicationConfig.REPRICE_OWN_ENDPOINT;
+  return `${applicationConfig.REPRICER_API_BASE_URL}${baseUri}${mpid}`;
+}

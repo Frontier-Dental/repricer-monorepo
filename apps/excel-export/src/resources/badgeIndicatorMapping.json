@@ -1,0 +1,18 @@
+[
+  {
+    "key": "ALL_ZERO",
+    "value": "Compete all - Regular"
+  },
+  {
+    "key": "ALL_PERCENTAGE",
+    "value": "Compete with all - Percentage"
+  },
+  {
+    "key": "BADGE_ONLY",
+    "value": "Compete with Authorized Distributors only"
+  },
+  {
+    "key": "NON_BADGE_ONLY  ",
+    "value": "Compete with Non-Authorized Distributors only"
+  }
+]

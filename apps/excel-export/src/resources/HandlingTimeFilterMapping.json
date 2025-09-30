@@ -1,0 +1,18 @@
+[
+  {
+    "key": "ALL",
+    "value": "All"
+  },
+  {
+    "key": "FAST_SHIPPING",
+    "value": "1-2 days (Fast Shipping)"
+  },
+  {
+    "key": "STOCKED",
+    "value": "1-5 days (Stocked)"
+  },
+  {
+    "key": "LONG_HANDLING",
+    "value": "6+ days (Long Handling)"
+  }
+]
