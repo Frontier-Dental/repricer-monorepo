@@ -1,39 +1,22 @@
-FROM node:18-alpine AS builder
-
-WORKDIR /app
-
-# Copy package files
-COPY apps/excel-export/package*.json ./
-COPY apps/excel-export/tsconfig.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy source code
-COPY apps/excel-export/src ./src
-
-# Build the application
-RUN npm run build
-
 FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY apps/excel-export/package*.json ./
+COPY . ./
 
-# Install production dependencies only
-RUN npm install --only=production && npm cache clean --force
+RUN npm ci
 
-# Copy built application
-COPY --from=builder /app/dist ./dist
+WORKDIR /app/apps/excel-export
 
-# Expose port
+RUN npm run build
+
+RUN npm prune --production
+
 EXPOSE 3003
 
-# Health check
+ENV NODE_ENV=production
+
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3003/health', (r) => {r.statusCode === 200 ? process.exit(0) : process.exit(1)})"
 
-# Start the application
 CMD ["node", "dist/main.js"]
