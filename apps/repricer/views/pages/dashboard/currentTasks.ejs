@@ -37,7 +37,7 @@
           <tbody>
           <% if(cronStatus && cronStatus.length==0) { %>
             <tr>
-              <td colspan="7" class="text-center" style="color: brown">No In-Progress Crons found.</td>
+              <td colspan="7" class="text-center">No In-Progress Crons found.</td>
             </tr>
           <% } else if(cronStatus.length>0){
           cronStatus.forEach(function(cron,idx){ %>
@@ -114,7 +114,7 @@
     $('#refreshRegularCrons').on('click', function() {
       loadRegularCrons();
     });
-scrape
+
     $('#refreshScrapeCrons').on('click', function() {
       loadScrapeCrons();
     });
@@ -148,7 +148,7 @@ scrape
 
       if (crons.length === 0) {
         tbody.append(
-          '<tr><td colspan="7" class="text-center" style="color: brown">No In-Progress Crons found.</td></tr>'
+          '<tr><td colspan="7" class="text-center">No In-Progress Crons found.</td></tr>'
         );
       } else {
         crons.forEach(function(cron, idx) {
@@ -206,7 +206,7 @@ scrape
 
       if (scrapeCrons.length === 0) {
         tbody.append(
-          '<tr><td colspan="7" class="text-center" style="color: brown">No In-Progress Scrape-Only Crons found.</td></tr>'
+          '<tr><td colspan="7" class="text-center">No In-Progress Scrape-Only Crons found.</td></tr>'
         );
       } else {
         scrapeCrons.forEach(function(cron, idx) {
