@@ -7,7 +7,7 @@ COPY apps/excel-export/package*.json ./
 COPY apps/excel-export/tsconfig.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy source code
 COPY apps/excel-export/src ./src
@@ -23,7 +23,7 @@ WORKDIR /app
 COPY apps/excel-export/package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --only=production && npm cache clean --force
 
 # Copy built application
 COPY --from=builder /app/dist ./dist
