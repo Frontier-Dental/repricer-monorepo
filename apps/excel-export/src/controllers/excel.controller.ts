@@ -221,6 +221,7 @@ function parseBadgeIndicator(stringValue: any, evalType: any) {
     );
     return $eval ? $eval.key : _.first(badgeResx)!.key;
   }
+  return undefined;
 }
 
 function spliceResult(arrayResult: any[], pageNo: number, pageSize: number) {
