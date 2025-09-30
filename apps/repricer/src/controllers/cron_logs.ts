@@ -943,12 +943,12 @@ export async function getFilterCronLogsByLimit(req: Request, res: Response) {
   });
 }
 
-export async function getCurrentTasks(req: Request, res: Response) {
+async function getInProgressRegularSecondaryAndExpressCrons() {
   let cronSettings = await mongoMiddleware.GetCronSettingsList();
   const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
   cronSettings = _.concat(cronSettings, slowCronSettings);
-
   let cronStatus = await mongoMiddleware.GetLatestCronStatus();
+
   if (cronStatus && cronStatus.length > 0) {
     cronStatus.forEach((x: any) => {
       if (x.cronId) {
@@ -963,15 +963,68 @@ export async function getCurrentTasks(req: Request, res: Response) {
     });
   }
 
+  return cronStatus;
+}
+
+export async function getInProgressRegularCrons(req: Request, res: Response) {
+  try {
+    const cronStatus = await getInProgressRegularSecondaryAndExpressCrons();
+
+    return res.json({
+      status: true,
+      cronStatus: cronStatus || [],
+    });
+  } catch (error) {
+    console.error("Error getting in-progress regular crons:", error);
+    return res.json({
+      status: false,
+      cronStatus: [],
+      error: error,
+    });
+  }
+}
+
+export async function getCurrentTasks(req: Request, res: Response) {
   let params = {
-    cronStatus: cronStatus,
+    cronStatus: await getInProgressRegularSecondaryAndExpressCrons(),
     groupName: "tasks",
     userRole: (req as any).session.users_id.userRole,
   };
   res.render("pages/dashboard/currentTasks", params);
 }
 
+export async function getInProgressScrapeCrons(req: Request, res: Response) {
+  try {
+    const scrapeCronStatus =
+      await scrapeOnlyMiddleware.GetRecentInProgressScrapeRuns();
+
+    const enrichedCronStatus = scrapeCronStatus.map((item: any) => {
+      return {
+        cronTime: item.CronStartTime,
+        keyGenId: item.KeyGenId,
+        cronName: item.CronName,
+        eligibleCount: item.EligibleCount || 0,
+        productsCompleted: item.CompletedProductCount || 0,
+        status: item.Status,
+      };
+    });
+
+    return res.json({
+      status: true,
+      scrapeCronStatus: enrichedCronStatus || [],
+    });
+  } catch (error) {
+    console.error("Error getting in-progress scrape crons:", error);
+    return res.json({
+      status: false,
+      scrapeCronStatus: [],
+      error: error,
+    });
+  }
+}
+
 export async function getCronHistoryLogs(req: Request, res: Response) {
+  console.log("getCronHistoryLogs");
   let logViewModel: any = [];
   let pgNo = 0;
   let pgLimit = 10; // item per page - default
@@ -1021,23 +1074,38 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   let group = "";
   let cronId = "";
 
-  let cronSettings = await mongoMiddleware.GetCronSettingsList();
-  const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
-  const scrapeOnlyCronSettings = await mongoMiddleware.GetScrapeCrons();
-  cronSettings = _.concat(cronSettings, slowCronSettings);
-  cronSettings = _.concat(cronSettings, scrapeOnlyCronSettings);
+  // Parallelize database queries for better performance
+  const [
+    cronSettingsBase,
+    slowCronSettings,
+    scrapeOnlyCronSettings,
+    cronStatus,
+  ] = await Promise.all([
+    mongoMiddleware.GetCronSettingsList(),
+    mongoMiddleware.GetSlowCronDetails(),
+    mongoMiddleware.GetScrapeCrons(),
+    mongoMiddleware.GetLatestCronStatus(),
+  ]);
 
-  let cronStatus = await mongoMiddleware.GetLatestCronStatus();
+  // Combine all cron settings
+  let cronSettings = _.concat(
+    cronSettingsBase,
+    slowCronSettings,
+    scrapeOnlyCronSettings,
+  );
+
+  // Create a map for O(1) lookup instead of using find() repeatedly
+  const cronSettingsMap = new Map();
+  cronSettings.forEach((cron: any) => {
+    const id = cron.CronId || cron.cronId;
+    const name = cron.CronName || cron.cronName;
+    if (id) cronSettingsMap.set(id, name);
+  });
+
   if (cronStatus && cronStatus.length > 0) {
     cronStatus.forEach((x: any) => {
       if (x.cronId) {
-        try {
-          x.cronName = cronSettings.find(
-            (t: any) => t.CronId == x.cronId,
-          )?.CronName;
-        } catch (ex) {
-          x.cronName = x.cronId;
-        }
+        x.cronName = cronSettingsMap.get(x.cronId) || x.cronId;
       }
     });
   }
@@ -1050,20 +1118,18 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
 
   let cronLogs: any = null;
   if (type == "SCRAPE_ONLY") {
-    if (cronId != "") {
-      cronLogs = await scrapeOnlyMiddleware.GetRunInfoByCron(
-        totalRecords,
-        moment(date.fromDate).format("YYYY-MM-DD hh:mm:ss"),
-        moment(date.toDate).format("YYYY-MM-DD hh:mm:ss"),
-        cronId,
-      );
-    } else {
-      cronLogs = await scrapeOnlyMiddleware.GetRunInfo(
-        totalRecords,
-        moment(date.fromDate).format("YYYY-MM-DD hh:mm:ss"),
-        moment(date.toDate).format("YYYY-MM-DD hh:mm:ss"),
-      );
-    }
+    // Use the stored procedure for scrape only cron runs
+    const scrapeRuns =
+      await scrapeOnlyMiddleware.GetRecentInProgressScrapeRuns();
+    cronLogs = {
+      mongoResult: [],
+      pageSize: pgLimit,
+      pageNumber: pgNo,
+      totalDocs: scrapeRuns.length,
+      totalPages: Math.ceil(scrapeRuns.length / pgLimit),
+    };
+    // Assign the scrape runs directly for processing
+    logViewModel = scrapeRuns;
   } else {
     cronLogs = await mongoMiddleware.GetCronLogsV2(
       pgNo,
@@ -1104,7 +1170,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
       }
     }
   } else if (type == "SCRAPE_ONLY") {
-    logViewModel = cronLogs;
+    // logViewModel already assigned above when fetching scrape runs
   }
   // filterCronLogs
   let filterCronLogs = await mongoMiddleware.GetFilterCronLogsByLimit(

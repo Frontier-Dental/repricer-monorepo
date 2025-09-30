@@ -24,6 +24,15 @@ export async function GetRunInfo(
   return logResult;
 }
 
+export async function GetRecentInProgressScrapeRuns() {
+  const sqlRunInfoResult =
+    await sqlMiddleware.GetRecentInProgressScrapeOnlyRuns();
+  if (sqlRunInfoResult && sqlRunInfoResult.length > 0) {
+    return sqlRunInfoResult[0];
+  }
+  return [];
+}
+
 export async function GetRunInfoByCron(
   noOfRecords: any,
   startDate: any,

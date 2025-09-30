@@ -4,76 +4,22 @@
 <div class="page">
   <div class="container-fluid">
     <div class="d-flex justify-content-between">
-      <h1 class="commanHeading">Current Tasks</h1>
+      <h1 class="commanHeading">In-Progress Crons</h1>
       <br />
     </div>
-    <!-- Is this needed here? -->
-    <form method="post" autocomplete="off" id="add_item_excel">
-      <div
-        class="modal fade"
-        id="exampleModal"
-        tabindex="-1"
-        role="dialog"
-        aria-labelledby="exampleModalLabel"
-        aria-hidden="true"
-      >
-        <div class="modal-dialog" role="document">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel">
-                Select Excel File
-              </h5>
-              <button
-                type="button"
-                class="close"
-                data-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div class="modal-body">
-              <input type="file" id="input" name="input" />
-            </div>
 
-            <div class="px-2 pb-3 d-flex align-items-center">
-              <div>
-                <label class="switch">
-                  <input type="checkbox" name="switch_on" />
-                  <span class="slider"></span>
-                </label>
-              </div>
-              <div>
-                <h4 class="mb-0 mt-3">Override Existing</h4>
-              </div>
-            </div>
-
-            <div class="modal-footer">
-              <a href="/sample.xlsx" class="btn btn-primary">
-                Sample Download
-              </a>
-              <button
-                type="button"
-                class="btn btn-secondary"
-                data-dismiss="modal"
-              >
-                Close
-              </button>
-              <button type="submit" class="btn btn-primary addItemExcel">
-                Update
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </form>
-
+    <!-- Regular, Secondary, and Express Crons Table -->
     <div class="card">
       <div class="body table-responsive">
-        <h5>Last <b>Regular (In-Progress)</b> Cron Status:</h5>
+        <div class="d-flex justify-content-between align-items-center">
+          <h5>Regular, Secondary & Express Cron Statuses:</h5>
+          <button type="button" class="btn btn-primary btn-sm" id="refreshRegularCrons">
+            <i class="ti-reload"></i> Refresh
+          </button>
+        </div>
         <hr />
         <table
-          id="example"
+          id="regularCronsTable"
           class="table table-striped table-bordered"
           style="width: 100%"
         >
@@ -88,40 +34,73 @@
               <th>Cron Status</th>
             </tr>
           </thead>
+          <tbody>
           <% if(cronStatus && cronStatus.length==0) { %>
-          <h5 style="color: brown">No Pending Cron found.</h5>
-
+            <tr>
+              <td colspan="7" class="text-center">No In-Progress Crons found.</td>
+            </tr>
           <% } else if(cronStatus.length>0){
           cronStatus.forEach(function(cron,idx){ %>
-          <tbody>
-            <td>
-              <%= idx+1 %>
-            </td>
-            <td>
-              <%= cron.cronTime %>
-            </td>
-            <td>
-              <%= cron.keyGenId %>
-            </td>
-            <td>
-              <%= cron.cronName %>
-            </td>
-            <td>
-              <%= cron.maximumProductCount %>
-            </td>
-            <td>
-              <%= cron.productsCount %>
-            </td>
-            <td>
-              <% if(cron.status=="Complete" ){ %>
-              <span style="color: green"><b> <%=cron.status %> </b></span>
-              <% }else{%>
-              <span style="color: orangered"><b> <%= cron.status %> </b></span>
-              <%}%>
-            </td>
-          </tbody>
+            <tr>
+              <td><%= idx+1 %></td>
+              <td><%= cron.cronTime %></td>
+              <td><%= cron.keyGenId %></td>
+              <td><%= cron.cronName %></td>
+              <td><%= cron.maximumProductCount %></td>
+              <td><%= cron.productsCount %></td>
+              <td>
+                <% if(cron.status=="Complete" ){ %>
+                <span style="color: green"><b> <%=cron.status %> </b></span>
+                <% }else{%>
+                <span style="color: orangered"><b> <%= cron.status %> </b></span>
+                <%}%>
+              </td>
+            </tr>
           <%});}%>
+          </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- Scrape Only Crons Table -->
+    <div class="card">
+      <div class="body table-responsive">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5>DataOnly Cron Statuses:</h5>
+          <button type="button" class="btn btn-primary btn-sm" id="refreshScrapeCrons">
+            <i class="ti-reload"></i> Refresh
+          </button>
+        </div>
+        <hr />
+        <table
+          id="scrapeCronsTable"
+          class="table table-striped table-bordered"
+          style="width: 100%; display: none;"
+        >
+          <thead>
+            <tr>
+              <th>Sl No.</th>
+              <th>Date Time</th>
+              <th>Object Id</th>
+              <th>Cron Group</th>
+              <th>Eligible Products</th>
+              <th>Products Completed</th>
+              <th>Cron Status</th>
+            </tr>
+          </thead>
+          <tbody id="scrapeCronsBody">
+            <tr>
+              <td colspan="7" class="text-center">Click "Refresh" to load scrape-only crons</td>
+            </tr>
+          </tbody>
+        </table>
+        <div id="scrapeLoadingMessage" style="display: none;" class="text-center p-3">
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          Loading scrape-only crons...
+        </div>
+        <div id="scrapeInitialMessage" class="text-center p-3">
+          Click "Refresh" to load scrape-only crons
+        </div>
       </div>
     </div>
   </div>
@@ -131,13 +110,125 @@
 
 <script src="/javascripts/dashboard.js"></script>
 <script>
-  // function refresh() {
-  //     // make Ajax call here, inside the callback call:
-  //     window.location.reload(true);
-  //     setTimeout(refresh, 60000);
-  //     // ...
-  // }
+  $(document).ready(function() {
+    $('#refreshRegularCrons').on('click', function() {
+      loadRegularCrons();
+    });
 
-  // // initial call, or just call refresh directly
-  // setTimeout(refresh, 60000);
+    $('#refreshScrapeCrons').on('click', function() {
+      loadScrapeCrons();
+    });
+
+    function loadRegularCrons() {
+      $('#refreshRegularCrons').prop('disabled', true);
+
+      $.ajax({
+        url: '/dashboard/getInProgressRegularCrons',
+        method: 'GET',
+        success: function(response) {
+          if (response.status && response.cronStatus) {
+            displayRegularCrons(response.cronStatus);
+          } else {
+            displayRegularCrons([]);
+          }
+
+          $('#refreshRegularCrons').prop('disabled', false);
+        },
+        error: function(error) {
+          console.error('Error loading regular crons:', error);
+          alert('Error loading regular crons. Please try again.');
+          $('#refreshRegularCrons').prop('disabled', false);
+        }
+      });
+    }
+
+    function displayRegularCrons(crons) {
+      const tbody = $('#regularCronsTable tbody');
+      tbody.empty();
+
+      if (crons.length === 0) {
+        tbody.append(
+          '<tr><td colspan="7" class="text-center">No In-Progress Crons found.</td></tr>'
+        );
+      } else {
+        crons.forEach(function(cron, idx) {
+          const statusColor = cron.status === 'Complete' ? 'green' : 'orangered';
+          const row = `
+            <tr>
+              <td>${idx + 1}</td>
+              <td>${cron.cronTime}</td>
+              <td>${cron.keyGenId}</td>
+              <td>${cron.cronName}</td>
+              <td>${cron.maximumProductCount}</td>
+              <td>${cron.productsCount}</td>
+              <td>
+                <span style="color: ${statusColor}"><b>${cron.status || ''}</b></span>
+              </td>
+            </tr>
+          `;
+          tbody.append(row);
+        });
+      }
+    }
+
+    function loadScrapeCrons() {
+      $('#scrapeInitialMessage').hide();
+      $('#scrapeCronsTable').hide();
+      $('#scrapeLoadingMessage').show();
+      $('#refreshScrapeCrons').prop('disabled', true);
+
+      $.ajax({
+        url: '/dashboard/getInProgressScrapeCrons',
+        method: 'GET',
+        success: function(response) {
+          $('#scrapeLoadingMessage').hide();
+
+          if (response.status && response.scrapeCronStatus) {
+            displayScrapeCrons(response.scrapeCronStatus);
+          } else {
+            displayScrapeCrons([]);
+          }
+
+          $('#refreshScrapeCrons').prop('disabled', false);
+        },
+        error: function(error) {
+          console.error('Error loading scrape crons:', error);
+          $('#scrapeLoadingMessage').hide();
+          $('#scrapeInitialMessage').text('Error loading scrape-only crons. Please try again.').show();
+          $('#refreshScrapeCrons').prop('disabled', false);
+        }
+      });
+    }
+
+    function displayScrapeCrons(scrapeCrons) {
+      const tbody = $('#scrapeCronsBody');
+      tbody.empty();
+
+      if (scrapeCrons.length === 0) {
+        tbody.append(
+          '<tr><td colspan="7" class="text-center">No In-Progress Scrape-Only Crons found.</td></tr>'
+        );
+      } else {
+        scrapeCrons.forEach(function(cron, idx) {
+          const statusColor = cron.status === 'Complete' ? 'green' : 'orangered';
+          const row = `
+            <tr>
+              <td>${idx + 1}</td>
+              <td>${cron.cronTime}</td>
+              <td>${cron.keyGenId}</td>
+              <td>${cron.cronName}</td>
+              <td>${cron.eligibleCount}</td>
+              <td>${cron.productsCompleted}</td>
+              <td>
+                <span style="color: ${statusColor}"><b>${cron.status || ''}</b></span>
+              </td>
+            </tr>
+          `;
+          tbody.append(row);
+        });
+      }
+
+      $('#scrapeCronsTable').show();
+    }
+  });
 </script>
