@@ -10,6 +10,8 @@ RUN npm run build
 
 WORKDIR /app/apps/excel-export
 
+COPY apps/excel-export/src/resources ./src/resources
+
 RUN npm prune --production
 
 EXPOSE 3003
