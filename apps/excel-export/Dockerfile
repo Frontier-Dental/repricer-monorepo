@@ -3,14 +3,14 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
-COPY tsconfig.json ./
+COPY apps/excel-export/package*.json ./
+COPY apps/excel-export/tsconfig.json ./
 
 # Install dependencies
 RUN npm ci
 
 # Copy source code
-COPY src ./src
+COPY apps/excel-export/src ./src
 
 # Build the application
 RUN npm run build
@@ -20,7 +20,7 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY apps/excel-export/package*.json ./
 
 # Install production dependencies only
 RUN npm ci --only=production && npm cache clean --force
