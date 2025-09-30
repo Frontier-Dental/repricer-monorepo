@@ -10,7 +10,7 @@ RUN npm run build
 
 WORKDIR /app/apps/excel-export
 
-COPY apps/excel-export/src/resources ./resources
+COPY apps/excel-export/resources ./resources
 
 RUN npm prune --production
 
