@@ -1,10 +1,11 @@
 {
   "name": "excel-export",
   "version": "1.0.0",
+  "type": "module",
   "description": "Excel export service for repricer",
   "main": "./dist/main.js",
   "scripts": {
-    "dev": "ts-node-dev -r dotenv/config --respawn --transpile-only --ignore-watch node_modules --ignore-watch '../*/dist' src/main.ts",
+    "dev": "tsx watch --env-file=.env src/main.ts",
     "start": "node dist/main.js",
     "build": "tsc",
     "format": "prettier --write \"src/**/*.{js,ts}\"",

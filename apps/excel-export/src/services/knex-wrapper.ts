@@ -1,4 +1,4 @@
-import { Knex, knex } from "knex";
+import knex, { Knex } from "knex";
 import { applicationConfig } from "../utility/config";
 
 let knexInstance: Knex | null = null;
