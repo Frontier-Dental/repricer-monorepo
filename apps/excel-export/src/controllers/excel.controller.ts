@@ -2,8 +2,8 @@ import { Request, Response } from "express";
 import excelJs from "exceljs";
 import _ from "lodash";
 import moment from "moment";
-import badgeResx from "../resources/badgeIndicatorMapping.json";
-import handlingTimeGroupResx from "../resources/HandlingTimeFilterMapping.json";
+import badgeResx from "../resources/badgeIndicatorMapping.json" assert { type: "json" };
+import handlingTimeGroupResx from "../resources/HandlingTimeFilterMapping.json" assert { type: "json" };
 import * as mySqlHelper from "../services/mysql";
 
 /****** PRIVATE FUNCTIONS ******/
