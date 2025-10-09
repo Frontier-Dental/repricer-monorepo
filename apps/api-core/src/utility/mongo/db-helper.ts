@@ -842,6 +842,20 @@ export const GetContextErrorItems = async (
     .toArray();
 };
 
+export const GetOpportunityItems = async (): Promise<any> => {
+  const query = {
+    nextCronTime: {
+      $lte: new Date(),
+    },
+    active: true,
+  };
+  const dbo = await getMongoDb();
+  return dbo
+    .collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION)
+    .find(query)
+    .toArray();
+};
+
 export const UpdateCronSettings = async (cronId: string): Promise<any> => {
   const dbo = await getMongoDb();
   return dbo

@@ -171,6 +171,114 @@ export async function getCronSettings(req: Request, res: Response) {
   cronSettingsResponse.custom.ThresholdReached = false; //await MapperHelper.GetIsStepReached(hiddenCronDetails, hiddenCronDetails.AlternateProxyProvider.length-1);
   cronSettingsResponse.custom.CloseToThresholdReached = false; // await MapperHelper.GetIsStepReached(hiddenCronDetails, hiddenCronDetails.AlternateProxyProvider.length - 2);
 
+  // Setup Opportunity Cron data
+  const opportunityCronDetails = cronSettingsResult.find(
+    (x: any) => x.CronName == "Cron-Opportunity",
+  );
+  cronSettingsResponse.opportunity = {};
+  if (opportunityCronDetails) {
+    cronSettingsResponse.opportunity.CronId = opportunityCronDetails.CronId;
+    cronSettingsResponse.opportunity.CronName = opportunityCronDetails.CronName;
+    cronSettingsResponse.opportunity.IsActive =
+      opportunityCronDetails.CronStatus;
+    cronSettingsResponse.opportunity.ProxyProvider =
+      opportunityCronDetails.ProxyProvider
+        ? opportunityCronDetails.ProxyProvider
+        : 0;
+    cronSettingsResponse.opportunity.IpType = opportunityCronDetails.IpType
+      ? opportunityCronDetails.IpType
+      : 0;
+    cronSettingsResponse.opportunity.FixedIp = opportunityCronDetails.FixedIp;
+    cronSettingsResponse.opportunity.Offset = opportunityCronDetails.Offset;
+    cronSettingsResponse.opportunity.CronTime = opportunityCronDetails.CronTime;
+    cronSettingsResponse.opportunity.CronTimeUnit =
+      opportunityCronDetails.CronTimeUnit;
+    cronSettingsResponse.opportunity.EligibleProductsCount =
+      await mongoMiddleware.GetOpportunityItemsCount();
+    cronSettingsResponse.opportunity.lastUpdatedBy =
+      await SessionHelper.GetAuditValue(opportunityCronDetails, "U_NAME");
+    cronSettingsResponse.opportunity.lastUpdatedOn =
+      await SessionHelper.GetAuditValue(opportunityCronDetails, "U_TIME");
+    cronSettingsResponse.opportunity.ProxyProvider_1 =
+      await MapperHelper.GetAlternateProxyProviderId(opportunityCronDetails, 1);
+    cronSettingsResponse.opportunity.ProxyProvider_2 =
+      await MapperHelper.GetAlternateProxyProviderId(opportunityCronDetails, 2);
+    cronSettingsResponse.opportunity.ProxyProvider_3 =
+      await MapperHelper.GetAlternateProxyProviderId(opportunityCronDetails, 3);
+    cronSettingsResponse.opportunity.ProxyProvider_4 =
+      await MapperHelper.GetAlternateProxyProviderId(opportunityCronDetails, 4);
+    cronSettingsResponse.opportunity.ProxyProvider_5 =
+      await MapperHelper.GetAlternateProxyProviderId(opportunityCronDetails, 5);
+    cronSettingsResponse.opportunity.ProxyProvider_6 =
+      await MapperHelper.GetAlternateProxyProviderId(opportunityCronDetails, 6);
+    cronSettingsResponse.opportunity.ProxyProvider_1_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        cronSettingsResponse.opportunity.ProxyProvider_1,
+      );
+    cronSettingsResponse.opportunity.ProxyProvider_2_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        cronSettingsResponse.opportunity.ProxyProvider_2,
+      );
+    cronSettingsResponse.opportunity.ProxyProvider_3_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        cronSettingsResponse.opportunity.ProxyProvider_3,
+      );
+    cronSettingsResponse.opportunity.ProxyProvider_4_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        cronSettingsResponse.opportunity.ProxyProvider_4,
+      );
+    cronSettingsResponse.opportunity.ProxyProvider_5_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        cronSettingsResponse.opportunity.ProxyProvider_5,
+      );
+    cronSettingsResponse.opportunity.ProxyProvider_6_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        cronSettingsResponse.opportunity.ProxyProvider_6,
+      );
+    cronSettingsResponse.opportunity.ProxyProvider_Name =
+      await MapperHelper.GetAlternateProxyProviderName(
+        configItems,
+        opportunityCronDetails.ProxyProvider,
+      );
+    cronSettingsResponse.opportunity.ThresholdReached = false;
+    cronSettingsResponse.opportunity.CloseToThresholdReached = false;
+  } else {
+    // Set default values when opportunity cron doesn't exist in database
+    cronSettingsResponse.opportunity.CronId = null;
+    cronSettingsResponse.opportunity.CronName = "Cron-Opportunity";
+    cronSettingsResponse.opportunity.IsActive = false;
+    cronSettingsResponse.opportunity.ProxyProvider = 0;
+    cronSettingsResponse.opportunity.IpType = 0;
+    cronSettingsResponse.opportunity.FixedIp = null;
+    cronSettingsResponse.opportunity.Offset = 0;
+    cronSettingsResponse.opportunity.CronTime = 30;
+    cronSettingsResponse.opportunity.CronTimeUnit = "min";
+    cronSettingsResponse.opportunity.EligibleProductsCount = 0;
+    cronSettingsResponse.opportunity.lastUpdatedBy = "N/A";
+    cronSettingsResponse.opportunity.lastUpdatedOn = "N/A";
+    cronSettingsResponse.opportunity.ProxyProvider_1 = 99;
+    cronSettingsResponse.opportunity.ProxyProvider_2 = 99;
+    cronSettingsResponse.opportunity.ProxyProvider_3 = 99;
+    cronSettingsResponse.opportunity.ProxyProvider_4 = 99;
+    cronSettingsResponse.opportunity.ProxyProvider_5 = 99;
+    cronSettingsResponse.opportunity.ProxyProvider_6 = 99;
+    cronSettingsResponse.opportunity.ProxyProvider_1_Name = "";
+    cronSettingsResponse.opportunity.ProxyProvider_2_Name = "";
+    cronSettingsResponse.opportunity.ProxyProvider_3_Name = "";
+    cronSettingsResponse.opportunity.ProxyProvider_4_Name = "";
+    cronSettingsResponse.opportunity.ProxyProvider_5_Name = "";
+    cronSettingsResponse.opportunity.ProxyProvider_6_Name = "";
+    cronSettingsResponse.opportunity.ProxyProvider_Name = "";
+    cronSettingsResponse.opportunity.ThresholdReached = false;
+    cronSettingsResponse.opportunity.CloseToThresholdReached = false;
+  }
+
   res.render("pages/settings/settingsList", {
     configItems: configItems,
     settings: cronSettingsResponse,
@@ -314,6 +422,50 @@ export async function updateCronSettings(req: Request, res: Response) {
       );
     }
   }
+
+  // Get Opportunity Cron Updates
+  const cronOpportunity = cronSettingsResponseFull.find(
+    (x: any) => x.CronName == "Cron-Opportunity",
+  );
+  const alternateProxyProviderDetailsForOpportunity =
+    await MapperHelper.MapAlternateProxyProviderDetails(998, payload); //998 in 1st param means it is for opportunity
+  if (
+    cronOpportunity?.ProxyProvider != payload.proxy_provider_opportunity ||
+    cronOpportunity?.CronTime != payload.cron_time_opportunity ||
+    cronOpportunity?.CronTimeUnit != payload.cron_time_unit_opportunity ||
+    cronOpportunity?.Offset != payload.offset_opportunity ||
+    !_.isEqual(
+      alternateProxyProviderDetailsForOpportunity,
+      cronOpportunity?.AlternateProxyProvider,
+    )
+  ) {
+    const cronSettingOpportunityPayload = new cronSettings(
+      cronOpportunity?.CronId,
+      cronOpportunity?.CronName,
+      payload.cron_time_unit_opportunity,
+      payload.cron_time_opportunity,
+      null as any,
+      cronOpportunity?.CronStatus,
+      payload.offset_opportunity,
+      payload.proxy_provider_opportunity,
+      null as any,
+      null as any,
+      alternateProxyProviderDetailsForOpportunity,
+    );
+    listOfUpdates.push(cronSettingOpportunityPayload);
+    if (
+      cronOpportunity?.CronTime != payload.cron_time_opportunity ||
+      cronOpportunity?.Offset != payload.offset_opportunity ||
+      cronOpportunity?.CronTimeUnit != payload.cron_time_unit_opportunity
+    ) {
+      listOfUpdatedCronKey.push(
+        cronMapping.find(
+          (c) => c.cronId == cronSettingOpportunityPayload.CronId,
+        )!.cronVariable,
+      );
+    }
+  }
+
   if (listOfUpdates.length > 0) {
     await mongoMiddleware.UpdateCronSettingsList(listOfUpdates, req);
     if (listOfUpdatedCronKey.length > 0) {

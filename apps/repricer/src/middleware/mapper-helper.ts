@@ -565,10 +565,14 @@ export const MapAlternateProxyProviderDetails = async (
   for (let i = 1; i <= 6; i++) {
     let info: any = {};
     info.Sequence = i;
-    const keyToGetValue =
-      idx == 999 ? `proxy_provider_422_alternate_${i}` : `proxy_provider_${i}`;
+    let keyToGetValue = `proxy_provider_${i}`;
+    if (idx == 999) {
+      keyToGetValue = `proxy_provider_422_alternate_${i}`;
+    } else if (idx == 998) {
+      keyToGetValue = `proxy_provider_opportunity_alternate_${i}`;
+    }
     info.ProxyProvider =
-      idx == 999
+      idx == 999 || idx == 998
         ? parseInt(payload[keyToGetValue])
         : parseInt(payload[keyToGetValue][idx]);
     alternateResults.push(info as never);

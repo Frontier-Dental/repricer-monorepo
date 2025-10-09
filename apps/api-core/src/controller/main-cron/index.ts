@@ -5,6 +5,7 @@ import { startAllCronHandler } from "./start-all";
 import { stopCronHandler } from "./stop";
 import { stopAllCronHandler } from "./stop-all";
 import { start422Handler } from "./start-422";
+import { startOpportunityHandler } from "./start-opportunity";
 import { updateProductManualHandler } from "./update-product-manual";
 import { startOverrideHandler } from "./startoverride";
 import { startFeedCronHandler } from "./start-feed-cron";
@@ -20,6 +21,7 @@ mainCronController.post("/schedule/StopCron", stopCronHandler);
 mainCronController.post("/schedule/StartCron", startCronHandler);
 mainCronController.post("/schedule/RecreateCron", recreateCronHandler);
 mainCronController.get("/schedule/start422", start422Handler);
+mainCronController.get("/schedule/startOpportunity", startOpportunityHandler);
 mainCronController.post(
   "/product/updateManualProd/:id",
   updateProductManualHandler,

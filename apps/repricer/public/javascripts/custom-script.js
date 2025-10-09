@@ -175,6 +175,11 @@ function editAll() {
   $('[name="cron_time_unit_422"]').removeAttr("disabled");
   $('[name^="proxy_provider_"]').removeAttr("disabled");
   $('[name^="proxy_provider_422_alternate_"]').removeAttr("disabled");
+  $('[name="proxy_provider_opportunity"]').removeAttr("disabled");
+  $('[name="offset_opportunity"]').removeAttr("readonly");
+  $('[name="cron_time_opportunity"]').removeAttr("readonly");
+  $('[name="cron_time_unit_opportunity"]').removeAttr("disabled");
+  $('[name^="proxy_provider_opportunity_alternate_"]').removeAttr("disabled");
 
   var fixedIpControls = $("input[name*='fixed_ip_']");
   for (var i = 0; i < fixedIpControls.length; i++) {
@@ -441,6 +446,54 @@ function stop422Cron(cronName) {
 
 function start422Cron(cronName) {
   if (confirm(`Are you sure you want to update the cron settings?`)) {
+    $.ajax({
+      type: "POST",
+      url: "/cronSettings/toggle_cron_status",
+      data: { CronName: cronName, Action: true },
+      dataType: "json",
+      cache: false,
+      beforeSend: function () {
+        showLoadingToast("Please Wait");
+      },
+      success: function (data) {
+        showSuccessToast(data.message);
+        location.reload();
+      },
+      error: function () {
+        showErrorToast("Something went wrong. Please try again");
+      },
+    });
+  } else {
+    location.reload();
+  }
+}
+
+function stopOpportunityCron(cronName) {
+  if (confirm(`Are you sure you want to stop the opportunity cron?`)) {
+    $.ajax({
+      type: "POST",
+      url: "/cronSettings/toggle_cron_status",
+      data: { CronName: cronName, Action: false },
+      dataType: "json",
+      cache: false,
+      beforeSend: function () {
+        showLoadingToast("Please Wait");
+      },
+      success: function (data) {
+        showSuccessToast(data.message);
+        location.reload();
+      },
+      error: function () {
+        showErrorToast("Something went wrong. Please try again");
+      },
+    });
+  } else {
+    location.reload();
+  }
+}
+
+function startOpportunityCron(cronName) {
+  if (confirm(`Are you sure you want to start the opportunity cron?`)) {
     $.ajax({
       type: "POST",
       url: "/cronSettings/toggle_cron_status",

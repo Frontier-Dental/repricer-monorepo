@@ -71,6 +71,8 @@ export const envSchema = z.object({
   CLEAR_LOG_PATH_ENDPOINT: z.string().default("/app/clear-logs"),
   SCRAPE_ITEMS_COLLECTION: z.string().default("scrapeItems"),
   ERROR_422_CRON_LOGS: z.string().default("422cronLogs"),
+  OPPORTUNITY_ITEM_COLLECTION: z.string().default("opportunityItems"),
+  OPPORTUNITY_CRON_LOGS: z.string().default("opportunityCronLogs"),
   SCRAPE_CRON_SETTINGS_COLLECTION_NAME: z
     .string()
     .default("scrapeCronSettings"),

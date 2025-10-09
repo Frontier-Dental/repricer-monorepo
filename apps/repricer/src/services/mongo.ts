@@ -482,6 +482,19 @@ export const GetContextErrorItemsCount = async (_activeStatus: any) => {
     .countDocuments(query);
 };
 
+export const GetOpportunityItemsCount = async () => {
+  const dbo = await getMongoDb();
+  const query: any = {
+    nextCronTime: {
+      $lte: new Date(),
+    },
+    active: true,
+  };
+  return dbo
+    .collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION)
+    .countDocuments(query);
+};
+
 export const GetConfigurations = async (activeOnly = true) => {
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),

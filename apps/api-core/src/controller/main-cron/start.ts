@@ -4,6 +4,7 @@ import {
   setCronAndStart,
   startCron,
   startError422Cron,
+  setOpportunityCronAndStart,
 } from "./shared";
 import { CacheKeyName } from "../../resources/cache-key-name";
 import * as cacheHelper from "../../utility/cache-helper";
@@ -18,6 +19,13 @@ export async function startCronHandler(
   const { jobName, cronId } = req.body;
   if (jobName === "Cron-422") {
     startError422Cron();
+    return res
+      .status(_codes.StatusCodes.OK)
+      .send(`Cron job started successfully for jobName : ${jobName}`);
+  }
+  if (jobName === "Cron-Opportunity") {
+    const cronSettings = await dbHelper.GetCronSettingsList();
+    setOpportunityCronAndStart(cronSettings);
     return res
       .status(_codes.StatusCodes.OK)
       .send(`Cron job started successfully for jobName : ${jobName}`);

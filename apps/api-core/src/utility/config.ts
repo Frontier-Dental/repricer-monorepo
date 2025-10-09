@@ -24,6 +24,8 @@ const envSchema = z.object({
   FILTER_CRON_LOGS: z.string().default("filterCronLogs"),
   PROXY_FAILURE_COLLECTION: z.string().default("proxyFailureDetails"),
   ERROR_422_CRON_LOGS: z.string().default("422cronLogs"),
+  OPPORTUNITY_ITEM_COLLECTION: z.string().default("opportunityItems"),
+  OPPORTUNITY_CRON_LOGS: z.string().default("opportunityCronLogs"),
   PROXY_SWITCHER_CRON_COLLECTION_NAME: z
     .string()
     .default("proxySwitcherCronSettings"),
@@ -171,6 +173,8 @@ const envSchema = z.object({
   RETRY_INTERVAL: z.coerce.number().default(2000),
   _422_CACHE_VALID_PERIOD: z.coerce.number().default(120),
   CRON_NAME_422: z.string().default("Cron-422"),
+  OPPORTUNITY_CACHE_VALID_PERIOD: z.coerce.number().default(120),
+  CRON_NAME_OPPORTUNITY: z.string().default("Cron-Opportunity"),
   VENDOR_ID: z.coerce.number().default(17357),
   VENDOR_COUNT: z.coerce.number().default(6),
   SQL_VENDOR_KEYS: z.string().default("table_vendorKeys"),
