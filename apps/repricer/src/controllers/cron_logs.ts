@@ -1052,7 +1052,7 @@ export async function getInProgressScrapeCrons(req: Request, res: Response) {
     const enrichedCronStatus = scrapeCronStatus.map((item: any) => {
       return {
         cronTime: item.CronStartTime
-          ? formatDateToEDT(new Date(item.CronStartTime))
+          ? formatDateToEDT(new Date(item.CronStartTime + " GMT-0400"))
           : "-",
         keyGenId: item.KeyGenId,
         cronName: item.CronName,
