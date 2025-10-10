@@ -18,6 +18,53 @@ import { applicationConfig } from "../utility/config";
 
 let _contextLog: any = null;
 
+/**
+ * Formats a date to EDT timezone in the format:
+ * "Fri Oct 10 2025 18:03:31 GMT-0400 (Eastern Daylight Time)"
+ */
+function formatDateToEDT(date: Date): string {
+  // Get date parts in EDT timezone
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(date);
+  const partMap: Record<string, string> = {};
+  parts.forEach((part) => {
+    if (part.type !== "literal") {
+      partMap[part.type] = part.value;
+    }
+  });
+
+  // Get timezone name (long format)
+  const tzFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/New_York",
+    timeZoneName: "long",
+  });
+  const tzParts = tzFormatter.formatToParts(date);
+  const tzName =
+    tzParts.find((p) => p.type === "timeZoneName")?.value ||
+    "Eastern Daylight Time";
+
+  // Determine offset based on whether it's DST or not
+  // EDT is -4, EST is -5
+  const isDST = tzName.includes("Daylight");
+  const offset = isDST ? "-0400" : "-0500";
+
+  // Pad hour to 2 digits
+  const hour = partMap.hour.padStart(2, "0");
+
+  return `${partMap.weekday} ${partMap.month} ${partMap.day} ${partMap.year} ${hour}:${partMap.minute}:${partMap.second} GMT${offset} (${tzName})`;
+}
+
 export async function getCronLogs(req: Request, res: Response) {
   let logViewModel: any[] = [];
   let pgNo = 0;
@@ -962,7 +1009,7 @@ async function getInProgressRegularSecondaryAndExpressCrons() {
       }
       // Format cronTime to Eastern Time with full format
       if (x.cronTime) {
-        x.cronTime = new Date(x.cronTime).toString();
+        x.cronTime = formatDateToEDT(new Date(x.cronTime));
       }
     });
   }
@@ -1005,7 +1052,7 @@ export async function getInProgressScrapeCrons(req: Request, res: Response) {
     const enrichedCronStatus = scrapeCronStatus.map((item: any) => {
       return {
         cronTime: item.CronStartTime
-          ? new Date(item.CronStartTime).toString()
+          ? formatDateToEDT(new Date(item.CronStartTime))
           : "-",
         keyGenId: item.KeyGenId,
         cronName: item.CronName,
