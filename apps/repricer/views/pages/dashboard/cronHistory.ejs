@@ -165,26 +165,26 @@
                         <nav aria-label="" class="">
                           <ul class="pagination  justify-content-center">
                             <li class="page-item p-2">
-                              <a href="/cronHistory?pgno=1&cronType=<%= params.filterCronType %>&cronId=<%= params.filterCron %>&fromDate=<%= params.filterStartDate %>&toDate=<%= params.filterEndDate %>&totalRecords=<%= params.filterTotalRecords %>"><button class="btn tracknumlisting-pagination-button" >&laquo;</button></a>
+                              <a href="/dashboard/cronHistory?pgno=1&cronType=<%= params.filterCronType %>&cronId=<%= params.filterCron %>&fromDate=<%= params.filterStartDate %>&toDate=<%= params.filterEndDate %>&totalRecords=<%= params.filterTotalRecords %>"><button class="btn tracknumlisting-pagination-button" >&laquo;</button></a>
                             </li>
                             <li class="page-item p-2">
-                              <a href="/cronHistory?pgno=<%= Math.max(1, pageNumber) %>&cronType=<%= params.filterCronType %>&cronId=<%= params.filterCron %>&fromDate=<%= params.filterStartDate %>&toDate=<%= params.filterEndDate %>&totalRecords=<%= params.filterTotalRecords %>"><button class="btn tracknumlisting-pagination-button" >Previous</button></a>
+                              <a href="/dashboard/cronHistory?pgno=<%= Math.max(1, pageNumber) %>&cronType=<%= params.filterCronType %>&cronId=<%= params.filterCron %>&fromDate=<%= params.filterStartDate %>&toDate=<%= params.filterEndDate %>&totalRecords=<%= params.filterTotalRecords %>"><button class="btn tracknumlisting-pagination-button" >Previous</button></a>
                             </li>
                             <% pages.slice(upVal, lowVal).map(pg => {
                               let active = (pg === pageNumber) ? '-active' : ''
                               %>
                                 <li class="page-item p-2">
-                                  <a href="/cronHistory?pgno=<%= (pg + 1) %>&cronType=<%= params.filterCronType %>&cronId=<%= params.filterCron %>&fromDate=<%= params.filterStartDate %>&toDate=<%= params.filterEndDate %>&totalRecords=<%= params.filterTotalRecords %>" ><button class="btn tracknumlisting-pagination-button" >
+                                  <a href="/dashboard/cronHistory?pgno=<%= (pg + 1) %>&cronType=<%= params.filterCronType %>&cronId=<%= params.filterCron %>&fromDate=<%= params.filterStartDate %>&toDate=<%= params.filterEndDate %>&totalRecords=<%= params.filterTotalRecords %>" ><button class="btn tracknumlisting-pagination-button" >
                                     <%= (pg + 1) %>
                                   </button></a>
                                 </li>
-                              
+
                             <% }) %>
                             <li class="page-item p-2">
-                              <a href="/cronHistory?pgno=<%= Math.min(totalPages, Number(pageNumber) + 2) %>&cronType=<%= params.filterCronType %>&cronId=<%= params.filterCron %>&fromDate=<%= params.filterStartDate %>&toDate=<%= params.filterEndDate %>&totalRecords=<%= params.filterTotalRecords %>"><button class="btn tracknumlisting-pagination-button" >Next</button></a>
+                              <a href="/dashboard/cronHistory?pgno=<%= Math.min(totalPages, Number(pageNumber) + 2) %>&cronType=<%= params.filterCronType %>&cronId=<%= params.filterCron %>&fromDate=<%= params.filterStartDate %>&toDate=<%= params.filterEndDate %>&totalRecords=<%= params.filterTotalRecords %>"><button class="btn tracknumlisting-pagination-button" >Next</button></a>
                             </li>
                             <li class="page-item p-2">
-                              <a href="/cronHistory?pgno=<%= totalPages %>&cronType=<%= params.filterCronType %>&cronId=<%= params.filterCron %>&fromDate=<%= params.filterStartDate %>&toDate=<%= params.filterEndDate %>&totalRecords=<%= params.filterTotalRecords %>"><button class="btn tracknumlisting-pagination-button" >&raquo;</button></a>
+                              <a href="/dashboard/cronHistory?pgno=<%= totalPages %>&cronType=<%= params.filterCronType %>&cronId=<%= params.filterCron %>&fromDate=<%= params.filterStartDate %>&toDate=<%= params.filterEndDate %>&totalRecords=<%= params.filterTotalRecords %>"><button class="btn tracknumlisting-pagination-button" >&raquo;</button></a>
                             </li>
                           </ul>
                         </nav>
