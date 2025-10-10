@@ -960,6 +960,10 @@ async function getInProgressRegularSecondaryAndExpressCrons() {
           x.cronName = x.cronId;
         }
       }
+      // Format cronTime to Eastern Time with full format
+      if (x.cronTime) {
+        x.cronTime = new Date(x.cronTime).toString();
+      }
     });
   }
 
@@ -1000,7 +1004,9 @@ export async function getInProgressScrapeCrons(req: Request, res: Response) {
 
     const enrichedCronStatus = scrapeCronStatus.map((item: any) => {
       return {
-        cronTime: item.CronStartTime,
+        cronTime: item.CronStartTime
+          ? new Date(item.CronStartTime).toString()
+          : "-",
         keyGenId: item.KeyGenId,
         cronName: item.CronName,
         eligibleCount: item.EligibleCount || 0,
