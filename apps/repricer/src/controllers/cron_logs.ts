@@ -1095,6 +1095,15 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
     toDate: "",
   };
 
+  // Check if this is an initial page load (no search performed)
+  const isInitialLoad =
+    !req.query.fromDate &&
+    !req.query.toDate &&
+    !req.query.pgno &&
+    !req.query.cronId &&
+    !req.query.cronType &&
+    !req.query.totalRecords;
+
   if (req.query.fromDate && req.query.toDate) {
     date.fromDate = new Date(req.query.fromDate as any);
     date.toDate = new Date(req.query.toDate as any);
@@ -1127,6 +1136,63 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   let group = "";
   let cronId = "";
 
+  // If initial load, skip expensive data fetching and render empty page
+  if (isInitialLoad) {
+    // Only fetch minimal data needed for dropdowns
+    const [cronSettingsBase, slowCronSettings, scrapeOnlyCronSettings] =
+      await Promise.all([
+        mongoMiddleware.GetCronSettingsList(),
+        mongoMiddleware.GetSlowCronDetails(),
+        mongoMiddleware.GetScrapeCrons(),
+      ]);
+
+    let cronSettings = _.concat(
+      cronSettingsBase,
+      slowCronSettings,
+      scrapeOnlyCronSettings,
+    );
+
+    let cronTypes = [
+      "ALL_EXCEPT_422",
+      "Regular",
+      "SLOWCRON",
+      "Manual",
+      "422Error",
+      "OVERRIDE_RUN",
+      "FEED_RUN",
+      "All",
+      "SCRAPE_ONLY",
+    ];
+
+    let params = {
+      filterCron: "",
+      filterCronType: "ALL_EXCEPT_422",
+      filterPgSize: 10,
+      filterStartDate: moment(date.fromDate).format("YYYY-MM-DDTHH:mm"),
+      filterEndDate: moment(date.toDate).format("YYYY-MM-DDTHH:mm"),
+      filterTotalRecords: 25,
+    };
+
+    return res.render("pages/dashboard/cronHistory", {
+      cronStatus: [],
+      params: params,
+      items: [],
+      filterLogs: [],
+      groupName: "cronHistory",
+      cronSettings: cronSettings,
+      cronTypes: cronTypes,
+      date,
+      type: "ALL_EXCEPT_422",
+      pageSize: 10,
+      pageNumber: 0,
+      totalDocs: 0,
+      totalPages: 0,
+      userRole: (req as any).session.users_id.userRole,
+      showSearchMessage: true,
+    });
+  }
+
+  // Normal search flow - fetch all data
   // Parallelize database queries for better performance
   const [
     cronSettingsBase,
@@ -1274,6 +1340,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
     totalDocs: cronLogs.totalDocs,
     totalPages: cronLogs.totalPages,
     userRole: (req as any).session.users_id.userRole,
+    showSearchMessage: false,
   });
 }
 
