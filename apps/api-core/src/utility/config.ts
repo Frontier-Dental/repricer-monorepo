@@ -4,6 +4,7 @@ import { z } from "zod";
 const envSchema = z.object({
   // Database
   MANAGED_MONGO_URL: z.string(),
+  MANAGED_MONGO_PASSWORD: z.string(),
   GET_PRICE_LIST_DBNAME: z.string().default("repricer"),
   GET_PRICE_LIST_COLLECTION_NAME: z.string().default("items"),
   CRON_LOGS_COLLECTION_NAME: z.string().default("cronLogs"),
@@ -252,6 +253,9 @@ const envSchema = z.object({
   CACHE_USERNAME: z.string(),
   CACHE_PASSWORD: z.string(),
   CACHE_PORT: z.coerce.number(),
+  REPRICER_ENCRYPTION_KEY: z
+    .string()
+    .default("3v9sKkLZ2z1Yq9eU8 + XgJk1YbZ9n3vLQ0mF9ZkQhJxgE="),
 });
 
 export function validateConfig() {

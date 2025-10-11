@@ -1,5 +1,10 @@
 import DataBase from "mysql2";
 import { applicationConfig } from "../../utility/config";
+// import Encrypto from "../../utility/encrypto";
+
+// const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
+// const sqlPassword = encrypto.decrypt(applicationConfig.SQL_PASSWORD);
+
 export default DataBase.createPool({
   host: applicationConfig.SQL_HOSTNAME,
   port: applicationConfig.SQL_PORT,
