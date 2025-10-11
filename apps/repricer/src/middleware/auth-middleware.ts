@@ -13,6 +13,11 @@ export function authMiddleware(
     res.redirect("/");
   } else {
     if (applicationConfig.AUTHENTICATION_DISABLED) {
+      (req as any).session.users_id = {
+        id: "dummySessionId",
+        userName: "dummyUserName",
+        userRole: "user", // Default role for now
+      };
       next();
     } else if (!users_id) {
       res.redirect("/");

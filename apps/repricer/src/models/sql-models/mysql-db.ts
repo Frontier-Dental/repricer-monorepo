@@ -1,15 +1,21 @@
 import DataBase from "mysql2";
 import { applicationConfig } from "../../utility/config";
-// import Encrypto from "../../utility/encrypto";
+import Encrypto from "../../utility/encrypto";
 
-// const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
-// const sqlPassword = encrypto.decrypt(applicationConfig.SQL_PASSWORD);
+// Helper: safely decrypt if format matches IV:CipherText
+function tryDecrypt(value: string): string {
+  if (typeof value !== "string" || !value.includes(":")) return value;
+  const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
+  return encrypto.decrypt(value);
+}
+
+const sqlPassword = tryDecrypt(applicationConfig.SQL_PASSWORD);
 
 export default DataBase.createPool({
   host: applicationConfig.SQL_HOSTNAME,
   port: applicationConfig.SQL_PORT,
   user: applicationConfig.SQL_USERNAME,
-  password: applicationConfig.SQL_PASSWORD,
+  password: sqlPassword,
   database: applicationConfig.SQL_DATABASE,
   waitForConnections: true,
   connectionLimit: 100,

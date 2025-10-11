@@ -64,7 +64,7 @@ async function createUser(username: string, password: string) {
       `✅ User '${username}' created successfully with ID: ${userId}`,
     );
     console.log(`Username: ${username}`);
-    console.log(`Password: ${password}`);
+    // console.log(`Password: ${password}`);
   } catch (error) {
     console.error("❌ Error creating user:", error);
   } finally {
@@ -78,8 +78,8 @@ async function createUser(username: string, password: string) {
 // Get command line arguments
 const args = process.argv.slice(2);
 if (args.length !== 2) {
-  console.log("Usage: npm run create-user <username> <password>");
-  console.log("Example: npm run create-user admin mypassword123");
+  // console.log("Usage: npm run create-user <username> <password>");
+  // console.log("Example: npm run create-user admin mypassword123");
   process.exit(1);
 }
 
