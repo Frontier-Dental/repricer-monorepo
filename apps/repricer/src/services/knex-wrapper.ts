@@ -8,9 +8,6 @@ export function getKnexInstance(): Knex {
     return knexInstance;
   } else {
     const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
-    const pmongoawd = encrypto.encrypt("A5M9ac0pGE68Y231");
-    const sqlpwd1 = encrypto.encrypt("AVNS_MTug6KbN42PzVoWvF6b");
-    const cachpwd = encrypto.encrypt("AVNS_-NpdYuIaSgqCmm5P_Kf");
     const sqlPassword = encrypto.decrypt(applicationConfig.SQL_PASSWORD);
     knexInstance = knex({
       client: "mysql2",
