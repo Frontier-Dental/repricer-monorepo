@@ -50,10 +50,10 @@ async function updateProductInfoWithCustomProxy(
   console.log("=== CUSTOM PROXY REQUEST ===");
   console.log("Proxy URL:", PROXY_URL);
   console.log("Target URL:", targetUrl);
-  console.log("Username:", USERNAME);
-  console.log("Subscription Key:", subscriptionKey);
-  console.log("Request Data:", JSON.stringify(data, null, 2));
-  console.log("=============================");
+  // console.log("Username:", USERNAME);
+  // console.log("Subscription Key:", subscriptionKey);
+  // console.log("Request Data:", JSON.stringify(data, null, 2));
+  // console.log("=============================");
 
   const postResponse = await axios.post(
     `${PROXY_URL}/proxy`,

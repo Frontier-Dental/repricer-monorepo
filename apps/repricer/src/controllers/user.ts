@@ -111,7 +111,8 @@ export async function add_user(req: Request, res: Response) {
   let result: any[] = [];
 
   for (const user of userNamesToAdd) {
-    const username = user.trim();
+    const username = user.userName.trim();
+    const password = user.userPassword.trim();
 
     // Check if user already exists using the new MySQL service
     const existingUser = await mysqlService.CheckUserExists(username);
@@ -122,30 +123,30 @@ export async function add_user(req: Request, res: Response) {
         data: `User already exists for ${username}`,
       } as never);
     } else {
-      // Generate a secure password
-      const generatedPassword = passwordGenerator.generate({
-        length: 15,
-        numbers: true,
-        strict: true,
-      });
+      // // Generate a secure password
+      // const generatedPassword = passwordGenerator.generate({
+      //   length: 15,
+      //   numbers: true,
+      //   strict: true,
+      // });
 
       // Hash the password before storing
-      const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       // Create user in MySQL
       const userId = await mysqlService.CreateUser(username, hashedPassword);
 
       if (userId) {
         // Send email with the plain text password (user needs to know it)
-        const userInfo = {
-          userName: username,
-          userPassword: generatedPassword, // Send plain text for user to use
-        };
+        // const userInfo = {
+        //   userName: username,
+        //   userPassword: generatedPassword, // Send plain text for user to use
+        // };
 
-        await httpMiddleware.native_post(
-          applicationConfig.USER_CREATION_EMAIL_TRIGGER_URL,
-          userInfo,
-        );
+        // await httpMiddleware.native_post(
+        //   applicationConfig.USER_CREATION_EMAIL_TRIGGER_URL,
+        //   userInfo,
+        // );
 
         result.push({
           userName: user,

@@ -3,6 +3,7 @@ import _ from "lodash";
 import moment from "moment";
 import * as SessionHelper from "../utility/session-helper";
 import * as mongoMiddleware from "../services/mongo";
+const securedPassword = "*****************";
 
 export async function GetConfigSetup(req: Request, res: Response) {
   let configItems = await mongoMiddleware.GetConfigurations(false);
@@ -23,6 +24,7 @@ export async function GetConfigSetup(req: Request, res: Response) {
       config.slowCrons = proxyCrons.slowCrons;
       config.scrapeCrons = proxyCrons.scrapeCrons;
       config.error422Crons = proxyCrons.error422Crons;
+      config.password = securedPassword;
     }),
   );
 
@@ -78,7 +80,10 @@ export async function UpdateConfig(req: Request, res: Response) {
 
     if (contextConfig) {
       contextConfig.userName = payload.userName[$cr];
-      contextConfig.password = payload.password[$cr];
+      contextConfig.password =
+        payload.password[$cr] != securedPassword
+          ? payload.password[$cr]
+          : contextConfig.password;
       contextConfig.hostUrl = payload.hostUrl[$cr];
       contextConfig.port =
         payload.port[$cr] != null && payload.port[$cr] != ""
