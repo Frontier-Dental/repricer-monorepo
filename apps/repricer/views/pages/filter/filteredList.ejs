@@ -31,7 +31,7 @@
                                         <th style="width: 100px;">Cron Offset</th>
                                         <th>Default Proxy Provider</th>
                                         <th>Alternate Provider List</th>
-                                        <th>Net32 Secret Key</th>
+                                        <!-- <th>Net32 Secret Key</th> -->
                                         <th>Last Modified By</th>
                                         <th>Last Modified On</th>
                                         <th style="width: 170px;">Last On Time</th>
@@ -186,7 +186,7 @@
                                                     <input type="text" class="form-control" value="<%= item.FixedIp %>"
                                                         name="s_fixed_ip_<%=item.CronId %>" placeholder="IP" readonly />
                                                 </td> -->
-                                                <td>
+                                                <!-- <td>
                                                     TRADENT : <input type="text" class="form-control"
                                                         value="<%= item.SecretKey[0].secretKey %>"
                                                         name="s_secret_key_tradent_<%= item.CronId %>"
@@ -211,7 +211,7 @@
                                                         value="<%= item.SecretKey[5].secretKey %>"
                                                         name="s_secret_key_triad_<%= item.CronId %>"
                                                         placeholder="Secret Key" readonly />
-                                                </td>
+                                                </td> -->
                                                 <td style=" word-wrap: break-word">
                                                     <%= item.lastUpdatedBy %>
                                                 </td>

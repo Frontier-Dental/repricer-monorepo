@@ -1,5 +1,5 @@
 import { createClient, RedisClientType } from "redis";
-
+import Encrypto from "../utility/encrypto";
 class CacheClient {
   private static instance: CacheClient;
   private client: RedisClientType;
@@ -116,11 +116,13 @@ interface CacheClientOptions {
 export function GetCacheClientOptions(
   applicationConfig: any,
 ): CacheClientOptions {
+  const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
+  const valkeyPassword = encrypto.decrypt(applicationConfig.CACHE_PASSWORD);
   return {
     host: applicationConfig.CACHE_HOST_URL,
     port: Number(applicationConfig.CACHE_PORT),
     username: applicationConfig.CACHE_USERNAME,
-    password: applicationConfig.CACHE_PASSWORD,
+    password: valkeyPassword,
     useTLS: false,
   };
 }

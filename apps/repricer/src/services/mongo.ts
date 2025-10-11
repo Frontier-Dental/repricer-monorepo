@@ -1,12 +1,11 @@
 import { MongoClient, Db, ObjectId } from "mongodb";
 import _ from "lodash";
-// import * as cacheHelper from "../utility/cache-helper";
-// import cacheKeyEnum from "../../resources/cacheKeyName.json";
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
 import { GetCacheClientOptions } from "../client/cacheClient";
 import CacheClient from "../client/cacheClient";
 import { CacheKey } from "@repricer-monorepo/shared";
+import Encrypto from "../utility/encrypto";
 
 // --- MongoDB Singleton Helper ---
 let mongoClient: MongoClient | null = null;
@@ -14,7 +13,15 @@ let mongoDb: Db | null = null;
 
 async function getMongoDb() {
   if (!mongoClient) {
-    mongoClient = new MongoClient(applicationConfig.MANAGED_MONGO_URL);
+    const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
+    const mongoPassword = encrypto.decrypt(
+      applicationConfig.MANAGED_MONGO_PASSWORD,
+    );
+    const mongoUrl = applicationConfig.MANAGED_MONGO_URL.replace(
+      "{{password}}",
+      mongoPassword,
+    );
+    mongoClient = new MongoClient(mongoUrl);
     await mongoClient.connect();
     mongoDb = mongoClient.db(applicationConfig.GET_REPRICER_DBNAME);
   }
