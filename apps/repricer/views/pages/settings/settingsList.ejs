@@ -39,7 +39,7 @@
                                         <th>Alternate Provider List</th>
                                         <!-- <th>IP Type</th>
                                         <th>IP</th> -->
-                                        <th>Net32 Secret Key</th>
+                                        <!-- <th>Net32 Secret Key</th> -->
                                         <th style="width: 80px;">Last Modified By</th>
                                         <th style="width: 80px;">Last Modified On</th>
                                         <th style="width: 80px;">Last On Time</th>
@@ -196,7 +196,7 @@
                                                     <input type="text" class="form-control" value="<%= item.FixedIp %>"
                                                         name="fixed_ip_<%=item.CronId %>" placeholder="IP" readonly />
                                                 </td> -->
-                                                <td>
+                                                <!-- <td>
                                                     TRADENT : <input type="text" class="form-control"
                                                         value="<%= item.SecretKey[0].secretKey %>"
                                                         name="secret_key_tradent" placeholder="Secret Key" readonly />
@@ -215,7 +215,7 @@
                                                     TRIAD : <input type="text" class="form-control"
                                                         value="<%= item.SecretKey[5].secretKey %>"
                                                         name="secret_key_triad" placeholder="Secret Key" readonly />
-                                                </td>
+                                                </td> -->
                                                 <td style=" word-wrap: break-word">
                                                     <%= item.lastUpdatedBy %>
                                                 </td>
