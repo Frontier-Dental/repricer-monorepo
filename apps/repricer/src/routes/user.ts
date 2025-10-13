@@ -12,5 +12,5 @@ userRouter.post(
   authMiddleware,
   indexController.changePassword,
 );
-userRouter.post("/add_user", authMiddleware, indexController.add_user);
+userRouter.post("/add_user", indexController.add_user);
 userRouter.post("/update_user", authMiddleware, indexController.update_user);
