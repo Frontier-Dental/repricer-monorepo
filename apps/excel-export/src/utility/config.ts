@@ -35,6 +35,7 @@ export const envSchema = z.object({
   FEED_REPRICER_ENDPOINT: z.string().default("/feed/RepriceProduct/"),
   PRODUCT_COLLECTION: z.string().default("products"),
   MANAGED_MONGO_URL: z.string(),
+  MANAGED_MONGO_PASSWORD: z.string(),
   USERS_COLLECTION: z.string().default("users"),
   DEFAULT_PRODUCT_STATUS: z.string().default("true"),
   SIMULATE_REPRICER_ENDPOINT: z.string().default("/repricer/V2AlgoTest"),
@@ -251,6 +252,9 @@ export const envSchema = z.object({
     .default("http://159.89.121.57:3000/monitor/get_422_product"),
   _422_ERROR_MAX_COUNT: z.coerce.number().default(100),
   _422_ERROR_ELIGIBLE_MAX_COUNT: z.coerce.number().default(500),
+  REPRICER_ENCRYPTION_KEY: z
+    .string()
+    .default("3v9sKkLZ2z1Yq9eU8 + XgJk1YbZ9n3vLQ0mF9ZkQhJxgE="),
 });
 
 export function validateConfig() {
