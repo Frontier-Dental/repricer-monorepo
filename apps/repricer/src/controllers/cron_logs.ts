@@ -1146,13 +1146,10 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   // If initial load, skip expensive data fetching and render empty page
   if (isInitialLoad) {
     // Only fetch minimal data needed for dropdowns
-    const [cronSettingsBase, slowCronSettings, scrapeOnlyCronSettings] =
-      await Promise.all([
-        mongoMiddleware.GetCronSettingsList(),
-        mongoMiddleware.GetSlowCronDetails(),
-        mongoMiddleware.GetScrapeCrons(),
-      ]);
-
+    const cronSettingsBase = await mongoMiddleware.GetCronSettingsList();
+    const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
+    const scrapeOnlyCronSettings = await mongoMiddleware.GetScrapeCrons();
+    // Combine all cron settings
     let cronSettings = _.concat(
       cronSettingsBase,
       slowCronSettings,
