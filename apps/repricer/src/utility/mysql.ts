@@ -44,7 +44,7 @@ export async function GetNumberOfScrapeProducts() {
   try {
     const queryToCall = `select count (Id) from table_scrapeProductList;`;
     const noOfRecords = await db.execute(queryToCall);
-    return noOfRecords[0][0]["count (Id)"];
+    return (noOfRecords[0] as any)[0]["count (Id)"];
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }
@@ -58,7 +58,7 @@ export async function GetScrapeProductList(pageNumber: any, pageSize: any) {
       pageNumber,
       pageSize,
     ]);
-    return scrapeProductList[0][0];
+    return (scrapeProductList[0] as any)[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }
@@ -77,7 +77,7 @@ export async function GetScrapeProductListByFilter(
       filterText,
       pageNumber,
     ]);
-    return scrapeProductList[0][0];
+    return (scrapeProductList[0] as any)[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }
@@ -88,7 +88,7 @@ export async function GetAllScrapeProductDetails() {
   try {
     const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_ALL_SCRAPEPRODUCT_DETAILS}()`;
     const scrapeProductList = await db.query(queryToCall);
-    return scrapeProductList[0][0];
+    return (scrapeProductList[0] as any)[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }
@@ -130,7 +130,7 @@ export async function GetLastScrapeDetailsById(mpId: any) {
   try {
     const queryToCall = `CALL ${applicationConfig.SQL_SP_GETLASTSCRAPEDETAILSBYID}(?)`;
     const scrapeDetails = await db.query(queryToCall, [mpId]);
-    return scrapeDetails[0][0];
+    return (scrapeDetails[0] as any)[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }
@@ -828,7 +828,7 @@ export async function GetLinkedVendorDetails(mpId: any, vendorName: any) {
     }
     const queryToCall = `select Id from ${tableName} where MpId=${mpId}`;
     const noOfRecords = await db.execute(queryToCall);
-    return noOfRecords[0][0]["Id"];
+    return (noOfRecords[0] as any)[0]["Id"];
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }
@@ -926,8 +926,8 @@ export async function MapVendorToRoot(data: any) {
       data.CronId,
       parseInt(data.MPID),
     ]);
-    console.trace(noOfRecords[0][0]);
-    return noOfRecords[0][0];
+    console.trace((noOfRecords[0] as any)[0]);
+    return (noOfRecords[0] as any)[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }
@@ -994,7 +994,7 @@ export async function UpdateBranchDataForVendor(
       parseFloat(payLoad.unitPrice),
       parseInt(mpId),
     ]);
-    return noOfRecords[0][0];
+    return (noOfRecords[0] as any)[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }
