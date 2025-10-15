@@ -88,11 +88,11 @@ nodeApp.get("/api/GetStatus", async (req: Request, res: Response) => {
 nodeApp.use(errorMiddleware);
 
 nodeApp.listen(port, async () => {
-  console.log(`Application server running on post ${port} at ${new Date()}`);
-  console.log(`Application version: ${packageJson.version}`);
+  console.info(`Application server running on post ${port} at ${new Date()}`);
+  console.info(`Application version: ${packageJson.version}`);
   initializeThresholdScraping();
   if (applicationConfig.SCHEDULE_CRONS_ON_STARTUP) {
-    console.log("Scheduling enabled crons on startup");
+    console.info("Scheduling enabled crons on startup");
     await startAllCronLogic();
     await start422Logic();
     await startFilterCronLogic();
@@ -101,11 +101,11 @@ nodeApp.listen(port, async () => {
     await startProxySwitchResetCronLogic();
     await startScrapeCronLogic();
     startV2AlgoHtmlFileCleanupCron();
-    console.log("All enabled crons started on startup");
+    console.info("All enabled crons started on startup");
   }
   if (!fs.existsSync("./activeProducts.json")) {
     fs.writeFileSync("./activeProducts.json", JSON.stringify([]));
-    console.log(
+    console.info(
       `Resetting complete for Active Products for Application Reset at ${new Date()}`,
     );
   }
