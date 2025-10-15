@@ -37,7 +37,7 @@ class CacheClient {
   public static getInstance(
     option: CacheClientOptions | null = null,
   ): CacheClient {
-    if (!CacheClient.instance) {
+    if (!CacheClient.instance || CacheClient.instance.client.isOpen === false) {
       CacheClient.instance = new CacheClient(option);
     }
     return CacheClient.instance;
@@ -100,6 +100,11 @@ class CacheClient {
     }
 
     return values;
+  }
+
+  public async disconnect(): Promise<void> {
+    console.debug("Disconnected Redis client");
+    await this.client.quit();
   }
 }
 

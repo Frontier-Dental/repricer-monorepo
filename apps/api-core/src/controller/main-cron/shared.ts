@@ -70,6 +70,7 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
     GetCacheClientOptions(applicationConfig),
   );
   const result = await cacheClient.get<any>(cacheKey);
+  await cacheClient.disconnect();
   if (result == null) {
     return false;
   } else {
@@ -134,6 +135,7 @@ export async function runCoreCronLogicFor422() {
       `Skipped Cron-422 as another 422 cron is already running. CURR_TIME : ${new Date().toISOString()} || RUNNING_CRON_TIME : ${runningCronDetails.initTime}`,
     );
   }
+  await cacheClient.disconnect();
 }
 
 export async function ParallelExecute(

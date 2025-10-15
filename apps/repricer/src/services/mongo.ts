@@ -322,7 +322,10 @@ export const GetCronSettingsList = async () => {
   const cronSettingsList = await cacheClient.get<any>(
     CacheKey.CRON_SETTINGS_LIST,
   );
-  if (cronSettingsList != null) return cronSettingsList;
+  if (cronSettingsList != null) {
+    await cacheClient.disconnect();
+    return cronSettingsList;
+  }
   const dbo = await getMongoDb();
   let dbResponse = await dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
@@ -331,6 +334,7 @@ export const GetCronSettingsList = async () => {
   if (dbResponse != null) {
     await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, dbResponse);
   }
+  await cacheClient.disconnect();
   return dbResponse;
 };
 
@@ -376,7 +380,7 @@ export const InsertCronSettings = async (payload: any) => {
     GetCacheClientOptions(applicationConfig),
   );
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
-
+  await cacheClient.disconnect();
   return insertedId.toString();
 };
 
@@ -390,7 +394,7 @@ export const ToggleCronStatus = async (
     GetCacheClientOptions(applicationConfig),
   );
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
-
+  await cacheClient.disconnect();
   return dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
     .findOneAndUpdate(
@@ -494,7 +498,10 @@ export const GetConfigurations = async (activeOnly = true) => {
     GetCacheClientOptions(applicationConfig),
   );
   const configurationResult = await cacheClient.get<any>(CacheKey.IP_CONFIG);
-  if (configurationResult != null) return configurationResult;
+  if (configurationResult != null) {
+    await cacheClient.disconnect();
+    return configurationResult;
+  }
   const dbo = await getMongoDb();
   const query = activeOnly ? { active: true } : {};
   const dbResult = await dbo
@@ -502,7 +509,7 @@ export const GetConfigurations = async (activeOnly = true) => {
     .find(query)
     .toArray();
   if (dbResult != null) await cacheClient.set(CacheKey.IP_CONFIG, dbResult);
-
+  await cacheClient.disconnect();
   return dbResult;
 };
 
@@ -513,7 +520,7 @@ export const UpdateConfiguration = async (payload: any, req: any) => {
     GetCacheClientOptions(applicationConfig),
   );
   await cacheClient.delete(CacheKey.IP_CONFIG);
-
+  await cacheClient.disconnect();
   for (const element of payload) {
     mongoResult = await dbo
       .collection(applicationConfig.IP_CONFIG)
@@ -1072,13 +1079,16 @@ export async function GetEnvSettings() {
     GetCacheClientOptions(applicationConfig),
   );
   const envSettingsResult = await cacheClient.get(CacheKey.ENV_SETTINGS);
-  if (envSettingsResult != null) return envSettingsResult;
+  if (envSettingsResult != null) {
+    await cacheClient.disconnect();
+    return envSettingsResult;
+  }
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo.collection(applicationConfig.ENV_SETTINGS!).findOne();
   if (mongoResult != null)
     await cacheClient.set(CacheKey.ENV_SETTINGS, mongoResult);
-
+  await cacheClient.disconnect();
   return mongoResult;
 }
 
@@ -1092,7 +1102,7 @@ export const UpsertEnvSettings = async (payload: any) => {
     .collection(applicationConfig.ENV_SETTINGS!)
     .findOneAndUpdate({}, payload);
   await cacheClient.delete(CacheKey.ENV_SETTINGS);
-
+  await cacheClient.disconnect();
   return mongoResult;
 };
 
@@ -1112,7 +1122,10 @@ export const GetFilteredCrons = async () => {
     GetCacheClientOptions(applicationConfig),
   );
   const filterCronDetails = await cacheClient.get(CacheKey.FILTER_CRON_DETAILS);
-  if (filterCronDetails != null) return filterCronDetails;
+  if (filterCronDetails != null) {
+    await cacheClient.disconnect();
+    return filterCronDetails;
+  }
   const dbo = await getMongoDb();
   mongoResult = await dbo
     .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME!)
@@ -1120,7 +1133,7 @@ export const GetFilteredCrons = async () => {
     .toArray();
   if (mongoResult != null)
     await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, mongoResult);
-
+  await cacheClient.disconnect();
   return mongoResult;
 };
 
@@ -1148,6 +1161,7 @@ export const UpdateSlowCronDetails = async (cronId: any, payload: any) => {
     GetCacheClientOptions(applicationConfig),
   );
   await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
+  await cacheClient.disconnect();
   return mongoResult;
 };
 
@@ -1156,7 +1170,10 @@ export const GetSlowCronDetails = async () => {
     GetCacheClientOptions(applicationConfig),
   );
   const slowCronDetails = await cacheClient.get(CacheKey.SLOW_CRON_DETAILS);
-  if (slowCronDetails != null) return slowCronDetails;
+  if (slowCronDetails != null) {
+    await cacheClient.disconnect();
+    return slowCronDetails;
+  }
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
@@ -1165,6 +1182,7 @@ export const GetSlowCronDetails = async () => {
     .toArray();
   if (mongoResult != null)
     await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, mongoResult);
+  await cacheClient.disconnect();
   return mongoResult;
 };
 
@@ -1195,6 +1213,7 @@ export const updateSlowCron = async (payload: any, req: any) => {
     GetCacheClientOptions(applicationConfig),
   );
   await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
+  await cacheClient.disconnect();
   return mongoResult;
 };
 
@@ -1299,12 +1318,25 @@ export const InsertOrUpdateScrapeOnlyProduct = async (payload: any) => {
 };
 
 export const GetScrapeCrons = async () => {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const scrapeOnlyCronDetails = await cacheClient.get(
+    CacheKey.SCRAPE_CRON_DETAILS,
+  );
+  if (scrapeOnlyCronDetails != null) {
+    await cacheClient.disconnect();
+    return scrapeOnlyCronDetails;
+  }
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
     .collection(applicationConfig.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
     .find()
     .toArray();
+  if (mongoResult != null)
+    await cacheClient.set(CacheKey.SCRAPE_CRON_DETAILS, mongoResult);
+  await cacheClient.disconnect();
   return mongoResult;
 };
 
@@ -1314,6 +1346,11 @@ export const UpdateScrapeCronDetails = async (cronId: any, payload: any) => {
   mongoResult = await dbo
     .collection(applicationConfig.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
     .findOneAndUpdate({ CronId: cronId }, payload);
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  await cacheClient.delete(CacheKey.SCRAPE_CRON_DETAILS);
+  await cacheClient.disconnect();
   return mongoResult;
 };
 
@@ -1340,6 +1377,11 @@ export const updateScrapeCron = async (payload: any, req: any) => {
         },
       );
   }
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  await cacheClient.delete(CacheKey.SCRAPE_CRON_DETAILS);
+  await cacheClient.disconnect();
   return mongoResult;
 };
 

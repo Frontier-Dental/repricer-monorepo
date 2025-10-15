@@ -16,6 +16,7 @@ export async function UpdateProxyPriority(payload: {
     GetCacheClientOptions(applicationConfig),
   );
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
+  await cacheClient.disconnect();
   const dbo = await getMongoDb();
   const updateValue = {
     $set: {
@@ -67,8 +68,10 @@ export async function GetGlobalConfig() {
   const mongoResult = await dbo
     .collection(applicationConfig.ENV_SETTINGS)
     .findOne();
-  if (mongoResult != null)
+  if (mongoResult != null) {
     await cacheClient.set(CacheKey.ENV_SETTINGS, mongoResult);
+  }
+  await cacheClient.disconnect();
   return mongoResult as GlobalConfig;
 }
 
@@ -88,6 +91,7 @@ export async function GetCronSettings(): Promise<CronSettingsDetail[]> {
   if (result != null) {
     await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, result);
   }
+  await cacheClient.disconnect();
   return result as CronSettingsDetail[];
 }
 
@@ -124,6 +128,7 @@ export async function GetDelay() {
     GetCacheClientOptions(applicationConfig),
   );
   const envSettingsResult = await cacheClient.get<any>(CacheKey.ENV_SETTINGS);
+  await cacheClient.disconnect();
   if (envSettingsResult != null) return envSettingsResult.delay;
   const dbo = await getMongoDb();
   const dbResponse = await dbo
@@ -321,6 +326,7 @@ export async function GetCronSettingsList(): Promise<CronSettingsDetail[]> {
   if (result != null) {
     await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, result);
   }
+  await cacheClient.disconnect();
   return result as CronSettingsDetail[];
 }
 
@@ -447,6 +453,7 @@ export async function UpdateCronDetailsByCronId(
     GetCacheClientOptions(applicationConfig),
   );
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
+  await cacheClient.disconnect();
   const dbo = await getMongoDb();
   return dbo
     .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
@@ -552,6 +559,7 @@ export async function GetFilterCronDetails(
     .sort({ _id: 1 })
     .toArray();
   await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, mongoResult);
+  await cacheClient.disconnect();
   return mongoResult;
 }
 
@@ -622,6 +630,7 @@ export async function GetSlowCronDetails(ignoreCache = false): Promise<any[]> {
     .toArray();
   if (mongoResult != null)
     await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, mongoResult);
+  await cacheClient.disconnect();
   return mongoResult;
 }
 
