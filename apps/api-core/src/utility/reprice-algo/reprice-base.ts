@@ -218,83 +218,138 @@ export async function RepriceErrorItem(
       seqString,
     );
     let isPriceUpdatedForVendor = false;
-    for (const seq of prioritySequence) {
-      if (!isPriceUpdatedForVendor) {
-        const contextVendor = seq.name;
-        let prod = await filterMapper.GetProductDetailsByVendor(
-          details,
-          contextVendor,
-        );
-        let tempProd = _.cloneDeep(prod);
-        prod.last_cron_time = new Date();
-        let isPriceUpdated = false;
-        if (prod.scrapeOn == true && prod.activated == true) {
-          const postUrl = applicationConfig.REPRICE_OWN_URL.replace(
-            "{mpId}",
-            prod.mpid,
+    if (
+      details.algo_execution_mode === AlgoExecutionMode.V1_ONLY ||
+      details.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY ||
+      details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY
+    ) {
+      for (const seq of prioritySequence) {
+        if (!isPriceUpdatedForVendor) {
+          const contextVendor = seq.name;
+          let prod = await filterMapper.GetProductDetailsByVendor(
+            details,
+            contextVendor,
           );
-          console.log(
-            `REPRICE : Cron-422 : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid}  on ${postUrl} at Time :  ${new Date()}`,
-          );
-          prod.last_attempted_time = new Date();
-          prod.lastCronRun = `Cron-422`;
-          tempProd.cronName = applicationConfig.CRON_NAME_422;
-          tempProd.contextVendor = contextVendor;
-          tempProd.contextCronName = `ExpressCron`;
-          let data: any = {};
-          data.result = net32result ? net32result.data : [];
-          data.prod = tempProd;
-          data.contextVendor = contextVendor;
-          const repriceResult: AxiosResponse<RepriceProductHttpResponse> =
-            await axiosHelper.postAsync(data, postUrl);
-          if (repriceResult && repriceResult.data) {
-            if (
-              repriceResult.data.priceUpdateResponse &&
-              repriceResult.data.priceUpdateResponse != null
-            ) {
+          let tempProd = _.cloneDeep(prod);
+          prod.last_cron_time = new Date();
+          let isPriceUpdated = false;
+          if (prod.scrapeOn == true && prod.activated == true) {
+            // const postUrl = applicationConfig.REPRICE_OWN_URL.replace(
+            //   "{mpId}",
+            //   prod.mpid,
+            // );
+            console.log(
+              `REPRICE : Cron-422 : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid} at Time :  ${new Date().toISOString()}`,
+            );
+            prod.last_attempted_time = new Date();
+            prod.lastCronRun = `Cron-422`;
+            tempProd.cronName = applicationConfig.CRON_NAME_422;
+            tempProd.contextVendor = contextVendor;
+            tempProd.contextCronName = `ExpressCron`;
+            let data: any = {};
+            data.result = net32result ? net32result.data : [];
+            data.prod = tempProd;
+            data.contextVendor = contextVendor;
+            const repriceResult = await repriceProduct(
+              prod.mpid!,
+              net32result.data.filter((p: any) => p.priceBreaks !== undefined),
+              tempProd as unknown as FrontierProduct,
+              contextVendor,
+            );
+            // const repriceResult: AxiosResponse<RepriceProductHttpResponse> =
+            // await axiosHelper.postAsync(data, postUrl);
+            if (repriceResult) {
               if (
-                JSON.stringify(repriceResult.data.priceUpdateResponse).indexOf(
-                  "ERROR:422",
-                ) == -1 &&
-                JSON.stringify(repriceResult.data.priceUpdateResponse).indexOf(
-                  "ERROR:429",
-                ) == -1 &&
-                JSON.stringify(repriceResult.data.priceUpdateResponse).indexOf(
-                  "ERROR:404",
-                ) == -1 &&
-                JSON.stringify(repriceResult.data.priceUpdateResponse).indexOf(
-                  "ERROR:",
-                ) == -1
+                repriceResult.priceUpdateResponse &&
+                repriceResult.priceUpdateResponse != null
               ) {
-                cronLogs.logs.push([
-                  {
-                    productId: prod.mpid,
-                    logs: repriceResult.data.cronResponse,
-                    vendor: contextVendor,
-                    priceUpdated: true,
-                    priceUpdatedOn: new Date(),
-                    priceUpdateResponse: repriceResult.data.priceUpdateResponse,
-                  },
-                ]);
-                prod.last_update_time = new Date();
-                isPriceUpdated = true;
-                prod.lastUpdatedBy = `Cron-422`;
-                isPriceUpdatedForVendor = true;
-                if (prod.wait_update_period == true) {
-                  prod.next_cron_time = calculateNextCronTime(new Date(), 12);
-                  const priceUpdatedItem = new ErrorItemModel(
+                if (
+                  JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
+                    "ERROR:422",
+                  ) == -1 &&
+                  JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
+                    "ERROR:429",
+                  ) == -1 &&
+                  JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
+                    "ERROR:404",
+                  ) == -1 &&
+                  JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
+                    "ERROR:",
+                  ) == -1
+                ) {
+                  cronLogs.logs.push([
+                    {
+                      productId: prod.mpid,
+                      logs: repriceResult.cronResponse,
+                      vendor: contextVendor,
+                      priceUpdated: true,
+                      priceUpdatedOn: new Date(),
+                      priceUpdateResponse: repriceResult.priceUpdateResponse,
+                    },
+                  ]);
+                  prod.last_update_time = new Date();
+                  isPriceUpdated = true;
+                  prod.lastUpdatedBy = `Cron-422`;
+                  isPriceUpdatedForVendor = true;
+                  if (prod.wait_update_period == true) {
+                    prod.next_cron_time = calculateNextCronTime(new Date(), 12);
+                    const priceUpdatedItem = new ErrorItemModel(
+                      prod.mpid,
+                      prod.next_cron_time,
+                      true,
+                      prod.cronId,
+                      "PRICE_UPDATE",
+                      contextVendor,
+                    );
+                    await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
+                    console.log({
+                      message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
+                      obj: JSON.stringify(priceUpdatedItem),
+                    });
+                  } else {
+                    prod.next_cron_time = null;
+                    const priceUpdatedItem = new ErrorItemModel(
+                      prod.mpid,
+                      prod.next_cron_time,
+                      false,
+                      prod.cronId,
+                      "IGNORE",
+                      contextVendor,
+                    );
+                    await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
+                    console.log(`GHOST : ${prod.mpid} - ${contextVendor}`);
+                  }
+                } else if (
+                  JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
+                    "ERROR:422",
+                  ) > -1
+                ) {
+                  prod.next_cron_time = await getNextCronTime(
+                    repriceResult.priceUpdateResponse,
+                  );
+                  // Add the product to Error Item Table.
+                  const errorItem = new ErrorItemModel(
                     prod.mpid,
                     prod.next_cron_time,
                     true,
                     prod.cronId,
-                    "PRICE_UPDATE",
+                    "422_ERROR",
                     contextVendor,
                   );
-                  await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
+                  await dbHelper.UpsertErrorItemLog(errorItem);
                   console.log({
                     message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
-                    obj: JSON.stringify(priceUpdatedItem),
+                    obj: JSON.stringify(errorItem),
                   });
+                  cronLogs.logs.push([
+                    {
+                      productId: prod.mpid,
+                      logs: repriceResult.cronResponse,
+                      vendor: contextVendor,
+                      priceUpdated: false,
+                      priceUpdateResponse: repriceResult.priceUpdateResponse,
+                    },
+                  ]);
                 } else {
                   prod.next_cron_time = null;
                   const priceUpdatedItem = new ErrorItemModel(
@@ -306,73 +361,63 @@ export async function RepriceErrorItem(
                     contextVendor,
                   );
                   await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
-                  console.log(`GHOST : ${prod.mpid} - ${contextVendor}`);
+                  console.log(
+                    `ERROR WHILE PRICE UPDATE : ${prod.mpid} - ${contextVendor}`,
+                  );
                 }
-              } else if (
-                JSON.stringify(repriceResult.data.priceUpdateResponse).indexOf(
-                  "ERROR:422",
-                ) > -1
-              ) {
-                prod.next_cron_time = await getNextCronTime(
-                  repriceResult.data.priceUpdateResponse,
-                );
-                // Add the product to Error Item Table.
+              } else {
+                prod.next_cron_time = null;
                 const errorItem = new ErrorItemModel(
                   prod.mpid,
-                  prod.next_cron_time,
-                  true,
+                  null,
+                  false,
                   prod.cronId,
-                  "422_ERROR",
+                  `IGNORE`,
                   contextVendor,
                 );
                 await dbHelper.UpsertErrorItemLog(errorItem);
-                console.log({
-                  message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
-                  obj: JSON.stringify(errorItem),
-                });
                 cronLogs.logs.push([
                   {
                     productId: prod.mpid,
-                    logs: repriceResult.data.cronResponse,
                     vendor: contextVendor,
-                    priceUpdated: false,
-                    priceUpdateResponse: repriceResult.data.priceUpdateResponse,
+                    logs: repriceResult.cronResponse,
                   },
                 ]);
-              } else {
-                prod.next_cron_time = null;
-                const priceUpdatedItem = new ErrorItemModel(
-                  prod.mpid,
-                  prod.next_cron_time,
-                  false,
-                  prod.cronId,
-                  "IGNORE",
-                  contextVendor,
+              }
+            }
+            // Add Last_Cron_Reprice_Message
+            prod.last_cron_message = filterMapper.GetLastCronMessageSimple(
+              repriceResult as any,
+            );
+
+            // Update History With Proper Message
+            if (
+              repriceResult &&
+              repriceResult.historyIdentifier &&
+              repriceResult.historyIdentifier.length > 0
+            ) {
+              for (const histItem of repriceResult.historyIdentifier) {
+                const errorMessage = await getErrorMessage(
+                  repriceResult,
+                  histItem.minQty,
                 );
-                await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
+                await sqlHelper.UpdateHistoryWithMessage(
+                  histItem.historyIdentifier,
+                  prod.last_cron_message,
+                );
                 console.log(
-                  `ERROR WHILE PRICE UPDATE : ${prod.mpid} - ${contextVendor}`,
+                  `History Updated for ${prod.mpid} with Identifier : ${histItem.historyIdentifier} and Message : ${prod.last_cron_message}`,
                 );
               }
-            } else {
-              prod.next_cron_time = null;
-              const errorItem = new ErrorItemModel(
-                prod.mpid,
-                null,
-                false,
-                prod.cronId,
-                `IGNORE`,
-                contextVendor,
-              );
-              await dbHelper.UpsertErrorItemLog(errorItem);
-              cronLogs.logs.push([
-                {
-                  productId: prod.mpid,
-                  vendor: contextVendor,
-                  logs: repriceResult.data.cronResponse,
-                },
-              ]);
             }
+            prod = updateLowestVendor(repriceResult as any, prod);
+            prod = updateCronBasedDetails(repriceResult, prod, false);
+            await sqlHelper.UpdateProductAsync(
+              prod,
+              isPriceUpdated,
+              contextVendor,
+            );
+            //dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
           } else {
             prod.next_cron_time = null;
             const errorItem = new ErrorItemModel(
@@ -380,68 +425,16 @@ export async function RepriceErrorItem(
               null,
               false,
               prod.cronId,
-              `IGNORE`,
+              "IGNORE",
               contextVendor,
             );
             await dbHelper.UpsertErrorItemLog(errorItem);
-            cronLogs.logs.push([
-              {
-                productId: prod.mpid,
-                vendor: contextVendor,
-                logs: repriceResult.data.cronResponse,
-              },
-            ]);
+            await sqlHelper.UpdateProductAsync(
+              prod,
+              isPriceUpdated,
+              contextVendor,
+            ); //dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
           }
-          // Add Last_Cron_Reprice_Message
-          prod.last_cron_message = filterMapper.GetLastCronMessageSimple(
-            repriceResult as any,
-          );
-
-          // Update History With Proper Message
-          if (
-            repriceResult &&
-            repriceResult.data &&
-            repriceResult.data.historyIdentifier &&
-            repriceResult.data.historyIdentifier.length > 0
-          ) {
-            for (const histItem of repriceResult.data.historyIdentifier) {
-              const errorMessage = await getErrorMessage(
-                repriceResult,
-                histItem.minQty,
-              );
-              await sqlHelper.UpdateHistoryWithMessage(
-                histItem.historyIdentifier,
-                prod.last_cron_message,
-              );
-              console.log(
-                `History Updated for ${prod.mpid} with Identifier : ${histItem.historyIdentifier} and Message : ${prod.last_cron_message}`,
-              );
-            }
-          }
-          prod = updateLowestVendor(repriceResult as any, prod);
-          prod = updateCronBasedDetails(repriceResult, prod, false);
-          await sqlHelper.UpdateProductAsync(
-            prod,
-            isPriceUpdated,
-            contextVendor,
-          );
-          //dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
-        } else {
-          prod.next_cron_time = null;
-          const errorItem = new ErrorItemModel(
-            prod.mpid,
-            null,
-            false,
-            prod.cronId,
-            "IGNORE",
-            contextVendor,
-          );
-          await dbHelper.UpsertErrorItemLog(errorItem);
-          await sqlHelper.UpdateProductAsync(
-            prod,
-            isPriceUpdated,
-            contextVendor,
-          ); //dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
         }
       }
     }
