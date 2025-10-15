@@ -597,5 +597,11 @@ export async function repriceProduct(
   } else {
     repriceResult =
       await Rule.OverrideRepriceResultForExpressCron(repriceResult);
+    outputResponse = new RepriceAsyncResponse(repriceResult!, output);
+    return {
+      cronResponse: outputResponse,
+      priceUpdateResponse: null,
+      historyIdentifier: historyIdentifier,
+    };
   }
 }

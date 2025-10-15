@@ -134,7 +134,7 @@ const envSchema = z.object({
     .default("https://www.net32.com/rest/neo/pdp/{mpId}/vendor-options"),
   REPRICE_OWN_URL: z
     .string()
-    .default("http://localhost:5001/search/RepriceProduct/"),
+    .default("http://localhost:5001/search/RepriceProduct/{mpId}"),
   UPDATE_TO_MAX_OWN_URL: z
     .string()
     .default("http://localhost:5001/search/RepriceProductToMax/{mpId}"),

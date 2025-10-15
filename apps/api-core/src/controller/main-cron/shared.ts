@@ -36,7 +36,12 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
     _422CronSetting.CronTime,
     parseInt(_422CronSetting.Offset),
   );
-
+  console.info(
+    `Setting up 422 cron with schedule: ${cronString} at ${new Date().toISOString()}`,
+  );
+  if (error422Cron) {
+    error422Cron.stop();
+  }
   error422Cron = schedule(
     cronString,
     async () => {
@@ -46,17 +51,27 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
         console.error(`Error running 422 cron:`, error);
       }
     },
-    { scheduled: _422CronSetting.CronStatus },
+    {
+      scheduled: _422CronSetting.CronStatus,
+      runOnInit:
+        _422CronSetting.CronStatus && applicationConfig.RUN_CRONS_ON_INIT,
+    },
   );
   if (_422CronSetting.CronStatus) {
-    console.log("Started 422 cron.");
+    console.info("Started 422 cron.");
   }
 }
 
 async function IsCacheValid(cacheKey: any, sysTime: any) {
-  if (cacheHelper.Has(cacheKey)) {
-    const result = cacheHelper.Get(cacheKey);
-    const differenceInTime = sysTime.getTime() - result.initTime.getTime();
+const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const result = await cacheClient.get<any>(cacheKey);
+  if (result == null) {
+    return false;
+  } else {
+    const differenceInTime =
+      sysTime.getTime() - new Date(result.initTime).getTime();
     const differenceInMinutes = Math.round(differenceInTime / 60000);
     const envVariables = await dbHelper.GetGlobalConfig();
     const thresholdValue =
@@ -64,30 +79,28 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
         ? envVariables.expressCronOverlapThreshold
         : applicationConfig._422_CACHE_VALID_PERIOD;
     console.log(
-      `Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date()}`,
+      `Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
     );
-    if (
-      typeof thresholdValue === "string"
-        ? parseFloat(thresholdValue!)
-        : thresholdValue < differenceInMinutes
-    )
-      return false;
-    else return true;
+    return !(typeof thresholdValue === "string"
+      ? parseFloat(thresholdValue!)
+      : thresholdValue < differenceInMinutes);
   }
-  return false;
 }
 
 export async function runCoreCronLogicFor422() {
-  const cacheKey = CacheKeyName._422_RUNNING_CACHE;
+  const cacheKey = CacheKey._422_RUNNING_CACHE;
   const isCacheValid = await IsCacheValid(cacheKey, new Date());
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
   if (!isCacheValid) {
-    console.log(`Getting List of Eligible Products for Cron-422`);
+    console.info(`Getting List of Eligible Products for Cron-422`);
     const runningCacheObj = { cronRunning: true, initTime: new Date() };
-    cacheHelper.Set(cacheKey, runningCacheObj);
+    await cacheClient.set(cacheKey, runningCacheObj);
     const eligibleProductList = await get422EligibleProducts();
     const keyGen = keyGenHelper.Generate();
-    console.log(
-      `Cron-422 running on ${new Date()} with Eligible Products Count : ${eligibleProductList.length} with KeyGen : ${keyGen}`,
+    console.info(
+      `Cron-422 running on ${new Date().toISOString()} with Eligible Products Count : ${eligibleProductList.length} with KeyGen : ${keyGen}`,
     );
     if (eligibleProductList.length > 0) {
       const envVariables = await dbHelper.GetGlobalConfig();
@@ -111,11 +124,11 @@ export async function runCoreCronLogicFor422() {
         }
       }
     }
-    cacheHelper.DeleteCacheByKey(cacheKey);
+    await cacheClient.delete(cacheKey);
   } else {
-    const runningCronDetails = await cacheHelper.Get(cacheKey);
-    console.log(
-      `Skipped Cron-422 as another 422 cron is already running. CURR_TIME : ${new Date()} || RUNNING_CRON_TIME : ${runningCronDetails.initTime}`,
+    const runningCronDetails = await cacheClient.get<any>(cacheKey);
+    console.warn(
+      `Skipped Cron-422 as another 422 cron is already running. CURR_TIME : ${new Date().toISOString()} || RUNNING_CRON_TIME : ${runningCronDetails.initTime}`,
     );
   }
 }
@@ -130,8 +143,8 @@ export async function ParallelExecute(
       repriceBase.RepriceErrorItemV2(item, initTime, `${keyGen}-${index}`),
     );
     await Promise.all(tasks);
-    console.log(
-      `PARALLEL EXECUTION : ${keyGen} All tasks completed at ${new Date()}`,
+    console.info(
+      `PARALLEL EXECUTION : ${keyGen} All tasks completed at ${new Date().toISOString()}`,
     );
   }
 }
@@ -213,6 +226,9 @@ export function setCronAndStart(
     cronSetting.CronTime,
     parseInt(cronSetting.Offset),
   );
+  console.info(
+    `Setting up cron ${cronName} with schedule: ${cronString} at ${new Date().toISOString()}`,
+  );
   mainCrons[cronName] = schedule(
     cronString,
     async () => {
@@ -228,7 +244,7 @@ export function setCronAndStart(
     },
   );
   if (cronSetting.CronStatus) {
-    console.log(`Started cron ${cronName}`);
+    console.info(`Started cron ${cronName}`);
   }
 }
 
@@ -236,15 +252,15 @@ export async function runCoreCronLogic(
   cronSettingsResponse: CronSettingsDetail,
   isSlowCron: boolean,
 ) {
-  console.log(`Running cron execution for ${cronSettingsResponse.CronName}`);
+  console.info(`Running cron execution for ${cronSettingsResponse.CronName}`);
   const initTime = new Date();
   const eligibleProductList = await getCronEligibleProductsV3(
     cronSettingsResponse.CronId,
   );
   if (eligibleProductList && eligibleProductList.length > 0) {
     const jobId = keyGenHelper.Generate();
-    console.log(
-      `${cronSettingsResponse.CronName} running on ${initTime} with Eligible Product count : ${eligibleProductList.length}  || Job ID : ${jobId}`,
+    console.debug(
+      `${cronSettingsResponse.CronName} running on ${initTime.toISOString()} with Eligible Product count : ${eligibleProductList.length}  || Job ID : ${jobId}`,
     );
     let chunkedList = _.chunk(
       eligibleProductList,
@@ -261,18 +277,18 @@ export async function runCoreCronLogic(
     }
   } else {
     await logBlankCronDetailsV3(cronSettingsResponse.CronId);
-    console.log(
-      `No eligible products found for ${cronSettingsResponse.CronName} at ${new Date()}`,
+    console.warn(
+      `No eligible products found for ${cronSettingsResponse.CronName} at ${new Date().toISOString()}`,
     );
   }
-  console.log(`Completed cron execution for ${cronSettingsResponse.CronName}`);
+  console.info(`Completed cron execution for ${cronSettingsResponse.CronName}`);
 }
 
 export async function logBlankCronDetailsV3(cronId: any) {
   let cronLogs = { time: new Date(), logs: [], cronId: cronId };
   const logInDb = await dbHelper.PushLogsAsync(cronLogs);
   if (logInDb) {
-    console.log(
+    console.debug(
       `Successfully logged blank reprice data at ${cronLogs.time} for cron ${cronId}`,
     );
   }
