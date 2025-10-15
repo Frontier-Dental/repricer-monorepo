@@ -6,11 +6,12 @@ import * as dbHelper from "../../utility/mongo/db-helper";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import * as mySqlHelper from "../../utility/mysql/mysql-helper";
 import * as feedHelper from "../../utility/feed-helper";
+// import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import * as _ from "lodash";
+import { CacheKeyName } from "../../resources/cache-key-name";
+import * as cacheHelper from "../../utility/cache-helper";
 import { VendorName } from "@repricer-monorepo/shared";
 import { applicationConfig } from "../../utility/config";
-import CacheClient, { GetCacheClientOptions } from "../../client/cacheClient";
-import { CacheKey } from "@repricer-monorepo/shared";
 
 const mainCrons: Record<string, ScheduledTask> = {};
 let error422Cron: ScheduledTask | null = null;
@@ -62,7 +63,7 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
 }
 
 async function IsCacheValid(cacheKey: any, sysTime: any) {
-  const cacheClient = CacheClient.getInstance(
+const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
   );
   const result = await cacheClient.get<any>(cacheKey);
@@ -294,10 +295,14 @@ export async function logBlankCronDetailsV3(cronId: any) {
 }
 
 export function IsChunkNeeded(list: any, envVariables: any, type: any) {
-  if (type === "EXPRESS" && envVariables && envVariables.expressCronBatchSize) {
-    return list.length > parseInt(envVariables.expressCronBatchSize);
+  switch (type) {
+    case "EXPRESS":
+      if (envVariables && envVariables.expressCronBatchSize) {
+        return list.length > parseInt(envVariables.expressCronBatchSize);
+      }
+    default:
+      return list.length > applicationConfig.BATCH_SIZE;
   }
-  return list.length > applicationConfig.BATCH_SIZE;
 }
 
 export async function getCronEligibleProductsV3(cronId: any) {
