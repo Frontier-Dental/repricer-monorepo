@@ -1,5 +1,8 @@
 import { schedule, ScheduledTask } from "node-cron";
-import { getKnexInstance } from "../model/sql-models/knex-wrapper";
+import {
+  getKnexInstance,
+  destroyKnexInstance,
+} from "../model/sql-models/knex-wrapper";
 
 let cleanupCron: ScheduledTask | null = null;
 
@@ -75,7 +78,7 @@ async function cleanupExpiredRecords(): Promise<void> {
   const deletedCount = await knex("v2_algo_execution")
     .where("expires_at", "<", currentTime)
     .del();
-
+  destroyKnexInstance();
   console.log(
     `Deleted ${deletedCount} expired records from v2_algo_execution table`,
   );
@@ -98,6 +101,8 @@ export async function getExpiredRecordsCount(): Promise<number> {
   } catch (error) {
     console.error("Error getting expired records count:", error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -114,5 +119,7 @@ export async function getTotalRecordsCount(): Promise<number> {
   } catch (error) {
     console.error("Error getting total records count:", error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }

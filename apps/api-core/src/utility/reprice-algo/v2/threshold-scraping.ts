@@ -1,6 +1,9 @@
 import { applicationConfig } from "../../config";
 import { scrapflyFetch } from "../../proxy/scrapfly-helper";
-import { getKnexInstance } from "../../../model/sql-models/knex-wrapper";
+import {
+  getKnexInstance,
+  destroyKnexInstance,
+} from "../../../model/sql-models/knex-wrapper";
 import fs from "fs";
 import path from "path";
 import * as cheerio from "cheerio";
@@ -168,6 +171,6 @@ async function storeVendorData(vendorData: ParsedVendorData[]) {
   // Verify insertion
   const count = await knex("vendor_thresholds").count("* as count").first();
   console.log(`Final record count: ${count ? count.count : 0}`);
-
+  destroyKnexInstance();
   console.log("✅ Vendor data stored successfully!");
 }

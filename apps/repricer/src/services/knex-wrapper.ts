@@ -24,3 +24,11 @@ export function getKnexInstance(): Knex {
     return knexInstance;
   }
 }
+
+export async function destroyKnexInstance() {
+  if (knexInstance) {
+    console.warn("Destroying Knex Instance");
+    await knexInstance.destroy();
+    knexInstance = null;
+  }
+}

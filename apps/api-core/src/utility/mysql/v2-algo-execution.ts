@@ -1,4 +1,7 @@
-import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
+import {
+  getKnexInstance,
+  destroyKnexInstance,
+} from "../../model/sql-models/knex-wrapper";
 
 export interface V2AlgoExecutionData {
   scrape_product_id: number;
@@ -24,6 +27,6 @@ export async function insertV2AlgoExecution(
     mp_id: data.mp_id,
     job_id: data.job_id,
   });
-
+  destroyKnexInstance();
   return insertId;
 }

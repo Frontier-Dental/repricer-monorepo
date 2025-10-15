@@ -1,4 +1,7 @@
-import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
+import {
+  getKnexInstance,
+  destroyKnexInstance,
+} from "../../model/sql-models/knex-wrapper";
 
 export interface V2AlgoResultData {
   job_id: string;
@@ -25,5 +28,6 @@ export async function insertMultipleV2AlgoResults(
   const knex = getKnexInstance();
 
   const insertIds = await knex("v2_algo_results").insert(results);
+  destroyKnexInstance();
   return insertIds;
 }

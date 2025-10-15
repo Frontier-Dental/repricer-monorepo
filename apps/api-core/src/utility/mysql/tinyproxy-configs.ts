@@ -1,4 +1,7 @@
-import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
+import {
+  getKnexInstance,
+  destroyKnexInstance,
+} from "../../model/sql-models/knex-wrapper";
 
 export interface TinyproxyConfigData {
   id?: number;
@@ -18,7 +21,7 @@ export async function findTinyproxyConfigByVendorId(
   const result = await knex("tinyproxy_configs")
     .where({ vendor_id: vendorId })
     .first();
-
+  destroyKnexInstance();
   return result || null;
 }
 
@@ -31,6 +34,6 @@ export async function findTinyproxyConfigsByVendorIds(
     "vendor_id",
     vendorIds,
   );
-
+  destroyKnexInstance();
   return result;
 }

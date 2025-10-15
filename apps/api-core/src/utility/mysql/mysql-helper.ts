@@ -3,7 +3,10 @@ import _ from "lodash";
 import moment from "moment";
 import { RepriceResultEnum } from "../../model/enumerations";
 import { HistoryModel } from "../../model/sql-models/history";
-import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
+import {
+  getKnexInstance,
+  destroyKnexInstance,
+} from "../../model/sql-models/knex-wrapper";
 import { applicationConfig } from "../config";
 import { GetTriggeredByValue, MapProductDetailsList } from "./mySql-mapper";
 import {
@@ -38,6 +41,8 @@ export async function InsertRunInfo(runInfo: RunInfo) {
   } catch (error) {
     console.log("Error in InsertRunInfo", runInfo, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -50,6 +55,8 @@ export async function UpdateRunInfo(query: string) {
   } catch (error) {
     console.log("Error in UpdateRunInfo", query, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -93,6 +100,8 @@ export async function InsertProductInfo(
   } catch (error) {
     console.log("Error in InsertProductInfo", productInfo, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -114,6 +123,8 @@ export async function InsertPriceBreakInfo(priceBreakInfo: PriceBreakInfo) {
   } catch (error) {
     console.log("Error in InsertPriceBreakInfo", priceBreakInfo, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -132,6 +143,8 @@ export async function InsertRunCompletionStatus(statusInfo: StatusInfo) {
   } catch (error) {
     console.log("Error in InsertRunCompletionStatus", statusInfo, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -145,6 +158,8 @@ export async function UpdateRunCompletionStatus(statusInfo: StatusInfo) {
   } catch (error) {
     console.log("Error in UpdateRunCompletionStatus", statusInfo, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -158,6 +173,8 @@ export async function GetEligibleScrapeProductList(cronId: string) {
   } catch (error) {
     console.log("Error in GetEligibleScrapeProductList", cronId, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -171,6 +188,8 @@ export async function UpdateLastScrapeInfo(mpid: string, time: string) {
   } catch (error) {
     console.log("Error in UpdateLastScrapeInfo", mpid, time, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -192,6 +211,8 @@ export async function GetScrapeProductDetailsByIdAndCron(
       error,
     );
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -217,6 +238,8 @@ export async function GetActiveProductListByCronId(
       error,
     );
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -289,6 +312,8 @@ export async function GetItemListById(mpId: string | number) {
   } catch (error) {
     console.log("Error in GetItemListById", mpId, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -334,6 +359,8 @@ export async function UpdateProductAsync(
       error,
     );
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -355,6 +382,8 @@ export async function UpdateCronForProductAsync(
   } catch (error) {
     console.log("Error in UpdateCronForProductAsync", payload, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -370,6 +399,8 @@ export async function GetFilterEligibleProductsList(filterDate: Date | string) {
   } catch (error) {
     console.log("Error in GetFilterEligibleProductsList", filterDate, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -395,6 +426,8 @@ export async function InsertHistoricalApiResponse(
       error,
     );
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -427,6 +460,8 @@ export async function InsertHistory(history: HistoryModel, refTime: Date) {
   } catch (error) {
     console.log("Error in InsertHistory", history, refTime, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -469,6 +504,8 @@ export async function UpdateTriggeredByVendor(
     console.log(
       `Exception while UpdateTriggeredByVendor : ${exception} for Vendor ${contextVendor} || MPID : ${payload.mpid}`,
     );
+  } finally {
+    destroyKnexInstance();
   }
   return triggeredByValue;
 }
@@ -491,6 +528,8 @@ export async function UpdateHistoryWithMessage(
       error,
     );
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -685,6 +724,8 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
   } catch (error) {
     console.log("Error in GetActiveFullProductDetailsList", cronId, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -699,6 +740,8 @@ export async function getNet32UrlById(mpId: number) {
   } catch (error) {
     console.log("Error in getNet32UrlById", mpId, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -722,6 +765,8 @@ export async function UpdateRepriceResultStatus(
       error,
     );
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -742,6 +787,8 @@ export async function GetProxiesNet32(
   } catch (error) {
     console.log("Error in GetProxiesNet32", usernames, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -772,6 +819,8 @@ export async function GetVendorKeys(
   } catch (error) {
     console.log("Error in GetVendorKeys", vendors, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
@@ -783,6 +832,8 @@ export async function ExecuteQuery(_query: string, _params: any) {
   } catch (error) {
     console.log("Error in ExecuteQuery", _query, _params, error);
     throw error;
+  } finally {
+    destroyKnexInstance();
   }
 }
 
