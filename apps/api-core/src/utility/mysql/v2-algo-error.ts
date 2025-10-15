@@ -1,4 +1,7 @@
-import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
+import {
+  getKnexInstance,
+  destroyKnexInstance,
+} from "../../model/sql-models/knex-wrapper";
 import { Net32Product } from "../../types/net32";
 
 export interface V2AlgoError {
@@ -21,6 +24,6 @@ export async function insertV2AlgoError(
     mp_id: errorData.mp_id,
     cron_name: errorData.cron_name,
   });
-
+  destroyKnexInstance();
   return insertId;
 }

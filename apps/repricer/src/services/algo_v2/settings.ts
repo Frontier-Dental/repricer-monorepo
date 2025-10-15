@@ -5,7 +5,7 @@ import {
   AlgoPriceStrategy,
   VendorNameLookup,
 } from "@repricer-monorepo/shared";
-import { getKnexInstance } from "../knex-wrapper";
+import { getKnexInstance, destroyKnexInstance } from "../knex-wrapper";
 
 export interface V2AlgoSettings {
   id?: number;
@@ -75,7 +75,7 @@ export async function getV2AlgoSettingsByMpId(
     .where("mp_id", mpId)
     .select("*")
     .orderBy("vendor_id");
-
+  destroyKnexInstance();
   return settings;
 }
 
@@ -83,28 +83,34 @@ export async function updateV2AlgoSettings(
   settings: V2AlgoSettings,
 ): Promise<number> {
   const knex = getKnexInstance();
-
-  // Check if settings exist based on mp_id and vendor_id
-  const existingSettings = await knex("v2_algo_settings")
-    .where({
-      mp_id: settings.mp_id,
-      vendor_id: settings.vendor_id,
-    })
-    .first();
-
-  if (existingSettings) {
-    // Update existing settings
-    await knex("v2_algo_settings")
+  try {
+    // Check if settings exist based on mp_id and vendor_id
+    const existingSettings = await knex("v2_algo_settings")
       .where({
         mp_id: settings.mp_id,
         vendor_id: settings.vendor_id,
       })
-      .update(settings);
-    return existingSettings.id;
-  } else {
-    // Insert new settings
-    const [insertId] = await knex("v2_algo_settings").insert(settings);
-    return insertId;
+      .first();
+
+    if (existingSettings) {
+      // Update existing settings
+      await knex("v2_algo_settings")
+        .where({
+          mp_id: settings.mp_id,
+          vendor_id: settings.vendor_id,
+        })
+        .update(settings);
+      return existingSettings.id;
+    } else {
+      // Insert new settings
+      const [insertId] = await knex("v2_algo_settings").insert(settings);
+      return insertId;
+    }
+  } catch (error) {
+    console.error("Error updating V2 algo settings:", error);
+    return -1;
+  } finally {
+    destroyKnexInstance();
   }
 }
 

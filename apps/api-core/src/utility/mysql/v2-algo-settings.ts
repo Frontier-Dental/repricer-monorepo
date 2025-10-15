@@ -4,7 +4,10 @@ import {
   AlgoPriceDirection,
   AlgoPriceStrategy,
 } from "@repricer-monorepo/shared";
-import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
+import {
+  getKnexInstance,
+  destroyKnexInstance,
+} from "../../model/sql-models/knex-wrapper";
 
 export interface V2AlgoSettingsData {
   id?: number;
@@ -45,7 +48,7 @@ export async function findV2AlgoSettings(
   const result = await knex("v2_algo_settings")
     .where({ mp_id: mpId, vendor_id: vendorId })
     .first();
-
+  destroyKnexInstance();
   return result || null;
 }
 
@@ -85,7 +88,7 @@ export async function createV2AlgoSettings(
   };
 
   const [insertId] = await knex("v2_algo_settings").insert(defaultSettings);
-
+  destroyKnexInstance();
   return {
     id: insertId,
     ...defaultSettings,

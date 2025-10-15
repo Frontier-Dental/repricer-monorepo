@@ -1,7 +1,7 @@
 import SqlConnectionPool from "../models/sql-models/mysql-db";
 import * as SqlMapper from "../utility/mapper/mysql-mapper";
 import { applicationConfig } from "../utility/config";
-import { getKnexInstance } from "./knex-wrapper";
+import { getKnexInstance, destroyKnexInstance } from "./knex-wrapper";
 import bcrypt from "bcrypt";
 
 export async function GetLatestRunInfo(
@@ -410,7 +410,7 @@ export async function GetAllRepriceEligibleProductByFilter(
       triadQuery,
     ])
     .orderBy("ProductId");
-
+  destroyKnexInstance();
   return SqlMapper.MapProductDetailsList(result);
 }
 
@@ -601,7 +601,7 @@ export async function GetAllRepriceEligibleProductByTag(
     ])
     // .whereNotNull("ChannelName")
     .orderBy("ProductId");
-
+  destroyKnexInstance();
   return SqlMapper.MapProductDetailsList(result);
 }
 

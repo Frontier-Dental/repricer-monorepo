@@ -1,5 +1,5 @@
 import { Date } from "mongoose";
-import { getKnexInstance } from "../knex-wrapper";
+import { getKnexInstance, destroyKnexInstance } from "../knex-wrapper";
 import { VendorNameLookup } from "@repricer-monorepo/shared";
 
 export interface V2AlgoResultWithExecution {
@@ -54,7 +54,7 @@ export async function getAlgoResultsWithExecutionData(
     ])
     .where("r.mp_id", mpId)
     .orderBy("r.created_at", "desc");
-
+  destroyKnexInstance();
   // Convert Buffer to string for chain_of_thought_html and add vendor name
   return results.map((result) => ({
     ...result,

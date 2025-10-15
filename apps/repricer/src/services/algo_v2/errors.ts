@@ -1,4 +1,4 @@
-import { getKnexInstance } from "../knex-wrapper";
+import { getKnexInstance, destroyKnexInstance } from "../knex-wrapper";
 
 export interface V2AlgoErrorRecord {
   id: number;
@@ -15,6 +15,6 @@ export async function getAllV2AlgoErrors(): Promise<V2AlgoErrorRecord[]> {
   const errors = await knex("v2_algo_error")
     .select("*")
     .orderBy("created_at", "desc");
-
+  destroyKnexInstance();
   return errors;
 }
