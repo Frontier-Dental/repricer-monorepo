@@ -13,8 +13,8 @@ import { GetCacheClientOptions } from "../../client/cacheClient";
 import CacheClient from "../../client/cacheClient";
 import { CacheKey } from "@repricer-monorepo/shared";
 
-const mainCrons: Record<string, ScheduledTask> = {};
-let error422Cron: ScheduledTask | null = null;
+var mainCrons: Record<string, ScheduledTask> = {};
+var error422Cron: ScheduledTask | null = null;
 
 export function stopAllMainCrons() {
   Object.values(mainCrons).forEach((cron) => {
@@ -22,6 +22,8 @@ export function stopAllMainCrons() {
       cron.stop();
     }
   });
+  mainCrons = {};
+  console.info("Stopped all main crons & reset to Empty.");
 }
 
 export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
@@ -42,6 +44,7 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
   if (error422Cron) {
     error422Cron.stop();
   }
+  error422Cron = null;
   error422Cron = schedule(
     cronString,
     async () => {
