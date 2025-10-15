@@ -22,6 +22,7 @@ export async function get_cache_item(
     GetCacheClientOptions(applicationConfig),
   );
   const value = await cacheClient.get<any>(_key);
+  await cacheClient.disconnect();
   return res.json({
     status: true,
     message: value,
@@ -38,6 +39,7 @@ export async function delete_cache_item(
     GetCacheClientOptions(applicationConfig),
   );
   const deleteCount = await cacheClient.delete(_key);
+  await cacheClient.disconnect();
   return res.json({
     status: true,
     message: `Deleted ${deleteCount} item(s) with key ${_key}`,
@@ -53,6 +55,7 @@ export async function flush_all_cache(
     GetCacheClientOptions(applicationConfig),
   );
   await cacheClient.flushAll();
+  await cacheClient.disconnect();
   return res.json({
     status: true,
     message: "All cache flushed successfully",
@@ -61,10 +64,12 @@ export async function flush_all_cache(
 
 export async function GetAllCacheItems(): Promise<any> {
   console.info("Fetching all cache items");
-  const cacheClient = CacheClient.getInstance(
+  const cacheClient: CacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
   );
-  return await cacheClient.getAllKeys(false);
+  const keys = await cacheClient.getAllKeys(false);
+  await cacheClient.disconnect();
+  return keys;
 }
 
 export async function ClearRepricerCache(
