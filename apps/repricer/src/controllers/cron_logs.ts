@@ -172,6 +172,13 @@ export async function getCronLogs(req: Request, res: Response) {
 export async function getLogsDetails(req: Request, res: Response) {
   const idx = req.params.id;
   let cronObject = await getCustomLogsDetailsById(idx as any);
+  let filteredLogs: any[] = [];
+  for (let log of cronObject.logData.logs) {
+    if (log.vendor != "UNKNOWN") {
+      filteredLogs.push(log);
+    }
+  }
+  cronObject.logData.logs = filteredLogs;
   res.render("pages/dashboard/logViewer", {
     items: cronObject,
     groupName: "dashboard",
