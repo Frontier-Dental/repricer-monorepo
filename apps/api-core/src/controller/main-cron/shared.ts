@@ -6,12 +6,12 @@ import * as dbHelper from "../../utility/mongo/db-helper";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import * as mySqlHelper from "../../utility/mysql/mysql-helper";
 import * as feedHelper from "../../utility/feed-helper";
-// import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import * as _ from "lodash";
-import { CacheKeyName } from "../../resources/cache-key-name";
-import * as cacheHelper from "../../utility/cache-helper";
 import { VendorName } from "@repricer-monorepo/shared";
 import { applicationConfig } from "../../utility/config";
+import { GetCacheClientOptions } from "../../client/cacheClient";
+import CacheClient from "../../client/cacheClient";
+import { CacheKey } from "@repricer-monorepo/shared";
 
 const mainCrons: Record<string, ScheduledTask> = {};
 let error422Cron: ScheduledTask | null = null;
@@ -63,7 +63,7 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
 }
 
 async function IsCacheValid(cacheKey: any, sysTime: any) {
-const cacheClient = CacheClient.getInstance(
+  const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
   );
   const result = await cacheClient.get<any>(cacheKey);
