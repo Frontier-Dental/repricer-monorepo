@@ -440,7 +440,7 @@ export async function GetAllRepriceEligibleProductByFilter(
       triadQuery,
     ])
     .orderBy("ProductId");
-  destroyKnexInstance();
+  //destroyKnexInstance();
   return SqlMapper.MapProductDetailsList(result);
 }
 
@@ -631,7 +631,7 @@ export async function GetAllRepriceEligibleProductByTag(
     ])
     // .whereNotNull("ChannelName")
     .orderBy("ProductId");
-  destroyKnexInstance();
+  //destroyKnexInstance();
   return SqlMapper.MapProductDetailsList(result);
 }
 

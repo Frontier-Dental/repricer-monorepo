@@ -24,6 +24,6 @@ export async function insertV2AlgoError(
     mp_id: errorData.mp_id,
     cron_name: errorData.cron_name,
   });
-  destroyKnexInstance();
+  //destroyKnexInstance();
   return insertId;
 }

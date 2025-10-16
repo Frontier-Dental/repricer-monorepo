@@ -78,7 +78,7 @@ async function cleanupExpiredRecords(): Promise<void> {
   const deletedCount = await knex("v2_algo_execution")
     .where("expires_at", "<", currentTime)
     .del();
-  destroyKnexInstance();
+  //destroyKnexInstance();
   console.log(
     `Deleted ${deletedCount} expired records from v2_algo_execution table`,
   );
@@ -102,7 +102,7 @@ export async function getExpiredRecordsCount(): Promise<number> {
     console.error("Error getting expired records count:", error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -120,6 +120,6 @@ export async function getTotalRecordsCount(): Promise<number> {
     console.error("Error getting total records count:", error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }

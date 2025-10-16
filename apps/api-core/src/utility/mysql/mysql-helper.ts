@@ -42,7 +42,7 @@ export async function InsertRunInfo(runInfo: RunInfo) {
     console.log("Error in InsertRunInfo", runInfo, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -56,7 +56,7 @@ export async function UpdateRunInfo(query: string) {
     console.log("Error in UpdateRunInfo", query, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -101,7 +101,7 @@ export async function InsertProductInfo(
     console.log("Error in InsertProductInfo", productInfo, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -124,7 +124,7 @@ export async function InsertPriceBreakInfo(priceBreakInfo: PriceBreakInfo) {
     console.log("Error in InsertPriceBreakInfo", priceBreakInfo, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -144,7 +144,7 @@ export async function InsertRunCompletionStatus(statusInfo: StatusInfo) {
     console.log("Error in InsertRunCompletionStatus", statusInfo, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -159,7 +159,7 @@ export async function UpdateRunCompletionStatus(statusInfo: StatusInfo) {
     console.log("Error in UpdateRunCompletionStatus", statusInfo, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -174,7 +174,7 @@ export async function GetEligibleScrapeProductList(cronId: string) {
     console.log("Error in GetEligibleScrapeProductList", cronId, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -189,7 +189,7 @@ export async function UpdateLastScrapeInfo(mpid: string, time: string) {
     console.log("Error in UpdateLastScrapeInfo", mpid, time, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -212,7 +212,7 @@ export async function GetScrapeProductDetailsByIdAndCron(
     );
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -239,7 +239,7 @@ export async function GetActiveProductListByCronId(
     );
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -313,7 +313,7 @@ export async function GetItemListById(mpId: string | number) {
     console.log("Error in GetItemListById", mpId, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -360,7 +360,7 @@ export async function UpdateProductAsync(
     );
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -383,7 +383,7 @@ export async function UpdateCronForProductAsync(
     console.log("Error in UpdateCronForProductAsync", payload, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -400,7 +400,7 @@ export async function GetFilterEligibleProductsList(filterDate: Date | string) {
     console.log("Error in GetFilterEligibleProductsList", filterDate, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -427,7 +427,7 @@ export async function InsertHistoricalApiResponse(
     );
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -461,7 +461,7 @@ export async function InsertHistory(history: HistoryModel, refTime: Date) {
     console.log("Error in InsertHistory", history, refTime, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -505,7 +505,7 @@ export async function UpdateTriggeredByVendor(
       `Exception while UpdateTriggeredByVendor : ${exception} for Vendor ${contextVendor} || MPID : ${payload.mpid}`,
     );
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
   return triggeredByValue;
 }
@@ -529,7 +529,7 @@ export async function UpdateHistoryWithMessage(
     );
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -725,7 +725,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
     console.log("Error in GetActiveFullProductDetailsList", cronId, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -741,7 +741,7 @@ export async function getNet32UrlById(mpId: number) {
     console.log("Error in getNet32UrlById", mpId, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -766,7 +766,7 @@ export async function UpdateRepriceResultStatus(
     );
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -788,7 +788,7 @@ export async function GetProxiesNet32(
     console.log("Error in GetProxiesNet32", usernames, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -820,7 +820,7 @@ export async function GetVendorKeys(
     console.log("Error in GetVendorKeys", vendors, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 
@@ -833,7 +833,7 @@ export async function ExecuteQuery(_query: string, _params: any) {
     console.log("Error in ExecuteQuery", _query, _params, error);
     throw error;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 

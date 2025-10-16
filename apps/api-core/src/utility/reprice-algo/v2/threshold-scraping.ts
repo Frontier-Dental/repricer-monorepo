@@ -171,6 +171,6 @@ async function storeVendorData(vendorData: ParsedVendorData[]) {
   // Verify insertion
   const count = await knex("vendor_thresholds").count("* as count").first();
   console.log(`Final record count: ${count ? count.count : 0}`);
-  destroyKnexInstance();
+  //destroyKnexInstance();
   console.log("✅ Vendor data stored successfully!");
 }

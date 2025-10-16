@@ -27,6 +27,6 @@ export async function insertV2AlgoExecution(
     mp_id: data.mp_id,
     job_id: data.job_id,
   });
-  destroyKnexInstance();
+  //destroyKnexInstance();
   return insertId;
 }
