@@ -1197,18 +1197,10 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   }
 
   // Normal search flow - fetch all data
-  // Parallelize database queries for better performance
-  const [
-    cronSettingsBase,
-    slowCronSettings,
-    scrapeOnlyCronSettings,
-    cronStatus,
-  ] = await Promise.all([
-    mongoMiddleware.GetCronSettingsList(),
-    mongoMiddleware.GetSlowCronDetails(),
-    mongoMiddleware.GetScrapeCrons(),
-    mongoMiddleware.GetLatestCronStatus(),
-  ]);
+  const cronSettingsBase = await mongoMiddleware.GetCronSettingsList();
+  const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
+  const scrapeOnlyCronSettings = await mongoMiddleware.GetScrapeCrons();
+  const cronStatus = await mongoMiddleware.GetLatestCronStatus();
 
   // Combine all cron settings
   let cronSettings = _.concat(
