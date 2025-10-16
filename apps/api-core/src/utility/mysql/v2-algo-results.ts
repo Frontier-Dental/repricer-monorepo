@@ -28,6 +28,6 @@ export async function insertMultipleV2AlgoResults(
   const knex = getKnexInstance();
 
   const insertIds = await knex("v2_algo_results").insert(results);
-  destroyKnexInstance();
+  //destroyKnexInstance();
   return insertIds;
 }

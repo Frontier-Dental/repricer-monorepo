@@ -15,6 +15,6 @@ export async function getAllV2AlgoErrors(): Promise<V2AlgoErrorRecord[]> {
   const errors = await knex("v2_algo_error")
     .select("*")
     .orderBy("created_at", "desc");
-  destroyKnexInstance();
+  //destroyKnexInstance();
   return errors;
 }

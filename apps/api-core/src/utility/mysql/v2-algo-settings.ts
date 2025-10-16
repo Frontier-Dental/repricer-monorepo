@@ -48,7 +48,7 @@ export async function findV2AlgoSettings(
   const result = await knex("v2_algo_settings")
     .where({ mp_id: mpId, vendor_id: vendorId })
     .first();
-  destroyKnexInstance();
+  //destroyKnexInstance();
   return result || null;
 }
 
@@ -88,7 +88,7 @@ export async function createV2AlgoSettings(
   };
 
   const [insertId] = await knex("v2_algo_settings").insert(defaultSettings);
-  destroyKnexInstance();
+  //destroyKnexInstance();
   return {
     id: insertId,
     ...defaultSettings,

@@ -75,7 +75,7 @@ export async function getV2AlgoSettingsByMpId(
     .where("mp_id", mpId)
     .select("*")
     .orderBy("vendor_id");
-  destroyKnexInstance();
+  //destroyKnexInstance();
   return settings;
 }
 
@@ -110,7 +110,7 @@ export async function updateV2AlgoSettings(
     console.error("Error updating V2 algo settings:", error);
     return -1;
   } finally {
-    destroyKnexInstance();
+    //destroyKnexInstance();
   }
 }
 

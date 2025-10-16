@@ -21,7 +21,7 @@ export async function findTinyproxyConfigByVendorId(
   const result = await knex("tinyproxy_configs")
     .where({ vendor_id: vendorId })
     .first();
-  destroyKnexInstance();
+  //destroyKnexInstance();
   return result || null;
 }
 
@@ -34,6 +34,6 @@ export async function findTinyproxyConfigsByVendorIds(
     "vendor_id",
     vendorIds,
   );
-  destroyKnexInstance();
+  //destroyKnexInstance();
   return result;
 }
