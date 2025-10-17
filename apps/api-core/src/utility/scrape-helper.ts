@@ -194,14 +194,10 @@ async function executeScrapeLogic(
             console.log(
               `SCRAPE-ONLY : ${cronSetting.CronName} : ${keyGen} : Inserted Product Info for MPID : ${prod.MpId} | VENDOR : ${productInfo.VendorId}`,
             );
-            if (
-              productInfoResult &&
-              productInfoResult.insertId &&
-              resp.priceBreaks
-            ) {
+            if (productInfoResult && productInfoResult[0] && resp.priceBreaks) {
               for (const pb of resp.priceBreaks) {
                 const priceBreakInfo = new PriceBreakInfo(
-                  productInfoResult.insertId,
+                  productInfoResult[0],
                   pb,
                 );
                 await mySqlHelper.InsertPriceBreakInfo(priceBreakInfo);
