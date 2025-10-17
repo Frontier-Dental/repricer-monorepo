@@ -1233,18 +1233,20 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
 
   let cronLogs: any = null;
   if (type == "SCRAPE_ONLY") {
-    // Use the stored procedure for scrape only cron runs
-    const scrapeRuns =
-      await scrapeOnlyMiddleware.GetRecentInProgressScrapeRuns();
-    cronLogs = {
-      mongoResult: [],
-      pageSize: pgLimit,
-      pageNumber: pgNo,
-      totalDocs: scrapeRuns.length,
-      totalPages: Math.ceil(scrapeRuns.length / pgLimit),
-    };
-    // Assign the scrape runs directly for processing
-    logViewModel = scrapeRuns;
+    if (cronId != "") {
+      cronLogs = await scrapeOnlyMiddleware.GetRunInfoByCron(
+        totalRecords,
+        moment(date.fromDate).format("YYYY-MM-DD hh:mm:ss"),
+        moment(date.toDate).format("YYYY-MM-DD hh:mm:ss"),
+        cronId,
+      );
+    } else {
+      cronLogs = await scrapeOnlyMiddleware.GetRunInfo(
+        totalRecords,
+        moment(date.fromDate).format("YYYY-MM-DD hh:mm:ss"),
+        moment(date.toDate).format("YYYY-MM-DD hh:mm:ss"),
+      );
+    }
   } else {
     cronLogs = await mongoMiddleware.GetCronLogsV2(
       pgNo,
@@ -1285,7 +1287,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
       }
     }
   } else if (type == "SCRAPE_ONLY") {
-    // logViewModel already assigned above when fetching scrape runs
+    logViewModel = cronLogs;
   }
   // filterCronLogs
   let filterCronLogs = await mongoMiddleware.GetFilterCronLogsByLimit(
