@@ -259,9 +259,9 @@ export async function runCoreCronLogic(
 ) {
   console.info(`Running cron execution for ${cronSettingsResponse.CronName}`);
   const initTime = new Date();
-  const eligibleProductList = await getCronEligibleProductsV3(
-    cronSettingsResponse.CronId,
-  );
+  const eligibleProductList = isSlowCron
+    ? await getSlowCronEligibleProductsV3(cronSettingsResponse.CronId)
+    : await getCronEligibleProductsV3(cronSettingsResponse.CronId);
   if (eligibleProductList && eligibleProductList.length > 0) {
     const jobId = keyGenHelper.Generate();
     console.debug(
@@ -323,6 +323,24 @@ export async function getCronEligibleProductsV3(cronId: any) {
     cronId,
     false,
   );
+  return eligibleProductList;
+}
+
+export async function getSlowCronEligibleProductsV3(cronId: any) {
+  let eligibleProductList: any[] = [];
+  try {
+    eligibleProductList = await mySqlHelper.GetActiveProductListByCronId(
+      cronId,
+      true,
+    );
+    eligibleProductList = await feedHelper.FilterEligibleProducts(
+      eligibleProductList,
+      cronId,
+      true,
+    );
+  } catch (exception) {
+    console.log(exception);
+  }
   return eligibleProductList;
 }
 
