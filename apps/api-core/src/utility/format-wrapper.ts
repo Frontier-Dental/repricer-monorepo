@@ -82,11 +82,10 @@ export function SetGlobalDetails(
       }
       break;
     case VendorName.TRIAD:
-      productItem.ownVendorId = "5";
-      productItem.sisterVendorId =
-        productItem.sisterVendorId && productItem.sisterVendorId != null
-          ? productItem.sisterVendorId
-          : "17357;20722;20755;20727;20533";
+      updatedProductItem.ownVendorId = "5";
+      if (!updatedProductItem.sisterVendorId) {
+        updatedProductItem.sisterVendorId = "17357;20722;20755;20727;20533";
+      }
       break;
     default:
       throw new Error(`Invalid vendor: ${contextVendor}`);
