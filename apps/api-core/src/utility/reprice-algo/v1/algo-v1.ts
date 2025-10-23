@@ -110,7 +110,7 @@ export async function repriceProduct(
       ownProduct.priceBreaks &&
       (ownProduct.priceBreaks.length === 1 || productItem.suppressPriceBreak)
     ) {
-      if (productItem.is_nc_needed && productItem.is_nc_needed) {
+      if (productItem.is_nc_needed) {
         repriceResult = await repriceHelperNc.Reprice(
           ownProduct,
           output,
@@ -143,7 +143,7 @@ export async function repriceProduct(
         );
 
         let indRepriceResult: RepriceModel;
-        if (productItem.is_nc_needed && productItem.is_nc_needed) {
+        if (productItem.is_nc_needed) {
           indRepriceResult = await repriceHelperNc.RepriceIndividualPriceBreak(
             ownProduct,
             output,
@@ -247,7 +247,8 @@ export async function repriceProduct(
   const isNcToBeApplied = isNcForBuyBoxApplied
     ? true
     : productItem.is_nc_needed;
-  if (productItem.repricingRule != null && isOverrideEnabled) {
+
+  if (productItem.repricingRule != null && !isOverrideEnabled) {
     repriceResult = await Rule.ApplyRule(
       repriceResult!,
       productItem.repricingRule,

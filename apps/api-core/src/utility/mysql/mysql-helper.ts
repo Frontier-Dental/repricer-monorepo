@@ -417,7 +417,7 @@ export async function InsertHistoricalApiResponse(
     const insertResult = await knex(
       applicationConfig.SQL_HISTORY_API_RESPONSE!,
     ).insert(insertObj);
-    return (insertResult as any)?.[0]?.insertId;
+    return insertResult[0];
   } catch (error) {
     console.log(
       "Error in InsertHistoricalApiResponse",
