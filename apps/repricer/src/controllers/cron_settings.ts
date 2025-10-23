@@ -201,7 +201,7 @@ export async function updateCronSettings(req: Request, res: Response) {
     const proxyProv = payload.proxy_provider[$cr]
       ? payload.proxy_provider[$cr]
       : cronSettingsResponse[$cr as any].ProxyProvider;
-    const secretKeyDetails = await getSecretKeyDetails($cr, payload);
+    const existingSecretKey = cronSettingsResponse[$cr as any].SecretKey;
     const alternateProxyProviderDetails =
       await MapperHelper.MapAlternateProxyProviderDetails($cr, payload);
     const cronSettingPayload = new cronSettings(
@@ -209,7 +209,7 @@ export async function updateCronSettings(req: Request, res: Response) {
       payload.cron_name[$cr],
       payload.cron_time_unit[$cr],
       payload.cron_time[$cr],
-      secretKeyDetails as any,
+      existingSecretKey as any,
       true as any,
       payload.offset[$cr],
       proxyProv,
@@ -230,10 +230,6 @@ export async function updateCronSettings(req: Request, res: Response) {
       !_.isEqual(
         cronSettingPayload.CronTimeUnit,
         cronSettingsResponse[$cr as any].CronTimeUnit,
-      ) ||
-      !_.isEqual(
-        cronSettingPayload.SecretKey,
-        cronSettingsResponse[$cr as any].SecretKey,
       ) ||
       !_.isEqual(cronSettingPayload.Offset, offset) ||
       !_.isEqual(
