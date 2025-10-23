@@ -491,6 +491,9 @@ export async function UpdateTriggeredByVendor(
       case "FIRSTDENT":
         contextTableName = applicationConfig.SQL_FIRSTDENT_DETAILS;
         break;
+      case "TRIAD":
+        contextTableName = applicationConfig.SQL_TRIAD_DETAILS;
+        break;
       default:
         break;
     }
