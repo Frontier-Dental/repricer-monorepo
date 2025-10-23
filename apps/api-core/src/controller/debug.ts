@@ -66,7 +66,7 @@ debugController.get(
       "TEST-DEBUG",
       [productDetails],
       new Date(),
-      _.first(cronSettingsResponse),
+      cronSettingsResponse,
       false,
     );
     res
