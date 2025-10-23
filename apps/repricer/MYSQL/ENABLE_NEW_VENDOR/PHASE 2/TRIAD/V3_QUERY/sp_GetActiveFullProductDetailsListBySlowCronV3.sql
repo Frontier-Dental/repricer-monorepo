@@ -23,6 +23,7 @@ from
       pl.SlowCronName,
       pl.SlowCronId,
       pl.IsSlowActivated,
+      pl.algo_execution_mode,
       tdl.*
     from
       table_scrapeProductList pl
@@ -45,6 +46,7 @@ from
       pl.SlowCronName,
       pl.SlowCronId,
       pl.IsSlowActivated,
+      pl.algo_execution_mode,
       fdl.*
     from
       table_scrapeProductList pl
@@ -67,6 +69,7 @@ from
       pl.SlowCronName,
       pl.SlowCronId,
       pl.IsSlowActivated,
+      pl.algo_execution_mode,
       mdl.*
     from
       table_scrapeProductList pl
@@ -89,6 +92,7 @@ from
       pl.SlowCronName,
       pl.SlowCronId,
       pl.IsSlowActivated,
+      pl.algo_execution_mode,
       firstDl.*
     from
       table_scrapeProductList pl
@@ -111,6 +115,7 @@ from
       pl.SlowCronName,
       pl.SlowCronId,
       pl.IsSlowActivated,
+      pl.algo_execution_mode,
       topDl.*
     from
       table_scrapeProductList pl
@@ -133,6 +138,7 @@ from
       pl.SlowCronName,
       pl.SlowCronId,
       pl.IsSlowActivated,
+      pl.algo_execution_mode,
       triadDl.*
     from
       table_scrapeProductList pl
