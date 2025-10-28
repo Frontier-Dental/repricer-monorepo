@@ -1,4 +1,4 @@
-import postmark from "postmark";
+import * as postmark from "postmark";
 import { applicationConfig } from "../../utility/config";
 
 export async function TriggerEmailForStorage(
