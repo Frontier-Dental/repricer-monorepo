@@ -1474,9 +1474,11 @@ function GetShippingPrice(item: Net32Product) {
       item.freeShippingThreshold != null && item.freeShippingThreshold >= 0
         ? item.freeShippingThreshold
         : 999999;
-    const unitBreak = item.priceBreaks.find((x) => x.minQty == 1);
+    const unitBreak = item.priceBreaks.find(
+      (x) => x.minQty == 1,
+    ) as Net32PriceBreak;
     const shippingCharge = item.standardShipping;
-    return unitBreak?.unitPrice || 0 < thresholdPrice
+    return unitBreak?.unitPrice < thresholdPrice
       ? parseFloat(shippingCharge as unknown as string)
       : 0;
   }
