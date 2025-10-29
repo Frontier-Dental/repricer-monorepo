@@ -1005,9 +1005,40 @@ export async function RepriceIndividualPriceBreak(
         return repriceModel;
       }
     }
-
+    let isDummyPriceBreak = false;
     //If the Lowest Price is of Self-Vendor
     if (_.first(sortedPayload)!.vendorId == $.VENDOR_ID) {
+      /*
+        1. If the 1st Lowest Price is of Self Vendor with Price Break Not Available
+        2. Then Look for the Next lowest Vendor with Price Break Available
+        3. If the Next Lowest vendor is sister vendor, then skip that price break change
+      */
+      if (priceBreak.minQty != 1) {
+        const existingPriceOfOwnProduct = _.first(
+          sortedPayload,
+        )?.priceBreaks.find((x) => x.minQty == priceBreak.minQty)?.unitPrice;
+        if (existingPriceOfOwnProduct == 0 && sortedPayload[1]) {
+          isDummyPriceBreak = true;
+          const nextLowestVendor = sortedPayload[1].vendorId.toString();
+          if (_.includes(excludedVendors, nextLowestVendor)) {
+            repriceModel.repriceDetails!.explained =
+              RepriceRenewedMessageEnum.NO_COMPETITOR_SISTER_VENDOR;
+            repriceModel.updateLowest(
+              sortedPayload[1].vendorName,
+              sortedPayload[1].priceBreaks.find(
+                (x) => x.minQty == priceBreak.minQty,
+              )!.unitPrice,
+            );
+            repriceModel.updateTriggeredBy(
+              sortedPayload[1]!.vendorName,
+              sortedPayload[1]!.vendorId,
+              priceBreak.minQty,
+            );
+            return repriceModel;
+          }
+        }
+      }
+
       // if next in list is in Excluded Vendor, go to next
       let nextIndex = 1;
       if (
@@ -1410,7 +1441,18 @@ export async function RepriceIndividualPriceBreak(
         }
       }
     }
-    repriceModel.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
+    if (isDummyPriceBreak === true) {
+      repriceModel.updateLowest(
+        sortedPayload[1].vendorName,
+        sortedPayload[1].priceBreaks.find((x) => x.minQty == priceBreak.minQty)!
+          .unitPrice,
+      );
+    } else {
+      repriceModel.updateLowest(
+        _.first(sortedPayload)!.vendorName,
+        lowestPrice,
+      );
+    }
 
     if (isTieScenario === true) {
       repriceModel.repriceDetails!.explained =

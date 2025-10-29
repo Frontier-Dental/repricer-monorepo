@@ -918,9 +918,36 @@ export async function RepriceIndividualPriceBreak(
         return repriceModel;
       }
     }
-
     //If the Lowest Price is of Self-Vendor
     if (_.first(sortedPayload)!.vendorId == $.VENDOR_ID) {
+      /*
+        1. If the 1st Lowest Price is of Self Vendor with Price Break Not Available
+        2. Then Look for the Next lowest Vendor with Price Break Available
+        3. If the Next Lowest vendor is sister vendor, then skip that price break change
+      */
+      const existingPriceOfOwnProduct = _.first(
+        sortedPayload,
+      )?.priceBreaks.find((x) => x.minQty == priceBreak.minQty)?.unitPrice;
+      if (existingPriceOfOwnProduct == 0 && sortedPayload[1]) {
+        const nextLowestVendor = sortedPayload[1].vendorId.toString();
+        if (_.includes(excludedVendors, nextLowestVendor)) {
+          repriceModel.repriceDetails!.explained =
+            RepriceRenewedMessageEnum.NO_COMPETITOR_SISTER_VENDOR;
+          repriceModel.updateLowest(
+            sortedPayload[1].vendorName,
+            sortedPayload[1].priceBreaks.find(
+              (x) => x.minQty == priceBreak.minQty,
+            )!.unitPrice,
+          );
+          repriceModel.updateTriggeredBy(
+            sortedPayload[1]!.vendorName,
+            sortedPayload[1]!.vendorId,
+            priceBreak.minQty,
+          );
+          return repriceModel;
+        }
+      }
+
       //Remove Sister Vendor if Both UP & DOWN selected or Compete with Next is true
       if (allowCompeteWithNextForFloor || productItem.repricingRule === 2) {
         rawDataForSisterCheck = _.cloneDeep(sortedPayload);
