@@ -219,6 +219,18 @@ export async function RepriceErrorItem(
     );
     let isPriceUpdatedForVendor = false;
     if (
+      details.algo_execution_mode === AlgoExecutionMode.V2_ONLY ||
+      details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY ||
+      details.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY
+    ) {
+      await repriceProductV2Wrapper(
+        net32result.data,
+        details,
+        cronSetting ? cronSetting.CronName : "ExpressCron",
+        false,
+      );
+    }
+    if (
       details.algo_execution_mode === AlgoExecutionMode.V1_ONLY ||
       details.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY ||
       details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY

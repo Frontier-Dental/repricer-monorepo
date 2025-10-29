@@ -194,8 +194,9 @@
                                                                     class="ti-trash"></i></a>&nbsp;<br>
                                                                     <a href="<%= item.net32Url %>" target="_blank"><i class="ti-world"></i></a>
                                                                 &nbsp;<br>
+                                                                <% if(isDev==true){ %>
                                                                 <a onclick="syncProductItem('<%= item.mpid%>');"><i class="fas fa-sync-alt" style="cursor: pointer;color: red;"></i></a>
-                                                                &nbsp;<br>
+                                                                &nbsp;<br> <% } %>
                                                                 <a onclick="removeFrom422ById('<%= item.mpid%>');"><i class="fas fa-bell" style="cursor: pointer;color: red;"></i></a>
                                                                 &nbsp;<br>
                                                                 <a onclick="updateProductQuantity('<%= item.mpid%>');"><i class="fas fa-sort-amount-up" style="cursor: pointer;"></i></a>

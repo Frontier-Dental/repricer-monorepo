@@ -158,7 +158,7 @@ export const envSchema = z.object({
   PROD_SYNC_URL: z
     .string()
     .default(
-      "http://159.89.121.57:3000/help/getProductDetailsById/{productId}",
+      "https://repricer-prod-jckio.ondigitalocean.app/help/getProductDetailsById/{productId}",
     ),
   MANUAL_PRODUCT_SYNC_PROCESS: z
     .string()
@@ -259,6 +259,12 @@ export const envSchema = z.object({
   REPRICER_ENCRYPTION_KEY: z
     .string()
     .default("3v9sKkLZ2z1Yq9eU8 + XgJk1YbZ9n3vLQ0mF9ZkQhJxgE="),
+  IS_DEV: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
 });
 
 export function validateConfig() {
