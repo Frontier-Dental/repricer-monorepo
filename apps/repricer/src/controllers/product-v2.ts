@@ -57,6 +57,7 @@ export async function showAllProducts(req: Request, res: Response) {
     userRole: (req.session as any).users_id?.userRole,
     mpid: req.query.mpid || "",
     channelId: req.query.channelId || "",
+    isDev: applicationConfig.IS_DEV,
   });
 }
 
