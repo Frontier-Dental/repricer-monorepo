@@ -15,7 +15,7 @@ import * as dbHelper from "../mongo/db-helper";
 import * as sqlHelper from "../mysql/mysql-helper";
 import { ProductDetailsListItem } from "../mysql/mySql-mapper";
 import * as requestGenerator from "../request-generator";
-import { repriceProduct } from "./v1/algo-v1";
+import { repriceProduct, repriceProductToMax } from "./v1/algo-v1";
 import { AlgoExecutionMode, VendorName } from "@repricer-monorepo/shared";
 import { repriceProductV2Wrapper } from "./v2/wrapper";
 import * as filterMapper from "../filter-mapper";
@@ -584,7 +584,6 @@ export async function UpdateToMax(
   cronSetting: any,
   keyGen: string,
   contextVendor: string,
-  postUrl: string,
 ) {
   let isPriceUpdated = false;
   let skipNextVendor = false;
@@ -597,25 +596,30 @@ export async function UpdateToMax(
   data.result = net32resp ? net32resp.data : net32resp;
   data.prod = prod;
   data.contextVendor = contextVendor;
-  const repriceResult = await axiosHelper.postAsync(data, postUrl);
-  if (repriceResult && repriceResult.data) {
+  const repriceResult = await repriceProductToMax(
+    prod.mpid,
+    data.result,
+    prod,
+    contextVendor,
+  );
+  if (repriceResult) {
     if (
-      repriceResult.data.priceUpdateResponse &&
-      repriceResult.data.priceUpdateResponse != null
+      repriceResult.priceUpdateResponse &&
+      repriceResult.priceUpdateResponse != null
     ) {
       skipNextVendor = true;
       if (
-        JSON.stringify(repriceResult.data.priceUpdateResponse).indexOf(
+        JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
           "ERROR:422",
         ) == -1
       ) {
         cronLogs.push({
           productId: prod.mpid,
           vendor: contextVendor,
-          logs: repriceResult.data.cronResponse,
+          logs: repriceResult.cronResponse,
           priceUpdated: true,
           priceUpdatedOn: new Date(),
-          priceUpdateResponse: repriceResult.data.priceUpdateResponse,
+          priceUpdateResponse: repriceResult.priceUpdateResponse,
         });
         prod.last_update_time = new Date();
         isPriceUpdated = true;
@@ -642,7 +646,7 @@ export async function UpdateToMax(
         }
       } else {
         prod.next_cron_time = await getNextCronTime(
-          repriceResult.data.priceUpdateResponse,
+          repriceResult.priceUpdateResponse,
         );
         // Add the product to Error Item Table.
         const errorItem = new ErrorItemModel(
@@ -661,28 +665,25 @@ export async function UpdateToMax(
         cronLogs.push({
           productId: prod.mpid,
           vendor: contextVendor,
-          logs: repriceResult.data.cronResponse,
+          logs: repriceResult.cronResponse,
           priceUpdated: false,
-          priceUpdateResponse: repriceResult.data.priceUpdateResponse,
+          priceUpdateResponse: repriceResult.priceUpdateResponse,
         });
       }
     } else {
       cronLogs.push({
         productId: prod.mpid,
         vendor: contextVendor,
-        logs: repriceResult.data.cronResponse,
+        logs: repriceResult.cronResponse,
       });
     }
-  } else if (
-    repriceResult &&
-    (repriceResult.status == _codes.StatusCodes.BAD_REQUEST ||
-      repriceResult.status == _codes.StatusCodes.IM_A_TEAPOT)
-  ) {
-    cronLogs.push({
-      productId: prod.mpid,
-      vendor: contextVendor,
-      logs: `Error: ${repriceResult.data}`,
-    });
+    // Add Last_Cron_Reprice_Message
+    prod.last_cron_message =
+      filterMapper.GetLastCronMessageSimple(repriceResult);
+    prod.last_cron_message = prod.last_cron_message + " #MANUAL";
+    prod = await updateLowestVendor((repriceResult as any)!, prod);
+    prod = await updateCronBasedDetails(repriceResult, prod, false);
+    await sqlHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
   } else {
     cronLogs.push({
       productId: prod.mpid,
@@ -690,12 +691,7 @@ export async function UpdateToMax(
       logs: "Some error occurred while repricing",
     });
   }
-  // Add Last_Cron_Reprice_Message
-  prod.last_cron_message = filterMapper.GetLastCronMessageSimple(repriceResult);
-  prod.last_cron_message = prod.last_cron_message + " #MANUAL";
-  prod = await updateLowestVendor((repriceResult as any)!, prod);
-  prod = await updateCronBasedDetails(repriceResult, prod, false);
-  await sqlHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
+
   return {
     cronLogs: cronLogs,
     prod: prod,

@@ -55,6 +55,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.15.3/xlsx.full.min.js"></script>
 
     <script>
+      const isDev = window.location.hostname.includes('repricer-dev');
+      document.title = isDev ? 'Repricer-SCRAPER-DEV' : 'Repricer-SCRAPER';
       let toggleEdit = (fieldName, index) => {
         var x = document.getElementById(fieldName+'-label-'+index);
         var y = document.getElementById(fieldName+'-input-'+index);

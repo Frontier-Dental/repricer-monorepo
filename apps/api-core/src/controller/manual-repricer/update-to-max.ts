@@ -52,10 +52,6 @@ export async function updateToMax(
     true,
   );
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
-  const postUrl = applicationConfig.UPDATE_TO_MAX_OWN_URL.replace(
-    "{mpId}",
-    mpid,
-  );
   if (prioritySequence && prioritySequence.length > 0) {
     const cronIdForScraping =
       isSlowCronRun == true
@@ -78,7 +74,6 @@ export async function updateToMax(
           cronSetting,
           keyGen,
           prioritySequence[idx].name,
-          postUrl,
         );
         if (repriceResponse && repriceResponse != null) {
           productLogs = repriceResponse.cronLogs;

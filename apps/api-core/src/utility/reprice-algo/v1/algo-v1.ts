@@ -606,3 +606,160 @@ export async function repriceProduct(
     };
   }
 }
+
+export async function repriceProductToMax(
+  mpid: string,
+  net32Products: Net32Product[],
+  internalProduct: FrontierProduct,
+  contextVendor: string,
+) {
+  try {
+    let productItem = internalProduct;
+    let result = net32Products;
+    let repriceResult: RepriceModel;
+    if (result && result.length > 0) {
+      // Format Response as per Expected Net32 Response
+      result = await formatter.FormatActiveField(result);
+      result = await formatter.FormatShippingThreshold(result);
+      productItem = await formatter.SetGlobalDetails(
+        productItem,
+        contextVendor,
+      );
+
+      let ownProduct = await responseUtility.GetOwnProduct(result, productItem);
+      let output = await responseUtility.FilterActiveResponse(
+        result,
+        productItem,
+      );
+      if (!ownProduct) {
+        return; //throw new Error("Could not find own product in Net32 Response");
+      }
+
+      if (productItem && ownProduct && ownProduct.inStock == true) {
+        if (ownProduct.priceBreaks) {
+          repriceResult = await repriceHelper.RepriceToMax(
+            ownProduct,
+            output,
+            productItem,
+            mpid,
+          );
+        }
+      }
+
+      // Update History
+      await HistoryHelper.Execute(
+        mpid,
+        repriceResult!,
+        output,
+        false,
+        contextVendor,
+      );
+
+      output = productItem.scrapeOn == true ? output : [];
+      let outputResponse = new RepriceAsyncResponse(repriceResult!, output);
+      const repriceNeeded = await isPriceUpdateRequired(
+        repriceResult!,
+        productItem.allowReprice,
+      );
+      // const repriceNeeded = false;
+      if (repriceNeeded) {
+        let priceUpdatedRequest: any = {};
+        priceUpdatedRequest.secretKey = await getSecretKey(
+          productItem.cronId,
+          contextVendor,
+        );
+        const priceUpdateUrl = apiMapping.find(
+          (x: any) => x.vendor == contextVendor.toUpperCase(),
+        )?.priceUpdateUrl;
+        let priceUpdatedResponse = null;
+        if (
+          repriceResult! &&
+          repriceResult.isMultiplePriceBreakAvailable != true
+        ) {
+          priceUpdatedRequest.payload = new UpdateRequest(
+            mpid,
+            repriceResult?.repriceDetails?.newPrice,
+            1,
+            productItem.cronName,
+          );
+          const isDev = JSON.parse(process.env.IS_DEV!);
+          if (isDev == false) {
+            priceUpdatedResponse = await axiosHelper.postAsync(
+              priceUpdatedRequest,
+              priceUpdateUrl!,
+            );
+          } else {
+            priceUpdatedResponse = {
+              data: { status: "SUCCESS", type: "dummy", url: priceUpdateUrl },
+            };
+          }
+        }
+        if (priceUpdatedResponse && priceUpdatedResponse.data) {
+          try {
+            if (
+              priceUpdatedResponse.data.message &&
+              (JSON.stringify(priceUpdatedResponse.data.message).indexOf(
+                "ERROR:422",
+              ) > -1 ||
+                JSON.stringify(priceUpdatedResponse.data.message).indexOf(
+                  "ERROR:429",
+                ) > -1 ||
+                JSON.stringify(priceUpdatedResponse.data.message).indexOf(
+                  "ERROR:404",
+                ) > -1 ||
+                JSON.stringify(priceUpdatedResponse.data.message).indexOf(
+                  "ERROR:",
+                ) > -1)
+            ) {
+              if (
+                outputResponse.repriceData &&
+                outputResponse.repriceData.isMultiplePriceBreakAvailable ==
+                  false &&
+                outputResponse.repriceData.repriceDetails
+              ) {
+                outputResponse.repriceData.repriceDetails.explained = `${outputResponse.repriceData.repriceDetails.explained}:FAILED(ERROR:${JSON.stringify(priceUpdatedResponse.data.message)})`;
+                outputResponse.repriceData.repriceDetails.isRepriced = false;
+              }
+              //return res.status(_codes.StatusCodes.OK).json({ "cronResponse": outputResponse, "priceUpdateResponse": null });
+            } else if (priceUpdatedResponse.data) {
+              // Update $UP or $DOWN if Price Update is Successful.
+              if (
+                outputResponse.repriceData &&
+                outputResponse.repriceData.isMultiplePriceBreakAvailable ==
+                  false &&
+                outputResponse.repriceData.repriceDetails
+              ) {
+                if (
+                  outputResponse.repriceData.repriceDetails.explained &&
+                  outputResponse.repriceData.repriceDetails.explained.indexOf(
+                    "#NEW",
+                  ) < 0
+                ) {
+                  const priceStepValue = await getPriceStepValue(
+                    outputResponse.repriceData.repriceDetails,
+                  );
+                  outputResponse.repriceData.repriceDetails.explained = `${outputResponse.repriceData.repriceDetails.explained} | ${priceStepValue}`;
+                }
+              }
+            }
+          } catch (exception) {
+            console.error({ FOR: mpid, EXCEPTION: exception });
+          }
+
+          return {
+            cronResponse: outputResponse,
+            priceUpdateResponse: priceUpdatedResponse.data,
+          };
+        }
+      }
+      return {
+        cronResponse: outputResponse,
+        priceUpdateResponse: null,
+      };
+    }
+    //throw new Error("Sorry some error occurred!");
+  } catch (exception) {
+    console.error({ MPID: mpid, EXCEPTION: exception });
+    //throw exception;
+  }
+}
