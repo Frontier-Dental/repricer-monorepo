@@ -14,11 +14,9 @@ export async function recreateCronHandler(
   res: Response,
 ): Promise<any> {
   const jobNames = req.body;
-  const cronDetails = (await dbHelper.GetCronSettings()).filter(
-    (x) => !x.IsHidden,
-  );
+  const cronDetails = await dbHelper.GetCronSettings();
   for (const jobName of jobNames) {
-    if (jobName === "Cron-422") {
+    if (jobName === "_Error422Cron") {
       setError422CronAndStart(cronDetails);
       continue;
     }
