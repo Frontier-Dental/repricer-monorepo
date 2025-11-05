@@ -16,6 +16,7 @@ export const monitorSenseController = express.Router();
 var monitorCrons: Record<string, ScheduledTask> = {};
 /************* PUBLIC SCHEDULED APIS *************/
 export async function startAllMonitorCrons() {
+  if (applicationConfig.IS_DEV) return;
   console.info(`Scheduling All Monitor CRONS on startup at ${new Date()}`);
   await startInProgressCronCheck();
   await startExpressCronValidationCheck();
