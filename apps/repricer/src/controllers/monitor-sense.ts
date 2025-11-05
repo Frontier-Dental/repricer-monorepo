@@ -1,91 +1,26 @@
 import _ from "lodash";
+import { ScheduledTask, schedule } from "node-cron";
 import cron from "node-cron";
 import express from "express";
 import _codes from "http-status-codes";
 import moment from "moment";
-import { Request, Response } from "express";
 import { TriggerEmail } from "../middleware/storage-sense-helpers/email-helper";
 import { applicationConfig } from "../utility/config";
-import {
-  getData,
-  postDataForExcel,
-} from "../middleware/storage-sense-helpers/axios-helper";
+import { postDataForExcel } from "../middleware/storage-sense-helpers/axios-helper";
 import { Client } from "basic-ftp";
 import path from "path";
 import fs from "fs";
+import * as mongoHelper from "../services/mongo";
 
 export const monitorSenseController = express.Router();
-
+var monitorCrons: Record<string, ScheduledTask> = {};
 /************* PUBLIC SCHEDULED APIS *************/
-monitorSenseController.get(
-  "/schedule/monitor-sense/cron",
-  async (req: Request, res: Response) => {
-    if (applicationConfig.START_CRON_PROGRESS_SCHEDULE === false) {
-      return res
-        .status(_codes.OK)
-        .send(
-          `Monitor Sense Cron for IN-PROGRESS CRONS not started as per settings at ${new Date()}`,
-        );
-    }
-    var inProgressCron = cron.schedule(
-      applicationConfig.CRON_PROGRESS_SCHEDULE,
-      async () => {
-        console.log(
-          `MONITOR-SENSE : CRON : IN-PROGRESS CRONS at ${new Date()}`,
-        );
-        await ValidateCronDetails();
-      },
-      { scheduled: true },
-    );
-    if (inProgressCron) {
-      return res
-        .status(_codes.OK)
-        .send(`Successfully Started IN-PROGRESS CRONS Check at ${new Date()}`);
-    } else {
-      return res
-        .status(_codes.BAD_REQUEST)
-        .send(
-          `Some error occurred while starting IN-PROGRESS CRONS check at ${new Date()}`,
-        );
-    }
-  },
-);
-
-monitorSenseController.get(
-  "/schedule/monitor-sense/422Error",
-  async (req, res) => {
-    if (applicationConfig.START_422_ERROR_CRON_SCHEDULE === false) {
-      return res
-        .status(_codes.OK)
-        .send(
-          `Monitor Sense Cron for 422 Product Count Validation Check not started as per settings at ${new Date()}`,
-        );
-    }
-    var _422ErrorValidationCron = cron.schedule(
-      applicationConfig._422_ERROR_CRON_SCHEDULE,
-      async () => {
-        console.log(
-          `MONITOR-SENSE : 422ERROR : VALIDATION CHECK at ${new Date()}`,
-        );
-        await Validate422ErrorProductDetails();
-      },
-      { scheduled: true },
-    );
-    if (_422ErrorValidationCron) {
-      return res
-        .status(_codes.OK)
-        .send(
-          `Successfully Started Cron for 422 Product Count Validation Check at ${new Date()}`,
-        );
-    } else {
-      return res
-        .status(_codes.BAD_REQUEST)
-        .send(
-          `Some error occurred while starting Cron for 422 Product Count Validation Check at ${new Date()}`,
-        );
-    }
-  },
-);
+export async function startAllMonitorCrons() {
+  console.info(`Scheduling All Monitor CRONS on startup at ${new Date()}`);
+  await startInProgressCronCheck();
+  await startExpressCronValidationCheck();
+  console.info(`Successfully Started All Monitor CRONS Check at ${new Date()}`);
+}
 
 monitorSenseController.get(
   "/schedule/monitor-sense/export_save",
@@ -147,19 +82,32 @@ monitorSenseController.get(
 
 /************* PRIVATE FUNCTIONS *************/
 async function ValidateCronDetails() {
-  const inProgressCronDetails = await getData(
-    applicationConfig.CRON_PROGRESS_EXTERNAL_ENDPOINT,
-  );
+  console.info(`Running IN-PROGRESS Cron Validation Check at ${new Date()}`);
+  const inProgressCronDetails = await mongoHelper.GetLatestCronStatus();
   const maxCount = applicationConfig.CRON_PROGRESS_MAX_COUNT;
-  if (
-    inProgressCronDetails &&
-    inProgressCronDetails.data &&
-    inProgressCronDetails.data.status == true &&
-    inProgressCronDetails.data.data &&
-    inProgressCronDetails.data.data.length > maxCount
-  ) {
+  if (inProgressCronDetails && inProgressCronDetails.length > maxCount) {
+    const regularCronDetails = await mongoHelper.GetCronSettingsList();
+    const slowCronDetails = await mongoHelper.GetSlowCronDetails();
+    const cronSettingsResponse = _.concat(regularCronDetails, slowCronDetails);
+    inProgressCronDetails.forEach((cronDetail: any) => {
+      const linkedCronDetails = cronSettingsResponse.find(
+        (x) => x.CronId === cronDetail.cronId,
+      );
+      cronDetail.cronName = linkedCronDetails
+        ? linkedCronDetails.CronName
+        : "N/A";
+      if (
+        cronDetail.productsCount == 0 &&
+        Math.round(
+          (new Date().getTime() - cronDetail.cronTime.getTime()) / 1000,
+        ) > 120
+      ) {
+        //If Cron is more than 120 seconds & still Product Count is 0 -> IGNORE the CRON STATUS LOG
+        mongoHelper.IgnoreCronStatusLog(cronDetail.cronId, cronDetail.keyGenId);
+      }
+    });
     const emailBody = await getEmailBodyForInProgressCron(
-      inProgressCronDetails.data.data,
+      inProgressCronDetails,
       maxCount,
     );
     const emailSubject = `MONITOR | Attention Needed : In-Progress Cron Count Reached Maximum Limit`;
@@ -186,25 +134,17 @@ async function getEmailBodyForInProgressCron(cronDetails: any, maxCount: any) {
 }
 
 async function Validate422ErrorProductDetails() {
-  const _422ProductDetails = await getData(
-    applicationConfig._422_ERROR_CRON_EXTERNAL_ENDPOINT,
-  );
+  console.info(`Running 422 ERROR Product Validation Check at ${new Date()}`);
+  const _422ProductDetails = await get422ProductDetails();
   const maxCountFor422Count = applicationConfig._422_ERROR_MAX_COUNT;
   const maxCountForEligibleCount =
     applicationConfig._422_ERROR_ELIGIBLE_MAX_COUNT;
-  if (
-    _422ProductDetails &&
-    _422ProductDetails.data &&
-    _422ProductDetails.data.status == true &&
-    _422ProductDetails.data.data
-  ) {
-    if (
-      _422ProductDetails.data.data.eligibleProducts > maxCountForEligibleCount
-    ) {
+  if (_422ProductDetails) {
+    if (_422ProductDetails.eligibleProducts > maxCountForEligibleCount) {
       const emailBody = await getEmailBodyFor422ErrorProduct(
-        _422ProductDetails.data.data.eligibleProducts,
+        _422ProductDetails.eligibleProducts,
         maxCountForEligibleCount,
-        _422ProductDetails.data.data.time,
+        _422ProductDetails.time,
         "422ELIGIBLE",
       );
       const emailSubject = `EXPRESS CRON | Eligible Products Count Reached Maximum Limit`;
@@ -214,11 +154,11 @@ async function Validate422ErrorProductDetails() {
         applicationConfig.MONITOR_EMAIL_ID,
       );
     }
-    if (_422ProductDetails.data.data.products422Error > maxCountFor422Count) {
+    if (_422ProductDetails.products422Error > maxCountFor422Count) {
       const emailBody = await getEmailBodyFor422ErrorProduct(
-        _422ProductDetails.data.data.products422Error,
+        _422ProductDetails.products422Error,
         maxCountFor422Count,
-        _422ProductDetails.data.data.time,
+        _422ProductDetails.time,
         "422ERROR",
       );
       const emailSubject = `EXPRESS CRON | 422 Error Count Reached Maximum Limit`;
@@ -288,4 +228,56 @@ async function uploadToFTP(localFilePath: any, fileName: any) {
   await client.uploadFrom(localFilePath, `REPRICER/${fileName}`);
   console.log("File uploaded successfully");
   client.close();
+}
+
+async function startInProgressCronCheck() {
+  console.info(
+    `Starting IN-PROGRESS CRONS Check at ${new Date()} with expression : ${applicationConfig.CRON_PROGRESS_SCHEDULE}`,
+  );
+  monitorCrons["InProgressCheckCron"] = schedule(
+    applicationConfig.CRON_PROGRESS_SCHEDULE,
+    async () => {
+      try {
+        await ValidateCronDetails();
+      } catch (error) {
+        console.error(`Error running InProgressCheckCron:`, error);
+      }
+    },
+    {
+      scheduled: true,
+      runOnInit: true,
+    },
+  );
+}
+
+async function startExpressCronValidationCheck() {
+  console.info(
+    `Starting EXPRESS CRONS Validation Check at ${new Date()} with expression : ${applicationConfig._422_ERROR_CRON_SCHEDULE}`,
+  );
+  monitorCrons["ExpressCheckCron"] = schedule(
+    applicationConfig._422_ERROR_CRON_SCHEDULE,
+    async () => {
+      try {
+        await Validate422ErrorProductDetails();
+      } catch (error) {
+        console.error(`Error running ExpressCheckCron:`, error);
+      }
+    },
+    {
+      scheduled: true,
+      runOnInit: true,
+    },
+  );
+}
+
+async function get422ProductDetails() {
+  let productsCount: any = {};
+  productsCount.products422Error =
+    await mongoHelper.Get422ProductCountByType("422_ERROR");
+  productsCount.priceUpdateProducts =
+    await mongoHelper.Get422ProductCountByType("PRICE_UPDATE");
+  productsCount.eligibleProducts =
+    await mongoHelper.GetContextErrorItemsCount(true);
+  productsCount.time = moment(new Date()).format("DD-MM-YYYY HH:mm:ss");
+  return productsCount;
 }

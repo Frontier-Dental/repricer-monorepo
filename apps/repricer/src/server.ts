@@ -10,6 +10,7 @@ import { errorMiddleware } from "./utility/error-middleware";
 import { applicationConfig, validateConfig } from "./utility/config";
 import morgan from "morgan";
 import packageJson from "../package.json";
+import { startAllMonitorCrons } from "./controllers/monitor-sense";
 
 validateConfig();
 
@@ -80,9 +81,11 @@ app.use("/public/images", express.static("./public/images"));
 app.use(errorMiddleware);
 
 const PORT = applicationConfig.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(
+app.listen(PORT, async () => {
+  console.info(
     `Server running with node environment ${process.env.NODE_ENV} on port ${PORT} at ${new Date()}`,
   );
-  console.log(`Application version: ${packageJson.version}`);
+  console.info(`Application version: ${packageJson.version}`);
+  console.info("Scheduling enabled crons on startup");
+  await startAllMonitorCrons();
 });
