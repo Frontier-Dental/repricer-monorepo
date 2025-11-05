@@ -463,34 +463,43 @@ export const FetchExports = async () => {
 };
 
 export const Get422ProductCountByType = async (_type: any) => {
-  const dbo = await getMongoDb();
-  let query: any = {
-    $and: [
-      {
-        active: true,
-      },
-      {
-        insertReason: _type,
-      },
-    ],
-  };
-  return dbo
-    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
-    .countDocuments(query);
+  try {
+    const dbo = await getMongoDb();
+    let query: any = {
+      $and: [
+        {
+          active: true,
+        },
+        {
+          insertReason: _type,
+        },
+      ],
+    };
+    return dbo
+      .collection(applicationConfig.ERROR_ITEM_COLLECTION)
+      .countDocuments(query);
+  } catch (err) {
+    //console.error(`Error in Get422ProductCountByType: ${err}`);
+    return 0;
+  }
 };
 
 export const GetContextErrorItemsCount = async (_activeStatus: any) => {
-  const dbo = await getMongoDb();
-  const query: any = {
-    nextCronTime: {
-      $lte: new Date(),
-      //$gte: new Date()
-    },
-    active: _activeStatus,
-  };
-  return dbo
-    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
-    .countDocuments(query);
+  try {
+    const dbo = await getMongoDb();
+    const query: any = {
+      nextCronTime: {
+        $lte: new Date(),
+        //$gte: new Date()
+      },
+      active: _activeStatus,
+    };
+    return dbo
+      .collection(applicationConfig.ERROR_ITEM_COLLECTION)
+      .countDocuments(query);
+  } catch (err) {
+    return 0;
+  }
 };
 
 export const GetConfigurations = async (activeOnly = true) => {

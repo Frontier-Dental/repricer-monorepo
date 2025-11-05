@@ -1,6 +1,7 @@
 import PromiseFtp from "promise-ftp";
 const ftp = new PromiseFtp();
 import fs from "fs";
+import { applicationConfig } from "../utility/config";
 
 export async function GetAllFileDetails() {
   let listOfFiles: any[] = [];
@@ -10,7 +11,9 @@ export async function GetAllFileDetails() {
     password: ">mL3.rEtJtsP@43",
     secure: false,
   });
-  const list = await ftp.list("REPRICER/DEV_HISTORY");
+  const list = applicationConfig.IS_DEV
+    ? await ftp.list("REPRICER/DEV_HISTORY")
+    : await ftp.list("REPRICER/HISTORY");
   list
     .filter(
       (file: any) =>
