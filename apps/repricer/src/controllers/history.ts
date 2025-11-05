@@ -165,7 +165,9 @@ export async function getHistoryById(req: Request, res: Response) {
 
 export async function downloadFile(req: Request, res: Response) {
   const filename = req.params.file;
-  const remotePath = `/REPRICER/DEV_HISTORY/${filename}`;
+  const remotePath = applicationConfig.IS_DEV
+    ? `/REPRICER/DEV_HISTORY/${filename}`
+    : `/REPRICER/HISTORY/${filename}`;
   const localPath = path.join(__dirname, `${filename}`);
   await ftpMiddleware.DownloadFile(remotePath, localPath);
   res.download(localPath, (err) => {

@@ -9,4 +9,4 @@ historyRouter.use(authMiddleware);
 historyRouter.get("/", historyController.getHistory);
 historyRouter.post("/exportHistoryById", historyController.getHistoryById);
 historyRouter.post("/get_all", historyController.getAllHistory);
-historyRouter.get("/:file", historyController.downloadFile);
+historyRouter.get("/download/:file", historyController.downloadFile);
