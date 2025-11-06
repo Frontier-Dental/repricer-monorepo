@@ -463,6 +463,58 @@ function start422Cron(cronName) {
   }
 }
 
+function stopOpportunityCron(cronName) {
+  if (confirm(`Are you sure you want to stop the opportunity cron?`)) {
+    $.ajax({
+      type: "POST",
+      url: "/cronSettings/toggle_cron_status",
+      data: { CronName: cronName, Action: false },
+      dataType: "json",
+      cache: false,
+      beforeSend: function () {
+        showLoadingToast("Please Wait");
+      },
+      success: function (data) {
+        showSuccessToast(data.message);
+        location.reload();
+      },
+      error: function () {
+        showErrorToast("Something went wrong. Please try again");
+      },
+    });
+  } else {
+    location.reload();
+  }
+}
+
+function startOpportunityCron(cronName) {
+  if (confirm(`Are you sure you want to start the opportunity cron?`)) {
+    $.ajax({
+      type: "POST",
+      url: "/cronSettings/toggle_cron_status",
+      data: { CronName: cronName, Action: true },
+      dataType: "json",
+      cache: false,
+      beforeSend: function () {
+        showLoadingToast("Please Wait");
+      },
+      success: function (data) {
+        showSuccessToast(data.message);
+        location.reload();
+      },
+      error: function () {
+        showErrorToast("Something went wrong. Please try again");
+      },
+    });
+  } else {
+    location.reload();
+  }
+}
+
+function showOpportunityDetails(type) {
+  window.location.href = "/cronSettings/show_details/" + type;
+}
+
 function updateIpView(control, cronId) {
   const controlName = "[name=ip_type_" + cronId + "]";
   var proxyProviderValue = parseInt(control.value);
