@@ -107,3 +107,34 @@ const getVendorEntityDb = (listOfItems: any, vendorName: any) =>
   listOfItems.find(
     (x: any) => x.ChannelName && x.ChannelName.toUpperCase() == vendorName,
   );
+
+export function ToIpConfigModelList(
+  incomingSqlData: any,
+): any[] | PromiseLike<any[]> {
+  const mappedList: any[] = [];
+  if (!incomingSqlData || incomingSqlData.length === 0) {
+    return mappedList;
+  }
+  for (const sqlItem of incomingSqlData) {
+    const mappedItem = {
+      proxyProvider: sqlItem.ProxyProvider,
+      proxyProviderName: sqlItem.ProxyProviderName,
+      userName: sqlItem.UserName,
+      password: sqlItem.Password,
+      hostUrl: sqlItem.HostUrl,
+      port: sqlItem.Port,
+      ipTypeName: sqlItem.IpTypeName,
+      ipType: sqlItem.IpType,
+      method: sqlItem.Method,
+      active: sqlItem.Active === 1 ? true : false,
+      proxyPriority: sqlItem.ProxyPriority,
+      isDummy: sqlItem.IsDummy === 1 ? true : false,
+      AuditInfo: {
+        UpdatedBy: sqlItem.UpdatedBy,
+        UpdatedOn: sqlItem.UpdatedOn,
+      },
+    };
+    mappedList.push(mappedItem);
+  }
+  return mappedList;
+}

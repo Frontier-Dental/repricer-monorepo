@@ -10,6 +10,7 @@ import * as debugProxyHelper from "../utility/debug-proxy-helper";
 import * as mySqlHelper from "../utility/mysql/mysql-helper";
 import * as uuid from "uuid";
 import { applicationConfig } from "../utility/config";
+import * as sqlV2Service from "../utility/mysql/mysql-v2";
 
 export const debugController = express.Router();
 
@@ -262,7 +263,7 @@ debugController.get(
     const proxyParam = parseInt(req.params.proxyProviderId);
     const proxyProvId = getProxyParamValue(proxyParam);
     const proxyProviderDetailsResponse =
-      await dbHelper.GetProxyConfigByProviderId(proxyProvId);
+      await sqlV2Service.GetProxyConfigByProviderId(proxyProvId);
     let proxyProviderDetails = getContextProxyProvider(
       proxyProviderDetailsResponse,
       proxyParam,

@@ -176,15 +176,15 @@ export const GetItemListById = async (_mpId: any): Promise<any> => {
     .findOne({ mpId: _mpId.toString() });
 };
 
-export const GetProxyConfigByProviderId = async (
-  providerId: any,
-): Promise<any> => {
-  const query = {
-    proxyProvider: providerId,
-  };
-  const dbo = await getMongoDb();
-  return dbo.collection(applicationConfig.IP_CONFIG).find(query).toArray();
-};
+// export const GetProxyConfigByProviderId = async (
+//   providerId: any,
+// ): Promise<any> => {
+//   const query = {
+//     proxyProvider: providerId,
+//   };
+//   const dbo = await getMongoDb();
+//   return dbo.collection(applicationConfig.IP_CONFIG).find(query).toArray();
+// };
 
 export const GetCronSettingsDetailsByName = async (
   cronName: string,
@@ -231,23 +231,23 @@ export async function getNet32KeysByCronName(cronName: string): Promise<any> {
     .findOne({ CronName: cronName });
 }
 
-export const GetRotatingProxyUrl = async (): Promise<any> => {
-  const query = {
-    $and: [
-      {
-        proxyProvider: 1,
-      },
-      {
-        ipType: 1,
-      },
-    ],
-  };
-  const dbo = await getMongoDb();
-  const result = await dbo
-    .collection(applicationConfig.IP_CONFIG)
-    .findOne(query);
-  return result?.hostUrl;
-};
+// export const GetRotatingProxyUrl = async (): Promise<any> => {
+//   const query = {
+//     $and: [
+//       {
+//         proxyProvider: 1,
+//       },
+//       {
+//         ipType: 1,
+//       },
+//     ],
+//   };
+//   const dbo = await getMongoDb();
+//   const result = await dbo
+//     .collection(applicationConfig.IP_CONFIG)
+//     .findOne(query);
+//   return result?.hostUrl;
+// };
 
 export const GetGlobalConfig = async (): Promise<any> => {
   const dbo = await getMongoDb();

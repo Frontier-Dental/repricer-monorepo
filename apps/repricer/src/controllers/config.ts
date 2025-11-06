@@ -3,10 +3,11 @@ import _ from "lodash";
 import moment from "moment";
 import * as SessionHelper from "../utility/session-helper";
 import * as mongoMiddleware from "../services/mongo";
+import * as sqlV2Service from "../services/mysql-v2";
 const securedPassword = "*****************";
 
 export async function GetConfigSetup(req: Request, res: Response) {
-  let configItems = await mongoMiddleware.GetConfigurations(false);
+  let configItems = await sqlV2Service.GetConfigurations(false);
 
   configItems = _.filter(configItems, (x) => x.isDummy != true);
   await Promise.all(
@@ -48,7 +49,7 @@ export async function GetConfigSetup(req: Request, res: Response) {
 export async function UpdateConfig(req: Request, res: Response) {
   const payload = req.body;
   let updatedConfigs: any[] = [];
-  let configSettingsResponse = await mongoMiddleware.GetConfigurations(false);
+  let configSettingsResponse = await sqlV2Service.GetConfigurations(false); //await mongoMiddleware.GetConfigurations(false);
 
   for (const $cr in payload.proxyProviderName) {
     const ipTypeStr =
@@ -96,8 +97,8 @@ export async function UpdateConfig(req: Request, res: Response) {
       }
     }
   }
-
-  await mongoMiddleware.UpdateConfiguration(updatedConfigs, req);
+  await sqlV2Service.UpdateConfiguration(updatedConfigs, req);
+  //await mongoMiddleware.UpdateConfiguration(updatedConfigs, req);
   return res.json({
     status: true,
     message: "Configuration settings updated successfully.",

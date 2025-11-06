@@ -502,53 +502,53 @@ export const GetContextErrorItemsCount = async (_activeStatus: any) => {
   }
 };
 
-export const GetConfigurations = async (activeOnly = true) => {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const configurationResult = await cacheClient.get<any>(CacheKey.IP_CONFIG);
-  if (configurationResult != null) {
-    await cacheClient.disconnect();
-    return configurationResult;
-  }
-  const dbo = await getMongoDb();
-  const query = activeOnly ? { active: true } : {};
-  const dbResult = await dbo
-    .collection(applicationConfig.IP_CONFIG)
-    .find(query)
-    .toArray();
-  if (dbResult != null) await cacheClient.set(CacheKey.IP_CONFIG, dbResult);
-  await cacheClient.disconnect();
-  return dbResult;
-};
+// export const GetConfigurations = async (activeOnly = true) => {
+//   const cacheClient = CacheClient.getInstance(
+//     GetCacheClientOptions(applicationConfig),
+//   );
+//   const configurationResult = await cacheClient.get<any>(CacheKey.IP_CONFIG);
+//   if (configurationResult != null) {
+//     await cacheClient.disconnect();
+//     return configurationResult;
+//   }
+//   const dbo = await getMongoDb();
+//   const query = activeOnly ? { active: true } : {};
+//   const dbResult = await dbo
+//     .collection(applicationConfig.IP_CONFIG)
+//     .find(query)
+//     .toArray();
+//   if (dbResult != null) await cacheClient.set(CacheKey.IP_CONFIG, dbResult);
+//   await cacheClient.disconnect();
+//   return dbResult;
+// };
 
-export const UpdateConfiguration = async (payload: any, req: any) => {
-  let mongoResult: any = null;
-  const dbo = await getMongoDb();
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  await cacheClient.delete(CacheKey.IP_CONFIG);
-  await cacheClient.disconnect();
-  for (const element of payload) {
-    mongoResult = await dbo
-      .collection(applicationConfig.IP_CONFIG)
-      .findOneAndUpdate(
-        { proxyProvider: element.proxyProvider, ipType: element.ipType },
-        {
-          $set: {
-            userName: element.userName,
-            password: element.password,
-            hostUrl: element.hostUrl,
-            port: parseInt(element.port),
-            active: element.active,
-            AuditInfo: await SessionHelper.GetAuditInfo(req),
-          },
-        },
-      );
-  }
-  return mongoResult;
-};
+// export const UpdateConfiguration = async (payload: any, req: any) => {
+//   let mongoResult: any = null;
+//   const dbo = await getMongoDb();
+//   const cacheClient = CacheClient.getInstance(
+//     GetCacheClientOptions(applicationConfig),
+//   );
+//   await cacheClient.delete(CacheKey.IP_CONFIG);
+//   await cacheClient.disconnect();
+//   for (const element of payload) {
+//     mongoResult = await dbo
+//       .collection(applicationConfig.IP_CONFIG)
+//       .findOneAndUpdate(
+//         { proxyProvider: element.proxyProvider, ipType: element.ipType },
+//         {
+//           $set: {
+//             userName: element.userName,
+//             password: element.password,
+//             hostUrl: element.hostUrl,
+//             port: parseInt(element.port),
+//             active: element.active,
+//             AuditInfo: await SessionHelper.GetAuditInfo(req),
+//           },
+//         },
+//       );
+//   }
+//   return mongoResult;
+// };
 
 export const GetHistoryDetailsForId = async (_mpId: any) => {
   const dbo = await getMongoDb();

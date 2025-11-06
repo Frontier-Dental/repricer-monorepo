@@ -36,25 +36,25 @@ export async function GetProxySwitchCronDetails(ignoreCache = false) {
     .toArray();
 }
 
-export async function GetAllProxyProvider(current_proxy_priority: any) {
-  const query = {
-    proxyPriority: { $exists: true, $nin: [0, current_proxy_priority] }, // will fetch proxies without proxy priority 0  and not existing one
-  };
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.IP_CONFIG)
-    .find(query)
-    .sort({ proxyPriority: 1 })
-    .toArray();
-}
+// export async function GetAllProxyProvider(current_proxy_priority: any) {
+//   const query = {
+//     proxyPriority: { $exists: true, $nin: [0, current_proxy_priority] }, // will fetch proxies without proxy priority 0  and not existing one
+//   };
+//   const dbo = await getMongoDb();
+//   return dbo
+//     .collection(applicationConfig.IP_CONFIG)
+//     .find(query)
+//     .sort({ proxyPriority: 1 })
+//     .toArray();
+// }
 
-export async function GetProxyConfigByPriority(proxyPriority: any) {
-  const query = {
-    proxyPriority: proxyPriority,
-  };
-  const dbo = await getMongoDb();
-  return dbo.collection(applicationConfig.IP_CONFIG).find(query).toArray();
-}
+// export async function GetProxyConfigByPriority(proxyPriority: any) {
+//   const query = {
+//     proxyPriority: proxyPriority,
+//   };
+//   const dbo = await getMongoDb();
+//   return dbo.collection(applicationConfig.IP_CONFIG).find(query).toArray();
+// }
 
 export async function GetGlobalConfig() {
   const cacheClient = CacheClient.getInstance(
@@ -368,13 +368,13 @@ export async function GetCronSettingsDetailsById2(
   return mongoResult;
 }
 
-export async function GetProxyConfigByProviderId(providerId: any) {
-  const query = {
-    proxyProvider: providerId,
-  };
-  const dbo = await getMongoDb();
-  return dbo.collection(applicationConfig.IP_CONFIG).find(query).toArray();
-}
+// export async function GetProxyConfigByProviderId(providerId: any) {
+//   const query = {
+//     proxyProvider: providerId,
+//   };
+//   const dbo = await getMongoDb();
+//   return dbo.collection(applicationConfig.IP_CONFIG).find(query).toArray();
+// }
 
 export async function ResetPendingCronLogs() {
   const dbo = await getMongoDb();
@@ -828,23 +828,23 @@ export async function UpdateScrapeProducts(mpId: any) {
     );
 }
 
-export const GetRotatingProxyUrl = async (): Promise<any> => {
-  const query = {
-    $and: [
-      {
-        proxyProvider: 1,
-      },
-      {
-        ipType: 1,
-      },
-    ],
-  };
-  const dbo = await getMongoDb();
-  const result = await dbo
-    .collection(applicationConfig.IP_CONFIG)
-    .findOne(query);
-  return result?.hostUrl;
-};
+// export const GetRotatingProxyUrl = async (): Promise<any> => {
+//   const query = {
+//     $and: [
+//       {
+//         proxyProvider: 1,
+//       },
+//       {
+//         ipType: 1,
+//       },
+//     ],
+//   };
+//   const dbo = await getMongoDb();
+//   const result = await dbo
+//     .collection(applicationConfig.IP_CONFIG)
+//     .findOne(query);
+//   return result?.hostUrl;
+// };
 
 export const GetContextErrorItems = async (
   _activeStatus: any,

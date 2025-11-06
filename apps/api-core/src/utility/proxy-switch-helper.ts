@@ -2,6 +2,7 @@ import * as dbHelper from "./mongo/db-helper";
 import * as axiosHelper from "./axios-helper";
 import _ from "lodash";
 import { applicationConfig } from "./config";
+import * as sqlV2Service from "./mysql/mysql-v2";
 
 interface ProxyFailureDetails {
   proxyProvider: number;
@@ -159,7 +160,7 @@ async function updateProxyForCron(
 ): Promise<CronInfo | null> {
   let payloadForEmail: CronInfo | null = null;
   const existingProxyDetails = _.first(
-    await dbHelper.GetProxyConfigByProviderId(existingProxyProviderId),
+    await sqlV2Service.GetProxyConfigByProviderId(existingProxyProviderId),
   ) as ProxyConfig | undefined;
 
   for (let cronSettings of listOfCrons) {
@@ -186,7 +187,7 @@ async function updateProxyForCron(
       );
     } else {
       const newProxyDetails = _.first(
-        await dbHelper.GetProxyConfigByProviderId(newProxyProvider),
+        await sqlV2Service.GetProxyConfigByProviderId(newProxyProvider),
       ) as ProxyConfig | undefined;
 
       await dbHelper.UpdateProxyDetailsByCronId(
