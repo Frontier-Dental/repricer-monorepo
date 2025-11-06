@@ -334,6 +334,8 @@ export const GetCronSettingsList = async () => {
   if (dbResponse != null) {
     await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, dbResponse);
   }
+
+  console.log("dbResponse", dbResponse);
   await cacheClient.disconnect();
   return dbResponse;
 };
@@ -497,6 +499,36 @@ export const GetContextErrorItemsCount = async (_activeStatus: any) => {
     return dbo
       .collection(applicationConfig.ERROR_ITEM_COLLECTION)
       .countDocuments(query);
+  } catch (err) {
+    return 0;
+  }
+};
+
+export const GetOpportunityProductCount = async () => {
+  try {
+    // TODO: Implement opportunity product count logic
+    // This should query the appropriate collection for opportunity products
+    return 0;
+  } catch (err) {
+    return 0;
+  }
+};
+
+export const GetOpportunityPriceUpdateCount = async () => {
+  try {
+    // TODO: Implement opportunity price update count logic
+    // This should query the appropriate collection for price update opportunities
+    return 0;
+  } catch (err) {
+    return 0;
+  }
+};
+
+export const GetOpportunityEligibleCount = async () => {
+  try {
+    // TODO: Implement opportunity eligible count logic
+    // This should query the appropriate collection for eligible opportunity products
+    return 0;
   } catch (err) {
     return 0;
   }

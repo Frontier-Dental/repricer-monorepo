@@ -10,6 +10,98 @@ import moment from "moment";
 import excelJs from "exceljs";
 import { v4 as uuidv4 } from "uuid";
 
+async function buildCustomCronSettings(
+  cronDetails: any,
+  configItems: any[],
+  productCountFn: () => Promise<number>,
+  priceUpdateCountFn: () => Promise<number>,
+  eligibleCountFn: () => Promise<number>,
+) {
+  if (!cronDetails) {
+    return null;
+  }
+
+  const customSettings: any = {};
+  customSettings.CronId = cronDetails.CronId;
+  customSettings.CronName = cronDetails.CronName;
+  customSettings.IsActive = cronDetails.CronStatus;
+  customSettings.ProxyProvider = cronDetails.ProxyProvider
+    ? cronDetails.ProxyProvider
+    : 0;
+  customSettings.IpType = cronDetails.IpType ? cronDetails.IpType : 0;
+  customSettings.FixedIp = cronDetails.FixedIp;
+  customSettings.Offset = cronDetails.Offset;
+  customSettings.CronTime = cronDetails.CronTime;
+  customSettings.CronTimeUnit = cronDetails.CronTimeUnit;
+
+  customSettings.NoOfOpportunityProducts = await productCountFn();
+  customSettings.NoOfPriceUpdateProducts = await priceUpdateCountFn();
+  customSettings.EligibleProductsCount = await eligibleCountFn();
+
+  customSettings.lastUpdatedBy = await SessionHelper.GetAuditValue(
+    cronDetails,
+    "U_NAME",
+  );
+  customSettings.lastUpdatedOn = await SessionHelper.GetAuditValue(
+    cronDetails,
+    "U_TIME",
+  );
+
+  customSettings.ProxyProvider_1 =
+    await MapperHelper.GetAlternateProxyProviderId(cronDetails, 1);
+  customSettings.ProxyProvider_2 =
+    await MapperHelper.GetAlternateProxyProviderId(cronDetails, 2);
+  customSettings.ProxyProvider_3 =
+    await MapperHelper.GetAlternateProxyProviderId(cronDetails, 3);
+  customSettings.ProxyProvider_4 =
+    await MapperHelper.GetAlternateProxyProviderId(cronDetails, 4);
+  customSettings.ProxyProvider_5 =
+    await MapperHelper.GetAlternateProxyProviderId(cronDetails, 5);
+  customSettings.ProxyProvider_6 =
+    await MapperHelper.GetAlternateProxyProviderId(cronDetails, 6);
+
+  customSettings.ProxyProvider_1_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      customSettings.ProxyProvider_1,
+    );
+  customSettings.ProxyProvider_2_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      customSettings.ProxyProvider_2,
+    );
+  customSettings.ProxyProvider_3_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      customSettings.ProxyProvider_3,
+    );
+  customSettings.ProxyProvider_4_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      customSettings.ProxyProvider_4,
+    );
+  customSettings.ProxyProvider_5_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      customSettings.ProxyProvider_5,
+    );
+  customSettings.ProxyProvider_6_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      customSettings.ProxyProvider_6,
+    );
+  customSettings.ProxyProvider_Name =
+    await MapperHelper.GetAlternateProxyProviderName(
+      configItems,
+      cronDetails.ProxyProvider,
+    );
+
+  customSettings.ThresholdReached = false;
+  customSettings.CloseToThresholdReached = false;
+
+  return customSettings;
+}
+
 export async function getCronSettings(req: Request, res: Response) {
   const cronSettingsResult = await mongoMiddleware.GetCronSettingsList();
   let configItems = await mongoMiddleware.GetConfigurations(true);
@@ -91,8 +183,14 @@ export async function getCronSettings(req: Request, res: Response) {
     setting.CloseToThresholdReached = false; //await MapperHelper.GetIsStepReached(setting, setting.AlternateProxyProvider.length - 2);
   }
   const hiddenCronDetails = cronSettingsResult.find(
-    (x: any) => x.IsHidden == true,
+    (x: any) => x.IsHidden == true && x.CronId === "DUMMY-422-Error",
   );
+  const opportunityCronDetails = cronSettingsResult.find(
+    (x: any) => x.IsHidden == true && x.CronId === "Cron-Opportunity",
+  );
+
+  console.log("cronSettingsResult", cronSettingsResult);
+
   cronSettingsResponse.custom = {};
   cronSettingsResponse.custom.CronId = hiddenCronDetails?.CronId;
   cronSettingsResponse.custom.CronName = hiddenCronDetails?.CronName;
@@ -170,6 +268,16 @@ export async function getCronSettings(req: Request, res: Response) {
     );
   cronSettingsResponse.custom.ThresholdReached = false; //await MapperHelper.GetIsStepReached(hiddenCronDetails, hiddenCronDetails.AlternateProxyProvider.length-1);
   cronSettingsResponse.custom.CloseToThresholdReached = false; // await MapperHelper.GetIsStepReached(hiddenCronDetails, hiddenCronDetails.AlternateProxyProvider.length - 2);
+
+  cronSettingsResponse.customOpportunity = await buildCustomCronSettings(
+    opportunityCronDetails,
+    configItems,
+    async () => await mongoMiddleware.GetOpportunityProductCount(),
+    async () => await mongoMiddleware.GetOpportunityPriceUpdateCount(),
+    async () => await mongoMiddleware.GetOpportunityEligibleCount(),
+  );
+
+  // console.log("cronSettingsResponse", cronSettingsResponse);
 
   res.render("pages/settings/settingsList", {
     configItems: configItems,
