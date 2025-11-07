@@ -56,24 +56,24 @@ export async function GetProxySwitchCronDetails(ignoreCache = false) {
 //   return dbo.collection(applicationConfig.IP_CONFIG).find(query).toArray();
 // }
 
-export async function GetGlobalConfig() {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const envSettingsResult = await cacheClient.get<GlobalConfig>(
-    CacheKey.ENV_SETTINGS,
-  );
-  if (envSettingsResult != null) return envSettingsResult;
-  const dbo = await getMongoDb();
-  const mongoResult = await dbo
-    .collection(applicationConfig.ENV_SETTINGS)
-    .findOne();
-  if (mongoResult != null) {
-    await cacheClient.set(CacheKey.ENV_SETTINGS, mongoResult);
-  }
-  await cacheClient.disconnect();
-  return mongoResult as GlobalConfig;
-}
+// export async function GetGlobalConfig() {
+//   const cacheClient = CacheClient.getInstance(
+//     GetCacheClientOptions(applicationConfig),
+//   );
+//   const envSettingsResult = await cacheClient.get<GlobalConfig>(
+//     CacheKey.ENV_SETTINGS,
+//   );
+//   if (envSettingsResult != null) return envSettingsResult;
+//   const dbo = await getMongoDb();
+//   const mongoResult = await dbo
+//     .collection(applicationConfig.ENV_SETTINGS)
+//     .findOne();
+//   if (mongoResult != null) {
+//     await cacheClient.set(CacheKey.ENV_SETTINGS, mongoResult);
+//   }
+//   await cacheClient.disconnect();
+//   return mongoResult as GlobalConfig;
+// }
 
 export async function GetCronSettings(): Promise<CronSettingsDetail[]> {
   const cacheClient = CacheClient.getInstance(
@@ -123,23 +123,23 @@ export async function UpdateCronStatusAsync(payload: any) {
     );
 }
 
-export async function GetDelay() {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const envSettingsResult = await cacheClient.get<any>(CacheKey.ENV_SETTINGS);
-  await cacheClient.disconnect();
-  if (envSettingsResult != null) return envSettingsResult.delay;
-  const dbo = await getMongoDb();
-  const dbResponse = await dbo
-    .collection(applicationConfig.ENV_SETTINGS)
-    .findOne();
-  if (dbResponse && dbResponse.delay) {
-    return parseInt(dbResponse.delay);
-  } else {
-    throw new Error("Delay setting not found");
-  }
-}
+// export async function GetDelay() {
+//   const cacheClient = CacheClient.getInstance(
+//     GetCacheClientOptions(applicationConfig),
+//   );
+//   const envSettingsResult = await cacheClient.get<any>(CacheKey.ENV_SETTINGS);
+//   await cacheClient.disconnect();
+//   if (envSettingsResult != null) return envSettingsResult.delay;
+//   const dbo = await getMongoDb();
+//   const dbResponse = await dbo
+//     .collection(applicationConfig.ENV_SETTINGS)
+//     .findOne();
+//   if (dbResponse && dbResponse.delay) {
+//     return parseInt(dbResponse.delay);
+//   } else {
+//     throw new Error("Delay setting not found");
+//   }
+// }
 
 export async function GetCronSettingsDetailsByName(
   cronName: any,

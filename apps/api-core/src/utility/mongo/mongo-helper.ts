@@ -249,10 +249,10 @@ export async function getNet32KeysByCronName(cronName: string): Promise<any> {
 //   return result?.hostUrl;
 // };
 
-export const GetGlobalConfig = async (): Promise<any> => {
-  const dbo = await getMongoDb();
-  return dbo.collection(applicationConfig.ENV_SETTINGS).findOne();
-};
+// export const GetGlobalConfig = async (): Promise<any> => {
+//   const dbo = await getMongoDb();
+//   return dbo.collection(applicationConfig.ENV_SETTINGS).findOne();
+// };
 
 export const FindErrorItemByIdAndStatus = async (
   _mpId: any,
@@ -275,16 +275,16 @@ export const FindErrorItemByIdAndStatus = async (
     .countDocuments(query);
 };
 
-export const GetDelay = async (): Promise<any> => {
-  const dbo = await getMongoDb();
-  const dbResponse = await dbo
-    .collection(applicationConfig.ENV_SETTINGS)
-    .findOne();
-  if (!dbResponse) {
-    throw new Error("Delay not found");
-  }
-  return parseInt(dbResponse.delay);
-};
+// export const GetDelay = async (): Promise<any> => {
+//   const dbo = await getMongoDb();
+//   const dbResponse = await dbo
+//     .collection(applicationConfig.ENV_SETTINGS)
+//     .findOne();
+//   if (!dbResponse) {
+//     throw new Error("Delay not found");
+//   }
+//   return parseInt(dbResponse.delay);
+// };
 
 export const UpdateCronDetailsByCronId = async (
   cronId: string,

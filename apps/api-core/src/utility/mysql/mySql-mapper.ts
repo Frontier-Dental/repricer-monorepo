@@ -178,6 +178,40 @@ export const ToIpConfigModelList = (
   return mappedList;
 };
 
+export const ToEnvSettingsModel = (incomingSqlData: any): any => {
+  let mappedItem: any = null;
+  if (!incomingSqlData) {
+    return mappedItem;
+  }
+  mappedItem = {
+    delay: incomingSqlData[0].Delay,
+    source: incomingSqlData[0].Source,
+    override_all: incomingSqlData[0].OverrideAll === 1 ? "true" : "false",
+    FrontierApiKey: incomingSqlData[0].FrontierApiKey,
+    DevIntegrationKey: incomingSqlData[0].DevIntegrationKey,
+    expressCronBatchSize: incomingSqlData[0].ExpressCronBatchSize,
+    expressCronOverlapThreshold: incomingSqlData[0].ExpressCronOverlapThreshold,
+    expressCronInstanceLimit: incomingSqlData[0].ExpressCronInstanceLimit,
+    AuditInfo: {
+      UpdatedBy: incomingSqlData[0].UpdatedBy,
+      UpdatedOn: incomingSqlData[0].UpdatedOn,
+    },
+    override_execution_priority_details: {
+      override_priority:
+        incomingSqlData[0].OverridePriority === 1 ? "true" : "false",
+      priority_settings: {
+        tradent_priority: getPriority(incomingSqlData, "TRADENT"),
+        frontier_priority: getPriority(incomingSqlData, "FRONTIER"),
+        mvp_priority: getPriority(incomingSqlData, "MVP"),
+        firstDent_priority: getPriority(incomingSqlData, "FIRSTDENT"),
+        topDent_priority: getPriority(incomingSqlData, "TOPDENT"),
+        triad_priority: getPriority(incomingSqlData, "TRIAD"),
+      },
+    },
+  };
+  return mappedItem;
+};
+
 /********************************** PRIVATE FUNCTIONS **********************************/
 
 function getMappedVendorDetails(
@@ -228,4 +262,11 @@ function hasPriceChanged(repriceModel: any) {
     return true;
   }
   return false;
+}
+
+function getPriority(incomingSqlData: any, vendorName: string) {
+  const vendorEntity = incomingSqlData.find(
+    (x: any) => x.EntityName && x.EntityName.toUpperCase() == vendorName,
+  );
+  return vendorEntity ? vendorEntity.Priority.toString() : null;
 }

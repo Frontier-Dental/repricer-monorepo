@@ -675,30 +675,30 @@ export const Get422ProductDetailsByType = async (_type: any) => {
     .toArray();
 };
 
-export const GetEnvValueByKey = async (keyName: any) => {
-  const dbo = await getMongoDb();
-  const mongoResult = await dbo
-    .collection(applicationConfig.ENV_SETTINGS!)
-    .findOne();
-  if (mongoResult) {
-    switch (keyName) {
-      case "SOURCE":
-        return mongoResult.source;
-      case "DELAY":
-        return mongoResult.delay;
-      case "OWN_VENDOR_ID":
-        return mongoResult.ownVendorId;
-      case "SISTER_VENDORS":
-        return mongoResult.excludedSisterVendors;
-      case "FRONTIER_API_KEY":
-        return mongoResult.FrontierApiKey;
-      case "DEV_SYNC_API_KEY":
-        return mongoResult.DevIntegrationKey;
-      default:
-        throw new Error(`Invalid key name: ${keyName}`);
-    }
-  }
-};
+// export const GetEnvValueByKey = async (keyName: any) => {
+//   const dbo = await getMongoDb();
+//   const mongoResult = await dbo
+//     .collection(applicationConfig.ENV_SETTINGS!)
+//     .findOne();
+//   if (mongoResult) {
+//     switch (keyName) {
+//       case "SOURCE":
+//         return mongoResult.source;
+//       case "DELAY":
+//         return mongoResult.delay;
+//       case "OWN_VENDOR_ID":
+//         return mongoResult.ownVendorId;
+//       case "SISTER_VENDORS":
+//         return mongoResult.excludedSisterVendors;
+//       case "FRONTIER_API_KEY":
+//         return mongoResult.FrontierApiKey;
+//       case "DEV_SYNC_API_KEY":
+//         return mongoResult.DevIntegrationKey;
+//       default:
+//         throw new Error(`Invalid key name: ${keyName}`);
+//     }
+//   }
+// };
 
 export const InsertOrUpdateProduct = async (payload: any, req: any) => {
   let mongoResult: any = null;
@@ -1083,37 +1083,37 @@ export const UpdateExecutionPriority = async (
   return mongoResult;
 };
 
-export async function GetEnvSettings() {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const envSettingsResult = await cacheClient.get(CacheKey.ENV_SETTINGS);
-  if (envSettingsResult != null) {
-    await cacheClient.disconnect();
-    return envSettingsResult;
-  }
-  let mongoResult: any = null;
-  const dbo = await getMongoDb();
-  mongoResult = await dbo.collection(applicationConfig.ENV_SETTINGS!).findOne();
-  if (mongoResult != null)
-    await cacheClient.set(CacheKey.ENV_SETTINGS, mongoResult);
-  await cacheClient.disconnect();
-  return mongoResult;
-}
+// export async function GetEnvSettings() {
+//   const cacheClient = CacheClient.getInstance(
+//     GetCacheClientOptions(applicationConfig),
+//   );
+//   const envSettingsResult = await cacheClient.get(CacheKey.ENV_SETTINGS);
+//   if (envSettingsResult != null) {
+//     await cacheClient.disconnect();
+//     return envSettingsResult;
+//   }
+//   let mongoResult: any = null;
+//   const dbo = await getMongoDb();
+//   mongoResult = await dbo.collection(applicationConfig.ENV_SETTINGS!).findOne();
+//   if (mongoResult != null)
+//     await cacheClient.set(CacheKey.ENV_SETTINGS, mongoResult);
+//   await cacheClient.disconnect();
+//   return mongoResult;
+// }
 
-export const UpsertEnvSettings = async (payload: any) => {
-  let mongoResult: any = null;
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.ENV_SETTINGS!)
-    .findOneAndUpdate({}, payload);
-  await cacheClient.delete(CacheKey.ENV_SETTINGS);
-  await cacheClient.disconnect();
-  return mongoResult;
-};
+// export const UpsertEnvSettings = async (payload: any) => {
+//   let mongoResult: any = null;
+//   const cacheClient = CacheClient.getInstance(
+//     GetCacheClientOptions(applicationConfig),
+//   );
+//   const dbo = await getMongoDb();
+//   mongoResult = await dbo
+//     .collection(applicationConfig.ENV_SETTINGS!)
+//     .findOneAndUpdate({}, payload);
+//   await cacheClient.delete(CacheKey.ENV_SETTINGS);
+//   await cacheClient.disconnect();
+//   return mongoResult;
+// };
 
 export const GetLogsBasedOnQuery = async (query: any) => {
   let mongoResult: any = null;

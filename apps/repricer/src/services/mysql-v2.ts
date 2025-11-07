@@ -56,3 +56,126 @@ export async function UpdateConfiguration(payload: any, req: any) {
       });
   }
 }
+
+export async function GetEnvSettings() {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const envSettingsResult = await cacheClient.get(CacheKey.ENV_SETTINGS);
+  if (envSettingsResult != null) {
+    await cacheClient.disconnect();
+    return envSettingsResult;
+  }
+  let envSettings = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetEnvSettings()`);
+  if (result && result[0] && result[0].length > 0) {
+    envSettings = await SqlMapper.ToEnvSettingsModel(result[0][0]);
+    await cacheClient.set(CacheKey.ENV_SETTINGS, envSettings); // Cache for 1 hour
+  }
+  return envSettings;
+}
+
+export async function GetEnvValueByKey(keyName: string) {
+  const envSettingsDetails = await GetEnvSettings();
+  if (envSettingsDetails) {
+    switch (keyName) {
+      case "SOURCE":
+        return envSettingsDetails.source;
+      case "DELAY":
+        return envSettingsDetails.delay;
+      case "OWN_VENDOR_ID":
+        return envSettingsDetails.ownVendorId;
+      case "SISTER_VENDORS":
+        return envSettingsDetails.excludedSisterVendors;
+      case "FRONTIER_API_KEY":
+        return envSettingsDetails.FrontierApiKey;
+      case "DEV_SYNC_API_KEY":
+        return envSettingsDetails.DevIntegrationKey;
+      default:
+        throw new Error(`Invalid key name: ${keyName}`);
+    }
+  }
+}
+
+export async function UpsertEnvSettings(payload: any) {
+  let mongoResult: any = null;
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const db = getKnexInstance();
+  await db("env_settings")
+    .where({ ConfigID: 1 })
+    .update({
+      Source: payload.source,
+      Delay: parseInt(payload.delay),
+      OverrideAll: JSON.parse(payload.override_all),
+      FrontierApiKey: payload.FrontierApiKey,
+      DevIntegrationKey: payload.DevIntegrationKey,
+      ExpressCronBatchSize: parseInt(payload.expressCronBatchSize),
+      ExpressCronOverlapThreshold: parseInt(
+        payload.expressCronOverlapThreshold,
+      ),
+      ExpressCronInstanceLimit: parseInt(payload.expressCronInstanceLimit),
+      UpdatedBy: payload.updatedBy,
+      UpdatedOn: payload.updatedOn,
+    });
+  await db("env_override_execution_details")
+    .where({ ConfigID: 1 })
+    .update({
+      OverridePriority: JSON.parse(
+        payload.override_execution_priority_details.override_priority,
+      ),
+    });
+  await db("env_execution_priorities")
+    .where({ ConfigID: 1, EntityName: "TRADENT" })
+    .update({
+      Priority: JSON.parse(
+        payload.override_execution_priority_details.priority_settings
+          .tradent_priority,
+      ),
+    });
+  await db("env_execution_priorities")
+    .where({ ConfigID: 1, EntityName: "FRONTIER" })
+    .update({
+      Priority: JSON.parse(
+        payload.override_execution_priority_details.priority_settings
+          .frontier_priority,
+      ),
+    });
+  await db("env_execution_priorities")
+    .where({ ConfigID: 1, EntityName: "MVP" })
+    .update({
+      Priority: JSON.parse(
+        payload.override_execution_priority_details.priority_settings
+          .mvp_priority,
+      ),
+    });
+  await db("env_execution_priorities")
+    .where({ ConfigID: 1, EntityName: "TOPDENT" })
+    .update({
+      Priority: JSON.parse(
+        payload.override_execution_priority_details.priority_settings
+          .topDent_priority,
+      ),
+    });
+  await db("env_execution_priorities")
+    .where({ ConfigID: 1, EntityName: "FIRSTDENT" })
+    .update({
+      Priority: JSON.parse(
+        payload.override_execution_priority_details.priority_settings
+          .firstDent_priority,
+      ),
+    });
+  await db("env_execution_priorities")
+    .where({ ConfigID: 1, EntityName: "TRIAD" })
+    .update({
+      Priority: JSON.parse(
+        payload.override_execution_priority_details.priority_settings
+          .triad_priority,
+      ),
+    });
+  await cacheClient.delete(CacheKey.ENV_SETTINGS);
+  await cacheClient.disconnect();
+  return mongoResult;
+}

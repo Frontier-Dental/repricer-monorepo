@@ -5,7 +5,6 @@ import CacheClient from "../../client/cacheClient";
 import { CacheKey } from "@repricer-monorepo/shared";
 import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
 import * as SqlMapper from "./mySql-mapper";
-import { getMongoDb } from "../mongo";
 
 export async function GetRotatingProxyUrl() {
   const knex = getKnexInstance();
@@ -16,13 +15,37 @@ export async function GetRotatingProxyUrl() {
   return null;
 }
 
-export const GetProxyConfigByProviderId = async (
+export async function GetProxyConfigByProviderId(
   providerId: any,
-): Promise<any> => {
+): Promise<any> {
   const knex = getKnexInstance();
   const result = await knex("ipConfig").where({ ProxyProvider: providerId });
   if (result && result.length > 0) {
     return await SqlMapper.ToIpConfigModelList(result);
   }
   return [];
-};
+}
+
+export async function GetGlobalConfig() {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const envSettingsResult = await cacheClient.get(CacheKey.ENV_SETTINGS);
+  if (envSettingsResult != null) {
+    await cacheClient.disconnect();
+    return envSettingsResult;
+  }
+  let envSettings = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetEnvSettings()`);
+  if (result && result[0] && result[0].length > 0) {
+    envSettings = await SqlMapper.ToEnvSettingsModel(result[0][0]);
+    await cacheClient.set(CacheKey.ENV_SETTINGS, envSettings); // Cache for 1 hour
+  }
+  return envSettings;
+}
+
+export async function GetDelay() {
+  const globalConfigDetails = await GetGlobalConfig();
+  return globalConfigDetails!.delay || 0;
+}

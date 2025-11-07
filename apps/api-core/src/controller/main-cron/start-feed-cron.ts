@@ -16,7 +16,7 @@ import {
   updateCronBasedDetails,
   updateLowestVendor,
 } from "./shared";
-
+import * as sqlV2Service from "../../utility/mysql/mysql-v2";
 let feedCron: ScheduledTask | null = null;
 
 export async function startFeedCronHandler(
@@ -52,7 +52,7 @@ export async function startFeedCronHandler(
 }
 
 async function getFeedEligibleList() {
-  const globalConfig = await dbHelper.GetGlobalConfig();
+  const globalConfig = await sqlV2Service.GetGlobalConfig();
   if (globalConfig && globalConfig.source != "FEED") {
     return [];
   }

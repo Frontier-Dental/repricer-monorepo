@@ -19,6 +19,7 @@ import {
   isPriceUpdateRequired,
 } from "../../utility/reprice-algo/v1/shared";
 import * as responseUtility from "../../utility/response-utility";
+import * as sqlV2Service from "../../utility/mysql/mysql-v2";
 
 export async function repriceProductToMax(
   req: Request,
@@ -26,7 +27,7 @@ export async function repriceProductToMax(
 ): Promise<any> {
   let productItem = req.body.prod;
   const contextVendor = req.body.contextVendor;
-  await delay(await dbHelper.GetDelay());
+  await delay(await sqlV2Service.GetDelay());
 
   let result = req.body.result;
   let repriceResult: RepriceModel | undefined;

@@ -29,7 +29,7 @@ export async function GetConfigSetup(req: Request, res: Response) {
     }),
   );
 
-  let envData: any = await mongoMiddleware.GetEnvSettings();
+  let envData: any = await sqlV2Service.GetEnvSettings(); //await mongoMiddleware.GetEnvSettings();
   envData.lastUpdatedBy = envData.AuditInfo ? envData.AuditInfo.UpdatedBy : "-";
   envData.lastUpdatedOn = envData.AuditInfo
     ? moment(envData.AuditInfo.UpdatedOn).format("DD-MM-YYYY HH:mm:ss")
@@ -116,18 +116,16 @@ export async function UpdateEnvInfo(req: Request, res: Response) {
     cronInstanceLimit,
   } = req.body;
   const payload = {
-    $set: {
-      delay: globalDelay,
-      source: sourceType,
-      override_all: overrideValue,
-      override_execution_priority_details: execPriorityObj,
-      expressCronBatchSize: cronBatchSize,
-      expressCronOverlapThreshold: cronOverlapThreshold,
-      expressCronInstanceLimit: cronInstanceLimit,
-      AuditInfo: await SessionHelper.GetAuditInfo(req),
-    },
+    delay: globalDelay,
+    source: sourceType,
+    override_all: overrideValue,
+    override_execution_priority_details: execPriorityObj,
+    expressCronBatchSize: cronBatchSize,
+    expressCronOverlapThreshold: cronOverlapThreshold,
+    expressCronInstanceLimit: cronInstanceLimit,
+    AuditInfo: await SessionHelper.GetAuditInfo(req),
   };
-  await mongoMiddleware.UpsertEnvSettings(payload);
+  await sqlV2Service.UpsertEnvSettings(payload); //await mongoMiddleware.UpsertEnvSettings(payload);
   return res.json({
     status: true,
     message: "Global settings updated successfully.",

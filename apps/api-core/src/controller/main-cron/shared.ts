@@ -12,6 +12,7 @@ import { applicationConfig } from "../../utility/config";
 import { GetCacheClientOptions } from "../../client/cacheClient";
 import CacheClient from "../../client/cacheClient";
 import { CacheKey } from "@repricer-monorepo/shared";
+import * as sqlV2Service from "../../utility/mysql/mysql-v2";
 
 var mainCrons: Record<string, ScheduledTask> = {};
 var error422Cron: ScheduledTask | null = null;
@@ -77,7 +78,7 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
     const differenceInTime =
       sysTime.getTime() - new Date(result.initTime).getTime();
     const differenceInMinutes = Math.round(differenceInTime / 60000);
-    const envVariables = await dbHelper.GetGlobalConfig();
+    const envVariables = await sqlV2Service.GetGlobalConfig();
     const thresholdValue =
       envVariables != null && envVariables.expressCronOverlapThreshold != null
         ? envVariables.expressCronOverlapThreshold
@@ -107,7 +108,7 @@ export async function runCoreCronLogicFor422() {
       `Cron-422 running on ${new Date().toISOString()} with Eligible Products Count : ${eligibleProductList.length} with KeyGen : ${keyGen}`,
     );
     if (eligibleProductList.length > 0) {
-      const envVariables = await dbHelper.GetGlobalConfig();
+      const envVariables = await sqlV2Service.GetGlobalConfig();
       let chunkedList = _.chunk(
         eligibleProductList,
         parseInt(envVariables.expressCronBatchSize!),
@@ -155,7 +156,7 @@ export async function ParallelExecute(
 }
 
 async function get422EligibleProducts() {
-  const globalConfig = await dbHelper.GetGlobalConfig();
+  const globalConfig = await sqlV2Service.GetGlobalConfig();
   if (globalConfig && globalConfig.source == "FEED") {
     return [];
   }
@@ -312,7 +313,7 @@ export function IsChunkNeeded(list: any, envVariables: any, type: any) {
 
 export async function getCronEligibleProductsV3(cronId: any) {
   let eligibleProductList: any[] = [];
-  const globalConfig = await dbHelper.GetGlobalConfig();
+  const globalConfig = await sqlV2Service.GetGlobalConfig();
   if (globalConfig && globalConfig.source == "FEED") {
     return eligibleProductList;
   }
