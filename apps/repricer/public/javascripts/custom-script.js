@@ -176,6 +176,14 @@ function editAll() {
   $('[name^="proxy_provider_"]').removeAttr("disabled");
   $('[name^="proxy_provider_422_alternate_"]').removeAttr("disabled");
 
+  // Enable opportunity cron fields
+  $('[name="cron_name_opportunity"]').removeAttr("readonly");
+  $('[name="proxy_provider_opportunity"]').removeAttr("disabled");
+  $('[name="offset_opportunity"]').removeAttr("readonly");
+  $('[name="cron_time_opportunity"]').removeAttr("readonly");
+  $('[name="cron_time_unit_opportunity"]').removeAttr("disabled");
+  $('[name^="proxy_provider_opportunity_alternate_"]').removeAttr("disabled");
+
   var fixedIpControls = $("input[name*='fixed_ip_']");
   for (var i = 0; i < fixedIpControls.length; i++) {
     fixedIpControls[i].removeAttribute("readonly");

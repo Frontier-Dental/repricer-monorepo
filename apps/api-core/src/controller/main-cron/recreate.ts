@@ -6,6 +6,7 @@ import {
   getMainCronNameFromJobName,
   setCronAndStart,
   setError422CronAndStart,
+  setOpportunityCronAndStart,
   stopCron,
 } from "./shared";
 
@@ -18,6 +19,10 @@ export async function recreateCronHandler(
   for (const jobName of jobNames) {
     if (jobName === "_Error422Cron") {
       setError422CronAndStart(cronDetails);
+      continue;
+    }
+    if (jobName === "Opportunity-Cron") {
+      setOpportunityCronAndStart(cronDetails);
       continue;
     }
     const cronName = getMainCronNameFromJobName(jobName);

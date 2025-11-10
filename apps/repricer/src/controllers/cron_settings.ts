@@ -10,6 +10,9 @@ import moment from "moment";
 import excelJs from "exceljs";
 import { v4 as uuidv4 } from "uuid";
 
+const ALTERNATE_PROXY_PROVIDER_422_INDEX = 999;
+const ALTERNATE_PROXY_PROVIDER_OPPORTUNITY_INDEX = 998;
+
 async function buildCustomCronSettings(
   cronDetails: any,
   configItems: any[],
@@ -287,6 +290,71 @@ export async function getCronSettings(req: Request, res: Response) {
   });
 }
 
+async function handleOpportunityCronUpdate(
+  cronSettingsResponseFull: any[],
+  payload: any,
+  listOfUpdates: any[],
+  listOfUpdatedCronKey: any[],
+) {
+  const cronOpportunity = cronSettingsResponseFull.find(
+    (x: any) =>
+      x.IsHidden == true &&
+      (x.CronId === "Cron-Opportunity" || x.CronId === "Opportunity-Cron"),
+  );
+
+  if (!cronOpportunity) {
+    return;
+  }
+
+  const alternateProxyProviderDetailsForOpportunity =
+    await MapperHelper.MapAlternateProxyProviderDetails(
+      ALTERNATE_PROXY_PROVIDER_OPPORTUNITY_INDEX,
+      payload,
+    );
+
+  if (
+    cronOpportunity?.ProxyProvider != payload.proxy_provider_opportunity ||
+    cronOpportunity?.FixedIp !=
+      payload[`fixed_ip_${cronOpportunity?.CronId}`] ||
+    cronOpportunity?.IpType != payload[`ip_type_${cronOpportunity?.CronId}`] ||
+    cronOpportunity?.CronTime != payload.cron_time_opportunity ||
+    cronOpportunity?.CronTimeUnit != payload.cron_time_unit_opportunity ||
+    cronOpportunity?.Offset != payload.offset_opportunity ||
+    !_.isEqual(
+      alternateProxyProviderDetailsForOpportunity,
+      cronOpportunity?.AlternateProxyProvider,
+    )
+  ) {
+    const cronSettingOpportunityPayload = new cronSettings(
+      cronOpportunity?.CronId,
+      cronOpportunity?.CronName,
+      payload.cron_time_unit_opportunity,
+      payload.cron_time_opportunity,
+      null as any,
+      cronOpportunity?.CronStatus,
+      payload.offset_opportunity,
+      payload.proxy_provider_opportunity,
+      payload[`ip_type_${cronOpportunity?.CronId}`],
+      payload[`fixed_ip_${cronOpportunity?.CronId}`],
+      alternateProxyProviderDetailsForOpportunity,
+    );
+    listOfUpdates.push(cronSettingOpportunityPayload);
+
+    if (
+      cronOpportunity?.CronTime != payload.cron_time_opportunity ||
+      cronOpportunity?.Offset != payload.offset_opportunity ||
+      cronOpportunity?.CronTimeUnit != payload.cron_time_unit_opportunity
+    ) {
+      const cronMappingEntry = cronMapping.find(
+        (c) => c.cronId == cronSettingOpportunityPayload.CronId,
+      );
+      if (cronMappingEntry) {
+        listOfUpdatedCronKey.push(cronMappingEntry.cronVariable);
+      }
+    }
+  }
+}
+
 export async function updateCronSettings(req: Request, res: Response) {
   const payload = req.body;
   const cronSettingsResponseFull = await mongoMiddleware.GetCronSettingsList();
@@ -380,7 +448,10 @@ export async function updateCronSettings(req: Request, res: Response) {
   // Get 422 Cron Updates
   const cron422 = cronSettingsResponseFull.find((x: any) => x.IsHidden == true);
   const alternateProxyProviderDetailsFor422 =
-    await MapperHelper.MapAlternateProxyProviderDetails(999, payload); //999 in 1st param means it is for 422
+    await MapperHelper.MapAlternateProxyProviderDetails(
+      ALTERNATE_PROXY_PROVIDER_422_INDEX,
+      payload,
+    );
   if (
     cron422?.ProxyProvider != payload.proxy_provider_422 ||
     cron422?.FixedIp != payload[`fixed_ip_${cron422?.CronId}`] ||
@@ -418,6 +489,15 @@ export async function updateCronSettings(req: Request, res: Response) {
       );
     }
   }
+
+  // Handle Opportunity Cron Updates
+  await handleOpportunityCronUpdate(
+    cronSettingsResponseFull,
+    payload,
+    listOfUpdates,
+    listOfUpdatedCronKey,
+  );
+
   if (listOfUpdates.length > 0) {
     await mongoMiddleware.UpdateCronSettingsList(listOfUpdates, req);
     if (listOfUpdatedCronKey.length > 0) {

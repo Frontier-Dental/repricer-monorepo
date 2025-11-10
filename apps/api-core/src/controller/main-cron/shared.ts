@@ -15,6 +15,7 @@ import { CacheKey } from "@repricer-monorepo/shared";
 
 var mainCrons: Record<string, ScheduledTask> = {};
 var error422Cron: ScheduledTask | null = null;
+var opportunityCron: ScheduledTask | null = null;
 
 export function stopAllMainCrons() {
   Object.values(mainCrons).forEach((cron) => {
@@ -62,6 +63,49 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
   );
   if (_422CronSetting.CronStatus) {
     console.info("Started 422 cron.");
+  }
+}
+
+export function setOpportunityCronAndStart(cronSettings: CronSettingsDetail[]) {
+  const opportunityCronSetting = cronSettings.find(
+    (x) =>
+      x.CronName == applicationConfig.CRON_NAME_OPPORTUNITY ||
+      x.CronId === "Cron-Opportunity" ||
+      x.CronId === "Opportunity-Cron",
+  );
+  if (!opportunityCronSetting) {
+    throw new Error("Opportunity Cron setting not found");
+  }
+  const cronString = responseUtility.GetCronGeneric(
+    opportunityCronSetting.CronTimeUnit,
+    opportunityCronSetting.CronTime,
+    parseInt(opportunityCronSetting.Offset),
+  );
+  console.info(
+    `Setting up opportunity cron with schedule: ${cronString} at ${new Date().toISOString()}`,
+  );
+  if (opportunityCron) {
+    opportunityCron.stop();
+  }
+  opportunityCron = null;
+  opportunityCron = schedule(
+    cronString,
+    async () => {
+      try {
+        await runCoreCronLogicForOpportunity();
+      } catch (error) {
+        console.error(`Error running opportunity cron:`, error);
+      }
+    },
+    {
+      scheduled: opportunityCronSetting.CronStatus,
+      runOnInit:
+        opportunityCronSetting.CronStatus &&
+        applicationConfig.RUN_CRONS_ON_INIT,
+    },
+  );
+  if (opportunityCronSetting.CronStatus) {
+    console.info("Started opportunity cron.");
   }
 }
 
@@ -136,6 +180,20 @@ export async function runCoreCronLogicFor422() {
     );
   }
   await cacheClient.disconnect();
+}
+
+export async function runCoreCronLogicForOpportunity() {
+  console.info("========================================");
+  console.info(`OPPORTUNITY CRON STARTED at ${new Date().toISOString()}`);
+  console.info("========================================");
+
+  // TODO: Implement opportunity cron logic
+  // This should fetch opportunity products and process them
+  console.warn("Opportunity cron logic not yet implemented");
+
+  console.info("========================================");
+  console.info(`OPPORTUNITY CRON COMPLETED at ${new Date().toISOString()}`);
+  console.info("========================================");
 }
 
 export async function ParallelExecute(
@@ -379,6 +437,26 @@ export function stop422Cron() {
     error422Cron.stop();
   } else {
     throw new Error("Error422Cron not found");
+  }
+}
+
+export function startOpportunityCron() {
+  if (opportunityCron) {
+    opportunityCron.start();
+    console.info("Started opportunity cron.");
+  } else {
+    console.warn(
+      "OpportunityCron not initialized, cannot start. Use setOpportunityCronAndStart() to initialize first.",
+    );
+  }
+}
+
+export function stopOpportunityCron() {
+  if (opportunityCron) {
+    opportunityCron.stop();
+    console.info("Stopped opportunity cron.");
+  } else {
+    console.warn("OpportunityCron not initialized, nothing to stop.");
   }
 }
 

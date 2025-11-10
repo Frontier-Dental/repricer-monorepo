@@ -12,6 +12,7 @@ import { filterCronRouter } from "./controller/filter-cron";
 import { startFilterCronLogic } from "./controller/filter-cron/start";
 import { mainCronController } from "./controller/main-cron";
 import { start422Logic } from "./controller/main-cron/start-422";
+import { startOpportunityLogic } from "./controller/main-cron/start-opportunity";
 import { startAllCronLogic } from "./controller/main-cron/start-all";
 import { manualRepriceController } from "./controller/manual-repricer";
 import { masterDataController } from "./controller/master-data";
@@ -95,6 +96,7 @@ nodeApp.listen(port, async () => {
     console.info("Scheduling enabled crons on startup");
     await startAllCronLogic();
     await start422Logic();
+    await startOpportunityLogic();
     await startFilterCronLogic();
     await startSlowCronLogic();
     await startProxySwitchCronLogic();
