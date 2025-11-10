@@ -183,7 +183,11 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
     ) {
       payload.ignorePhantomQBreak = true;
     }
-    if (!payload.ownVendorThreshold) {
+    if (
+      payload.ownVendorThreshold === undefined ||
+      payload.ownVendorThreshold === null ||
+      payload.ownVendorThreshold === ""
+    ) {
       payload.ownVendorThreshold = 1;
     }
     if (
@@ -707,7 +711,11 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
     ) {
       payload.ignorePhantomQBreak = true;
     }
-    if (!payload.ownVendorThreshold) {
+    if (
+      payload.ownVendorThreshold === undefined ||
+      payload.ownVendorThreshold === null ||
+      payload.ownVendorThreshold === ""
+    ) {
       payload.ownVendorThreshold = 1;
     }
     if (
