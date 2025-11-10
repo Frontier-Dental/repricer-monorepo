@@ -11,6 +11,7 @@ const envSchema = z.object({
   CRON_STATUS_COLLECTION_NAME: z.string().default("cronStatusLogs"),
   CRON_SETTINGS_COLLECTION_NAME: z.string().default("cronSettings"),
   ERROR_ITEM_COLLECTION: z.string().default("errorItems"),
+  OPPORTUNITY_ITEM_COLLECTION: z.string().default("opportunityItems"),
   MANAGED_MONGO_PRODUCT_COLLECTION: z.string().default("products"),
   MANAGED_MONGO_COLLECTION: z.string().default("results"),
   IP_CONFIG: z.string().default("ipConfig"),

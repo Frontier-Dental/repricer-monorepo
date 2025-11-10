@@ -4,6 +4,7 @@ import * as responseUtility from "../../utility/response-utility";
 import * as keyGenHelper from "../../utility/job-id-helper";
 import * as dbHelper from "../../utility/mongo/db-helper";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
+import * as repriceBaseOpportunity from "../../utility/reprice-algo/reprice-base-opportunity";
 import * as mySqlHelper from "../../utility/mysql/mysql-helper";
 import * as feedHelper from "../../utility/feed-helper";
 import * as _ from "lodash";
@@ -183,17 +184,70 @@ export async function runCoreCronLogicFor422() {
 }
 
 export async function runCoreCronLogicForOpportunity() {
-  console.info("========================================");
-  console.info(`OPPORTUNITY CRON STARTED at ${new Date().toISOString()}`);
-  console.info("========================================");
+  const cacheKey = CacheKey.OPPORTUNITY_RUNNING_CACHE;
+  const isCacheValid = await IsCacheValid(cacheKey, new Date());
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  if (!isCacheValid) {
+    console.info(`Getting List of Eligible Products for Opportunity Cron`);
+    const runningCacheObj = { cronRunning: true, initTime: new Date() };
+    await cacheClient.set(cacheKey, runningCacheObj);
+    const eligibleProductList = await getOpportunityEligibleProducts();
+    const keyGen = keyGenHelper.Generate();
+    console.info(
+      `Opportunity Cron running on ${new Date().toISOString()} with Eligible Products Count : ${eligibleProductList.length} with KeyGen : ${keyGen}`,
+    );
+    if (eligibleProductList.length > 0) {
+      const envVariables = await dbHelper.GetGlobalConfig();
+      let chunkedList = _.chunk(
+        eligibleProductList,
+        parseInt(envVariables.expressCronBatchSize!),
+      );
+      let chunkedBatch = _.chunk(
+        chunkedList,
+        parseInt(envVariables.expressCronInstanceLimit!),
+      );
+      let batchCount = 1;
+      for (let itemList of chunkedBatch) {
+        if (itemList.length > 0) {
+          await ParallelExecuteOpportunity(
+            itemList,
+            new Date(),
+            `${keyGen}-${batchCount}`,
+          );
+          batchCount++;
+        }
+      }
+    }
+    await cacheClient.delete(cacheKey);
+  } else {
+    const runningCronDetails = await cacheClient.get<any>(cacheKey);
+    console.warn(
+      `Skipped Opportunity Cron as another opportunity cron is already running. CURR_TIME : ${new Date().toISOString()} || RUNNING_CRON_TIME : ${runningCronDetails.initTime}`,
+    );
+  }
+  await cacheClient.disconnect();
+}
 
-  // TODO: Implement opportunity cron logic
-  // This should fetch opportunity products and process them
-  console.warn("Opportunity cron logic not yet implemented");
-
-  console.info("========================================");
-  console.info(`OPPORTUNITY CRON COMPLETED at ${new Date().toISOString()}`);
-  console.info("========================================");
+export async function ParallelExecuteOpportunity(
+  itemList: any,
+  initTime: any,
+  keyGen: any,
+) {
+  if (itemList && itemList.length > 0) {
+    const tasks = itemList.map((item: any, index: any) =>
+      repriceBaseOpportunity.RepriceOpportunityItemV2(
+        item,
+        initTime,
+        `${keyGen}-${index}`,
+      ),
+    );
+    await Promise.all(tasks);
+    console.info(
+      `PARALLEL EXECUTION OPPORTUNITY : ${keyGen} All tasks completed at ${new Date().toISOString()}`,
+    );
+  }
 }
 
 export async function ParallelExecute(
@@ -246,6 +300,43 @@ async function get422EligibleProducts() {
     }
   }
   resultantOutput = feedHelper.SetSkipReprice(resultantOutput, false);
+  return resultantOutput;
+}
+
+async function getOpportunityEligibleProducts() {
+  const globalConfig = await dbHelper.GetGlobalConfig();
+  if (globalConfig && globalConfig.source == "FEED") {
+    return [];
+  }
+  let cronSettingDetailsResponse = await dbHelper.GetCronSettingsList();
+  let slowCronDetails = await dbHelper.GetSlowCronDetails();
+  cronSettingDetailsResponse = _.concat(
+    cronSettingDetailsResponse,
+    slowCronDetails,
+  );
+  const mongoResponse = await dbHelper.GetContextOpportunityItems(true);
+  let resultantOutput = [];
+  if (mongoResponse && mongoResponse.length > 0) {
+    for (const oppItem of mongoResponse) {
+      let productDetails = await mySqlHelper.GetItemListById(oppItem.mpId);
+      if (productDetails) {
+        const contextCronId = await getContextCronId(
+          productDetails,
+          oppItem.vendorName,
+        );
+        if (contextCronId) {
+          (productDetails as any).cronSettingsResponse =
+            cronSettingDetailsResponse.find(
+              (x: any) => x.CronId == contextCronId,
+            );
+          (productDetails as any).insertReason = oppItem.insertReason;
+          (productDetails as any).contextVendor = oppItem.vendorName;
+          resultantOutput.push(productDetails);
+        }
+      }
+    }
+  }
+  resultantOutput = feedHelper.SetSkipReprice(resultantOutput, true);
   return resultantOutput;
 }
 
