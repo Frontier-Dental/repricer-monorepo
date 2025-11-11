@@ -30,17 +30,26 @@ export async function GetGlobalConfig() {
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
   );
-  const envSettingsResult = await cacheClient.get(CacheKey.ENV_SETTINGS);
-  if (envSettingsResult != null) {
-    await cacheClient.disconnect();
-    return envSettingsResult;
+  try {
+    const envSettingsResult = await cacheClient.get(CacheKey.ENV_SETTINGS);
+    if (envSettingsResult != null) {
+      await cacheClient.disconnect();
+      return envSettingsResult;
+    }
+  } catch (err) {
+    console.error(`Error in GetGlobalConfig while getting from cache:`, err);
   }
   let envSettings = null;
-  const db = getKnexInstance();
-  const result = await db.raw(`call GetEnvSettings()`);
-  if (result && result[0] && result[0].length > 0) {
-    envSettings = await SqlMapper.ToEnvSettingsModel(result[0][0]);
-    await cacheClient.set(CacheKey.ENV_SETTINGS, envSettings); // Cache for 1 hour
+  try {
+    const db = getKnexInstance();
+    const result = await db.raw(`call GetEnvSettings()`);
+    if (result && result[0] && result[0].length > 0) {
+      envSettings = await SqlMapper.ToEnvSettingsModel(result[0][0]);
+      await cacheClient.set(CacheKey.ENV_SETTINGS, envSettings); // Cache for 1 hour
+    }
+    await cacheClient.disconnect();
+  } catch (err) {
+    console.error(`Error in GetGlobalConfig while getting from DB:`, err);
   }
   return envSettings;
 }
