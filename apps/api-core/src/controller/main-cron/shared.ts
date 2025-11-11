@@ -66,13 +66,13 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
   }
 }
 
-async function IsCacheValid(cacheKey: any, sysTime: any) {
+async function IsCacheValid(
+  cacheClient: CacheClient,
+  cacheKey: any,
+  sysTime: any,
+) {
   try {
-    const cacheClient = CacheClient.getInstance(
-      GetCacheClientOptions(applicationConfig),
-    );
     const result = await cacheClient.get<any>(cacheKey);
-    await cacheClient.disconnect();
     if (result == null) {
       return false;
     } else {
@@ -99,10 +99,10 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
 
 export async function runCoreCronLogicFor422() {
   const cacheKey = CacheKey._422_RUNNING_CACHE;
-  const isCacheValid = await IsCacheValid(cacheKey, new Date());
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
   );
+  const isCacheValid = await IsCacheValid(cacheClient, cacheKey, new Date());
   if (!isCacheValid) {
     console.info(`Getting List of Eligible Products for Cron-422`);
     const runningCacheObj = { cronRunning: true, initTime: new Date() };
