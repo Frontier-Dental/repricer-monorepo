@@ -1,12 +1,11 @@
 import _ from "lodash";
-import * as dbHelper from "./mongo/db-helper";
 import * as responseUtility from "./response-utility";
 import { GlobalConfig } from "../types/global-config";
 import { ErrorItem } from "../types/error-item";
 import { ProductDetailsListItem } from "./mysql/mySql-mapper";
 import { applicationConfig } from "./config";
 import { VendorName } from "@repricer-monorepo/shared";
-
+import * as sqlV2Service from "../utility/mysql/mysql-v2";
 export async function GetProductItemListQuery(): Promise<{
   idRef: string;
   active: boolean;
@@ -29,7 +28,7 @@ export async function GetPrioritySequence(
   const _firstDent = { name: VendorName.FIRSTDENT, value: "firstDentDetails" };
   const _triad = { name: VendorName.TRIAD, value: "triadDetails" };
   let prioritySequence = [];
-  const globalConfig = await dbHelper.GetGlobalConfig();
+  const globalConfig = await sqlV2Service.GetGlobalConfig();
   const isOverrideEnabled = IsOverrideExecutionPriorityEnabled(globalConfig!);
   let productDetails = _.cloneDeep(productInfo);
 
