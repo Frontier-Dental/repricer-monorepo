@@ -67,28 +67,33 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
 }
 
 async function IsCacheValid(cacheKey: any, sysTime: any) {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const result = await cacheClient.get<any>(cacheKey);
-  await cacheClient.disconnect();
-  if (result == null) {
-    return false;
-  } else {
-    const differenceInTime =
-      sysTime.getTime() - new Date(result.initTime).getTime();
-    const differenceInMinutes = Math.round(differenceInTime / 60000);
-    const envVariables = await sqlV2Service.GetGlobalConfig();
-    const thresholdValue =
-      envVariables != null && envVariables.expressCronOverlapThreshold != null
-        ? envVariables.expressCronOverlapThreshold
-        : applicationConfig._422_CACHE_VALID_PERIOD;
-    console.log(
-      `Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
+  try {
+    const cacheClient = CacheClient.getInstance(
+      GetCacheClientOptions(applicationConfig),
     );
-    return !(typeof thresholdValue === "string"
-      ? parseFloat(thresholdValue!)
-      : thresholdValue < differenceInMinutes);
+    const result = await cacheClient.get<any>(cacheKey);
+    await cacheClient.disconnect();
+    if (result == null) {
+      return false;
+    } else {
+      const differenceInTime =
+        sysTime.getTime() - new Date(result.initTime).getTime();
+      const differenceInMinutes = Math.round(differenceInTime / 60000);
+      const envVariables = await sqlV2Service.GetGlobalConfig();
+      const thresholdValue =
+        envVariables != null && envVariables.expressCronOverlapThreshold != null
+          ? envVariables.expressCronOverlapThreshold
+          : applicationConfig._422_CACHE_VALID_PERIOD;
+      console.log(
+        `Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
+      );
+      return !(typeof thresholdValue === "string"
+        ? parseFloat(thresholdValue!)
+        : thresholdValue < differenceInMinutes);
+    }
+  } catch (error) {
+    console.error(`Error in IsCacheValid for 422 Cron:`, error);
+    return false;
   }
 }
 
