@@ -102,8 +102,12 @@ class CacheClient {
   }
 
   public async disconnect(): Promise<void> {
-    console.debug("Disconnected Redis client");
-    await this.client.quit();
+    if (this.client.isOpen === true) {
+      console.debug("Disconnected Redis client");
+      await this.client.quit();
+    } else {
+      console.debug("Redis client already disconnected");
+    }
   }
 }
 

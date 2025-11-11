@@ -66,12 +66,11 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
   }
 }
 
-async function IsCacheValid(
-  cacheClient: CacheClient,
-  cacheKey: any,
-  sysTime: any,
-) {
+async function IsCacheValid(cacheKey: any, sysTime: any) {
   try {
+    const cacheClient = CacheClient.getInstance(
+      GetCacheClientOptions(applicationConfig),
+    );
     const result = await cacheClient.get<any>(cacheKey);
     if (result == null) {
       return false;
@@ -87,6 +86,7 @@ async function IsCacheValid(
       console.log(
         `Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
       );
+      await cacheClient.disconnect();
       return !(typeof thresholdValue === "string"
         ? parseFloat(thresholdValue!)
         : thresholdValue < differenceInMinutes);
@@ -99,13 +99,13 @@ async function IsCacheValid(
 
 export async function runCoreCronLogicFor422() {
   const cacheKey = CacheKey._422_RUNNING_CACHE;
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const isCacheValid = await IsCacheValid(cacheClient, cacheKey, new Date());
+  const isCacheValid = await IsCacheValid(cacheKey, new Date());
   if (!isCacheValid) {
     console.info(`Getting List of Eligible Products for Cron-422`);
     const runningCacheObj = { cronRunning: true, initTime: new Date() };
+    let cacheClient = CacheClient.getInstance(
+      GetCacheClientOptions(applicationConfig),
+    );
     await cacheClient.set(cacheKey, runningCacheObj);
     const eligibleProductList = await get422EligibleProducts();
     const keyGen = keyGenHelper.Generate();
@@ -134,14 +134,21 @@ export async function runCoreCronLogicFor422() {
         }
       }
     }
+    cacheClient = CacheClient.getInstance(
+      GetCacheClientOptions(applicationConfig),
+    );
     await cacheClient.delete(cacheKey);
+    await cacheClient.disconnect();
   } else {
+    const cacheClient = CacheClient.getInstance(
+      GetCacheClientOptions(applicationConfig),
+    );
     const runningCronDetails = await cacheClient.get<any>(cacheKey);
     console.warn(
       `Skipped Cron-422 as another 422 cron is already running. CURR_TIME : ${new Date().toISOString()} || RUNNING_CRON_TIME : ${runningCronDetails.initTime}`,
     );
+    await cacheClient.disconnect();
   }
-  await cacheClient.disconnect();
 }
 
 export async function ParallelExecute(
