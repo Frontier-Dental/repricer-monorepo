@@ -5,6 +5,7 @@ import { Net32PriceBreak, Net32Product } from "../../../types/net32";
 import { FrontierProduct } from "../../../types/frontier";
 import { RepriceData, RepriceModel } from "../../../model/reprice-model";
 import { applicationConfig } from "../../config";
+import * as sqlV2Service from "../../../utility/mysql/mysql-v2";
 
 export function isPriceUpdateRequired(
   repriceResult: RepriceModel,
@@ -90,7 +91,7 @@ export async function isOverrideEnabledForProduct(
   override_bulk_update: boolean,
 ): Promise<boolean> {
   if (override_bulk_update) {
-    const globalConfig = await dbHelper.GetGlobalConfig();
+    const globalConfig = await sqlV2Service.GetGlobalConfig();
     if (globalConfig && globalConfig.override_all) {
       return JSON.parse(globalConfig.override_all);
     }

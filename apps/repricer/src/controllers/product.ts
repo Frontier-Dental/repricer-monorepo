@@ -11,6 +11,7 @@ import Item from "../models/item";
 import { applicationConfig } from "../utility/config";
 import * as SessionHelper from "../utility/session-helper";
 import { ExcelExportService } from "../services/excel-export.service";
+import * as sqlV2Service from "../services/mysql-v2";
 
 export const getMasterItemController = async (req: Request, res: Response) => {
   let query: any = {};
@@ -464,7 +465,7 @@ export async function runManualCron(req: Request, res: Response) {
     for (const prod of selectedProducts) {
       const query = { mpid: prod };
       const itemDetails = await Item.find(query);
-      const source = await mongoMiddleware.GetEnvValueByKey("SOURCE");
+      const source = await sqlV2Service.GetEnvValueByKey("SOURCE"); //await mongoMiddleware.GetEnvValueByKey("SOURCE");
       const repriceResult = await httpMiddleware.runManualCron(
         prod,
         _.first(itemDetails),

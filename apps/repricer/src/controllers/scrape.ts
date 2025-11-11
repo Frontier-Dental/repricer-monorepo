@@ -10,10 +10,11 @@ import cronSettings from "../models/cron-settings";
 import cronMapping from "../../resources/cronMapping.json";
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
+import * as sqlV2Service from "../services/mysql-v2";
 
 export const GetScrapeCron = async (req: Request, res: Response) => {
   let scrapeCronDetails = await mongoMiddleware.GetScrapeCrons();
-  let configItems = await mongoMiddleware.GetConfigurations(true);
+  let configItems = await sqlV2Service.GetConfigurations(true);
   for (let item of scrapeCronDetails) {
     item.lastUpdatedBy = await SessionHelper.GetAuditValue(item, "U_NAME");
     item.lastUpdatedOn = await SessionHelper.GetAuditValue(item, "U_TIME");

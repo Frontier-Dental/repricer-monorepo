@@ -9,10 +9,11 @@ import cronMapping from "../../resources/cronMapping.json";
 import moment from "moment";
 import excelJs from "exceljs";
 import { v4 as uuidv4 } from "uuid";
+import * as sqlV2Service from "../services/mysql-v2";
 
 export async function getCronSettings(req: Request, res: Response) {
   const cronSettingsResult = await mongoMiddleware.GetCronSettingsList();
-  let configItems = await mongoMiddleware.GetConfigurations(true);
+  let configItems = await sqlV2Service.GetConfigurations(true);
   let cronSettingsResponse: any = _.filter(cronSettingsResult, (sett) => {
     return sett.IsHidden != true;
   });
