@@ -2,7 +2,12 @@ import * as SqlMapper from "../utility/mapper/mysql-mapper";
 import { applicationConfig } from "../utility/config";
 import { GetCacheClientOptions } from "../client/cacheClient";
 import CacheClient from "../client/cacheClient";
-import { CacheKey } from "@repricer-monorepo/shared";
+import {
+  CacheKey,
+  CronSettingsDto,
+  SecretKeyDto,
+  AlternateProxyProviderDto,
+} from "@repricer-monorepo/shared";
 import { getKnexInstance } from "./knex-wrapper";
 import { GetAuditInfo } from "../utility/session-helper";
 
@@ -73,6 +78,7 @@ export async function GetEnvSettings() {
     envSettings = await SqlMapper.ToEnvSettingsModel(result[0][0]);
     await cacheClient.set(CacheKey.ENV_SETTINGS, envSettings); // Cache for 1 hour
   }
+  await cacheClient.disconnect();
   return envSettings;
 }
 
@@ -178,4 +184,63 @@ export async function UpsertEnvSettings(payload: any) {
   await cacheClient.delete(CacheKey.ENV_SETTINGS);
   await cacheClient.disconnect();
   return mongoResult;
+}
+
+export async function InsertOrUpdateCronSettings(
+  cronSettingEntity: CronSettingsDto,
+  cronSettingSecretKeys: SecretKeyDto[],
+  alternateProxyProviders: AlternateProxyProviderDto[],
+) {
+  const db = getKnexInstance();
+  await db.transaction(async (trx) => {
+    console.debug(
+      `Upserting Cron Setting : ${cronSettingEntity.CronId} || Name : ${cronSettingEntity.CronName}`,
+    );
+    await trx<CronSettingsDto>("cron_settings")
+      .insert(cronSettingEntity)
+      .onConflict("CronId")
+      .merge();
+
+    for (const secretKey of cronSettingSecretKeys) {
+      console.debug(
+        `Upserting Secret Key for Cron : ${secretKey.CronId} || Vendor : ${secretKey.VendorName} || Value : ${secretKey.SecretKey}`,
+      );
+      await trx<SecretKeyDto>("secret_keys")
+        .insert(secretKey)
+        .onConflict(["CronId", "VendorName"])
+        .merge();
+    }
+
+    for (const alternateProvider of alternateProxyProviders) {
+      console.debug(
+        `Upserting Alternate Provider for Cron : ${cronSettingEntity.CronId} || Sequence : ${alternateProvider.Sequence} || Value : ${alternateProvider.ProxyProvider}`,
+      );
+      await trx<AlternateProxyProviderDto>("alternate_proxy_providers")
+        .insert(alternateProvider)
+        .onConflict(["CronId", "Sequence"])
+        .merge();
+    }
+  });
+}
+
+export async function GetCronSettingsList() {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const cronSettingsList = await cacheClient.get<any>(
+    CacheKey.CRON_SETTINGS_LIST,
+  );
+  if (cronSettingsList != null) {
+    await cacheClient.disconnect();
+    return cronSettingsList;
+  }
+  let cronSettingsDetails = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetRegularCronSettingsList()`);
+  if (result && result[0] && result[0].length > 0) {
+    cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
+    await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, cronSettingsDetails); // Cache for 1 hour
+  }
+  await cacheClient.disconnect();
+  return cronSettingsDetails;
 }

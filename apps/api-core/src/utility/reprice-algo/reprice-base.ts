@@ -19,6 +19,7 @@ import { repriceProduct, repriceProductToMax } from "./v1/algo-v1";
 import { AlgoExecutionMode, VendorName } from "@repricer-monorepo/shared";
 import { repriceProductV2Wrapper } from "./v2/wrapper";
 import * as filterMapper from "../filter-mapper";
+import { GetCronSettingsList } from "../../utility/mysql/mysql-v2";
 
 export async function Execute(
   jobId: string,
@@ -705,7 +706,7 @@ async function initCronStatus(_contextCronStatus: any) {
 }
 
 async function proceedWithExecution(cronId: string) {
-  let cronSettingDetails = await dbHelper.GetCronSettingsList();
+  let cronSettingDetails = await GetCronSettingsList();
   const slowCronDetails = await dbHelper.GetSlowCronDetails();
   cronSettingDetails = _.concat(cronSettingDetails, slowCronDetails);
   if (cronSettingDetails) {

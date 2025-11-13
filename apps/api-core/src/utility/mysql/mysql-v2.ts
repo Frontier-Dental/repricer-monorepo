@@ -58,3 +58,25 @@ export async function GetDelay() {
   const globalConfigDetails = await GetGlobalConfig();
   return globalConfigDetails!.delay || 0;
 }
+
+export async function GetCronSettingsList() {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const cronSettingsList = await cacheClient.get<any>(
+    CacheKey.CRON_SETTINGS_LIST,
+  );
+  if (cronSettingsList != null) {
+    await cacheClient.disconnect();
+    return cronSettingsList;
+  }
+  let cronSettingsDetails = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetRegularCronSettingsList()`);
+  if (result && result[0] && result[0].length > 0) {
+    cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
+    await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, cronSettingsDetails); // Cache for 1 hour
+  }
+  await cacheClient.disconnect();
+  return cronSettingsDetails;
+}

@@ -8,6 +8,7 @@ import * as httpMiddleware from "../utility/http-wrappers";
 import * as mongoMiddleware from "../services/mongo";
 import * as mySqlMiddleware from "../services/mysql";
 import { applicationConfig } from "../utility/config";
+import { GetCronSettingsList } from "../services/mysql-v2";
 
 export async function ResetSlowCronUpdate(req: Request, res: Response) {
   const query = {
@@ -52,7 +53,7 @@ export async function ResetSlowCronUpdate(req: Request, res: Response) {
 export async function RefillParentCronDetails(req: Request, res: Response) {
   const payload = _.map(req.body, "mpId");
   let results: any[] = [];
-  const cronSettingsResponse = await mongoMiddleware.GetCronSettingsList();
+  const cronSettingsResponse = await GetCronSettingsList();
   if (payload && payload.length > 0) {
     for (const mpId of payload) {
       let product = _.first(await mongoMiddleware.FindProductById(mpId)) as any;
@@ -131,7 +132,7 @@ export async function ScrapeProduct(req: Request, res: Response) {
 export async function MapVendorToRoot(req: Request, res: Response) {
   const mpIdList = req.body;
   if (mpIdList && mpIdList.length > 0) {
-    const regCronData = await mongoMiddleware.GetCronSettingsList();
+    const regCronData = await GetCronSettingsList();
     for (const $ of mpIdList) {
       $.CronId = regCronData.find(
         (x: any) => x.CronName == $.CronName.trim(),

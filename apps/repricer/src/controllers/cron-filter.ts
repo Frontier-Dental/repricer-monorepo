@@ -8,7 +8,7 @@ import cronMapping from "../../resources/cronMapping.json";
 import * as SessionHelper from "../utility/session-helper";
 import * as MapperHelper from "../middleware/mapper-helper";
 import { Request, Response } from "express";
-import * as sqlV2Service from "../services/mysql-v2";
+import { GetConfigurations, GetCronSettingsList } from "../services/mysql-v2";
 
 export async function GetFilterCron(req: Request, res: Response) {
   let filterCronDetails = await mongoMiddleware.GetFilteredCrons();
@@ -24,7 +24,7 @@ export async function GetFilterCron(req: Request, res: Response) {
     );
   }
   let slowCronDetails = await mongoMiddleware.GetSlowCronDetails();
-  let configItems = await sqlV2Service.GetConfigurations(true);
+  let configItems = await GetConfigurations(true);
   for (let item of slowCronDetails) {
     item.lastUpdatedBy = await SessionHelper.GetAuditValue(
       item as any,
@@ -285,7 +285,7 @@ export async function UpdateSlowCronExpression(req: Request, res: Response) {
 export async function ExportLogDetails(req: Request, res: Response) {
   const cronKey = req.params.key;
   let cronLogDetails = await mongoMiddleware.GetFilterCronLogByKey(cronKey);
-  const regularCronDetails = await mongoMiddleware.GetCronSettingsList();
+  const regularCronDetails = await GetCronSettingsList();
   const filterCronDetails = await mongoMiddleware.GetFilteredCrons();
   const contextCronName = filterCronDetails.find(
     (c: any) => c.cronId == cronLogDetails.contextCronId,

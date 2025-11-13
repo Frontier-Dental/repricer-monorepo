@@ -11,6 +11,7 @@ import { Client } from "basic-ftp";
 import path from "path";
 import fs from "fs";
 import * as mongoHelper from "../services/mongo";
+import { GetCronSettingsList } from "../services/mysql-v2";
 
 export const monitorSenseController = express.Router();
 var monitorCrons: Record<string, ScheduledTask> = {};
@@ -87,7 +88,7 @@ async function ValidateCronDetails() {
   const inProgressCronDetails = await mongoHelper.GetLatestCronStatus();
   const maxCount = applicationConfig.CRON_PROGRESS_MAX_COUNT;
   if (inProgressCronDetails && inProgressCronDetails.length > maxCount) {
-    const regularCronDetails = await mongoHelper.GetCronSettingsList();
+    const regularCronDetails = await GetCronSettingsList();
     const slowCronDetails = await mongoHelper.GetSlowCronDetails();
     const cronSettingsResponse = _.concat(regularCronDetails, slowCronDetails);
     inProgressCronDetails.forEach((cronDetail: any) => {

@@ -86,3 +86,93 @@ export enum CacheKey {
   ENV_SETTINGS = "ENV_SETTINGS",
   IP_CONFIG = "IP_CONFIG",
 }
+
+export class CronSettingsDto {
+  CronId: string;
+  CronName: string;
+  CronTimeUnit: "sec" | "min" | "hour" | "day";
+  CronTime: number;
+  Offset?: number;
+  FixedIp?: string | null;
+  IpType?: number | null;
+  ProxyProvider: number;
+  SwitchSequence?: number | null;
+  IsHidden: boolean;
+  CronType: string;
+  CronStatus: boolean;
+  UpdatedBy?: string | null;
+  CreatedTime?: Date;
+  UpdatedTime?: Date;
+
+  constructor(
+    CronId: string,
+    CronName: string,
+    CronTimeUnit: "sec" | "min" | "hour" | "day",
+    CronTime: number,
+    ProxyProvider: number,
+    IpType?: number | null,
+    Offset?: number,
+    FixedIp?: string | null,
+    SwitchSequence?: number | null,
+    IsHidden: boolean = false,
+    CronType: string = "DEFAULT",
+    CronStatus: boolean = true,
+    UpdatedBy?: string | null,
+    CreatedTime?: Date,
+    UpdatedTime?: Date,
+  ) {
+    this.CronId = CronId;
+    this.CronName = CronName;
+    this.CronTimeUnit = CronTimeUnit;
+    this.CronTime = CronTime;
+    this.Offset = Offset;
+    this.FixedIp = FixedIp;
+    this.IpType = IpType;
+    this.ProxyProvider = ProxyProvider;
+    this.SwitchSequence = SwitchSequence;
+    this.IsHidden = IsHidden;
+    this.CronType = CronType;
+    this.CronStatus = CronStatus;
+    this.UpdatedBy = UpdatedBy;
+    this.CreatedTime = CreatedTime;
+    this.UpdatedTime = UpdatedTime;
+  }
+}
+
+export class SecretKeyDto {
+  Id?: number; // Optional for inserts
+  CronId: string;
+  VendorName: string;
+  SecretKey: string;
+
+  constructor(
+    CronId: string,
+    VendorName: string,
+    SecretKey: string,
+    Id?: number,
+  ) {
+    this.Id = Id;
+    this.CronId = CronId;
+    this.VendorName = VendorName;
+    this.SecretKey = SecretKey;
+  }
+}
+
+export class AlternateProxyProviderDto {
+  Id?: number; // Optional for inserts
+  CronId: string;
+  Sequence: number;
+  ProxyProvider: number;
+
+  constructor(
+    CronId: string,
+    Sequence: number,
+    ProxyProvider: number,
+    Id?: number,
+  ) {
+    this.Id = Id;
+    this.CronId = CronId;
+    this.Sequence = Sequence;
+    this.ProxyProvider = ProxyProvider;
+  }
+}

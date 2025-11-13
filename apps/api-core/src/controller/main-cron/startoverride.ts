@@ -7,13 +7,14 @@ import * as dbHelper from "../../utility/mongo/db-helper";
 // import * as mongoHelper from "../../utility/mongo/mongo-helper";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import { startAllCronAsIs, stopAllMainCrons } from "./shared";
+import { GetCronSettingsList } from "../../utility/mysql/mysql-v2";
 
 export async function startOverrideHandler(
   req: Request,
   res: Response,
 ): Promise<any> {
   //Update All Cron to Stop
-  const cronDetails = await dbHelper.GetCronSettingsList();
+  const cronDetails = await GetCronSettingsList();
   const existingCronConfig = _.cloneDeep(cronDetails);
   if (cronDetails && cronDetails.length > 0) {
     for (const cron of cronDetails) {

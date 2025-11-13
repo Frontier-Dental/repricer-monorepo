@@ -9,11 +9,11 @@ import cronMapping from "../../resources/cronMapping.json";
 import moment from "moment";
 import excelJs from "exceljs";
 import { v4 as uuidv4 } from "uuid";
-import * as sqlV2Service from "../services/mysql-v2";
+import { GetConfigurations, GetCronSettingsList } from "../services/mysql-v2";
 
 export async function getCronSettings(req: Request, res: Response) {
-  const cronSettingsResult = await mongoMiddleware.GetCronSettingsList();
-  let configItems = await sqlV2Service.GetConfigurations(true);
+  const cronSettingsResult = await GetCronSettingsList();
+  let configItems = await GetConfigurations(true);
   let cronSettingsResponse: any = _.filter(cronSettingsResult, (sett) => {
     return sett.IsHidden != true;
   });
@@ -182,7 +182,7 @@ export async function getCronSettings(req: Request, res: Response) {
 
 export async function updateCronSettings(req: Request, res: Response) {
   const payload = req.body;
-  const cronSettingsResponseFull = await mongoMiddleware.GetCronSettingsList();
+  const cronSettingsResponseFull = await GetCronSettingsList();
   const cronSettingsResponse = _.filter(
     cronSettingsResponseFull,
     (x) => x.IsHidden != true,
@@ -360,7 +360,7 @@ export async function updateCronSettings(req: Request, res: Response) {
 }
 
 export async function addCronSettings(req: Request, res: Response) {
-  let cronSettingsResponse = await mongoMiddleware.GetCronSettingsList();
+  let cronSettingsResponse = await GetCronSettingsList();
   cronSettingsResponse.push(
     new cronSettings(
       uuidv4().toString().replace("-", ""),
@@ -384,7 +384,7 @@ export async function addCronSettings(req: Request, res: Response) {
 }
 
 export async function toggleCronStatus(req: Request, res: Response) {
-  let cronSettingsResponse = await mongoMiddleware.GetCronSettingsList();
+  let cronSettingsResponse = await GetCronSettingsList();
   let actionResponse = "";
   const payload = req.body;
   const { CronName } = req.body;

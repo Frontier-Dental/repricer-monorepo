@@ -15,6 +15,7 @@ import { Request, Response } from "express";
 import * as ftpMiddleware from "../services/ftp";
 import * as scrapeOnlyMiddleware from "../middleware/scrape-only";
 import { applicationConfig } from "../utility/config";
+import { GetCronSettingsList } from "../services/mysql-v2";
 
 let _contextLog: any = null;
 
@@ -84,7 +85,7 @@ export async function getCronLogs(req: Request, res: Response) {
 
   let group = "";
   let cronId = "";
-  let cronSettings = await mongoMiddleware.GetCronSettingsList();
+  let cronSettings = await GetCronSettingsList();
   const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
   cronSettings = _.concat(cronSettings, slowCronSettings);
   if (req.query.group) {
@@ -998,7 +999,7 @@ export async function getFilterCronLogsByLimit(req: Request, res: Response) {
 }
 
 async function getInProgressRegularSecondaryAndExpressCrons() {
-  let cronSettings = await mongoMiddleware.GetCronSettingsList();
+  let cronSettings = await GetCronSettingsList();
   const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
   cronSettings = _.concat(cronSettings, slowCronSettings);
   let cronStatus = await mongoMiddleware.GetLatestCronStatus();
@@ -1146,7 +1147,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   // If initial load, skip expensive data fetching and render empty page
   if (isInitialLoad) {
     // Only fetch minimal data needed for dropdowns
-    const cronSettingsBase = await mongoMiddleware.GetCronSettingsList();
+    const cronSettingsBase = await GetCronSettingsList();
     const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
     const scrapeOnlyCronSettings = await mongoMiddleware.GetScrapeCrons();
     // Combine all cron settings
@@ -1197,7 +1198,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   }
 
   // Normal search flow - fetch all data
-  const cronSettingsBase = await mongoMiddleware.GetCronSettingsList();
+  const cronSettingsBase = await GetCronSettingsList();
   const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
   const scrapeOnlyCronSettings = await mongoMiddleware.GetScrapeCrons();
   const cronStatus = await mongoMiddleware.GetLatestCronStatus();
@@ -1427,7 +1428,7 @@ export async function getCustomCronDetails(req: Request, res: Response) {
     (a: any, b: any) =>
       (new Date(a.time as any) as any) - (new Date(b.time as any) as any),
   );
-  let cronSettings = await mongoMiddleware.GetCronSettingsList();
+  let cronSettings = await GetCronSettingsList();
   const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
   cronSettings = _.concat(cronSettings, slowCronSettings);
   if (logsList && logsList.length > 0) {

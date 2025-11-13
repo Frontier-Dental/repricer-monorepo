@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import * as _codes from "http-status-codes";
-import * as dbHelper from "../../utility/mongo/db-helper";
 import { setError422CronAndStart } from "./shared";
 import { applicationConfig } from "../../utility/config";
+import { GetCronSettingsList } from "../../utility/mysql/mysql-v2";
 
 export async function start422Handler(
   req: Request,
@@ -16,6 +16,6 @@ export async function start422Handler(
 }
 
 export async function start422Logic() {
-  const cronSettings = await dbHelper.GetCronSettingsList();
+  const cronSettings = await GetCronSettingsList();
   setError422CronAndStart(cronSettings);
 }
