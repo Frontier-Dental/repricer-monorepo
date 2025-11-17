@@ -13,6 +13,7 @@ import ProductModel from "../models/product";
 import * as secretDetailsResx from "../../resources/SecretKeyMapping.json";
 import cronMapping from "../../resources/cronMapping.json";
 import * as configIpResx from "../../resources/serverIp.json";
+import * as sqlV2Service from "../services/mysql-v2";
 
 export async function getLogsById(req: Request, res: Response) {
   const idx = req.params.id;
@@ -113,7 +114,7 @@ export async function pingCheck(req: Request, res: Response) {
 
 export async function troubleshoot(req: Request, res: Response) {
   const cronSettingsResult = await mongoMiddleware.GetCronSettingsList();
-  const configItems = await mongoMiddleware.GetConfigurations();
+  const configItems = await sqlV2Service.GetConfigurations();
   const contextItem = configItems.find(
     (x: any) => x.proxyProvider == 1 && x.ipType == 0,
   );
