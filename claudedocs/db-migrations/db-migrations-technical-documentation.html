@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Migrations Technical Documentation - Repricer Monorepo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        header {
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #1e40af;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .meta {
+            color: #6b7280;
+            font-size: 0.95em;
+        }
+
+        h2 {
+            color: #1e40af;
+            font-size: 1.8em;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        h3 {
+            color: #374151;
+            font-size: 1.4em;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            color: #4b5563;
+            font-size: 1.1em;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .toc {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+
+        .toc h2 {
+            margin-top: 0;
+            font-size: 1.3em;
+            border: none;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin: 8px 0;
+        }
+
+        .toc a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #dc2626;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 15px 0;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+
+        th {
+            background: #2563eb;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .badge-primary {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .schema-diagram {
+            background: #f8fafc;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+
+        .migration-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .migration-card h4 {
+            margin-top: 0;
+            color: #1e40af;
+        }
+
+        footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #e5e7eb;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.9em;
+        }
+
+        .command {
+            background: #1e293b;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Database Migrations Technical Documentation</h1>
+            <div class="meta">
+                <strong>Project:</strong> Repricer Monorepo - Database Migrations<br>
+                <strong>Framework:</strong> Knex.js with TypeScript<br>
+                <strong>Database:</strong> MySQL 2<br>
+                <strong>Total LOC:</strong> 1,357 lines<br>
+                <strong>Generated:</strong> November 11, 2025
+            </div>
+        </header>
+
+        <div class="toc">
+            <h2>Table of Contents</h2>
+            <ul>
+                <li><a href="#overview">1. Project Overview</a></li>
+                <li><a href="#structure">2. Project Structure</a></li>
+                <li><a href="#configuration">3. Configuration</a></li>
+                <li><a href="#migrations">4. Database Migrations</a></li>
+                <li><a href="#scripts">5. Migration Scripts</a></li>
+                <li><a href="#seeds">6. Database Seeds</a></li>
+                <li><a href="#deployment">7. Deployment Process</a></li>
+                <li><a href="#patterns">8. Migration Patterns & Best Practices</a></li>
+                <li><a href="#dependencies">9. Dependencies & Tools</a></li>
+                <li><a href="#schema">10. Database Schema</a></li>
+            </ul>
+        </div>
+
+        <section id="overview">
+            <h2>1. Project Overview</h2>
+            <p>
+                The <code>apps/db-migrations</code> directory manages all database schema changes and data migrations
+                for the Repricer Monorepo application. It uses Knex.js, a SQL query builder for Node.js, to handle
+                MySQL database migrations in a version-controlled, reversible manner.
+            </p>
+
+            <div class="info-box">
+                <strong>Key Features:</strong>
+                <ul>
+                    <li>TypeScript-based migration system for type safety</li>
+                    <li>Environment-specific configurations (development/production)</li>
+                    <li>Automated migration scripts for legacy data transformation</li>
+                    <li>Seed data management for proxy configurations and vendor settings</li>
+                    <li>Comprehensive rollback support for all migrations</li>
+                </ul>
+            </div>
+
+            <h3>Purpose</h3>
+            <p>
+                This migration system supports a pricing algorithm platform (V2) that manages:
+            </p>
+            <ul>
+                <li>Algorithm settings and pricing strategies across multiple vendors</li>
+                <li>Price calculation results and execution tracking</li>
+                <li>Error logging and monitoring</li>
+                <li>User authentication and authorization</li>
+                <li>Proxy configuration for vendor-specific network access</li>
+                <li>Channel ID management for marketplace integrations</li>
+                <li>Vendor threshold configurations for shipping calculations</li>
+            </ul>
+        </section>
+
+        <section id="structure">
+            <h2>2. Project Structure</h2>
+
+            <pre><code>apps/db-migrations/
+├── migrations/              # Database schema migrations
+│   ├── 20250729000000_v2_algo_settings.ts
+│   ├── 20250729000001_tinyproxy_configs.ts
+│   ├── 20250729000002_v2_algo_results.ts
+│   ├── 20250729000003_v2_algo_execution.ts
+│   ├── 20250729000004_v2_algo_error.ts
+│   ├── 20250729000005_v2_toggle.ts
+│   ├── 20250729000006_create_users_table.ts
+│   ├── 20250729000007_channel_ids.ts
+│   └── 20250729000008_vendor_thresholds.ts
+├── scripts/                 # Data migration utilities
+│   ├── create-user.ts
+│   ├── migrate-channel-ids.ts
+│   └── migrate-settings.ts
+├── seeds/                   # Seed data scripts
+│   ├── 01_tinyproxy_configs.ts
+│   └── 02_vendor_shipping.ts
+├── knexfile.ts             # Knex configuration
+├── encrypto.ts             # Encryption utilities (empty)
+├── package.json            # Dependencies and scripts
+├── README.md               # Deployment documentation
+└── .gitignore              # Git ignore rules</code></pre>
+
+            <h3>File Organization</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Directory/File</th>
+                        <th>Purpose</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>migrations/</code></td>
+                        <td>Schema change scripts executed in timestamp order</td>
+                        <td>9 files</td>
+                    </tr>
+                    <tr>
+                        <td><code>scripts/</code></td>
+                        <td>Data transformation utilities for legacy migration</td>
+                        <td>3 files</td>
+                    </tr>
+                    <tr>
+                        <td><code>seeds/</code></td>
+                        <td>Initial data population for reference tables</td>
+                        <td>2 files</td>
+                    </tr>
+                    <tr>
+                        <td><code>knexfile.ts</code></td>
+                        <td>Environment-specific database configuration</td>
+                        <td>1 file</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="configuration">
+            <h2>3. Configuration</h2>
+
+            <h3>Knex Configuration (knexfile.ts)</h3>
+            <p>
+                The Knex configuration manages database connections for both development and production environments.
+                It dynamically loads environment-specific settings from <code>.env.[environment]</code> files.
+            </p>
+
+            <h4>Environment Variables Required</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Description</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>SQL_HOSTNAME</code></td>
+                        <td>MySQL server hostname</td>
+                        <td>localhost</td>
+                    </tr>
+                    <tr>
+                        <td><code>SQL_PORT</code></td>
+                        <td>MySQL server port</td>
+                        <td>3306</td>
+                    </tr>
+                    <tr>
+                        <td><code>SQL_USERNAME</code></td>
+                        <td>Database username</td>
+                        <td>repricer_user</td>
+                    </tr>
+                    <tr>
+                        <td><code>SQL_PASSWORD</code></td>
+                        <td>Database password</td>
+                        <td>********</td>
+                    </tr>
+                    <tr>
+                        <td><code>SQL_DATABASE</code></td>
+                        <td>Database name</td>
+                        <td>repricer_db</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Configuration Structure</h4>
+            <pre><code>const config: { [key: string]: Knex.Config } = {
+  development: {
+    client: "mysql2",
+    connection: getConnectionConfig("development"),
+    migrations: {
+      directory: "./migrations",
+      extension: "ts",
+    },
+    seeds: {
+      directory: "./seeds",
+      extension: "ts",
+    },
+  },
+  production: {
+    // Same structure with production credentials
+  }
+};</code></pre>
+
+            <div class="warning-box">
+                <strong>Security Note:</strong> All environment files (<code>.env.*</code>) are gitignored to prevent
+                credential exposure. Never commit environment files to version control.
+            </div>
+
+            <h3>Package Configuration (package.json)</h3>
+            <h4>NPM Scripts</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Script</th>
+                        <th>Command</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>migrate:dev</code></td>
+                        <td>knex migrate:latest --env development</td>
+                        <td>Run all pending migrations in dev</td>
+                    </tr>
+                    <tr>
+                        <td><code>migrate:prod</code></td>
+                        <td>knex migrate:latest --env production</td>
+                        <td>Run all pending migrations in prod</td>
+                    </tr>
+                    <tr>
+                        <td><code>rollback:dev</code></td>
+                        <td>knex migrate:rollback --env development</td>
+                        <td>Rollback last batch in dev</td>
+                    </tr>
+                    <tr>
+                        <td><code>rollback:prod</code></td>
+                        <td>knex migrate:rollback --env production</td>
+                        <td>Rollback last batch in prod</td>
+                    </tr>
+                    <tr>
+                        <td><code>seed:dev</code></td>
+                        <td>knex seed:run --env development</td>
+                        <td>Run seed files in dev</td>
+                    </tr>
+                    <tr>
+                        <td><code>seed:prod</code></td>
+                        <td>knex seed:run --env production</td>
+                        <td>Run seed files in prod</td>
+                    </tr>
+                    <tr>
+                        <td><code>create-user</code></td>
+                        <td>tsx scripts/create-user.ts</td>
+                        <td>Create authenticated user</td>
+                    </tr>
+                    <tr>
+                        <td><code>migrate-settings</code></td>
+                        <td>tsx scripts/migrate-settings.ts</td>
+                        <td>Migrate legacy settings to V2</td>
+                    </tr>
+                    <tr>
+                        <td><code>migrate-channel-ids</code></td>
+                        <td>tsx scripts/migrate-channel-ids.ts</td>
+                        <td>Migrate channel IDs to new table</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="migrations">
+            <h2>4. Database Migrations</h2>
+            <p>
+                All migrations follow a timestamp-based naming convention (<code>YYYYMMDDHHMMSS_description.ts</code>)
+                to ensure deterministic execution order. Each migration exports <code>up()</code> and <code>down()</code>
+                functions for forward and rollback operations.
+            </p>
+
+            <div class="migration-card">
+                <h4>Migration 1: v2_algo_settings (20250729000000)</h4>
+                <span class="badge badge-primary">Core Table</span>
+                <span class="badge badge-success">86 lines</span>
+
+                <p><strong>Purpose:</strong> Creates the primary algorithm configuration table for V2 pricing system.</p>
+
+                <p><strong>Key Features:</strong></p>
+                <ul>
+                    <li>Comprehensive pricing strategy configuration (27 columns)</li>
+                    <li>Support for multiple price direction strategies (UP, DOWN, UP_DOWN)</li>
+                    <li>Badge indicator filtering for competitive analysis</li>
+                    <li>Vendor relationship management (sister vendors, exclusions)</li>
+                    <li>Handling time group segmentation</li>
+                    <li>Price floor/ceiling controls with percentage-based repricing</li>
+                    <li>Inventory competition thresholds</li>
+                </ul>
+
+                <p><strong>Enum Types:</strong></p>
+                <ul>
+                    <li><code>up_down</code>: UP, UP_DOWN, DOWN</li>
+                    <li><code>badge_indicator</code>: ALL, BADGE</li>
+                    <li><code>handling_time_group</code>: ALL, FAST_SHIPPING, STOCKED, LONG_HANDLING</li>
+                    <li><code>price_strategy</code>: UNIT, TOTAL, BUY_BOX</li>
+                </ul>
+
+                <p><strong>Indexes:</strong></p>
+                <ul>
+                    <li><code>mp_id</code> (indexed)</li>
+                    <li><code>vendor_id</code> (indexed)</li>
+                </ul>
+            </div>
+
+            <div class="migration-card">
+                <h4>Migration 2: tinyproxy_configs (20250729000001)</h4>
+                <span class="badge badge-warning">Infrastructure</span>
+                <span class="badge badge-success">18 lines</span>
+
+                <p><strong>Purpose:</strong> Manages proxy configuration for vendor-specific network routing.</p>
+
+                <p><strong>Schema:</strong></p>
+                <ul>
+                    <li><code>proxy_username</code>: Authentication username</li>
+                    <li><code>proxy_password</code>: Authentication password</li>
+                    <li><code>subscription_key</code>: Net32 subscription key</li>
+                    <li><code>ip</code>: Proxy server IP address</li>
+                    <li><code>port</code>: Proxy server port</li>
+                    <li><code>vendor_id</code>: Associated vendor (indexed)</li>
+                </ul>
+
+                <div class="info-box">
+                    <strong>Use Case:</strong> Each vendor (Tradent, MVP, FirstDent, TopDent, Triad, Frontier)
+                    has dedicated proxy boxes for network isolation and rate limiting control.
+                </div>
+            </div>
+
+            <div class="migration-card">
+                <h4>Migration 3: v2_algo_results (20250729000002)</h4>
+                <span class="badge badge-primary">Core Table</span>
+                <span class="badge badge-success">32 lines</span>
+
+                <p><strong>Purpose:</strong> Stores pricing algorithm execution results and decisions.</p>
+
+                <p><strong>Key Fields:</strong></p>
+                <ul>
+                    <li><code>job_id</code>: UUID for execution correlation (indexed)</li>
+                    <li><code>suggested_price</code>: Algorithm-calculated price</li>
+                    <li><code>lowest_price</code>: Market lowest price found</li>
+                    <li><code>lowest_vendor_id</code>: Vendor with lowest price</li>
+                    <li><code>comment</code>: Execution reasoning (TEXT)</li>
+                    <li><code>triggered_by_vendor</code>: Vendor that triggered repricing</li>
+                    <li><code>result</code>: Execution outcome (indexed)</li>
+                    <li><code>quantity</code>: Product quantity</li>
+                    <li><code>cron_name</code>: Scheduler identifier (indexed)</li>
+                    <li><code>q_break_valid</code>: Quantity break validation status</li>
+                    <li><code>price_update_result</code>: API update status</li>
+                    <li><code>new_price_breaks</code>: Updated price break structure</li>
+                </ul>
+
+                <p><strong>Composite Index:</strong> (mp_id, vendor_id) for efficient querying</p>
+            </div>
+
+            <div class="migration-card">
+                <h4>Migration 4: v2_algo_execution (20250729000003)</h4>
+                <span class="badge badge-primary">Core Table</span>
+                <span class="badge badge-success">26 lines</span>
+
+                <p><strong>Purpose:</strong> Maintains detailed execution traces and chain-of-thought data.</p>
+
+                <p><strong>Key Features:</strong></p>
+                <ul>
+                    <li>Stores HTML-formatted execution reasoning (MEDIUMBLOB)</li>
+                    <li>Expiration-based data retention (<code>expires_at</code>)</li>
+                    <li>Foreign key to <code>v2_algo_results</code> via <code>job_id</code></li>
+                    <li>Foreign key to <code>table_scrapeProductList</code> via <code>scrape_product_id</code></li>
+                    <li>Indexed by mp_id, vendor_id, and job_id</li>
+                </ul>
+
+                <div class="success-box">
+                    <strong>Observability:</strong> Chain-of-thought HTML enables detailed debugging and
+                    algorithm transparency for pricing decisions.
+                </div>
+            </div>
+
+            <div class="migration-card">
+                <h4>Migration 5: v2_algo_error (20250729000004)</h4>
+                <span class="badge badge-danger">Error Tracking</span>
+                <span class="badge badge-success">17 lines</span>
+
+                <p><strong>Purpose:</strong> Centralized error logging for algorithm failures.</p>
+
+                <p><strong>Schema:</strong></p>
+                <ul>
+                    <li><code>created_at</code>: Error timestamp</li>
+                    <li><code>error</code>: Error message/stack trace (TEXT)</li>
+                    <li><code>net32_json</code>: Full Net32 API response (JSON)</li>
+                    <li><code>mp_id</code>: Affected marketplace product</li>
+                    <li><code>cron_name</code>: Scheduler that encountered error</li>
+                </ul>
+            </div>
+
+            <div class="migration-card">
+                <h4>Migration 6: v2_toggle (20250729000005)</h4>
+                <span class="badge badge-warning">Feature Flag</span>
+                <span class="badge badge-success">23 lines</span>
+
+                <p><strong>Purpose:</strong> Enables gradual V2 algorithm rollout via feature flags.</p>
+
+                <p><strong>Execution Modes:</strong></p>
+                <ul>
+                    <li><code>V2_ONLY</code>: Execute only V2 algorithm</li>
+                    <li><code>V1_ONLY</code>: Execute only legacy V1 algorithm</li>
+                    <li><code>V2_EXECUTE_V1_DRY</code>: V2 live, V1 dry run</li>
+                    <li><code>V1_EXECUTE_V2_DRY</code>: V1 live, V2 dry run (default)</li>
+                </ul>
+
+                <p><strong>Implementation:</strong> Alters <code>table_scrapeProductList</code> with
+                <code>algo_execution_mode</code> ENUM column.</p>
+            </div>
+
+            <div class="migration-card">
+                <h4>Migration 7: users (20250729000006)</h4>
+                <span class="badge badge-warning">Authentication</span>
+                <span class="badge badge-success">15 lines</span>
+
+                <p><strong>Purpose:</strong> User authentication and authorization management.</p>
+
+                <p><strong>Schema:</strong></p>
+                <ul>
+                    <li><code>username</code>: Unique username (indexed)</li>
+                    <li><code>password</code>: Bcrypt-hashed password</li>
+                    <li><code>created_at</code>, <code>updated_at</code>: Timestamps</li>
+                </ul>
+
+                <div class="warning-box">
+                    <strong>Security:</strong> Passwords are hashed with bcrypt (10 rounds) before storage.
+                    See <code>scripts/create-user.ts</code> for implementation.
+                </div>
+            </div>
+
+            <div class="migration-card">
+                <h4>Migration 8: channel_ids (20250729000007)</h4>
+                <span class="badge badge-primary">Data Migration</span>
+                <span class="badge badge-success">17 lines</span>
+
+                <p><strong>Purpose:</strong> Normalizes channel ID storage from vendor-specific tables.</p>
+
+                <p><strong>Schema:</strong></p>
+                <ul>
+                    <li><code>vendor_id</code>: Vendor identifier</li>
+                    <li><code>mp_id</code>: Marketplace product identifier</li>
+                    <li><code>channel_id</code>: Marketplace channel identifier</li>
+                    <li><code>created_at</code>, <code>updated_at</code>: Timestamps</li>
+                </ul>
+
+                <p><strong>Composite Index:</strong> (vendor_id, mp_id) for efficient lookups</p>
+
+                <p><strong>Migration Script:</strong> <code>scripts/migrate-channel-ids.ts</code> handles
+                data migration from legacy vendor detail tables.</p>
+            </div>
+
+            <div class="migration-card">
+                <h4>Migration 9: vendor_thresholds (20250729000008)</h4>
+                <span class="badge badge-primary">Reference Data</span>
+                <span class="badge badge-success">16 lines</span>
+
+                <p><strong>Purpose:</strong> Vendor-specific shipping threshold configuration.</p>
+
+                <p><strong>Schema:</strong></p>
+                <ul>
+                    <li><code>vendor_id</code>: Vendor identifier</li>
+                    <li><code>threshold</code>: Free shipping threshold amount (DECIMAL 10,2)</li>
+                    <li><code>standard_shipping</code>: Standard shipping cost (DECIMAL 10,2)</li>
+                    <li><code>created_at</code>, <code>updated_at</code>: Timestamps</li>
+                </ul>
+
+                <p><strong>Seed Data:</strong> Populated via <code>seeds/02_vendor_shipping.ts</code></p>
+            </div>
+        </section>
+
+        <section id="scripts">
+            <h2>5. Migration Scripts</h2>
+            <p>
+                The scripts directory contains data transformation utilities for migrating legacy data
+                into the V2 schema. These are executed manually after schema migrations.
+            </p>
+
+            <h3>create-user.ts (88 lines)</h3>
+            <span class="badge badge-warning">Authentication</span>
+
+            <p><strong>Purpose:</strong> Creates authenticated users with bcrypt password hashing.</p>
+
+            <p><strong>Usage:</strong></p>
+            <div class="command">$ npm run create-user &lt;username&gt; &lt;password&gt;</div>
+
+            <p><strong>Features:</strong></p>
+            <ul>
+                <li>Validates username uniqueness before insertion</li>
+                <li>Hashes passwords with bcrypt (10 salt rounds)</li>
+                <li>Provides success/error feedback with emojis</li>
+                <li>Automatically closes database connection</li>
+            </ul>
+
+            <p><strong>Error Handling:</strong></p>
+            <ul>
+                <li>Checks for existing username before creation</li>
+                <li>Validates environment variable presence</li>
+                <li>Gracefully handles database connection errors</li>
+            </ul>
+
+            <h3>migrate-channel-ids.ts (368 lines)</h3>
+            <span class="badge badge-primary">Data Migration</span>
+
+            <p><strong>Purpose:</strong> Migrates channel IDs from legacy vendor-specific tables to normalized table.</p>
+
+            <p><strong>Usage:</strong></p>
+            <div class="command">$ npm run migrate-channel-ids</div>
+
+            <p><strong>Vendor Coverage:</strong></p>
+            <ul>
+                <li>FirstDent (table_firstDentDetails → vendor_id: 20533)</li>
+                <li>Frontier (table_frontierDetails → vendor_id: 20722)</li>
+                <li>TopDent (table_topDentDetails → vendor_id: 20727)</li>
+                <li>Tradent (table_tradentDetails → vendor_id: 17357)</li>
+            </ul>
+
+            <p><strong>Migration Strategy:</strong></p>
+            <ol>
+                <li>Query legacy vendor detail tables for ChannelId column</li>
+                <li>Check for existing records in channel_ids table</li>
+                <li>Separate records into insert, update, and skip batches</li>
+                <li>Batch insert new records for efficiency</li>
+                <li>Transactional batch updates for modified channel IDs</li>
+                <li>Verify final record counts per vendor</li>
+            </ol>
+
+            <p><strong>Batch Operations:</strong></p>
+            <ul>
+                <li>Efficient bulk inserts for new records</li>
+                <li>Transactional updates to maintain consistency</li>
+                <li>Skip duplicate records to avoid unnecessary writes</li>
+                <li>Detailed logging for each operation type</li>
+            </ul>
+
+            <p><strong>Output Metrics:</strong></p>
+            <ul>
+                <li>Inserted count: New channel ID records created</li>
+                <li>Updated count: Modified existing records</li>
+                <li>Skipped count: Identical records (no action needed)</li>
+                <li>Success/failure summary per vendor</li>
+            </ul>
+
+            <h3>migrate-settings.ts (549 lines)</h3>
+            <span class="badge badge-primary">Data Migration</span>
+
+            <p><strong>Purpose:</strong> Transforms legacy V1 algorithm settings to V2 schema format.</p>
+
+            <p><strong>Usage:</strong></p>
+            <div class="command">$ npm run migrate-settings                    # Migrate all vendors
+$ npm run migrate-settings -- --mp-id 12345  # Sync single MP ID</div>
+
+            <p><strong>Vendor Coverage:</strong></p>
+            <ul>
+                <li>FirstDent (table_firstDentDetails → 20533)</li>
+                <li>Frontier (table_frontierDetails → 20722)</li>
+                <li>MVP (table_mvpDetails → 20755)</li>
+                <li>TopDent (table_topDentDetails → 20727)</li>
+                <li>Tradent (table_tradentDetails → 17357)</li>
+                <li>Triad (table_triadDetails → 5)</li>
+            </ul>
+
+            <h4>Field Mapping Logic</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>V1 Field</th>
+                        <th>V2 Field</th>
+                        <th>Transformation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Activated</td>
+                        <td>enabled</td>
+                        <td>1 → true, 0 → false</td>
+                    </tr>
+                    <tr>
+                        <td>SuppressPriceBreakForOne</td>
+                        <td>suppress_price_break_if_Q1_not_updated</td>
+                        <td>1 → true, 0 → false</td>
+                    </tr>
+                    <tr>
+                        <td>RepricingRule</td>
+                        <td>up_down</td>
+                        <td>2 → UP_DOWN, else → DOWN</td>
+                    </tr>
+                    <tr>
+                        <td>BadgeIndicator</td>
+                        <td>badge_indicator</td>
+                        <td>"BADGE_ONLY" → BADGE, else → ALL</td>
+                    </tr>
+                    <tr>
+                        <td>PercentageDown</td>
+                        <td>reprice_down_percentage</td>
+                        <td>value * 100 (convert to percentage)</td>
+                    </tr>
+                    <tr>
+                        <td>SisterVendorId</td>
+                        <td>sister_vendor_ids</td>
+                        <td>Replace ";" with ","</td>
+                    </tr>
+                    <tr>
+                        <td>IsNCNeeded</td>
+                        <td>price_strategy</td>
+                        <td>1 → TOTAL, 0 → UNIT</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Batch Processing Strategy</h4>
+            <ol>
+                <li>Fetch all settings from vendor-specific legacy table</li>
+                <li>Transform each setting to V2 schema format</li>
+                <li>Query existing records in v2_algo_settings</li>
+                <li>Create lookup map for efficient comparison</li>
+                <li>Separate records into insert vs update batches</li>
+                <li>Execute batch insert for new records</li>
+                <li>Execute transactional batch updates for existing records</li>
+                <li>Report detailed metrics (inserted, updated counts)</li>
+            </ol>
+
+            <p><strong>Operating Modes:</strong></p>
+            <ul>
+                <li><strong>All Vendors Mode:</strong> Sequential migration of all 6 vendors</li>
+                <li><strong>Single MP ID Mode:</strong> Sync specific product across all vendors</li>
+            </ul>
+
+            <div class="info-box">
+                <strong>Use Case for Single MP ID:</strong> When a new product is added or settings are
+                updated in legacy tables, use <code>--mp-id</code> flag to sync only that product
+                without re-migrating all data.
+            </div>
+        </section>
+
+        <section id="seeds">
+            <h2>6. Database Seeds</h2>
+            <p>
+                Seed files populate reference tables with initial configuration data required for
+                system operation.
+            </p>
+
+            <h3>01_tinyproxy_configs.ts (60 lines)</h3>
+            <span class="badge badge-warning">Infrastructure</span>
+
+            <p><strong>Purpose:</strong> Loads proxy server configurations from JSON data file.</p>
+
+            <p><strong>Data Source:</strong> <code>data/tinyproxy-configs.json</code></p>
+
+            <p><strong>Expected JSON Format:</strong></p>
+            <pre><code>[
+  {
+    "box": "tradent",
+    "proxy_username": "tradent",
+    "proxy_password": "PASSWORD",
+    "subscription_key": "SUBSCRIPTION_KEY_NET32",
+    "ip": "174.138.69.66",
+    "port": 8888,
+    "vendor_id": 17357
+  }
+]</code></pre>
+
+            <p><strong>Seed Process:</strong></p>
+            <ol>
+                <li>Read JSON file from <code>data/tinyproxy-configs.json</code></li>
+                <li>Parse vendor proxy configurations</li>
+                <li>Delete all existing records (truncate)</li>
+                <li>Batch insert new configurations</li>
+                <li>Verify final record count</li>
+            </ol>
+
+            <div class="warning-box">
+                <strong>Security Note:</strong> The <code>data/</code> directory is gitignored.
+                Proxy credentials must be manually created on each deployment environment.
+            </div>
+
+            <h3>02_vendor_shipping.ts (56 lines)</h3>
+            <span class="badge badge-primary">Reference Data</span>
+
+            <p><strong>Purpose:</strong> Populates vendor shipping thresholds and costs.</p>
+
+            <p><strong>Data Source:</strong> <code>data/vendor-shipping.json</code></p>
+
+            <p><strong>Expected JSON Format:</strong></p>
+            <pre><code>[
+  {
+    "vendorId": 20533,
+    "vendorName": "FirstDent",
+    "standardShipping": 8.95,
+    "freeShippingThreshold": 149.00
+  }
+]</code></pre>
+
+            <p><strong>Field Mapping:</strong></p>
+            <ul>
+                <li><code>vendorId</code> → <code>vendor_id</code></li>
+                <li><code>standardShipping</code> → <code>standard_shipping</code></li>
+                <li><code>freeShippingThreshold</code> → <code>threshold</code></li>
+            </ul>
+
+            <p><strong>Seed Process:</strong></p>
+            <ol>
+                <li>Read vendor shipping data from JSON file</li>
+                <li>Delete existing vendor_thresholds records</li>
+                <li>Transform JSON to database schema format</li>
+                <li>Batch insert vendor threshold configurations</li>
+                <li>Verify insertion success</li>
+            </ol>
+        </section>
+
+        <section id="deployment">
+            <h2>7. Deployment Process</h2>
+            <p>
+                The deployment process follows a specific sequence to ensure data integrity and
+                proper schema evolution.
+            </p>
+
+            <h3>Deployment Steps</h3>
+            <ol class="deployment-steps">
+                <li>
+                    <strong>Create Environment File</strong>
+                    <p>Create <code>.env.[environment]</code> with database credentials:</p>
+                    <pre><code>SQL_HOSTNAME=localhost
+SQL_PORT=3306
+SQL_USERNAME=repricer_user
+SQL_PASSWORD=secure_password
+SQL_DATABASE=repricer_db</code></pre>
+                </li>
+
+                <li>
+                    <strong>Set Environment Variable</strong>
+                    <div class="command">$ export ENVIRONMENT=production</div>
+                </li>
+
+                <li>
+                    <strong>Run Database Migrations</strong>
+                    <div class="command">$ npm run migrate:prod</div>
+                    <p>Executes all pending migrations in timestamp order.</p>
+                </li>
+
+                <li>
+                    <strong>Migrate Legacy Settings</strong>
+                    <div class="command">$ npm run migrate-settings</div>
+                    <p>Transforms V1 algorithm settings to V2 schema for all vendors.</p>
+                </li>
+
+                <li>
+                    <strong>Migrate Channel IDs</strong>
+                    <div class="command">$ npm run migrate-channel-ids</div>
+                    <p>Normalizes channel IDs from vendor-specific tables.</p>
+                </li>
+
+                <li>
+                    <strong>Create Proxy Configuration File</strong>
+                    <p>Create <code>data/tinyproxy-configs.json</code> with proxy server details
+                    (see seed section for format).</p>
+                </li>
+
+                <li>
+                    <strong>Run Seed Data</strong>
+                    <div class="command">$ npm run seed:prod</div>
+                    <p>Populates tinyproxy_configs and vendor_thresholds tables.</p>
+                </li>
+
+                <li>
+                    <strong>Create Admin Users</strong>
+                    <div class="command">$ npm run create-user admin secure_password</div>
+                    <p>Creates initial administrative users for authentication.</p>
+                </li>
+            </ol>
+
+            <div class="warning-box">
+                <strong>Important:</strong> Always execute migrations before running data migration scripts.
+                Schema must exist before data transformation.
+            </div>
+
+            <h3>Rollback Procedure</h3>
+            <p>If a migration causes issues, use rollback commands:</p>
+
+            <h4>Rollback Last Batch</h4>
+            <div class="command">$ npm run rollback:prod</div>
+
+            <h4>Rollback All Migrations</h4>
+            <div class="command">$ npm run rollback:prod:all</div>
+
+            <div class="warning-box">
+                <strong>Data Loss Warning:</strong> Rolling back migrations may result in data loss.
+                Always backup production databases before performing rollbacks.
+            </div>
+        </section>
+
+        <section id="patterns">
+            <h2>8. Migration Patterns & Best Practices</h2>
+
+            <h3>Migration File Structure</h3>
+            <p>All migrations follow this consistent pattern:</p>
+            <pre><code>import type { Knex } from "knex";
+
+export async function up(knex: Knex): Promise&lt;void&gt; {
+  // Schema changes for moving forward
+  await knex.schema.createTable("table_name", (table) => {
+    // Table definition
+  });
+}
+
+export async function down(knex: Knex): Promise&lt;void&gt; {
+  // Reverse schema changes
+  await knex.schema.dropTableIfExists("table_name");
+}</code></pre>
+
+            <h3>Naming Conventions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Convention</th>
+                        <th>Pattern</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Migration Files</td>
+                        <td>YYYYMMDDHHMMSS_description.ts</td>
+                        <td>20250729000000_v2_algo_settings.ts</td>
+                    </tr>
+                    <tr>
+                        <td>Table Names</td>
+                        <td>snake_case, descriptive</td>
+                        <td>v2_algo_settings, channel_ids</td>
+                    </tr>
+                    <tr>
+                        <td>Column Names</td>
+                        <td>snake_case</td>
+                        <td>vendor_id, created_at</td>
+                    </tr>
+                    <tr>
+                        <td>Enum Values</td>
+                        <td>UPPER_SNAKE_CASE</td>
+                        <td>V2_ONLY, UP_DOWN</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Index Strategy</h3>
+            <ul>
+                <li><strong>Foreign Keys:</strong> Always index foreign key columns</li>
+                <li><strong>Query Patterns:</strong> Index columns used in WHERE clauses</li>
+                <li><strong>Composite Indexes:</strong> Use for common multi-column queries</li>
+                <li><strong>Performance:</strong> Avoid over-indexing; focus on query hotspots</li>
+            </ul>
+
+            <h4>Index Examples</h4>
+            <pre><code>// Single column index
+table.integer("vendor_id").notNullable().index();
+
+// Composite index
+table.index(["mp_id", "vendor_id"]);
+
+// Named composite index
+table.index(["vendor_id", "mp_id"], "vendor_mp_id_index");</code></pre>
+
+            <h3>Data Type Best Practices</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Use Case</th>
+                        <th>Data Type</th>
+                        <th>Example</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Currency/Prices</td>
+                        <td>DECIMAL(10, 2)</td>
+                        <td>floor_price, max_price</td>
+                    </tr>
+                    <tr>
+                        <td>Percentages</td>
+                        <td>DECIMAL(10, 2)</td>
+                        <td>reprice_up_percentage</td>
+                    </tr>
+                    <tr>
+                        <td>Boolean Flags</td>
+                        <td>BOOLEAN</td>
+                        <td>enabled, keep_position</td>
+                    </tr>
+                    <tr>
+                        <td>UUIDs</td>
+                        <td>VARCHAR(36)</td>
+                        <td>job_id</td>
+                    </tr>
+                    <tr>
+                        <td>Large Text</td>
+                        <td>TEXT</td>
+                        <td>comment, error</td>
+                    </tr>
+                    <tr>
+                        <td>Binary Data</td>
+                        <td>MEDIUMBLOB</td>
+                        <td>chain_of_thought_html</td>
+                    </tr>
+                    <tr>
+                        <td>JSON Data</td>
+                        <td>JSON</td>
+                        <td>net32_json</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Foreign Key Constraints</h3>
+            <p>Enforce referential integrity with foreign keys:</p>
+            <pre><code>// Foreign key to results table
+table
+  .foreign("job_id")
+  .references("job_id")
+  .inTable("v2_algo_results");
+
+// Foreign key to products table
+table
+  .foreign("scrape_product_id")
+  .references("Id")
+  .inTable("table_scrapeProductList");</code></pre>
+
+            <h3>Default Values Strategy</h3>
+            <ul>
+                <li><strong>Boolean Fields:</strong> Provide explicit defaults (true/false)</li>
+                <li><strong>Numeric Sentinel Values:</strong> Use -1 for "not set" states</li>
+                <li><strong>Enum Fields:</strong> Set sensible defaults for gradual rollout</li>
+                <li><strong>Timestamps:</strong> Use <code>timestamps(true, true)</code> for auto-management</li>
+            </ul>
+
+            <h3>Migration Safety Checklist</h3>
+            <div class="success-box">
+                <strong>Pre-Migration:</strong>
+                <ul>
+                    <li>✓ Backup production database</li>
+                    <li>✓ Test migration on development environment</li>
+                    <li>✓ Verify down() function reverses up() changes</li>
+                    <li>✓ Review indexes for query performance impact</li>
+                </ul>
+            </div>
+
+            <div class="warning-box">
+                <strong>During Migration:</strong>
+                <ul>
+                    <li>⚠ Monitor execution time for large tables</li>
+                    <li>⚠ Watch for lock timeouts on production databases</li>
+                    <li>⚠ Verify foreign key constraints don't cause failures</li>
+                </ul>
+            </div>
+
+            <div class="success-box">
+                <strong>Post-Migration:</strong>
+                <ul>
+                    <li>✓ Verify table structure matches expectations</li>
+                    <li>✓ Check index creation success</li>
+                    <li>✓ Run data migration scripts if required</li>
+                    <li>✓ Test application functionality</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="dependencies">
+            <h2>9. Dependencies & Tools</h2>
+
+            <h3>Core Dependencies</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Package</th>
+                        <th>Version</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>knex</td>
+                        <td>^3.1.0</td>
+                        <td>SQL query builder and migration framework</td>
+                    </tr>
+                    <tr>
+                        <td>mysql2</td>
+                        <td>(via knex)</td>
+                        <td>MySQL database driver</td>
+                    </tr>
+                    <tr>
+                        <td>dotenv</td>
+                        <td>^16.4.5</td>
+                        <td>Environment variable management</td>
+                    </tr>
+                    <tr>
+                        <td>bcrypt</td>
+                        <td>^6.0.0</td>
+                        <td>Password hashing for user authentication</td>
+                    </tr>
+                    <tr>
+                        <td>tsx</td>
+                        <td>^4.20.4</td>
+                        <td>TypeScript execution for scripts</td>
+                    </tr>
+                    <tr>
+                        <td>@repricer-monorepo/shared</td>
+                        <td>*</td>
+                        <td>Shared types and enums across monorepo</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Development Dependencies</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Package</th>
+                        <th>Version</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>typescript</td>
+                        <td>^5.0.0</td>
+                        <td>TypeScript compiler</td>
+                    </tr>
+                    <tr>
+                        <td>ts-node</td>
+                        <td>^10.9.1</td>
+                        <td>TypeScript execution environment</td>
+                    </tr>
+                    <tr>
+                        <td>@types/bcrypt</td>
+                        <td>^6.0.0</td>
+                        <td>TypeScript definitions for bcrypt</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Shared Types & Enums</h3>
+            <p>
+                The <code>@repricer-monorepo/shared</code> package provides type-safe enums
+                used across migrations:
+            </p>
+
+            <h4>AlgoPriceDirection</h4>
+            <ul>
+                <li><code>UP</code>: Only increase prices</li>
+                <li><code>DOWN</code>: Only decrease prices</li>
+                <li><code>UP_DOWN</code>: Bidirectional pricing</li>
+            </ul>
+
+            <h4>AlgoPriceStrategy</h4>
+            <ul>
+                <li><code>UNIT</code>: Price per unit</li>
+                <li><code>TOTAL</code>: Total price including shipping</li>
+                <li><code>BUY_BOX</code>: Buy box optimization</li>
+            </ul>
+
+            <h4>AlgoBadgeIndicator</h4>
+            <ul>
+                <li><code>ALL</code>: Compete with all vendors</li>
+                <li><code>BADGE</code>: Only compete with badged vendors</li>
+            </ul>
+
+            <h4>AlgoHandlingTimeGroup</h4>
+            <ul>
+                <li><code>ALL</code>: All handling time groups</li>
+                <li><code>FAST_SHIPPING</code>: Fast shipping only</li>
+                <li><code>STOCKED</code>: Stocked items</li>
+                <li><code>LONG_HANDLING</code>: Long handling time items</li>
+            </ul>
+
+            <h4>AlgoExecutionMode</h4>
+            <ul>
+                <li><code>V2_ONLY</code>: Execute V2 algorithm only</li>
+                <li><code>V1_ONLY</code>: Execute V1 algorithm only</li>
+                <li><code>V2_EXECUTE_V1_DRY</code>: V2 live, V1 dry run</li>
+                <li><code>V1_EXECUTE_V2_DRY</code>: V1 live, V2 dry run</li>
+            </ul>
+        </section>
+
+        <section id="schema">
+            <h2>10. Database Schema</h2>
+
+            <h3>Entity Relationship Overview</h3>
+            <div class="schema-diagram">
+<pre>
+┌─────────────────────────────┐
+│   v2_algo_settings          │
+├─────────────────────────────┤
+│ PK  id                      │
+│ IDX mp_id                   │
+│ IDX vendor_id               │
+│     enabled                 │
+│     price_strategy          │
+│     floor_price             │
+│     max_price               │
+│     ... (24 more columns)   │
+└─────────────────────────────┘
+         │
+         │ 1:N (mp_id, vendor_id)
+         ├──────────────────────────────────┐
+         │                                  │
+         ▼                                  ▼
+┌──────────────────────┐         ┌──────────────────────┐
+│  v2_algo_results     │         │  channel_ids         │
+├──────────────────────┤         ├──────────────────────┤
+│ PK  id               │         │ PK  id               │
+│ IDX job_id           │         │ IDX vendor_id        │
+│ IDX mp_id            │         │ IDX mp_id            │
+│ IDX vendor_id        │         │     channel_id       │
+│ IDX result           │         └──────────────────────┘
+│ IDX cron_name        │
+│     suggested_price  │
+│     lowest_price     │
+└──────────────────────┘
+         │
+         │ 1:1 (job_id)
+         ▼
+┌──────────────────────┐
+│  v2_algo_execution   │
+├──────────────────────┤
+│ PK  id               │
+│ FK  job_id           │───┐
+│ FK  scrape_product_id│   │
+│ IDX mp_id            │   │
+│ IDX vendor_id        │   │
+│     chain_of_thought │   │
+│     expires_at       │   │
+└──────────────────────┘   │
+                           │
+         ┌─────────────────┘
+         │
+         │ (References)
+         ▼
+┌──────────────────────────────┐
+│  table_scrapeProductList     │
+│  (Legacy Product Table)      │
+├──────────────────────────────┤
+│ PK  Id                       │
+│     algo_execution_mode      │
+│     ... (other fields)       │
+└──────────────────────────────┘
+
+┌──────────────────────┐
+│  v2_algo_error       │
+├──────────────────────┤
+│ PK  id               │
+│     created_at       │
+│     error            │
+│     net32_json       │
+│     mp_id            │
+│     cron_name        │
+└──────────────────────┘
+
+┌──────────────────────┐         ┌──────────────────────┐
+│  users               │         │  tinyproxy_configs   │
+├──────────────────────┤         ├──────────────────────┤
+│ PK  id               │         │ PK  id               │
+│ UQ  username         │         │ IDX vendor_id        │
+│     password         │         │     proxy_username   │
+│     created_at       │         │     proxy_password   │
+│     updated_at       │         │     subscription_key │
+└──────────────────────┘         │     ip               │
+                                 │     port             │
+                                 └──────────────────────┘
+
+┌──────────────────────┐
+│  vendor_thresholds   │
+├──────────────────────┤
+│ PK  id               │
+│     vendor_id        │
+│     threshold        │
+│     standard_shipping│
+│     created_at       │
+│     updated_at       │
+└──────────────────────┘
+</pre>
+            </div>
+
+            <h3>Table Summary</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Table</th>
+                        <th>Purpose</th>
+                        <th>Columns</th>
+                        <th>Indexes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>v2_algo_settings</code></td>
+                        <td>Algorithm configuration per vendor/product</td>
+                        <td>27</td>
+                        <td>mp_id, vendor_id</td>
+                    </tr>
+                    <tr>
+                        <td><code>v2_algo_results</code></td>
+                        <td>Pricing execution results and decisions</td>
+                        <td>14</td>
+                        <td>job_id, result, cron_name, (mp_id, vendor_id)</td>
+                    </tr>
+                    <tr>
+                        <td><code>v2_algo_execution</code></td>
+                        <td>Detailed execution traces with reasoning</td>
+                        <td>8</td>
+                        <td>job_id, mp_id, vendor_id</td>
+                    </tr>
+                    <tr>
+                        <td><code>v2_algo_error</code></td>
+                        <td>Error logging and debugging data</td>
+                        <td>6</td>
+                        <td>None</td>
+                    </tr>
+                    <tr>
+                        <td><code>tinyproxy_configs</code></td>
+                        <td>Proxy server configurations per vendor</td>
+                        <td>7</td>
+                        <td>vendor_id</td>
+                    </tr>
+                    <tr>
+                        <td><code>channel_ids</code></td>
+                        <td>Normalized marketplace channel identifiers</td>
+                        <td>6</td>
+                        <td>(vendor_id, mp_id)</td>
+                    </tr>
+                    <tr>
+                        <td><code>vendor_thresholds</code></td>
+                        <td>Shipping cost and threshold configuration</td>
+                        <td>6</td>
+                        <td>None</td>
+                    </tr>
+                    <tr>
+                        <td><code>users</code></td>
+                        <td>Application user authentication</td>
+                        <td>5</td>
+                        <td>username (unique)</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Key Relationships</h3>
+            <ul>
+                <li><strong>Settings → Results:</strong> One configuration drives many pricing executions</li>
+                <li><strong>Results → Execution:</strong> Each result has detailed execution trace</li>
+                <li><strong>Execution → Products:</strong> Foreign key to legacy product table</li>
+                <li><strong>Vendors:</strong> Core entity linking settings, proxies, channels, and thresholds</li>
+            </ul>
+
+            <h3>Data Retention Strategy</h3>
+            <div class="info-box">
+                <strong>Execution Traces:</strong> The <code>v2_algo_execution</code> table includes
+                an <code>expires_at</code> column for automated data cleanup. Chain-of-thought data
+                is retained for debugging but can be purged after expiration.
+            </div>
+        </section>
+
+        <footer>
+            <p>
+                <strong>Database Migrations Technical Documentation</strong><br>
+                Generated for Repricer Monorepo - apps/db-migrations<br>
+                Framework: Knex.js 3.1.0 with TypeScript 5.0.0<br>
+                Total Lines of Code: 1,357 lines
+            </p>
+            <p style="margin-top: 10px; font-size: 0.85em; color: #9ca3af;">
+                This documentation covers all database migrations, scripts, seeds, and deployment procedures.<br>
+                For updates or questions, refer to the project README or contact the development team.
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

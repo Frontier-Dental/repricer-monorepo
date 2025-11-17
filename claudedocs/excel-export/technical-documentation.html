@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Export Service - Technical Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        nav {
+            background: #2d3748;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #667eea;
+        }
+
+        main {
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 4rem;
+        }
+
+        h2 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #764ba2;
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem;
+        }
+
+        h4 {
+            color: #4a5568;
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .info-box {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background: #fffaf0;
+            border-left: 4px solid #ed8936;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #f0fff4;
+            border-left: 4px solid #48bb78;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        code {
+            background: #2d3748;
+            color: #68d391;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .card h4 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .badge-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ed8936;
+            color: white;
+        }
+
+        .badge-info {
+            background: #4299e1;
+            color: white;
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        footer {
+            background: #2d3748;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .architecture-diagram {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .flow-item {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 1rem 1.5rem;
+            margin: 0.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .flow-arrow {
+            display: inline-block;
+            color: #667eea;
+            font-size: 2rem;
+            margin: 0 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Excel Export Service</h1>
+            <p>Technical Documentation v1.0.0</p>
+            <p>Dedicated Microservice for Repricer Excel Exports</p>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#api">API Reference</a></li>
+                <li><a href="#data-model">Data Model</a></li>
+                <li><a href="#export">Export Process</a></li>
+                <li><a href="#dependencies">Dependencies</a></li>
+                <li><a href="#deployment">Deployment</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <section id="overview">
+                <h2>1. Overview</h2>
+
+                <div class="info-box">
+                    <h4>Service Purpose</h4>
+                    <p>The Excel Export Service is a dedicated Node.js microservice responsible for generating Excel exports of product repricing data from a MySQL database. It operates independently from the main repricer application, handling complex data transformation and Excel file generation with optimized memory usage.</p>
+                </div>
+
+                <h3>Key Features</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>📊 Data Export</h4>
+                        <p>Export complete product details from MySQL database with vendor-specific information across 6 different vendor channels</p>
+                    </div>
+                    <div class="card">
+                        <h4>🎯 Filtering Support</h4>
+                        <p>Advanced filtering by tags, activation status, cron ID, and channel names for targeted exports</p>
+                    </div>
+                    <div class="card">
+                        <h4>⚡ Memory Optimization</h4>
+                        <p>Streaming Excel generation with ExcelJS to handle large datasets without memory overflow</p>
+                    </div>
+                    <div class="card">
+                        <h4>🔄 Data Transformation</h4>
+                        <p>Automatic date formatting, badge indicator mapping, and handling time group translations</p>
+                    </div>
+                </div>
+
+                <h3>Technology Stack</h3>
+                <table>
+                    <tr>
+                        <th>Component</th>
+                        <th>Technology</th>
+                        <th>Version</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td>Runtime</td>
+                        <td>Node.js</td>
+                        <td>18+</td>
+                        <td>JavaScript runtime environment</td>
+                    </tr>
+                    <tr>
+                        <td>Language</td>
+                        <td>TypeScript</td>
+                        <td>5.8.3</td>
+                        <td>Type-safe development</td>
+                    </tr>
+                    <tr>
+                        <td>Web Framework</td>
+                        <td>Express</td>
+                        <td>5.1.0</td>
+                        <td>HTTP server and routing</td>
+                    </tr>
+                    <tr>
+                        <td>Excel Generation</td>
+                        <td>ExcelJS</td>
+                        <td>4.3.0</td>
+                        <td>Excel file creation and manipulation</td>
+                    </tr>
+                    <tr>
+                        <td>Database (Primary)</td>
+                        <td>MySQL</td>
+                        <td>-</td>
+                        <td>Product and vendor data storage</td>
+                    </tr>
+                    <tr>
+                        <td>Database (Legacy)</td>
+                        <td>MongoDB</td>
+                        <td>4.10.0</td>
+                        <td>Cron settings lookup (cached)</td>
+                    </tr>
+                    <tr>
+                        <td>Date Handling</td>
+                        <td>Moment.js</td>
+                        <td>2.30.1</td>
+                        <td>Date formatting and parsing</td>
+                    </tr>
+                    <tr>
+                        <td>Utilities</td>
+                        <td>Lodash</td>
+                        <td>4.17.21</td>
+                        <td>Data manipulation utilities</td>
+                    </tr>
+                </table>
+            </section>
+
+            <section id="architecture">
+                <h2>2. Architecture & Design Patterns</h2>
+
+                <h3>2.1 Layered Architecture</h3>
+                <div class="architecture-diagram">
+                    <div class="flow-item">HTTP Layer (Express)</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item">Routes</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item">Controllers</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item">Services</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-item">Database</div>
+                </div>
+
+                <h3>2.2 Directory Structure</h3>
+                <pre><code>apps/excel-export/
+├── src/
+│   ├── controllers/
+│   │   └── excel.controller.ts      # Request handling and response
+│   ├── services/
+│   │   ├── excel.service.ts         # Excel generation logic (unused)
+│   │   ├── mysql.ts                 # MySQL database operations
+│   │   ├── mongo.service.ts         # MongoDB connection & caching
+│   │   └── knex-wrapper.ts          # Knex query builder wrapper
+│   ├── models/
+│   │   ├── item.ts                  # Mongoose schema (legacy)
+│   │   ├── user-model/
+│   │   │   └── custom-product.ts    # Product entity mapper
+│   │   └── sql-models/
+│   │       ├── mysql-db.ts          # MySQL connection pool
+│   │       └── mysql-product.ts     # SQL product types
+│   ├── routes/
+│   │   └── excel.routes.ts          # API route definitions
+│   ├── utility/
+│   │   ├── config.ts                # Environment configuration with Zod
+│   │   ├── encrypto.ts              # Encryption/decryption utilities
+│   │   └── mapper/
+│   │       └── mysql-mapper.ts      # SQL result transformation
+│   ├── utils/
+│   │   └── badge-helper.ts          # Badge indicator mapping
+│   ├── resources/
+│   │   ├── badgeIndicatorMapping.json
+│   │   └── HandlingTimeFilterMapping.json
+│   └── main.ts                      # Application entry point
+├── resources/                       # External resource files
+├── Dockerfile                       # Container configuration
+├── package.json                     # Dependencies and scripts
+└── tsconfig.json                    # TypeScript configuration</code></pre>
+
+                <h3>2.3 Design Patterns</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Service Layer Pattern</h4>
+                        <p><strong>Implementation:</strong> Business logic separated into service files</p>
+                        <p><strong>Benefits:</strong> Reusable logic, easier testing, clear separation of concerns</p>
+                    </div>
+                    <div class="card">
+                        <h4>Repository Pattern</h4>
+                        <p><strong>Implementation:</strong> Database access through <code>mysql.ts</code> service</p>
+                        <p><strong>Benefits:</strong> Database abstraction, easier to swap data sources</p>
+                    </div>
+                    <div class="card">
+                        <h4>Data Mapper Pattern</h4>
+                        <p><strong>Implementation:</strong> <code>mysql-mapper.ts</code> and <code>CustomProduct</code> class</p>
+                        <p><strong>Benefits:</strong> Clean transformation from SQL to domain objects</p>
+                    </div>
+                    <div class="card">
+                        <h4>Connection Pool Pattern</h4>
+                        <p><strong>Implementation:</strong> MySQL connection pooling via <code>mysql2/promise</code></p>
+                        <p><strong>Benefits:</strong> Efficient resource usage, better performance</p>
+                    </div>
+                </div>
+
+                <h3>2.4 Configuration Management</h3>
+                <div class="info-box">
+                    <h4>Zod-based Type-Safe Configuration</h4>
+                    <p>The application uses Zod schema validation to ensure all environment variables are properly typed and validated at startup. This prevents runtime errors from misconfiguration.</p>
+                    <ul>
+                        <li>258 configuration parameters with type validation</li>
+                        <li>Default values for non-critical settings</li>
+                        <li>Required validation for critical parameters (DB credentials, API keys)</li>
+                        <li>Automatic type coercion for numbers and booleans</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="api">
+                <h2>3. API Reference</h2>
+
+                <h3>3.1 Export Endpoint</h3>
+                <div class="card">
+                    <h4><span class="badge badge-success">GET</span> /api/excel/download</h4>
+                    <p><strong>Description:</strong> Generate and download Excel file with complete product details</p>
+
+                    <h4>Request Parameters</h4>
+                    <p>None (exports all products)</p>
+
+                    <h4>Response</h4>
+                    <table>
+                        <tr>
+                            <th>Header</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td>Content-Type</td>
+                            <td>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</td>
+                        </tr>
+                        <tr>
+                            <td>Content-Disposition</td>
+                            <td>attachment; filename=itemExcel.xlsx</td>
+                        </tr>
+                    </table>
+
+                    <h4>Success Response</h4>
+                    <ul>
+                        <li><strong>Status Code:</strong> 200 OK</li>
+                        <li><strong>Body:</strong> Binary Excel file stream</li>
+                    </ul>
+
+                    <h4>Error Response</h4>
+                    <ul>
+                        <li><strong>Status Code:</strong> 500 Internal Server Error</li>
+                        <li><strong>Body:</strong> <code>{ "error": "error message", "timestamp": "ISO date" }</code></li>
+                    </ul>
+                </div>
+
+                <h3>3.2 Health Check Endpoint</h3>
+                <div class="card">
+                    <h4><span class="badge badge-info">GET</span> /health</h4>
+                    <p><strong>Description:</strong> Service health status check</p>
+
+                    <h4>Response</h4>
+                    <pre><code>{
+  "status": "healthy",
+  "service": "excel-export",
+  "timestamp": "2025-01-15T10:30:00.000Z"
+}</code></pre>
+                </div>
+
+                <h3>3.3 Error Handling</h3>
+                <div class="warning-box">
+                    <h4>Global Error Handler</h4>
+                    <p>All errors are caught by the Express error middleware and returned with:</p>
+                    <ul>
+                        <li>HTTP status code (from error object or 500)</li>
+                        <li>Error message</li>
+                        <li>ISO timestamp</li>
+                        <li>Console error logging for debugging</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="data-model">
+                <h2>4. Data Model & Schema</h2>
+
+                <h3>4.1 Product Entity Structure</h3>
+                <p>The application works with a complex product structure that aggregates data from multiple vendor channels:</p>
+
+                <h4>Core Product Fields</h4>
+                <table>
+                    <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>mpId</td>
+                        <td>string</td>
+                        <td>Marketplace Product ID (primary identifier)</td>
+                    </tr>
+                    <tr>
+                        <td>net32url</td>
+                        <td>string</td>
+                        <td>Net32 product URL</td>
+                    </tr>
+                    <tr>
+                        <td>isBadgeItem</td>
+                        <td>boolean</td>
+                        <td>Whether product has badge indicator</td>
+                    </tr>
+                    <tr>
+                        <td>isScrapeOnlyActivated</td>
+                        <td>boolean</td>
+                        <td>Data scraping activation status</td>
+                    </tr>
+                    <tr>
+                        <td>isSlowActivated</td>
+                        <td>boolean</td>
+                        <td>Slow cron activation status</td>
+                    </tr>
+                </table>
+
+                <h4>Vendor-Specific Details (6 Vendors)</h4>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Supported Vendors</h4>
+                        <ul>
+                            <li><span class="badge badge-primary">TRADENT</span></li>
+                            <li><span class="badge badge-primary">FRONTIER</span></li>
+                            <li><span class="badge badge-primary">MVP</span></li>
+                            <li><span class="badge badge-primary">TOPDENT</span></li>
+                            <li><span class="badge badge-primary">FIRSTDENT</span></li>
+                            <li><span class="badge badge-primary">TRIAD</span></li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Per-Vendor Fields (60+ fields)</h4>
+                        <ul>
+                            <li>Channel identification</li>
+                            <li>Pricing configuration</li>
+                            <li>Repricing rules</li>
+                            <li>Scheduling information</li>
+                            <li>Status tracking</li>
+                            <li>Competition settings</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>4.2 Excel Export Columns (63 columns)</h3>
+                <p>The exported Excel file contains 63 columns organized into functional groups:</p>
+
+                <h4>Identification & Status (9 columns)</h4>
+                <ul>
+                    <li>Channel Name, MPID, Channel ID, Focus ID</li>
+                    <li>Active - Repricer, Data - Scrape</li>
+                    <li>Cron Name, DataOnlyCronName, ExecutionPriority</li>
+                </ul>
+
+                <h4>Pricing Information (8 columns)</h4>
+                <ul>
+                    <li>Unit Price, Floor Price, Max Price</li>
+                    <li>Latest Price, Last Existing Price, Last Suggested Price</li>
+                    <li>Lowest Vendor Price, Lowest Vendor</li>
+                </ul>
+
+                <h4>Repricing Configuration (15 columns)</h4>
+                <ul>
+                    <li>Up/Down, Reprice Up %, Reprice Down %</li>
+                    <li>NC, Suppress Price Break settings</li>
+                    <li>Badge Indicator, Badge Percentages</li>
+                    <li>Competition settings (Compete With All Vendors, etc.)</li>
+                    <li>Buy Box logic configuration</li>
+                </ul>
+
+                <h4>Scheduling & Status (12 columns)</h4>
+                <ul>
+                    <li>Last CRON run at, Next Cron Time</li>
+                    <li>Last updated at, Last Reprice Attempted</li>
+                    <li>Last run cron-type, Last updated cron-type</li>
+                    <li>Slow Cron Name, Is Slow Activated</li>
+                    <li>Reprice - Scrape, Reprice status</li>
+                </ul>
+
+                <h4>Advanced Settings (19 columns)</h4>
+                <ul>
+                    <li>Sister Vendor Id, Inactive Vendor settings</li>
+                    <li>Override Bulk Update configurations</li>
+                    <li>Handling Time Group, Keep Position</li>
+                    <li>Inventory Competition Threshold</li>
+                    <li>Exclude Vendor(s), Triggered By Vendor</li>
+                    <li>Own Vendor Threshold, Buy Box settings</li>
+                </ul>
+
+                <h3>4.3 Database Schema</h3>
+                <div class="info-box">
+                    <h4>MySQL Database Structure</h4>
+                    <p>The service uses MySQL stored procedures for data retrieval:</p>
+                    <ul>
+                        <li><code>sp_GetFullProductDetailsListV3()</code> - Main export procedure</li>
+                        <li>Returns unified result set with LEFT JOINs across vendor tables</li>
+                        <li>Each product can have 0-6 vendor detail records</li>
+                    </ul>
+                </div>
+
+                <h4>Primary Tables</h4>
+                <table>
+                    <tr>
+                        <th>Table</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td>table_scrapeProductList</td>
+                        <td>Master product list with metadata</td>
+                    </tr>
+                    <tr>
+                        <td>table_tradentDetails</td>
+                        <td>Tradent vendor-specific pricing and rules</td>
+                    </tr>
+                    <tr>
+                        <td>table_frontierDetails</td>
+                        <td>Frontier vendor-specific pricing and rules</td>
+                    </tr>
+                    <tr>
+                        <td>table_mvpDetails</td>
+                        <td>MVP vendor-specific pricing and rules</td>
+                    </tr>
+                    <tr>
+                        <td>table_topDentDetails</td>
+                        <td>TopDent vendor-specific pricing and rules</td>
+                    </tr>
+                    <tr>
+                        <td>table_firstDentDetails</td>
+                        <td>FirstDent vendor-specific pricing and rules</td>
+                    </tr>
+                    <tr>
+                        <td>table_triadDetails</td>
+                        <td>Triad vendor-specific pricing and rules</td>
+                    </tr>
+                </table>
+
+                <h3>4.4 Data Transformation Mappings</h3>
+
+                <h4>Badge Indicator Mapping</h4>
+                <table>
+                    <tr>
+                        <th>Key</th>
+                        <th>Display Value</th>
+                    </tr>
+                    <tr>
+                        <td>ALL_ZERO</td>
+                        <td>Compete all - Regular</td>
+                    </tr>
+                    <tr>
+                        <td>ALL_PERCENTAGE</td>
+                        <td>Compete with all - Percentage</td>
+                    </tr>
+                    <tr>
+                        <td>BADGE_ONLY</td>
+                        <td>Compete with Authorized Distributors only</td>
+                    </tr>
+                    <tr>
+                        <td>NON_BADGE_ONLY</td>
+                        <td>Compete with Non-Authorized Distributors only</td>
+                    </tr>
+                </table>
+
+                <h4>Handling Time Filter Mapping</h4>
+                <table>
+                    <tr>
+                        <th>Key</th>
+                        <th>Display Value</th>
+                    </tr>
+                    <tr>
+                        <td>ALL</td>
+                        <td>All</td>
+                    </tr>
+                    <tr>
+                        <td>FAST_SHIPPING</td>
+                        <td>1-2 days (Fast Shipping)</td>
+                    </tr>
+                    <tr>
+                        <td>STOCKED</td>
+                        <td>1-5 days (Stocked)</td>
+                    </tr>
+                    <tr>
+                        <td>LONG_HANDLING</td>
+                        <td>6+ days (Long Handling)</td>
+                    </tr>
+                </table>
+            </section>
+
+            <section id="export">
+                <h2>5. Export Process & Data Flow</h2>
+
+                <h3>5.1 Export Workflow</h3>
+                <div class="architecture-diagram">
+                    <div style="text-align: left; display: inline-block;">
+                        <div class="flow-item" style="display: block; margin: 0.5rem 0;">1. HTTP GET Request</div>
+                        <div class="flow-arrow" style="display: block;">↓</div>
+                        <div class="flow-item" style="display: block; margin: 0.5rem 0;">2. Route Handler</div>
+                        <div class="flow-arrow" style="display: block;">↓</div>
+                        <div class="flow-item" style="display: block; margin: 0.5rem 0;">3. Controller: exportItems()</div>
+                        <div class="flow-arrow" style="display: block;">↓</div>
+                        <div class="flow-item" style="display: block; margin: 0.5rem 0;">4. MySQL Query via SP</div>
+                        <div class="flow-arrow" style="display: block;">↓</div>
+                        <div class="flow-item" style="display: block; margin: 0.5rem 0;">5. Data Mapping (SQL → Domain)</div>
+                        <div class="flow-arrow" style="display: block;">↓</div>
+                        <div class="flow-item" style="display: block; margin: 0.5rem 0;">6. Vendor Details Extraction</div>
+                        <div class="flow-arrow" style="display: block;">↓</div>
+                        <div class="flow-item" style="display: block; margin: 0.5rem 0;">7. Data Transformation</div>
+                        <div class="flow-arrow" style="display: block;">↓</div>
+                        <div class="flow-item" style="display: block; margin: 0.5rem 0;">8. Excel Workbook Creation</div>
+                        <div class="flow-arrow" style="display: block;">↓</div>
+                        <div class="flow-item" style="display: block; margin: 0.5rem 0;">9. Column Definition (63 cols)</div>
+                        <div class="flow-arrow" style="display: block;">↓</div>
+                        <div class="flow-item" style="display: block; margin: 0.5rem 0;">10. Row Population</div>
+                        <div class="flow-arrow" style="display: block;">↓</div>
+                        <div class="flow-item" style="display: block; margin: 0.5rem 0;">11. Stream to Response</div>
+                        <div class="flow-arrow" style="display: block;">↓</div>
+                        <div class="flow-item" style="display: block; margin: 0.5rem 0;">12. Download Complete</div>
+                    </div>
+                </div>
+
+                <h3>5.2 Data Retrieval Process</h3>
+                <div class="card">
+                    <h4>Step 1: Database Query</h4>
+                    <pre><code>// Calls stored procedure to get all products with vendor details
+const ItemCollection = await mySqlHelper.GetCompleteProductDetails();
+
+// Stored Procedure: sp_GetFullProductDetailsListV3()
+// Returns: Unified result set with products × vendors (0-6 records per product)</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>Step 2: Data Mapping (mysql-mapper.ts)</h4>
+                    <pre><code>// Groups records by ProductId (mpId)
+const groupedList = _.groupBy(payload, (prod) => prod.ProductId);
+
+// For each product, extract vendor-specific details
+for (const prodId of listOfProductIds) {
+  const mappedProduct = {
+    mpId: prodId,
+    tradentDetails: getMappedVendorDetails(..., VendorName.TRADENT),
+    frontierDetails: getMappedVendorDetails(..., VendorName.FRONTIER),
+    mvpDetails: getMappedVendorDetails(..., VendorName.MVP),
+    topDentDetails: getMappedVendorDetails(..., VendorName.TOPDENT),
+    firstDentDetails: getMappedVendorDetails(..., VendorName.FIRSTDENT),
+    triadDetails: getMappedVendorDetails(..., VendorName.TRIAD)
+  };
+}</code></pre>
+                </div>
+
+                <h3>5.3 Vendor Detail Extraction</h3>
+                <div class="card">
+                    <h4>Step 3: Flatten Vendor Details</h4>
+                    <pre><code>// Extract each vendor's details into separate array items
+ItemCollection.map((val: any) => {
+  if (val.tradentDetails) {
+    val.tradentDetails.scrapeOnlyCronName = val.scrapeOnlyCronName;
+    val.tradentDetails.isScrapeOnlyActivated = val.isScrapeOnlyActivated;
+    val.tradentDetails.isBadgeItem = val.isBadgeItem;
+    AllItems.push(val.tradentDetails);
+  }
+  // Repeat for frontier, mvp, topDent, firstDent, triad
+});
+
+// Result: Flat array where each item represents one vendor's data</code></pre>
+                </div>
+
+                <h3>5.4 Data Transformation</h3>
+                <div class="card">
+                    <h4>Step 4: Format Dates and Values</h4>
+                    <pre><code>AllItems.forEach(($item) => {
+  // Date formatting with moment.js
+  $item.lastCronTime = $item.last_cron_time
+    ? moment($item.last_cron_time).format("YYYY-MM-DD HH:mm:ss")
+    : $item.last_cron_time;
+
+  // Badge indicator mapping
+  $item.badge_indicator = parseBadgeIndicator($item.badgeIndicator, "KEY");
+
+  // Type conversions
+  $item.mpid = parseInt($item.mpid);
+  $item.unitPrice = $item.unitPrice ? parseFloat($item.unitPrice) : null;
+
+  // Handling time filter mapping
+  $item.handling_time_filter = $item.handlingTimeFilter
+    ? handlingTimeGroupResx.find((x) => x.key == $item.handlingTimeFilter).value
+    : null;
+});</code></pre>
+                </div>
+
+                <h3>5.5 Excel Generation</h3>
+                <div class="card">
+                    <h4>Step 5: Create Excel Workbook</h4>
+                    <pre><code>const workbook = new excelJs.Workbook();
+let worksheet = workbook.addWorksheet("ItemList", {
+  views: [{ state: "frozen", ySplit: 1 }]  // Freeze header row
+});
+
+// Enable auto-filter on all columns
+worksheet.autoFilter = "A1:BK1";
+
+// Define 63 columns with headers and widths
+worksheet.columns = [
+  { header: "Channel Name", key: "channelName", width: 20 },
+  { header: "Active - Repricer", key: "activated", width: 20 },
+  // ... 61 more columns
+];
+
+// Add all data rows
+worksheet.addRows(AllItems);</code></pre>
+                </div>
+
+                <h3>5.6 Response Streaming</h3>
+                <div class="card">
+                    <h4>Step 6: Stream to Client</h4>
+                    <pre><code>// Set response headers
+res.setHeader("Content-Type",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+res.setHeader("Content-Disposition",
+  "attachment; filename=itemExcel.xlsx");
+
+// Stream workbook directly to response
+return workbook.xlsx.write(res).then(function () {
+  res.status(200).end();
+});</code></pre>
+                </div>
+
+                <h3>5.7 Performance Considerations</h3>
+                <div class="success-box">
+                    <h4>Memory Optimization Strategies</h4>
+                    <ul>
+                        <li><strong>Streaming:</strong> ExcelJS writes directly to response stream without buffering entire file in memory</li>
+                        <li><strong>Single Query:</strong> One database call retrieves all required data via stored procedure</li>
+                        <li><strong>Efficient Mapping:</strong> Lodash groupBy for O(n) complexity in data organization</li>
+                        <li><strong>Connection Pooling:</strong> Reuses database connections to avoid overhead</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <h4>Potential Bottlenecks</h4>
+                    <ul>
+                        <li><strong>Large Datasets:</strong> Export time scales linearly with product count × vendor count</li>
+                        <li><strong>Date Formatting:</strong> Moment.js operations on every timestamp field</li>
+                        <li><strong>Array Operations:</strong> Multiple iterations over item collections for transformation</li>
+                        <li><strong>Database Query:</strong> Complex JOIN across 7 tables can be slow on large datasets</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="dependencies">
+                <h2>6. Dependencies & Integration</h2>
+
+                <h3>6.1 Core Dependencies</h3>
+                <table>
+                    <tr>
+                        <th>Package</th>
+                        <th>Version</th>
+                        <th>Purpose</th>
+                        <th>Critical?</th>
+                    </tr>
+                    <tr>
+                        <td>express</td>
+                        <td>5.1.0</td>
+                        <td>Web server framework</td>
+                        <td><span class="badge badge-warning">Yes</span></td>
+                    </tr>
+                    <tr>
+                        <td>exceljs</td>
+                        <td>4.3.0</td>
+                        <td>Excel file generation</td>
+                        <td><span class="badge badge-warning">Yes</span></td>
+                    </tr>
+                    <tr>
+                        <td>mongoose</td>
+                        <td>7.0.5</td>
+                        <td>MongoDB ODM (cron settings)</td>
+                        <td><span class="badge badge-info">Medium</span></td>
+                    </tr>
+                    <tr>
+                        <td>mysql2</td>
+                        <td>via shared package</td>
+                        <td>MySQL database driver</td>
+                        <td><span class="badge badge-warning">Yes</span></td>
+                    </tr>
+                    <tr>
+                        <td>moment</td>
+                        <td>2.30.1</td>
+                        <td>Date formatting</td>
+                        <td><span class="badge badge-info">Medium</span></td>
+                    </tr>
+                    <tr>
+                        <td>lodash</td>
+                        <td>4.17.21</td>
+                        <td>Data manipulation utilities</td>
+                        <td><span class="badge badge-info">Medium</span></td>
+                    </tr>
+                    <tr>
+                        <td>dotenv</td>
+                        <td>16.0.1</td>
+                        <td>Environment variable loading</td>
+                        <td><span class="badge badge-warning">Yes</span></td>
+                    </tr>
+                    <tr>
+                        <td>cors</td>
+                        <td>2.8.5</td>
+                        <td>Cross-origin resource sharing</td>
+                        <td><span class="badge badge-success">Low</span></td>
+                    </tr>
+                    <tr>
+                        <td>morgan</td>
+                        <td>1.10.1</td>
+                        <td>HTTP request logging</td>
+                        <td><span class="badge badge-success">Low</span></td>
+                    </tr>
+                </table>
+
+                <h3>6.2 Monorepo Integration</h3>
+                <div class="info-box">
+                    <h4>Shared Package Dependency</h4>
+                    <p>The service depends on <code>@repricer-monorepo/shared</code> package for:</p>
+                    <ul>
+                        <li><strong>VendorName enum:</strong> Standardized vendor identifiers (TRADENT, FRONTIER, MVP, etc.)</li>
+                        <li><strong>Shared types:</strong> Common type definitions used across services</li>
+                        <li><strong>Utilities:</strong> Shared helper functions and constants</li>
+                    </ul>
+                </div>
+
+                <h3>6.3 Database Connections</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>MySQL (Primary)</h4>
+                        <ul>
+                            <li><strong>Connection:</strong> mysql2/promise with connection pooling</li>
+                            <li><strong>Host:</strong> From SQL_HOSTNAME env var</li>
+                            <li><strong>Port:</strong> Configurable (SQL_PORT)</li>
+                            <li><strong>Database:</strong> From SQL_DATABASE env var</li>
+                            <li><strong>Pool Size:</strong> Managed automatically</li>
+                            <li><strong>Usage:</strong> Product and vendor data retrieval</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>MongoDB (Legacy/Cache)</h4>
+                        <ul>
+                            <li><strong>Connection:</strong> Mongoose ODM</li>
+                            <li><strong>URI:</strong> From MANAGED_MONGO_URL env var</li>
+                            <li><strong>Password:</strong> Encrypted in config, decrypted at runtime</li>
+                            <li><strong>Cache Duration:</strong> 5 minutes for cron settings</li>
+                            <li><strong>Usage:</strong> Cron settings lookup (minimal)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>6.4 External Service Dependencies</h3>
+                <table>
+                    <tr>
+                        <th>Service</th>
+                        <th>Purpose</th>
+                        <th>Required?</th>
+                    </tr>
+                    <tr>
+                        <td>Main Repricer API</td>
+                        <td>Integration point for export requests</td>
+                        <td><span class="badge badge-success">No</span></td>
+                    </tr>
+                    <tr>
+                        <td>MySQL Database Server</td>
+                        <td>Product and vendor data storage</td>
+                        <td><span class="badge badge-warning">Yes</span></td>
+                    </tr>
+                    <tr>
+                        <td>MongoDB Server</td>
+                        <td>Cron settings (legacy, cached)</td>
+                        <td><span class="badge badge-info">Optional</span></td>
+                    </tr>
+                </table>
+
+                <h3>6.5 Security Dependencies</h3>
+                <div class="card">
+                    <h4>Encryption System</h4>
+                    <p>Custom encryption utility (<code>encrypto.ts</code>) for sensitive configuration:</p>
+                    <ul>
+                        <li>Decrypts MongoDB password at runtime</li>
+                        <li>Uses AES encryption with configurable key</li>
+                        <li>Prevents plaintext password storage in environment variables</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="deployment">
+                <h2>7. Deployment & Operations</h2>
+
+                <h3>7.1 Docker Configuration</h3>
+                <div class="card">
+                    <h4>Dockerfile Breakdown</h4>
+                    <pre><code>FROM node:18-alpine          # Lightweight Node.js 18 base image
+
+WORKDIR /app                 # Set working directory
+
+COPY . ./                    # Copy monorepo files
+RUN npm ci                   # Clean install dependencies
+RUN npm run build            # Compile TypeScript
+
+WORKDIR /app/apps/excel-export    # Navigate to service directory
+RUN npm prune --production   # Remove dev dependencies
+
+EXPOSE 3003                  # Service listens on port 3003
+ENV NODE_ENV=production      # Set production mode
+
+# Health check configuration
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3003/health', ...)"
+
+CMD ["node", "dist/main.js"] # Start compiled application</code></pre>
+                </div>
+
+                <h3>7.2 Environment Variables</h3>
+                <div class="warning-box">
+                    <h4>Required Configuration (Critical)</h4>
+                    <table>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                        <tr>
+                            <td>SQL_HOSTNAME</td>
+                            <td>MySQL server hostname</td>
+                            <td>mysql.example.com</td>
+                        </tr>
+                        <tr>
+                            <td>SQL_USERNAME</td>
+                            <td>MySQL username</td>
+                            <td>repricer_user</td>
+                        </tr>
+                        <tr>
+                            <td>SQL_PASSWORD</td>
+                            <td>MySQL password</td>
+                            <td>secretpassword</td>
+                        </tr>
+                        <tr>
+                            <td>SQL_PORT</td>
+                            <td>MySQL port</td>
+                            <td>3306</td>
+                        </tr>
+                        <tr>
+                            <td>SQL_DATABASE</td>
+                            <td>MySQL database name</td>
+                            <td>repricer_db</td>
+                        </tr>
+                        <tr>
+                            <td>MANAGED_MONGO_URL</td>
+                            <td>MongoDB connection URI template</td>
+                            <td>mongodb://user:{{password}}@host/db</td>
+                        </tr>
+                        <tr>
+                            <td>MANAGED_MONGO_PASSWORD</td>
+                            <td>Encrypted MongoDB password</td>
+                            <td>encrypted_string</td>
+                        </tr>
+                        <tr>
+                            <td>REPRICER_ENCRYPTION_KEY</td>
+                            <td>Encryption key for decryption</td>
+                            <td>base64_encoded_key</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="info-box">
+                    <h4>Optional Configuration</h4>
+                    <table>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                        <tr>
+                            <td>PORT</td>
+                            <td>3000</td>
+                            <td>HTTP server port (overridden to 3003 in code)</td>
+                        </tr>
+                        <tr>
+                            <td>NODE_ENV</td>
+                            <td>development</td>
+                            <td>Environment mode</td>
+                        </tr>
+                        <tr>
+                            <td>USE_MYSQL</td>
+                            <td>true</td>
+                            <td>Enable/disable MySQL connection</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h3>7.3 Build & Run Scripts</h3>
+                <table>
+                    <tr>
+                        <th>Script</th>
+                        <th>Command</th>
+                        <th>Purpose</th>
+                    </tr>
+                    <tr>
+                        <td>Development</td>
+                        <td><code>npm run dev</code></td>
+                        <td>Hot-reload development server with tsx watch</td>
+                    </tr>
+                    <tr>
+                        <td>Start</td>
+                        <td><code>npm start</code></td>
+                        <td>Run TypeScript directly with tsx (no build)</td>
+                    </tr>
+                    <tr>
+                        <td>Build</td>
+                        <td><code>npm run build</code></td>
+                        <td>Compile TypeScript to JavaScript</td>
+                    </tr>
+                    <tr>
+                        <td>Format</td>
+                        <td><code>npm run format</code></td>
+                        <td>Format code with Prettier</td>
+                    </tr>
+                    <tr>
+                        <td>Test</td>
+                        <td><code>npm test</code></td>
+                        <td>Run Jest test suite (if configured)</td>
+                    </tr>
+                </table>
+
+                <h3>7.4 Production Deployment</h3>
+                <div class="success-box">
+                    <h4>Deployment Steps</h4>
+                    <ol>
+                        <li><strong>Build Docker Image:</strong> <code>docker build -t excel-export:latest .</code></li>
+                        <li><strong>Configure Environment:</strong> Create .env file or set environment variables</li>
+                        <li><strong>Run Container:</strong> <code>docker run -p 3003:3003 --env-file .env excel-export:latest</code></li>
+                        <li><strong>Verify Health:</strong> <code>curl http://localhost:3003/health</code></li>
+                        <li><strong>Test Export:</strong> <code>curl http://localhost:3003/api/excel/download -o test.xlsx</code></li>
+                    </ol>
+                </div>
+
+                <h3>7.5 Monitoring & Health Checks</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Built-in Health Check</h4>
+                        <p><strong>Endpoint:</strong> GET /health</p>
+                        <p><strong>Interval:</strong> 30 seconds</p>
+                        <p><strong>Timeout:</strong> 3 seconds</p>
+                        <p><strong>Start Period:</strong> 5 seconds</p>
+                        <p><strong>Retries:</strong> 3 attempts</p>
+                    </div>
+                    <div class="card">
+                        <h4>Logging</h4>
+                        <p><strong>HTTP Requests:</strong> Morgan middleware (dev format)</p>
+                        <p><strong>Errors:</strong> Console.error with stack traces</p>
+                        <p><strong>Database:</strong> Connection status logged to console</p>
+                        <p><strong>Startup:</strong> Port and endpoint information</p>
+                    </div>
+                </div>
+
+                <h3>7.6 Scaling Considerations</h3>
+                <div class="card">
+                    <h4>Horizontal Scaling</h4>
+                    <ul>
+                        <li><strong>Stateless Design:</strong> No session state, can run multiple instances</li>
+                        <li><strong>Database Connection Pooling:</strong> Each instance manages its own pool</li>
+                        <li><strong>Load Balancing:</strong> Use reverse proxy (nginx, HAProxy) to distribute requests</li>
+                        <li><strong>Cache Sharing:</strong> MongoDB cron cache is instance-local (5 min TTL)</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box">
+                    <h4>Resource Requirements</h4>
+                    <ul>
+                        <li><strong>Memory:</strong> Minimum 512MB, recommended 1GB per instance</li>
+                        <li><strong>CPU:</strong> 1 vCPU minimum, 2 vCPU recommended for concurrent exports</li>
+                        <li><strong>Network:</strong> Outbound MySQL/MongoDB connectivity required</li>
+                        <li><strong>Storage:</strong> Minimal (< 100MB for compiled code and dependencies)</li>
+                    </ul>
+                </div>
+
+                <h3>7.7 Troubleshooting Guide</h3>
+                <table>
+                    <tr>
+                        <th>Issue</th>
+                        <th>Possible Cause</th>
+                        <th>Solution</th>
+                    </tr>
+                    <tr>
+                        <td>Service won't start</td>
+                        <td>Missing environment variables</td>
+                        <td>Check all required env vars are set, review Zod validation errors</td>
+                    </tr>
+                    <tr>
+                        <td>Database connection error</td>
+                        <td>Incorrect credentials or unreachable host</td>
+                        <td>Verify SQL_HOSTNAME, SQL_USERNAME, SQL_PASSWORD, network connectivity</td>
+                    </tr>
+                    <tr>
+                        <td>MongoDB connection error</td>
+                        <td>Encrypted password decryption failure</td>
+                        <td>Verify REPRICER_ENCRYPTION_KEY and MANAGED_MONGO_PASSWORD</td>
+                    </tr>
+                    <tr>
+                        <td>Empty Excel file</td>
+                        <td>No data in database or stored procedure error</td>
+                        <td>Check database has product data, verify stored procedure exists</td>
+                    </tr>
+                    <tr>
+                        <td>Export timeout</td>
+                        <td>Large dataset or slow database</td>
+                        <td>Optimize stored procedure, increase server timeout, add pagination</td>
+                    </tr>
+                    <tr>
+                        <td>Memory errors</td>
+                        <td>Insufficient container memory</td>
+                        <td>Increase Docker memory limit, optimize data processing</td>
+                    </tr>
+                </table>
+            </section>
+
+            <section id="appendix">
+                <h2>8. Additional Information</h2>
+
+                <h3>8.1 Code Quality</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>TypeScript Configuration</h4>
+                        <ul>
+                            <li>Target: ES2020</li>
+                            <li>Module: ESNext</li>
+                            <li>Strict mode enabled</li>
+                            <li>Source maps generated</li>
+                            <li>Declaration files generated</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Code Standards</h4>
+                        <ul>
+                            <li>Prettier for formatting</li>
+                            <li>ESM module system</li>
+                            <li>Async/await for async operations</li>
+                            <li>Type safety with TypeScript</li>
+                            <li>Error handling with try/catch</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>8.2 Future Improvements</h3>
+                <div class="info-box">
+                    <h4>Potential Enhancements</h4>
+                    <ul>
+                        <li><strong>Pagination Support:</strong> Add parameters for page size and page number to handle large datasets</li>
+                        <li><strong>Filter Implementation:</strong> Activate filter endpoints mentioned in README but not implemented</li>
+                        <li><strong>Caching Layer:</strong> Cache generated Excel files for repeated requests with same parameters</li>
+                        <li><strong>Compression:</strong> GZIP compression for Excel file transfer</li>
+                        <li><strong>Progress Reporting:</strong> WebSocket or SSE for export progress updates</li>
+                        <li><strong>Format Options:</strong> Support CSV, JSON, or other export formats</li>
+                        <li><strong>Scheduled Exports:</strong> Automatic periodic exports to storage</li>
+                        <li><strong>Column Selection:</strong> Allow clients to choose which columns to export</li>
+                        <li><strong>Authentication:</strong> Add API authentication and authorization</li>
+                        <li><strong>Rate Limiting:</strong> Prevent abuse of export endpoint</li>
+                    </ul>
+                </div>
+
+                <h3>8.3 Known Limitations</h3>
+                <div class="warning-box">
+                    <h4>Current Constraints</h4>
+                    <ul>
+                        <li>No pagination - exports all data in single request</li>
+                        <li>No filtering implementation (only full export available)</li>
+                        <li>Synchronous processing - blocks until export complete</li>
+                        <li>No progress indicators for long-running exports</li>
+                        <li>Fixed column structure - cannot customize output</li>
+                        <li>Legacy ExcelService class unused (dead code)</li>
+                        <li>MongoDB dependency could be removed (minimal usage)</li>
+                        <li>Moment.js is deprecated - consider migrating to date-fns or Luxon</li>
+                    </ul>
+                </div>
+
+                <h3>8.4 Related Documentation</h3>
+                <ul>
+                    <li><a href="../README.md">Project README</a></li>
+                    <li><a href="https://github.com/exceljs/exceljs">ExcelJS Documentation</a></li>
+                    <li><a href="https://expressjs.com/">Express.js Documentation</a></li>
+                    <li><a href="https://www.typescriptlang.org/">TypeScript Documentation</a></li>
+                </ul>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Excel Export Service - Technical Documentation</p>
+            <p>Generated: January 2025 | Version: 1.0.0</p>
+        </footer>
+    </div>
+</body>
+</html>
