@@ -308,36 +308,6 @@ export async function GetEligibleContextErrorItems(
   return result as ErrorItem[];
 }
 
-export async function GetFilterCronDetails(
-  ignoreCache = false,
-): Promise<any[]> {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  if (!ignoreCache) {
-    const filterCronDetails = await cacheClient.get<any>(
-      CacheKey.FILTER_CRON_DETAILS,
-    );
-    if (filterCronDetails != null) return filterCronDetails;
-  }
-  const dbo = await getMongoDb();
-  const mongoResult = await dbo
-    .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME)
-    .find()
-    .sort({ _id: 1 })
-    .toArray();
-  await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, mongoResult);
-  await cacheClient.disconnect();
-  return mongoResult;
-}
-
-export async function GetFilterCronDetailsByName(_cronName: any) {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME)
-    .findOne({ cronName: _cronName });
-}
-
 export async function GetProductListByQuery(query: any) {
   const dbo = await getMongoDb();
   return dbo
@@ -378,28 +348,6 @@ export async function UpdateCronForProductAsync(payload: any) {
         $set: setVal,
       },
     );
-}
-
-export async function GetSlowCronDetails(ignoreCache = false): Promise<any[]> {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  if (!ignoreCache) {
-    const slowCronDetails = await cacheClient.get<any[]>(
-      CacheKey.SLOW_CRON_DETAILS,
-    );
-    if (slowCronDetails != null) return slowCronDetails;
-  }
-  const dbo = await getMongoDb();
-  const mongoResult = await dbo
-    .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME)
-    .find()
-    .sort({ _id: 1 })
-    .toArray();
-  if (mongoResult != null)
-    await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, mongoResult);
-  await cacheClient.disconnect();
-  return mongoResult;
 }
 
 export async function GetProxyFailureDetailsByProxyProviderId(
@@ -489,29 +437,6 @@ export async function GetScrapeProductList(cronId: any, _isActive: any) {
     .sort({ _id: 1 })
     .toArray();
   return mongoResult;
-}
-
-export async function GetScrapeCronDetails(
-  ignoreCache = false,
-): Promise<ScrapeCronDetail[]> {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const cronSettingsList = await cacheClient.get<any>(
-    CacheKey.SCRAPE_CRON_DETAILS,
-  );
-  if (cronSettingsList != null) return cronSettingsList;
-  const dbo = await getMongoDb();
-  const result = await dbo
-    .collection(applicationConfig.SCRAPE_CRON_NAME)
-    .find()
-    .sort({ _id: 1 })
-    .toArray();
-  if (result != null) {
-    await cacheClient.set(CacheKey.SCRAPE_CRON_DETAILS, result);
-  }
-  await cacheClient.disconnect();
-  return result as ScrapeCronDetail[];
 }
 
 export async function InsertScrapeProduct(payload: any) {

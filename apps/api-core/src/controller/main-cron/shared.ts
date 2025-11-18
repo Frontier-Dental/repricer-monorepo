@@ -173,7 +173,7 @@ async function get422EligibleProducts() {
     return [];
   }
   let cronSettingDetailsResponse = await sqlV2Service.GetCronSettingsList();
-  let slowCronDetails = await dbHelper.GetSlowCronDetails();
+  let slowCronDetails = await sqlV2Service.GetSlowCronDetails();
   cronSettingDetailsResponse = _.concat(
     cronSettingDetailsResponse,
     slowCronDetails,

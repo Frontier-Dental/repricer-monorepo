@@ -21,6 +21,7 @@ import * as filterMapper from "../filter-mapper";
 import {
   GetCronSettingsList,
   GetCronSettingsDetailsByName,
+  GetSlowCronDetails,
 } from "../../utility/mysql/mysql-v2";
 
 export async function Execute(
@@ -709,7 +710,7 @@ async function initCronStatus(_contextCronStatus: any) {
 
 async function proceedWithExecution(cronId: string) {
   let cronSettingDetails = await GetCronSettingsList();
-  const slowCronDetails = await dbHelper.GetSlowCronDetails();
+  const slowCronDetails = await GetSlowCronDetails();
   cronSettingDetails = _.concat(cronSettingDetails, slowCronDetails);
   if (cronSettingDetails) {
     const contextCron = cronSettingDetails.find((x: any) => x.CronId == cronId);

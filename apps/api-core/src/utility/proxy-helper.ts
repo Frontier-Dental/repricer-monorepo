@@ -53,7 +53,7 @@ export const GetProxyDetailsByName = async (
 
 export const GetProxyDetailsById = async (cronId: number): Promise<any[]> => {
   const regularCronDetails = await sqlV2Service.GetCronSettingsList();
-  const slowCronDetails = await dbHelper.GetSlowCronDetails();
+  const slowCronDetails = await sqlV2Service.GetSlowCronDetails();
   const cronDetails = _.concat(regularCronDetails, slowCronDetails);
   return [cronDetails.find((x: any) => x.CronId == cronId)].filter(
     Boolean,

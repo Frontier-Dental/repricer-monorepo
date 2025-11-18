@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
-import * as dbHelper from "../../utility/mongo/db-helper";
 import { scrapeProductList } from "./shared";
 import * as _codes from "http-status-codes";
 import * as mySqlHelper from "../../utility/mysql/mysql-helper";
 import * as scrapeHelper from "../../utility/scrape-helper";
 import { ScrapeCronDetail } from "../../utility/mongo/types";
+import { GetScrapeCronDetails } from "../../utility/mysql/mysql-v2";
 
 export async function runCron(req: Request, res: Response): Promise<any> {
   const requestedCron = req.params.cronName;
-  const scrapeCronDetails = await dbHelper.GetScrapeCronDetails();
+  const scrapeCronDetails = await GetScrapeCronDetails();
   const contextCronDetails = scrapeCronDetails.find(
     (x: any) => x.CronName == requestedCron,
   );
@@ -19,7 +19,7 @@ export async function runCron(req: Request, res: Response): Promise<any> {
 export async function runProduct(req: Request, res: Response): Promise<any> {
   const requestedCron = req.params.cronName;
   const productId = req.params.product;
-  const scrapeCronDetails = await dbHelper.GetScrapeCronDetails();
+  const scrapeCronDetails = await GetScrapeCronDetails();
   const contextCronDetails = scrapeCronDetails.find(
     (x: any) => x.CronName == requestedCron,
   );
