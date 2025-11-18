@@ -53,7 +53,7 @@ debugController.get(
       contextCronName = (productDetails as any).triadDetails.cronName;
     }
     let cronSettingsResponse =
-      await dbHelper.GetCronSettingsDetailsByName(contextCronName);
+      await sqlV2Service.GetCronSettingsDetailsByName(contextCronName);
     if (
       !cronSettingsResponse ||
       (cronSettingsResponse && cronSettingsResponse.length == 0)
@@ -129,7 +129,7 @@ debugController.post(
     const requiredCronName = req.params.cronName.trim();
     const products = req.body;
     const cronSettingsResponse: any[] =
-      await dbHelper.GetCronSettingsDetailsByName(requiredCronName);
+      await sqlV2Service.GetCronSettingsDetailsByName(requiredCronName);
     if (cronSettingsResponse && cronSettingsResponse.length > 0) {
       const cronId = _.first(cronSettingsResponse).CronId as any;
       for (let prod of products) {

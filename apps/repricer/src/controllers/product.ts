@@ -11,7 +11,11 @@ import Item from "../models/item";
 import { applicationConfig } from "../utility/config";
 import * as SessionHelper from "../utility/session-helper";
 import { ExcelExportService } from "../services/excel-export.service";
-import { GetCronSettingsList, GetEnvValueByKey } from "../services/mysql-v2";
+import {
+  GetCronSettingsList,
+  GetEnvValueByKey,
+  ToggleCronStatus,
+} from "../services/mysql-v2";
 
 export const getMasterItemController = async (req: Request, res: Response) => {
   let query: any = {};
@@ -438,7 +442,7 @@ export async function runAllCron(req: Request, res: Response) {
       if (cron.IsHidden && cron.IsHidden == true) {
         // do nothing
       } else {
-        await mongoMiddleware.ToggleCronStatus(cron.CronId, true as any, req);
+        await ToggleCronStatus(cron.CronId, true as any, req);
       }
     }
   }
@@ -799,11 +803,7 @@ export async function stopAllCron(req: Request, res: Response) {
         if (cron.IsHidden) {
           // do nothing
         } else {
-          await mongoMiddleware.ToggleCronStatus(
-            cron.CronId,
-            false as any,
-            req,
-          );
+          await ToggleCronStatus(cron.CronId, false as any, req);
         }
       }
     }

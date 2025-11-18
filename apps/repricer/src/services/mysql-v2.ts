@@ -39,14 +39,11 @@ export async function GetConfigurations(activeOnly = true) {
 }
 
 export async function UpdateConfiguration(payload: any, req: any) {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  await cacheClient.delete(`${CacheKey.IP_CONFIG}_true`);
-  await cacheClient.delete(`${CacheKey.IP_CONFIG}_false`);
-  await cacheClient.disconnect();
   const db = getKnexInstance();
   const auditInfo = await GetAuditInfo(req);
+  console.debug(
+    `Updating IP Configurations at ${new Date().toISOString()} || By : ${auditInfo.UpdatedBy}`,
+  );
   for (const element of payload) {
     await db("ipConfig")
       .where({ ProxyProvider: element.proxyProvider, IpType: element.ipType })
@@ -60,6 +57,12 @@ export async function UpdateConfiguration(payload: any, req: any) {
         UpdatedBy: auditInfo.UpdatedBy,
       });
   }
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  await cacheClient.delete(`${CacheKey.IP_CONFIG}_true`);
+  await cacheClient.delete(`${CacheKey.IP_CONFIG}_false`);
+  await cacheClient.disconnect();
 }
 
 export async function GetEnvSettings() {
@@ -108,6 +111,9 @@ export async function UpsertEnvSettings(payload: any) {
   let mongoResult: any = null;
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
+  );
+  console.debug(
+    `Updating Env Settings at ${new Date().toISOString()} || By : ${payload.updatedBy}`,
   );
   const db = getKnexInstance();
   await db("env_settings")
@@ -243,4 +249,89 @@ export async function GetCronSettingsList() {
   }
   await cacheClient.disconnect();
   return cronSettingsDetails;
+}
+
+export async function UpdateCronSettingsList(payload: any, req: any) {
+  let mongoResult: any = null;
+  const db = getKnexInstance();
+  for (const element of payload) {
+    console.debug(
+      `Updating Cron Settings at ${new Date().toISOString()} : ${element.CronId} || Name : ${element.CronName}`,
+    );
+    await db("cron_settings")
+      .where({ CronId: element.CronId })
+      .update({
+        CronTime: element.CronTime ? parseInt(element.CronTime) : null,
+        CronTimeUnit: element.CronTimeUnit,
+        Offset: element.Offset ? parseInt(element.Offset) : null,
+        ProxyProvider: element.ProxyProvider
+          ? parseInt(element.ProxyProvider)
+          : null,
+        IpType: element.IpType ? parseInt(element.IpType) : null,
+        FixedIp: element.FixedIp,
+        UpdatedTime: (await GetAuditInfo(req)).UpdatedOn,
+        UpdatedBy: (await GetAuditInfo(req)).UpdatedBy,
+      });
+
+    if (element.SecretKey && element.SecretKey.length > 0) {
+      for (const secret of element.SecretKey) {
+        console.debug(
+          `Updating Secret Key for Cron : ${element.CronId} || Vendor : ${secret.vendorName} || Value : ${secret.secretKey}`,
+        );
+        await db("secret_keys")
+          .where({ CronId: element.CronId, VendorName: secret.vendorName })
+          .update({
+            SecretKey: secret.secretKey,
+          });
+      }
+    }
+
+    if (
+      element.AlternateProxyProvider &&
+      element.AlternateProxyProvider.length > 0
+    ) {
+      for (const alternateProvider of element.AlternateProxyProvider) {
+        console.debug(
+          `Updating Alternate Provider for Cron : ${element.CronId} || Sequence : ${alternateProvider.Sequence} || Value : ${alternateProvider.ProxyProvider}`,
+        );
+        await db("alternate_proxy_providers")
+          .where({
+            CronId: element.CronId,
+            Sequence: alternateProvider.Sequence,
+          })
+          .update({
+            ProxyProvider: parseInt(alternateProvider.ProxyProvider),
+          });
+      }
+    }
+  }
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
+  await cacheClient.disconnect();
+  return mongoResult;
+}
+
+export async function ToggleCronStatus(
+  cronId: string,
+  cronStatus: string,
+  req: any,
+) {
+  console.debug(
+    `Toggling Cron Status at ${new Date().toISOString()} : ${cronId} || Status : ${cronStatus}`,
+  );
+  const db = getKnexInstance();
+  await db("cron_settings")
+    .where({ CronId: cronId })
+    .update({
+      CronStatus: JSON.parse(cronStatus),
+      UpdatedBy: (await GetAuditInfo(req)).UpdatedBy,
+      UpdatedTime: (await GetAuditInfo(req)).UpdatedOn,
+    });
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
+  await cacheClient.disconnect();
 }

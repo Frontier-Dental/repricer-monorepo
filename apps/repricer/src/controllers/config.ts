@@ -18,13 +18,6 @@ export async function GetConfigSetup(req: Request, res: Response) {
       config.lastUpdatedOn = config.AuditInfo
         ? moment(config.AuditInfo.UpdatedOn).format("DD-MM-YYYY HH:mm:ss")
         : "-";
-      const proxyCrons = await mongoMiddleware.GetCronsByProxyProvider(
-        config.proxyProvider,
-      );
-      config.regularCrons = proxyCrons.regularCrons;
-      config.slowCrons = proxyCrons.slowCrons;
-      config.scrapeCrons = proxyCrons.scrapeCrons;
-      config.error422Crons = proxyCrons.error422Crons;
       config.password = securedPassword;
     }),
   );

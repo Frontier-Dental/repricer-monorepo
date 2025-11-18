@@ -8,7 +8,6 @@ import { RepriceAsyncResponse } from "../../model/reprice-async-response";
 import { CronSettings } from "../../types/cron-settings";
 import { FrontierProduct } from "../../types/frontier";
 import { Net32Product, Net32Response } from "../../types/net32";
-import { RepriceProductHttpResponse } from "../../types/reprice-product-http-response";
 import * as axiosHelper from "../axios-helper";
 import { applicationConfig } from "../config";
 import * as dbHelper from "../mongo/db-helper";
@@ -19,7 +18,10 @@ import { repriceProduct, repriceProductToMax } from "./v1/algo-v1";
 import { AlgoExecutionMode, VendorName } from "@repricer-monorepo/shared";
 import { repriceProductV2Wrapper } from "./v2/wrapper";
 import * as filterMapper from "../filter-mapper";
-import { GetCronSettingsList } from "../../utility/mysql/mysql-v2";
+import {
+  GetCronSettingsList,
+  GetCronSettingsDetailsByName,
+} from "../../utility/mysql/mysql-v2";
 
 export async function Execute(
   jobId: string,
@@ -63,7 +65,7 @@ export async function Execute(
     try {
       if (!cronSetting) {
         cronSetting = _.first(
-          await dbHelper.GetCronSettingsDetailsByName(prod.cronName),
+          await GetCronSettingsDetailsByName(prod.cronName),
         );
       }
       let isProceed = true;
@@ -975,7 +977,7 @@ function proceedNext(prod: any, key: string) {
 export async function repriceWrapper(
   net32resp: Net32Response,
   prod: ProductDetailsListItem,
-  cronSetting: CronSettings,
+  cronSetting: any,
   isOverrideRun: boolean,
   keyGen: string,
   prioritySequence: { name: string; value: string }[],

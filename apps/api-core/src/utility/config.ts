@@ -9,7 +9,7 @@ const envSchema = z.object({
   GET_PRICE_LIST_COLLECTION_NAME: z.string().default("items"),
   CRON_LOGS_COLLECTION_NAME: z.string().default("cronLogs"),
   CRON_STATUS_COLLECTION_NAME: z.string().default("cronStatusLogs"),
-  CRON_SETTINGS_COLLECTION_NAME: z.string().default("cronSettings"),
+  // CRON_SETTINGS_COLLECTION_NAME: z.string().default("cronSettings"),
   ERROR_ITEM_COLLECTION: z.string().default("errorItems"),
   MANAGED_MONGO_PRODUCT_COLLECTION: z.string().default("products"),
   MANAGED_MONGO_COLLECTION: z.string().default("results"),

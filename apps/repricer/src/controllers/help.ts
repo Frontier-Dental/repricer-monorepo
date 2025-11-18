@@ -19,6 +19,7 @@ import {
   GetConfigurations,
   GetCronSettingsList,
   InsertOrUpdateCronSettings,
+  UpdateCronSettingsList,
 } from "../services/mysql-v2";
 
 export async function getLogsById(req: Request, res: Response) {
@@ -232,7 +233,7 @@ export async function createCrons(req: Request, res: Response) {
     cron.UpdatedTime = new Date();
     cron.CronStatus = false;
     cron.CronId = $id;
-    await mongoMiddleware.InsertCronSettings(cron);
+    //await mongoMiddleware.InsertCronSettings(cron);
     newCronList.push({
       cronId: $id,
       cronVariable: `_E${generalCronDetails.length + count}Cron`,
@@ -368,7 +369,7 @@ export async function updateCronSecretKey(req: Request, res: Response) {
       $.SecretKey = await getSecretKeyDetails($.CronName);
     }
   }
-  await mongoMiddleware.UpdateCronSettingsList(cronSettingsList, req);
+  await UpdateCronSettingsList(cronSettingsList, req);
   return res.status(200).json({
     status: `SUCCESS`,
     cronDetails: cronSettingsList,
