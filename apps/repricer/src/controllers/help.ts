@@ -20,7 +20,8 @@ import {
   GetCronSettingsList,
   InsertOrUpdateCronSettings,
   UpdateCronSettingsList,
-  GetSlowCronDetails,
+  UpsertFilterCronSettings,
+  GetFilteredCrons,
 } from "../services/mysql-v2";
 
 export async function getLogsById(req: Request, res: Response) {
@@ -462,6 +463,10 @@ export async function migrateCronSettingsToSql(req: Request, res: Response) {
             );
           }
         }
+      case "FILTER":
+        cronSettingsList = await mongoMiddleware.GetFilteredCrons();
+        await UpsertFilterCronSettings(cronSettingsList);
+        break;
       default:
         break;
     }

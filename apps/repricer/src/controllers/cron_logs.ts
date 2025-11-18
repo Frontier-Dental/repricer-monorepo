@@ -15,7 +15,11 @@ import { Request, Response } from "express";
 import * as ftpMiddleware from "../services/ftp";
 import * as scrapeOnlyMiddleware from "../middleware/scrape-only";
 import { applicationConfig } from "../utility/config";
-import { GetCronSettingsList, GetSlowCronDetails } from "../services/mysql-v2";
+import {
+  GetCronSettingsList,
+  GetSlowCronDetails,
+  GetFilteredCrons,
+} from "../services/mysql-v2";
 
 let _contextLog: any = null;
 
@@ -144,7 +148,7 @@ export async function getCronLogs(req: Request, res: Response) {
   let filterCronLogs = await mongoMiddleware.GetFilterCronLogsByLimit(
     applicationConfig.FILTER_CRON_LOGS_LIMIT,
   );
-  const filterCronDetails = await mongoMiddleware.GetFilteredCrons();
+  const filterCronDetails = await GetFilteredCrons();
   _.forEach(filterCronLogs, (x: any) => {
     x.filterDate = moment(x.filterDate).format("DD-MM-YY HH:mm:ss");
     x.startTime = moment(x.startTime).format("DD-MM-YY HH:mm:ss");
@@ -982,7 +986,7 @@ export async function getFilterCronLogsByLimit(req: Request, res: Response) {
   let filterCronLogsResult =
     await mongoMiddleware.GetFilterCronLogsByLimit(logsLimit);
   if (filterCronLogsResult && filterCronLogsResult.length > 0) {
-    const filterCronDetails = await mongoMiddleware.GetFilteredCrons();
+    const filterCronDetails = await GetFilteredCrons();
     _.forEach(filterCronLogsResult, (x: any) => {
       x.filterDate = moment(x.filterDate).format("DD-MM-YY HH:mm:ss");
       x.startTime = moment(x.startTime).format("DD-MM-YY HH:mm:ss");
@@ -1294,7 +1298,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   let filterCronLogs = await mongoMiddleware.GetFilterCronLogsByLimit(
     applicationConfig.FILTER_CRON_LOGS_LIMIT,
   );
-  const filterCronDetails = await mongoMiddleware.GetFilteredCrons();
+  const filterCronDetails = await GetFilteredCrons();
   _.forEach(filterCronLogs, (x: any) => {
     x.filterDate = moment(x.filterDate).format("DD-MM-YY HH:mm:ss");
     x.startTime = moment(x.startTime).format("DD-MM-YY HH:mm:ss");

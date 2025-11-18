@@ -160,7 +160,7 @@ debugController.get(
   async (req: Request, res: Response) => {
     const requiredCronName = req.params.cronName.trim();
     const cronSettingsResponse =
-      await dbHelper.GetFilterCronDetailsByName(requiredCronName);
+      await sqlV2Service.GetFilterCronDetailsByName(requiredCronName);
     await filterMapper.FilterProducts(cronSettingsResponse);
     res.status(_codes.StatusCodes.OK).send("Success!!");
   },

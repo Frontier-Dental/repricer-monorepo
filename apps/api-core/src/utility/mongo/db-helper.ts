@@ -308,36 +308,6 @@ export async function GetEligibleContextErrorItems(
   return result as ErrorItem[];
 }
 
-export async function GetFilterCronDetails(
-  ignoreCache = false,
-): Promise<any[]> {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  if (!ignoreCache) {
-    const filterCronDetails = await cacheClient.get<any>(
-      CacheKey.FILTER_CRON_DETAILS,
-    );
-    if (filterCronDetails != null) return filterCronDetails;
-  }
-  const dbo = await getMongoDb();
-  const mongoResult = await dbo
-    .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME)
-    .find()
-    .sort({ _id: 1 })
-    .toArray();
-  await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, mongoResult);
-  await cacheClient.disconnect();
-  return mongoResult;
-}
-
-export async function GetFilterCronDetailsByName(_cronName: any) {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME)
-    .findOne({ cronName: _cronName });
-}
-
 export async function GetProductListByQuery(query: any) {
   const dbo = await getMongoDb();
   return dbo

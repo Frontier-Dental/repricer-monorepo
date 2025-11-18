@@ -10,6 +10,7 @@ import {
 } from "@repricer-monorepo/shared";
 import { getKnexInstance } from "./knex-wrapper";
 import { GetAuditInfo } from "../utility/session-helper";
+import AuditInfo from "../models/audit-info";
 
 export async function GetConfigurations(activeOnly = true) {
   const cacheClient = CacheClient.getInstance(
@@ -376,4 +377,89 @@ export async function GetScrapeCrons() {
   }
   await cacheClient.disconnect();
   return cronSettingsDetails;
+}
+
+export async function UpsertFilterCronSettings(filterCronSettingsPayload: any) {
+  if (filterCronSettingsPayload && filterCronSettingsPayload.length > 0) {
+    const db = getKnexInstance();
+    for (const filterCron of filterCronSettingsPayload) {
+      console.debug(
+        `Upserting Filter Cron Settings for Cron : ${filterCron.cronName} at ${new Date().toISOString()}`,
+      );
+      await db.transaction(async (trx) => {
+        await trx("filter_cron_settings")
+          .insert({
+            CronId: filterCron.cronId,
+            CronName: filterCron.cronName,
+            CronExpression: filterCron.cronExpression,
+            Status: JSON.parse(filterCron.status),
+            FilterValue: parseInt(filterCron.filterValue),
+            LinkedCronId: filterCron.linkedCronId,
+            LinkedCronName: filterCron.linkedCronName,
+            UpdatedBy: filterCron.AuditInfo
+              ? filterCron.AuditInfo.UpdatedBy
+              : "ANONYMOUS",
+            CreatedTime: new Date(),
+            UpdatedTime: new Date(),
+          })
+          .onConflict("CronId")
+          .merge({
+            CronExpression: filterCron.cronExpression,
+            Status: JSON.parse(filterCron.status),
+            FilterValue: parseInt(filterCron.filterValue),
+            LinkedCronId: filterCron.linkedCronId,
+            LinkedCronName: filterCron.linkedCronName,
+            UpdatedBy: filterCron.AuditInfo
+              ? filterCron.AuditInfo.UpdatedBy
+              : "ANONYMOUS",
+            UpdatedTime: new Date(),
+          });
+      });
+    }
+  }
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  await cacheClient.delete(CacheKey.FILTER_CRON_DETAILS);
+  await cacheClient.disconnect();
+}
+
+export async function GetFilteredCrons() {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const filterCronDetails = await cacheClient.get(CacheKey.FILTER_CRON_DETAILS);
+  if (filterCronDetails != null) {
+    await cacheClient.disconnect();
+    return filterCronDetails;
+  }
+  let cronSettingsDetails = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetFilterCronList()`);
+  if (result && result[0] && result[0].length > 0) {
+    cronSettingsDetails = await SqlMapper.ToFilterSettingsModel(result[0][0]);
+    await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, cronSettingsDetails); // Cache for 1 hour
+  }
+  await cacheClient.disconnect();
+  return cronSettingsDetails;
+}
+
+export async function ToggleFilterCronStatus(
+  cronId: string,
+  status: boolean,
+  auditInfo: AuditInfo,
+) {
+  const db = getKnexInstance();
+  await db("filter_cron_settings")
+    .where({ CronId: cronId })
+    .update({
+      Status: status,
+      UpdatedBy: auditInfo.UpdatedBy,
+      UpdatedTime: auditInfo.UpdatedOn,
+    });
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  await cacheClient.delete(CacheKey.FILTER_CRON_DETAILS);
+  await cacheClient.disconnect();
 }

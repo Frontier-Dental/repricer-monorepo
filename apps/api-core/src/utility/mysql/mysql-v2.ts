@@ -225,3 +225,28 @@ export async function GetScrapeCronDetails(ignoreCache = false) {
   await cacheClient.disconnect();
   return cronSettingsDetails;
 }
+
+export async function GetFilteredCrons(ignoreCache = false) {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const filterCronDetails = await cacheClient.get(CacheKey.FILTER_CRON_DETAILS);
+  if (filterCronDetails != null && !ignoreCache) {
+    await cacheClient.disconnect();
+    return filterCronDetails;
+  }
+  let cronSettingsDetails = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetFilterCronList()`);
+  if (result && result[0] && result[0].length > 0) {
+    cronSettingsDetails = await SqlMapper.ToFilterSettingsModel(result[0][0]);
+    await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, cronSettingsDetails); // Cache for 1 hour
+  }
+  await cacheClient.disconnect();
+  return cronSettingsDetails;
+}
+
+export async function GetFilterCronDetailsByName($cronName: any) {
+  const filterCronDetails = await GetFilteredCrons();
+  return filterCronDetails.find((x: any) => x.cronName == $cronName);
+}

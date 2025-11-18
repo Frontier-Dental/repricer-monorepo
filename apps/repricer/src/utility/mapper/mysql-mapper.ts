@@ -268,6 +268,24 @@ export function ToCronSettingsModel(incomingSqlData: any): any {
   return mappedList;
 }
 
+export function ToFilterSettingsModel(incomingSqlData: any): any {
+  let mappedItem: any = [];
+  if (!incomingSqlData) {
+    return mappedItem;
+  }
+  for (let sqlItem of incomingSqlData) {
+    // Remove 'UpdatedBy' and add 'AuditInfo'
+    const { updatedBy, updatedTime, ...rest } = sqlItem;
+    mappedItem.push({
+      ...rest,
+      AuditInfo: {
+        UpdatedBy: sqlItem.updatedBy,
+        UpdatedOn: sqlItem.updatedTime,
+      },
+    });
+  }
+  return mappedItem;
+}
 /********************************** PRIVATE FUNCTIONS **********************************/
 
 function getMappedVendorDetails(listOfItems: any, vendorName: any) {

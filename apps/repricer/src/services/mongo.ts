@@ -932,20 +932,6 @@ export const GetFilteredCrons = async () => {
   return mongoResult;
 };
 
-export const UpdateFilterCronDetails = async (cronId: any, payload: any) => {
-  let mongoResult: any = null;
-  const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME!)
-    .findOneAndUpdate({ cronId: cronId }, payload);
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  await cacheClient.delete(CacheKey.FILTER_CRON_DETAILS);
-
-  return mongoResult;
-};
-
 export const GetSlowCronDetails = async () => {
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),

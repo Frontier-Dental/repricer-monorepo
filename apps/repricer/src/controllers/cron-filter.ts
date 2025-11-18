@@ -14,10 +14,13 @@ import {
   GetSlowCronDetails,
   ToggleCronStatus as SqlToggleCronStatus,
   UpdateCronSettingsList,
+  GetFilteredCrons,
+  ToggleFilterCronStatus,
+  UpsertFilterCronSettings,
 } from "../services/mysql-v2";
 
 export async function GetFilterCron(req: Request, res: Response) {
-  let filterCronDetails = await mongoMiddleware.GetFilteredCrons();
+  let filterCronDetails = await GetFilteredCrons();
   for (let item of filterCronDetails) {
     item.expressionUrl = getExpressionUrl(item.cronExpression);
     item.lastUpdatedBy = await SessionHelper.GetAuditValue(
@@ -113,64 +116,44 @@ export async function GetFilterCron(req: Request, res: Response) {
 
 export async function UpdateFilterCron(req: Request, res: Response) {
   const requestPayload = req.body;
-  let mongoQuery: any = null;
   let cronRecreationNeeded = false;
+  const filterCronDetails = await GetFilteredCrons();
+  let contextFilterCron = filterCronDetails.find(
+    (x: any) => x.cronId == requestPayload.id,
+  );
   switch (requestPayload.type.toUpperCase()) {
     case "CRONEXPRESSION":
       cronRecreationNeeded = true;
-      mongoQuery = {
-        $set: {
-          cronExpression: requestPayload.value,
-          updatedOn: new Date(),
-          AuditInfo: await SessionHelper.GetAuditInfo(req),
-        },
-      };
+      contextFilterCron.cronExpression = requestPayload.value;
       break;
     case "FILTERVALUE":
-      mongoQuery = {
-        $set: {
-          filterValue: requestPayload.value,
-          updatedOn: new Date(),
-          AuditInfo: await SessionHelper.GetAuditInfo(req),
-        },
-      };
+      contextFilterCron.filterValue = requestPayload.value
+        ? parseInt(requestPayload.value)
+        : 0;
       break;
     case "LINKEDCRONNAME":
-      mongoQuery = {
-        $set: {
-          linkedCronName: requestPayload.value.trim(),
-          linkedCronId: await getSlowCronIdByCronName(
-            requestPayload.value.trim(),
-          ),
-          updatedOn: new Date(),
-          AuditInfo: await SessionHelper.GetAuditInfo(req),
-        },
-      };
+      contextFilterCron.linkedCronId = await getSlowCronIdByCronName(
+        requestPayload.value.trim(),
+      );
+      contextFilterCron.linkedCronName = requestPayload.value.trim();
       break;
     default:
       break;
   }
-  if (mongoQuery != null) {
-    await mongoMiddleware.UpdateFilterCronDetails(
-      requestPayload.id,
-      mongoQuery,
-    );
-    if (cronRecreationNeeded == true) {
-      const jobName = cronMapping.find(
-        (x) => x.cronId == requestPayload.id,
-      )?.cronVariable;
-      await httpMiddleware.recreateFilterCron({ jobName: jobName });
-    }
-    return res.json({
-      status: true,
-      message: `Filter Cron details updated successfully.`,
-    });
-  } else {
-    return res.json({
-      status: false,
-      message: `Failed to Update Filter Cron Details.`,
-    });
+  contextFilterCron.AuditInfo.UpdatedBy = (
+    await SessionHelper.GetAuditInfo(req)
+  ).UpdatedBy;
+  await UpsertFilterCronSettings([contextFilterCron]);
+  if (cronRecreationNeeded == true) {
+    const jobName = cronMapping.find(
+      (x) => x.cronId == requestPayload.id,
+    )?.cronVariable;
+    await httpMiddleware.recreateFilterCron({ jobName: jobName });
   }
+  return res.json({
+    status: true,
+    message: `Filter Cron details updated successfully.`,
+  });
 }
 
 export async function UpdateSlowCronExpression(req: Request, res: Response) {
@@ -282,7 +265,7 @@ export async function ExportLogDetails(req: Request, res: Response) {
   const cronKey = req.params.key;
   let cronLogDetails = await mongoMiddleware.GetFilterCronLogByKey(cronKey);
   const regularCronDetails = await GetCronSettingsList();
-  const filterCronDetails = await mongoMiddleware.GetFilteredCrons();
+  const filterCronDetails = await GetFilteredCrons();
   const contextCronName = filterCronDetails.find(
     (c: any) => c.cronId == cronLogDetails.contextCronId,
   ).cronName;
@@ -345,13 +328,12 @@ export async function ToggleCronStatus(req: Request, res: Response) {
       status: cronStatus,
     });
     if (response && response.status == 200) {
-      const cronStatusStr = cronStatus == 1 ? "true" : "false";
-      await mongoMiddleware.UpdateFilterCronDetails(contextCronId, {
-        $set: {
-          status: cronStatusStr,
-          AuditInfo: await SessionHelper.GetAuditInfo(req),
-        },
-      });
+      const cronStatusStr = cronStatus == 1 ? true : false;
+      await ToggleFilterCronStatus(
+        contextCronId,
+        cronStatusStr,
+        await SessionHelper.GetAuditInfo(req),
+      );
       return res.json({
         status: true,
         message: response.data,
