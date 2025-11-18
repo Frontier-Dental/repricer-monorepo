@@ -96,33 +96,11 @@ export const UpdateCronStatusAsync = async (payload: any): Promise<any> => {
     );
 };
 
-export const GetCronSettingsList = async (): Promise<any> => {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
-    .find()
-    .toArray();
-};
-
 export const ResetPendingCronLogs = async (): Promise<any> => {
   const dbo = await getMongoDb();
   return dbo
     .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
     .updateMany({}, { $set: { status: "Complete" } });
-};
-
-export const UpdateCronSettings = async (cronId: string): Promise<any> => {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
-    .findOneAndUpdate(
-      { CronId: cronId },
-      {
-        $set: {
-          UpdatedTime: new Date(),
-        },
-      },
-    );
 };
 
 export const UpsertErrorItemLog = async (payload: any): Promise<any> => {
@@ -176,28 +154,6 @@ export const GetItemListById = async (_mpId: any): Promise<any> => {
     .findOne({ mpId: _mpId.toString() });
 };
 
-// export const GetProxyConfigByProviderId = async (
-//   providerId: any,
-// ): Promise<any> => {
-//   const query = {
-//     proxyProvider: providerId,
-//   };
-//   const dbo = await getMongoDb();
-//   return dbo.collection(applicationConfig.IP_CONFIG).find(query).toArray();
-// };
-
-export const GetCronSettingsDetailsByName = async (
-  cronName: string,
-): Promise<any> => {
-  const query = {
-    CronName: cronName,
-  };
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
-    .findOne(query);
-};
-
 export const GetHistoryDetailsForId = async (_mpId: any): Promise<any> => {
   const dbo = await getMongoDb();
   return dbo
@@ -224,36 +180,6 @@ export const UpsertHistoryDetails = async (payload: any): Promise<any> => {
   }
 };
 
-export async function getNet32KeysByCronName(cronName: string): Promise<any> {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
-    .findOne({ CronName: cronName });
-}
-
-// export const GetRotatingProxyUrl = async (): Promise<any> => {
-//   const query = {
-//     $and: [
-//       {
-//         proxyProvider: 1,
-//       },
-//       {
-//         ipType: 1,
-//       },
-//     ],
-//   };
-//   const dbo = await getMongoDb();
-//   const result = await dbo
-//     .collection(applicationConfig.IP_CONFIG)
-//     .findOne(query);
-//   return result?.hostUrl;
-// };
-
-// export const GetGlobalConfig = async (): Promise<any> => {
-//   const dbo = await getMongoDb();
-//   return dbo.collection(applicationConfig.ENV_SETTINGS).findOne();
-// };
-
 export const FindErrorItemByIdAndStatus = async (
   _mpId: any,
   _status: any,
@@ -273,35 +199,6 @@ export const FindErrorItemByIdAndStatus = async (
   return dbo
     .collection(applicationConfig.ERROR_ITEM_COLLECTION)
     .countDocuments(query);
-};
-
-// export const GetDelay = async (): Promise<any> => {
-//   const dbo = await getMongoDb();
-//   const dbResponse = await dbo
-//     .collection(applicationConfig.ENV_SETTINGS)
-//     .findOne();
-//   if (!dbResponse) {
-//     throw new Error("Delay not found");
-//   }
-//   return parseInt(dbResponse.delay);
-// };
-
-export const UpdateCronDetailsByCronId = async (
-  cronId: string,
-  _status: any,
-): Promise<any> => {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
-    .findOneAndUpdate(
-      { CronId: cronId },
-      {
-        $set: {
-          UpdatedTime: new Date(),
-          CronStatus: _status,
-        },
-      },
-    );
 };
 
 export const GetListOfOverrideProducts = async (): Promise<any> => {

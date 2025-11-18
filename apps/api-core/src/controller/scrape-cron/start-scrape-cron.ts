@@ -4,6 +4,7 @@ import * as dbHelper from "../../utility/mongo/db-helper";
 import * as responseUtility from "../../utility/response-utility";
 import { scrapeCrons, scrapeProductList } from "./shared";
 import * as _codes from "http-status-codes";
+import { GetScrapeCronDetails } from "../../utility/mysql/mysql-v2";
 
 export async function startScrapeCron(
   req: Request,
@@ -14,7 +15,7 @@ export async function startScrapeCron(
 }
 
 export async function startScrapeCronLogic() {
-  const scrapeCronDetails = await dbHelper.GetScrapeCronDetails();
+  const scrapeCronDetails = await GetScrapeCronDetails();
   if (scrapeCronDetails && scrapeCronDetails.length > 0) {
     for (var i = 0; i < scrapeCronDetails.length; i++) {
       if (scrapeCronDetails[i]) {

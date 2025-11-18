@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import moment from "moment";
 import Item, { IItem } from "../models/item";
-import { getCronSettingsList } from "./mongo.service";
+import { GetCronSettingsList } from "./mysql";
 import { parseBadgeIndicator } from "../utils/badge-helper";
 
 export interface ExcelColumn {
@@ -139,7 +139,7 @@ export class ExcelService {
     query: any = {},
   ): Promise<ExcelJS.Workbook> {
     const items = await Item.find(query).lean();
-    const cronSettings = await getCronSettingsList();
+    const cronSettings = await GetCronSettingsList();
 
     const formattedItems = this.formatItemData(items, cronSettings);
 

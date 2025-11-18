@@ -53,12 +53,12 @@ debugController.get(
       contextCronName = (productDetails as any).triadDetails.cronName;
     }
     let cronSettingsResponse =
-      await dbHelper.GetCronSettingsDetailsByName(contextCronName);
+      await sqlV2Service.GetCronSettingsDetailsByName(contextCronName);
     if (
       !cronSettingsResponse ||
       (cronSettingsResponse && cronSettingsResponse.length == 0)
     ) {
-      const slowCronDetails = await dbHelper.GetSlowCronDetails();
+      const slowCronDetails = await sqlV2Service.GetSlowCronDetails();
       cronSettingsResponse = [
         slowCronDetails.find((x: any) => x.CronName == contextCronName),
       ];
@@ -129,7 +129,7 @@ debugController.post(
     const requiredCronName = req.params.cronName.trim();
     const products = req.body;
     const cronSettingsResponse: any[] =
-      await dbHelper.GetCronSettingsDetailsByName(requiredCronName);
+      await sqlV2Service.GetCronSettingsDetailsByName(requiredCronName);
     if (cronSettingsResponse && cronSettingsResponse.length > 0) {
       const cronId = _.first(cronSettingsResponse).CronId as any;
       for (let prod of products) {
@@ -160,7 +160,7 @@ debugController.get(
   async (req: Request, res: Response) => {
     const requiredCronName = req.params.cronName.trim();
     const cronSettingsResponse =
-      await dbHelper.GetFilterCronDetailsByName(requiredCronName);
+      await sqlV2Service.GetFilterCronDetailsByName(requiredCronName);
     await filterMapper.FilterProducts(cronSettingsResponse);
     res.status(_codes.StatusCodes.OK).send("Success!!");
   },
@@ -339,8 +339,8 @@ debugController.get(
     const productId = req.params.key;
     const vendorName = req.params.vendor;
     const productDetails = await dbHelper.FindProductById(productId);
-    let cronSettingDetailsResponse = await dbHelper.GetCronSettingsList();
-    let slowCronDetails = await dbHelper.GetSlowCronDetails();
+    let cronSettingDetailsResponse = await sqlV2Service.GetCronSettingsList();
+    let slowCronDetails = await sqlV2Service.GetSlowCronDetails();
     cronSettingDetailsResponse = _.concat(
       cronSettingDetailsResponse,
       slowCronDetails,

@@ -10,6 +10,7 @@ import * as feedHelper from "../../utility/feed-helper";
 import { getContextCronId } from "./shared";
 import { proceedNext } from "./shared";
 import { applicationConfig } from "../../utility/config";
+import { GetCronSettingsDetailsById } from "../../utility/mysql/mysql-v2";
 
 export async function updateToMax(
   req: Request<{ id: string }, any, any>,
@@ -29,9 +30,7 @@ export async function updateToMax(
     "{mpId}",
     mpid,
   );
-  const cronSetting = _.first(
-    await dbHelper.GetCronSettingsDetailsById(contextCronId),
-  );
+  const cronSetting = _.first(await GetCronSettingsDetailsById(contextCronId));
   let cronLogs: any = {
     time: new Date(),
     keyGen: keyGen,

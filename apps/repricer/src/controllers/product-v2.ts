@@ -12,6 +12,7 @@ import * as mySqlHelper from "../services/mysql";
 import { applicationConfig } from "../utility/config";
 import * as httpHelper from "../utility/http-wrappers";
 import * as SessionHelper from "../utility/session-helper";
+import { GetCronSettingsList, GetSlowCronDetails } from "../services/mysql-v2";
 
 export async function showAllProducts(req: Request, res: Response) {
   let pgNo = 0;
@@ -126,8 +127,8 @@ export async function collateProducts(req: Request, res: Response) {
 export async function editItemView(req: Request, res: Response) {
   const mpid = req.params.mpid;
   let productDetails = await mySqlHelper.GetFullProductDetailsById(mpid); // await mongoMiddleware.FindProductById(mpid);
-  let cronSettingsResponse = await mongoMiddleware.GetCronSettingsList();
-  const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
+  let cronSettingsResponse = await GetCronSettingsList();
+  const slowCronSettings = await GetSlowCronDetails();
   cronSettingsResponse = _.concat(cronSettingsResponse, slowCronSettings);
   _.first(productDetails).cronSettings = cronSettingsResponse.filter(
     (x: any) => x.IsHidden != true,
@@ -145,8 +146,8 @@ export async function editItemView(req: Request, res: Response) {
 export async function updateProductDetails(req: Request, res: Response) {
   var details = req.body;
   //const scrapeOnlyCronSettings = await mongoMiddleware.GetScrapeCrons();
-  let cronSettingsResponse = await mongoMiddleware.GetCronSettingsList();
-  const slowCronSettingsResponse = await mongoMiddleware.GetSlowCronDetails();
+  let cronSettingsResponse = await GetCronSettingsList();
+  const slowCronSettingsResponse = await GetSlowCronDetails();
   cronSettingsResponse = _.concat(
     cronSettingsResponse,
     slowCronSettingsResponse,
@@ -293,8 +294,8 @@ export async function addItems(req: Request, res: Response) {
     topDentDetails: null,
     firstDentDetails: null,
   };
-  let cronSettingsResponse = await mongoMiddleware.GetCronSettingsList();
-  const slowCronSettings = await mongoMiddleware.GetSlowCronDetails();
+  let cronSettingsResponse = await GetCronSettingsList();
+  const slowCronSettings = await GetSlowCronDetails();
   cronSettingsResponse = _.concat(cronSettingsResponse, slowCronSettings);
   productDetails.cronSettings = cronSettingsResponse.filter(
     (x: any) => x.IsHidden != true,
@@ -574,8 +575,7 @@ export async function saveRootDetails(req: Request, res: Response) {
   const { mpid, rootDetailsForPayload } = req.body;
   const mpidTrimmed = mpid.trim();
 
-  const regularCronSettingsDetails =
-    await mongoMiddleware.GetCronSettingsList();
+  const regularCronSettingsDetails = await GetCronSettingsList();
   const scrapeOnlyCronSettingsDetails = await mongoMiddleware.GetScrapeCrons();
   const linkedRegularCronName = regularCronSettingsDetails.find(
     (x: any) => x.CronId == rootDetailsForPayload.cronGroup,

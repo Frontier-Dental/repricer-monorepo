@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import cron from "node-cron";
-import * as dbHelper from "../../utility/mongo/db-helper";
 import * as responseUtility from "../../utility/response-utility";
 import * as _codes from "http-status-codes";
 import { runCoreCronLogic } from "../main-cron/shared";
 import { slowCrons, getCronNameByJobName } from "./shared";
+import { GetSlowCronDetails } from "../../utility/mysql/mysql-v2";
 
 export async function startAllSlowCronHandler(
   req: Request,
@@ -17,7 +17,7 @@ export async function startAllSlowCronHandler(
 }
 
 export async function startSlowCronLogic() {
-  const slowCronDetails = await dbHelper.GetSlowCronDetails();
+  const slowCronDetails = await GetSlowCronDetails();
   if (slowCronDetails && slowCronDetails.length > 0) {
     for (let i = 0; i < slowCronDetails.length; i++) {
       const cronDetail = slowCronDetails[i];

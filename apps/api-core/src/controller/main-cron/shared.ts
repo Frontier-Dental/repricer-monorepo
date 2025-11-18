@@ -172,8 +172,8 @@ async function get422EligibleProducts() {
   if (globalConfig && globalConfig.source == "FEED") {
     return [];
   }
-  let cronSettingDetailsResponse = await dbHelper.GetCronSettingsList();
-  let slowCronDetails = await dbHelper.GetSlowCronDetails();
+  let cronSettingDetailsResponse = await sqlV2Service.GetCronSettingsList();
+  let slowCronDetails = await sqlV2Service.GetSlowCronDetails();
   cronSettingDetailsResponse = _.concat(
     cronSettingDetailsResponse,
     slowCronDetails,
@@ -352,7 +352,10 @@ export async function getSlowCronEligibleProductsV3(cronId: any) {
       true,
     );
   } catch (exception) {
-    console.log(exception);
+    console.error(
+      `Error while getSlowCronEligibleProductsV3 || Error : ${exception}`,
+      exception,
+    );
   }
   return eligibleProductList;
 }

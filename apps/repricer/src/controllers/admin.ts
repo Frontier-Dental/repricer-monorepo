@@ -6,9 +6,10 @@ import * as httpHelper from "../utility/http-wrappers";
 import * as SessionHelper from "../utility/session-helper";
 import { Request, Response } from "express";
 import { applicationConfig } from "../utility/config";
+import { GetCronSettingsList } from "../services/mysql-v2";
 
 export async function getAdminSettings(req: Request, res: Response) {
-  const cronResults = await mongoMiddleware.GetCronSettingsList();
+  const cronResults = await GetCronSettingsList();
   const cacheResults = await cacheController.GetAllCacheItems();
   let proxyFailureDetails = await mongoMiddleware.GetProxyFailureDetails();
   if (proxyFailureDetails && proxyFailureDetails.length > 0) {
