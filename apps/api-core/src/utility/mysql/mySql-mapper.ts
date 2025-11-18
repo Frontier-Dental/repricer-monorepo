@@ -236,7 +236,7 @@ export function ToCronSettingsModel(incomingSqlData: any): any {
       FixedIp: cronSettingSqlEntity[0].FixedIp,
       CreatedTime: cronSettingSqlEntity[0].CreatedTime,
       SwitchSequence: cronSettingSqlEntity[0].SwitchSequence,
-      IsHidden: cronSettingSqlEntity[0].IsHidden,
+      IsHidden: cronSettingSqlEntity[0].IsHidden == 1 ? true : false,
       UpdatedTime: cronSettingSqlEntity[0].UpdatedTime,
       CronType: cronSettingSqlEntity[0].CronType,
       SecretKey: toSecretKeysForCron(cronSettingSqlEntity),
