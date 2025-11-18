@@ -352,7 +352,10 @@ export async function getSlowCronEligibleProductsV3(cronId: any) {
       true,
     );
   } catch (exception) {
-    console.log(exception);
+    console.error(
+      `Error while getSlowCronEligibleProductsV3 || Error : ${exception}`,
+      exception,
+    );
   }
   return eligibleProductList;
 }

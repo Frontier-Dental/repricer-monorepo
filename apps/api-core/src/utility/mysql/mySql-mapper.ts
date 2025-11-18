@@ -229,7 +229,7 @@ export function ToCronSettingsModel(incomingSqlData: any): any {
       CronName: cronSettingSqlEntity[0].CronName,
       CronTimeUnit: cronSettingSqlEntity[0].CronTimeUnit,
       CronTime: cronSettingSqlEntity[0].CronTime,
-      CronStatus: cronSettingSqlEntity[0].CronStatus,
+      CronStatus: cronSettingSqlEntity[0].CronStatus == 1 ? true : false,
       Offset: cronSettingSqlEntity[0].Offset,
       ProxyProvider: cronSettingSqlEntity[0].ProxyProvider,
       IpType: cronSettingSqlEntity[0].IpType,
