@@ -185,3 +185,23 @@ export async function GetLinkedCronSettingsByProviderId(
     (c: any) => c.ProxyProvider === proxyProviderId,
   );
 }
+
+export async function GetSlowCronDetails(ignoreCache = false) {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const slowCronDetails = await cacheClient.get(CacheKey.SLOW_CRON_DETAILS);
+  if (slowCronDetails != null && !ignoreCache) {
+    await cacheClient.disconnect();
+    return slowCronDetails;
+  }
+  let cronSettingsDetails = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetSlowCronSettingsList()`);
+  if (result && result[0] && result[0].length > 0) {
+    cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
+    await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, cronSettingsDetails); // Cache for 1 hour
+  }
+  await cacheClient.disconnect();
+  return cronSettingsDetails;
+}

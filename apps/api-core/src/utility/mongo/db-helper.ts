@@ -380,28 +380,6 @@ export async function UpdateCronForProductAsync(payload: any) {
     );
 }
 
-export async function GetSlowCronDetails(ignoreCache = false): Promise<any[]> {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  if (!ignoreCache) {
-    const slowCronDetails = await cacheClient.get<any[]>(
-      CacheKey.SLOW_CRON_DETAILS,
-    );
-    if (slowCronDetails != null) return slowCronDetails;
-  }
-  const dbo = await getMongoDb();
-  const mongoResult = await dbo
-    .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME)
-    .find()
-    .sort({ _id: 1 })
-    .toArray();
-  if (mongoResult != null)
-    await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, mongoResult);
-  await cacheClient.disconnect();
-  return mongoResult;
-}
-
 export async function GetProxyFailureDetailsByProxyProviderId(
   proxyProvId: any,
 ) {

@@ -35,7 +35,7 @@ export async function getAsync(
 ) {
   let responseData = null;
   let cronDetails = await sqlV2Service.GetCronSettingsList();
-  const slowCronDetails = await dbHelper.GetSlowCronDetails();
+  const slowCronDetails = await sqlV2Service.GetSlowCronDetails();
   cronDetails = _.concat(cronDetails, slowCronDetails);
   const cronName = cronDetails.find((x: any) => x.CronId == cronId)?.CronName;
   if (applicationConfig.IS_DEBUG) {

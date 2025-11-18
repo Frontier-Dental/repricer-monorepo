@@ -8,7 +8,13 @@ import cronMapping from "../../resources/cronMapping.json";
 import * as SessionHelper from "../utility/session-helper";
 import * as MapperHelper from "../middleware/mapper-helper";
 import { Request, Response } from "express";
-import { GetConfigurations, GetCronSettingsList } from "../services/mysql-v2";
+import {
+  GetConfigurations,
+  GetCronSettingsList,
+  GetSlowCronDetails,
+  ToggleCronStatus as SqlToggleCronStatus,
+  UpdateCronSettingsList,
+} from "../services/mysql-v2";
 
 export async function GetFilterCron(req: Request, res: Response) {
   let filterCronDetails = await mongoMiddleware.GetFilteredCrons();
@@ -23,7 +29,7 @@ export async function GetFilterCron(req: Request, res: Response) {
       "U_TIME",
     );
   }
-  let slowCronDetails = await mongoMiddleware.GetSlowCronDetails();
+  let slowCronDetails = await GetSlowCronDetails();
   let configItems = await GetConfigurations(true);
   for (let item of slowCronDetails) {
     item.lastUpdatedBy = await SessionHelper.GetAuditValue(
@@ -169,7 +175,7 @@ export async function UpdateFilterCron(req: Request, res: Response) {
 
 export async function UpdateSlowCronExpression(req: Request, res: Response) {
   const payload = req.body;
-  const cronSlowCronResponse = await mongoMiddleware.GetSlowCronDetails();
+  const cronSlowCronResponse = await GetSlowCronDetails();
   const slowCronIds = _.map(cronSlowCronResponse, "CronId");
   let updatedList: any[] = [];
   let recreatePayload: any[] = [];
@@ -251,29 +257,19 @@ export async function UpdateSlowCronExpression(req: Request, res: Response) {
   }
 
   if (updatedList.length > 0) {
-    const updateResponse = await mongoMiddleware.updateSlowCron(
-      updatedList,
-      req,
-    );
-    if (updateResponse) {
-      if (recreatePayload.length > 0) {
-        for (const cronId of recreatePayload) {
-          const jobName = cronMapping.find(
-            (x) => x.cronId == cronId,
-          )?.cronVariable;
-          await httpMiddleware.recreateSlowCron({ jobName: jobName });
-        }
+    await UpdateCronSettingsList(updatedList, req);
+    if (recreatePayload.length > 0) {
+      for (const cronId of recreatePayload) {
+        const jobName = cronMapping.find(
+          (x) => x.cronId == cronId,
+        )?.cronVariable;
+        // await httpMiddleware.recreateSlowCron({ jobName: jobName });
       }
-      return res.json({
-        status: true,
-        message: "Slow Cron updated successfully.",
-      });
-    } else {
-      return res.json({
-        status: false,
-        message: "Something went wrong ,Please try again.",
-      });
     }
+    return res.json({
+      status: true,
+      message: "Slow Cron updated successfully.",
+    });
   } else {
     return res.json({
       status: true,
@@ -338,7 +334,7 @@ export async function ToggleCronStatus(req: Request, res: Response) {
   const jobName = cronMapping.find(
     (x) => x.cronId == contextCronId,
   )?.cronVariable;
-  const slowCronDetails = await mongoMiddleware.GetSlowCronDetails();
+  const slowCronDetails = await GetSlowCronDetails();
   const slowCronData = slowCronDetails.find(
     (x: any) => x.CronId == contextCronId,
   );
@@ -369,12 +365,7 @@ export async function ToggleCronStatus(req: Request, res: Response) {
     });
     if (response && response.status == 200) {
       const cronStatusStr = cronStatus == 1 ? true : false;
-      await mongoMiddleware.UpdateSlowCronDetails(contextCronId, {
-        $set: {
-          CronStatus: cronStatusStr,
-          AuditInfo: await SessionHelper.GetAuditInfo(req),
-        },
-      });
+      await SqlToggleCronStatus(contextCronId, cronStatusStr.toString(), req);
       return res.json({
         status: true,
         message: response.data,
@@ -400,7 +391,7 @@ function getExpressionUrl(expression: any) {
 }
 
 async function getSlowCronIdByCronName(cronName: any) {
-  const cronSlowCronResponse = await mongoMiddleware.GetSlowCronDetails();
+  const cronSlowCronResponse = await GetSlowCronDetails();
   return cronSlowCronResponse.find(
     (x: any) => x.CronName.toUpperCase() == cronName.toUpperCase(),
   ).CronId;

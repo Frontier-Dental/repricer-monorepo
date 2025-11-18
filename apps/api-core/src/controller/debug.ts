@@ -58,7 +58,7 @@ debugController.get(
       !cronSettingsResponse ||
       (cronSettingsResponse && cronSettingsResponse.length == 0)
     ) {
-      const slowCronDetails = await dbHelper.GetSlowCronDetails();
+      const slowCronDetails = await sqlV2Service.GetSlowCronDetails();
       cronSettingsResponse = [
         slowCronDetails.find((x: any) => x.CronName == contextCronName),
       ];
@@ -340,7 +340,7 @@ debugController.get(
     const vendorName = req.params.vendor;
     const productDetails = await dbHelper.FindProductById(productId);
     let cronSettingDetailsResponse = await sqlV2Service.GetCronSettingsList();
-    let slowCronDetails = await dbHelper.GetSlowCronDetails();
+    let slowCronDetails = await sqlV2Service.GetSlowCronDetails();
     cronSettingDetailsResponse = _.concat(
       cronSettingDetailsResponse,
       slowCronDetails,

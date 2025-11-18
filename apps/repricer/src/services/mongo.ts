@@ -946,20 +946,6 @@ export const UpdateFilterCronDetails = async (cronId: any, payload: any) => {
   return mongoResult;
 };
 
-export const UpdateSlowCronDetails = async (cronId: any, payload: any) => {
-  let mongoResult: any = null;
-  const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME!)
-    .findOneAndUpdate({ CronId: cronId }, payload);
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
-  await cacheClient.disconnect();
-  return mongoResult;
-};
-
 export const GetSlowCronDetails = async () => {
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
@@ -977,37 +963,6 @@ export const GetSlowCronDetails = async () => {
     .toArray();
   if (mongoResult != null)
     await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, mongoResult);
-  await cacheClient.disconnect();
-  return mongoResult;
-};
-
-export const updateSlowCron = async (payload: any, req: any) => {
-  let mongoResult: any = null;
-  const dbo = await getMongoDb();
-
-  for (const element of payload) {
-    mongoResult = await dbo
-      .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME!)
-      .findOneAndUpdate(
-        { CronId: element.CronId },
-        {
-          $set: {
-            CronName: element.CronName,
-            CronTime: element.CronTime,
-            CronTimeUnit: element.CronTimeUnit,
-            Offset: element.Offset,
-            ProxyProvider: element.ProxyProvider,
-            UpdatedTime: element.UpdatedTime,
-            AlternateProxyProvider: element.AlternateProxyProvider,
-            AuditInfo: await SessionHelper.GetAuditInfo(req),
-          },
-        },
-      );
-  }
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
   await cacheClient.disconnect();
   return mongoResult;
 };

@@ -45,7 +45,7 @@ export const envSchema = z.object({
     .default("/schedule/start_specific_cron"),
   ERROR_ONE: z.string().default("Error: Invalid response found in Net32 Api"),
   ERROR_TWO: z.string().default("Error: Could not find own vendor Id"),
-  SLOW_CRON_GROUP_COLLECTION_NAME: z.string().default("slowCronSettings"),
+  // SLOW_CRON_GROUP_COLLECTION_NAME: z.string().default("slowCronSettings"),
   FILTER_CRON_LOGS: z.string().default("filterCronLogs"),
   FILTER_CRON_LOGS_LIMIT: z.coerce.number().default(10),
   FILTER_CRON_TOGGLE_STATUS_ENDPOINT: z

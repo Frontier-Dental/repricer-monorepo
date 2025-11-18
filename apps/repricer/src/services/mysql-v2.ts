@@ -252,7 +252,6 @@ export async function GetCronSettingsList() {
 }
 
 export async function UpdateCronSettingsList(payload: any, req: any) {
-  let mongoResult: any = null;
   const db = getKnexInstance();
   for (const element of payload) {
     console.debug(
@@ -309,8 +308,8 @@ export async function UpdateCronSettingsList(payload: any, req: any) {
     GetCacheClientOptions(applicationConfig),
   );
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
+  await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
   await cacheClient.disconnect();
-  return mongoResult;
 }
 
 export async function ToggleCronStatus(
@@ -333,5 +332,26 @@ export async function ToggleCronStatus(
     GetCacheClientOptions(applicationConfig),
   );
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
+  await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
   await cacheClient.disconnect();
+}
+
+export async function GetSlowCronDetails() {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const slowCronDetails = await cacheClient.get(CacheKey.SLOW_CRON_DETAILS);
+  if (slowCronDetails != null) {
+    await cacheClient.disconnect();
+    return slowCronDetails;
+  }
+  let cronSettingsDetails = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetSlowCronSettingsList()`);
+  if (result && result[0] && result[0].length > 0) {
+    cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
+    await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, cronSettingsDetails); // Cache for 1 hour
+  }
+  await cacheClient.disconnect();
+  return cronSettingsDetails;
 }

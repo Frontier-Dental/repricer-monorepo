@@ -16,7 +16,7 @@ const envSchema = z.object({
   IP_CONFIG: z.string().default("ipConfig"),
   HISTORY_DB: z.string().default("historyData"),
   ENV_SETTINGS: z.string().default("envsettings"),
-  SLOW_CRON_GROUP_COLLECTION_NAME: z.string().default("slowCronSettings"),
+  // SLOW_CRON_GROUP_COLLECTION_NAME: z.string().default("slowCronSettings"),
   SCRAPE_CRON_NAME: z.string().default("scrapeCronSettings"),
   SCRAPE_PRODUCTS_COLLECTION_NAME: z.string().default("scrapeProducts"),
   SCRAPE_PRODUCTS_LOGS_COLLECTION_NAME: z.string().default("scrapeCronLogs"),
