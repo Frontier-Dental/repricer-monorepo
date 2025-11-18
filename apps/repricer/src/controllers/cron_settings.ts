@@ -389,6 +389,11 @@ export async function toggleCronStatus(req: Request, res: Response) {
   const payload = req.body;
   const { CronName } = req.body;
   if (CronName && CronName != null) {
+    await mongoMiddleware.ToggleCronStatus(
+      cronSettingsResponse.find((x: any) => x.CronName == CronName)?.CronId,
+      JSON.parse(payload.Action),
+      req,
+    );
     if (JSON.parse(payload.Action) == true) {
       await httpMiddleware.startCron({ jobName: CronName, cronId: null });
       actionResponse = "Started";
@@ -396,11 +401,6 @@ export async function toggleCronStatus(req: Request, res: Response) {
       await httpMiddleware.stopCron({ jobName: CronName });
       actionResponse = "Stopped";
     }
-    await mongoMiddleware.ToggleCronStatus(
-      cronSettingsResponse.find((x: any) => x.CronName == CronName)?.CronId,
-      JSON.parse(payload.Action),
-      req,
-    );
     return res.json({
       status: true,
       message: `Cron ${CronName} ${actionResponse} Successfully.`,
@@ -408,6 +408,11 @@ export async function toggleCronStatus(req: Request, res: Response) {
   } else {
     const existingSettings = cronSettingsResponse.find(
       (x: any) => x.CronId == payload.CronId,
+    );
+    await mongoMiddleware.ToggleCronStatus(
+      payload.CronId,
+      JSON.parse(payload.Action),
+      req,
     );
     if (JSON.parse(payload.Action) != existingSettings?.CronStatus) {
       const jobName = cronMapping.find(
@@ -423,13 +428,7 @@ export async function toggleCronStatus(req: Request, res: Response) {
         await httpMiddleware.stopCron({ jobName: jobName });
         actionResponse = "Stopped";
       }
-      await mongoMiddleware.ToggleCronStatus(
-        payload.CronId,
-        JSON.parse(payload.Action),
-        req,
-      );
     }
-
     return res.json({
       status: true,
       message: `Cron ${payload.CronId} ${actionResponse} Successfully.`,
