@@ -1,0 +1,2321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DB-Migrations User Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-bottom: 4px solid #5568d3;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .meta-info {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .meta-info div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-info strong {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-info span {
+            font-size: 1.1rem;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav h2 {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        nav a {
+            color: #667eea;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        nav a:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 100px;
+        }
+
+        h2 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #764ba2;
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem 0;
+        }
+
+        h4 {
+            color: #495057;
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.75rem 0;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: #495057;
+        }
+
+        .card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .card h4 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+
+        code {
+            background: #f1f3f5;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge-migration { background: #667eea; color: white; }
+        .badge-script { background: #28a745; color: white; }
+        .badge-seed { background: #ffc107; color: #212529; }
+        .badge-required { background: #dc3545; color: white; }
+        .badge-optional { background: #6c757d; color: white; }
+
+        .highlight-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        footer {
+            background: #2d3748;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        footer p {
+            color: #cbd5e0;
+        }
+
+        .schema-diagram {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .table-schema {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .table-schema h4 {
+            margin-top: 0;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .faq-item {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .faq-question {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .faq-answer {
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>DB-Migrations User Guide</h1>
+            <p>Complete guide for database schema management with Knex.js migrations for the Dental Supply Repricer system</p>
+            <div class="meta-info">
+                <div>
+                    <strong>Version</strong>
+                    <span>1.0.0</span>
+                </div>
+                <div>
+                    <strong>Last Updated</strong>
+                    <span>2025-11-18</span>
+                </div>
+                <div>
+                    <strong>Migration Count</strong>
+                    <span>9 Migrations</span>
+                </div>
+                <div>
+                    <strong>Author</strong>
+                    <span>Julian Wilson</span>
+                </div>
+            </div>
+        </header>
+
+        <nav>
+            <h2>Quick Navigation</h2>
+            <ul>
+                <li><a href="#getting-started">Getting Started</a></li>
+                <li><a href="#core-concepts">Core Concepts</a></li>
+                <li><a href="#tutorials">Step-by-Step Tutorials</a></li>
+                <li><a href="#migration-reference">Migration Reference</a></li>
+                <li><a href="#configuration">Configuration Guide</a></li>
+                <li><a href="#v1-to-v2">V1 to V2 Migration</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+                <li><a href="#best-practices">Best Practices</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+        </nav>
+
+        <div class="content">
+            <!-- GETTING STARTED -->
+            <section id="getting-started">
+                <h2>Getting Started</h2>
+
+                <h3>What is DB-Migrations?</h3>
+                <p>DB-Migrations is the database schema management application for the dental supply repricing system. It uses Knex.js to manage MySQL database schema migrations, ensuring consistent database structure across development, staging, and production environments.</p>
+
+                <div class="info-box">
+                    <strong>Key Responsibilities:</strong>
+                    <ul>
+                        <li>Managing MySQL database schema with version control</li>
+                        <li>Creating and maintaining tables for V2 algorithm system</li>
+                        <li>Migrating data from V1 to V2 algorithm format</li>
+                        <li>Providing utility scripts for user management and data migration</li>
+                        <li>Ensuring database consistency across environments</li>
+                    </ul>
+                </div>
+
+                <h3>Prerequisites</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>System Requirements</strong>
+                    <ul>
+                        <li>Node.js 16.x or higher</li>
+                        <li>npm 8.x or higher</li>
+                        <li>MySQL 5.7+ or 8.0+</li>
+                        <li>Access to MySQL database with CREATE/ALTER privileges</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Required Knowledge</strong>
+                    <ul>
+                        <li>Basic understanding of SQL and relational databases</li>
+                        <li>Familiarity with Knex.js migration concepts (optional but helpful)</li>
+                        <li>Understanding of the V1 and V2 algorithm differences</li>
+                        <li>Command-line interface experience</li>
+                    </ul>
+                </div>
+
+                <h3>Installation</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Navigate to DB-Migrations Directory</strong>
+                    <pre><code>cd apps/db-migrations</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Install Dependencies</strong>
+                    <pre><code># Install from monorepo root (recommended)
+npm install
+
+# Or from db-migrations directory
+npm install</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Configure Environment</strong>
+                    <p>Create a <code>.env.development</code> file in <code>apps/db-migrations/</code> directory:</p>
+                    <pre><code>SQL_HOSTNAME=localhost
+SQL_PORT=3306
+SQL_USERNAME=root
+SQL_PASSWORD=your_password
+SQL_DATABASE=repricer_db</code></pre>
+                </div>
+
+                <h3>Running Your First Migration</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Verify Database Connection</strong>
+                    <p>Test that you can connect to MySQL with the provided credentials:</p>
+                    <pre><code>mysql -h localhost -u root -p repricer_db</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Run All Migrations</strong>
+                    <pre><code># From db-migrations directory
+npm run migrate:dev</code></pre>
+                    <p>This will create all 9 tables in your database.</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Verify Migration Success</strong>
+                    <pre><code># Check if tables were created
+mysql -u root -p -e "SHOW TABLES" repricer_db
+
+# Should show:
+# - v2_algo_settings
+# - v2_algo_results
+# - v2_algo_execution
+# - v2_algo_error
+# - v2_toggle
+# - users
+# - channel_ids
+# - vendor_thresholds
+# - tinyproxy_configs</code></pre>
+                </div>
+
+                <div class="success-box">
+                    <strong>✓ Success!</strong> Your database schema is now ready. You can proceed to seed data or migrate V1 settings to V2.
+                </div>
+            </section>
+
+            <!-- CORE CONCEPTS -->
+            <section id="core-concepts">
+                <h2>Core Concepts</h2>
+
+                <h3>What are Database Migrations?</h3>
+                <p>Database migrations are version-controlled scripts that modify your database schema. Think of them as "Git for your database structure" - each migration represents a change to the schema that can be applied or rolled back.</p>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <h4>Migration Up</h4>
+                        <p>The <code>up()</code> function defines changes to apply to the database (create tables, add columns, etc.)</p>
+                    </div>
+                    <div class="card">
+                        <h4>Migration Down</h4>
+                        <p>The <code>down()</code> function reverses the changes made in <code>up()</code>, allowing rollback to previous state.</p>
+                    </div>
+                </div>
+
+                <h3>Why Use Knex.js?</h3>
+                <p>Knex.js is a SQL query builder and migration tool for Node.js. It provides:</p>
+
+                <div class="card">
+                    <ul>
+                        <li><strong>Database Agnostic:</strong> Works with MySQL, PostgreSQL, SQLite, and more</li>
+                        <li><strong>Type-Safe:</strong> Full TypeScript support for schema definitions</li>
+                        <li><strong>Version Control:</strong> Track schema changes just like code changes</li>
+                        <li><strong>Rollback Safety:</strong> Undo changes if something goes wrong</li>
+                        <li><strong>Environment Separation:</strong> Different configurations for dev/staging/production</li>
+                    </ul>
+                </div>
+
+                <h3>Migration Workflow</h3>
+
+                <div class="schema-diagram">
+                    <h4 style="text-align: center; margin-bottom: 1.5rem;">Standard Migration Workflow</h4>
+                    <div style="text-align: center;">
+                        <div style="display: inline-block; background: #667eea; color: white; padding: 1rem 1.5rem; border-radius: 8px; margin: 0.5rem;">
+                            1. Create Migration
+                        </div>
+                        <div style="display: inline-block; font-size: 1.5rem; color: #667eea; margin: 0 0.5rem;">→</div>
+                        <div style="display: inline-block; background: #667eea; color: white; padding: 1rem 1.5rem; border-radius: 8px; margin: 0.5rem;">
+                            2. Test in Dev
+                        </div>
+                        <div style="display: inline-block; font-size: 1.5rem; color: #667eea; margin: 0 0.5rem;">→</div>
+                        <div style="display: inline-block; background: #667eea; color: white; padding: 1rem 1.5rem; border-radius: 8px; margin: 0.5rem;">
+                            3. Commit to Git
+                        </div>
+                        <br/><br/>
+                        <div style="display: inline-block; font-size: 1.5rem; color: #667eea; margin: 0 0.5rem;">↓</div>
+                        <br/><br/>
+                        <div style="display: inline-block; background: #667eea; color: white; padding: 1rem 1.5rem; border-radius: 8px; margin: 0.5rem;">
+                            4. Deploy to Staging
+                        </div>
+                        <div style="display: inline-block; font-size: 1.5rem; color: #667eea; margin: 0 0.5rem;">→</div>
+                        <div style="display: inline-block; background: #667eea; color: white; padding: 1rem 1.5rem; border-radius: 8px; margin: 0.5rem;">
+                            5. Test Rollback
+                        </div>
+                        <div style="display: inline-block; font-size: 1.5rem; color: #667eea; margin: 0 0.5rem;">→</div>
+                        <div style="display: inline-block; background: #28a745; color: white; padding: 1rem 1.5rem; border-radius: 8px; margin: 0.5rem;">
+                            6. Deploy to Production
+                        </div>
+                    </div>
+                </div>
+
+                <h3>V1 vs V2 Algorithm Architecture</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>V1 Algorithm (Legacy)</th>
+                            <th>V2 Algorithm (Current)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Database Storage</strong></td>
+                            <td>Vendor-specific tables (6 tables)<br/>table_tradentDetails, table_mvpDetails, etc.</td>
+                            <td>Unified table: v2_algo_settings<br/>Vendor identified by vendor_id column</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Badge Competition</strong></td>
+                            <td>Binary: BADGE_ONLY or ALL</td>
+                            <td>Four strategies: ALL_ZERO, ALL_PERCENTAGE, BADGE_ONLY, NON_BADGE_ONLY</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Settings Count</strong></td>
+                            <td>~20 configuration fields</td>
+                            <td>27 configuration columns with advanced pricing logic</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Price Strategy</strong></td>
+                            <td>Unit price or total cost (binary)</td>
+                            <td>UNIT, TOTAL, or BUY_BOX optimization</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Execution Tracking</strong></td>
+                            <td>Basic MongoDB logs</td>
+                            <td>Dedicated tables: v2_algo_results, v2_algo_execution, v2_algo_error</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Database Schema Overview</h3>
+
+                <div class="table-schema">
+                    <h4>Core V2 Algorithm Tables</h4>
+                    <ul>
+                        <li><code>v2_algo_settings</code> - Per-product pricing configuration (27 columns)</li>
+                        <li><code>v2_algo_results</code> - Repricing execution results and price update outcomes</li>
+                        <li><code>v2_algo_execution</code> - Chain-of-thought debugging logs for algorithm decisions</li>
+                        <li><code>v2_algo_error</code> - Error tracking with automatic retry logic</li>
+                        <li><code>v2_toggle</code> - Feature flag to enable/disable V2 algorithm per product</li>
+                    </ul>
+                </div>
+
+                <div class="table-schema">
+                    <h4>Supporting Tables</h4>
+                    <ul>
+                        <li><code>users</code> - Admin user accounts with bcrypt-hashed passwords</li>
+                        <li><code>channel_ids</code> - Vendor-specific Net32 marketplace channel mappings</li>
+                        <li><code>vendor_thresholds</code> - Shipping threshold rules per vendor</li>
+                        <li><code>tinyproxy_configs</code> - Proxy configuration for vendor web scraping</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- TUTORIALS -->
+            <section id="tutorials">
+                <h2>Step-by-Step Tutorials</h2>
+
+                <h3>Tutorial 1: Running Your First Migration</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Set Up Environment File</strong>
+                    <p>Create <code>.env.development</code> with your database credentials:</p>
+                    <pre><code>SQL_HOSTNAME=localhost
+SQL_PORT=3306
+SQL_USERNAME=root
+SQL_PASSWORD=your_dev_password
+SQL_DATABASE=repricer_dev</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Create Database</strong>
+                    <pre><code>mysql -u root -p -e "CREATE DATABASE repricer_dev"</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Run Migrations</strong>
+                    <pre><code>cd apps/db-migrations
+npm run migrate:dev</code></pre>
+                    <p><strong>Expected Output:</strong></p>
+                    <pre><code>Batch 1 run: 9 migrations
+20250729000000_v2_algo_settings.ts
+20250729000001_tinyproxy_configs.ts
+20250729000002_v2_algo_results.ts
+20250729000003_v2_algo_execution.ts
+20250729000004_v2_algo_error.ts
+20250729000005_v2_toggle.ts
+20250729000006_create_users_table.ts
+20250729000007_channel_ids.ts
+20250729000008_vendor_thresholds.ts</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Verify Tables</strong>
+                    <pre><code>mysql -u root -p repricer_dev -e "SHOW TABLES"</code></pre>
+                </div>
+
+                <h3>Tutorial 2: Creating a New Migration</h3>
+
+                <div class="warning-box">
+                    <strong>Important:</strong> Creating new migrations is typically done by developers when schema changes are needed. Database administrators should focus on running and managing existing migrations.
+                </div>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Generate Migration File</strong>
+                    <pre><code>cd apps/db-migrations
+npx knex migrate:make add_new_column --env development</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Edit Migration File</strong>
+                    <p>Open the generated file in <code>migrations/</code> directory:</p>
+                    <pre><code>import type { Knex } from "knex";
+
+export async function up(knex: Knex): Promise&lt;void&gt; {
+  await knex.schema.table('v2_algo_settings', (table) => {
+    table.boolean('new_feature_flag').notNullable().defaultTo(false);
+  });
+}
+
+export async function down(knex: Knex): Promise&lt;void&gt; {
+  await knex.schema.table('v2_algo_settings', (table) => {
+    table.dropColumn('new_feature_flag');
+  });
+}</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Test Migration</strong>
+                    <pre><code># Apply migration
+npm run migrate:dev
+
+# Test rollback
+npm run rollback:dev
+
+# Re-apply migration
+npm run migrate:dev</code></pre>
+                </div>
+
+                <h3>Tutorial 3: Rolling Back Migrations</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Check Current Migration Status</strong>
+                    <pre><code>mysql -u root -p repricer_dev -e "SELECT * FROM knex_migrations ORDER BY id DESC LIMIT 5"</code></pre>
+                    <p>This shows the last 5 migrations applied to your database.</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Rollback Last Batch</strong>
+                    <pre><code>npm run rollback:dev</code></pre>
+                    <p>This will undo the most recent batch of migrations (all migrations run in a single <code>migrate</code> command).</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Rollback All Migrations</strong>
+                    <pre><code>npm run rollback:dev:all</code></pre>
+                    <p><strong>⚠ Warning:</strong> This will drop ALL tables created by migrations. Use with extreme caution!</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Re-apply Migrations</strong>
+                    <pre><code>npm run migrate:dev</code></pre>
+                </div>
+
+                <h3>Tutorial 4: Using Utility Scripts</h3>
+
+                <h4>Creating Admin Users</h4>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Run Create User Script</strong>
+                    <pre><code>npm run create-user admin SecurePassword123!</code></pre>
+                    <p><strong>Expected Output:</strong></p>
+                    <pre><code>✅ User 'admin' created successfully with ID: 1
+Username: admin</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Verify User Creation</strong>
+                    <pre><code>mysql -u root -p repricer_dev -e "SELECT id, username, created_at FROM users"</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Security Notes</strong>
+                    <ul>
+                        <li>Passwords are hashed with bcrypt (10 rounds)</li>
+                        <li>Never store plaintext passwords</li>
+                        <li>Use strong passwords with mix of characters</li>
+                        <li>Usernames must be unique</li>
+                    </ul>
+                </div>
+
+                <h4>Migrating V1 Settings to V2</h4>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Ensure V1 Tables Exist</strong>
+                    <p>Verify you have legacy vendor tables:</p>
+                    <pre><code>mysql -u root -p repricer_dev -e "SHOW TABLES LIKE 'table_%Details'"</code></pre>
+                    <p>Should show: table_tradentDetails, table_mvpDetails, table_frontierDetails, etc.</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Run Migration Script</strong>
+                    <pre><code>npm run migrate-settings</code></pre>
+                    <p><strong>Expected Output:</strong></p>
+                    <pre><code>🚀 Starting sequential migration of all vendor settings...
+📋 Vendors to migrate: FirstDent, Frontier, MVP, TopDent, Tradent, Triad
+
+============================================================
+🔄 Starting Tradent migration...
+📊 Found 1250 Tradent settings to migrate
+✅ Batch inserted 1250 new settings for Tradent
+✅ Successfully migrated 1250 Tradent settings to v2_algo_settings
+📝 Inserted: 1250, Updated: 0
+
+🎉 Migration Summary:
+✅ Successful migrations: 6/6
+📊 Total Inserted: 7500
+📊 Total Updated: 0</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Verify Migration</strong>
+                    <pre><code># Check total count
+mysql -u root -p repricer_dev -e "SELECT COUNT(*) FROM v2_algo_settings"
+
+# Check per-vendor counts
+mysql -u root -p repricer_dev -e "SELECT vendor_id, COUNT(*) as count FROM v2_algo_settings GROUP BY vendor_id"</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Sync Single Product</strong>
+                    <p>To update settings for a specific MP ID across all vendors:</p>
+                    <pre><code>npm run migrate-settings -- --mp-id 12345</code></pre>
+                </div>
+
+                <h4>Migrating Channel IDs</h4>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Run Channel ID Migration</strong>
+                    <pre><code>npm run migrate-channel-ids</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Verify Channel Data</strong>
+                    <pre><code>mysql -u root -p repricer_dev -e "SELECT * FROM channel_ids LIMIT 10"</code></pre>
+                </div>
+
+                <h3>Tutorial 5: Running Seeds</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Prepare Proxy Config Data</strong>
+                    <p>Create a JSON file with proxy configurations (see README.md for format).</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Run Seed Script</strong>
+                    <pre><code>npm run seed:dev</code></pre>
+                    <p>This will populate the <code>tinyproxy_configs</code> table with vendor proxy settings.</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Verify Seed Data</strong>
+                    <pre><code>mysql -u root -p repricer_dev -e "SELECT box, vendor_id, ip FROM tinyproxy_configs"</code></pre>
+                </div>
+            </section>
+
+            <!-- MIGRATION REFERENCE -->
+            <section id="migration-reference">
+                <h2>Migration Reference</h2>
+
+                <p>Complete reference for all 9 migrations in the system, listed in execution order.</p>
+
+                <h3>Migration 1: v2_algo_settings</h3>
+                <div class="table-schema">
+                    <h4><span class="badge badge-migration">MIGRATION</span> 20250729000000_v2_algo_settings.ts</h4>
+                    <p><strong>Purpose:</strong> Core V2 algorithm configuration table with 27 columns for per-product-vendor pricing rules.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Default</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>INT (PK)</td>
+                                <td>AUTO_INCREMENT</td>
+                                <td>Primary key</td>
+                            </tr>
+                            <tr>
+                                <td><code>mp_id</code></td>
+                                <td>INT (indexed)</td>
+                                <td>NOT NULL</td>
+                                <td>Net32 marketplace product ID</td>
+                            </tr>
+                            <tr>
+                                <td><code>vendor_id</code></td>
+                                <td>INT (indexed)</td>
+                                <td>NOT NULL</td>
+                                <td>Vendor identifier (17357=Tradent, 20755=MVP, etc.)</td>
+                            </tr>
+                            <tr>
+                                <td><code>suppress_price_break_if_Q1_not_updated</code></td>
+                                <td>BOOLEAN</td>
+                                <td>false</td>
+                                <td>Prevent price break changes if Q1 unchanged</td>
+                            </tr>
+                            <tr>
+                                <td><code>suppress_price_break</code></td>
+                                <td>BOOLEAN</td>
+                                <td>false</td>
+                                <td>Disable all price break modifications</td>
+                            </tr>
+                            <tr>
+                                <td><code>compete_on_price_break_only</code></td>
+                                <td>BOOLEAN</td>
+                                <td>false</td>
+                                <td>Only compete on price break quantity (Q)</td>
+                            </tr>
+                            <tr>
+                                <td><code>up_down</code></td>
+                                <td>ENUM</td>
+                                <td>UP_DOWN</td>
+                                <td>Price direction: UP, DOWN, or UP_DOWN</td>
+                            </tr>
+                            <tr>
+                                <td><code>badge_indicator</code></td>
+                                <td>ENUM</td>
+                                <td>ALL</td>
+                                <td>Badge competition: ALL or BADGE</td>
+                            </tr>
+                            <tr>
+                                <td><code>execution_priority</code></td>
+                                <td>INT UNSIGNED</td>
+                                <td>0</td>
+                                <td>Execution order priority (lower = higher priority)</td>
+                            </tr>
+                            <tr>
+                                <td><code>reprice_up_percentage</code></td>
+                                <td>DECIMAL(10,2)</td>
+                                <td>-1</td>
+                                <td>Percentage to increase price (-1 = disabled)</td>
+                            </tr>
+                            <tr>
+                                <td><code>compare_q2_with_q1</code></td>
+                                <td>BOOLEAN</td>
+                                <td>false</td>
+                                <td>Compare quantity 2 with quantity 1 for pricing</td>
+                            </tr>
+                            <tr>
+                                <td><code>compete_with_all_vendors</code></td>
+                                <td>BOOLEAN</td>
+                                <td>false</td>
+                                <td>Compete against all vendors, not just eligible ones</td>
+                            </tr>
+                            <tr>
+                                <td><code>reprice_up_badge_percentage</code></td>
+                                <td>DECIMAL(10,2)</td>
+                                <td>-1</td>
+                                <td>Badge-specific upward repricing percentage</td>
+                            </tr>
+                            <tr>
+                                <td><code>sister_vendor_ids</code></td>
+                                <td>VARCHAR(255)</td>
+                                <td>""</td>
+                                <td>Comma-separated list of related vendor IDs</td>
+                            </tr>
+                            <tr>
+                                <td><code>exclude_vendors</code></td>
+                                <td>VARCHAR(255)</td>
+                                <td>""</td>
+                                <td>Comma-separated vendor IDs to exclude from competition</td>
+                            </tr>
+                            <tr>
+                                <td><code>inactive_vendor_id</code></td>
+                                <td>VARCHAR(255)</td>
+                                <td>""</td>
+                                <td>Comma-separated inactive vendor IDs</td>
+                            </tr>
+                            <tr>
+                                <td><code>handling_time_group</code></td>
+                                <td>ENUM</td>
+                                <td>ALL</td>
+                                <td>Shipping speed filter: ALL, FAST_SHIPPING, STOCKED, LONG_HANDLING</td>
+                            </tr>
+                            <tr>
+                                <td><code>keep_position</code></td>
+                                <td>BOOLEAN</td>
+                                <td>false</td>
+                                <td>Maintain current competitive position</td>
+                            </tr>
+                            <tr>
+                                <td><code>inventory_competition_threshold</code></td>
+                                <td>INT UNSIGNED</td>
+                                <td>1</td>
+                                <td>Minimum inventory to be competitive</td>
+                            </tr>
+                            <tr>
+                                <td><code>reprice_down_percentage</code></td>
+                                <td>DECIMAL(10,2)</td>
+                                <td>-1</td>
+                                <td>Percentage to decrease price (-1 = disabled)</td>
+                            </tr>
+                            <tr>
+                                <td><code>floor_price</code></td>
+                                <td>DECIMAL(10,2)</td>
+                                <td>0.00</td>
+                                <td>Minimum allowed price</td>
+                            </tr>
+                            <tr>
+                                <td><code>max_price</code></td>
+                                <td>DECIMAL(10,2)</td>
+                                <td>99999999.99</td>
+                                <td>Maximum allowed price</td>
+                            </tr>
+                            <tr>
+                                <td><code>reprice_down_badge_percentage</code></td>
+                                <td>DECIMAL(10,2)</td>
+                                <td>-1</td>
+                                <td>Badge-specific downward repricing percentage</td>
+                            </tr>
+                            <tr>
+                                <td><code>floor_compete_with_next</code></td>
+                                <td>BOOLEAN</td>
+                                <td>false</td>
+                                <td>At floor price, compete with next seller</td>
+                            </tr>
+                            <tr>
+                                <td><code>own_vendor_threshold</code></td>
+                                <td>INT UNSIGNED</td>
+                                <td>1</td>
+                                <td>Threshold for own vendor listings</td>
+                            </tr>
+                            <tr>
+                                <td><code>price_strategy</code></td>
+                                <td>ENUM</td>
+                                <td>UNIT</td>
+                                <td>Pricing strategy: UNIT, TOTAL, or BUY_BOX</td>
+                            </tr>
+                            <tr>
+                                <td><code>enabled</code></td>
+                                <td>BOOLEAN</td>
+                                <td>false</td>
+                                <td>Whether V2 algorithm is active for this product-vendor</td>
+                            </tr>
+                            <tr>
+                                <td><code>target_price</code></td>
+                                <td>DECIMAL(10,2)</td>
+                                <td>NULL</td>
+                                <td>Optional target price to achieve</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Indexes:</strong></p>
+                    <ul>
+                        <li><code>mp_id</code> - Fast product lookup</li>
+                        <li><code>vendor_id</code> - Fast vendor filtering</li>
+                        <li><code>(mp_id, vendor_id)</code> - Composite index for unique product-vendor lookup</li>
+                    </ul>
+                </div>
+
+                <h3>Migration 2: tinyproxy_configs</h3>
+                <div class="table-schema">
+                    <h4><span class="badge badge-migration">MIGRATION</span> 20250729000001_tinyproxy_configs.ts</h4>
+                    <p><strong>Purpose:</strong> Store proxy server configurations for vendor-specific web scraping.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>INT (PK)</td>
+                                <td>Primary key</td>
+                            </tr>
+                            <tr>
+                                <td><code>box</code></td>
+                                <td>VARCHAR(255)</td>
+                                <td>Vendor name (tradent, mvp, frontier, etc.)</td>
+                            </tr>
+                            <tr>
+                                <td><code>proxy_username</code></td>
+                                <td>VARCHAR(255)</td>
+                                <td>Proxy authentication username</td>
+                            </tr>
+                            <tr>
+                                <td><code>proxy_password</code></td>
+                                <td>VARCHAR(255)</td>
+                                <td>Proxy authentication password</td>
+                            </tr>
+                            <tr>
+                                <td><code>subscription_key</code></td>
+                                <td>VARCHAR(255)</td>
+                                <td>Net32 API subscription key</td>
+                            </tr>
+                            <tr>
+                                <td><code>ip</code></td>
+                                <td>VARCHAR(45)</td>
+                                <td>Proxy server IP address</td>
+                            </tr>
+                            <tr>
+                                <td><code>port</code></td>
+                                <td>INT</td>
+                                <td>Proxy server port</td>
+                            </tr>
+                            <tr>
+                                <td><code>vendor_id</code></td>
+                                <td>INT</td>
+                                <td>Vendor identifier matching v2_algo_settings</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Migration 3: v2_algo_results</h3>
+                <div class="table-schema">
+                    <h4><span class="badge badge-migration">MIGRATION</span> 20250729000002_v2_algo_results.ts</h4>
+                    <p><strong>Purpose:</strong> Store repricing execution results and price update outcomes.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>INT (PK)</td>
+                                <td>Primary key</td>
+                            </tr>
+                            <tr>
+                                <td><code>job_id</code></td>
+                                <td>VARCHAR(36) indexed</td>
+                                <td>Unique job identifier (UUID)</td>
+                            </tr>
+                            <tr>
+                                <td><code>suggested_price</code></td>
+                                <td>DECIMAL(10,2)</td>
+                                <td>Algorithm-calculated price</td>
+                            </tr>
+                            <tr>
+                                <td><code>lowest_price</code></td>
+                                <td>DECIMAL(10,2)</td>
+                                <td>Competitor's lowest price found</td>
+                            </tr>
+                            <tr>
+                                <td><code>lowest_vendor_id</code></td>
+                                <td>INT UNSIGNED</td>
+                                <td>Vendor with lowest competitive price</td>
+                            </tr>
+                            <tr>
+                                <td><code>comment</code></td>
+                                <td>TEXT</td>
+                                <td>Human-readable explanation of pricing decision</td>
+                            </tr>
+                            <tr>
+                                <td><code>triggered_by_vendor</code></td>
+                                <td>VARCHAR(255)</td>
+                                <td>Which competitor triggered the reprice</td>
+                            </tr>
+                            <tr>
+                                <td><code>result</code></td>
+                                <td>VARCHAR(255) indexed</td>
+                                <td>Outcome: REPRICED, NO_CHANGE, ERROR, etc.</td>
+                            </tr>
+                            <tr>
+                                <td><code>quantity</code></td>
+                                <td>INT UNSIGNED</td>
+                                <td>Inventory quantity at time of execution</td>
+                            </tr>
+                            <tr>
+                                <td><code>vendor_id</code></td>
+                                <td>INT UNSIGNED indexed</td>
+                                <td>Vendor being repriced</td>
+                            </tr>
+                            <tr>
+                                <td><code>mp_id</code></td>
+                                <td>INT UNSIGNED</td>
+                                <td>Net32 marketplace product ID</td>
+                            </tr>
+                            <tr>
+                                <td><code>cron_name</code></td>
+                                <td>VARCHAR(255) indexed</td>
+                                <td>Which cron job executed the reprice</td>
+                            </tr>
+                            <tr>
+                                <td><code>q_break_valid</code></td>
+                                <td>BOOLEAN</td>
+                                <td>Whether price break is valid</td>
+                            </tr>
+                            <tr>
+                                <td><code>price_update_result</code></td>
+                                <td>VARCHAR(255)</td>
+                                <td>Net32 API response status</td>
+                            </tr>
+                            <tr>
+                                <td><code>new_price_breaks</code></td>
+                                <td>VARCHAR(255)</td>
+                                <td>Updated price break structure</td>
+                            </tr>
+                            <tr>
+                                <td><code>created_at</code></td>
+                                <td>TIMESTAMP</td>
+                                <td>Execution timestamp</td>
+                            </tr>
+                            <tr>
+                                <td><code>updated_at</code></td>
+                                <td>TIMESTAMP</td>
+                                <td>Last update timestamp</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Indexes:</strong></p>
+                    <ul>
+                        <li><code>job_id</code> - Fast job lookup</li>
+                        <li><code>result</code> - Filter by outcome</li>
+                        <li><code>vendor_id</code> - Filter by vendor</li>
+                        <li><code>cron_name</code> - Track cron execution</li>
+                        <li><code>(mp_id, vendor_id)</code> - Product-vendor lookup</li>
+                    </ul>
+                </div>
+
+                <h3>Migration 4: v2_algo_execution</h3>
+                <div class="table-schema">
+                    <h4><span class="badge badge-migration">MIGRATION</span> 20250729000003_v2_algo_execution.ts</h4>
+                    <p><strong>Purpose:</strong> Chain-of-thought debugging logs showing algorithm decision-making process.</p>
+                    <p>This table stores detailed step-by-step reasoning for each repricing decision, essential for debugging and auditing.</p>
+                </div>
+
+                <h3>Migration 5: v2_algo_error</h3>
+                <div class="table-schema">
+                    <h4><span class="badge badge-migration">MIGRATION</span> 20250729000004_v2_algo_error.ts</h4>
+                    <p><strong>Purpose:</strong> Error tracking with automatic retry logic for failed repricing attempts.</p>
+                    <p>Captures errors, stack traces, and retry counts to ensure no pricing updates are lost due to transient failures.</p>
+                </div>
+
+                <h3>Migration 6: v2_toggle</h3>
+                <div class="table-schema">
+                    <h4><span class="badge badge-migration">MIGRATION</span> 20250729000005_v2_toggle.ts</h4>
+                    <p><strong>Purpose:</strong> Feature flag to gradually enable V2 algorithm per product-vendor combination.</p>
+                    <p>Allows safe rollout of V2 algorithm while maintaining V1 as fallback.</p>
+                </div>
+
+                <h3>Migration 7: users</h3>
+                <div class="table-schema">
+                    <h4><span class="badge badge-migration">MIGRATION</span> 20250729000006_create_users_table.ts</h4>
+                    <p><strong>Purpose:</strong> Admin user accounts for system access.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>INT (PK)</td>
+                                <td>Primary key</td>
+                            </tr>
+                            <tr>
+                                <td><code>username</code></td>
+                                <td>VARCHAR(255) UNIQUE</td>
+                                <td>Unique username for login</td>
+                            </tr>
+                            <tr>
+                                <td><code>password</code></td>
+                                <td>VARCHAR(255)</td>
+                                <td>Bcrypt-hashed password (10 rounds)</td>
+                            </tr>
+                            <tr>
+                                <td><code>created_at</code></td>
+                                <td>TIMESTAMP</td>
+                                <td>Account creation date</td>
+                            </tr>
+                            <tr>
+                                <td><code>updated_at</code></td>
+                                <td>TIMESTAMP</td>
+                                <td>Last modification date</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Migration 8: channel_ids</h3>
+                <div class="table-schema">
+                    <h4><span class="badge badge-migration">MIGRATION</span> 20250729000007_channel_ids.ts</h4>
+                    <p><strong>Purpose:</strong> Net32 marketplace channel mappings for vendor-specific product listings.</p>
+                    <p>Maps internal product IDs to Net32 channel-specific identifiers for multi-vendor management.</p>
+                </div>
+
+                <h3>Migration 9: vendor_thresholds</h3>
+                <div class="table-schema">
+                    <h4><span class="badge badge-migration">MIGRATION</span> 20250729000008_vendor_thresholds.ts</h4>
+                    <p><strong>Purpose:</strong> Shipping threshold rules per vendor.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Column</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>id</code></td>
+                                <td>INT (PK)</td>
+                                <td>Primary key</td>
+                            </tr>
+                            <tr>
+                                <td><code>vendor_id</code></td>
+                                <td>INT UNSIGNED</td>
+                                <td>Vendor identifier</td>
+                            </tr>
+                            <tr>
+                                <td><code>threshold</code></td>
+                                <td>DECIMAL(10,2)</td>
+                                <td>Minimum order value for free shipping</td>
+                            </tr>
+                            <tr>
+                                <td><code>standard_shipping</code></td>
+                                <td>DECIMAL(10,2)</td>
+                                <td>Standard shipping cost below threshold</td>
+                            </tr>
+                            <tr>
+                                <td><code>created_at</code></td>
+                                <td>TIMESTAMP</td>
+                                <td>Record creation timestamp</td>
+                            </tr>
+                            <tr>
+                                <td><code>updated_at</code></td>
+                                <td>TIMESTAMP</td>
+                                <td>Last update timestamp</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- CONFIGURATION GUIDE -->
+            <section id="configuration">
+                <h2>Configuration Guide</h2>
+
+                <h3>Environment Variables</h3>
+
+                <div class="warning-box">
+                    <strong>⚠ Security Warning:</strong> Never commit <code>.env</code> files to version control. These files contain sensitive database credentials.
+                </div>
+
+                <h3>Required Variables</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>SQL_HOSTNAME</code><br/><span class="badge badge-required">REQUIRED</span></td>
+                            <td>MySQL server hostname or IP</td>
+                            <td><code>localhost</code> or <code>192.168.1.100</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>SQL_PORT</code><br/><span class="badge badge-required">REQUIRED</span></td>
+                            <td>MySQL server port</td>
+                            <td><code>3306</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>SQL_USERNAME</code><br/><span class="badge badge-required">REQUIRED</span></td>
+                            <td>MySQL username with CREATE/ALTER privileges</td>
+                            <td><code>root</code> or <code>repricer_admin</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>SQL_PASSWORD</code><br/><span class="badge badge-required">REQUIRED</span></td>
+                            <td>MySQL password</td>
+                            <td><code>SecurePassword123!</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>SQL_DATABASE</code><br/><span class="badge badge-required">REQUIRED</span></td>
+                            <td>MySQL database name</td>
+                            <td><code>repricer_db</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Environment File Templates</h3>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <h4>Development (.env.development)</h4>
+                        <pre><code>SQL_HOSTNAME=localhost
+SQL_PORT=3306
+SQL_USERNAME=root
+SQL_PASSWORD=dev_password
+SQL_DATABASE=repricer_dev</code></pre>
+                    </div>
+                    <div class="card">
+                        <h4>Production (.env.production)</h4>
+                        <pre><code>SQL_HOSTNAME=prod-mysql-server.example.com
+SQL_PORT=3306
+SQL_USERNAME=repricer_prod
+SQL_PASSWORD=strong_prod_password_here
+SQL_DATABASE=repricer_production</code></pre>
+                    </div>
+                </div>
+
+                <h3>Knex Configuration</h3>
+
+                <p>The <code>knexfile.ts</code> automatically loads environment-specific configuration based on the environment:</p>
+
+                <pre><code>// Development
+npm run migrate:dev    # Uses .env.development
+
+// Production
+npm run migrate:prod   # Uses .env.production</code></pre>
+
+                <h3>Database User Permissions</h3>
+
+                <div class="card">
+                    <h4>Minimum Required MySQL Privileges</h4>
+                    <pre><code>-- Grant necessary privileges
+GRANT CREATE, ALTER, DROP, INDEX, SELECT, INSERT, UPDATE, DELETE
+ON repricer_db.*
+TO 'repricer_user'@'localhost'
+IDENTIFIED BY 'secure_password';
+
+FLUSH PRIVILEGES;</code></pre>
+                </div>
+
+                <div class="warning-box">
+                    <strong>Production Best Practice:</strong> Use a dedicated MySQL user with limited privileges. Avoid using <code>root</code> in production.
+                </div>
+
+                <h3>Multiple Environment Setup</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Create Environment Files</strong>
+                    <pre><code># Development
+.env.development
+
+# Staging
+.env.staging
+
+# Production
+.env.production</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Set NODE_ENV Before Running</strong>
+                    <pre><code># For custom environment
+export NODE_ENV=staging
+npm run migrate:dev  # Will use .env.staging</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Use Dedicated Commands</strong>
+                    <pre><code># Development
+npm run migrate:dev
+npm run rollback:dev
+
+# Production
+npm run migrate:prod
+npm run rollback:prod</code></pre>
+                </div>
+            </section>
+
+            <!-- V1 TO V2 MIGRATION -->
+            <section id="v1-to-v2">
+                <h2>V1 to V2 Migration Guide</h2>
+
+                <h3>Understanding V1 to V2 Transformation</h3>
+
+                <p>The migration from V1 to V2 algorithm involves transforming data from 6 vendor-specific tables into a single unified <code>v2_algo_settings</code> table with enhanced pricing logic.</p>
+
+                <div class="info-box">
+                    <strong>Migration Strategy:</strong> The script performs intelligent field mapping, data transformation, and batch upserts to ensure data integrity and minimal downtime.
+                </div>
+
+                <h3>Field Mapping Reference</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>V1 Field (Legacy)</th>
+                            <th>V2 Field (Current)</th>
+                            <th>Transformation Logic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>MpId</code></td>
+                            <td><code>mp_id</code></td>
+                            <td>Direct copy</td>
+                        </tr>
+                        <tr>
+                            <td>N/A (table name determines)</td>
+                            <td><code>vendor_id</code></td>
+                            <td>Mapped from vendor config:<br/>Tradent=17357, MVP=20755, etc.</td>
+                        </tr>
+                        <tr>
+                            <td><code>Activated</code></td>
+                            <td><code>enabled</code></td>
+                            <td>1 → true, 0 → false</td>
+                        </tr>
+                        <tr>
+                            <td><code>SuppressPriceBreakForOne</code></td>
+                            <td><code>suppress_price_break_if_Q1_not_updated</code></td>
+                            <td>1 → true, 0 → false</td>
+                        </tr>
+                        <tr>
+                            <td><code>SuppressPriceBreak</code></td>
+                            <td><code>suppress_price_break</code></td>
+                            <td>1 → true, 0 → false</td>
+                        </tr>
+                        <tr>
+                            <td><code>BeatQPrice</code></td>
+                            <td><code>compete_on_price_break_only</code></td>
+                            <td>1 → true, 0 → false</td>
+                        </tr>
+                        <tr>
+                            <td><code>RepricingRule</code></td>
+                            <td><code>up_down</code></td>
+                            <td>2 → UP_DOWN, else → DOWN</td>
+                        </tr>
+                        <tr>
+                            <td><code>BadgeIndicator</code></td>
+                            <td><code>badge_indicator</code></td>
+                            <td>"BADGE_ONLY" → BADGE, else → ALL</td>
+                        </tr>
+                        <tr>
+                            <td><code>ExecutionPriority</code></td>
+                            <td><code>execution_priority</code></td>
+                            <td>Direct copy, default 0</td>
+                        </tr>
+                        <tr>
+                            <td><code>PercentageIncrease</code></td>
+                            <td><code>reprice_up_percentage</code></td>
+                            <td>Direct copy, default -1</td>
+                        </tr>
+                        <tr>
+                            <td><code>CompareWithQ1</code></td>
+                            <td><code>compare_q2_with_q1</code></td>
+                            <td>1 → true, 0 → false</td>
+                        </tr>
+                        <tr>
+                            <td><code>CompeteAll</code></td>
+                            <td><code>compete_with_all_vendors</code></td>
+                            <td>1 → true, 0 → false</td>
+                        </tr>
+                        <tr>
+                            <td><code>BadgePercentage</code></td>
+                            <td><code>reprice_up_badge_percentage</code></td>
+                            <td>Direct copy, default -1</td>
+                        </tr>
+                        <tr>
+                            <td><code>SisterVendorId</code></td>
+                            <td><code>sister_vendor_ids</code></td>
+                            <td>Replace semicolons with commas: "123;456" → "123,456"</td>
+                        </tr>
+                        <tr>
+                            <td><code>ExcludedVendors</code></td>
+                            <td><code>exclude_vendors</code></td>
+                            <td>Replace semicolons with commas</td>
+                        </tr>
+                        <tr>
+                            <td><code>InactiveVendorId</code></td>
+                            <td><code>inactive_vendor_id</code></td>
+                            <td>Replace semicolons with commas</td>
+                        </tr>
+                        <tr>
+                            <td><code>HandlingTimeFilter</code></td>
+                            <td><code>handling_time_group</code></td>
+                            <td>Direct copy, default ""</td>
+                        </tr>
+                        <tr>
+                            <td><code>KeepPosition</code></td>
+                            <td><code>keep_position</code></td>
+                            <td>1 → true, 0 → false</td>
+                        </tr>
+                        <tr>
+                            <td><code>InventoryThreshold</code></td>
+                            <td><code>inventory_competition_threshold</code></td>
+                            <td>Direct copy, default 1</td>
+                        </tr>
+                        <tr>
+                            <td><code>PercentageDown</code></td>
+                            <td><code>reprice_down_percentage</code></td>
+                            <td>Multiply by 100: 0.05 → 5.00, or -1 if zero</td>
+                        </tr>
+                        <tr>
+                            <td><code>FloorPrice</code></td>
+                            <td><code>floor_price</code></td>
+                            <td>Direct copy, default 0</td>
+                        </tr>
+                        <tr>
+                            <td><code>MaxPrice</code></td>
+                            <td><code>max_price</code></td>
+                            <td>Direct copy, default 99999999.99</td>
+                        </tr>
+                        <tr>
+                            <td><code>BadgePercentageDown</code></td>
+                            <td><code>reprice_down_badge_percentage</code></td>
+                            <td>Multiply by 100 or -1 if zero</td>
+                        </tr>
+                        <tr>
+                            <td><code>CompeteWithNext</code></td>
+                            <td><code>floor_compete_with_next</code></td>
+                            <td>1 → true, 0 → false</td>
+                        </tr>
+                        <tr>
+                            <td><code>OwnVendorThreshold</code></td>
+                            <td><code>own_vendor_threshold</code></td>
+                            <td>Direct copy, default 1</td>
+                        </tr>
+                        <tr>
+                            <td><code>IsNCNeeded</code></td>
+                            <td><code>price_strategy</code></td>
+                            <td>1 → TOTAL, 0 → UNIT</td>
+                        </tr>
+                        <tr>
+                            <td><code>UnitPrice</code></td>
+                            <td><code>target_price</code></td>
+                            <td>Direct copy, nullable</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Migration Execution Steps</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Pre-Migration Verification</strong>
+                    <pre><code># Check V1 tables exist
+mysql -u root -p repricer_db -e "SHOW TABLES LIKE 'table_%Details'"
+
+# Count V1 records
+mysql -u root -p repricer_db -e "
+SELECT
+  'Tradent' as vendor, COUNT(*) as count FROM table_tradentDetails
+  UNION ALL
+  SELECT 'MVP', COUNT(*) FROM table_mvpDetails
+  UNION ALL
+  SELECT 'Frontier', COUNT(*) FROM table_frontierDetails
+  UNION ALL
+  SELECT 'FirstDent', COUNT(*) FROM table_firstDentDetails
+  UNION ALL
+  SELECT 'TopDent', COUNT(*) FROM table_topDentDetails
+  UNION ALL
+  SELECT 'Triad', COUNT(*) FROM table_triadDetails
+"</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Backup V1 Data</strong>
+                    <pre><code># Backup all vendor tables
+mysqldump -u root -p repricer_db \
+  table_tradentDetails \
+  table_mvpDetails \
+  table_frontierDetails \
+  table_firstDentDetails \
+  table_topDentDetails \
+  table_triadDetails \
+  > v1_backup_$(date +%Y%m%d).sql</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Run Migration Script</strong>
+                    <pre><code>npm run migrate-settings</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Post-Migration Verification</strong>
+                    <pre><code># Verify record counts match
+mysql -u root -p repricer_db -e "
+SELECT vendor_id, COUNT(*) as count
+FROM v2_algo_settings
+GROUP BY vendor_id
+"
+
+# Check sample transformations
+mysql -u root -p repricer_db -e "
+SELECT mp_id, vendor_id, enabled, floor_price, max_price
+FROM v2_algo_settings
+LIMIT 10
+"</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">5</span>
+                    <strong>Validate Business Rules</strong>
+                    <ul>
+                        <li>Verify percentage fields are correctly transformed (multiplied by 100)</li>
+                        <li>Check boolean conversions (1/0 to true/false)</li>
+                        <li>Validate semicolon-to-comma delimiter changes</li>
+                        <li>Ensure vendor_id mapping is correct</li>
+                    </ul>
+                </div>
+
+                <h3>Vendor ID Mapping</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vendor Name</th>
+                            <th>V1 Table</th>
+                            <th>V2 vendor_id</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Tradent</td>
+                            <td>table_tradentDetails</td>
+                            <td>17357</td>
+                        </tr>
+                        <tr>
+                            <td>MVP</td>
+                            <td>table_mvpDetails</td>
+                            <td>20755</td>
+                        </tr>
+                        <tr>
+                            <td>Frontier</td>
+                            <td>table_frontierDetails</td>
+                            <td>20722</td>
+                        </tr>
+                        <tr>
+                            <td>FirstDent</td>
+                            <td>table_firstDentDetails</td>
+                            <td>20533</td>
+                        </tr>
+                        <tr>
+                            <td>TopDent</td>
+                            <td>table_topDentDetails</td>
+                            <td>20727</td>
+                        </tr>
+                        <tr>
+                            <td>Triad</td>
+                            <td>table_triadDetails</td>
+                            <td>5</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Migration Script Advanced Usage</h3>
+
+                <div class="card">
+                    <h4>Migrate All Vendors</h4>
+                    <pre><code>npm run migrate-settings</code></pre>
+                    <p>Processes all 6 vendors sequentially with batch upserts.</p>
+                </div>
+
+                <div class="card">
+                    <h4>Sync Single Product Across All Vendors</h4>
+                    <pre><code>npm run migrate-settings -- --mp-id 12345</code></pre>
+                    <p>Updates settings for product 12345 across all vendor tables. Useful for testing or fixing individual products.</p>
+                </div>
+
+                <div class="card">
+                    <h4>View Help</h4>
+                    <pre><code>npm run migrate-settings -- --help</code></pre>
+                </div>
+
+                <h3>Rollback Strategy</h3>
+
+                <div class="warning-box">
+                    <strong>Important:</strong> The migration script performs upserts (insert or update). If you need to rollback:
+                    <ol>
+                        <li>Restore from backup: <code>mysql -u root -p repricer_db < v1_backup_YYYYMMDD.sql</code></li>
+                        <li>Delete V2 data: <code>DELETE FROM v2_algo_settings WHERE vendor_id IN (17357, 20755, 20722, 20533, 20727, 5)</code></li>
+                        <li>Re-run migration if needed</li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- TROUBLESHOOTING -->
+            <section id="troubleshooting">
+                <h2>Troubleshooting</h2>
+
+                <h3>Common Issues and Solutions</h3>
+
+                <div class="faq-item">
+                    <div class="faq-question">❌ Error: "SQL_HOSTNAME is not set"</div>
+                    <div class="faq-answer">
+                        <p><strong>Cause:</strong> Environment variables are not loaded or the wrong environment file is being used.</p>
+                        <p><strong>Solution:</strong></p>
+                        <ol>
+                            <li>Verify <code>.env.development</code> or <code>.env.production</code> exists in <code>apps/db-migrations/</code></li>
+                            <li>Check file has correct format (no spaces around =)
+                                <pre><code># Correct
+SQL_HOSTNAME=localhost
+
+# Incorrect
+SQL_HOSTNAME = localhost</code></pre>
+                            </li>
+                            <li>Ensure you're running from the correct directory</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">❌ Migration fails with "Access denied for user"</div>
+                    <div class="faq-answer">
+                        <p><strong>Cause:</strong> MySQL user lacks necessary privileges or wrong password.</p>
+                        <p><strong>Solution:</strong></p>
+                        <pre><code># Test connection manually
+mysql -h localhost -u root -p
+
+# Grant privileges
+GRANT CREATE, ALTER, DROP, INDEX, SELECT, INSERT, UPDATE, DELETE
+ON repricer_db.*
+TO 'your_user'@'localhost';
+
+FLUSH PRIVILEGES;</code></pre>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">❌ "Table already exists" error</div>
+                    <div class="faq-answer">
+                        <p><strong>Cause:</strong> Migration was previously run or tables exist from manual creation.</p>
+                        <p><strong>Solution:</strong></p>
+                        <ol>
+                            <li>Check migration status:
+                                <pre><code>mysql -u root -p repricer_db -e "SELECT * FROM knex_migrations"</code></pre>
+                            </li>
+                            <li>If migration is recorded but table state is unclear, rollback and re-run:
+                                <pre><code>npm run rollback:dev
+npm run migrate:dev</code></pre>
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">❌ Rollback fails with "knex_migrations table does not exist"</div>
+                    <div class="faq-answer">
+                        <p><strong>Cause:</strong> No migrations have been run yet, or database is in inconsistent state.</p>
+                        <p><strong>Solution:</strong></p>
+                        <pre><code># If starting fresh, just run migrations
+npm run migrate:dev
+
+# If database has manual tables, clean up manually
+mysql -u root -p repricer_db -e "DROP TABLE IF EXISTS
+  v2_algo_settings, v2_algo_results, v2_algo_execution,
+  v2_algo_error, v2_toggle, users, channel_ids,
+  vendor_thresholds, tinyproxy_configs"
+
+# Then run migrations
+npm run migrate:dev</code></pre>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">❌ V1 to V2 migration finds no vendor tables</div>
+                    <div class="faq-answer">
+                        <p><strong>Cause:</strong> V1 vendor tables don't exist in the database.</p>
+                        <p><strong>Solution:</strong></p>
+                        <ol>
+                            <li>Verify you're connected to the correct database:
+                                <pre><code>mysql -u root -p repricer_db -e "SHOW TABLES"</code></pre>
+                            </li>
+                            <li>Check expected table names:
+                                <pre><code>table_tradentDetails
+table_mvpDetails
+table_frontierDetails
+table_firstDentDetails
+table_topDentDetails
+table_triadDetails</code></pre>
+                            </li>
+                            <li>If tables don't exist, you may be working with a fresh installation (no V1 data to migrate)</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">❌ Migration script hangs or takes too long</div>
+                    <div class="faq-answer">
+                        <p><strong>Cause:</strong> Large dataset or slow database connection.</p>
+                        <p><strong>Solution:</strong></p>
+                        <ul>
+                            <li>Check database connection latency</li>
+                            <li>Monitor script progress (it logs vendor-by-vendor)</li>
+                            <li>For very large datasets (>10,000 products per vendor), consider batching:
+                                <pre><code># Sync vendors individually if needed
+# Modify migrate-settings.ts to process one vendor at a time</code></pre>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">❌ TypeScript compilation errors</div>
+                    <div class="faq-answer">
+                        <p><strong>Cause:</strong> Dependencies not installed or version mismatch.</p>
+                        <p><strong>Solution:</strong></p>
+                        <pre><code># Reinstall dependencies
+npm install
+
+# Rebuild shared package
+cd ../../packages/shared
+npm run build
+
+# Return to db-migrations
+cd ../../apps/db-migrations
+npm run migrate:dev</code></pre>
+                    </div>
+                </div>
+
+                <h3>Debugging Steps</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Enable Verbose Logging</strong>
+                    <p>Knex migrations show detailed SQL when errors occur. Review error messages carefully.</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Check Migration State</strong>
+                    <pre><code># View migration history
+mysql -u root -p repricer_db -e "
+SELECT id, name, batch, migration_time
+FROM knex_migrations
+ORDER BY id DESC
+"</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Manual Table Inspection</strong>
+                    <pre><code># Check table structure
+mysql -u root -p repricer_db -e "DESCRIBE v2_algo_settings"
+
+# Count records
+mysql -u root -p repricer_db -e "SELECT COUNT(*) FROM v2_algo_settings"
+
+# Check indexes
+mysql -u root -p repricer_db -e "SHOW INDEX FROM v2_algo_settings"</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Test Database Connectivity</strong>
+                    <pre><code># Test basic connection
+mysql -h $SQL_HOSTNAME -u $SQL_USERNAME -p
+
+# Test with environment variables
+node -e "
+const dotenv = require('dotenv');
+dotenv.config({ path: '.env.development' });
+console.log('Host:', process.env.SQL_HOSTNAME);
+console.log('Database:', process.env.SQL_DATABASE);
+"</code></pre>
+                </div>
+            </section>
+
+            <!-- BEST PRACTICES -->
+            <section id="best-practices">
+                <h2>Best Practices</h2>
+
+                <h3>Migration Development</h3>
+
+                <div class="card">
+                    <h4>1. Always Include Down Functions</h4>
+                    <p>Every migration must have a <code>down()</code> function that reverses the <code>up()</code> changes:</p>
+                    <pre><code>export async function up(knex: Knex): Promise&lt;void&gt; {
+  await knex.schema.createTable('new_table', (table) => {
+    table.increments('id');
+  });
+}
+
+export async function down(knex: Knex): Promise&lt;void&gt; {
+  await knex.schema.dropTableIfExists('new_table');
+}</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>2. Use Descriptive Migration Names</h4>
+                    <ul>
+                        <li>Good: <code>20250729000000_v2_algo_settings.ts</code></li>
+                        <li>Good: <code>20250729000001_add_vendor_threshold_columns.ts</code></li>
+                        <li>Bad: <code>migration1.ts</code></li>
+                        <li>Bad: <code>update.ts</code></li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>3. Test Rollbacks Before Production</h4>
+                    <pre><code># Development testing workflow
+npm run migrate:dev       # Apply migration
+npm run rollback:dev      # Test rollback
+npm run migrate:dev       # Re-apply migration
+# Only deploy to production after successful rollback test</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>4. Use Transactions for Data Migrations</h4>
+                    <p>When migrating data (not just schema), use transactions to ensure atomicity:</p>
+                    <pre><code>export async function up(knex: Knex): Promise&lt;void&gt; {
+  await knex.transaction(async (trx) => {
+    // All operations succeed or all fail
+    await trx('table1').update({ status: 'migrated' });
+    await trx('table2').insert({ data: 'new' });
+  });
+}</code></pre>
+                </div>
+
+                <h3>Production Deployment</h3>
+
+                <div class="card">
+                    <h4>1. Always Backup Before Migrations</h4>
+                    <pre><code># Before production migration
+mysqldump -u root -p repricer_production > backup_$(date +%Y%m%d_%H%M%S).sql
+
+# Run migration
+npm run migrate:prod
+
+# Keep backup for at least 30 days</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>2. Run Migrations During Low-Traffic Periods</h4>
+                    <ul>
+                        <li>Schedule migrations during maintenance windows</li>
+                        <li>Notify users of potential downtime</li>
+                        <li>Monitor application during and after migration</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>3. Never Modify Committed Migrations</h4>
+                    <p>Once a migration is deployed to production, never modify it. Instead, create a new migration to make changes:</p>
+                    <pre><code># Wrong: Editing existing migration
+# Right: Creating new migration
+npx knex migrate:make fix_vendor_threshold_column --env development</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>4. Monitor Migration Execution Time</h4>
+                    <pre><code># For large tables, monitor progress
+mysql -u root -p repricer_production -e "
+SELECT table_name, table_rows
+FROM information_schema.tables
+WHERE table_schema = 'repricer_production'
+"</code></pre>
+                </div>
+
+                <h3>Security Best Practices</h3>
+
+                <div class="card">
+                    <h4>1. Environment File Security</h4>
+                    <ul>
+                        <li>Never commit <code>.env</code> files to Git</li>
+                        <li>Use different credentials for dev/staging/production</li>
+                        <li>Rotate database passwords quarterly</li>
+                        <li>Limit database user privileges to minimum required</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>2. User Password Hashing</h4>
+                    <pre><code># Always use bcrypt with minimum 10 rounds
+const hashedPassword = await bcrypt.hash(password, 10);
+
+# Never store plaintext passwords
+# Never log passwords in migration scripts</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>3. Audit Trail</h4>
+                    <ul>
+                        <li>Keep migration logs for compliance</li>
+                        <li>Document who ran what migration when</li>
+                        <li>Maintain changelog of schema changes</li>
+                    </ul>
+                </div>
+
+                <h3>Performance Optimization</h3>
+
+                <div class="card">
+                    <h4>1. Add Indexes for Query Performance</h4>
+                    <p>Always add indexes on columns used in WHERE clauses, JOINs, or ORDER BY:</p>
+                    <pre><code>table.integer('mp_id').notNullable().index();  // Single column index
+table.index(['mp_id', 'vendor_id']);           // Composite index</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>2. Use Appropriate Data Types</h4>
+                    <ul>
+                        <li><code>DECIMAL(10,2)</code> for prices (not FLOAT)</li>
+                        <li><code>INT UNSIGNED</code> for IDs and counts</li>
+                        <li><code>BOOLEAN</code> for true/false flags</li>
+                        <li><code>ENUM</code> for fixed value sets (badge_indicator, price_strategy)</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>3. Batch Operations for Large Datasets</h4>
+                    <p>The migrate-settings script uses batch upserts for efficiency:</p>
+                    <pre><code>// Good: Batch insert
+await db('v2_algo_settings').insert(arrayOf1000Records);
+
+// Bad: Individual inserts in loop
+for (const record of arrayOf1000Records) {
+  await db('v2_algo_settings').insert(record);
+}</code></pre>
+                </div>
+
+                <h3>Documentation Standards</h3>
+
+                <div class="card">
+                    <h4>1. Comment Complex Migrations</h4>
+                    <pre><code>export async function up(knex: Knex): Promise&lt;void&gt; {
+  // Create v2_algo_settings table with 27 configuration columns
+  // This table consolidates vendor-specific settings from 6 legacy tables
+  await knex.schema.createTable('v2_algo_settings', (table) => {
+    // ... table definition
+  });
+}</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>2. Maintain README with Migration History</h4>
+                    <p>Update project README whenever migrations are added with:</p>
+                    <ul>
+                        <li>Migration purpose</li>
+                        <li>Tables affected</li>
+                        <li>Deployment date</li>
+                        <li>Any special considerations</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- FAQ -->
+            <section id="faq">
+                <h2>Frequently Asked Questions</h2>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: What's the difference between migrations and seeds?</div>
+                    <div class="faq-answer">
+                        <p><strong>Migrations</strong> manage database schema (structure) - creating tables, adding columns, etc. They are version-controlled and sequential.</p>
+                        <p><strong>Seeds</strong> populate tables with initial or test data. Seeds can be run multiple times and are not version-controlled like migrations.</p>
+                        <p>Example: Migration creates <code>users</code> table, seed populates it with an admin user.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: Can I run migrations on a production database without downtime?</div>
+                    <div class="faq-answer">
+                        <p>It depends on the migration type:</p>
+                        <ul>
+                            <li><strong>Safe (Zero Downtime):</strong> Adding new tables, adding nullable columns, creating indexes on small tables</li>
+                            <li><strong>Risky (Potential Downtime):</strong> Altering large tables, dropping columns, changing data types</li>
+                            <li><strong>Requires Downtime:</strong> Dropping tables, renaming columns used in production code</li>
+                        </ul>
+                        <p>For risky operations, use blue-green deployments or maintenance windows.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: What happens if a migration fails halfway through?</div>
+                    <div class="faq-answer">
+                        <p>MySQL does not support transactional DDL (unlike PostgreSQL). This means:</p>
+                        <ul>
+                            <li>If a migration fails, some changes may be applied, some may not</li>
+                            <li>The database may be in an inconsistent state</li>
+                            <li>You must manually review and fix the state</li>
+                        </ul>
+                        <p><strong>Recovery Steps:</strong></p>
+                        <ol>
+                            <li>Check <code>knex_migrations</code> table to see if migration was recorded</li>
+                            <li>Manually inspect tables to see what was created</li>
+                            <li>Either manually complete the migration or rollback manually</li>
+                            <li>Update <code>knex_migrations</code> table accordingly</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: Should I delete old migrations?</div>
+                    <div class="faq-answer">
+                        <p><strong>No, never delete migrations that have been run in production.</strong></p>
+                        <p>Reasons:</p>
+                        <ul>
+                            <li>They provide a complete history of schema evolution</li>
+                            <li>They're needed to build databases from scratch</li>
+                            <li>Deleting them breaks rollback capability</li>
+                            <li>Other developers/environments may not have run them yet</li>
+                        </ul>
+                        <p>Old migrations are harmless - they only run once per database and are tracked in <code>knex_migrations</code>.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: How do I handle schema changes in both migration and active code?</div>
+                    <div class="faq-answer">
+                        <p>Use a two-phase deployment:</p>
+                        <ol>
+                            <li><strong>Phase 1 - Additive Migration:</strong>
+                                <ul>
+                                    <li>Add new columns/tables (don't remove old ones yet)</li>
+                                    <li>Deploy code that writes to both old and new schema</li>
+                                    <li>Migrate data from old to new schema</li>
+                                </ul>
+                            </li>
+                            <li><strong>Phase 2 - Cleanup:</strong>
+                                <ul>
+                                    <li>Update code to use only new schema</li>
+                                    <li>Deploy code changes</li>
+                                    <li>Remove old columns/tables in a new migration</li>
+                                </ul>
+                            </li>
+                        </ol>
+                        <p>This ensures zero-downtime deployments.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: Why use Knex instead of raw SQL migrations?</div>
+                    <div class="faq-answer">
+                        <p>Advantages of Knex:</p>
+                        <ul>
+                            <li><strong>Type Safety:</strong> TypeScript support catches errors at compile-time</li>
+                            <li><strong>Database Agnostic:</strong> Same code works on MySQL, PostgreSQL, SQLite</li>
+                            <li><strong>Rollback Support:</strong> Built-in up/down migration pattern</li>
+                            <li><strong>Version Tracking:</strong> Automatic tracking of which migrations have been run</li>
+                            <li><strong>Programmatic Control:</strong> Can use loops, conditions, external data in migrations</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: Can I run migrations in parallel?</div>
+                    <div class="faq-answer">
+                        <p><strong>No, migrations must run sequentially.</strong></p>
+                        <p>Knex uses a lock to prevent concurrent migrations. This is critical because:</p>
+                        <ul>
+                            <li>Migrations often depend on previous migrations</li>
+                            <li>Multiple instances could create duplicate tables</li>
+                            <li>Race conditions could corrupt schema state</li>
+                        </ul>
+                        <p>If you have multiple servers, run migrations from only one server before deploying application code.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: How do I test migrations before production?</div>
+                    <div class="faq-answer">
+                        <p>Follow this testing workflow:</p>
+                        <ol>
+                            <li><strong>Local Testing:</strong> Run migration on local dev database, test rollback</li>
+                            <li><strong>Staging with Production Data:</strong> Restore production backup to staging, run migration</li>
+                            <li><strong>Performance Testing:</strong> Monitor migration time on production-sized dataset</li>
+                            <li><strong>Application Testing:</strong> Test application with new schema on staging</li>
+                            <li><strong>Rollback Testing:</strong> Test rollback procedure on staging</li>
+                            <li><strong>Production:</strong> Only after all tests pass, deploy to production</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: What's the best way to rename a column?</div>
+                    <div class="faq-answer">
+                        <p>Use the three-phase approach to avoid downtime:</p>
+                        <pre><code>// Phase 1: Add new column
+await knex.schema.table('v2_algo_settings', (table) => {
+  table.decimal('new_column_name', 10, 2);
+});
+
+// Phase 2: Copy data (in separate migration after code deployment)
+await knex('v2_algo_settings')
+  .update({ new_column_name: knex.raw('old_column_name') });
+
+// Phase 3: Drop old column (after code updated to use new name)
+await knex.schema.table('v2_algo_settings', (table) => {
+  table.dropColumn('old_column_name');
+});</code></pre>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: How long should I keep database backups?</div>
+                    <div class="faq-answer">
+                        <p>Recommended retention policy:</p>
+                        <ul>
+                            <li><strong>Pre-migration backups:</strong> 30 days minimum</li>
+                            <li><strong>Daily backups:</strong> 7 days</li>
+                            <li><strong>Weekly backups:</strong> 30 days</li>
+                            <li><strong>Monthly backups:</strong> 12 months</li>
+                            <li><strong>Critical milestone backups:</strong> Indefinitely (before major releases)</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p><strong>DB-Migrations User Guide</strong> | Version 1.0.0 | Last Updated: 2025-11-18</p>
+            <p>For technical support, contact: julianwlsn@gmail.com</p>
+            <p>Part of the Dental Supply Repricer Monorepo System</p>
+        </footer>
+    </div>
+</body>
+</html>

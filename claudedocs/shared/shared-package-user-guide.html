@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Package User Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-bottom: 4px solid #5568d3;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .meta-info {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .meta-info div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-info strong {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-info span {
+            font-size: 1.1rem;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav h2 {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        nav a {
+            color: #667eea;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        nav a:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 100px;
+        }
+
+        h2 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #764ba2;
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem 0;
+        }
+
+        h4 {
+            color: #495057;
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.75rem 0;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: #495057;
+        }
+
+        .card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .card h4 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+
+        code {
+            background: #f1f3f5;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge-enum { background: #6f42c1; color: white; }
+        .badge-type { background: #007bff; color: white; }
+        .badge-const { background: #28a745; color: white; }
+        .badge-lookup { background: #17a2b8; color: white; }
+
+        .highlight-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        footer {
+            background: #2d3748;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        footer p {
+            color: #cbd5e0;
+        }
+
+        .architecture-diagram {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .flow-box {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 0.5rem;
+            font-weight: 600;
+        }
+
+        .flow-arrow {
+            display: inline-block;
+            font-size: 1.5rem;
+            color: #667eea;
+            margin: 0 0.5rem;
+        }
+
+        .faq-item {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #764ba2;
+        }
+
+        .faq-item h4 {
+            color: #764ba2;
+            margin-top: 0;
+        }
+
+        @media print {
+            nav {
+                position: relative;
+            }
+
+            .container {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>@repricer-monorepo/shared</h1>
+            <p>Comprehensive Developer Guide for the Shared Types & Enums Package</p>
+
+            <div class="meta-info">
+                <div>
+                    <strong>Package Version</strong>
+                    <span>1.0.0</span>
+                </div>
+                <div>
+                    <strong>Module System</strong>
+                    <span>ESNext</span>
+                </div>
+                <div>
+                    <strong>TypeScript Target</strong>
+                    <span>ES2020</span>
+                </div>
+                <div>
+                    <strong>Consumer Apps</strong>
+                    <span>5 applications</span>
+                </div>
+            </div>
+        </header>
+
+        <nav>
+            <h2>Table of Contents</h2>
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#getting-started">Getting Started</a></li>
+                <li><a href="#core-concepts">Core Concepts</a></li>
+                <li><a href="#package-structure">Package Structure</a></li>
+                <li><a href="#vendor-types">Vendor Types</a></li>
+                <li><a href="#algorithm-enums">Algorithm Enums</a></li>
+                <li><a href="#cache-keys">Cache Keys</a></li>
+                <li><a href="#usage-examples">Usage Examples</a></li>
+                <li><a href="#integration">Integration Guide</a></li>
+                <li><a href="#development">Development Guide</a></li>
+                <li><a href="#best-practices">Best Practices</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+        </nav>
+
+        <div class="content">
+            <section id="overview">
+                <h2>Overview</h2>
+
+                <div class="info-box">
+                    <strong>Purpose:</strong> The <code>@repricer-monorepo/shared</code> package is the single source of truth for all shared TypeScript types, enums, and constants used across the repricer monorepo applications.
+                </div>
+
+                <h3>Why This Package Exists</h3>
+                <p>In a monorepo architecture with 5+ applications, maintaining consistency across shared data structures is critical. This package ensures:</p>
+                <ul>
+                    <li><strong>Type Safety:</strong> Compile-time guarantees across all applications</li>
+                    <li><strong>Single Source of Truth:</strong> No duplicate type definitions across apps</li>
+                    <li><strong>Consistent Updates:</strong> Changes propagate automatically to all consumers</li>
+                    <li><strong>Reduced Errors:</strong> Eliminates type drift between applications</li>
+                    <li><strong>Developer Efficiency:</strong> Import once, use everywhere</li>
+                </ul>
+
+                <h3>Consumer Applications</h3>
+                <div class="grid-2">
+                    <div class="card">
+                        <h4>front-end</h4>
+                        <p>React 19.1 UI for V2 algorithm configuration. Uses vendor enums, algorithm types, and cache keys for API integration.</p>
+                    </div>
+                    <div class="card">
+                        <h4>repricer</h4>
+                        <p>Core repricing business logic. Heavily uses algorithm enums, vendor types, and execution modes for pricing calculations.</p>
+                    </div>
+                    <div class="card">
+                        <h4>api-core</h4>
+                        <p>REST API gateway. Uses cache keys for Redis operations and vendor types for cron management.</p>
+                    </div>
+                    <div class="card">
+                        <h4>excel-export</h4>
+                        <p>Vendor report export service. Uses vendor enums for channel-specific 63-column reports.</p>
+                    </div>
+                    <div class="card">
+                        <h4>db-migrations</h4>
+                        <p>Database schema migrations. Uses all enums for seeding V2 algorithm tables.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="getting-started">
+                <h2>Getting Started</h2>
+
+                <h3>Installation</h3>
+                <p>The shared package is automatically available in all monorepo apps via workspace linking:</p>
+
+                <pre><code>{
+  "dependencies": {
+    "@repricer-monorepo/shared": "*"
+  }
+}</code></pre>
+
+                <div class="warning-box">
+                    <strong>Important:</strong> Always use the wildcard version <code>"*"</code> in monorepo apps to ensure automatic updates when the shared package changes.
+                </div>
+
+                <h3>First Import</h3>
+                <pre><code>// TypeScript/JavaScript
+import { VendorName, AlgoExecutionMode, CacheKey } from '@repricer-monorepo/shared';
+
+// Use the imported types
+const vendor: VendorName = VendorName.FRONTIER;
+const mode: AlgoExecutionMode = AlgoExecutionMode.V2_ONLY;
+const key: CacheKey = CacheKey.CRON_SETTINGS_LIST;</code></pre>
+
+                <h3>Verify Installation</h3>
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Check package.json dependencies</strong>
+                    <pre><code>cd apps/your-app
+cat package.json | grep "@repricer-monorepo/shared"</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Install dependencies</strong>
+                    <pre><code>npm install</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Test import</strong>
+                    <pre><code>// In any TypeScript file
+import { VendorName } from '@repricer-monorepo/shared';
+console.log(VendorName.FRONTIER); // Should compile without errors</code></pre>
+                </div>
+            </section>
+
+            <section id="core-concepts">
+                <h2>Core Concepts</h2>
+
+                <h3>Monorepo Structure</h3>
+                <p>The shared package sits at the root level alongside application packages:</p>
+
+                <div class="architecture-diagram">
+                    <div class="flow-box">repricer-monorepo</div>
+                    <div class="flow-arrow">↓</div>
+                    <div>
+                        <div class="flow-box">packages/shared</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-box">apps/front-end</div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div>
+                        <div class="flow-box">builds to dist/</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-box">apps/repricer</div>
+                    </div>
+                    <div class="flow-arrow">↓</div>
+                    <div>
+                        <div class="flow-box">imported by all apps</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-box">apps/api-core</div>
+                    </div>
+                </div>
+
+                <h3>Build System</h3>
+                <p>The shared package uses TypeScript compilation to generate distributable code:</p>
+                <ul>
+                    <li><strong>Source:</strong> <code>src/index.ts</code> (single entry point)</li>
+                    <li><strong>Build Output:</strong> <code>dist/index.js</code> + <code>dist/index.d.ts</code></li>
+                    <li><strong>Compiler:</strong> TypeScript 5.8.3 targeting ES2020</li>
+                    <li><strong>Module Format:</strong> ESNext with Node resolution</li>
+                </ul>
+
+                <h3>Export Strategy</h3>
+                <p>All exports are named exports from a single index file:</p>
+                <pre><code>// ✅ Correct - Named imports
+import { VendorName, AlgoExecutionMode } from '@repricer-monorepo/shared';
+
+// ❌ Wrong - No default export
+import shared from '@repricer-monorepo/shared';
+
+// ✅ Also valid - Namespace import
+import * as Shared from '@repricer-monorepo/shared';</code></pre>
+            </section>
+
+            <section id="package-structure">
+                <h2>Package Structure</h2>
+
+                <h3>Directory Layout</h3>
+                <pre><code>packages/shared/
+├── src/
+│   └── index.ts          # Single source file with all exports
+├── dist/                 # Build output (generated)
+│   ├── index.js          # Compiled JavaScript
+│   ├── index.d.ts        # Type declarations
+│   └── index.d.ts.map    # Declaration source maps
+├── package.json          # Package configuration
+├── tsconfig.json         # TypeScript compiler config
+└── README.md             # Basic package info</code></pre>
+
+                <h3>src/index.ts Exports</h3>
+                <p>The package exports 9 categories of types:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th>Count</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Vendor Identification</td>
+                            <td><span class="badge badge-enum">ENUM</span></td>
+                            <td>2</td>
+                            <td>VendorId, VendorName</td>
+                        </tr>
+                        <tr>
+                            <td>Vendor Lookups</td>
+                            <td><span class="badge badge-lookup">CONST</span></td>
+                            <td>2</td>
+                            <td>VendorNameLookup, VendorIdLookup</td>
+                        </tr>
+                        <tr>
+                            <td>Algorithm Execution</td>
+                            <td><span class="badge badge-enum">ENUM</span></td>
+                            <td>1</td>
+                            <td>AlgoExecutionMode</td>
+                        </tr>
+                        <tr>
+                            <td>Algorithm Pricing</td>
+                            <td><span class="badge badge-enum">ENUM</span></td>
+                            <td>3</td>
+                            <td>AlgoPriceDirection, AlgoPriceStrategy, AlgoBadgeIndicator</td>
+                        </tr>
+                        <tr>
+                            <td>Algorithm Filtering</td>
+                            <td><span class="badge badge-enum">ENUM</span></td>
+                            <td>1</td>
+                            <td>AlgoHandlingTimeGroup</td>
+                        </tr>
+                        <tr>
+                            <td>Cache Management</td>
+                            <td><span class="badge badge-enum">ENUM</span></td>
+                            <td>1</td>
+                            <td>CacheKey (20+ keys)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Build Configuration</h3>
+                <div class="card">
+                    <h4>TypeScript Compiler Options</h4>
+                    <pre><code>{
+  "target": "ES2020",              // Modern JavaScript features
+  "module": "ESNext",              // Latest module system
+  "declaration": true,             // Generate .d.ts files
+  "declarationMap": true,          // Source maps for types
+  "strict": true,                  // Full type safety
+  "esModuleInterop": true,         // CJS/ESM compatibility
+  "sourceMap": true                // Debug support
+}</code></pre>
+                </div>
+
+                <h3>Package.json Configuration</h3>
+                <pre><code>{
+  "name": "@repricer-monorepo/shared",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  }
+}</code></pre>
+            </section>
+
+            <section id="vendor-types">
+                <h2>Vendor Types Reference</h2>
+
+                <h3>VendorId Enum</h3>
+                <p>Numeric identifiers for each dental supply vendor in the system:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vendor</th>
+                            <th>ID</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>VendorId.FRONTIER</code></td>
+                            <td>20722</td>
+                            <td>Frontier Dental Supply vendor channel</td>
+                        </tr>
+                        <tr>
+                            <td><code>VendorId.TRADENT</code></td>
+                            <td>17357</td>
+                            <td>Tradent Dental Supply vendor channel</td>
+                        </tr>
+                        <tr>
+                            <td><code>VendorId.MVP</code></td>
+                            <td>20755</td>
+                            <td>MVP Dental Supply vendor channel</td>
+                        </tr>
+                        <tr>
+                            <td><code>VendorId.TOPDENT</code></td>
+                            <td>20727</td>
+                            <td>TopDent Dental Supply vendor channel</td>
+                        </tr>
+                        <tr>
+                            <td><code>VendorId.FIRSTDENT</code></td>
+                            <td>20533</td>
+                            <td>FirstDent Dental Supply vendor channel</td>
+                        </tr>
+                        <tr>
+                            <td><code>VendorId.TRIAD</code></td>
+                            <td>5</td>
+                            <td>Triad Dental Supply vendor channel</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Usage Example</h4>
+                <pre><code>import { VendorId } from '@repricer-monorepo/shared';
+
+// Database queries
+const frontierProducts = await db('products')
+  .where('vendor_id', VendorId.FRONTIER);
+
+// API filtering
+app.get('/products/:vendorId', (req, res) => {
+  const vendorId = parseInt(req.params.vendorId);
+  if (!Object.values(VendorId).includes(vendorId)) {
+    return res.status(400).json({ error: 'Invalid vendor ID' });
+  }
+  // Process request...
+});</code></pre>
+
+                <h3>VendorName Enum</h3>
+                <p>String identifiers for vendor names (used in configuration, logs, exports):</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Enum Value</th>
+                            <th>String Value</th>
+                            <th>Use Cases</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>VendorName.FRONTIER</code></td>
+                            <td>"FRONTIER"</td>
+                            <td>Channel names, Excel exports, logs</td>
+                        </tr>
+                        <tr>
+                            <td><code>VendorName.MVP</code></td>
+                            <td>"MVP"</td>
+                            <td>Channel names, Excel exports, logs</td>
+                        </tr>
+                        <tr>
+                            <td><code>VendorName.TRADENT</code></td>
+                            <td>"TRADENT"</td>
+                            <td>Channel names, Excel exports, logs</td>
+                        </tr>
+                        <tr>
+                            <td><code>VendorName.FIRSTDENT</code></td>
+                            <td>"FIRSTDENT"</td>
+                            <td>Channel names, Excel exports, logs</td>
+                        </tr>
+                        <tr>
+                            <td><code>VendorName.TOPDENT</code></td>
+                            <td>"TOPDENT"</td>
+                            <td>Channel names, Excel exports, logs</td>
+                        </tr>
+                        <tr>
+                            <td><code>VendorName.TRIAD</code></td>
+                            <td>"TRIAD"</td>
+                            <td>Channel names, Excel exports, logs</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Usage Example</h4>
+                <pre><code>import { VendorName } from '@repricer-monorepo/shared';
+
+// Excel export column headers
+const headers = [
+  `${VendorName.FRONTIER}_price`,
+  `${VendorName.MVP}_price`,
+  `${VendorName.TRADENT}_price`
+];
+
+// Logging
+logger.info(`Processing ${VendorName.FRONTIER} products`);
+
+// Switch statements with type safety
+function getVendorDisplayName(vendor: VendorName): string {
+  switch (vendor) {
+    case VendorName.FRONTIER:
+      return 'Frontier Dental Supply';
+    case VendorName.MVP:
+      return 'MVP Dental Supply';
+    // TypeScript ensures all cases are handled
+    default:
+      const _exhaustive: never = vendor;
+      throw new Error(`Unknown vendor: ${vendor}`);
+  }
+}</code></pre>
+
+                <h3>Vendor Lookup Constants</h3>
+                <p>Bidirectional conversion maps between vendor IDs and names:</p>
+
+                <h4>VendorNameLookup</h4>
+                <pre><code>import { VendorNameLookup, VendorId } from '@repricer-monorepo/shared';
+
+// Convert ID to Name
+const vendorId = 20722;
+const vendorName = VendorNameLookup[vendorId]; // "FRONTIER"
+
+// Type-safe usage
+function getVendorName(id: number): VendorName | undefined {
+  return VendorNameLookup[id];
+}</code></pre>
+
+                <h4>VendorIdLookup</h4>
+                <pre><code>import { VendorIdLookup, VendorName } from '@repricer-monorepo/shared';
+
+// Convert Name to ID
+const vendorName = VendorName.FRONTIER;
+const vendorId = VendorIdLookup[vendorName]; // 20722
+
+// Type-safe usage
+function getVendorId(name: VendorName): VendorId {
+  return VendorIdLookup[name];
+}</code></pre>
+            </section>
+
+            <section id="algorithm-enums">
+                <h2>Algorithm Enums Reference</h2>
+
+                <h3>AlgoExecutionMode</h3>
+                <p>Controls which pricing algorithm version executes and whether both run in comparison mode:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Mode</th>
+                            <th>Value</th>
+                            <th>Behavior</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>V2_ONLY</code></td>
+                            <td>"V2_ONLY"</td>
+                            <td>Execute only V2 algorithm, apply results to database</td>
+                        </tr>
+                        <tr>
+                            <td><code>V1_ONLY</code></td>
+                            <td>"V1_ONLY"</td>
+                            <td>Execute only V1 legacy algorithm, apply results</td>
+                        </tr>
+                        <tr>
+                            <td><code>V2_EXECUTE_V1_DRY</code></td>
+                            <td>"V2_EXECUTE_V1_DRY"</td>
+                            <td>Apply V2 results, run V1 in dry-run mode for comparison</td>
+                        </tr>
+                        <tr>
+                            <td><code>V1_EXECUTE_V2_DRY</code></td>
+                            <td>"V1_EXECUTE_V2_DRY"</td>
+                            <td>Apply V1 results, run V2 in dry-run mode for testing</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Usage Example</h4>
+                <pre><code>import { AlgoExecutionMode } from '@repricer-monorepo/shared';
+
+async function executeRepricing(mode: AlgoExecutionMode, productId: string) {
+  switch (mode) {
+    case AlgoExecutionMode.V2_ONLY:
+      const v2Result = await runV2Algorithm(productId);
+      await applyPricingResult(v2Result);
+      break;
+
+    case AlgoExecutionMode.V2_EXECUTE_V1_DRY:
+      const [v2Exec, v1Dry] = await Promise.all([
+        runV2Algorithm(productId),
+        runV1Algorithm(productId)
+      ]);
+      await applyPricingResult(v2Exec);
+      await logComparisonMetrics(v2Exec, v1Dry);
+      break;
+
+    // Handle other modes...
+  }
+}</code></pre>
+
+                <h3>AlgoPriceDirection</h3>
+                <p>Defines allowed price movement directions for repricing:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Direction</th>
+                            <th>Value</th>
+                            <th>Pricing Behavior</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>UP</code></td>
+                            <td>"UP"</td>
+                            <td>Only increase prices, never decrease</td>
+                        </tr>
+                        <tr>
+                            <td><code>UP_DOWN</code></td>
+                            <td>"UP/DOWN"</td>
+                            <td>Allow both price increases and decreases</td>
+                        </tr>
+                        <tr>
+                            <td><code>DOWN</code></td>
+                            <td>"DOWN"</td>
+                            <td>Only decrease prices, never increase</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Usage Example</h4>
+                <pre><code>import { AlgoPriceDirection } from '@repricer-monorepo/shared';
+
+function applyPriceDirection(
+  currentPrice: number,
+  calculatedPrice: number,
+  direction: AlgoPriceDirection
+): number {
+  switch (direction) {
+    case AlgoPriceDirection.UP:
+      return Math.max(currentPrice, calculatedPrice);
+
+    case AlgoPriceDirection.DOWN:
+      return Math.min(currentPrice, calculatedPrice);
+
+    case AlgoPriceDirection.UP_DOWN:
+      return calculatedPrice;
+
+    default:
+      const _exhaustive: never = direction;
+      throw new Error(`Unknown direction: ${direction}`);
+  }
+}</code></pre>
+
+                <h3>AlgoPriceStrategy</h3>
+                <p>Determines pricing calculation methodology:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Strategy</th>
+                            <th>Value</th>
+                            <th>Calculation Method</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>UNIT</code></td>
+                            <td>"UNIT"</td>
+                            <td>Compare and optimize per-unit pricing</td>
+                        </tr>
+                        <tr>
+                            <td><code>TOTAL</code></td>
+                            <td>"TOTAL"</td>
+                            <td>Compare total order cost (unit price + shipping)</td>
+                        </tr>
+                        <tr>
+                            <td><code>BUY_BOX</code></td>
+                            <td>"BUY_BOX"</td>
+                            <td>Optimize for Net32 buy-box position</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Usage Example</h4>
+                <pre><code>import { AlgoPriceStrategy } from '@repricer-monorepo/shared';
+
+function calculateCompetitivePrice(
+  product: Product,
+  competitors: Competitor[],
+  strategy: AlgoPriceStrategy
+): number {
+  switch (strategy) {
+    case AlgoPriceStrategy.UNIT:
+      const lowestUnit = Math.min(...competitors.map(c => c.unitPrice));
+      return lowestUnit - 0.01;
+
+    case AlgoPriceStrategy.TOTAL:
+      const lowestTotal = Math.min(...competitors.map(c =>
+        c.unitPrice + c.shippingCost
+      ));
+      return calculateUnitFromTotal(lowestTotal, product.shippingCost);
+
+    case AlgoPriceStrategy.BUY_BOX:
+      return calculateBuyBoxPrice(product, competitors);
+  }
+}</code></pre>
+
+                <h3>AlgoBadgeIndicator</h3>
+                <p>Badge competition strategy selector:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Strategy</th>
+                            <th>Value</th>
+                            <th>Competition Scope</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ALL</code></td>
+                            <td>"ALL"</td>
+                            <td>Compete against all sellers regardless of badge level</td>
+                        </tr>
+                        <tr>
+                            <td><code>BADGE</code></td>
+                            <td>"BADGE"</td>
+                            <td>Compete only within same badge level tier</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="info-box">
+                    <strong>Note:</strong> This enum is a simplified version. The full badge strategy system uses percentage-based and non-badge strategies defined in <code>v2_algo_settings</code> table.
+                </div>
+
+                <h3>AlgoHandlingTimeGroup</h3>
+                <p>Shipping speed filter categories:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Group</th>
+                            <th>Value</th>
+                            <th>Filtering Criteria</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ALL</code></td>
+                            <td>"ALL"</td>
+                            <td>Include all sellers regardless of handling time</td>
+                        </tr>
+                        <tr>
+                            <td><code>FAST_SHIPPING</code></td>
+                            <td>"FAST_SHIPPING"</td>
+                            <td>Only sellers with 1-2 day handling time</td>
+                        </tr>
+                        <tr>
+                            <td><code>STOCKED</code></td>
+                            <td>"STOCKED"</td>
+                            <td>Only in-stock items (0-3 day handling)</td>
+                        </tr>
+                        <tr>
+                            <td><code>LONG_HANDLING</code></td>
+                            <td>"LONG_HANDLING"</td>
+                            <td>Allow longer handling times (4+ days)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Usage Example</h4>
+                <pre><code>import { AlgoHandlingTimeGroup } from '@repricer-monorepo/shared';
+
+function filterCompetitorsByHandlingTime(
+  competitors: Competitor[],
+  group: AlgoHandlingTimeGroup
+): Competitor[] {
+  switch (group) {
+    case AlgoHandlingTimeGroup.ALL:
+      return competitors;
+
+    case AlgoHandlingTimeGroup.FAST_SHIPPING:
+      return competitors.filter(c => c.handlingTimeDays <= 2);
+
+    case AlgoHandlingTimeGroup.STOCKED:
+      return competitors.filter(c => c.handlingTimeDays <= 3);
+
+    case AlgoHandlingTimeGroup.LONG_HANDLING:
+      return competitors; // Include all, no upper limit
+  }
+}</code></pre>
+            </section>
+
+            <section id="cache-keys">
+                <h2>Cache Keys Reference</h2>
+
+                <h3>CacheKey Enum</h3>
+                <p>Redis cache key constants for consistent caching across applications:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Value</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>CRON_SETTINGS_LIST</code></td>
+                            <td>"CRON_SETTINGS_LIST"</td>
+                            <td>Cached list of all cron job configurations</td>
+                        </tr>
+                        <tr>
+                            <td><code>ENV_DELAY</code></td>
+                            <td>"ENV_DELAY"</td>
+                            <td>Environment-specific delay settings</td>
+                        </tr>
+                        <tr>
+                            <td><code>GLOBAL_INFO</code></td>
+                            <td>"GLOBAL_INFO"</td>
+                            <td>System-wide configuration and status</td>
+                        </tr>
+                        <tr>
+                            <td><code>PROXY_CONFIG_BY_PROVIDER_ID</code></td>
+                            <td>"PROXY_CONFIG_BY_PROVIDER_ID"</td>
+                            <td>Proxy settings indexed by provider ID</td>
+                        </tr>
+                        <tr>
+                            <td><code>FILTER_CRON_DETAILS</code></td>
+                            <td>"FILTER_CRON_DETAILS"</td>
+                            <td>Filter-based cron job details</td>
+                        </tr>
+                        <tr>
+                            <td><code>SLOW_CRON_DETAILS</code></td>
+                            <td>"SLOW_CRON_DETAILS"</td>
+                            <td>Slow cron job execution details</td>
+                        </tr>
+                        <tr>
+                            <td><code>SCRAPE_CRON_DETAILS</code></td>
+                            <td>"SCRAPE_CRON_DETAILS"</td>
+                            <td>Web scraping cron job configurations</td>
+                        </tr>
+                        <tr>
+                            <td><code>PROXY_CONFIG_BY_PRIORITY</code></td>
+                            <td>"PROXY_CONFIG_BY_PRIORITY"</td>
+                            <td>Proxy settings ordered by priority</td>
+                        </tr>
+                        <tr>
+                            <td><code>GET_ALL_PROXIES</code></td>
+                            <td>"GET_ALL_PROXIES"</td>
+                            <td>Complete list of available proxies</td>
+                        </tr>
+                        <tr>
+                            <td><code>PROXY_SWITCH_CRON_DETAILS</code></td>
+                            <td>"PROXY_SWITCH_CRON_DETAILS"</td>
+                            <td>Proxy rotation cron job settings</td>
+                        </tr>
+                        <tr>
+                            <td><code>_422_RUNNING_CACHE</code></td>
+                            <td>"422_RUNNING_CACHE"</td>
+                            <td>Tracking active 422 error retry jobs</td>
+                        </tr>
+                        <tr>
+                            <td><code>SMART_PROXY_WEB_COUNTER_CACHE</code></td>
+                            <td>"SMART_PROXY_WEB_COUNTER_CACHE"</td>
+                            <td>SmartProxy API usage counter</td>
+                        </tr>
+                        <tr>
+                            <td><code>SCRAPING_BEE_NON_JS_COUNTER_CACHE</code></td>
+                            <td>"SCRAPING_BEE_NON_JS_COUNTER_CACHE"</td>
+                            <td>ScrapingBee non-JS request counter</td>
+                        </tr>
+                        <tr>
+                            <td><code>SCRAPING_BEE_JS_COUNTER_CACHE</code></td>
+                            <td>"SCRAPING_BEE_JS_COUNTER_CACHE"</td>
+                            <td>ScrapingBee JS-enabled request counter</td>
+                        </tr>
+                        <tr>
+                            <td><code>BRIGHT_DATA_COUNTER_CACHE</code></td>
+                            <td>"BRIGHT_DATA_COUNTER_CACHE"</td>
+                            <td>BrightData API usage counter</td>
+                        </tr>
+                        <tr>
+                            <td><code>ENV_SETTINGS</code></td>
+                            <td>"ENV_SETTINGS"</td>
+                            <td>Environment configuration cache</td>
+                        </tr>
+                        <tr>
+                            <td><code>IP_CONFIG</code></td>
+                            <td>"IP_CONFIG"</td>
+                            <td>IP address configuration cache</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>Usage Example</h4>
+                <pre><code>import { CacheKey } from '@repricer-monorepo/shared';
+import Redis from 'ioredis';
+
+const redis = new Redis();
+
+// Set cache
+await redis.set(
+  CacheKey.CRON_SETTINGS_LIST,
+  JSON.stringify(cronSettings),
+  'EX',
+  3600 // 1 hour TTL
+);
+
+// Get cache
+const cached = await redis.get(CacheKey.GLOBAL_INFO);
+const globalInfo = cached ? JSON.parse(cached) : null;
+
+// Delete cache
+await redis.del(CacheKey.PROXY_CONFIG_BY_PROVIDER_ID);
+
+// Type-safe cache key builder
+class CacheService {
+  async get<T>(key: CacheKey): Promise<T | null> {
+    const value = await redis.get(key);
+    return value ? JSON.parse(value) : null;
+  }
+
+  async set<T>(key: CacheKey, value: T, ttl?: number): Promise<void> {
+    const args = [key, JSON.stringify(value)];
+    if (ttl) args.push('EX', ttl.toString());
+    await redis.set(...args);
+  }
+}</code></pre>
+            </section>
+
+            <section id="usage-examples">
+                <h2>Usage Examples</h2>
+
+                <h3>Basic Type Imports</h3>
+                <pre><code>// Single import
+import { VendorName } from '@repricer-monorepo/shared';
+
+// Multiple imports
+import {
+  VendorId,
+  VendorName,
+  AlgoExecutionMode,
+  CacheKey
+} from '@repricer-monorepo/shared';
+
+// Namespace import (less common)
+import * as Shared from '@repricer-monorepo/shared';
+const vendorId = Shared.VendorId.FRONTIER;</code></pre>
+
+                <h3>Type Guards</h3>
+                <pre><code>import { VendorName, VendorId } from '@repricer-monorepo/shared';
+
+// Type guard for VendorName
+function isVendorName(value: string): value is VendorName {
+  return Object.values(VendorName).includes(value as VendorName);
+}
+
+// Usage
+const userInput = req.body.vendor;
+if (isVendorName(userInput)) {
+  // TypeScript now knows userInput is VendorName
+  processVendor(userInput);
+} else {
+  throw new Error('Invalid vendor name');
+}
+
+// Type guard for VendorId
+function isVendorId(value: number): value is VendorId {
+  return Object.values(VendorId).includes(value as VendorId);
+}</code></pre>
+
+                <h3>Switch Statements with Exhaustiveness Checking</h3>
+                <pre><code>import { AlgoExecutionMode } from '@repricer-monorepo/shared';
+
+function getExecutionDescription(mode: AlgoExecutionMode): string {
+  switch (mode) {
+    case AlgoExecutionMode.V2_ONLY:
+      return 'Running V2 algorithm only';
+
+    case AlgoExecutionMode.V1_ONLY:
+      return 'Running V1 legacy algorithm only';
+
+    case AlgoExecutionMode.V2_EXECUTE_V1_DRY:
+      return 'V2 active, V1 dry-run comparison';
+
+    case AlgoExecutionMode.V1_EXECUTE_V2_DRY:
+      return 'V1 active, V2 dry-run testing';
+
+    default:
+      // This ensures all enum values are handled
+      const _exhaustive: never = mode;
+      throw new Error(`Unhandled execution mode: ${mode}`);
+  }
+}</code></pre>
+
+                <h3>Type Narrowing with Enums</h3>
+                <pre><code>import { AlgoPriceDirection } from '@repricer-monorepo/shared';
+
+interface PricingConfig {
+  direction: AlgoPriceDirection;
+  minPrice?: number;
+  maxPrice?: number;
+}
+
+function validatePricingConfig(config: PricingConfig): void {
+  // Narrow types based on direction
+  if (config.direction === AlgoPriceDirection.UP) {
+    if (!config.minPrice) {
+      throw new Error('UP direction requires minPrice');
+    }
+  } else if (config.direction === AlgoPriceDirection.DOWN) {
+    if (!config.maxPrice) {
+      throw new Error('DOWN direction requires maxPrice');
+    }
+  }
+  // UP_DOWN allows both to be optional
+}</code></pre>
+
+                <h3>Database Query Patterns</h3>
+                <pre><code>import { VendorId, VendorName, VendorNameLookup } from '@repricer-monorepo/shared';
+import { Knex } from 'knex';
+
+// Query by vendor ID
+async function getProductsByVendor(
+  db: Knex,
+  vendorId: VendorId
+): Promise<Product[]> {
+  return db('products')
+    .where('vendor_id', vendorId)
+    .select('*');
+}
+
+// Query with vendor name conversion
+async function getProductsByVendorName(
+  db: Knex,
+  vendorName: VendorName
+): Promise<Product[]> {
+  const vendorId = VendorIdLookup[vendorName];
+  return getProductsByVendor(db, vendorId);
+}
+
+// Bulk query for multiple vendors
+async function getProductsForAllVendors(db: Knex) {
+  return db('products')
+    .whereIn('vendor_id', Object.values(VendorId))
+    .select('*');
+}</code></pre>
+
+                <h3>React Component Integration</h3>
+                <pre><code>import { VendorName, AlgoPriceStrategy } from '@repricer-monorepo/shared';
+import { useState } from 'react';
+
+interface VendorSelectorProps {
+  onSelect: (vendor: VendorName) => void;
+}
+
+export function VendorSelector({ onSelect }: VendorSelectorProps) {
+  const [selected, setSelected] = useState<VendorName | null>(null);
+
+  const vendors = Object.values(VendorName);
+
+  return (
+    <select
+      value={selected ?? ''}
+      onChange={(e) => {
+        const vendor = e.target.value as VendorName;
+        setSelected(vendor);
+        onSelect(vendor);
+      }}
+    >
+      <option value="">Select Vendor</option>
+      {vendors.map(vendor => (
+        <option key={vendor} value={vendor}>
+          {vendor}
+        </option>
+      ))}
+    </select>
+  );
+}</code></pre>
+
+                <h3>API Response Typing</h3>
+                <pre><code>import { VendorName, AlgoExecutionMode } from '@repricer-monorepo/shared';
+
+interface AlgorithmSettings {
+  vendor: VendorName;
+  executionMode: AlgoExecutionMode;
+  priceStrategy: AlgoPriceStrategy;
+  enabled: boolean;
+}
+
+// Express API handler
+app.get('/api/settings/:vendor', async (req, res) => {
+  const vendorParam = req.params.vendor;
+
+  if (!isVendorName(vendorParam)) {
+    return res.status(400).json({
+      error: 'Invalid vendor',
+      validVendors: Object.values(VendorName)
+    });
+  }
+
+  const settings: AlgorithmSettings = await getSettings(vendorParam);
+  res.json(settings);
+});</code></pre>
+            </section>
+
+            <section id="integration">
+                <h2>Integration Guide</h2>
+
+                <h3>Adding Shared Package to New App</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Add Dependency to package.json</strong>
+                    <pre><code>// In apps/your-new-app/package.json
+{
+  "dependencies": {
+    "@repricer-monorepo/shared": "*"
+  }
+}</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Install Dependencies</strong>
+                    <pre><code>cd apps/your-new-app
+npm install</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Configure TypeScript</strong>
+                    <pre><code>// Ensure tsconfig.json has module resolution
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "esModuleInterop": true
+  }
+}</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Import and Use</strong>
+                    <pre><code>import { VendorName } from '@repricer-monorepo/shared';
+
+console.log(VendorName.FRONTIER); // Ready to use!</code></pre>
+                </div>
+
+                <h3>Updating Shared Types</h3>
+
+                <div class="warning-box">
+                    <strong>Breaking Change Protocol:</strong> Changes to enums or types can break all consuming applications. Follow this process carefully.
+                </div>
+
+                <h4>Adding New Enum Values (Non-Breaking)</h4>
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Edit packages/shared/src/index.ts</strong>
+                    <pre><code>export enum VendorName {
+  FRONTIER = "FRONTIER",
+  MVP = "MVP",
+  // ... existing values
+  NEW_VENDOR = "NEW_VENDOR"  // ✅ Safe to add
+}</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Rebuild Shared Package</strong>
+                    <pre><code>cd packages/shared
+npm run build</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Verify in Consumer Apps</strong>
+                    <pre><code>cd apps/repricer
+npm run build  # Should compile without errors</code></pre>
+                </div>
+
+                <h4>Modifying Existing Enum Values (Breaking Change)</h4>
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Audit All Usage</strong>
+                    <pre><code># Search all apps for usage
+grep -r "VendorName.OLD_VALUE" apps/</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Create Migration Plan</strong>
+                    <ul>
+                        <li>Identify all database migrations needed</li>
+                        <li>Plan API contract changes</li>
+                        <li>Update all switch statements</li>
+                        <li>Update all database queries</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Execute in Order</strong>
+                    <ol>
+                        <li>Run database migrations first</li>
+                        <li>Update shared package</li>
+                        <li>Update all consuming apps</li>
+                        <li>Test thoroughly before deploying</li>
+                    </ol>
+                </div>
+
+                <h3>Version Control Best Practices</h3>
+                <div class="card">
+                    <h4>Semantic Versioning</h4>
+                    <ul>
+                        <li><strong>Patch (1.0.x):</strong> Bug fixes, documentation updates</li>
+                        <li><strong>Minor (1.x.0):</strong> New enum values, new exports (non-breaking)</li>
+                        <li><strong>Major (x.0.0):</strong> Removing enums, changing enum values, renaming exports</li>
+                    </ul>
+                </div>
+
+                <h3>Dependency Management</h3>
+                <pre><code>// Root package.json workspaces configuration
+{
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ]
+}
+
+// Turborepo handles build order automatically
+// packages/shared always builds before apps/*</code></pre>
+            </section>
+
+            <section id="development">
+                <h2>Development Guide</h2>
+
+                <h3>Local Development Workflow</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Watch Mode for Development</strong>
+                    <pre><code>cd packages/shared
+npm run dev  # TypeScript compiler in watch mode</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Make Changes to src/index.ts</strong>
+                    <pre><code>// Add new enum
+export enum NewFeatureMode {
+  ENABLED = "ENABLED",
+  DISABLED = "DISABLED"
+}</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Auto-Compilation</strong>
+                    <p>Watch mode automatically rebuilds to <code>dist/</code> on file save</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Test in Consumer App</strong>
+                    <pre><code>// In apps/front-end/src/components/test.tsx
+import { NewFeatureMode } from '@repricer-monorepo/shared';
+
+console.log(NewFeatureMode.ENABLED); // Should work immediately</code></pre>
+                </div>
+
+                <h3>Adding New Types</h3>
+
+                <h4>Adding a New Enum</h4>
+                <pre><code>// packages/shared/src/index.ts
+
+export enum ProxyProvider {
+  BRIGHT_DATA = "BRIGHT_DATA",
+  SCRAPFLY = "SCRAPFLY",
+  SCRAPING_BEE = "SCRAPING_BEE"
+}
+
+// If needed, add lookup constant
+export const ProxyProviderPriority: Record<ProxyProvider, number> = {
+  [ProxyProvider.BRIGHT_DATA]: 1,
+  [ProxyProvider.SCRAPFLY]: 2,
+  [ProxyProvider.SCRAPING_BEE]: 3
+};</code></pre>
+
+                <h4>Adding a New Type Definition</h4>
+                <pre><code>// packages/shared/src/index.ts
+
+export interface CronConfiguration {
+  id: number;
+  name: string;
+  schedule: string;
+  enabled: boolean;
+  vendor: VendorName;
+}
+
+export type CronStatus = 'running' | 'stopped' | 'error';</code></pre>
+
+                <h3>Building the Package</h3>
+
+                <h4>Production Build</h4>
+                <pre><code>cd packages/shared
+npm run build</code></pre>
+
+                <p>Generates:</p>
+                <ul>
+                    <li><code>dist/index.js</code> - Compiled JavaScript (ES2020)</li>
+                    <li><code>dist/index.d.ts</code> - TypeScript type declarations</li>
+                    <li><code>dist/index.d.ts.map</code> - Source maps for debugging</li>
+                </ul>
+
+                <h4>Clean Build</h4>
+                <pre><code># Windows
+npm run clean-windows && npm run build
+
+# Linux/Mac
+npm run clean && npm run build</code></pre>
+
+                <h3>Testing Changes</h3>
+
+                <div class="card">
+                    <h4>Manual Testing Checklist</h4>
+                    <ol>
+                        <li>Build shared package: <code>npm run build</code></li>
+                        <li>Test in each consumer app:
+                            <ul>
+                                <li><code>cd apps/front-end && npm run build</code></li>
+                                <li><code>cd apps/repricer && npm run build</code></li>
+                                <li><code>cd apps/api-core && npm test</code></li>
+                                <li><code>cd apps/excel-export && npm run build</code></li>
+                                <li><code>cd apps/db-migrations && npm run build</code></li>
+                            </ul>
+                        </li>
+                        <li>Run type checking: <code>npm run check-types</code></li>
+                        <li>Test imports in real usage scenarios</li>
+                    </ol>
+                </div>
+
+                <h3>Publishing Updates</h3>
+
+                <div class="warning-box">
+                    <strong>Important:</strong> The shared package is private to this monorepo and not published to npm. Updates are consumed through workspace linking.
+                </div>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Update Version (Optional)</strong>
+                    <pre><code>// packages/shared/package.json
+{
+  "version": "1.1.0"  // Increment based on changes
+}</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Commit Changes</strong>
+                    <pre><code>git add packages/shared
+git commit -m "feat(shared): add ProxyProvider enum"</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Update Consuming Apps</strong>
+                    <pre><code># From monorepo root
+npm install  # Refreshes workspace links</code></pre>
+                </div>
+            </section>
+
+            <section id="best-practices">
+                <h2>Best Practices</h2>
+
+                <h3>When to Use Shared Package vs Local Types</h3>
+
+                <div class="grid-2">
+                    <div class="success-box">
+                        <h4>✅ Use Shared Package For:</h4>
+                        <ul>
+                            <li>Types used in 2+ applications</li>
+                            <li>Database enum values</li>
+                            <li>API contract types</li>
+                            <li>Domain model enums (vendors, algorithms)</li>
+                            <li>Cache key constants</li>
+                            <li>Configuration enums</li>
+                        </ul>
+                    </div>
+
+                    <div class="warning-box">
+                        <h4>❌ Keep Local For:</h4>
+                        <ul>
+                            <li>App-specific UI component props</li>
+                            <li>Internal implementation details</li>
+                            <li>Helper function types</li>
+                            <li>Single-app domain logic</li>
+                            <li>Temporary experimental types</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Type Safety Patterns</h3>
+
+                <h4>1. Exhaustive Switch Statements</h4>
+                <pre><code>import { AlgoExecutionMode } from '@repricer-monorepo/shared';
+
+function handleMode(mode: AlgoExecutionMode) {
+  switch (mode) {
+    case AlgoExecutionMode.V2_ONLY:
+      return 'v2';
+    case AlgoExecutionMode.V1_ONLY:
+      return 'v1';
+    case AlgoExecutionMode.V2_EXECUTE_V1_DRY:
+      return 'v2-with-v1-dry';
+    case AlgoExecutionMode.V1_EXECUTE_V2_DRY:
+      return 'v1-with-v2-dry';
+    default:
+      // TypeScript error if any case is missed
+      const _exhaustive: never = mode;
+      throw new Error(`Unhandled mode: ${mode}`);
+  }
+}</code></pre>
+
+                <h4>2. Type-Safe Enum Iteration</h4>
+                <pre><code>import { VendorName } from '@repricer-monorepo/shared';
+
+// Get all enum values
+const allVendors = Object.values(VendorName);
+
+// Type-safe mapping
+const vendorConfigs = allVendors.map(vendor => ({
+  name: vendor,
+  enabled: true
+}));</code></pre>
+
+                <h4>3. Branded Types for IDs</h4>
+                <pre><code>import { VendorId } from '@repricer-monorepo/shared';
+
+// Use branded types to prevent mixing IDs
+type ProductId = number & { __brand: 'ProductId' };
+type OrderId = number & { __brand: 'OrderId' };
+
+// VendorId is already a proper enum, not just number
+function getProduct(
+  productId: ProductId,
+  vendorId: VendorId  // Type-safe vendor ID
+): Promise<Product> {
+  // Implementation
+}</code></pre>
+
+                <h3>Avoiding Circular Dependencies</h3>
+
+                <div class="warning-box">
+                    <strong>Critical Rule:</strong> The shared package must never import from apps. Dependencies flow one way only.
+                </div>
+
+                <div class="architecture-diagram">
+                    <div class="flow-box">packages/shared</div>
+                    <div class="flow-arrow">→ ONE WAY ONLY →</div>
+                    <div class="flow-box">apps/*</div>
+                </div>
+
+                <h4>✅ Correct Pattern</h4>
+                <pre><code>// packages/shared/src/index.ts
+export enum VendorName { /* ... */ }
+
+// apps/repricer/src/types.ts
+import { VendorName } from '@repricer-monorepo/shared';
+
+export interface RepricerConfig {
+  vendor: VendorName;  // Use shared type
+}</code></pre>
+
+                <h4>❌ Incorrect Pattern</h4>
+                <pre><code>// ❌ NEVER DO THIS
+// packages/shared/src/index.ts
+import { RepricerConfig } from '../../apps/repricer/src/types';
+// This creates circular dependency!</code></pre>
+
+                <h3>Documentation Standards</h3>
+
+                <h4>Documenting New Enums</h4>
+                <pre><code>/**
+ * Proxy provider services for web scraping operations.
+ *
+ * Used to configure and rotate between different proxy services
+ * for bypassing rate limits and geo-restrictions.
+ *
+ * @example
+ * ```typescript
+ * const provider = ProxyProvider.BRIGHT_DATA;
+ * const config = await getProxyConfig(provider);
+ * ```
+ */
+export enum ProxyProvider {
+  /** BrightData (formerly Luminati) - Premium proxy service */
+  BRIGHT_DATA = "BRIGHT_DATA",
+
+  /** ScrapFly - JavaScript rendering proxy */
+  SCRAPFLY = "SCRAPFLY",
+
+  /** ScrapingBee - Web scraping API with JS support */
+  SCRAPING_BEE = "SCRAPING_BEE"
+}</code></pre>
+
+                <h3>Naming Conventions</h3>
+
+                <div class="card">
+                    <h4>Enum Naming Rules</h4>
+                    <ul>
+                        <li><strong>Enum Name:</strong> PascalCase singular (<code>VendorName</code>, <code>AlgoExecutionMode</code>)</li>
+                        <li><strong>Enum Values:</strong> SCREAMING_SNAKE_CASE (<code>FRONTIER</code>, <code>V2_ONLY</code>)</li>
+                        <li><strong>Lookup Objects:</strong> PascalCase with "Lookup" suffix (<code>VendorNameLookup</code>)</li>
+                        <li><strong>Prefixes:</strong> Use domain prefix for clarity (<code>Algo</code> for algorithm-related)</li>
+                    </ul>
+                </div>
+
+                <h4>Enum Value Assignment</h4>
+                <pre><code>// ✅ Good - Explicit string values
+export enum Status {
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE"
+}
+
+// ✅ Good - Explicit numeric values (when needed)
+export enum VendorId {
+  FRONTIER = 20722,
+  TRADENT = 17357
+}
+
+// ❌ Avoid - Auto-numeric enums (hard to debug)
+export enum Status {
+  ACTIVE,    // 0
+  INACTIVE   // 1
+}</code></pre>
+            </section>
+
+            <section id="troubleshooting">
+                <h2>Troubleshooting</h2>
+
+                <h3>Common Issues</h3>
+
+                <div class="faq-item">
+                    <h4>Import Error: "Cannot find module '@repricer-monorepo/shared'"</h4>
+                    <p><strong>Symptoms:</strong> TypeScript or Node.js cannot resolve the shared package</p>
+                    <p><strong>Solutions:</strong></p>
+                    <ol>
+                        <li>Verify package.json dependency:
+                            <pre><code>grep "@repricer-monorepo/shared" apps/your-app/package.json</code></pre>
+                        </li>
+                        <li>Reinstall dependencies:
+                            <pre><code>npm install</code></pre>
+                        </li>
+                        <li>Rebuild shared package:
+                            <pre><code>cd packages/shared && npm run build</code></pre>
+                        </li>
+                        <li>Check tsconfig.json module resolution:
+                            <pre><code>{
+  "compilerOptions": {
+    "moduleResolution": "node"
+  }
+}</code></pre>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Type Mismatch: "Type 'string' is not assignable to type 'VendorName'"</h4>
+                    <p><strong>Cause:</strong> Attempting to assign a plain string to an enum type</p>
+                    <p><strong>Solution:</strong> Use type assertion or validation:</p>
+                    <pre><code>// ❌ Wrong
+const vendor: VendorName = "FRONTIER";
+
+// ✅ Correct - Type assertion (use only if certain)
+const vendor: VendorName = "FRONTIER" as VendorName;
+
+// ✅ Better - Runtime validation
+import { VendorName } from '@repricer-monorepo/shared';
+
+function isVendorName(value: string): value is VendorName {
+  return Object.values(VendorName).includes(value as VendorName);
+}
+
+const input = "FRONTIER";
+if (isVendorName(input)) {
+  const vendor: VendorName = input;  // Type-safe
+}</code></pre>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Build Error: "Module not found: Error: Can't resolve '@repricer-monorepo/shared'"</h4>
+                    <p><strong>Context:</strong> Webpack or Vite build fails</p>
+                    <p><strong>Solutions:</strong></p>
+                    <ol>
+                        <li>Ensure shared package is built:
+                            <pre><code>cd packages/shared && npm run build</code></pre>
+                        </li>
+                        <li>Check Turborepo build order in turbo.json:
+                            <pre><code>{
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"]  // Builds dependencies first
+    }
+  }
+}</code></pre>
+                        </li>
+                        <li>Build from monorepo root:
+                            <pre><code>npm run build  # Turborepo handles order</code></pre>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="faq-item">
+                    <h4>IntelliSense Not Working: IDE doesn't autocomplete shared types</h4>
+                    <p><strong>Solutions:</strong></p>
+                    <ol>
+                        <li>Rebuild shared package type declarations:
+                            <pre><code>cd packages/shared
+npm run clean && npm run build</code></pre>
+                        </li>
+                        <li>Restart TypeScript server in VS Code:
+                            <ul>
+                                <li>Cmd/Ctrl + Shift + P</li>
+                                <li>"TypeScript: Restart TS Server"</li>
+                            </ul>
+                        </li>
+                        <li>Check dist/index.d.ts exists:
+                            <pre><code>ls packages/shared/dist/index.d.ts</code></pre>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Changes Not Reflecting: Modified shared package but apps don't see changes</h4>
+                    <p><strong>Debugging Steps:</strong></p>
+                    <ol>
+                        <li>Verify changes were saved to src/index.ts</li>
+                        <li>Rebuild shared package:
+                            <pre><code>cd packages/shared && npm run build</code></pre>
+                        </li>
+                        <li>Check dist/index.js contains your changes</li>
+                        <li>Clear app node_modules and reinstall:
+                            <pre><code>rm -rf node_modules package-lock.json
+npm install</code></pre>
+                        </li>
+                        <li>Use watch mode during development:
+                            <pre><code>cd packages/shared && npm run dev</code></pre>
+                        </li>
+                    </ol>
+                </div>
+
+                <h3>Debugging Techniques</h3>
+
+                <h4>Verify Package Linking</h4>
+                <pre><code># Check where package resolves
+node -e "console.log(require.resolve('@repricer-monorepo/shared'))"
+
+# Should output: /path/to/monorepo/packages/shared/dist/index.js</code></pre>
+
+                <h4>Inspect Generated Types</h4>
+                <pre><code># View generated type declarations
+cat packages/shared/dist/index.d.ts
+
+# Verify enum exports
+grep "export enum" packages/shared/dist/index.d.ts</code></pre>
+
+                <h4>Test Import in Node REPL</h4>
+                <pre><code>node
+> const { VendorName } = require('@repricer-monorepo/shared');
+> console.log(VendorName.FRONTIER);
+'FRONTIER'</code></pre>
+            </section>
+
+            <section id="faq">
+                <h2>Frequently Asked Questions</h2>
+
+                <div class="faq-item">
+                    <h4>Q: Why not just use regular TypeScript files imported with relative paths?</h4>
+                    <p>A: Shared package provides:</p>
+                    <ul>
+                        <li>Single source of truth across all apps</li>
+                        <li>Proper dependency management via npm workspaces</li>
+                        <li>Automatic build ordering through Turborepo</li>
+                        <li>Clear separation between shared and app-specific code</li>
+                        <li>Better IDE support with published type declarations</li>
+                    </ul>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Q: Can I add interfaces and type aliases to the shared package?</h4>
+                    <p>A: Yes! The shared package can export:</p>
+                    <ul>
+                        <li><code>enum</code> - Enumerated values</li>
+                        <li><code>interface</code> - Object shape definitions</li>
+                        <li><code>type</code> - Type aliases and unions</li>
+                        <li><code>const</code> - Runtime constants and lookup objects</li>
+                        <li><code>function</code> - Shared utility functions (less common)</li>
+                    </ul>
+                    <p>However, keep logic in apps and only put pure types/constants in shared.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Q: How do I handle breaking changes to shared types?</h4>
+                    <p>A: Follow this process:</p>
+                    <ol>
+                        <li>Increment major version (1.x.x → 2.0.0)</li>
+                        <li>Create migration guide in commit message</li>
+                        <li>Update all consuming apps in same PR/commit</li>
+                        <li>Test thoroughly before merging</li>
+                        <li>Consider deprecation period for gradual migration</li>
+                    </ol>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Q: Should cache keys be enums or constants?</h4>
+                    <p>A: Current implementation uses <code>enum CacheKey</code> which provides:</p>
+                    <ul>
+                        <li>Type safety for function parameters</li>
+                        <li>Autocomplete in IDEs</li>
+                        <li>Compile-time checking</li>
+                        <li>Runtime value validation</li>
+                    </ul>
+                    <p>Alternative using <code>const</code> would work but provide less type safety.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Q: Can shared package import external libraries?</h4>
+                    <p>A: Technically yes, but avoid it:</p>
+                    <ul>
+                        <li><strong>✅ OK:</strong> Type-only imports (<code>import type { ... }</code>)</li>
+                        <li><strong>❌ Avoid:</strong> Runtime dependencies (lodash, axios, etc.)</li>
+                        <li><strong>Reason:</strong> Adds dependencies to all consuming apps</li>
+                        <li><strong>Best Practice:</strong> Keep shared package dependency-free except for <code>typescript</code></li>
+                    </ul>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Q: How do I debug "Cannot find name 'VendorName'" errors?</h4>
+                    <p>A: Checklist:</p>
+                    <ol>
+                        <li>Verify import statement: <code>import { VendorName } from '@repricer-monorepo/shared';</code></li>
+                        <li>Check TypeScript is configured correctly</li>
+                        <li>Rebuild shared package: <code>cd packages/shared && npm run build</code></li>
+                        <li>Verify dist/index.d.ts exports VendorName</li>
+                        <li>Restart TypeScript server in IDE</li>
+                        <li>Check for typos in import name</li>
+                    </ol>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Q: What's the difference between VendorId and VendorName?</h4>
+                    <p>A: They serve different purposes:</p>
+                    <ul>
+                        <li><strong>VendorId:</strong> Numeric database identifiers (20722, 17357, etc.)</li>
+                        <li><strong>VendorName:</strong> String identifiers for logs, exports, configs</li>
+                        <li><strong>Lookup objects:</strong> Convert between the two</li>
+                        <li><strong>Use case:</strong> Database uses IDs, UI/exports use names</li>
+                    </ul>
+                    <pre><code>// Database query uses ID
+const products = await db('products')
+  .where('vendor_id', VendorId.FRONTIER);
+
+// Excel export uses name
+worksheet.addRow({
+  vendor: VendorName.FRONTIER  // "FRONTIER"
+});</code></pre>
+                </div>
+
+                <div class="faq-item">
+                    <h4>Q: Can I use shared enums in MongoDB schemas?</h4>
+                    <p>A: Yes, with proper typing:</p>
+                    <pre><code>import { VendorName } from '@repricer-monorepo/shared';
+import { Schema } from 'mongoose';
+
+const ProductSchema = new Schema({
+  vendor: {
+    type: String,
+    enum: Object.values(VendorName),
+    required: true
+  }
+});
+
+// TypeScript interface
+interface IProduct {
+  vendor: VendorName;  // Type-safe
+}</code></pre>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p>@repricer-monorepo/shared v1.0.0 - Comprehensive Developer Guide</p>
+            <p>Part of the Repricer Monorepo Documentation Suite</p>
+            <p>Last Updated: November 2024</p>
+        </footer>
+    </div>
+</body>
+</html>
