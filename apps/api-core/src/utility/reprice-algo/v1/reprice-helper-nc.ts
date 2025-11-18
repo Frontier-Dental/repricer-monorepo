@@ -123,8 +123,8 @@ export async function Reprice(
           excludedVendors = [];
         }
       } catch (exception) {
-        console.log(`Exception in TIE Scenario for ${productItem.mpid}`);
-        console.log(exception);
+        console.error(`Exception in TIE Scenario for ${productItem.mpid}`);
+        console.error(exception);
       }
     }
 
@@ -955,8 +955,8 @@ export async function RepriceIndividualPriceBreak(
           excludedVendors = [];
         }
       } catch (exception) {
-        console.log(`Exception in TIE Scenario for ${productItem.mpid}`);
-        console.log(exception);
+        console.error(`Exception in TIE Scenario for ${productItem.mpid}`);
+        console.error(exception);
       }
     }
 
