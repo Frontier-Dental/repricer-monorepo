@@ -272,6 +272,7 @@
                 <li><a href="#structure">Documentation Structure</a></li>
                 <li><a href="#navigation">Quick Navigation</a></li>
                 <li><a href="#applications">Application Summaries</a></li>
+                <li><a href="#algorithm-docs">Algorithm Documentation</a></li>
                 <li><a href="#architecture">System Architecture</a></li>
                 <li><a href="#statistics">Documentation Statistics</a></li>
                 <li><a href="#how-to-use">How to Use</a></li>
@@ -512,6 +513,16 @@ claudedocs/
                     <p><strong>📄 Documentation:</strong> <a href="repricer/repricer-technical-documentation.html">repricer-technical-documentation.html</a></p>
                     <p><strong>🔍 Analysis:</strong> <a href="repricer/analysis-repricer.html">analysis-repricer.html</a></p>
 
+                    <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                        <strong style="color: #3b82f6;">📚 Algorithm Deep Dive Documentation:</strong>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li><a href="repricer/v2-algorithm-field-guide.html" style="color: #2563eb; font-weight: 500;">🎯 V2 Algorithm Field-by-Field Guide</a> - Complete explanation of all 27 settings fields with business examples</li>
+                            <li><a href="api-core/v1-vs-v2-algorithm-comparison.html" style="color: #2563eb; font-weight: 500;">⚖️ V1 vs V2 Algorithm Comparison</a> - Technical comparison and migration guide</li>
+                            <li><a href="api-core/v2-algorithm-detailed-documentation.html" style="color: #2563eb; font-weight: 500;">🔬 V2 Algorithm Technical Documentation</a> - Complete technical implementation details</li>
+                            <li><a href="api-core/v1-algorithm-detailed-documentation.html" style="color: #2563eb; font-weight: 500;">📜 V1 Algorithm Technical Documentation</a> - Legacy algorithm reference</li>
+                        </ul>
+                    </div>
+
                     <div style="margin-top: 1rem;">
                         <strong>Key Features:</strong>
                         <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
@@ -554,6 +565,100 @@ claudedocs/
 
                     <div style="margin-top: 1rem;">
                         <strong>Key Exports:</strong> VendorId/VendorName types, ExecutionMode enum, PriceDirection enum, PriceStrategy enum, BadgeIndicator enum, HandlingTimeGroup enum, Cache key constants
+                    </div>
+                </div>
+            </section>
+
+            <section id="algorithm-docs">
+                <h2>🎯 Repricing Algorithm Documentation</h2>
+
+                <p>Comprehensive documentation for understanding and configuring the repricing algorithms (V1 legacy and V2 current).</p>
+
+                <div class="features">
+                    <div class="feature-item">
+                        <strong>🎯 V2 Field-by-Field Guide</strong>
+                        <p><strong>For:</strong> Pricing managers, business users, admins</p>
+                        <p><strong>Content:</strong> Plain-language explanation of all 27 V2 algorithm settings with business examples, common values, and troubleshooting</p>
+                        <p style="margin-top: 0.5rem;"><a href="repricer/v2-algorithm-field-guide.html" style="display: inline-block; padding: 0.5rem 1rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">📖 Read V2 Field Guide</a></p>
+                    </div>
+
+                    <div class="feature-item">
+                        <strong>⚖️ V1 vs V2 Comparison</strong>
+                        <p><strong>For:</strong> Technical teams, decision makers</p>
+                        <p><strong>Content:</strong> Side-by-side technical comparison, migration strategies, feature differences, and upgrade benefits</p>
+                        <p style="margin-top: 0.5rem;"><a href="api-core/v1-vs-v2-algorithm-comparison.html" style="display: inline-block; padding: 0.5rem 1rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">📖 Read Comparison</a></p>
+                    </div>
+
+                    <div class="feature-item">
+                        <strong>🔬 V2 Technical Deep Dive</strong>
+                        <p><strong>For:</strong> Developers, system architects</p>
+                        <p><strong>Content:</strong> Complete technical implementation with code examples, execution flow, buy-box logic, and advanced features</p>
+                        <p style="margin-top: 0.5rem;"><a href="api-core/v2-algorithm-detailed-documentation.html" style="display: inline-block; padding: 0.5rem 1rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">📖 Read V2 Technical Docs</a></p>
+                    </div>
+
+                    <div class="feature-item">
+                        <strong>📜 V1 Technical Reference</strong>
+                        <p><strong>For:</strong> Maintenance teams, legacy support</p>
+                        <p><strong>Content:</strong> Legacy V1 algorithm documentation with 4-component architecture and original business logic</p>
+                        <p style="margin-top: 0.5rem;"><a href="api-core/v1-algorithm-detailed-documentation.html" style="display: inline-block; padding: 0.5rem 1rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">📖 Read V1 Technical Docs</a></p>
+                    </div>
+                </div>
+
+                <h3>Quick Reference Matrix</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Your Role</th>
+                            <th>Start Here</th>
+                            <th>Then Read</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Pricing Manager</strong></td>
+                            <td><a href="repricer/v2-algorithm-field-guide.html">V2 Field-by-Field Guide</a></td>
+                            <td><a href="repricer/repricer-user-guide.html">Repricer User Guide</a></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Business Admin</strong></td>
+                            <td><a href="repricer/v2-algorithm-field-guide.html">V2 Field-by-Field Guide</a></td>
+                            <td><a href="front-end/front-end-user-guide.html">Front-End User Guide</a></td>
+                        </tr>
+                        <tr>
+                            <td><strong>System Administrator</strong></td>
+                            <td><a href="api-core/v1-vs-v2-algorithm-comparison.html">V1 vs V2 Comparison</a></td>
+                            <td><a href="api-core/v2-algorithm-detailed-documentation.html">V2 Technical Docs</a></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Developer</strong></td>
+                            <td><a href="api-core/v2-algorithm-detailed-documentation.html">V2 Technical Docs</a></td>
+                            <td><a href="repricer/repricer-technical-documentation.html">Repricer Technical Docs</a></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Migration Team</strong></td>
+                            <td><a href="api-core/v1-vs-v2-algorithm-comparison.html">V1 vs V2 Comparison</a></td>
+                            <td><a href="db-migrations/db-migrations-user-guide.html">DB Migrations Guide</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Algorithm Documentation Coverage</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>27</h4>
+                        <p>V2 Algorithm Fields Documented</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>4</h4>
+                        <p>Badge Competition Strategies</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>3</h4>
+                        <p>Price Strategy Types</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>40+</h4>
+                        <p>V2 Algorithm Functions</p>
                     </div>
                 </div>
             </section>
@@ -654,7 +759,7 @@ claudedocs/
                         <p>Applications/Packages Documented</p>
                     </div>
                     <div class="stat-card">
-                        <h4>16</h4>
+                        <h4>20</h4>
                         <p>HTML Documentation Files</p>
                     </div>
                     <div class="stat-card">
