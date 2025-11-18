@@ -18,7 +18,7 @@ export const envSchema = z.object({
   FILTER_CRON_COLLECTION_NAME: z.string().default("filterCronSettings"),
   IP_CONFIG: z.string().default("ipConfig"),
   REPRICE_OWN_ENDPOINT: z.string().default("/search/RepriceProduct/"),
-  CRON_SETTINGS_COLLECTION_NAME: z.string().default("cronSettings"),
+  // CRON_SETTINGS_COLLECTION_NAME: z.string().default("cronSettings"),
   CRON_START_ENDPOINT: z.string().default("/schedule/StartCron"),
   CRON_STOP_ENDPOINT: z.string().default("/schedule/StopCron"),
   RECREATE_CRON_ENDPOINT: z.string().default("/schedule/RecreateCron"),

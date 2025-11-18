@@ -172,7 +172,7 @@ async function get422EligibleProducts() {
   if (globalConfig && globalConfig.source == "FEED") {
     return [];
   }
-  let cronSettingDetailsResponse = await dbHelper.GetCronSettingsList();
+  let cronSettingDetailsResponse = await sqlV2Service.GetCronSettingsList();
   let slowCronDetails = await dbHelper.GetSlowCronDetails();
   cronSettingDetailsResponse = _.concat(
     cronSettingDetailsResponse,

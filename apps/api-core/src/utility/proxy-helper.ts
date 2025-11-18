@@ -4,7 +4,7 @@ import * as sqlV2Service from "./mysql/mysql-v2";
 
 export const GetProxy = async (cronName: string): Promise<any | null> => {
   let proxyResult: any = { protocol: "http" };
-  const cronDetails = await dbHelper.GetCronSettingsDetailsByName(cronName);
+  const cronDetails = await sqlV2Service.GetCronSettingsDetailsByName(cronName);
   if (cronDetails) {
     const proxyDetails = await sqlV2Service.GetProxyConfigByProviderId(
       _.first(cronDetails as any[]).ProxyProvider,
@@ -48,11 +48,11 @@ export const GetProxy = async (cronName: string): Promise<any | null> => {
 export const GetProxyDetailsByName = async (
   cronName: string,
 ): Promise<any | null> => {
-  return dbHelper.GetCronSettingsDetailsByName(cronName);
+  return sqlV2Service.GetCronSettingsDetailsByName(cronName);
 };
 
 export const GetProxyDetailsById = async (cronId: number): Promise<any[]> => {
-  const regularCronDetails = await dbHelper.GetCronSettingsList();
+  const regularCronDetails = await sqlV2Service.GetCronSettingsList();
   const slowCronDetails = await dbHelper.GetSlowCronDetails();
   const cronDetails = _.concat(regularCronDetails, slowCronDetails);
   return [cronDetails.find((x: any) => x.CronId == cronId)].filter(

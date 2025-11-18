@@ -11,10 +11,7 @@ cronSettingsRouter.post(
   "/update_cron_settings",
   cronSettingsController.updateCronSettings,
 );
-cronSettingsRouter.get(
-  "/add_cron_settings",
-  cronSettingsController.addCronSettings,
-);
+
 cronSettingsRouter.post(
   "/toggle_cron_status",
   cronSettingsController.toggleCronStatus,

@@ -4,6 +4,7 @@ import express, { Request, Response } from "express";
 import * as _codes from "http-status-codes";
 import * as dbHelper from "../utility/mongo/db-helper";
 import * as proxySwitchHelper from "../utility/proxy-switch-helper";
+import { GetCronSettingsDetailsByName } from "../utility/mysql/mysql-v2";
 
 export const proxySwitchController = express.Router();
 
@@ -91,8 +92,7 @@ proxySwitchController.get(
   "/proxy_provider/debug/:cronName",
   async (req: Request, res: Response): Promise<any> => {
     const reqCronName = req.params.cronName;
-    const cronDetails =
-      await dbHelper.GetCronSettingsDetailsByName(reqCronName);
+    const cronDetails = await GetCronSettingsDetailsByName(reqCronName);
     const responseData = await proxySwitchHelper.DebugProxySwitch(
       _.first(cronDetails),
     );

@@ -26,7 +26,10 @@ import {
   getPriceListFormatted,
   isChangeResult,
 } from "./utility";
-
+import {
+  GetCronSettingsDetailsByName,
+  GetCronSettingsDetailsById,
+} from "../../../utility/mysql/mysql-v2";
 // Custom proxy function for Net32 API calls
 async function updateProductInfoWithCustomProxy(
   proxyConfig: any,
@@ -315,8 +318,8 @@ async function updatePricesIfNecessary(
 
   const settings =
     cronName === "MANUAL" && contextCronId
-      ? await mongoHelper.GetCronSettingsDetailsById2(contextCronId)
-      : await mongoHelper.GetCronSettingsDetailsByCronName2(cronName);
+      ? await GetCronSettingsDetailsById(contextCronId)
+      : await GetCronSettingsDetailsByName(cronName);
 
   if (!settings) {
     throw new Error(

@@ -8,12 +8,16 @@ import cronSettings from "../models/cron-settings";
 import cronMapping from "../../resources/cronMapping.json";
 import moment from "moment";
 import excelJs from "exceljs";
-import { v4 as uuidv4 } from "uuid";
-import * as sqlV2Service from "../services/mysql-v2";
+import {
+  GetConfigurations,
+  GetCronSettingsList,
+  UpdateCronSettingsList,
+  ToggleCronStatus,
+} from "../services/mysql-v2";
 
 export async function getCronSettings(req: Request, res: Response) {
-  const cronSettingsResult = await mongoMiddleware.GetCronSettingsList();
-  let configItems = await sqlV2Service.GetConfigurations(true);
+  const cronSettingsResult = await GetCronSettingsList();
+  let configItems = await GetConfigurations(true);
   let cronSettingsResponse: any = _.filter(cronSettingsResult, (sett) => {
     return sett.IsHidden != true;
   });
@@ -182,7 +186,7 @@ export async function getCronSettings(req: Request, res: Response) {
 
 export async function updateCronSettings(req: Request, res: Response) {
   const payload = req.body;
-  const cronSettingsResponseFull = await mongoMiddleware.GetCronSettingsList();
+  const cronSettingsResponseFull = await GetCronSettingsList();
   const cronSettingsResponse = _.filter(
     cronSettingsResponseFull,
     (x) => x.IsHidden != true,
@@ -312,7 +316,7 @@ export async function updateCronSettings(req: Request, res: Response) {
     }
   }
   if (listOfUpdates.length > 0) {
-    await mongoMiddleware.UpdateCronSettingsList(listOfUpdates, req);
+    await UpdateCronSettingsList(listOfUpdates, req);
     if (listOfUpdatedCronKey.length > 0) {
       const cronRecreateResponse =
         await httpMiddleware.recreateCron(listOfUpdatedCronKey);
@@ -325,7 +329,7 @@ export async function updateCronSettings(req: Request, res: Response) {
         cronRecreateResponse &&
         (cronRecreateResponse as any).response.data
       ) {
-        await mongoMiddleware.UpdateCronSettingsList(cronSettingsResponse, req);
+        await UpdateCronSettingsList(cronSettingsResponse, req);
         return res.json({
           status: false,
           message: (cronRecreateResponse as any).response.data,
@@ -334,13 +338,13 @@ export async function updateCronSettings(req: Request, res: Response) {
         cronRecreateResponse &&
         (cronRecreateResponse as any).message
       ) {
-        await mongoMiddleware.UpdateCronSettingsList(cronSettingsResponse, req);
+        await UpdateCronSettingsList(cronSettingsResponse, req);
         return res.json({
           status: false,
           message: (cronRecreateResponse as any).message,
         });
       } else {
-        await mongoMiddleware.UpdateCronSettingsList(cronSettingsResponse, req);
+        await UpdateCronSettingsList(cronSettingsResponse, req);
         return res.json({
           status: false,
           message: "Cron update failed. Please retry",
@@ -359,32 +363,8 @@ export async function updateCronSettings(req: Request, res: Response) {
   }
 }
 
-export async function addCronSettings(req: Request, res: Response) {
-  let cronSettingsResponse = await mongoMiddleware.GetCronSettingsList();
-  cronSettingsResponse.push(
-    new cronSettings(
-      uuidv4().toString().replace("-", ""),
-      "Cron-X",
-      "min",
-      60 as any,
-      "XXXXXXXXXXXXXXX" as any,
-      new Date() as any,
-      new Date() as any,
-      false as any,
-      null as any,
-      null as any,
-    ) as any,
-  );
-  await mongoMiddleware.InsertCronSettings(_.last(cronSettingsResponse));
-  res.render("pages/settings/settingsList", {
-    settings: cronSettingsResponse,
-    groupName: "settings",
-    userRole: (req as any).session.users_id.userRole,
-  });
-}
-
 export async function toggleCronStatus(req: Request, res: Response) {
-  let cronSettingsResponse = await mongoMiddleware.GetCronSettingsList();
+  let cronSettingsResponse = await GetCronSettingsList();
   let actionResponse = "";
   const payload = req.body;
   const { CronName } = req.body;
@@ -396,7 +376,7 @@ export async function toggleCronStatus(req: Request, res: Response) {
       await httpMiddleware.stopCron({ jobName: CronName });
       actionResponse = "Stopped";
     }
-    await mongoMiddleware.ToggleCronStatus(
+    await ToggleCronStatus(
       cronSettingsResponse.find((x: any) => x.CronName == CronName)?.CronId,
       JSON.parse(payload.Action),
       req,
@@ -423,11 +403,7 @@ export async function toggleCronStatus(req: Request, res: Response) {
         await httpMiddleware.stopCron({ jobName: jobName });
         actionResponse = "Stopped";
       }
-      await mongoMiddleware.ToggleCronStatus(
-        payload.CronId,
-        JSON.parse(payload.Action),
-        req,
-      );
+      await ToggleCronStatus(payload.CronId, JSON.parse(payload.Action), req);
     }
 
     return res.json({

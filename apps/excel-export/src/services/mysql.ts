@@ -1098,3 +1098,13 @@ export async function GetAllRepriceEligibleProductByChannelId(channelId: any) {
   }
   return await SqlMapper.MapProductDetailsList(scrapeDetails);
 }
+
+export async function GetCronSettingsList() {
+  let cronSettingsDetails = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetRegularCronSettingsList()`);
+  if (result && result[0] && result[0].length > 0) {
+    cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
+  }
+  return cronSettingsDetails;
+}
