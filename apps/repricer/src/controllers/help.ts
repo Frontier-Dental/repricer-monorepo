@@ -422,7 +422,28 @@ export async function migrateCronSettingsToSql(req: Request, res: Response) {
         }
         break;
       case "SLOW":
-        cronSettingsList = await GetSlowCronDetails();
+        cronSettingsList = await mongoMiddleware.GetSlowCronDetails();
+        if (cronSettingsList && cronSettingsList.length > 0) {
+          for (let cronSetting of cronSettingsList) {
+            cronSetting.CronType = cronType;
+            const cronSettingEntity = await sqlMapper.mapCronSettingToEntity(
+              cronSetting,
+              auditInfo,
+            );
+            const cronSettingSecretKeys =
+              await sqlMapper.mapCronSettingSecretKeysToEntity(cronSetting);
+            const alternateProxyProviders =
+              await sqlMapper.mapAlternateProxyProvidersToEntity(cronSetting);
+            await InsertOrUpdateCronSettings(
+              cronSettingEntity,
+              cronSettingSecretKeys,
+              alternateProxyProviders,
+            );
+          }
+        }
+        break;
+      case "DATA_ONLY":
+        cronSettingsList = await mongoMiddleware.GetScrapeCrons();
         if (cronSettingsList && cronSettingsList.length > 0) {
           for (let cronSetting of cronSettingsList) {
             cronSetting.CronType = cronType;

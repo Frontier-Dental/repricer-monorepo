@@ -309,6 +309,7 @@ export async function UpdateCronSettingsList(payload: any, req: any) {
   );
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
   await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
+  await cacheClient.delete(CacheKey.SCRAPE_CRON_DETAILS);
   await cacheClient.disconnect();
 }
 
@@ -333,6 +334,7 @@ export async function ToggleCronStatus(
   );
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
   await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
+  await cacheClient.delete(CacheKey.SCRAPE_CRON_DETAILS);
   await cacheClient.disconnect();
 }
 
@@ -351,6 +353,26 @@ export async function GetSlowCronDetails() {
   if (result && result[0] && result[0].length > 0) {
     cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
     await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, cronSettingsDetails); // Cache for 1 hour
+  }
+  await cacheClient.disconnect();
+  return cronSettingsDetails;
+}
+
+export async function GetScrapeCrons() {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const slowCronDetails = await cacheClient.get(CacheKey.SCRAPE_CRON_DETAILS);
+  if (slowCronDetails != null) {
+    await cacheClient.disconnect();
+    return slowCronDetails;
+  }
+  let cronSettingsDetails = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetDataOnlyCronList()`);
+  if (result && result[0] && result[0].length > 0) {
+    cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
+    await cacheClient.set(CacheKey.SCRAPE_CRON_DETAILS, cronSettingsDetails); // Cache for 1 hour
   }
   await cacheClient.disconnect();
   return cronSettingsDetails;

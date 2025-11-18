@@ -469,29 +469,6 @@ export async function GetScrapeProductList(cronId: any, _isActive: any) {
   return mongoResult;
 }
 
-export async function GetScrapeCronDetails(
-  ignoreCache = false,
-): Promise<ScrapeCronDetail[]> {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const cronSettingsList = await cacheClient.get<any>(
-    CacheKey.SCRAPE_CRON_DETAILS,
-  );
-  if (cronSettingsList != null) return cronSettingsList;
-  const dbo = await getMongoDb();
-  const result = await dbo
-    .collection(applicationConfig.SCRAPE_CRON_NAME)
-    .find()
-    .sort({ _id: 1 })
-    .toArray();
-  if (result != null) {
-    await cacheClient.set(CacheKey.SCRAPE_CRON_DETAILS, result);
-  }
-  await cacheClient.disconnect();
-  return result as ScrapeCronDetail[];
-}
-
 export async function InsertScrapeProduct(payload: any) {
   const dbo = await getMongoDb();
   return dbo

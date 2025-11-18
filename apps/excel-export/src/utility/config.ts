@@ -18,7 +18,6 @@ export const envSchema = z.object({
   FILTER_CRON_COLLECTION_NAME: z.string().default("filterCronSettings"),
   IP_CONFIG: z.string().default("ipConfig"),
   REPRICE_OWN_ENDPOINT: z.string().default("/search/RepriceProduct/"),
-  // CRON_SETTINGS_COLLECTION_NAME: z.string().default("cronSettings"),
   CRON_START_ENDPOINT: z.string().default("/schedule/StartCron"),
   CRON_STOP_ENDPOINT: z.string().default("/schedule/StopCron"),
   RECREATE_CRON_ENDPOINT: z.string().default("/schedule/RecreateCron"),
@@ -45,7 +44,6 @@ export const envSchema = z.object({
     .default("/schedule/start_specific_cron"),
   ERROR_ONE: z.string().default("Error: Invalid response found in Net32 Api"),
   ERROR_TWO: z.string().default("Error: Could not find own vendor Id"),
-  // SLOW_CRON_GROUP_COLLECTION_NAME: z.string().default("slowCronSettings"),
   FILTER_CRON_LOGS: z.string().default("filterCronLogs"),
   FILTER_CRON_LOGS_LIMIT: z.coerce.number().default(10),
   FILTER_CRON_TOGGLE_STATUS_ENDPOINT: z
@@ -75,9 +73,6 @@ export const envSchema = z.object({
   CLEAR_LOG_PATH_ENDPOINT: z.string().default("/app/clear-logs"),
   SCRAPE_ITEMS_COLLECTION: z.string().default("scrapeItems"),
   ERROR_422_CRON_LOGS: z.string().default("422cronLogs"),
-  SCRAPE_CRON_SETTINGS_COLLECTION_NAME: z
-    .string()
-    .default("scrapeCronSettings"),
   SCRAPE_LOGS_COLLECTION: z.string().default("scrapeCronLogs"),
   SCRAPE_CRON_TOGGLE_STATUS_ENDPOINT: z
     .string()
