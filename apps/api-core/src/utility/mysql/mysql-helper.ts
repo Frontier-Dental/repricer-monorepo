@@ -784,8 +784,9 @@ export async function GetProxiesNet32(
     }
 
     proxyList = await knex(applicationConfig.SQL_PROXY_NET_32!)
-      .whereIn("username", usernames)
+      .whereIn("proxy_username", usernames)
       .select("*");
+
     return proxyList;
   } catch (error) {
     console.log("Error in GetProxiesNet32", usernames, error);
