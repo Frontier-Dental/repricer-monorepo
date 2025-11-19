@@ -58,9 +58,9 @@ export interface StatusInfo {
 
 export interface ProxyNet32 {
   id: number;
-  username: string;
-  password: string;
-  ipAddress: string;
+  proxy_username: string;
+  proxy_password: string;
+  ip: string;
   port: string;
 }
 

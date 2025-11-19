@@ -54,4 +54,7 @@ productV2Router.get(
   productV2Controller.syncProductDetails,
 );
 productV2Router.post("/updateAllToMax", productV2Controller.updateToMax);
-// productV2Router.post("/updateProductQuantity", productV2Controller.updateProductQuantity);
+productV2Router.post(
+  "/updateProductQuantity",
+  productV2Controller.updateProductQuantity,
+);

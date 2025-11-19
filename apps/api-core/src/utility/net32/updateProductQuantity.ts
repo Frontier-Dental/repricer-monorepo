@@ -1,8 +1,7 @@
-import { getAxiosProxyInstance } from "./proxyAxiosInstance";
 import { GetProxiesNet32, GetVendorKeys } from "../mysql/mysql-helper";
-
 import { ProxyNet32 } from "../mysql/types";
 import { applicationConfig } from "../config";
+import axios from "axios";
 
 const HTTP_STATUS = {
   OK: 200,
@@ -81,7 +80,7 @@ const prepareVendorUpdates = (
   return vendorData.map((vendorObject) => {
     const vendorKey = vendorKeys.get(vendorObject.vendor);
     const proxy = proxies.find(
-      (proxy: ProxyNet32) => proxy.username === vendorObject.vendor,
+      (proxy: ProxyNet32) => proxy.proxy_username === vendorObject.vendor,
     );
 
     if (!vendorKey || !proxy) {
@@ -111,13 +110,13 @@ const executeVendorUpdate = async (
     const result = {
       vendor: updateData.vendor.vendor,
       success:
-        response.status >= HTTP_STATUS.OK &&
-        response.status < HTTP_STATUS.REDIRECT_START,
-      status: response.status,
-      data: response.data,
+        response.data.statusCode >= HTTP_STATUS.OK &&
+        response.data.statusCode < HTTP_STATUS.REDIRECT_START,
+      status: response.data.statusCode,
+      data: response.data.data,
     };
 
-    if (response.status === HTTP_STATUS.NOT_FOUND) {
+    if (response.data.statusCode === HTTP_STATUS.NOT_FOUND) {
       result.success = true;
       result.data.message =
         "A valid development key is in use, no update made.";
@@ -155,24 +154,22 @@ const updateProductQuantity = async (
   vendorKey: string,
   proxy: ProxyNet32,
 ) => {
-  const axios = getAxiosProxyInstance(
-    applicationConfig.NET32_UPDATE_QUANTITY_URL,
-    { "Subscription-Key": vendorKey },
-    proxy.ipAddress,
-    proxy.username,
-    proxy.password,
-    proxy.port,
-  );
+  const url = `http://${proxy.ip}:${proxy.port}/proxy`;
 
-  axios.defaults.validateStatus = (status) =>
-    status < HTTP_STATUS.SERVER_ERROR_START;
-
-  const body = [
-    {
-      mpid: mpid,
-      inventory: quantity,
+  const net32Options = {
+    url: applicationConfig.NET32_UPDATE_QUANTITY_URL,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Subscription-Key": vendorKey,
     },
-  ];
+    data: [{ mpid: mpid, inventory: quantity }],
+  };
 
-  return await axios.post("/", body);
+  const proxyOptions = {
+    auth: { username: proxy.proxy_username, password: proxy.proxy_password },
+    headers: { "Content-Type": "application/json" },
+  };
+
+  return await axios.post(url, net32Options, proxyOptions);
 };
