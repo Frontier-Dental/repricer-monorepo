@@ -442,7 +442,7 @@
                     <strong>Required Access</strong>
                     <ul>
                         <li>Database credentials (MySQL, MongoDB, Redis)</li>
-                        <li>API keys for proxy services (ScrapingBee, ScrapFly, BrightData)</li>
+                        <li>API keys for proxy services (ScrapFly, SmartProxy, ScrapingBee)</li>
                         <li>Network access to Net32.com API endpoints</li>
                         <li>Environment configuration file (.env)</li>
                     </ul>
@@ -609,7 +609,7 @@ npm start</code></pre>
 
                 <div class="card">
                     <h4>6. Proxy Switch Crons</h4>
-                    <p>Manage rotation between different proxy providers (BrightData, ScrapFly, ScrapingBee) when failures occur.</p>
+                    <p>Manage rotation between different proxy providers (ScrapFly, SmartProxy, ScrapingBee) when failures occur.</p>
                     <p><strong>Typical Schedule:</strong> Event-driven (triggered by proxy failures)</p>
                 </div>
 
@@ -762,8 +762,8 @@ db.cronLogs.find().sort({_id: -1}).limit(10)</code></pre>
                     <strong>Understanding Proxy Providers</strong>
                     <p>The system uses three proxy providers with automatic failover:</p>
                     <ul>
-                        <li><strong>BrightData:</strong> Primary proxy service</li>
-                        <li><strong>ScrapFly:</strong> Secondary failover</li>
+                        <li><strong>ScrapFly:</strong> Primary proxy service</li>
+                        <li><strong>SmartProxy:</strong> Secondary failover</li>
                         <li><strong>ScrapingBee:</strong> Tertiary fallback</li>
                     </ul>
                 </div>
