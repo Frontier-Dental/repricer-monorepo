@@ -474,32 +474,6 @@
                     </div>
                 </div>
 
-                <h3>System Requirements</h3>
-
-                <div class="grid-2">
-                    <div class="card">
-                        <h4>Software Requirements</h4>
-                        <ul>
-                            <li>Node.js 16.x or higher</li>
-                            <li>npm 8.x or higher</li>
-                            <li>TypeScript 5.x</li>
-                            <li>MySQL 8.0+</li>
-                            <li>MongoDB 4.x+</li>
-                            <li>Redis 6.x+</li>
-                        </ul>
-                    </div>
-                    <div class="card">
-                        <h4>Required Access</h4>
-                        <ul>
-                            <li>Database credentials (MySQL, MongoDB, Redis)</li>
-                            <li>Net32 vendor API keys (6 vendors)</li>
-                            <li>Proxy service API keys (BrightData, ScrapFly, ScrapingBee)</li>
-                            <li>SMTP credentials for email notifications</li>
-                            <li>FTP access for vendor feed files</li>
-                        </ul>
-                    </div>
-                </div>
-
                 <h3>Installation</h3>
 
                 <div class="step">
@@ -1048,13 +1022,13 @@ TTL 422_RUNNING_CACHE</code></pre>
                         <tbody>
                             <tr>
                                 <td>1 (Primary)</td>
-                                <td>BrightData</td>
+                                <td>ScrapFly</td>
                                 <td>Default proxy for all scraping operations</td>
                             </tr>
                             <tr>
                                 <td>2 (Secondary)</td>
-                                <td>ScrapFly</td>
-                                <td>Automatic failover when BrightData fails</td>
+                                <td>SmartProxy</td>
+                                <td>Automatic failover when ScrapFly fails</td>
                             </tr>
                             <tr>
                                 <td>3 (Tertiary)</td>
@@ -1098,11 +1072,11 @@ SCRAPFLY_TIMEOUT_VALUE=15000       # Request timeout (15s)</code></pre>
                     <p>Manually trigger proxy rotation if needed:</p>
                     <pre><code># Update proxy priority in MySQL
 UPDATE tinyproxy_configs
-SET priority = 2
-WHERE provider_name = 'ScrapFly';
+SET priority = 3
+WHERE provider_name = 'BrightData';
 
 # Clear failure counter in Redis
-DEL BRIGHT_DATA_COUNTER_CACHE</code></pre>
+DEL SCRAPFLY_COUNTER_CACHE</code></pre>
                 </div>
 
                 <h3>Tutorial 6: Bulk Operations</h3>
@@ -1699,9 +1673,6 @@ MVP_CRON=0 */4 * * *              # Conflicts with both</code></pre>
                         <li><strong>Standard crons:</strong> 500-700 products (balanced)</li>
                         <li><strong>Slow crons:</strong> 1000-2000 products (lower priority)</li>
                     </ul>
-                    <div class="warning-box">
-                        <strong>Memory Warning:</strong> Batch sizes >2000 can cause memory issues on 4GB RAM servers. Monitor with <code>NODE_OPTIONS='--max-old-space-size=4096'</code>
-                    </div>
                 </div>
 
                 <div class="card">
@@ -1720,19 +1691,6 @@ db.cronLogs.aggregate([
   { $match: { duration: { $gt: 300000 } } },  // >5 minutes
   { $sort: { duration: -1 } }
 ])</code></pre>
-                </div>
-
-                <h3>Scheduling Best Practices</h3>
-
-                <div class="highlight-box">
-                    <strong>Golden Rules for Cron Scheduling:</strong>
-                    <ol>
-                        <li><strong>High-Priority Products:</strong> Every 2-4 hours with small batches (300-500)</li>
-                        <li><strong>Standard Products:</strong> Every 4-6 hours with medium batches (500-700)</li>
-                        <li><strong>Low-Priority Products:</strong> Once or twice daily with large batches (1000-2000)</li>
-                        <li><strong>Scraping Operations:</strong> Every 4-6 hours (avoid peak marketplace traffic)</li>
-                        <li><strong>Error Recovery:</strong> Every 30-60 minutes (small overhead, high value)</li>
-                    </ol>
                 </div>
 
                 <h3>Monitoring Cron Executions</h3>
@@ -2120,32 +2078,6 @@ WHERE product_id = '12345';</code></pre>
                 </div>
 
                 <div class="faq-item">
-                    <div class="faq-question">❌ High memory usage and crashes</div>
-                    <div class="faq-answer">
-                        <p><strong>Memory Optimization Steps:</strong></p>
-                        <ol>
-                            <li>Reduce batch size in cron configurations (from 700 to 500)</li>
-                            <li>Increase Node.js heap size: <code>NODE_OPTIONS='--max-old-space-size=4096'</code></li>
-                            <li>Stagger cron schedules to prevent simultaneous execution</li>
-                            <li>Clear old MongoDB logs (>30 days)</li>
-                            <li>Restart application daily via cron or process manager</li>
-                        </ol>
-                        <pre><code># Update batch size in MongoDB
-db.cronSettings.updateMany(
-  { batchSize: { $gt: 500 } },
-  { $set: { batchSize: 500 } }
-);
-
-# Clean old logs
-db.cronLogs.deleteMany({
-  createdAt: {
-    $lt: new Date(Date.now() - 30*24*60*60*1000)
-  }
-});</code></pre>
-                    </div>
-                </div>
-
-                <div class="faq-item">
                     <div class="faq-question">❌ V2 algorithm not executing (falling back to V1)</div>
                     <div class="faq-answer">
                         <p><strong>Verification Steps:</strong></p>
@@ -2349,7 +2281,6 @@ OPTIMIZE TABLE v2_algo_results, v2_algo_execution;</code></pre>
                     <strong>Critical Security Measures:</strong>
                     <ul>
                         <li>Never commit <code>.env</code> files to version control</li>
-                        <li>Rotate vendor API keys quarterly</li>
                         <li>Use strong passwords (bcrypt hashed) for all users</li>
                         <li>Limit database user permissions to minimum required</li>
                         <li>Run application behind reverse proxy (nginx) with HTTPS</li>
@@ -2553,25 +2484,6 @@ WHERE migrated_from_v1 = true;</code></pre>
                             </tbody>
                         </table>
                         <p>Choose filters based on your shipping capabilities to ensure fair competition comparison.</p>
-                    </div>
-                </div>
-
-                <div class="faq-item">
-                    <div class="faq-question">Q: What are the system requirements for production?</div>
-                    <div class="faq-answer">
-                        <p><strong>Minimum Production Requirements:</strong></p>
-                        <ul>
-                            <li><strong>CPU:</strong> 4 cores (8 recommended for high-volume)</li>
-                            <li><strong>RAM:</strong> 8 GB (16 GB for >10,000 products)</li>
-                            <li><strong>Storage:</strong> 50 GB SSD (database growth planning)</li>
-                            <li><strong>Network:</strong> Stable connection with <5ms latency to databases</li>
-                        </ul>
-                        <p><strong>Separate Database Servers Recommended:</strong></p>
-                        <ul>
-                            <li>MySQL: 4GB RAM minimum, 20GB storage</li>
-                            <li>MongoDB: 4GB RAM minimum, 50GB storage (logs grow quickly)</li>
-                            <li>Redis: 2GB RAM minimum for caching</li>
-                        </ul>
                     </div>
                 </div>
             </section>
