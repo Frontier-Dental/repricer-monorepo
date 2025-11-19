@@ -67,9 +67,10 @@ export async function updateProductQuantity(req: Request, res: Response) {
   const vendorData = req.body.vendorData || [];
 
   try {
+    const updateQuantityUrl = `${applicationConfig.REPRICER_API_BASE_URL}/data/UpdateProductQuantity`;
     const config = {
       method: "POST",
-      url: "http://localhost:5001/data/UpdateProductQuantity",
+      url: updateQuantityUrl,
       headers: {
         "Content-Type": "application/json",
       },
