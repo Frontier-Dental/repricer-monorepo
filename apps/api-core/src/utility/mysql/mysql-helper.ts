@@ -321,6 +321,11 @@ export async function UpdateProductAsync(
   payload: UpdateProductPayload,
   isPriceUpdated: boolean,
   contextVendor: string,
+  marketData?: {
+    inStock?: boolean;
+    inventory?: number;
+    ourPrice?: number;
+  }
 ) {
   try {
     const knex = getKnexInstance();
@@ -339,6 +344,21 @@ export async function UpdateProductAsync(
       LastSuggestedPrice: payload.lastSuggestedPrice,
     };
 
+    // Add market state fields if provided (backward compatible)
+    if (marketData) {
+      if (marketData.inStock !== undefined) {
+        updateObj.CurrentInStock = marketData.inStock;
+      }
+      if (marketData.inventory !== undefined) {
+        updateObj.CurrentInventory = marketData.inventory;
+      }
+      if (marketData.ourPrice !== undefined) {
+        updateObj.OurLastPrice = marketData.ourPrice;
+      }
+      // Update timestamp when market data is provided
+      updateObj.MarketStateUpdatedAt = new Date();
+    }
+
     if (payload.next_cron_time && payload.next_cron_time !== "") {
       updateObj.NextCronTime = payload.next_cron_time;
     }
@@ -356,6 +376,7 @@ export async function UpdateProductAsync(
       payload,
       isPriceUpdated,
       contextVendor,
+      marketData,
       error,
     );
     throw error;

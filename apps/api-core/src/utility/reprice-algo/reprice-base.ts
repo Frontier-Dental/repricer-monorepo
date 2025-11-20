@@ -687,7 +687,29 @@ export async function UpdateToMax(
     prod.last_cron_message = prod.last_cron_message + " #MANUAL";
     prod = await updateLowestVendor((repriceResult as any)!, prod);
     prod = await updateCronBasedDetails(repriceResult, prod, false);
-    await sqlHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
+
+    // Extract market data for manual reprice
+    let marketData: { inStock?: boolean; inventory?: number; ourPrice?: number } | undefined;
+    try {
+      const ownVendorList = (applicationConfig.OWN_VENDOR_LIST || "").split(";");
+      const ownVendorData = data.result?.find(
+        (v: any) => v.vendorId && ownVendorList.includes(v.vendorId.toString())
+      );
+
+      if (ownVendorData) {
+        marketData = {
+          inStock: ownVendorData.inStock ?? undefined,
+          inventory: ownVendorData.inventory ?? undefined,
+          ourPrice: repriceResult?.priceUpdateResponse?.suggestedPrice ??
+                    prod.lastSuggestedPrice ??
+                    prod.unitPrice
+        };
+      }
+    } catch (error) {
+      console.log(`Market data extraction error for manual reprice ${prod.mpid}:`, error);
+    }
+
+    await sqlHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor, marketData);
   } else {
     cronLogs.push({
       productId: prod.mpid,
@@ -850,10 +872,38 @@ async function repriceSingleVendor(
   }
   prod = updateLowestVendor(repriceResult!, prod);
   prod = await updateCronBasedDetails(repriceResult, prod, false);
+
+  // Extract market data from our vendor in the API response
+  let marketData: { inStock?: boolean; inventory?: number; ourPrice?: number } | undefined;
+  try {
+    // Get our vendor IDs from config
+    const ownVendorList = (applicationConfig.OWN_VENDOR_LIST || "").split(";");
+
+    // Find our vendor data in the response
+    const ownVendorData = net32resp.data.find(
+      v => v.vendorId && ownVendorList.includes(v.vendorId.toString())
+    );
+
+    if (ownVendorData) {
+      marketData = {
+        inStock: ownVendorData.inStock ?? undefined,
+        inventory: ownVendorData.inventory ?? undefined,
+        ourPrice: repriceResult?.priceUpdateResponse?.suggestedPrice ??
+                  prod.lastSuggestedPrice ??
+                  prod.unitPrice
+      };
+    }
+  } catch (error) {
+    // Log but don't fail if market data extraction fails
+    console.log(`Market data extraction error for ${prod.mpid}:`, error);
+  }
+
+  // Pass market data to UpdateProductAsync (backward compatible)
   await sqlHelper.UpdateProductAsync(
     prod as any,
     isPriceUpdated,
     contextVendor,
+    marketData  // New optional parameter
   );
   return {
     cronLogs: cronLogs,
