@@ -385,6 +385,62 @@ export async function UpdateProductAsync(
   }
 }
 
+// New function to update ONLY market state fields (for scraping)
+export async function UpdateMarketStateOnly(
+  mpid: string | number,
+  vendorName: string,
+  marketData: {
+    inStock?: boolean;
+    inventory?: number;
+    ourPrice?: number;
+  }
+) {
+  try {
+    const knex = getKnexInstance();
+    const contextTableName = getContextTableNameByVendorName(vendorName);
+
+    if (!contextTableName) {
+      console.log(`No table found for vendor: ${vendorName}`);
+      return null;
+    }
+
+    const updateObj: Record<string, any> = {};
+
+    // Only update fields that have data
+    if (marketData.inStock !== undefined) {
+      updateObj.CurrentInStock = marketData.inStock;
+    }
+    if (marketData.inventory !== undefined) {
+      updateObj.CurrentInventory = marketData.inventory;
+    }
+    if (marketData.ourPrice !== undefined) {
+      updateObj.OurLastPrice = marketData.ourPrice;
+    }
+
+    // Only perform update if we have fields to update
+    if (Object.keys(updateObj).length > 0) {
+      updateObj.MarketStateUpdatedAt = new Date();
+
+      const result = await knex(contextTableName)
+        .update(updateObj)
+        .where("MpId", parseInt(mpid.toString()));
+
+      return result;
+    }
+
+    return 0; // No updates performed
+  } catch (error) {
+    console.log(
+      "Error in UpdateMarketStateOnly",
+      mpid,
+      vendorName,
+      marketData,
+      error,
+    );
+    throw error;
+  }
+}
+
 export async function UpdateCronForProductAsync(
   payload: UpdateCronForProductPayload,
 ) {
