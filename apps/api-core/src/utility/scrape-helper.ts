@@ -194,6 +194,69 @@ async function executeScrapeLogic(
             console.log(
               `SCRAPE-ONLY : ${cronSetting.CronName} : ${keyGen} : Inserted Product Info for MPID : ${prod.MpId} | VENDOR : ${productInfo.VendorId}`,
             );
+
+            // Update vendor detail tables with market state for our own vendor
+            if (isOwnVendor) {
+              // Determine which vendor detail table to update
+              let vendorName = "";
+              let channelId = "";
+
+              if (prod.LinkedTradentDetailsInfo > 0) {
+                vendorName = "TRADENT";
+                channelId = prod.LinkedTradentDetailsInfo.toString();
+              } else if (prod.LinkedFrontiersDetailsInfo > 0) {
+                vendorName = "FRONTIER";
+                channelId = prod.LinkedFrontiersDetailsInfo.toString();
+              } else if (prod.LinkedMvpDetailsInfo > 0) {
+                vendorName = "MVP";
+                channelId = prod.LinkedMvpDetailsInfo.toString();
+              } else if (prod.LinkedFirstDentDetailsInfo > 0) {
+                vendorName = "FIRSTDENT";
+                channelId = prod.LinkedFirstDentDetailsInfo.toString();
+              } else if (prod.LinkedTopDentDetailsInfo > 0) {
+                vendorName = "TOPDENT";
+                channelId = prod.LinkedTopDentDetailsInfo.toString();
+              } else if (prod.LinkedTriadDetailsInfo > 0) {
+                vendorName = "TRIAD";
+                channelId = prod.LinkedTriadDetailsInfo.toString();
+              }
+
+              if (vendorName && channelId) {
+                const marketData = {
+                  inStock: resp.inStock ?? undefined,
+                  inventory: resp.inventory ?? undefined,
+                  ourPrice: resp.price ?? undefined  // Use the scraped price
+                };
+
+                // Construct a minimal UpdateProductPayload with required fields
+                // Most fields will be preserved from existing DB record
+                const updatePayload = {
+                  lastCronRun: moment().format("YYYY-MM-DD HH:mm:ss"),
+                  last_cron_message: `SCRAPE-ONLY: Market state updated`,
+                  lastUpdatedBy: "SCRAPE",
+                  lowest_vendor: "",  // Will be preserved from DB
+                  lowest_vendor_price: "0",  // Will be preserved from DB
+                  lastExistingPrice: resp.price?.toString() || "0",
+                  lastSuggestedPrice: resp.price?.toString() || "0",
+                  last_cron_time: moment().format("YYYY-MM-DD HH:mm:ss"),
+                  last_attempted_time: moment().format("YYYY-MM-DD HH:mm:ss"),
+                  next_cron_time: null,
+                  mpid: prod.MpId
+                };
+
+                await mySqlHelper.UpdateProductAsync(
+                  updatePayload,
+                  false,  // isPriceUpdated
+                  vendorName,
+                  marketData
+                );
+
+                console.log(
+                  `SCRAPE-ONLY : Updated market state for ${vendorName} - MPID: ${prod.MpId}, InStock: ${resp.inStock}, Inventory: ${resp.inventory}, Price: ${resp.price}`
+                );
+              }
+            }
+
             if (productInfoResult && productInfoResult[0] && resp.priceBreaks) {
               for (const pb of resp.priceBreaks) {
                 const priceBreakInfo = new PriceBreakInfo(
