@@ -428,10 +428,31 @@ export async function RepriceErrorItem(
             }
             prod = updateLowestVendor(repriceResult as any, prod);
             prod = updateCronBasedDetails(repriceResult, prod, false);
+
+            // Extract market data for 422 error recovery
+            let marketData: { inStock?: boolean; inventory?: number; ourPrice?: number } | undefined;
+            try {
+              const ownVendorList = (applicationConfig.OWN_VENDOR_LIST || "").split(";");
+              const ownVendorData = net32result.data.find(
+                (v: any) => v.vendorId && ownVendorList.includes(v.vendorId.toString())
+              );
+
+              if (ownVendorData) {
+                marketData = {
+                  inStock: ownVendorData.inStock ?? undefined,
+                  inventory: ownVendorData.inventory ?? undefined,
+                  ourPrice: prod.lastSuggestedPrice ?? prod.unitPrice
+                };
+              }
+            } catch (error) {
+              console.log(`Market data extraction error for 422 recovery ${prod.mpid}:`, error);
+            }
+
             await sqlHelper.UpdateProductAsync(
               prod,
               isPriceUpdated,
               contextVendor,
+              marketData  // Pass market data for 422 error recovery
             );
             //dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
           } else {
@@ -445,10 +466,31 @@ export async function RepriceErrorItem(
               contextVendor,
             );
             await dbHelper.UpsertErrorItemLog(errorItem);
+
+            // Still capture market data even for ignored products
+            let ignoreMarketData: { inStock?: boolean; inventory?: number; ourPrice?: number } | undefined;
+            try {
+              const ownVendorList = (applicationConfig.OWN_VENDOR_LIST || "").split(";");
+              const ownVendorData = net32result.data.find(
+                (v: any) => v.vendorId && ownVendorList.includes(v.vendorId.toString())
+              );
+
+              if (ownVendorData) {
+                ignoreMarketData = {
+                  inStock: ownVendorData.inStock ?? undefined,
+                  inventory: ownVendorData.inventory ?? undefined,
+                  ourPrice: prod.unitPrice  // Use current price for ignored products
+                };
+              }
+            } catch (error) {
+              console.log(`Market data extraction error for ignored product ${prod.mpid}:`, error);
+            }
+
             await sqlHelper.UpdateProductAsync(
               prod,
               isPriceUpdated,
               contextVendor,
+              ignoreMarketData  // Pass market data even for ignored products
             ); //dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
           }
         }
