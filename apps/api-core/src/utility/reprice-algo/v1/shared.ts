@@ -5,6 +5,7 @@ import { FrontierProduct } from "../../../types/frontier";
 import { RepriceData, RepriceModel } from "../../../model/reprice-model";
 import { applicationConfig } from "../../config";
 import * as sqlV2Service from "../../../utility/mysql/mysql-v2";
+import * as dbHelper from "../../mongo/db-helper";
 
 export function isPriceUpdateRequired(
   repriceResult: RepriceModel,
@@ -78,7 +79,7 @@ export async function getSecretKey(cronId: string, contextVendor: string) {
     throw new Error(`Cron setting details not found for ${cronId}`);
   }
   const secretKey = cronSettingDetails[0].SecretKey?.find(
-    (x) => x.vendorName == contextVendor,
+    (x: any) => x.vendorName == contextVendor,
   )?.secretKey;
   if (!secretKey) {
     throw new Error(`Secret key not found for ${cronId} and ${contextVendor}`);
