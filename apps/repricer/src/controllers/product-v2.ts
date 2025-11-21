@@ -857,10 +857,13 @@ export async function exportItems(req: Request, res: Response) {
       (process.env.NODE_ENV === "production"
         ? "http://excel-export:3003"
         : "http://localhost:3003");
-    const response = await axios.get(`${excelServiceUrl}/api/excel/download`, {
-      responseType: "stream",
-      params: req.query,
-    });
+    const response = await axios.get(
+      `${excelServiceUrl}/api/excel/download/all_items`,
+      {
+        responseType: "stream",
+        params: req.query,
+      },
+    );
 
     // Forward the response headers
     res.setHeader(
