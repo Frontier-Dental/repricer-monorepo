@@ -1,6 +1,5 @@
 import _ from "lodash";
 import * as globalParam from "../../../model/global-param";
-import * as dbHelper from "../../mongo/db-helper";
 import { Net32PriceBreak, Net32Product } from "../../../types/net32";
 import { FrontierProduct } from "../../../types/frontier";
 import { RepriceData, RepriceModel } from "../../../model/reprice-model";
@@ -15,8 +14,8 @@ export function isPriceUpdateRequired(
     isRepriceOn &&
     repriceResult.repriceDetails &&
     repriceResult.repriceDetails.newPrice !== "N/A" &&
-    repriceResult.repriceDetails.newPrice !==
-      (repriceResult.repriceDetails.oldPrice as unknown as string)
+    repriceResult.repriceDetails.newPrice?.toString() !==
+      repriceResult.repriceDetails.oldPrice.toString()
   ) {
     return true;
   } else if (
@@ -28,7 +27,7 @@ export function isPriceUpdateRequired(
     repriceResult.listOfRepriceDetails.forEach(($rp) => {
       if (
         $rp.newPrice !== "N/A" &&
-        ($rp.newPrice as unknown as number) !== $rp.oldPrice
+        $rp.newPrice?.toString() !== $rp.oldPrice.toString()
       ) {
         $eval = true;
       } else if ($rp.active == false) {
