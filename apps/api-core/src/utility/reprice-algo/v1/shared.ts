@@ -75,10 +75,10 @@ export function notQ2VsQ1(minQty: number, compareWithQ1: boolean) {
 
 export async function getSecretKey(cronId: string, contextVendor: string) {
   const cronSettingDetails = await GetCronSettingsDetailsById(cronId);
-  if (cronSettingDetails.length === 0) {
+  if (!cronSettingDetails) {
     throw new Error(`Cron setting details not found for ${cronId}`);
   }
-  const secretKey = cronSettingDetails[0].SecretKey?.find(
+  const secretKey = cronSettingDetails?.SecretKey?.find(
     (x: any) => x.vendorName == contextVendor,
   )?.secretKey;
   if (!secretKey) {
