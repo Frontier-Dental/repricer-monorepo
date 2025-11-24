@@ -152,7 +152,7 @@ export class OwnVendorProductDetails {
   currentInStock: boolean | null;
   currentInventory: number | null;
   ourLastPrice: number | null;
-  marketStateUpdatedAt: Date | null;
+  marketStateUpdatedAt: Date | string | null;
 
   constructor(sqlEntity: SqlEntity, _algo_execution_mode: string) {
     this.channelName = sqlEntity["ChannelName"] || "";

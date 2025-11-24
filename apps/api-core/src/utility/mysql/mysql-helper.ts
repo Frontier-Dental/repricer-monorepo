@@ -324,8 +324,8 @@ export async function UpdateProductAsync(
   marketData?: {
     inStock?: boolean;
     inventory?: number;
-    ourPrice?: number;
-  }
+    ourPrice?: number | null;
+  },
 ) {
   try {
     const knex = getKnexInstance();
@@ -393,7 +393,7 @@ export async function UpdateMarketStateOnly(
     inStock?: boolean;
     inventory?: number;
     ourPrice?: number;
-  }
+  },
 ) {
   try {
     const knex = getKnexInstance();
