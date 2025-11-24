@@ -199,12 +199,12 @@ export async function runCoreCronLogicFor422() {
 export async function runCoreCronLogicForOpportunity() {
   const cacheKey = CacheKey.OPPORTUNITY_RUNNING_CACHE;
   const isCacheValid = await IsCacheValid(cacheKey, new Date());
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
   if (!isCacheValid) {
     console.info(`Getting List of Eligible Products for Opportunity Cron`);
     const runningCacheObj = { cronRunning: true, initTime: new Date() };
+    let cacheClient = CacheClient.getInstance(
+      GetCacheClientOptions(applicationConfig),
+    );
     await cacheClient.set(cacheKey, runningCacheObj);
     const eligibleProductList = await getOpportunityEligibleProducts();
     const keyGen = keyGenHelper.Generate();
@@ -212,7 +212,7 @@ export async function runCoreCronLogicForOpportunity() {
       `Opportunity Cron running on ${new Date().toISOString()} with Eligible Products Count : ${eligibleProductList.length} with KeyGen : ${keyGen}`,
     );
     if (eligibleProductList.length > 0) {
-      const envVariables = await dbHelper.GetGlobalConfig();
+      const envVariables = await sqlV2Service.GetGlobalConfig();
       let chunkedList = _.chunk(
         eligibleProductList,
         parseInt(envVariables.expressCronBatchSize!),
@@ -233,14 +233,21 @@ export async function runCoreCronLogicForOpportunity() {
         }
       }
     }
+    cacheClient = CacheClient.getInstance(
+      GetCacheClientOptions(applicationConfig),
+    );
     await cacheClient.delete(cacheKey);
+    await cacheClient.disconnect();
   } else {
+    const cacheClient = CacheClient.getInstance(
+      GetCacheClientOptions(applicationConfig),
+    );
     const runningCronDetails = await cacheClient.get<any>(cacheKey);
     console.warn(
       `Skipped Opportunity Cron as another opportunity cron is already running. CURR_TIME : ${new Date().toISOString()} || RUNNING_CRON_TIME : ${runningCronDetails.initTime}`,
     );
+    await cacheClient.disconnect();
   }
-  await cacheClient.disconnect();
 }
 
 export async function ParallelExecuteOpportunity(
@@ -317,12 +324,12 @@ async function get422EligibleProducts() {
 }
 
 async function getOpportunityEligibleProducts() {
-  const globalConfig = await dbHelper.GetGlobalConfig();
+  const globalConfig = await sqlV2Service.GetGlobalConfig();
   if (globalConfig && globalConfig.source == "FEED") {
     return [];
   }
-  let cronSettingDetailsResponse = await dbHelper.GetCronSettingsList();
-  let slowCronDetails = await dbHelper.GetSlowCronDetails();
+  let cronSettingDetailsResponse = await sqlV2Service.GetCronSettingsList();
+  let slowCronDetails = await sqlV2Service.GetSlowCronDetails();
   cronSettingDetailsResponse = _.concat(
     cronSettingDetailsResponse,
     slowCronDetails,

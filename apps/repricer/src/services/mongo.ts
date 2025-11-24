@@ -435,9 +435,20 @@ export const GetContextErrorItemsCount = async (_activeStatus: any) => {
 
 export const GetOpportunityProductCount = async () => {
   try {
-    // TODO: Implement opportunity product count logic
-    // This should query the appropriate collection for opportunity products
-    return 0;
+    const dbo = await getMongoDb();
+    let query: any = {
+      $and: [
+        {
+          active: true,
+        },
+        {
+          insertReason: "OPPORTUNITY_ERROR",
+        },
+      ],
+    };
+    return dbo
+      .collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION)
+      .countDocuments(query);
   } catch (err) {
     return 0;
   }
@@ -445,9 +456,20 @@ export const GetOpportunityProductCount = async () => {
 
 export const GetOpportunityPriceUpdateCount = async () => {
   try {
-    // TODO: Implement opportunity price update count logic
-    // This should query the appropriate collection for price update opportunities
-    return 0;
+    const dbo = await getMongoDb();
+    let query: any = {
+      $and: [
+        {
+          active: true,
+        },
+        {
+          insertReason: "PRICE_UPDATE",
+        },
+      ],
+    };
+    return dbo
+      .collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION)
+      .countDocuments(query);
   } catch (err) {
     return 0;
   }
@@ -455,9 +477,16 @@ export const GetOpportunityPriceUpdateCount = async () => {
 
 export const GetOpportunityEligibleCount = async () => {
   try {
-    // TODO: Implement opportunity eligible count logic
-    // This should query the appropriate collection for eligible opportunity products
-    return 0;
+    const dbo = await getMongoDb();
+    const query: any = {
+      nextCronTime: {
+        $lte: new Date(),
+      },
+      active: true,
+    };
+    return dbo
+      .collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION)
+      .countDocuments(query);
   } catch (err) {
     return 0;
   }
@@ -632,6 +661,24 @@ export const Get422ProductDetailsByType = async (_type: any) => {
   };
   return dbo
     .collection(applicationConfig.ERROR_ITEM_COLLECTION!)
+    .find(query)
+    .toArray();
+};
+
+export const GetOpportunityProductDetailsByType = async (_type: any) => {
+  const dbo = await getMongoDb();
+  let query = {
+    $and: [
+      {
+        active: true,
+      },
+      {
+        insertReason: _type,
+      },
+    ],
+  };
+  return dbo
+    .collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION!)
     .find(query)
     .toArray();
 };

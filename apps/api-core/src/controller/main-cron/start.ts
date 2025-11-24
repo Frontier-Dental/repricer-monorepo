@@ -6,9 +6,11 @@ import {
   startError422Cron,
   setOpportunityCronAndStart,
 } from "./shared";
-import { GetCronSettingsDetailsByName } from "../../utility/mysql/mysql-v2";
+import {
+  GetCronSettingsDetailsByName,
+  GetCronSettingsList,
+} from "../../utility/mysql/mysql-v2";
 import * as _codes from "http-status-codes";
-import * as dbHelper from "../../utility/mongo/db-helper";
 import { BadRequest } from "http-errors";
 import { UpdateCronSettings } from "../../utility/mysql/mysql-v2";
 
@@ -24,7 +26,7 @@ export async function startCronHandler(
       .send(`Cron job started successfully for jobName : ${jobName}`);
   }
   if (jobName === "Cron-Opportunity") {
-    const cronSettings = await dbHelper.GetCronSettings();
+    const cronSettings = await GetCronSettingsList();
     setOpportunityCronAndStart(cronSettings);
     return res
       .status(_codes.StatusCodes.OK)

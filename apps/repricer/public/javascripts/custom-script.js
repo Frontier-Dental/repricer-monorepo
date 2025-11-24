@@ -797,6 +797,14 @@ function show422Error(param) {
   window.open(`/cronSettings/show_details/${param}`, "_blank");
 }
 
+function showOpportunityError(param) {
+  window.open(`/cronSettings/show_opportunity_details/${param}`, "_blank");
+}
+
+function exportOpportunityDetails(param) {
+  window.open(`/cronSettings/export_opportunity_view/${param}`, "_blank");
+}
+
 function searchDetails() {
   var input, filter, table, tr, td, i, txtValue;
   input = document.getElementById("myInput");

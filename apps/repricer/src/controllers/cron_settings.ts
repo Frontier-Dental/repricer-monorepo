@@ -621,6 +621,28 @@ export async function show_details(req: Request, res: Response) {
   });
 }
 
+export async function show_opportunity_details(req: Request, res: Response) {
+  const param = req.params.param.trim();
+  let productList =
+    await mongoMiddleware.GetOpportunityProductDetailsByType(param);
+  (productList as any).paramData = param;
+  if (productList.length > 0) {
+    for (let prod of productList) {
+      prod.nextCronTime = prod.nextCronTime
+        ? moment(prod.nextCronTime).format("DD-MM-YYYY HH:mm:ss")
+        : null;
+      prod.updatedOn = prod.updatedOn
+        ? moment(prod.updatedOn).format("DD-MM-YYYY HH:mm:ss")
+        : null;
+    }
+  }
+  res.render("pages/settings/opportunity_detail_view", {
+    items: productList,
+    groupName: "settings",
+    userRole: (req as any).session.users_id.userRole,
+  });
+}
+
 export async function exportItems(req: Request, res: Response) {
   const type = req.params.type_info;
   let productList = await mongoMiddleware.Get422ProductDetailsByType(

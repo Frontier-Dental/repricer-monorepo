@@ -21,6 +21,10 @@ cronSettingsRouter.get(
   cronSettingsController.show_details,
 );
 cronSettingsRouter.get(
+  "/show_opportunity_details/:param",
+  cronSettingsController.show_opportunity_details,
+);
+cronSettingsRouter.get(
   "/export_view/:type_info",
   cronSettingsController.exportItems,
 );

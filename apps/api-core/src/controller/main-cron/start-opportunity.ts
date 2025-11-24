@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import * as _codes from "http-status-codes";
-import * as dbHelper from "../../utility/mongo/db-helper";
+import * as dbHelper from "../../utility/mysql/mysql-v2";
 import { setOpportunityCronAndStart } from "./shared";
 import { applicationConfig } from "../../utility/config";
 
