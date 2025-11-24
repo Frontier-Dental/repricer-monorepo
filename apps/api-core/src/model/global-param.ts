@@ -1,5 +1,4 @@
-import * as dbHelper from "../utility/mongo/db-helper";
-
+import * as sqlV2Service from "../utility/mysql/mysql-v2";
 export async function GetInfo(mpId: any, productDet?: any) {
   const productInfo = productDet ? productDet : null;
   if (
@@ -15,7 +14,7 @@ export async function GetInfo(mpId: any, productDet?: any) {
     };
     return infoDetails;
   }
-  const response = await dbHelper.GetGlobalConfig();
+  const response = await sqlV2Service.GetGlobalConfig();
 
   const infoDetails = {
     VENDOR_ID: (response as any).ownVendorId,

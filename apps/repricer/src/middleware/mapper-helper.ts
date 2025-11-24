@@ -810,9 +810,12 @@ export const GetAlternateProxyProviderName = async (
     const linkedProvider = details.find(
       (x: any) => x.proxyProvider == providerId,
     );
-    return linkedProvider.method
-      ? `${linkedProvider.proxyProviderName} - ${linkedProvider.method}`
-      : `${linkedProvider.proxyProviderName}`;
+
+    return linkedProvider
+      ? linkedProvider.method
+        ? `${linkedProvider.proxyProviderName} - ${linkedProvider.method}`
+        : `${linkedProvider.proxyProviderName}`
+      : null;
   }
   return "";
 };

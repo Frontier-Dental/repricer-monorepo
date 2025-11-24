@@ -1,0 +1,2499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repricer Application User Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            border-bottom: 4px solid #5568d3;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .meta-info {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .meta-info div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-info strong {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-info span {
+            font-size: 1.1rem;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav h2 {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        nav a {
+            color: #667eea;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        nav a:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 100px;
+        }
+
+        h2 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #764ba2;
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem 0;
+        }
+
+        h4 {
+            color: #495057;
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.75rem 0;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: #495057;
+        }
+
+        .card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .card h4 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            color: #495057;
+        }
+
+        code {
+            background: #f1f3f5;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge-v1 { background: #ffc107; color: #212529; }
+        .badge-v2 { background: #28a745; color: white; }
+        .badge-required { background: #dc3545; color: white; }
+        .badge-optional { background: #6c757d; color: white; }
+        .badge-vendor { background: #6f42c1; color: white; }
+        .badge-strategy { background: #17a2b8; color: white; }
+
+        .highlight-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 4px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        footer {
+            background: #2d3748;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        footer p {
+            color: #cbd5e0;
+        }
+
+        .architecture-diagram {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .flow-box {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 0.5rem;
+            font-weight: 600;
+        }
+
+        .flow-arrow {
+            display: inline-block;
+            font-size: 1.5rem;
+            color: #667eea;
+            margin: 0 0.5rem;
+        }
+
+        .endpoint-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .endpoint-card h4 {
+            margin-top: 0;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .faq-item {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .faq-question {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .faq-answer {
+            color: #495057;
+        }
+
+        .decision-tree {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            font-family: monospace;
+            line-height: 1.8;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .feature-card h4 {
+            color: white;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Repricer Application User Guide</h1>
+            <p>Complete guide for using the core dental supply repricing application - business logic engine with dual algorithm support (V1 + V2)</p>
+            <div class="meta-info">
+                <div>
+                    <strong>Version</strong>
+                    <span>1.0.1</span>
+                </div>
+                <div>
+                    <strong>Last Updated</strong>
+                    <span>2025-11-18</span>
+                </div>
+                <div>
+                    <strong>Default Port</strong>
+                    <span>3000</span>
+                </div>
+                <div>
+                    <strong>Contact</strong>
+                    <span>pranoyg52@gmail.com</span>
+                </div>
+            </div>
+        </header>
+
+        <nav>
+            <h2>Quick Navigation</h2>
+            <ul>
+                <li><a href="#getting-started">Getting Started</a></li>
+                <li><a href="#core-concepts">Core Concepts</a></li>
+                <li><a href="#tutorials">Tutorials</a></li>
+                <li><a href="#algorithm-guide">Algorithm Guide</a></li>
+                <li><a href="#vendor-integration">Vendor Integration</a></li>
+                <li><a href="#cron-system">Cron System</a></li>
+                <li><a href="#web-interface">Web Interface</a></li>
+                <li><a href="#api-reference">API Reference</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+                <li><a href="#best-practices">Best Practices</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+        </nav>
+
+        <div class="content">
+            <!-- GETTING STARTED -->
+            <section id="getting-started">
+                <h2>Getting Started</h2>
+
+                <h3>What is the Repricer Application?</h3>
+                <p>The Repricer is the <strong>core business logic engine</strong> of the dental supply repricing system. It contains all pricing algorithms, vendor integrations, competition analysis, and automated repricing workflows for 6 dental supply vendors on the Net32 marketplace.</p>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>Dual Algorithm Engine</h4>
+                        <p>Supports both V1 (legacy 4-component) and V2 (advanced 40+ function) pricing algorithms with seamless migration capabilities.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>6 Vendor Support</h4>
+                        <p>Fully integrated repricing for Tradent, Frontier, MVP, FirstDent, TopDent, and Triad with vendor-specific business rules.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Buy-Box Optimization</h4>
+                        <p>Advanced V2 algorithm focuses on winning the Net32 buy-box with intelligent badge competition strategies.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>30+ Cron Jobs</h4>
+                        <p>Automated scheduling across 6 cron types: Regular, Slow, Scrape, Filter, 422 Recovery, and Proxy Switch.</p>
+                    </div>
+                </div>
+
+                <h3>Installation</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Clone and Install Dependencies</strong>
+                    <pre><code># From monorepo root
+npm install
+
+# Or navigate to repricer directory
+cd apps/repricer
+npm install</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Configure Environment Variables</strong>
+                    <p>Create a <code>.env</code> file in <code>apps/repricer/</code> directory (see Configuration section for full template).</p>
+                    <pre><code># Minimum required variables
+SQL_HOSTNAME=localhost
+SQL_USERNAME=root
+SQL_PASSWORD=your_password
+SQL_DATABASE=repricer_db
+MANAGED_MONGO_URL=mongodb://user:pass@host:27017/database
+SESSION_SECRET=your_secret_key
+SMTP_PWD=your_smtp_password</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Run Database Migrations</strong>
+                    <pre><code>cd apps/db-migrations
+npm run migrate:dev
+npm run seed:dev</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Start the Application</strong>
+                    <pre><code># Development mode (hot-reload)
+npm run dev
+
+# Production mode
+npm run build
+npm start</code></pre>
+                </div>
+
+                <div class="success-box">
+                    <strong>✓ Verification:</strong> Access the web interface at <code>http://localhost:3000</code> and verify the health endpoint: <code>http://localhost:3000/health</code> returns <code>{"status": "ok"}</code>
+                </div>
+
+                <h3>First Login</h3>
+
+                <div class="info-box">
+                    <strong>Default Admin Credentials:</strong>
+                    <p>After running migrations and seed scripts, create an admin user:</p>
+                    <pre><code>cd apps/db-migrations
+npm run create-user
+
+# Follow the prompts to enter:
+# - Email address
+# - Password (will be bcrypt hashed)
+# - User role</code></pre>
+                </div>
+
+                <p>Navigate to <code>http://localhost:3000/login</code> and use your newly created credentials to access the admin panel.</p>
+            </section>
+
+            <!-- CORE CONCEPTS -->
+            <section id="core-concepts">
+                <h2>Core Concepts</h2>
+
+                <h3>Why the Repricer Exists</h3>
+                <p>The Repricer application is the <strong>heart of the automated pricing system</strong>. While API-Core orchestrates <em>when</em> repricing happens, the Repricer determines <em>how</em> prices are calculated and <em>why</em> specific pricing decisions are made.</p>
+
+                <div class="architecture-diagram">
+                    <div class="flow-box">User/Admin</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-box">Web Interface<br/>(EJS/React)</div>
+                    <br/><br/>
+                    <div class="flow-arrow">↓</div>
+                    <br/>
+                    <div class="flow-box">Repricer App<br/>(Port 3000)</div>
+                    <div class="flow-arrow">←→</div>
+                    <div class="flow-box">API-Core<br/>(Port 5001)</div>
+                    <br/><br/>
+                    <div class="flow-arrow">↓</div>
+                    <br/>
+                    <div class="flow-box">V1 Algorithm<br/>(4 Components)</div>
+                    <div class="flow-box">V2 Algorithm<br/>(40+ Functions)</div>
+                    <br/><br/>
+                    <div class="flow-arrow">↓</div>
+                    <br/>
+                    <div class="flow-box">MySQL + MongoDB + Redis</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-box">Net32 Marketplace</div>
+                </div>
+
+                <h3>Dual Algorithm System</h3>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <h4><span class="badge badge-v1">V1</span> Legacy Algorithm</h4>
+                        <p><strong>Status:</strong> Maintained for backward compatibility</p>
+                        <p><strong>Components:</strong> 4 core modules</p>
+                        <ul>
+                            <li>Basic competition analysis</li>
+                            <li>Simple price positioning</li>
+                            <li>Fixed margin rules</li>
+                            <li>Limited badge awareness</li>
+                        </ul>
+                        <p><strong>Use When:</strong> Products not yet migrated to V2, legacy vendor configurations</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="badge badge-v2">V2</span> Current Algorithm</h4>
+                        <p><strong>Status:</strong> Active development and primary system</p>
+                        <p><strong>Functions:</strong> 40+ specialized functions</p>
+                        <ul>
+                            <li>Buy-box optimization focus</li>
+                            <li>4 badge competition strategies</li>
+                            <li>Dynamic margin calculations</li>
+                            <li>Handling time group filters</li>
+                            <li>Advanced competition analysis</li>
+                            <li>Chain-of-thought debugging</li>
+                        </ul>
+                        <p><strong>Use When:</strong> All new products, products requiring advanced strategies</p>
+                    </div>
+                </div>
+
+                <h3>Badge Competition Strategies</h3>
+                <p>The V2 algorithm introduces sophisticated competition logic based on Net32 seller badges (0-3 levels). Understanding these strategies is critical for effective repricing:</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Strategy</th>
+                            <th>Competition Logic</th>
+                            <th>Best For</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-strategy">ALL_ZERO</span></td>
+                            <td>Compete against all sellers as if they're badge level 0 (ignore badge advantages)</td>
+                            <td>High-volume commodities, aggressive pricing scenarios</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-strategy">ALL_PERCENTAGE</span></td>
+                            <td>Apply percentage-based competition across all badge levels with scaling factors</td>
+                            <td>Balanced approach, mid-tier products with mixed competition</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-strategy">BADGE_ONLY</span></td>
+                            <td>Compete only within the same badge level (badge 2 competes with badge 2 only)</td>
+                            <td>Premium products, when badge level matters significantly</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-strategy">NON_BADGE_ONLY</span></td>
+                            <td>Compete only against sellers with no badge (level 0)</td>
+                            <td>Entry-level pricing, when avoiding badge competition entirely</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>6 Vendor Support</h3>
+
+                <div class="grid-3">
+                    <div class="card">
+                        <h4><span class="badge badge-vendor">TRADENT</span></h4>
+                        <p><strong>Vendor ID:</strong> 17357</p>
+                        <p>Primary vendor with full V2 algorithm support and advanced settings.</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="badge badge-vendor">FRONTIER</span></h4>
+                        <p><strong>Vendor ID:</strong> 20722</p>
+                        <p>Full V2 support with shipping threshold automation.</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="badge badge-vendor">MVP</span></h4>
+                        <p><strong>Vendor ID:</strong> 20755</p>
+                        <p>Supported with custom margin rules.</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="badge badge-vendor">FIRSTDENT</span></h4>
+                        <p><strong>Vendor ID:</strong> 20533</p>
+                        <p>Full V2 algorithm integration.</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="badge badge-vendor">TOPDENT</span></h4>
+                        <p><strong>Vendor ID:</strong> 20727</p>
+                        <p>V2 algorithm with specialized settings.</p>
+                    </div>
+                    <div class="card">
+                        <h4><span class="badge badge-vendor">TRIAD</span></h4>
+                        <p><strong>Vendor ID:</strong> 5</p>
+                        <p>Legacy vendor with V1 algorithm support.</p>
+                    </div>
+                </div>
+
+                <h3>Price Strategy Types</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Strategy</th>
+                            <th>Description</th>
+                            <th>Calculation Method</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>UNIT</code></td>
+                            <td>Price per unit (default)</td>
+                            <td>Compete based on unit price regardless of quantity</td>
+                        </tr>
+                        <tr>
+                            <td><code>TOTAL</code></td>
+                            <td>Total price comparison</td>
+                            <td>Calculate total price (unit × quantity) for competition</td>
+                        </tr>
+                        <tr>
+                            <td><code>BUY_BOX</code></td>
+                            <td>Optimize for buy-box win</td>
+                            <td>Focus on winning Net32 buy-box with strategic pricing</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Database Architecture</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Database</th>
+                            <th>Purpose</th>
+                            <th>Key Tables/Collections</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>MySQL</strong></td>
+                            <td>Structured algorithm data with ACID compliance</td>
+                            <td>
+                                <code>v2_algo_settings</code> (27 columns),
+                                <code>v2_algo_results</code>,
+                                <code>v2_algo_execution</code>,
+                                <code>v2_algo_error</code>,
+                                <code>vendor_thresholds</code>,
+                                <code>users</code>,
+                                <code>channel_ids</code>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>MongoDB</strong></td>
+                            <td>Flexible logs and cached data</td>
+                            <td>
+                                <code>cronLogs</code>,
+                                <code>cronSettings</code>,
+                                <code>productsDetails</code>,
+                                <code>errorItems</code>,
+                                <code>422cronLogs</code>,
+                                <code>filterCronLogs</code>,
+                                <code>scrapeCronLogs</code>,
+                                <code>proxyFailureDetails</code>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Redis</strong></td>
+                            <td>Session storage and high-speed cache</td>
+                            <td>
+                                Session data,
+                                Cron execution cache,
+                                422 error cache,
+                                Proxy counter cache
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Net32 Integration</h3>
+
+                <div class="info-box">
+                    <strong>What is Net32?</strong>
+                    <p>Net32.com is the primary dental supply marketplace where the repricing system operates. The Repricer integrates with Net32 through:</p>
+                    <ul>
+                        <li><strong>Product Data API:</strong> Fetch marketplace listings and competition details</li>
+                        <li><strong>Price Update API:</strong> Submit new prices to update vendor listings</li>
+                        <li><strong>Buy-Box System:</strong> Win featured placement for maximum visibility</li>
+                        <li><strong>Seller Badges:</strong> 4-tier badge system (0-3) affecting competition dynamics</li>
+                        <li><strong>Shipping Thresholds:</strong> Vendor-specific free shipping minimum order values</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- TUTORIALS -->
+            <section id="tutorials">
+                <h2>Step-by-Step Tutorials</h2>
+
+                <h3>Tutorial 1: Viewing Products and Repricing Results</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Access the Products Dashboard</strong>
+                    <p>Navigate to <code>http://localhost:3000/products</code> in your web browser.</p>
+                    <p>This displays the main product list with current pricing information, competition status, and algorithm settings.</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Filter Products by Vendor</strong>
+                    <p>Use the vendor dropdown to filter products:</p>
+                    <ul>
+                        <li>Select vendor name (e.g., TRADENT, FRONTIER, MVP)</li>
+                        <li>View only products for that specific vendor channel</li>
+                        <li>Check repricing status and last update timestamps</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>View Repricing Results</strong>
+                    <p>Click on a product to see detailed repricing information:</p>
+                    <ul>
+                        <li><strong>Current Price:</strong> Active marketplace price</li>
+                        <li><strong>Suggested Price:</strong> Algorithm-calculated optimal price</li>
+                        <li><strong>Competition:</strong> Competitor prices and badge levels</li>
+                        <li><strong>Execution Log:</strong> V2 algorithm chain-of-thought debugging</li>
+                        <li><strong>Last Repriced:</strong> Timestamp of last successful update</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Check Algorithm Execution History</strong>
+                    <p>Navigate to <code>/history</code> to review historical execution logs:</p>
+                    <pre><code># View in MySQL
+SELECT * FROM v2_algo_execution
+WHERE product_id = 'YOUR_PRODUCT_ID'
+ORDER BY created_at DESC
+LIMIT 10;</code></pre>
+                </div>
+
+                <h3>Tutorial 2: Configuring V2 Algorithm Settings</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Access V2 Algorithm Configuration</strong>
+                    <p>Navigate to <code>http://localhost:3000/v2-algo</code> or use the React frontend at <code>http://localhost:3000/vite</code>.</p>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Select Badge Strategy</strong>
+                    <p>Choose the appropriate competition strategy:</p>
+                    <div class="decision-tree">
+Product Type Assessment:
+├─ High-volume commodity?
+│  └─ Use ALL_ZERO (compete aggressively)
+├─ Mixed competition landscape?
+│  └─ Use ALL_PERCENTAGE (balanced approach)
+├─ Premium/specialized product?
+│  └─ Use BADGE_ONLY (compete within badge level)
+└─ Entry-level positioning?
+   └─ Use NON_BADGE_ONLY (avoid badge competition)
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Configure Price Thresholds</strong>
+                    <p>Set minimum and maximum price boundaries:</p>
+                    <ul>
+                        <li><strong>Floor Price:</strong> Absolute minimum price (protect margins)</li>
+                        <li><strong>Ceiling Price:</strong> Maximum allowed price (prevent excessive pricing)</li>
+                        <li><strong>Target Margin:</strong> Desired profit percentage</li>
+                        <li><strong>Minimum Margin:</strong> Lowest acceptable profit threshold</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Set Handling Time Filters</strong>
+                    <p>Control which competitors to consider based on shipping speed:</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Filter</th>
+                                <th>Includes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>ALL</code></td>
+                                <td>All sellers regardless of handling time</td>
+                            </tr>
+                            <tr>
+                                <td><code>FAST_SHIPPING</code></td>
+                                <td>Only sellers with 0-2 day handling time</td>
+                            </tr>
+                            <tr>
+                                <td><code>STOCKED</code></td>
+                                <td>Sellers with in-stock inventory (0 day handling)</td>
+                            </tr>
+                            <tr>
+                                <td><code>LONG_HANDLING</code></td>
+                                <td>Sellers with 3+ day handling time</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">5</span>
+                    <strong>Save and Apply Settings</strong>
+                    <pre><code># Settings are stored in MySQL
+INSERT INTO v2_algo_settings (
+  product_id, vendor_id, badge_strategy,
+  floor_price, ceiling_price, target_margin,
+  handling_time_group, price_strategy, enabled
+) VALUES (
+  '12345', 17357, 'BADGE_ONLY',
+  25.00, 150.00, 0.30,
+  'FAST_SHIPPING', 'BUY_BOX', true
+);</code></pre>
+                </div>
+
+                <h3>Tutorial 3: Managing Cron Schedules</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>View Active Cron Jobs</strong>
+                    <p>Navigate to <code>/cron-settings</code> to see all configured cron jobs:</p>
+                    <pre><code># MongoDB query
+db.cronSettings.find({ enabled: true })</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Create a New Cron Schedule</strong>
+                    <p>Add a new regular cron configuration:</p>
+                    <pre><code>// MongoDB insert
+db.cronSettings.insertOne({
+  key: "tradent-premium-products",
+  name: "Tradent Premium Hourly Reprice",
+  channelName: "TRADENT",
+  enabled: true,
+  schedule: "0 * * * *",  // Every hour
+  batchSize: 500,
+  description: "Hourly repricing for premium Tradent products"
+})</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Configure Cron Type</strong>
+                    <p>Choose the appropriate cron type based on purpose:</p>
+                    <ul>
+                        <li><strong>Regular Cron:</strong> Standard repricing (every 2-4 hours)</li>
+                        <li><strong>Slow Cron:</strong> Low-priority products (once/twice daily)</li>
+                        <li><strong>Scrape Cron:</strong> Competitor data collection (every 4-6 hours)</li>
+                        <li><strong>Filter Cron:</strong> Conditional repricing with filters</li>
+                        <li><strong>422 Cron:</strong> Automatic error recovery (every 30-60 min)</li>
+                        <li><strong>Proxy Switch Cron:</strong> Event-driven proxy rotation</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Enable/Disable Cron</strong>
+                    <p>Toggle cron execution status:</p>
+                    <pre><code>// MongoDB update
+db.cronSettings.updateOne(
+  { key: "tradent-premium-products" },
+  { $set: { enabled: false } }
+)</code></pre>
+                </div>
+
+                <h3>Tutorial 4: Handling 422 Errors</h3>
+
+                <div class="warning-box">
+                    <strong>What are 422 Errors?</strong>
+                    <p>HTTP 422 (Unprocessable Entity) errors occur when Net32 API rejects a price update request. Common causes:</p>
+                    <ul>
+                        <li>Rate limiting (too many requests in short time)</li>
+                        <li>Invalid price format or values</li>
+                        <li>Product not found or inactive</li>
+                        <li>Vendor authentication failures</li>
+                    </ul>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Monitor 422 Errors</strong>
+                    <p>Check MongoDB for recent 422 errors:</p>
+                    <pre><code>db["422cronLogs"].find()
+  .sort({ _id: -1 })
+  .limit(20)</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>View Cached Error Items</strong>
+                    <p>Errors are cached in Redis for automatic retry:</p>
+                    <pre><code># Redis CLI
+KEYS *422*
+GET 422_RUNNING_CACHE
+
+# See cache validity period (default: 120 minutes)
+TTL 422_RUNNING_CACHE</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Automatic Recovery Process</strong>
+                    <p>The system automatically handles 422 errors:</p>
+                    <ol>
+                        <li>Error detected during price update</li>
+                        <li>Error details saved to <code>v2_algo_error</code> table (MySQL)</li>
+                        <li>Error cached in Redis with TTL (default: 2 hours)</li>
+                        <li>422 recovery cron runs every 30-60 minutes</li>
+                        <li>Cached errors are retried with exponential backoff</li>
+                        <li>Successful retries removed from cache</li>
+                    </ol>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Manual Error Recovery</strong>
+                    <p>Trigger immediate 422 error recovery via API-Core:</p>
+                    <pre><code>curl http://localhost:5001/schedule/start422</code></pre>
+                </div>
+
+                <h3>Tutorial 5: Managing Proxy Providers</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Understanding Proxy Rotation</strong>
+                    <p>The system uses 3 proxy providers with automatic failover:</p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Priority</th>
+                                <th>Provider</th>
+                                <th>Use Case</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1 (Primary)</td>
+                                <td>ScrapFly</td>
+                                <td>Default proxy for all scraping operations</td>
+                            </tr>
+                            <tr>
+                                <td>2 (Secondary)</td>
+                                <td>SmartProxy</td>
+                                <td>Automatic failover when ScrapFly fails</td>
+                            </tr>
+                            <tr>
+                                <td>3 (Tertiary)</td>
+                                <td>ScrapingBee</td>
+                                <td>Final fallback for critical operations</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Configure Proxy Settings</strong>
+                    <p>Set environment variables to control proxy behavior:</p>
+                    <pre><code># .env file
+PROXYSWITCH_COUNTER_MAXLIMIT=200  # Failures before switch
+PROXYSWITCH_TIMER=3600000          # Reset counter (1 hour)
+SCRAPINGBEE_TIMEOUT_VALUE=15000    # Request timeout (15s)
+SCRAPFLY_TIMEOUT_VALUE=15000       # Request timeout (15s)</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Monitor Proxy Failures</strong>
+                    <p>Check MongoDB for proxy failure tracking:</p>
+                    <pre><code>db.proxyFailureDetails.aggregate([
+  {
+    $group: {
+      _id: "$provider",
+      totalFailures: { $sum: 1 },
+      lastFailure: { $max: "$timestamp" }
+    }
+  },
+  { $sort: { totalFailures: -1 } }
+])</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <strong>Force Proxy Switch</strong>
+                    <p>Manually trigger proxy rotation if needed:</p>
+                    <pre><code># Update proxy priority in MySQL
+UPDATE tinyproxy_configs
+SET priority = 3
+WHERE provider_name = 'BrightData';
+
+# Clear failure counter in Redis
+DEL SCRAPFLY_COUNTER_CACHE</code></pre>
+                </div>
+
+                <h3>Tutorial 6: Bulk Operations</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>Bulk Price Update</strong>
+                    <p>Update prices for multiple products simultaneously:</p>
+                    <pre><code># Via Product Controller
+POST /product/bulk-update
+
+{
+  "products": [
+    {
+      "productId": "12345",
+      "channelName": "TRADENT",
+      "newPrice": 49.99,
+      "floorPrice": 35.00
+    },
+    {
+      "productId": "12346",
+      "channelName": "TRADENT",
+      "newPrice": 89.99,
+      "floorPrice": 60.00
+    }
+  ]
+}</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Bulk Algorithm Settings Migration</strong>
+                    <p>Migrate multiple products from V1 to V2:</p>
+                    <pre><code>cd apps/db-migrations
+npm run migrate-settings
+
+# Script migrates all V1 settings to V2 format
+# Preserves business logic and pricing rules
+# Creates backup before migration</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Bulk Enable/Disable Products</strong>
+                    <p>Toggle repricing for product groups:</p>
+                    <pre><code># MySQL bulk update
+UPDATE v2_algo_settings
+SET enabled = false
+WHERE vendor_id = 17357
+AND floor_price < 10.00;</code></pre>
+                </div>
+            </section>
+
+            <!-- ALGORITHM GUIDE -->
+            <section id="algorithm-guide">
+                <h2>Algorithm Guide</h2>
+
+                <h3>V1 Algorithm (Legacy)</h3>
+
+                <div class="card">
+                    <h4>Architecture Overview</h4>
+                    <p>The V1 algorithm consists of 4 core components providing basic competitive repricing functionality:</p>
+                    <ol>
+                        <li><strong>Competition Analyzer:</strong> Fetches competitor prices from Net32</li>
+                        <li><strong>Price Calculator:</strong> Determines optimal price based on fixed rules</li>
+                        <li><strong>Margin Enforcer:</strong> Ensures minimum profit margins are met</li>
+                        <li><strong>Update Executor:</strong> Submits price changes to Net32 API</li>
+                    </ol>
+                </div>
+
+                <div class="card">
+                    <h4>V1 Logic Flow</h4>
+                    <pre><code>1. Fetch product details from Net32
+2. Get all competitor listings
+3. Filter competitors by basic criteria:
+   - In stock
+   - Valid pricing
+   - Same quantity
+4. Find lowest competitor price
+5. Calculate our price:
+   IF (lowest_competitor < floor_price)
+     price = floor_price
+   ELSE
+     price = lowest_competitor - margin_buffer
+6. Apply margin checks
+7. Submit price update to Net32</code></pre>
+                </div>
+
+                <div class="highlight-box">
+                    <strong>V1 Limitations:</strong>
+                    <ul>
+                        <li>No badge awareness (treats all competitors equally)</li>
+                        <li>Fixed margin calculations (no dynamic adjustments)</li>
+                        <li>No buy-box optimization</li>
+                        <li>Limited debugging capabilities</li>
+                        <li>Simple competition filtering</li>
+                    </ul>
+                </div>
+
+                <h3>V2 Algorithm (Current)</h3>
+
+                <div class="card">
+                    <h4>Architecture Overview</h4>
+                    <p>The V2 algorithm is a comprehensive 40+ function system designed for buy-box optimization with advanced competition analysis:</p>
+                    <ul>
+                        <li><strong>Badge Strategy Engine:</strong> 4 distinct competition strategies</li>
+                        <li><strong>Buy-Box Optimizer:</strong> Focus on winning featured placement</li>
+                        <li><strong>Dynamic Margin Calculator:</strong> Adjusts margins based on competition</li>
+                        <li><strong>Handling Time Filters:</strong> Filter competitors by shipping speed</li>
+                        <li><strong>Chain-of-Thought Logging:</strong> Detailed execution debugging</li>
+                        <li><strong>Multi-Price Strategy:</strong> UNIT, TOTAL, or BUY_BOX calculations</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>V2 Execution Flow</h4>
+                    <pre><code>1. Load V2 Algorithm Settings (27 columns from MySQL)
+   - Badge strategy
+   - Price thresholds (floor, ceiling)
+   - Margin requirements (target, minimum)
+   - Handling time group filter
+   - Price strategy type
+
+2. Fetch Net32 Product Data
+   - Current buy-box winner
+   - All marketplace listings
+   - Competitor details with badge levels
+   - Shipping information
+
+3. Apply Badge Strategy Filter
+   ALL_ZERO: Ignore badge levels, compete with all
+   ALL_PERCENTAGE: Scale competition by badge percentage
+   BADGE_ONLY: Filter to same badge level only
+   NON_BADGE_ONLY: Filter to non-badge (level 0) only
+
+4. Apply Handling Time Filter
+   ALL: Include all competitors
+   FAST_SHIPPING: Only 0-2 day handling time
+   STOCKED: Only 0 day handling (in stock)
+   LONG_HANDLING: Only 3+ day handling
+
+5. Calculate Optimal Price
+   BUY_BOX strategy:
+     - Analyze buy-box requirements
+     - Calculate price to win buy-box
+     - Consider badge advantages
+   UNIT strategy:
+     - Find lowest unit price in filtered competitors
+     - Apply margin buffer
+   TOTAL strategy:
+     - Calculate total price (unit × quantity)
+     - Compete on total order value
+
+6. Margin Validation
+   - Check against floor price (absolute minimum)
+   - Verify target margin achieved
+   - Ensure minimum margin threshold
+   - Validate ceiling price not exceeded
+
+7. Chain-of-Thought Logging
+   - Log every decision point to v2_algo_execution
+   - Record filtered competitors
+   - Document calculation steps
+   - Explain final price decision
+
+8. Execute Price Update
+   - Submit to Net32 API
+   - Handle 422 errors with caching
+   - Log results to v2_algo_results
+   - Update product status</code></pre>
+                </div>
+
+                <h3>Badge Strategy Selection Guide</h3>
+
+                <div class="decision-tree">
+<strong>Decision Tree for Badge Strategy Selection:</strong>
+
+Q1: What is your competitive advantage?
+├─ High volume/low cost → Consider ALL_ZERO
+├─ Fast shipping → Consider FAST_SHIPPING filter + BADGE_ONLY
+├─ Premium quality → Consider BADGE_ONLY
+└─ Price leadership → Consider ALL_PERCENTAGE or NON_BADGE_ONLY
+
+Q2: What is the competition landscape?
+├─ Many low-badge sellers → ALL_ZERO or NON_BADGE_ONLY
+├─ Mixed badge levels → ALL_PERCENTAGE
+├─ Mostly same badge as us → BADGE_ONLY
+└─ Few high-badge sellers → ALL_PERCENTAGE or BADGE_ONLY
+
+Q3: What is your margin requirement?
+├─ High margin needed → BADGE_ONLY (less competition)
+├─ Flexible margin → ALL_PERCENTAGE
+└─ Aggressive pricing → ALL_ZERO (maximum competition)
+
+Q4: What is the product type?
+├─ Commodity/high-volume → ALL_ZERO
+├─ Specialized/niche → BADGE_ONLY
+├─ Balanced market → ALL_PERCENTAGE
+└─ Entry-level market → NON_BADGE_ONLY
+                </div>
+
+                <h3>V2 Algorithm Settings Schema</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>product_id</code></td>
+                            <td>VARCHAR(255)</td>
+                            <td>Net32 marketplace product ID</td>
+                        </tr>
+                        <tr>
+                            <td><code>vendor_id</code></td>
+                            <td>INT</td>
+                            <td>Vendor identifier (17357=TRADENT, etc.)</td>
+                        </tr>
+                        <tr>
+                            <td><code>badge_strategy</code></td>
+                            <td>ENUM</td>
+                            <td>ALL_ZERO | ALL_PERCENTAGE | BADGE_ONLY | NON_BADGE_ONLY</td>
+                        </tr>
+                        <tr>
+                            <td><code>floor_price</code></td>
+                            <td>DECIMAL(10,2)</td>
+                            <td>Absolute minimum price (margin protection)</td>
+                        </tr>
+                        <tr>
+                            <td><code>ceiling_price</code></td>
+                            <td>DECIMAL(10,2)</td>
+                            <td>Maximum allowed price</td>
+                        </tr>
+                        <tr>
+                            <td><code>target_margin</code></td>
+                            <td>DECIMAL(5,2)</td>
+                            <td>Desired profit percentage (e.g., 0.30 = 30%)</td>
+                        </tr>
+                        <tr>
+                            <td><code>minimum_margin</code></td>
+                            <td>DECIMAL(5,2)</td>
+                            <td>Lowest acceptable profit threshold</td>
+                        </tr>
+                        <tr>
+                            <td><code>handling_time_group</code></td>
+                            <td>ENUM</td>
+                            <td>ALL | FAST_SHIPPING | STOCKED | LONG_HANDLING</td>
+                        </tr>
+                        <tr>
+                            <td><code>price_strategy</code></td>
+                            <td>ENUM</td>
+                            <td>UNIT | TOTAL | BUY_BOX</td>
+                        </tr>
+                        <tr>
+                            <td><code>enabled</code></td>
+                            <td>BOOLEAN</td>
+                            <td>Whether V2 algorithm is active for this product</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Algorithm Comparison: V1 vs V2</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>V1 Algorithm</th>
+                            <th>V2 Algorithm</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Functions/Components</strong></td>
+                            <td>4 core components</td>
+                            <td>40+ specialized functions</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Badge Awareness</strong></td>
+                            <td>None</td>
+                            <td>4 badge strategies</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Buy-Box Optimization</strong></td>
+                            <td>Not supported</td>
+                            <td>Primary focus</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Margin Calculation</strong></td>
+                            <td>Fixed rules</td>
+                            <td>Dynamic with min/max thresholds</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Handling Time Filters</strong></td>
+                            <td>Basic in-stock check</td>
+                            <td>4 filter groups (ALL, FAST, STOCKED, LONG)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Price Strategies</strong></td>
+                            <td>Unit price only</td>
+                            <td>UNIT, TOTAL, BUY_BOX</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Debugging</strong></td>
+                            <td>Basic logs</td>
+                            <td>Chain-of-thought execution logs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Error Handling</strong></td>
+                            <td>Simple retry</td>
+                            <td>Advanced 422 caching and recovery</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Configuration</strong></td>
+                            <td>Hard-coded rules</td>
+                            <td>27-column settings table per product</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- VENDOR INTEGRATION -->
+            <section id="vendor-integration">
+                <h2>Vendor Integration</h2>
+
+                <h3>Vendor-Specific Configuration</h3>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <h4><span class="badge badge-vendor">TRADENT</span> (ID: 17357)</h4>
+                        <p><strong>Status:</strong> Primary vendor, full V2 support</p>
+                        <p><strong>Shipping Threshold:</strong> $75 minimum for free shipping</p>
+                        <p><strong>Special Features:</strong></p>
+                        <ul>
+                            <li>Advanced badge strategy support</li>
+                            <li>Buy-box optimization enabled</li>
+                            <li>Custom margin rules per category</li>
+                            <li>FTP feed integration for product updates</li>
+                        </ul>
+                        <p><strong>Cron Schedule:</strong> Every 2 hours (high-priority products)</p>
+                    </div>
+
+                    <div class="card">
+                        <h4><span class="badge badge-vendor">FRONTIER</span> (ID: 20722)</h4>
+                        <p><strong>Status:</strong> Full V2 support with automation</p>
+                        <p><strong>Shipping Threshold:</strong> $100 minimum for free shipping</p>
+                        <p><strong>Special Features:</strong></p>
+                        <ul>
+                            <li>Automated shipping threshold scraping</li>
+                            <li>Badge competition fully enabled</li>
+                            <li>Dynamic margin adjustments</li>
+                            <li>Handling time filter optimization</li>
+                        </ul>
+                        <p><strong>Cron Schedule:</strong> Every 4 hours (standard products)</p>
+                    </div>
+
+                    <div class="card">
+                        <h4><span class="badge badge-vendor">MVP</span> (ID: 20755)</h4>
+                        <p><strong>Status:</strong> V2 with custom margin rules</p>
+                        <p><strong>Shipping Threshold:</strong> $50 minimum for free shipping</p>
+                        <p><strong>Special Features:</strong></p>
+                        <ul>
+                            <li>Lower margin requirements (competitive pricing)</li>
+                            <li>ALL_PERCENTAGE badge strategy default</li>
+                            <li>Fast shipping filter emphasis</li>
+                            <li>Simplified buy-box targeting</li>
+                        </ul>
+                        <p><strong>Cron Schedule:</strong> Every 4 hours</p>
+                    </div>
+
+                    <div class="card">
+                        <h4><span class="badge badge-vendor">FIRSTDENT</span> (ID: 20533)</h4>
+                        <p><strong>Status:</strong> Full V2 algorithm integration</p>
+                        <p><strong>Shipping Threshold:</strong> $60 minimum for free shipping</p>
+                        <p><strong>Special Features:</strong></p>
+                        <ul>
+                            <li>BADGE_ONLY strategy commonly used</li>
+                            <li>Premium product focus</li>
+                            <li>Higher margin targets</li>
+                            <li>Quality-over-price positioning</li>
+                        </ul>
+                        <p><strong>Cron Schedule:</strong> Every 6 hours (slow cron)</p>
+                    </div>
+
+                    <div class="card">
+                        <h4><span class="badge badge-vendor">TOPDENT</span> (ID: 20727)</h4>
+                        <p><strong>Status:</strong> V2 with specialized settings</p>
+                        <p><strong>Shipping Threshold:</strong> $80 minimum for free shipping</p>
+                        <p><strong>Special Features:</strong></p>
+                        <ul>
+                            <li>Category-specific badge strategies</li>
+                            <li>Bulk order optimization</li>
+                            <li>TOTAL price strategy emphasis</li>
+                            <li>Handling time group filters active</li>
+                        </ul>
+                        <p><strong>Cron Schedule:</strong> Every 4 hours</p>
+                    </div>
+
+                    <div class="card">
+                        <h4><span class="badge badge-vendor">TRIAD</span> (ID: 5)</h4>
+                        <p><strong>Status:</strong> Legacy vendor (V1 algorithm)</p>
+                        <p><strong>Shipping Threshold:</strong> $50 minimum for free shipping</p>
+                        <p><strong>Special Features:</strong></p>
+                        <ul>
+                            <li>V1 algorithm maintained for compatibility</li>
+                            <li>Basic competition filtering only</li>
+                            <li>Fixed margin calculations</li>
+                            <li>Manual repricing emphasis</li>
+                        </ul>
+                        <p><strong>Cron Schedule:</strong> Daily slow cron</p>
+                    </div>
+                </div>
+
+                <h3>Vendor Shipping Threshold Management</h3>
+
+                <div class="info-box">
+                    <strong>What are Shipping Thresholds?</strong>
+                    <p>Free shipping minimum order values set by each vendor to encourage larger purchases. The system tracks and updates these dynamically via scraping crons.</p>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vendor</th>
+                            <th>Current Threshold</th>
+                            <th>Update Frequency</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>TRADENT</td>
+                            <td>$75.00</td>
+                            <td>Daily scrape</td>
+                            <td>Net32 vendor page scraping</td>
+                        </tr>
+                        <tr>
+                            <td>FRONTIER</td>
+                            <td>$100.00</td>
+                            <td>Daily scrape</td>
+                            <td>Net32 vendor page scraping</td>
+                        </tr>
+                        <tr>
+                            <td>MVP</td>
+                            <td>$50.00</td>
+                            <td>Daily scrape</td>
+                            <td>Net32 vendor page scraping</td>
+                        </tr>
+                        <tr>
+                            <td>FIRSTDENT</td>
+                            <td>$60.00</td>
+                            <td>Daily scrape</td>
+                            <td>Net32 vendor page scraping</td>
+                        </tr>
+                        <tr>
+                            <td>TOPDENT</td>
+                            <td>$80.00</td>
+                            <td>Daily scrape</td>
+                            <td>Net32 vendor page scraping</td>
+                        </tr>
+                        <tr>
+                            <td>TRIAD</td>
+                            <td>$50.00</td>
+                            <td>Manual update</td>
+                            <td>Configuration file</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="card">
+                    <h4>Updating Shipping Thresholds</h4>
+                    <pre><code># Automatic scraping (runs on API-Core startup if configured)
+RUN_SHIPPING_THRESHOLD_SCRAPE_ON_STARTUP=true
+
+# Manual update via MySQL
+UPDATE vendor_thresholds
+SET shipping_threshold = 85.00
+WHERE vendor_id = 17357;  -- TRADENT
+
+# Verify threshold update
+SELECT vendor_id, vendor_name, shipping_threshold, updated_at
+FROM vendor_thresholds;</code></pre>
+                </div>
+
+                <h3>Vendor API Integration</h3>
+
+                <div class="endpoint-card">
+                    <h4>Net32 Price Update Endpoint</h4>
+                    <p><strong>URL:</strong> <code>https://api.net32.com/inventory/products/update</code></p>
+                    <p><strong>Method:</strong> POST</p>
+                    <p><strong>Request Body:</strong></p>
+                    <pre><code>{
+  "vendorId": 17357,
+  "secretKey": "vendor_secret_key",
+  "products": [
+    {
+      "mpId": "12345",
+      "price": 49.99,
+      "quantity": 100,
+      "inStock": true
+    }
+  ]
+}</code></pre>
+                    <p><strong>Response:</strong></p>
+                    <pre><code>{
+  "success": true,
+  "updated": 1,
+  "failed": 0,
+  "errors": []
+}</code></pre>
+                </div>
+            </section>
+
+            <!-- CRON SYSTEM -->
+            <section id="cron-system">
+                <h2>Cron System Management</h2>
+
+                <h3>6 Cron Types Explained</h3>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Purpose</th>
+                            <th>Typical Schedule</th>
+                            <th>Batch Size</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Regular Crons</strong></td>
+                            <td>Standard repricing for active products</td>
+                            <td>Every 2-4 hours</td>
+                            <td>500-700 products</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Slow Crons</strong></td>
+                            <td>Low-priority products needing infrequent updates</td>
+                            <td>Once or twice daily</td>
+                            <td>1000-2000 products</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Scrape Crons</strong></td>
+                            <td>Competitor data collection and marketplace scraping</td>
+                            <td>Every 4-6 hours</td>
+                            <td>N/A (scraping operation)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Filter Crons</strong></td>
+                            <td>Conditional repricing based on product filters</td>
+                            <td>Custom (user-defined)</td>
+                            <td>Varies by filter</td>
+                        </tr>
+                        <tr>
+                            <td><strong>422 Crons</strong></td>
+                            <td>Automatic retry of failed price updates</td>
+                            <td>Every 30-60 minutes</td>
+                            <td>All cached errors</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Proxy Switch Crons</strong></td>
+                            <td>Rotate proxy providers on failure threshold</td>
+                            <td>Event-driven</td>
+                            <td>N/A (monitoring)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Cron Configuration Best Practices</h3>
+
+                <div class="card">
+                    <h4>1. Avoid Overlapping Execution</h4>
+                    <p>Stagger cron schedules to prevent resource contention:</p>
+                    <pre><code># Good: Staggered schedules
+TRADENT_MAIN_CRON=0 */4 * * *    # Runs at 00:00, 04:00, 08:00, etc.
+FRONTIER_CRON=15 */4 * * *        # Runs at 00:15, 04:15, 08:15, etc.
+MVP_CRON=30 */4 * * *             # Runs at 00:30, 04:30, 08:30, etc.
+
+# Bad: All run simultaneously
+TRADENT_MAIN_CRON=0 */4 * * *
+FRONTIER_CRON=0 */4 * * *         # Conflicts with TRADENT
+MVP_CRON=0 */4 * * *              # Conflicts with both</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>2. Appropriate Batch Sizes</h4>
+                    <p>Balance performance and resource usage:</p>
+                    <ul>
+                        <li><strong>High-frequency crons:</strong> 300-500 products (quick execution)</li>
+                        <li><strong>Standard crons:</strong> 500-700 products (balanced)</li>
+                        <li><strong>Slow crons:</strong> 1000-2000 products (lower priority)</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>3. Monitor Execution Times</h4>
+                    <p>Track cron performance to optimize schedules:</p>
+                    <pre><code># MongoDB query - find slow crons
+db.cronLogs.aggregate([
+  {
+    $project: {
+      cronKey: 1,
+      duration: {
+        $subtract: ["$endTime", "$startTime"]
+      }
+    }
+  },
+  { $match: { duration: { $gt: 300000 } } },  // >5 minutes
+  { $sort: { duration: -1 } }
+])</code></pre>
+                </div>
+
+                <h3>Monitoring Cron Executions</h3>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <strong>View Recent Executions</strong>
+                    <pre><code># MongoDB - Last 20 cron executions
+db.cronLogs.find()
+  .sort({ _id: -1 })
+  .limit(20)
+  .pretty()</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <strong>Check Success Rate</strong>
+                    <pre><code># MongoDB - Success rate by cron
+db.cronLogs.aggregate([
+  {
+    $group: {
+      _id: "$cronKey",
+      total: { $sum: 1 },
+      successful: {
+        $sum: { $cond: [{ $eq: ["$status", "success"] }, 1, 0] }
+      }
+    }
+  },
+  {
+    $project: {
+      cronKey: "$_id",
+      total: 1,
+      successful: 1,
+      successRate: {
+        $multiply: [
+          { $divide: ["$successful", "$total"] },
+          100
+        ]
+      }
+    }
+  }
+])</code></pre>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <strong>Identify Failed Executions</strong>
+                    <pre><code># MongoDB - Recent failures
+db.cronLogs.find({
+  status: { $in: ["error", "failed"] }
+}).sort({ _id: -1 }).limit(10)</code></pre>
+                </div>
+            </section>
+
+            <!-- WEB INTERFACE -->
+            <section id="web-interface">
+                <h2>Web Interface Guide</h2>
+
+                <h3>EJS Frontend (Legacy)</h3>
+
+                <div class="info-box">
+                    <strong>Access:</strong> <code>http://localhost:3000</code>
+                    <p>The EJS-based web interface provides admin access to:</p>
+                    <ul>
+                        <li>Product management and viewing</li>
+                        <li>Cron schedule configuration</li>
+                        <li>Historical repricing logs</li>
+                        <li>User administration</li>
+                        <li>System monitoring and health checks</li>
+                    </ul>
+                </div>
+
+                <h4>Main Pages</h4>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Route</th>
+                            <th>Page</th>
+                            <th>Functionality</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>/</code></td>
+                            <td>Dashboard</td>
+                            <td>System overview, recent activity, key metrics</td>
+                        </tr>
+                        <tr>
+                            <td><code>/products</code></td>
+                            <td>Product List</td>
+                            <td>View all products with search, filter, and pagination</td>
+                        </tr>
+                        <tr>
+                            <td><code>/cron-settings</code></td>
+                            <td>Cron Management</td>
+                            <td>Configure, enable/disable, and monitor cron jobs</td>
+                        </tr>
+                        <tr>
+                            <td><code>/history</code></td>
+                            <td>Execution History</td>
+                            <td>Review historical repricing logs and results</td>
+                        </tr>
+                        <tr>
+                            <td><code>/admin</code></td>
+                            <td>Admin Panel</td>
+                            <td>User management, system settings, database utilities</td>
+                        </tr>
+                        <tr>
+                            <td><code>/monitor</code></td>
+                            <td>System Monitor</td>
+                            <td>Real-time system health, resource usage, error tracking</td>
+                        </tr>
+                        <tr>
+                            <td><code>/v2-algo</code></td>
+                            <td>V2 Algorithm Config</td>
+                            <td>Configure V2 algorithm settings per product</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>React Frontend (Modern UI)</h3>
+
+                <div class="info-box">
+                    <strong>Access:</strong> <code>http://localhost:3000/vite</code>
+                    <p>The modern React 19.1 frontend (from <code>apps/front-end</code>) provides enhanced UX for:</p>
+                    <ul>
+                        <li>V2 algorithm configuration with real-time validation</li>
+                        <li>Interactive product filtering and sorting</li>
+                        <li>Visual repricing analytics and charts</li>
+                        <li>Streamlined badge strategy selection</li>
+                        <li>Bulk operations with progress tracking</li>
+                    </ul>
+                </div>
+
+                <h4>Key Features</h4>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <h4>V2 Algorithm Configuration</h4>
+                        <p>Interactive form with real-time validation:</p>
+                        <ul>
+                            <li>Badge strategy selection with visual decision tree</li>
+                            <li>Price threshold sliders with instant feedback</li>
+                            <li>Margin calculator with profit projections</li>
+                            <li>Handling time filter checkboxes</li>
+                            <li>Bulk apply settings across products</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h4>Product Analytics Dashboard</h4>
+                        <p>Visual insights into repricing performance:</p>
+                        <ul>
+                            <li>Buy-box win rate charts</li>
+                            <li>Margin trend graphs</li>
+                            <li>Competition heatmaps</li>
+                            <li>Badge strategy effectiveness metrics</li>
+                            <li>Real-time price comparison tables</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Authentication and User Roles</h3>
+
+                <div class="card">
+                    <h4>User Roles</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Role</th>
+                                <th>Permissions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Admin</strong></td>
+                                <td>Full system access, user management, cron configuration, database utilities</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Manager</strong></td>
+                                <td>Product management, algorithm configuration, view-only cron access</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Viewer</strong></td>
+                                <td>Read-only access to products, history, and analytics</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h4>Creating New Users</h4>
+                    <pre><code>cd apps/db-migrations
+npm run create-user
+
+# Interactive prompts:
+# Enter email: user@example.com
+# Enter password: (will be bcrypt hashed)
+# Select role: admin / manager / viewer</code></pre>
+                </div>
+            </section>
+
+            <!-- API REFERENCE -->
+            <section id="api-reference">
+                <h2>API Endpoint Reference</h2>
+
+                <h3>Product Management</h3>
+
+                <div class="endpoint-card">
+                    <h4>GET /product/list</h4>
+                    <p>Retrieve paginated product list with filters</p>
+                    <p><strong>Query Parameters:</strong></p>
+                    <ul>
+                        <li><code>vendor</code> - Filter by vendor name (TRADENT, FRONTIER, etc.)</li>
+                        <li><code>page</code> - Page number (default: 1)</li>
+                        <li><code>limit</code> - Results per page (default: 50)</li>
+                        <li><code>search</code> - Search by product name or ID</li>
+                    </ul>
+                    <p><strong>Example:</strong></p>
+                    <pre><code>curl http://localhost:3000/product/list?vendor=TRADENT&page=1&limit=20</code></pre>
+                </div>
+
+                <div class="endpoint-card">
+                    <h4>GET /product/:id</h4>
+                    <p>Get detailed product information including algorithm settings</p>
+                    <p><strong>Example:</strong></p>
+                    <pre><code>curl http://localhost:3000/product/12345</code></pre>
+                </div>
+
+                <div class="endpoint-card">
+                    <h4>POST /product/update/:id</h4>
+                    <p>Update product configuration</p>
+                    <p><strong>Request Body:</strong></p>
+                    <pre><code>{
+  "floorPrice": 35.00,
+  "ceilingPrice": 150.00,
+  "activated": true,
+  "allowReprice": true
+}</code></pre>
+                </div>
+
+                <h3>V2 Algorithm Configuration</h3>
+
+                <div class="endpoint-card">
+                    <h4>GET /v2-algo/settings/:productId/:vendorId</h4>
+                    <p>Retrieve V2 algorithm settings for a specific product-vendor combination</p>
+                    <p><strong>Example:</strong></p>
+                    <pre><code>curl http://localhost:3000/v2-algo/settings/12345/17357</code></pre>
+                </div>
+
+                <div class="endpoint-card">
+                    <h4>POST /v2-algo/settings</h4>
+                    <p>Create or update V2 algorithm settings</p>
+                    <p><strong>Request Body:</strong></p>
+                    <pre><code>{
+  "productId": "12345",
+  "vendorId": 17357,
+  "badgeStrategy": "BADGE_ONLY",
+  "floorPrice": 25.00,
+  "ceilingPrice": 150.00,
+  "targetMargin": 0.30,
+  "minimumMargin": 0.15,
+  "handlingTimeGroup": "FAST_SHIPPING",
+  "priceStrategy": "BUY_BOX",
+  "enabled": true
+}</code></pre>
+                </div>
+
+                <h3>Cron Management</h3>
+
+                <div class="endpoint-card">
+                    <h4>GET /cron-settings/list</h4>
+                    <p>List all cron job configurations</p>
+                    <p><strong>Example:</strong></p>
+                    <pre><code>curl http://localhost:3000/cron-settings/list</code></pre>
+                </div>
+
+                <div class="endpoint-card">
+                    <h4>POST /cron-settings/toggle/:key</h4>
+                    <p>Enable or disable a cron job</p>
+                    <p><strong>Request Body:</strong></p>
+                    <pre><code>{
+  "enabled": false
+}</code></pre>
+                </div>
+
+                <h3>History and Logging</h3>
+
+                <div class="endpoint-card">
+                    <h4>GET /history/product/:productId</h4>
+                    <p>Get repricing history for a specific product</p>
+                    <p><strong>Query Parameters:</strong></p>
+                    <ul>
+                        <li><code>startDate</code> - Filter from date (YYYY-MM-DD)</li>
+                        <li><code>endDate</code> - Filter to date (YYYY-MM-DD)</li>
+                        <li><code>limit</code> - Maximum results (default: 100)</li>
+                    </ul>
+                </div>
+
+                <div class="endpoint-card">
+                    <h4>GET /cron-logs/:cronKey</h4>
+                    <p>Retrieve execution logs for a specific cron job</p>
+                    <p><strong>Example:</strong></p>
+                    <pre><code>curl http://localhost:3000/cron-logs/tradent-main-cron</code></pre>
+                </div>
+
+                <h3>Admin and Monitoring</h3>
+
+                <div class="endpoint-card">
+                    <h4>GET /monitor/health</h4>
+                    <p>System health check with database connectivity status</p>
+                    <p><strong>Response:</strong></p>
+                    <pre><code>{
+  "status": "healthy",
+  "mysql": "connected",
+  "mongodb": "connected",
+  "redis": "connected",
+  "uptime": 3600,
+  "memory": {
+    "used": 512000000,
+    "total": 4294967296
+  }
+}</code></pre>
+                </div>
+
+                <div class="endpoint-card">
+                    <h4>GET /cache/status</h4>
+                    <p>Redis cache status and statistics</p>
+                </div>
+            </section>
+
+            <!-- TROUBLESHOOTING -->
+            <section id="troubleshooting">
+                <h2>Troubleshooting</h2>
+
+                <div class="faq-item">
+                    <div class="faq-question">❌ Prices not updating on Net32</div>
+                    <div class="faq-answer">
+                        <p><strong>Checklist:</strong></p>
+                        <ol>
+                            <li>Verify product is <code>activated: true</code> and <code>allowReprice: true</code></li>
+                            <li>Check vendor secret key is valid in environment variables</li>
+                            <li>Review <code>v2_algo_results</code> table for calculated prices</li>
+                            <li>Look for 422 errors in <code>v2_algo_error</code> table</li>
+                            <li>Confirm Net32 API endpoint is accessible</li>
+                            <li>Verify price is within floor/ceiling bounds</li>
+                        </ol>
+                        <pre><code># Check product settings
+SELECT * FROM v2_algo_settings
+WHERE product_id = '12345' AND vendor_id = 17357;
+
+# Check recent errors
+SELECT * FROM v2_algo_error
+WHERE product_id = '12345'
+ORDER BY created_at DESC LIMIT 5;</code></pre>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">❌ Algorithm execution showing no competitors</div>
+                    <div class="faq-answer">
+                        <p><strong>Common Causes:</strong></p>
+                        <ul>
+                            <li>Badge strategy too restrictive (e.g., BADGE_ONLY with no same-badge sellers)</li>
+                            <li>Handling time filter excludes all competitors</li>
+                            <li>Proxy failures preventing data scraping</li>
+                            <li>Product not found on Net32 marketplace</li>
+                        </ul>
+                        <p><strong>Solutions:</strong></p>
+                        <pre><code># Check execution log
+SELECT execution_log FROM v2_algo_execution
+WHERE product_id = '12345'
+ORDER BY created_at DESC LIMIT 1;
+
+# Try less restrictive badge strategy
+UPDATE v2_algo_settings
+SET badge_strategy = 'ALL_PERCENTAGE'
+WHERE product_id = '12345';
+
+# Use ALL handling time filter
+UPDATE v2_algo_settings
+SET handling_time_group = 'ALL'
+WHERE product_id = '12345';</code></pre>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">❌ V2 algorithm not executing (falling back to V1)</div>
+                    <div class="faq-answer">
+                        <p><strong>Verification Steps:</strong></p>
+                        <ol>
+                            <li>Check V2 settings exist for product-vendor combination</li>
+                            <li>Verify <code>enabled</code> column is <code>true</code></li>
+                            <li>Confirm algorithm mode is not forcing V1</li>
+                            <li>Review error logs for V2 execution failures</li>
+                        </ol>
+                        <pre><code># Check V2 settings
+SELECT * FROM v2_algo_settings
+WHERE product_id = '12345' AND vendor_id = 17357;
+
+# If missing, insert default settings
+INSERT INTO v2_algo_settings (...) VALUES (...);
+
+# Verify algorithm execution mode
+SELECT algo_mode FROM products
+WHERE product_id = '12345';</code></pre>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">❌ Proxy scraping failures</div>
+                    <div class="faq-answer">
+                        <p><strong>Debugging Process:</strong></p>
+                        <pre><code># Check proxy failure count
+db.proxyFailureDetails.countDocuments({
+  provider: "BrightData",
+  timestamp: { $gt: new Date(Date.now() - 3600000) }
+});
+
+# Test proxy connectivity manually
+curl -x http://proxy-url:port https://api.net32.com/test
+
+# Force proxy switch
+UPDATE tinyproxy_configs
+SET priority = 2
+WHERE provider_name = 'ScrapFly';
+
+# Clear failure counter
+DEL BRIGHT_DATA_COUNTER_CACHE</code></pre>
+                    </div>
+                </div>
+
+                <h3>Debugging Tools</h3>
+
+                <div class="card">
+                    <h4>Enable Debug Mode</h4>
+                    <pre><code># Add to .env
+IS_DEBUG=true
+REQUEST_LOGGING=true
+
+# Restart application
+npm run dev</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>Database Query Examples</h4>
+                    <pre><code># Find products with V2 settings but disabled
+SELECT p.product_id, p.product_name, v.enabled
+FROM products p
+JOIN v2_algo_settings v ON p.product_id = v.product_id
+WHERE v.enabled = false;
+
+# Find products with recent 422 errors
+SELECT DISTINCT product_id
+FROM v2_algo_error
+WHERE created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR);
+
+# Check cron execution frequency
+SELECT cronKey, COUNT(*) as executions,
+       MAX(createdAt) as lastRun
+FROM cronLogs
+WHERE createdAt > DATE_SUB(NOW(), INTERVAL 7 DAY)
+GROUP BY cronKey;</code></pre>
+                </div>
+            </section>
+
+            <!-- BEST PRACTICES -->
+            <section id="best-practices">
+                <h2>Best Practices</h2>
+
+                <h3>Algorithm Configuration</h3>
+
+                <div class="card">
+                    <h4>1. Start Conservative, Iterate</h4>
+                    <ul>
+                        <li>Begin with <code>ALL_PERCENTAGE</code> badge strategy for balanced approach</li>
+                        <li>Set wide price floors/ceilings initially (prevent unexpected bounds)</li>
+                        <li>Monitor for 2-3 days before adjusting</li>
+                        <li>Make incremental changes to one parameter at a time</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>2. Badge Strategy Selection</h4>
+                    <ul>
+                        <li>Use <code>BADGE_ONLY</code> for premium products where badge matters</li>
+                        <li>Use <code>ALL_ZERO</code> for commodities needing aggressive pricing</li>
+                        <li>Use <code>ALL_PERCENTAGE</code> as default balanced approach</li>
+                        <li>Avoid <code>NON_BADGE_ONLY</code> unless specifically targeting low-badge competition</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>3. Margin Management</h4>
+                    <ul>
+                        <li>Set <code>targetMargin</code> 5-10% above <code>minimumMargin</code> for flexibility</li>
+                        <li>Use <code>floorPrice</code> to protect absolute minimums (cost + min profit)</li>
+                        <li>Set <code>ceilingPrice</code> to prevent excessive pricing (market research based)</li>
+                        <li>Review margin achievement weekly and adjust targets</li>
+                    </ul>
+                </div>
+
+                <h3>Vendor Management</h3>
+
+                <div class="card">
+                    <h4>1. Vendor-Specific Strategies</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Vendor</th>
+                                <th>Recommended Strategy</th>
+                                <th>Rationale</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>TRADENT</td>
+                                <td>BADGE_ONLY or ALL_PERCENTAGE</td>
+                                <td>Premium positioning, badge advantage matters</td>
+                            </tr>
+                            <tr>
+                                <td>FRONTIER</td>
+                                <td>ALL_PERCENTAGE</td>
+                                <td>Balanced competition, shipping threshold optimization</td>
+                            </tr>
+                            <tr>
+                                <td>MVP</td>
+                                <td>ALL_ZERO or ALL_PERCENTAGE</td>
+                                <td>Value positioning, aggressive pricing acceptable</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card">
+                    <h4>2. Shipping Threshold Optimization</h4>
+                    <ul>
+                        <li>Monitor shipping threshold changes weekly</li>
+                        <li>Price products near threshold strategically (encourage add-ons)</li>
+                        <li>Use TOTAL price strategy for multi-quantity products</li>
+                        <li>Update thresholds immediately when vendor changes them</li>
+                    </ul>
+                </div>
+
+                <h3>Performance Optimization</h3>
+
+                <div class="card">
+                    <h4>1. Cron Scheduling</h4>
+                    <ul>
+                        <li>High-priority products: 2-4 hour intervals with 300-500 batch size</li>
+                        <li>Standard products: 4-6 hour intervals with 500-700 batch size</li>
+                        <li>Low-priority: 12-24 hour intervals with 1000-2000 batch size</li>
+                        <li>Stagger all crons by 15-30 minutes to prevent overlaps</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h4>2. Database Maintenance</h4>
+                    <pre><code># Weekly cleanup tasks
+# Archive logs older than 30 days
+db.cronLogs.deleteMany({
+  createdAt: { $lt: new Date(Date.now() - 30*24*60*60*1000) }
+});
+
+# Clean completed error items
+db.errorItems.deleteMany({
+  status: "resolved",
+  resolvedAt: { $lt: new Date(Date.now() - 7*24*60*60*1000) }
+});
+
+# Optimize MySQL tables
+OPTIMIZE TABLE v2_algo_results, v2_algo_execution;</code></pre>
+                </div>
+
+                <div class="card">
+                    <h4>3. Monitoring and Alerts</h4>
+                    <ul>
+                        <li>Set up alerts for 422 error rate >10% in 1 hour</li>
+                        <li>Monitor memory usage, alert if >85% for >5 minutes</li>
+                        <li>Track cron execution failures, alert if 3+ consecutive failures</li>
+                        <li>Monitor proxy failure rate, switch providers if >20% failures</li>
+                    </ul>
+                </div>
+
+                <h3>Security Best Practices</h3>
+
+                <div class="warning-box">
+                    <strong>Critical Security Measures:</strong>
+                    <ul>
+                        <li>Never commit <code>.env</code> files to version control</li>
+                        <li>Use strong passwords (bcrypt hashed) for all users</li>
+                        <li>Limit database user permissions to minimum required</li>
+                        <li>Run application behind reverse proxy (nginx) with HTTPS</li>
+                        <li>Implement rate limiting for public endpoints</li>
+                        <li>Regularly update dependencies and security patches</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- FAQ -->
+            <section id="faq">
+                <h2>Frequently Asked Questions</h2>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: Should I use V1 or V2 algorithm?</div>
+                    <div class="faq-answer">
+                        <p><strong>Use V2 for all new products and migrations.</strong> V1 is maintained only for legacy compatibility.</p>
+                        <p>V2 provides:</p>
+                        <ul>
+                            <li>Buy-box optimization (critical for visibility)</li>
+                            <li>4 badge competition strategies (flexible positioning)</li>
+                            <li>Advanced margin management (protect profitability)</li>
+                            <li>Chain-of-thought debugging (troubleshooting ease)</li>
+                        </ul>
+                        <p>Only use V1 if specific products have not yet been migrated or require legacy business logic.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: How do I know which badge strategy to use?</div>
+                    <div class="faq-answer">
+                        <p>Follow this decision matrix:</p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product Type</th>
+                                    <th>Competition</th>
+                                    <th>Recommended Strategy</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Commodity, high-volume</td>
+                                    <td>Many sellers, all levels</td>
+                                    <td><code>ALL_ZERO</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Standard product</td>
+                                    <td>Mixed badge levels</td>
+                                    <td><code>ALL_PERCENTAGE</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Premium, specialized</td>
+                                    <td>Same badge level</td>
+                                    <td><code>BADGE_ONLY</code></td>
+                                </tr>
+                                <tr>
+                                    <td>Entry-level</td>
+                                    <td>Mostly non-badge</td>
+                                    <td><code>NON_BADGE_ONLY</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: Why are my prices not updating despite cron execution?</div>
+                    <div class="faq-answer">
+                        <p>Common reasons:</p>
+                        <ol>
+                            <li><strong>Product settings:</strong> Check <code>activated</code> and <code>allowReprice</code> flags</li>
+                            <li><strong>Price bounds:</strong> Calculated price may be outside floor/ceiling range</li>
+                            <li><strong>No competition:</strong> Badge/handling filters may exclude all competitors</li>
+                            <li><strong>422 errors:</strong> Net32 API rejecting updates (check error logs)</li>
+                            <li><strong>Vendor authentication:</strong> Secret key may be invalid or expired</li>
+                        </ol>
+                        <p>Always check <code>v2_algo_execution</code> table for chain-of-thought logs explaining why price was/wasn't updated.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: How often should products be repriced?</div>
+                    <div class="faq-answer">
+                        <p>Frequency depends on product priority and competition dynamics:</p>
+                        <ul>
+                            <li><strong>High-priority/competitive:</strong> Every 2-4 hours (rapid competition response)</li>
+                            <li><strong>Standard products:</strong> Every 4-6 hours (balanced monitoring)</li>
+                            <li><strong>Stable/low-priority:</strong> Once or twice daily (resource efficiency)</li>
+                            <li><strong>Seasonal/promotional:</strong> Hourly during peak periods, daily otherwise</li>
+                        </ul>
+                        <p>Balance frequency with system resources and Net32 API rate limits.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: What causes 422 errors and how are they handled?</div>
+                    <div class="faq-answer">
+                        <p><strong>Common 422 Error Causes:</strong></p>
+                        <ul>
+                            <li>Rate limiting (too many API requests)</li>
+                            <li>Invalid price format (negative, too many decimals)</li>
+                            <li>Product not found or inactive on marketplace</li>
+                            <li>Vendor authentication failure</li>
+                            <li>Price change too frequent (Net32 throttling)</li>
+                        </ul>
+                        <p><strong>Automatic Handling:</strong></p>
+                        <ol>
+                            <li>Error logged to <code>v2_algo_error</code> table with details</li>
+                            <li>Error cached in Redis with 2-hour TTL</li>
+                            <li>422 recovery cron runs every 30-60 minutes</li>
+                            <li>Errors retried with exponential backoff</li>
+                            <li>Successful retries removed from cache and error table</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: Can I run multiple Repricer instances?</div>
+                    <div class="faq-answer">
+                        <p><strong>Not recommended.</strong> Running multiple instances simultaneously can cause:</p>
+                        <ul>
+                            <li>Duplicate cron executions (same products repriced multiple times)</li>
+                            <li>Database race conditions (conflicting price updates)</li>
+                            <li>Cache inconsistencies (Redis cache conflicts)</li>
+                            <li>422 error rate increase (excessive API calls)</li>
+                        </ul>
+                        <p>For high availability, use a load balancer with sticky sessions and ensure only ONE instance runs cron jobs (others handle web requests only).</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: How do I migrate products from V1 to V2 algorithm?</div>
+                    <div class="faq-answer">
+                        <p>Use the automated migration script:</p>
+                        <pre><code>cd apps/db-migrations
+npm run migrate-settings
+
+# This script:
+# 1. Reads V1 algorithm settings
+# 2. Transforms to V2 format (27 columns)
+# 3. Maps V1 logic to V2 badge strategies
+# 4. Preserves margin rules and price bounds
+# 5. Creates backup before migration
+# 6. Logs all transformations
+
+# Verify migration
+SELECT * FROM v2_algo_settings
+WHERE migrated_from_v1 = true;</code></pre>
+                        <p>Always test in development environment before production migration.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: What is the buy-box and why does it matter?</div>
+                    <div class="faq-answer">
+                        <p><strong>The Net32 Buy-Box</strong> is the featured product placement that appears when multiple sellers offer the same product. Winning the buy-box means:</p>
+                        <ul>
+                            <li><strong>Maximum visibility:</strong> Your listing is shown first</li>
+                            <li><strong>Higher conversion:</strong> Most buyers purchase from buy-box winner</li>
+                            <li><strong>Competitive advantage:</strong> Buyers see your price as the default</li>
+                            <li><strong>Badge benefits:</strong> Higher badge levels have advantage in buy-box algorithm</li>
+                        </ul>
+                        <p>V2 algorithm's <code>BUY_BOX</code> price strategy specifically optimizes for winning this placement by considering badge levels, price competitiveness, and shipping speed.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">Q: How do handling time filters work?</div>
+                    <div class="faq-answer">
+                        <p>Handling time represents how quickly a seller ships after order placement. Filters control which competitors to consider:</p>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Filter</th>
+                                    <th>Handling Time</th>
+                                    <th>Use Case</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>ALL</code></td>
+                                    <td>Any handling time</td>
+                                    <td>Maximum competition, aggressive pricing</td>
+                                </tr>
+                                <tr>
+                                    <td><code>FAST_SHIPPING</code></td>
+                                    <td>0-2 days</td>
+                                    <td>Compete with fast shippers only</td>
+                                </tr>
+                                <tr>
+                                    <td><code>STOCKED</code></td>
+                                    <td>0 days (in stock)</td>
+                                    <td>Compete only with in-stock sellers</td>
+                                </tr>
+                                <tr>
+                                    <td><code>LONG_HANDLING</code></td>
+                                    <td>3+ days</td>
+                                    <td>Compete with slower shippers</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p>Choose filters based on your shipping capabilities to ensure fair competition comparison.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p><strong>Repricer Application User Guide</strong> | Version 1.0.1 | Last Updated: 2025-11-18</p>
+            <p>For technical support, contact: pranoyg52@gmail.com</p>
+            <p>Part of the Dental Supply Repricer Monorepo System</p>
+        </footer>
+    </div>
+</body>
+</html>

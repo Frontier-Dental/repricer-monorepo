@@ -7,12 +7,12 @@ import { apiMapping } from "../resources/api-mapping";
 import { CronSettings } from "../types/cron-settings";
 import { applicationConfig } from "./config";
 import * as dbHelper from "./mongo/db-helper";
-// import * as mongoHelper from "./mongo/mongo-helper";
 import * as axiosRetryHelper from "./proxy/axios-retry-helper";
 import * as brightDataHelper from "./proxy/bright-data-helper";
 import * as scrapflyHelper from "./proxy/scrapfly-helper";
 import * as ProxyHelper from "./proxy-helper";
 import * as responseUtility from "./response-utility";
+import * as sqlV2Service from "../utility/mysql/mysql-v2";
 
 export async function postAsync(payload: any, _url: string) {
   const config = {
@@ -34,17 +34,17 @@ export async function getAsync(
   seqString?: string | null,
 ) {
   let responseData = null;
-  let cronDetails = await dbHelper.GetCronSettingsList();
-  const slowCronDetails = await dbHelper.GetSlowCronDetails();
+  let cronDetails = await sqlV2Service.GetCronSettingsList();
+  const slowCronDetails = await sqlV2Service.GetSlowCronDetails();
   cronDetails = _.concat(cronDetails, slowCronDetails);
-  const cronName = cronDetails.find((x) => x.CronId == cronId)?.CronName;
+  const cronName = cronDetails.find((x: any) => x.CronId == cronId)?.CronName;
   if (applicationConfig.IS_DEBUG) {
     return getMorphedResponse();
   }
   const proxyDetailsResponse = await ProxyHelper.GetProxyDetailsById(cronId);
   let proxyProvider = _.first(proxyDetailsResponse)?.ProxyProvider;
   const proxyConfigDetails =
-    await dbHelper.GetProxyConfigByProviderId(proxyProvider);
+    await sqlV2Service.GetProxyConfigByProviderId(proxyProvider);
 
   switch (proxyProvider) {
     case 0:
@@ -100,7 +100,7 @@ export async function getAsync(
       break;
     default:
       const proxy = await ProxyHelper.GetProxy(cronName!);
-      if (proxy?.host == (await dbHelper.GetRotatingProxyUrl())) {
+      if (proxy?.host == (await sqlV2Service.GetRotatingProxyUrl())) {
         responseData = await fetchGetAsync(proxy, _url);
       } else {
         var startTime = process.hrtime();
@@ -124,7 +124,7 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings) {
       : cronSetting.ProxyProvider;
   if (proxyProvider != null) {
     const proxyConfigDetails =
-      await dbHelper.GetProxyConfigByProviderId(proxyProvider);
+      await sqlV2Service.GetProxyConfigByProviderId(proxyProvider);
     switch (proxyProvider) {
       case 0:
         responseData = await axiosRetryHelper.getScrapingBeeResponse(
@@ -179,7 +179,7 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings) {
         break;
       default:
         const proxy = await ProxyHelper.GetProxyV2(cronSetting, proxyProvider);
-        if (proxy.host == (await dbHelper.GetRotatingProxyUrl())) {
+        if (proxy.host == (await sqlV2Service.GetRotatingProxyUrl())) {
           responseData = await fetchGetAsync(proxy, _url);
         } else {
           var startTime = process.hrtime();
@@ -272,7 +272,7 @@ export async function native_get(_url: string): Promise<any> {
 }
 
 export async function fetch_product_data(_url: string): Promise<any> {
-  const proxyConfigDetails = await dbHelper.GetProxyConfigByProviderId(3);
+  const proxyConfigDetails = await sqlV2Service.GetProxyConfigByProviderId(3);
   return getScrappingResponse(_url, _.first(proxyConfigDetails));
 }
 

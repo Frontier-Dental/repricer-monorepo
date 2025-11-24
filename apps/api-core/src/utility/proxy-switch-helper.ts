@@ -2,6 +2,7 @@ import * as dbHelper from "./mongo/db-helper";
 import * as axiosHelper from "./axios-helper";
 import _ from "lodash";
 import { applicationConfig } from "./config";
+import * as sqlV2Service from "./mysql/mysql-v2";
 
 interface ProxyFailureDetails {
   proxyProvider: number;
@@ -85,7 +86,7 @@ export const SwitchProxy = async (): Promise<void> => {
 
         // Changing Proxy Provider To All Linked Cron to Next Available Proxy Provider.
         const linkedCronWithExistingProxyProvider =
-          await dbHelper.GetLinkedCronSettingsByProviderId(
+          await sqlV2Service.GetLinkedCronSettingsByProviderId(
             record.proxyProvider,
           );
 
@@ -159,7 +160,7 @@ async function updateProxyForCron(
 ): Promise<CronInfo | null> {
   let payloadForEmail: CronInfo | null = null;
   const existingProxyDetails = _.first(
-    await dbHelper.GetProxyConfigByProviderId(existingProxyProviderId),
+    await sqlV2Service.GetProxyConfigByProviderId(existingProxyProviderId),
   ) as ProxyConfig | undefined;
 
   for (let cronSettings of listOfCrons) {
@@ -179,17 +180,17 @@ async function updateProxyForCron(
         thresholdReached: true,
       };
       payloadForEmail = cronInfo;
-      await dbHelper.UpdateProxyDetailsByCronId(
+      await sqlV2Service.UpdateProxyDetailsByCronId(
         cronSettings.CronId,
         cronSettings.ProxyProvider,
         -1,
       );
     } else {
       const newProxyDetails = _.first(
-        await dbHelper.GetProxyConfigByProviderId(newProxyProvider),
+        await sqlV2Service.GetProxyConfigByProviderId(newProxyProvider),
       ) as ProxyConfig | undefined;
 
-      await dbHelper.UpdateProxyDetailsByCronId(
+      await sqlV2Service.UpdateProxyDetailsByCronId(
         cronSettings.CronId as unknown as string,
         newProxyProvider,
         sequence,

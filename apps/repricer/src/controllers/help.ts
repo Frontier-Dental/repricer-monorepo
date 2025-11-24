@@ -13,6 +13,16 @@ import ProductModel from "../models/product";
 import * as secretDetailsResx from "../../resources/SecretKeyMapping.json";
 import cronMapping from "../../resources/cronMapping.json";
 import * as configIpResx from "../../resources/serverIp.json";
+import * as sqlMapper from "../utility/mapper/mysql-mapper";
+import * as sessionHelper from "../utility/session-helper";
+import {
+  GetConfigurations,
+  GetCronSettingsList,
+  InsertOrUpdateCronSettings,
+  UpdateCronSettingsList,
+  UpsertFilterCronSettings,
+  GetFilteredCrons,
+} from "../services/mysql-v2";
 
 export async function getLogsById(req: Request, res: Response) {
   const idx = req.params.id;
@@ -112,8 +122,8 @@ export async function pingCheck(req: Request, res: Response) {
 }
 
 export async function troubleshoot(req: Request, res: Response) {
-  const cronSettingsResult = await mongoMiddleware.GetCronSettingsList();
-  const configItems = await mongoMiddleware.GetConfigurations();
+  const cronSettingsResult = await GetCronSettingsList();
+  const configItems = await GetConfigurations();
   const contextItem = configItems.find(
     (x: any) => x.proxyProvider == 1 && x.ipType == 0,
   );
@@ -206,7 +216,7 @@ export async function loadProductDetails(req: Request, res: Response) {
 
 export async function createCrons(req: Request, res: Response) {
   const countOfCrons = parseInt(req.params.count);
-  const existingCronDetails = await mongoMiddleware.GetCronSettingsList();
+  const existingCronDetails = await GetCronSettingsList();
   const generalCronDetails = _.filter(
     existingCronDetails,
     (x) => x.IsHidden != true,
@@ -225,7 +235,7 @@ export async function createCrons(req: Request, res: Response) {
     cron.UpdatedTime = new Date();
     cron.CronStatus = false;
     cron.CronId = $id;
-    await mongoMiddleware.InsertCronSettings(cron);
+    //await mongoMiddleware.InsertCronSettings(cron);
     newCronList.push({
       cronId: $id,
       cronVariable: `_E${generalCronDetails.length + count}Cron`,
@@ -299,7 +309,7 @@ async function ping(hostname: any, port: any) {
 }
 
 async function mapCronDetails(healthResp: any) {
-  const cronSettingsList = await mongoMiddleware.GetCronSettingsList();
+  const cronSettingsList = await GetCronSettingsList();
   _.forEach(healthResp, (h) => {
     h.cronName = getCronName(h.ip, cronSettingsList);
   });
@@ -355,13 +365,13 @@ async function getVendorDetails(obj: any) {
 }
 
 export async function updateCronSecretKey(req: Request, res: Response) {
-  let cronSettingsList: any = await mongoMiddleware.GetCronSettingsList();
+  let cronSettingsList: any = await GetCronSettingsList();
   for (let $ of cronSettingsList) {
     if ($.CronName != "Cron-422") {
       $.SecretKey = await getSecretKeyDetails($.CronName);
     }
   }
-  await mongoMiddleware.UpdateCronSettingsList(cronSettingsList, req);
+  await UpdateCronSettingsList(cronSettingsList, req);
   return res.status(200).json({
     status: `SUCCESS`,
     cronDetails: cronSettingsList,
@@ -382,5 +392,88 @@ async function getSecretKeyDetails(cronName: any) {
     secretDetails.push(vDetail);
   }
   return secretDetails;
+}
+
+/** SQL MIGRATION UTILITIES */
+export async function migrateCronSettingsToSql(req: Request, res: Response) {
+  const cronTypes = req.body.cronTypes;
+  let cronSettingsList: any = [];
+  const auditInfo = await sessionHelper.GetAuditInfo(req);
+  for (const cronType of cronTypes) {
+    switch (cronType) {
+      case "REGULAR":
+        cronSettingsList = await mongoMiddleware.GetCronSettingsList();
+        if (cronSettingsList && cronSettingsList.length > 0) {
+          for (let cronSetting of cronSettingsList) {
+            cronSetting.CronType = cronType;
+            const cronSettingEntity = await sqlMapper.mapCronSettingToEntity(
+              cronSetting,
+              auditInfo,
+            );
+            const cronSettingSecretKeys =
+              await sqlMapper.mapCronSettingSecretKeysToEntity(cronSetting);
+            const alternateProxyProviders =
+              await sqlMapper.mapAlternateProxyProvidersToEntity(cronSetting);
+            await InsertOrUpdateCronSettings(
+              cronSettingEntity,
+              cronSettingSecretKeys,
+              alternateProxyProviders,
+            );
+          }
+        }
+        break;
+      case "SLOW":
+        cronSettingsList = await mongoMiddleware.GetSlowCronDetails();
+        if (cronSettingsList && cronSettingsList.length > 0) {
+          for (let cronSetting of cronSettingsList) {
+            cronSetting.CronType = cronType;
+            const cronSettingEntity = await sqlMapper.mapCronSettingToEntity(
+              cronSetting,
+              auditInfo,
+            );
+            const cronSettingSecretKeys =
+              await sqlMapper.mapCronSettingSecretKeysToEntity(cronSetting);
+            const alternateProxyProviders =
+              await sqlMapper.mapAlternateProxyProvidersToEntity(cronSetting);
+            await InsertOrUpdateCronSettings(
+              cronSettingEntity,
+              cronSettingSecretKeys,
+              alternateProxyProviders,
+            );
+          }
+        }
+        break;
+      case "DATA_ONLY":
+        cronSettingsList = await mongoMiddleware.GetScrapeCrons();
+        if (cronSettingsList && cronSettingsList.length > 0) {
+          for (let cronSetting of cronSettingsList) {
+            cronSetting.CronType = cronType;
+            const cronSettingEntity = await sqlMapper.mapCronSettingToEntity(
+              cronSetting,
+              auditInfo,
+            );
+            const cronSettingSecretKeys =
+              await sqlMapper.mapCronSettingSecretKeysToEntity(cronSetting);
+            const alternateProxyProviders =
+              await sqlMapper.mapAlternateProxyProvidersToEntity(cronSetting);
+            await InsertOrUpdateCronSettings(
+              cronSettingEntity,
+              cronSettingSecretKeys,
+              alternateProxyProviders,
+            );
+          }
+        }
+      case "FILTER":
+        cronSettingsList = await mongoMiddleware.GetFilteredCrons();
+        await UpsertFilterCronSettings(cronSettingsList);
+        break;
+      default:
+        break;
+    }
+  }
+  return res.status(200).json({
+    status: `SUCCESS`,
+    message: `Successfully migrated cron settings to SQL for cron type ${cronTypes.join(", ")}`,
+  });
 }
 const delay = (ms: any) => new Promise((resolve) => setTimeout(resolve, ms));

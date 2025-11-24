@@ -9,13 +9,13 @@ import {
   setOpportunityCronAndStart,
   stopCron,
 } from "./shared";
-
+import { GetCronSettingsList } from "../../utility/mysql/mysql-v2";
 export async function recreateCronHandler(
   req: Request,
   res: Response,
 ): Promise<any> {
   const jobNames = req.body;
-  const cronDetails = await dbHelper.GetCronSettings();
+  const cronDetails = await GetCronSettingsList();
   for (const jobName of jobNames) {
     if (jobName === "_Error422Cron") {
       setError422CronAndStart(cronDetails);
@@ -29,7 +29,7 @@ export async function recreateCronHandler(
     if (!cronName) {
       throw BadRequest(`Cron name corresponding to ${jobName} not found`);
     }
-    const settings = cronDetails.find((x) => x.CronName === cronName);
+    const settings = cronDetails.find((x: any) => x.CronName === cronName);
     if (!settings) {
       throw BadRequest(`Cron settings not found for ${cronName}`);
     }

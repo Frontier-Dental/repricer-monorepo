@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation Index - Repricer Monorepo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        nav {
+            background: #2d3748;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        nav a:hover {
+            color: #667eea;
+        }
+
+        main {
+            padding: 3rem 2rem;
+        }
+
+        section {
+            margin-bottom: 4rem;
+        }
+
+        h2 {
+            color: #2d3748;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #667eea;
+        }
+
+        h3 {
+            color: #4a5568;
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .app-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 2rem;
+            margin: 2rem 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .app-card h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-item {
+            background: #f7fafc;
+            padding: 1.5rem;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .feature-item strong {
+            display: block;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .diagram {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 2rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 2rem 0;
+        }
+
+        .diagram pre {
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card h4 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        .checklist {
+            background: #f7fafc;
+            padding: 1.5rem 2rem;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+        }
+
+        .checklist li {
+            margin: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .checklist li:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+        }
+
+        a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            background: #2d3748;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        .meta-info {
+            background: #edf2f7;
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .meta-info strong {
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            main {
+                padding: 1.5rem 1rem;
+            }
+
+            .features, .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 Documentation Index</h1>
+            <p>Repricer Monorepo - Comprehensive Technical Documentation</p>
+            <div class="meta-info" style="margin-top: 1rem; background: rgba(255,255,255,0.1); color: white;">
+                <strong>Last Updated:</strong> 2025-11-18 | <strong>Repository:</strong> repricer-monorepo | <strong>Total Applications:</strong> 5 + 1 Shared Package
+            </div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="#structure">Documentation Structure</a></li>
+                <li><a href="#navigation">Quick Navigation</a></li>
+                <li><a href="#applications">Application Summaries</a></li>
+                <li><a href="#algorithm-docs">Algorithm Documentation</a></li>
+                <li><a href="#architecture">System Architecture</a></li>
+                <li><a href="#statistics">Documentation Statistics</a></li>
+                <li><a href="#how-to-use">How to Use</a></li>
+                <li><a href="#maintenance">Keeping Updated</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <section id="overview">
+                <h2>📋 Overview</h2>
+                <p>This directory contains organized technical documentation and analysis files for each application in the <code>apps/</code> folder of the repricer-monorepo.</p>
+
+                <div class="meta-info">
+                    <strong>Purpose:</strong> Comprehensive technical documentation and analysis for all applications in the monorepo
+                </div>
+            </section>
+
+            <section id="structure">
+                <h2>📚 Documentation Structure</h2>
+
+                <div class="diagram">
+                    <pre>
+claudedocs/
+├── ANALYSIS-INDEX.md              # Summary of all code analysis files
+├── DOCUMENTATION-INDEX.md         # This file - summary of all documentation
+├── api-core/
+│   ├── analysis-api-core.md
+│   └── api-core-technical-documentation.html
+├── db-migrations/
+│   ├── analysis-db-migrations.md
+│   └── db-migrations-technical-documentation.html
+├── excel-export/
+│   ├── analysis-excel-export.md
+│   └── technical-documentation.html
+├── front-end/
+│   ├── analysis-front-end.md
+│   └── technical-documentation.html
+└── repricer/
+    ├── analysis-repricer.md
+    └── repricer-technical-documentation.html
+                    </pre>
+                </div>
+            </section>
+
+            <section id="navigation">
+                <h2>🎯 Quick Navigation</h2>
+
+                <h3>By Application</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Application</th>
+                            <th>User Guide</th>
+                            <th>Technical Docs</th>
+                            <th>Analysis</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>api-core</strong></td>
+                            <td><a href="api-core/api-core-user-guide.html">📖 Guide</a></td>
+                            <td><a href="api-core/api-core-technical-documentation.html">📄 Docs</a></td>
+                            <td><a href="api-core/analysis-api-core.html">🔍 Analysis</a></td>
+                            <td>REST API & Orchestration</td>
+                        </tr>
+                        <tr>
+                            <td><strong>db-migrations</strong></td>
+                            <td><a href="db-migrations/db-migrations-user-guide.html">📖 Guide</a></td>
+                            <td><a href="db-migrations/db-migrations-technical-documentation.html">📄 Docs</a></td>
+                            <td><a href="db-migrations/analysis-db-migrations.html">🔍 Analysis</a></td>
+                            <td>Database Schema Management</td>
+                        </tr>
+                        <tr>
+                            <td><strong>excel-export</strong></td>
+                            <td><a href="excel-export/excel-export-user-guide.html">📖 Guide</a></td>
+                            <td><a href="excel-export/technical-documentation.html">📄 Docs</a></td>
+                            <td><a href="excel-export/analysis-excel-export.html">🔍 Analysis</a></td>
+                            <td>Data Export Service</td>
+                        </tr>
+                        <tr>
+                            <td><strong>front-end</strong></td>
+                            <td><a href="front-end/front-end-user-guide.html">📖 Guide</a></td>
+                            <td><a href="front-end/technical-documentation.html">📄 Docs</a></td>
+                            <td><a href="front-end/analysis-front-end.html">🔍 Analysis</a></td>
+                            <td>React User Interface</td>
+                        </tr>
+                        <tr>
+                            <td><strong>repricer</strong></td>
+                            <td><a href="repricer/repricer-user-guide.html">📖 Guide</a></td>
+                            <td><a href="repricer/repricer-technical-documentation.html">📄 Docs</a></td>
+                            <td><a href="repricer/analysis-repricer.html">🔍 Analysis</a></td>
+                            <td>Core Repricing Logic</td>
+                        </tr>
+                        <tr>
+                            <td><strong>shared</strong></td>
+                            <td><a href="shared/shared-package-user-guide.html">📖 Guide</a></td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>Shared Types & Enums Package</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>By Document Type</h3>
+                <div class="features">
+                    <div class="feature-item">
+                        <strong>📖 User Guides (HTML)</strong>
+                        <p>Comprehensive step-by-step guides for end users, admins, and developers covering installation, configuration, common workflows, troubleshooting, and best practices</p>
+                    </div>
+                    <div class="feature-item">
+                        <strong>📄 Technical Documentation (HTML)</strong>
+                        <p>Comprehensive, formatted reference docs with syntax highlighting, API catalogs, deployment guides, and code examples</p>
+                    </div>
+                    <div class="feature-item">
+                        <strong>🔍 Analysis Files (HTML)</strong>
+                        <p>Code quality analysis, security assessments, performance reviews, and architectural insights with actionable recommendations</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="applications">
+                <h2>📖 Application Summaries</h2>
+
+                <div class="app-card">
+                    <h3>1. api-core - REST API & Orchestration Layer</h3>
+                    <p><strong>Location:</strong> <code>apps/api-core/</code></p>
+                    <p><strong>📖 User Guide:</strong> <a href="api-core/api-core-user-guide.html">api-core-user-guide.html</a></p>
+                    <p><strong>📄 Documentation:</strong> <a href="api-core/api-core-technical-documentation.html">api-core-technical-documentation.html</a></p>
+                    <p><strong>🔍 Analysis:</strong> <a href="api-core/analysis-api-core.html">analysis-api-core.html</a></p>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Key Features:</strong>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li>REST API endpoints for feed processing and cron management</li>
+                            <li>11+ cron management endpoints</li>
+                            <li>3 manual repricer operations</li>
+                            <li>Health check and status monitoring</li>
+                            <li>Proxy management integration</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Technology Stack:</strong> Node.js + TypeScript (ES2020), Express.js, MongoDB + MySQL + Redis, Docker
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Coverage:</strong> API endpoint catalog, Cron job system (6 types), Database integration patterns, Configuration management, Deployment guide
+                    </div>
+                </div>
+
+                <div class="app-card">
+                    <h3>2. db-migrations - Database Schema Management</h3>
+                    <p><strong>Location:</strong> <code>apps/db-migrations/</code></p>
+                    <p><strong>📖 User Guide:</strong> <a href="db-migrations/db-migrations-user-guide.html">db-migrations-user-guide.html</a></p>
+                    <p><strong>📄 Documentation:</strong> <a href="db-migrations/db-migrations-technical-documentation.html">db-migrations-technical-documentation.html</a></p>
+                    <p><strong>🔍 Analysis:</strong> <a href="db-migrations/analysis-db-migrations.html">analysis-db-migrations.html</a></p>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Key Features:</strong>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li>9 migration files (1,357 lines of code)</li>
+                            <li>3 utility scripts (1,005 lines) for data transformation</li>
+                            <li>2 seed files for reference data</li>
+                            <li>V1→V2 algorithm settings migration</li>
+                            <li>Complete rollback procedures</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Technology Stack:</strong> Knex.js migration framework, TypeScript, MySQL database, bcrypt for password hashing
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Database Tables:</strong> v2_algo_settings (27 columns), v2_algo_results, v2_algo_execution, v2_algo_error, vendor_thresholds, users, channel_ids, tinyproxy_configs
+                    </div>
+                </div>
+
+                <div class="app-card">
+                    <h3>3. excel-export - Data Export Service</h3>
+                    <p><strong>Location:</strong> <code>apps/excel-export/</code></p>
+                    <p><strong>📖 User Guide:</strong> <a href="excel-export/excel-export-user-guide.html">excel-export-user-guide.html</a></p>
+                    <p><strong>📄 Documentation:</strong> <a href="excel-export/technical-documentation.html">technical-documentation.html</a></p>
+                    <p><strong>🔍 Analysis:</strong> <a href="excel-export/analysis-excel-export.html">analysis-excel-export.html</a></p>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Key Features:</strong>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li>63-column Excel export with vendor-specific data</li>
+                            <li>Memory-optimized streaming architecture</li>
+                            <li>Support for 6 vendor channels</li>
+                            <li>MySQL stored procedure integration</li>
+                            <li>Single GET endpoint: /api/excel/download</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Technology Stack:</strong> Node.js + TypeScript, ExcelJS library (streaming), MySQL + MongoDB, Express.js, Docker
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Export Capabilities:</strong> Product details, pricing data, algorithm settings, competition metrics, badge indicators, handling time and shipping filters, frozen headers with auto-filters
+                    </div>
+                </div>
+
+                <div class="app-card">
+                    <h3>4. front-end - React User Interface</h3>
+                    <p><strong>Location:</strong> <code>apps/front-end/</code></p>
+                    <p><strong>📖 User Guide:</strong> <a href="front-end/front-end-user-guide.html">front-end-user-guide.html</a></p>
+                    <p><strong>📄 Documentation:</strong> <a href="front-end/technical-documentation.html">technical-documentation.html</a></p>
+                    <p><strong>🔍 Analysis:</strong> <a href="front-end/analysis-front-end.html">analysis-front-end.html</a></p>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Key Features:</strong>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li>Modern React 19.1 application</li>
+                            <li>File-based routing with TanStack Router</li>
+                            <li>Component-based architecture</li>
+                            <li>Product management interface</li>
+                            <li>Algorithm settings configuration</li>
+                            <li>Error monitoring dashboard</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Technology Stack:</strong> React 19.1 + TypeScript 5.8, Vite 7.0, TanStack Router + Table, Tailwind CSS 4.1 + shadcn/ui, Radix UI primitives, React Hook Form + Zod validation
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Key Components:</strong> DataTable (sorting/filtering/pagination), V2AlgoSettingsForm (complex validation), Navigation (route-aware), Supporting utilities and hooks
+                    </div>
+                </div>
+
+                <div class="app-card">
+                    <h3>5. repricer - Core Repricing Business Logic</h3>
+                    <p><strong>Location:</strong> <code>apps/repricer/</code></p>
+                    <p><strong>📖 User Guide:</strong> <a href="repricer/repricer-user-guide.html">repricer-user-guide.html</a></p>
+                    <p><strong>📄 Documentation:</strong> <a href="repricer/repricer-technical-documentation.html">repricer-technical-documentation.html</a></p>
+                    <p><strong>🔍 Analysis:</strong> <a href="repricer/analysis-repricer.html">analysis-repricer.html</a></p>
+
+                    <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 4px;">
+                        <strong style="color: #3b82f6;">📚 Algorithm Deep Dive Documentation:</strong>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li><a href="repricer/v2-algorithm-field-guide.html" style="color: #2563eb; font-weight: 500;">🎯 V2 Algorithm Field-by-Field Guide</a> - Complete explanation of all 27 settings fields with business examples</li>
+                            <li><a href="api-core/v1-vs-v2-algorithm-comparison.html" style="color: #2563eb; font-weight: 500;">⚖️ V1 vs V2 Algorithm Comparison</a> - Technical comparison and migration guide</li>
+                            <li><a href="api-core/v2-algorithm-detailed-documentation.html" style="color: #2563eb; font-weight: 500;">🔬 V2 Algorithm Technical Documentation</a> - Complete technical implementation details</li>
+                            <li><a href="api-core/v1-algorithm-detailed-documentation.html" style="color: #2563eb; font-weight: 500;">📜 V1 Algorithm Technical Documentation</a> - Legacy algorithm reference</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Key Features:</strong>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li>Dual repricing algorithm system (V1 + V2)</li>
+                            <li>6 vendor support (Tradent, Frontier, FirstDent, TopDent, MVP, Triad)</li>
+                            <li>4 badge competition strategies</li>
+                            <li>60+ API endpoints across 23 controllers</li>
+                            <li>30+ cron configurations for automation</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Technology Stack:</strong> Node.js + TypeScript, Express.js, Hybrid MySQL + MongoDB, Redis caching, Net32 API integration, Docker
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Repricing System:</strong> V1 Algorithm (legacy, 4 components), V2 Algorithm (current, buy-box optimization, 40+ functions), Badge Strategies (ALL_ZERO, ALL_PERCENTAGE, BADGE_ONLY, NON_BADGE_ONLY)
+                    </div>
+                </div>
+
+                <div class="app-card">
+                    <h3>6. shared - Shared Types & Enums Package</h3>
+                    <p><strong>Location:</strong> <code>packages/shared/</code></p>
+                    <p><strong>📖 User Guide:</strong> <a href="shared/shared-package-user-guide.html">shared-package-user-guide.html</a></p>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Key Features:</strong>
+                        <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li>Centralized TypeScript types and enums for all applications</li>
+                            <li>Badge strategy enums (4 strategies)</li>
+                            <li>Vendor channel definitions (6 vendors)</li>
+                            <li>Algorithm execution modes and price strategies</li>
+                            <li>Redis cache key constants (17+ keys)</li>
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Technology Stack:</strong> TypeScript 5.8, NPM package structure, Monorepo integration
+                    </div>
+
+                    <div style="margin-top: 1rem;">
+                        <strong>Key Exports:</strong> VendorId/VendorName types, ExecutionMode enum, PriceDirection enum, PriceStrategy enum, BadgeIndicator enum, HandlingTimeGroup enum, Cache key constants
+                    </div>
+                </div>
+            </section>
+
+            <section id="algorithm-docs">
+                <h2>🎯 Repricing Algorithm Documentation</h2>
+
+                <p>Comprehensive documentation for understanding and configuring the repricing algorithms (V1 legacy and V2 current).</p>
+
+                <div class="features">
+                    <div class="feature-item">
+                        <strong>🎯 V2 Field-by-Field Guide</strong>
+                        <p><strong>For:</strong> Pricing managers, business users, admins</p>
+                        <p><strong>Content:</strong> Plain-language explanation of all 27 V2 algorithm settings with business examples, common values, and troubleshooting</p>
+                        <p style="margin-top: 0.5rem;"><a href="repricer/v2-algorithm-field-guide.html" style="display: inline-block; padding: 0.5rem 1rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">📖 Read V2 Field Guide</a></p>
+                    </div>
+
+                    <div class="feature-item">
+                        <strong>🚀 V1 Field-by-Field Guide</strong>
+                        <p><strong>For:</strong> Business users, operations managers, pricing strategists</p>
+                        <p><strong>Content:</strong> Comprehensive guide to all 24 V1 algorithm settings with 12+ business rules, quick start strategies, and troubleshooting</p>
+                        <p style="margin-top: 0.5rem;"><a href="repricer/v1-algorithm-field-guide.html" style="display: inline-block; padding: 0.5rem 1rem; background: #56ab2f; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">📖 Read V1 Field Guide</a></p>
+                    </div>
+
+                    <div class="feature-item">
+                        <strong>⚖️ V1 vs V2 Comparison</strong>
+                        <p><strong>For:</strong> Technical teams, decision makers</p>
+                        <p><strong>Content:</strong> Side-by-side technical comparison, migration strategies, feature differences, and upgrade benefits</p>
+                        <p style="margin-top: 0.5rem;"><a href="api-core/v1-vs-v2-algorithm-comparison.html" style="display: inline-block; padding: 0.5rem 1rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">📖 Read Comparison</a></p>
+                    </div>
+
+                    <div class="feature-item">
+                        <strong>🔬 V2 Technical Deep Dive</strong>
+                        <p><strong>For:</strong> Developers, system architects</p>
+                        <p><strong>Content:</strong> Complete technical implementation with code examples, execution flow, buy-box logic, and advanced features</p>
+                        <p style="margin-top: 0.5rem;"><a href="api-core/v2-algorithm-detailed-documentation.html" style="display: inline-block; padding: 0.5rem 1rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">📖 Read V2 Technical Docs</a></p>
+                    </div>
+
+                    <div class="feature-item">
+                        <strong>📜 V1 Technical Reference</strong>
+                        <p><strong>For:</strong> Maintenance teams, legacy support</p>
+                        <p><strong>Content:</strong> Legacy V1 algorithm documentation with 4-component architecture and original business logic</p>
+                        <p style="margin-top: 0.5rem;"><a href="api-core/v1-algorithm-detailed-documentation.html" style="display: inline-block; padding: 0.5rem 1rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">📖 Read V1 Technical Docs</a></p>
+                    </div>
+                </div>
+
+                <h3>Quick Reference Matrix</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Your Role</th>
+                            <th>Start Here</th>
+                            <th>Then Read</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Pricing Manager</strong></td>
+                            <td><a href="repricer/v2-algorithm-field-guide.html">V2 Field-by-Field Guide</a></td>
+                            <td><a href="repricer/repricer-user-guide.html">Repricer User Guide</a></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Business Admin</strong></td>
+                            <td><a href="repricer/v2-algorithm-field-guide.html">V2 Field-by-Field Guide</a></td>
+                            <td><a href="front-end/front-end-user-guide.html">Front-End User Guide</a></td>
+                        </tr>
+                        <tr>
+                            <td><strong>System Administrator</strong></td>
+                            <td><a href="api-core/v1-vs-v2-algorithm-comparison.html">V1 vs V2 Comparison</a></td>
+                            <td><a href="api-core/v2-algorithm-detailed-documentation.html">V2 Technical Docs</a></td>
+                        </tr>
+                        <tr>
+                            <td><strong>V1 Algorithm User</strong></td>
+                            <td><a href="repricer/v1-algorithm-field-guide.html">V1 Field-by-Field Guide</a></td>
+                            <td><a href="api-core/v1-vs-v2-algorithm-comparison.html">V1 vs V2 Comparison</a></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Developer</strong></td>
+                            <td><a href="api-core/v2-algorithm-detailed-documentation.html">V2 Technical Docs</a></td>
+                            <td><a href="repricer/repricer-technical-documentation.html">Repricer Technical Docs</a></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Migration Team</strong></td>
+                            <td><a href="api-core/v1-vs-v2-algorithm-comparison.html">V1 vs V2 Comparison</a></td>
+                            <td><a href="db-migrations/db-migrations-user-guide.html">DB Migrations Guide</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Algorithm Documentation Coverage</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>27</h4>
+                        <p>V2 Algorithm Fields Documented</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>4</h4>
+                        <p>Badge Competition Strategies</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>3</h4>
+                        <p>Price Strategy Types</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>40+</h4>
+                        <p>V2 Algorithm Functions</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="architecture">
+                <h2>🏗️ System Architecture Overview</h2>
+
+                <h3>Technology Stack Summary</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Layer</th>
+                            <th>Technologies</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Frontend</strong></td>
+                            <td>React 19.1, TypeScript 5.8, Vite 7.0, TanStack Router, Tailwind CSS 4.1</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Backend</strong></td>
+                            <td>Node.js, TypeScript (ES2020), Express.js</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Databases</strong></td>
+                            <td>MySQL (structured), MongoDB (flexible logs), Redis (caching)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Build Tools</strong></td>
+                            <td>Vite, TypeScript Compiler, Docker</td>
+                        </tr>
+                        <tr>
+                            <td><strong>UI Framework</strong></td>
+                            <td>shadcn/ui, Radix UI, Lucide icons</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Data Validation</strong></td>
+                            <td>Zod, React Hook Form</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Migration</strong></td>
+                            <td>Knex.js</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Export</strong></td>
+                            <td>ExcelJS (streaming)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Application Roles</h3>
+                <div class="diagram">
+                    <pre>
+┌─────────────────────────────────────────────────────────────┐
+│                        MONOREPO                              │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
+│  │  front-end   │───▶│   api-core   │───▶│   repricer   │  │
+│  │ (React UI)   │    │(REST Gateway)│    │(Core Logic)  │  │
+│  └──────────────┘    └──────────────┘    └──────────────┘  │
+│         │                    │                    │          │
+│         │                    │                    │          │
+│         ▼                    ▼                    ▼          │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │              Database Layer (MySQL + MongoDB)         │  │
+│  │                        Redis Cache                    │  │
+│  └──────────────────────────────────────────────────────┘  │
+│         ▲                                         ▲          │
+│         │                                         │          │
+│  ┌──────────────┐                         ┌──────────────┐  │
+│  │db-migrations │                         │excel-export  │  │
+│  │  (Schema)    │                         │(Data Export) │  │
+│  └──────────────┘                         └──────────────┘  │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <h3>Data Flow</h3>
+                <ol style="margin-left: 1.5rem;">
+                    <li><strong>User Interface</strong> → front-end (React application)</li>
+                    <li><strong>API Gateway</strong> → api-core (REST endpoints, cron orchestration)</li>
+                    <li><strong>Business Logic</strong> → repricer (pricing algorithms, vendor logic)</li>
+                    <li><strong>Data Export</strong> → excel-export (reporting and analytics)</li>
+                    <li><strong>Schema Management</strong> → db-migrations (database evolution)</li>
+                </ol>
+            </section>
+
+            <section id="statistics">
+                <h2>📊 Documentation Statistics</h2>
+
+                <h3>Total Documentation Coverage</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>6</h4>
+                        <p>Applications/Packages Documented</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>21</h4>
+                        <p>HTML Documentation Files</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>70+</h4>
+                        <p>API Endpoints</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>20+</h4>
+                        <p>Database Tables/Collections</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>258+</h4>
+                        <p>Config Parameters</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>6</h4>
+                        <p>Vendor Integrations</p>
+                    </div>
+                </div>
+
+                <h3>Documentation Quality</h3>
+                <ul class="checklist">
+                    <li>Complete Architecture Coverage - All 5 applications + 1 shared package fully documented</li>
+                    <li>Multi-Format - HTML User Guides + Technical Reference + Analysis (quality/security)</li>
+                    <li>Professional Formatting - Syntax highlighting, responsive design, navigation</li>
+                    <li>Deployment Guides - Complete setup and deployment instructions</li>
+                    <li>API References - Endpoint catalogs with request/response details</li>
+                    <li>Code Examples - Real implementation examples from codebase</li>
+                    <li>Visual Aids - Tables, diagrams, color-coded sections</li>
+                </ul>
+            </section>
+
+            <section id="how-to-use">
+                <h2>🚀 How to Use This Documentation</h2>
+
+                <div class="features">
+                    <div class="feature-item">
+                        <strong>For New Developers</strong>
+                        <ol style="margin-left: 1rem; margin-top: 0.5rem;">
+                            <li>Start with relevant User Guide for getting started</li>
+                            <li>Read Application Summaries (this page)</li>
+                            <li>Dive into Technical Docs for API references</li>
+                            <li>Review Analysis Files for code quality patterns</li>
+                        </ol>
+                    </div>
+
+                    <div class="feature-item">
+                        <strong>For Technical Reference</strong>
+                        <ul style="margin-left: 1rem; margin-top: 0.5rem;">
+                            <li><strong>Getting Started:</strong> Read User Guides for step-by-step tutorials</li>
+                            <li><strong>API Integration:</strong> api-core and repricer technical docs</li>
+                            <li><strong>Database Schema:</strong> db-migrations user guide and docs</li>
+                            <li><strong>Frontend Development:</strong> front-end user guide and docs</li>
+                            <li><strong>Type Definitions:</strong> shared package user guide</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-item">
+                        <strong>For Architecture Decisions</strong>
+                        <ul style="margin-left: 1rem; margin-top: 0.5rem;">
+                            <li>Review analysis files for patterns and design decisions</li>
+                            <li>Check HTML docs for configuration management</li>
+                            <li>See deployment sections for operational considerations</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-item">
+                        <strong>For Maintenance</strong>
+                        <ul style="margin-left: 1rem; margin-top: 0.5rem;">
+                            <li><strong>Schema Changes:</strong> Use db-migrations for patterns</li>
+                            <li><strong>API Changes:</strong> Update endpoint documentation</li>
+                            <li><strong>UI Updates:</strong> Maintain component documentation</li>
+                            <li><strong>Configuration:</strong> Keep env vars current</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="maintenance">
+                <h2>🔄 Keeping Documentation Updated</h2>
+
+                <h3>When to Update Documentation</h3>
+                <ul style="margin-left: 1.5rem;">
+                    <li><strong>New Features:</strong> Add to relevant HTML documentation with examples</li>
+                    <li><strong>API Changes:</strong> Update endpoint catalogs in api-core and repricer</li>
+                    <li><strong>Schema Changes:</strong> Document new migrations in db-migrations</li>
+                    <li><strong>UI Components:</strong> Add to front-end component catalog</li>
+                    <li><strong>Configuration:</strong> Update environment variable references</li>
+                </ul>
+
+                <h3>Documentation Workflow</h3>
+                <ol style="margin-left: 1.5rem;">
+                    <li><strong>Make Code Changes</strong> → Update codebase</li>
+                    <li><strong>Update Technical Docs</strong> → Modify HTML documentation files</li>
+                    <li><strong>Update Analysis</strong> → Refresh analysis files if architecture changes</li>
+                    <li><strong>Update Indices</strong> → Keep ANALYSIS-INDEX and DOCUMENTATION-INDEX current</li>
+                    <li><strong>Review</strong> → Ensure consistency across all documentation</li>
+                </ol>
+
+                <h3>Documentation Standards</h3>
+                <ul class="checklist">
+                    <li>HTML Docs - Professional formatting, syntax highlighting, complete coverage</li>
+                    <li>Analysis Files - Architectural insights, patterns, design decisions</li>
+                    <li>Code Examples - Real examples from codebase, not hypothetical</li>
+                    <li>Accuracy - Verify all technical details against actual implementation</li>
+                    <li>Completeness - Cover setup, usage, deployment, troubleshooting</li>
+                </ul>
+
+                <h3>Documentation Ownership</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Application</th>
+                            <th>Technical Owner</th>
+                            <th>Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>api-core</td>
+                            <td>Technical Writer Agent</td>
+                            <td>2025-11-11</td>
+                        </tr>
+                        <tr>
+                            <td>db-migrations</td>
+                            <td>Technical Writer Agent</td>
+                            <td>2025-11-11</td>
+                        </tr>
+                        <tr>
+                            <td>excel-export</td>
+                            <td>Technical Writer Agent</td>
+                            <td>2025-11-11</td>
+                        </tr>
+                        <tr>
+                            <td>front-end</td>
+                            <td>Technical Writer Agent</td>
+                            <td>2025-11-11</td>
+                        </tr>
+                        <tr>
+                            <td>repricer</td>
+                            <td>Technical Writer Agent</td>
+                            <td>2025-11-11</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="related">
+                <h2>🎯 Related Documentation</h2>
+                <ul style="margin-left: 1.5rem;">
+                    <li><a href="ANALYSIS-INDEX.html"><strong>ANALYSIS-INDEX.html</strong></a> - Summary of all code analysis files with security and quality findings</li>
+                    <li><strong>Repository README.md</strong> - General project information and getting started guide</li>
+                    <li><strong>Individual Application READMEs</strong> - App-specific getting started guides</li>
+                </ul>
+            </section>
+        </main>
+
+        <footer>
+            <p><strong>Generated:</strong> 2025-11-18 | <strong>Documentation Version:</strong> 2.0</p>
+            <p><strong>Monorepo:</strong> repricer-monorepo | <strong>Total Applications:</strong> 5 (api-core, db-migrations, excel-export, front-end, repricer) + 1 Package (shared)</p>
+            <p style="margin-top: 1rem; opacity: 0.8;">Comprehensive user guides, technical documentation, and analysis for the repricer monorepo</p>
+        </footer>
+    </div>
+</body>
+</html>

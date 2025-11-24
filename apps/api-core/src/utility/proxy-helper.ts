@@ -1,11 +1,12 @@
 import _ from "lodash";
 import * as dbHelper from "./mongo/db-helper";
+import * as sqlV2Service from "./mysql/mysql-v2";
 
 export const GetProxy = async (cronName: string): Promise<any | null> => {
   let proxyResult: any = { protocol: "http" };
-  const cronDetails = await dbHelper.GetCronSettingsDetailsByName(cronName);
+  const cronDetails = await sqlV2Service.GetCronSettingsDetailsByName(cronName);
   if (cronDetails) {
-    const proxyDetails = await dbHelper.GetProxyConfigByProviderId(
+    const proxyDetails = await sqlV2Service.GetProxyConfigByProviderId(
       _.first(cronDetails as any[]).ProxyProvider,
     );
     switch (_.first(cronDetails as any[]).ProxyProvider) {
@@ -47,12 +48,12 @@ export const GetProxy = async (cronName: string): Promise<any | null> => {
 export const GetProxyDetailsByName = async (
   cronName: string,
 ): Promise<any | null> => {
-  return dbHelper.GetCronSettingsDetailsByName(cronName);
+  return sqlV2Service.GetCronSettingsDetailsByName(cronName);
 };
 
 export const GetProxyDetailsById = async (cronId: number): Promise<any[]> => {
-  const regularCronDetails = await dbHelper.GetCronSettingsList();
-  const slowCronDetails = await dbHelper.GetSlowCronDetails();
+  const regularCronDetails = await sqlV2Service.GetCronSettingsList();
+  const slowCronDetails = await sqlV2Service.GetSlowCronDetails();
   const cronDetails = _.concat(regularCronDetails, slowCronDetails);
   return [cronDetails.find((x: any) => x.CronId == cronId)].filter(
     Boolean,
@@ -78,7 +79,7 @@ export const GetProxyV2 = async (
   let proxyResult: any = { protocol: "http" };
   if (cronSettings) {
     const proxyDetails =
-      await dbHelper.GetProxyConfigByProviderId(proxyProvider);
+      await sqlV2Service.GetProxyConfigByProviderId(proxyProvider);
     switch (proxyProvider) {
       case 0:
         proxyResult.host = _.first(proxyDetails as any[])?.hostUrl;

@@ -9,7 +9,7 @@ import { FrontierProduct } from "../../../types/frontier";
 import { applicationConfig } from "../../config";
 
 export function ApplyRule(
-  repriceResult: RepriceModel,
+  repriceResult: any,
   ruleIdentifier: number,
   isNcNeeded?: boolean,
   net32Details?: Net32Product,
@@ -77,7 +77,11 @@ export function ApplyRule(
                 ? parseFloat($.oldPrice as unknown as string)
                 : getNcCalculatedPrice($, net32Details);
             if (
-              parseFloat($.newPrice as unknown as string) > calculatedOldPrice
+              parseFloat($.newPrice as unknown as string) >
+                calculatedOldPrice ||
+              $.explained ==
+                RepriceRenewedMessageEnum.SHUT_DOWN_NO_COMPETITOR ||
+              $.explained == RepriceRenewedMessageEnum.SHUT_DOWN_FLOOR_REACHED
             ) {
               $.goToPrice = $.newPrice;
               $.newPrice = "N/A";

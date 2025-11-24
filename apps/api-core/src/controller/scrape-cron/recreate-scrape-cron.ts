@@ -8,6 +8,7 @@ import {
 } from "./shared";
 import { schedule } from "node-cron";
 import * as responseUtility from "../../utility/response-utility";
+import { GetScrapeCronDetails } from "../../utility/mysql/mysql-v2";
 
 export async function recreateScrapeCron(
   req: Request,
@@ -15,9 +16,9 @@ export async function recreateScrapeCron(
 ): Promise<any> {
   try {
     const { jobName } = req.body;
-    const scrapeCronDetails = await dbHelper.GetScrapeCronDetails(true);
+    const scrapeCronDetails = await GetScrapeCronDetails(true);
     const details = scrapeCronDetails.find(
-      (x) => x.CronName === getScrapeCronNameFromJobName(jobName),
+      (x: any) => x.CronName === getScrapeCronNameFromJobName(jobName),
     );
     if (!details) {
       return res.status(404).json({

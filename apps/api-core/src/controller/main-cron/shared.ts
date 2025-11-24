@@ -13,6 +13,7 @@ import { applicationConfig } from "../../utility/config";
 import { GetCacheClientOptions } from "../../client/cacheClient";
 import CacheClient from "../../client/cacheClient";
 import { CacheKey } from "@repricer-monorepo/shared";
+import * as sqlV2Service from "../../utility/mysql/mysql-v2";
 
 var mainCrons: Record<string, ScheduledTask> = {};
 var error422Cron: ScheduledTask | null = null;
@@ -111,40 +112,45 @@ export function setOpportunityCronAndStart(cronSettings: CronSettingsDetail[]) {
 }
 
 async function IsCacheValid(cacheKey: any, sysTime: any) {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const result = await cacheClient.get<any>(cacheKey);
-  await cacheClient.disconnect();
-  if (result == null) {
-    return false;
-  } else {
-    const differenceInTime =
-      sysTime.getTime() - new Date(result.initTime).getTime();
-    const differenceInMinutes = Math.round(differenceInTime / 60000);
-    const envVariables = await dbHelper.GetGlobalConfig();
-    const thresholdValue =
-      envVariables != null && envVariables.expressCronOverlapThreshold != null
-        ? envVariables.expressCronOverlapThreshold
-        : applicationConfig._422_CACHE_VALID_PERIOD;
-    console.log(
-      `Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
+  try {
+    const cacheClient = CacheClient.getInstance(
+      GetCacheClientOptions(applicationConfig),
     );
-    return !(typeof thresholdValue === "string"
-      ? parseFloat(thresholdValue!)
-      : thresholdValue < differenceInMinutes);
+    const result = await cacheClient.get<any>(cacheKey);
+    if (result == null) {
+      return false;
+    } else {
+      const differenceInTime =
+        sysTime.getTime() - new Date(result.initTime).getTime();
+      const differenceInMinutes = Math.round(differenceInTime / 60000);
+      const envVariables = await sqlV2Service.GetGlobalConfig();
+      const thresholdValue =
+        envVariables != null && envVariables.expressCronOverlapThreshold != null
+          ? envVariables.expressCronOverlapThreshold
+          : applicationConfig._422_CACHE_VALID_PERIOD;
+      console.log(
+        `Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
+      );
+      await cacheClient.disconnect();
+      return !(typeof thresholdValue === "string"
+        ? parseFloat(thresholdValue!)
+        : thresholdValue < differenceInMinutes);
+    }
+  } catch (error) {
+    console.error(`Error in IsCacheValid for 422 Cron:`, error);
+    return false;
   }
 }
 
 export async function runCoreCronLogicFor422() {
   const cacheKey = CacheKey._422_RUNNING_CACHE;
   const isCacheValid = await IsCacheValid(cacheKey, new Date());
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
   if (!isCacheValid) {
     console.info(`Getting List of Eligible Products for Cron-422`);
     const runningCacheObj = { cronRunning: true, initTime: new Date() };
+    let cacheClient = CacheClient.getInstance(
+      GetCacheClientOptions(applicationConfig),
+    );
     await cacheClient.set(cacheKey, runningCacheObj);
     const eligibleProductList = await get422EligibleProducts();
     const keyGen = keyGenHelper.Generate();
@@ -152,7 +158,7 @@ export async function runCoreCronLogicFor422() {
       `Cron-422 running on ${new Date().toISOString()} with Eligible Products Count : ${eligibleProductList.length} with KeyGen : ${keyGen}`,
     );
     if (eligibleProductList.length > 0) {
-      const envVariables = await dbHelper.GetGlobalConfig();
+      const envVariables = await sqlV2Service.GetGlobalConfig();
       let chunkedList = _.chunk(
         eligibleProductList,
         parseInt(envVariables.expressCronBatchSize!),
@@ -173,14 +179,21 @@ export async function runCoreCronLogicFor422() {
         }
       }
     }
+    cacheClient = CacheClient.getInstance(
+      GetCacheClientOptions(applicationConfig),
+    );
     await cacheClient.delete(cacheKey);
+    await cacheClient.disconnect();
   } else {
+    const cacheClient = CacheClient.getInstance(
+      GetCacheClientOptions(applicationConfig),
+    );
     const runningCronDetails = await cacheClient.get<any>(cacheKey);
     console.warn(
       `Skipped Cron-422 as another 422 cron is already running. CURR_TIME : ${new Date().toISOString()} || RUNNING_CRON_TIME : ${runningCronDetails.initTime}`,
     );
+    await cacheClient.disconnect();
   }
-  await cacheClient.disconnect();
 }
 
 export async function runCoreCronLogicForOpportunity() {
@@ -267,12 +280,12 @@ export async function ParallelExecute(
 }
 
 async function get422EligibleProducts() {
-  const globalConfig = await dbHelper.GetGlobalConfig();
+  const globalConfig = await sqlV2Service.GetGlobalConfig();
   if (globalConfig && globalConfig.source == "FEED") {
     return [];
   }
-  let cronSettingDetailsResponse = await dbHelper.GetCronSettingsList();
-  let slowCronDetails = await dbHelper.GetSlowCronDetails();
+  let cronSettingDetailsResponse = await sqlV2Service.GetCronSettingsList();
+  let slowCronDetails = await sqlV2Service.GetSlowCronDetails();
   cronSettingDetailsResponse = _.concat(
     cronSettingDetailsResponse,
     slowCronDetails,
@@ -461,7 +474,7 @@ export function IsChunkNeeded(list: any, envVariables: any, type: any) {
 
 export async function getCronEligibleProductsV3(cronId: any) {
   let eligibleProductList: any[] = [];
-  const globalConfig = await dbHelper.GetGlobalConfig();
+  const globalConfig = await sqlV2Service.GetGlobalConfig();
   if (globalConfig && globalConfig.source == "FEED") {
     return eligibleProductList;
   }
@@ -488,7 +501,10 @@ export async function getSlowCronEligibleProductsV3(cronId: any) {
       true,
     );
   } catch (exception) {
-    console.log(exception);
+    console.error(
+      `Error while getSlowCronEligibleProductsV3 || Error : ${exception}`,
+      exception,
+    );
   }
   return eligibleProductList;
 }

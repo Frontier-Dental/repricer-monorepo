@@ -1,9 +1,18 @@
 import SqlConnectionPool from "../models/sql-models/mysql-db";
 import * as SqlMapper from "../utility/mapper/mysql-mapper";
 import { applicationConfig } from "../utility/config";
-import { getKnexInstance, destroyKnexInstance } from "./knex-wrapper";
+import { getKnexInstance } from "./knex-wrapper";
 import bcrypt from "bcrypt";
+import Encrypto from "../utility/encrypto";
+import mysql from "mysql2";
+// Helper: safely decrypt if format matches IV:CipherText
+function tryDecrypt(value: string): string {
+  if (typeof value !== "string" || !value.includes(":")) return value;
+  const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
+  return encrypto.decrypt(value);
+}
 
+const sqlPassword = tryDecrypt(applicationConfig.SQL_PASSWORD);
 export async function GetLatestRunInfo(
   noOfRecords: any,
   startDateTime: any,
@@ -175,7 +184,11 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
     ) {
       payload.ignorePhantomQBreak = true;
     }
-    if (!payload.ownVendorThreshold) {
+    if (
+      payload.ownVendorThreshold === undefined ||
+      payload.ownVendorThreshold === null ||
+      payload.ownVendorThreshold === ""
+    ) {
       payload.ownVendorThreshold = 1;
     }
     if (
@@ -697,7 +710,11 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
     ) {
       payload.ignorePhantomQBreak = true;
     }
-    if (!payload.ownVendorThreshold) {
+    if (
+      payload.ownVendorThreshold === undefined ||
+      payload.ownVendorThreshold === null ||
+      payload.ownVendorThreshold === ""
+    ) {
       payload.ownVendorThreshold = 1;
     }
     if (
@@ -1089,4 +1106,49 @@ export async function GetAllRepriceEligibleProductByChannelId(channelId: any) {
     SqlConnectionPool.releaseConnection(db);
   }
   return await SqlMapper.MapProductDetailsList(scrapeDetails);
+}
+
+export async function GetCronSettingsList() {
+  let cronSettingsDetails = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetRegularCronSettingsList()`);
+  if (result && result[0] && result[0].length > 0) {
+    cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
+  }
+  return cronSettingsDetails;
+}
+
+export async function StreamCompleteProductDetailsAsync(): Promise<any> {
+  const db = mysql.createConnection({
+    host: applicationConfig.SQL_HOSTNAME,
+    port: applicationConfig.SQL_PORT,
+    user: applicationConfig.SQL_USERNAME,
+    password: sqlPassword,
+    database: applicationConfig.SQL_DATABASE,
+    waitForConnections: true,
+    connectionLimit: 100,
+    maxIdle: 10,
+    idleTimeout: 60000,
+    queueLimit: 0,
+    enableKeepAlive: true,
+  });
+  return new Promise((resolve, reject) => {
+    db.connect((err: any) => {
+      if (err) {
+        db.destroy();
+        return reject(new Error(`Connection failed: ${err.message}`));
+      }
+
+      const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_ALL_PRODUCT_DETAILS}();`;
+      const query = db.query(queryToCall);
+      const stream = query.stream({ highWaterMark: 50 });
+
+      stream.on("end", () => db.destroy());
+      stream.on("error", (streamErr: any) => {
+        db.destroy();
+        reject(new Error(`Stream error: ${streamErr.message}`));
+      });
+      resolve({ stream, db });
+    });
+  });
 }

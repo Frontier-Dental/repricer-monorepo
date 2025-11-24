@@ -15,6 +15,7 @@ import * as requestGenerator from "../../utility/request-generator";
 import { getContextCronId, proceedNext } from "./shared";
 import { v4 } from "uuid";
 import { AlgoExecutionMode } from "@repricer-monorepo/shared";
+import { GetCronSettingsDetailsById } from "../../utility/mysql/mysql-v2";
 
 export async function manualRepriceHandler(
   req: Request<{ id: string }, any, any, any>,
@@ -36,9 +37,7 @@ export async function manualRepriceHandler(
     "{mpId}",
     mpid,
   );
-  const cronSetting = _.first(
-    await mongoHelper.GetCronSettingsDetailsById(contextCronId),
-  );
+  const cronSetting = _.first(await GetCronSettingsDetailsById(contextCronId));
   let cronLogs = {
     time: new Date(),
     keyGen: jobId,
