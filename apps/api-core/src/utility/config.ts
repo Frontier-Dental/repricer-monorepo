@@ -253,6 +253,11 @@ const envSchema = z.object({
   REPRICER_ENCRYPTION_KEY: z
     .string()
     .default("3v9sKkLZ2z1Yq9eU8 + XgJk1YbZ9n3vLQ0mF9ZkQhJxgE="),
+  MINI_ERP_BASE_URL: z.string(),
+  MINI_ERP_USERNAME: z.string(),
+  MINI_ERP_PASSWORD: z.string(),
+  STOCK_UPDATE_CRON_EXP: z.string(),
+  MINI_ERP_DATA_CRON_EXP: z.string(),
 });
 
 export function validateConfig() {
