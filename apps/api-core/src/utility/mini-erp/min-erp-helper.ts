@@ -226,69 +226,53 @@ async function seedProductsToDatabase(
   products: MiniErpProduct[],
   pageNumber: number,
 ): Promise<void> {
-  if (!products || products.length === 0) {
-    return;
-  }
-
   const waitlistItems: WaitlistModel[] = [];
 
+  const stockDataMap = await getInventoryStockMap(products);
+
+  // Process each product using the pre-fetched stock data
   for (const product of products) {
     if (!product?.mpid || !product?.vendorName) {
+      continue;
+    }
+
+    const stockKey = `${product.mpid}_${product.vendorName}`;
+    const currentStock = stockDataMap.get(stockKey);
+
+    if (!currentStock) {
       console.warn(
-        `Skipping product on page ${pageNumber} due to missing identifiers`,
-        {
-          mpid: product?.mpid,
-          vendorName: product?.vendorName,
-        },
+        `Product ${product.mpid}/${product.vendorName} has no current stock data, skipping...`,
       );
       continue;
     }
 
-    try {
-      const currentStock = await GetCurrentStock(
-        product.mpid,
-        product.vendorName,
+    const repricerInventory = Number(currentStock.CurrentInventory ?? 0);
+    const miniErpInventory = Number(product.quantityAvailable ?? 0);
+
+    // Determine whether the item needs to be enqueued for net32 sync
+    let targetInventory: number | null = null;
+
+    if (repricerInventory > 0 && miniErpInventory === 0) {
+      targetInventory = 0;
+    } else if (repricerInventory === 0 && miniErpInventory > 0) {
+      targetInventory = getRandomizedNet32Quantity(miniErpInventory);
+    } else {
+      console.log(
+        `Product ${product.mpid}/${product.vendorName} inventory states match (repricer: ${repricerInventory}, sql: ${miniErpInventory}), skipping...`,
       );
-      if (!currentStock) {
-        console.warn(
-          `Product ${product.mpid}/${product.vendorName} has no current stock data, skipping...`,
-        );
-        continue;
-      }
-
-      const repricerInventory = Number(currentStock.CurrentInventory ?? 0);
-      const miniErpInventory = Number(product.quantityAvailable ?? 0);
-
-      // Determine whether the item needs to be enqueued for net32 sync
-      let targetInventory: number | null = null;
-
-      if (repricerInventory > 0 && miniErpInventory === 0) {
-        targetInventory = 0;
-      } else if (repricerInventory === 0 && miniErpInventory > 0) {
-        targetInventory = getRandomizedNet32Quantity(miniErpInventory);
-      } else {
-        console.log(
-          `Product ${product.mpid}/${product.vendorName} inventory states match (repricer: ${repricerInventory}, sql: ${miniErpInventory}), skipping...`,
-        );
-        continue;
-      }
-
-      // create an array of watchlist models for bulk insert
-      waitlistItems.push(
-        new WaitlistModel(
-          Number(product.mpid),
-          product.vendorName,
-          repricerInventory,
-          miniErpInventory,
-          targetInventory,
-        ),
-      );
-    } catch (error) {
-      console.error(
-        `Failed to load current stock for ${product.mpid}/${product.vendorName} on page ${pageNumber}`,
-        error,
-      );
+      continue;
     }
+
+    // create an array of watchlist models for bulk insert
+    waitlistItems.push(
+      new WaitlistModel(
+        Number(product.mpid),
+        product.vendorName,
+        repricerInventory,
+        miniErpInventory,
+        targetInventory,
+      ),
+    );
   }
 
   if (waitlistItems.length === 0) {
@@ -300,6 +284,57 @@ async function seedProductsToDatabase(
   console.log(
     `Inserted ${waitlistItems.length} watchlist items for page ${pageNumber}`,
   );
+}
+
+async function getInventoryStockMap(products: MiniErpProduct[]) {
+  if (!products || products.length === 0) {
+    return new Map<string, any>();
+  }
+
+  // Group products by vendor name to reduce database calls
+  const productsByVendor = products.reduce(
+    (acc, product) => {
+      if (!product?.mpid || !product?.vendorName) {
+        console.warn(`Skipping product due to missing identifiers`, {
+          mpid: product?.mpid,
+          vendorName: product?.vendorName,
+        });
+        return acc;
+      }
+      acc[product.vendorName] = [...(acc[product.vendorName] || []), product];
+      return acc;
+    },
+    {} as Record<string, MiniErpProduct[]>,
+  );
+
+  // Create a map for quick lookup: mpid -> stock data
+  const stockDataMap = new Map<
+    string,
+    { CurrentInStock?: number; CurrentInventory?: number }
+  >();
+
+  // Fetch stock data in batches (one call per vendor)
+  for (const vendor in productsByVendor) {
+    const vendorProducts = productsByVendor[vendor];
+    const mpids = vendorProducts.map((product) => product.mpid);
+
+    try {
+      const currentStockResults = await GetCurrentStock(mpids, vendor);
+
+      if (currentStockResults && Array.isArray(currentStockResults)) {
+        for (const stock of currentStockResults) {
+          stockDataMap.set(`${stock.mpid}_${vendor}`, {
+            CurrentInStock: stock.CurrentInStock,
+            CurrentInventory: stock.CurrentInventory,
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to load current stock for vendor ${vendor}`, error);
+    }
+  }
+
+  return stockDataMap;
 }
 
 export function getRandomizedNet32Quantity(sqlInventory: number): number {
