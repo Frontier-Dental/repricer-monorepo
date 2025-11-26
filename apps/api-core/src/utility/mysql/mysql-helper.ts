@@ -18,6 +18,7 @@ import {
   UpdateCronForProductPayload,
   UpdateProductPayload,
 } from "./types";
+import { WaitlistModel } from "../../model/waitlist-model";
 
 export async function InsertRunInfo(runInfo: RunInfo) {
   try {
@@ -912,6 +913,40 @@ export async function ExecuteQuery(_query: string, _params: any) {
     return result[0];
   } catch (error) {
     console.log("Error in ExecuteQuery", _query, _params, error);
+    throw error;
+  } finally {
+    //destroyKnexInstance();
+  }
+}
+
+export async function GetCurrentStock(mpid: string, vendorName: string) {
+  const contextTableName = getContextTableNameByVendorName(
+    vendorName?.toUpperCase(),
+  );
+  try {
+    const knex = getKnexInstance();
+    const result = await knex(contextTableName!).where("mpid", mpid).first();
+    return result;
+  } catch (error) {
+    console.log(
+      "Error in GetCurrentStock",
+      mpid,
+      vendorName,
+      contextTableName,
+      error,
+    );
+    throw error;
+  } finally {
+    //destroyKnexInstance();
+  }
+}
+
+export async function WaitlistInsert(waitlistItems: WaitlistModel[]) {
+  try {
+    const knex = getKnexInstance();
+    await knex(applicationConfig.SQL_WAITLIST!).insert(waitlistItems);
+  } catch (error) {
+    console.log("Error in WaitlistInsert", waitlistItems, error);
     throw error;
   } finally {
     //destroyKnexInstance();

@@ -9,6 +9,8 @@ import {
   MiniErpProduct,
   PaginationDecision,
 } from ".";
+import { GetCurrentStock, WaitlistInsert } from "../mysql/mysql-helper";
+import { WaitlistModel } from "../../model/waitlist-model";
 
 const DEFAULT_MINI_ERP_PAGE_SIZE = 1000;
 const CACHE_TTL_SECONDS = 60 * 60 * 20; // 20 hours
@@ -41,7 +43,6 @@ async function loginToMiniErp(): Promise<MiniErpLoginResponse | undefined> {
     };
 
     const loginResponse = await axiosHelper.postAsync(loginPayload, loginUrl);
-    console.log(loginResponse?.data, "loginResponse");
 
     console.log("Mini ERP Login response status", loginResponse?.status);
 
@@ -82,10 +83,7 @@ export async function getProductsFromMiniErp(): Promise<boolean> {
     }
 
     const productsUrl = `${baseUrl}/graphql`;
-    const allProducts = await fetchAllMiniErpProducts(
-      productsUrl,
-      loginResponse.access_token,
-    );
+    await fetchAllMiniErpProducts(productsUrl, loginResponse.access_token);
     return true;
   } catch (error: any) {
     const errorMessage = error.message || "Unknown error";
@@ -138,7 +136,7 @@ async function fetchAllMiniErpProducts(
 
       // Seed data to SQL table before fetching next page (sequential approach)
       try {
-        // await seedProductsToDatabase(items, currentPage);
+        await seedProductsToDatabase(items, currentPage);
         console.log(
           `Seeded ${items.length} products from page ${currentPage} to database`,
         );
@@ -217,4 +215,112 @@ function resolvePaginationDecision(
     hasNextPage,
     nextPage: hasNextPage ? currentPage + 1 : currentPage,
   };
+}
+
+/**
+ * Seeds products to the watch_list table using batch insert
+ * @param products - Array of products to insert
+ * @param pageNumber - Current page number for logging
+ */
+async function seedProductsToDatabase(
+  products: MiniErpProduct[],
+  pageNumber: number,
+): Promise<void> {
+  if (!products || products.length === 0) {
+    return;
+  }
+
+  const waitlistItems: WaitlistModel[] = [];
+
+  for (const product of products) {
+    if (!product?.mpid || !product?.vendorName) {
+      console.warn(
+        `Skipping product on page ${pageNumber} due to missing identifiers`,
+        {
+          mpid: product?.mpid,
+          vendorName: product?.vendorName,
+        },
+      );
+      continue;
+    }
+
+    try {
+      const currentStock = await GetCurrentStock(
+        product.mpid,
+        product.vendorName,
+      );
+      if (!currentStock) {
+        console.warn(
+          `Product ${product.mpid}/${product.vendorName} has no current stock data, skipping...`,
+        );
+        continue;
+      }
+
+      const repricerInventory = Number(currentStock.CurrentInventory ?? 0);
+      const miniErpInventory = Number(product.quantityAvailable ?? 0);
+
+      // Determine whether the item needs to be enqueued for net32 sync
+      let targetInventory: number | null = null;
+
+      if (repricerInventory > 0 && miniErpInventory === 0) {
+        targetInventory = 0;
+      } else if (repricerInventory === 0 && miniErpInventory > 0) {
+        targetInventory = getRandomizedNet32Quantity(miniErpInventory);
+      } else {
+        console.log(
+          `Product ${product.mpid}/${product.vendorName} inventory states match (repricer: ${repricerInventory}, sql: ${miniErpInventory}), skipping...`,
+        );
+        continue;
+      }
+
+      // create an array of watchlist models for bulk insert
+      waitlistItems.push(
+        new WaitlistModel(
+          Number(product.mpid),
+          product.vendorName,
+          repricerInventory,
+          miniErpInventory,
+          targetInventory,
+        ),
+      );
+    } catch (error) {
+      console.error(
+        `Failed to load current stock for ${product.mpid}/${product.vendorName} on page ${pageNumber}`,
+        error,
+      );
+    }
+  }
+
+  if (waitlistItems.length === 0) {
+    console.log(`No eligible watchlist items found for page ${pageNumber}`);
+    return;
+  }
+
+  await WaitlistInsert(waitlistItems);
+  console.log(
+    `Inserted ${waitlistItems.length} watchlist items for page ${pageNumber}`,
+  );
+}
+
+export function getRandomizedNet32Quantity(sqlInventory: number): number {
+  const DEFAULT_RANDOMIZATION_RANGE = { min: 5000, max: 9999 };
+
+  const NET32_RANDOMIZATION_RULES = [
+    { upperBound: 99, min: 250, max: 349 },
+    { upperBound: 100, min: 350, max: 599 },
+    { upperBound: 500, min: 600, max: 1999 },
+    { upperBound: 1000, min: 5000, max: 9999 },
+  ];
+
+  const normalizedInventory = Math.max(0, Math.floor(sqlInventory));
+
+  const range =
+    NET32_RANDOMIZATION_RULES.find(
+      (rule) => normalizedInventory <= rule.upperBound,
+    ) ?? DEFAULT_RANDOMIZATION_RANGE;
+
+  const lowerBound = Math.ceil(range.min);
+  const upperBound = Math.floor(range.max);
+
+  return Math.floor(Math.random() * (upperBound - lowerBound + 1)) + lowerBound;
 }

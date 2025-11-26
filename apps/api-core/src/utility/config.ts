@@ -258,6 +258,7 @@ const envSchema = z.object({
   MINI_ERP_PASSWORD: z.string(),
   STOCK_UPDATE_CRON_EXP: z.string(),
   MINI_ERP_DATA_CRON_EXP: z.string(),
+  SQL_WAITLIST: z.string().default("waitlist"),
 });
 
 export function validateConfig() {
