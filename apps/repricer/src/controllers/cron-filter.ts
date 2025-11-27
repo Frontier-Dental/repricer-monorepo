@@ -246,7 +246,7 @@ export async function UpdateSlowCronExpression(req: Request, res: Response) {
         const jobName = cronMapping.find(
           (x) => x.cronId == cronId,
         )?.cronVariable;
-        // await httpMiddleware.recreateSlowCron({ jobName: jobName });
+        await httpMiddleware.recreateSlowCron({ jobName: jobName });
       }
     }
     return res.json({
@@ -322,32 +322,32 @@ export async function ToggleCronStatus(req: Request, res: Response) {
     (x: any) => x.CronId == contextCronId,
   );
   if (!slowCronData) {
+    const cronStatusStr = cronStatus == 1 ? true : false;
+    await ToggleFilterCronStatus(
+      contextCronId,
+      cronStatusStr,
+      await SessionHelper.GetAuditInfo(req),
+    );
     //Update FilterCron Details
     const response = await httpMiddleware.toggleFilterCron({
       jobName: jobName,
       status: cronStatus,
     });
     if (response && response.status == 200) {
-      const cronStatusStr = cronStatus == 1 ? true : false;
-      await ToggleFilterCronStatus(
-        contextCronId,
-        cronStatusStr,
-        await SessionHelper.GetAuditInfo(req),
-      );
       return res.json({
         status: true,
         message: response.data,
       });
     }
   } else if (slowCronData) {
+    const cronStatusStr = cronStatus == 1 ? true : false;
+    await SqlToggleCronStatus(contextCronId, cronStatusStr.toString(), req);
     //Update SlowCron Details
     const response = await httpMiddleware.toggleSlowCron({
       jobName: jobName,
       status: cronStatus,
     });
     if (response && response.status == 200) {
-      const cronStatusStr = cronStatus == 1 ? true : false;
-      await SqlToggleCronStatus(contextCronId, cronStatusStr.toString(), req);
       return res.json({
         status: true,
         message: response.data,
