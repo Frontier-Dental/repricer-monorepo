@@ -8,6 +8,7 @@ export class WaitlistModel {
   message?: string;
   created_at?: Date;
   updated_at?: Date;
+  id?: number;
 
   constructor(
     mp_id: number,
@@ -19,6 +20,7 @@ export class WaitlistModel {
     message?: string,
     created_at?: Date,
     updated_at?: Date,
+    id?: number,
   ) {
     this.mp_id = mp_id;
     this.vendor_name = vendor_name;
@@ -29,5 +31,6 @@ export class WaitlistModel {
     this.message = message;
     this.created_at = created_at;
     this.updated_at = updated_at;
+    this.id = id;
   }
 }
