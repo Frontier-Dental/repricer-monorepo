@@ -5,7 +5,7 @@ export interface MiniErpLoginResponse {
 export interface MiniErpProduct {
   mpid: string;
   vendorName: string;
-  quantityAvailable?: number;
+  quantityAvailable: number;
 }
 
 export interface MiniErpPaginationMeta {
@@ -16,10 +16,5 @@ export interface MiniErpPaginationMeta {
 
 export interface MiniErpNormalizedResponse {
   items: MiniErpProduct[];
-  meta: MiniErpPaginationMeta;
-}
-
-export interface PaginationDecision {
-  hasNextPage: boolean;
-  nextPage: number;
+  hasMore: boolean;
 }

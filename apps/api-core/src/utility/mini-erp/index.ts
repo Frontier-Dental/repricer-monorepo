@@ -4,7 +4,6 @@ import {
   MiniErpProduct,
   MiniErpPaginationMeta,
   MiniErpNormalizedResponse,
-  PaginationDecision,
 } from "./types";
 
 export {
@@ -13,5 +12,4 @@ export {
   MiniErpProduct,
   MiniErpPaginationMeta,
   MiniErpNormalizedResponse,
-  PaginationDecision,
 };

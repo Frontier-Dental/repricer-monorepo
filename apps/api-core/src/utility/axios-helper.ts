@@ -364,15 +364,13 @@ export async function getProductsFromMiniErp(
   const { page, pageSize } = queryData;
 
   const graphqlQuery = `
-  query getUpdatedProducts($hoursSinceUpdate: Int, $page: Int, $pageSize: Int) {
-    getUpdatedProducts(hoursSinceUpdate: $hoursSinceUpdate, page: $page, pageSize: $pageSize) {
+  query getUpdatedProductsWithOffsetPagination($hoursSinceUpdate: Int, $page: Int, $pageSize: Int) {
+    getUpdatedProductsWithOffsetPagination(hoursSinceUpdate: $hoursSinceUpdate, page: $page, pageSize: $pageSize) {
       items {
-        mpid
-        vendorName
+        mpid,
+        vendorName,
         quantityAvailable
       }
-      page
-      pageSize
       hasMore
     }
   }
@@ -390,7 +388,7 @@ export async function getProductsFromMiniErp(
     data: {
       query: graphqlQuery,
       variables: {
-        hoursSinceUpdate: 4,
+        hoursSinceUpdate: applicationConfig.MINI_ERP_DATA_HOURS_SINCE_UPDATE,
         page: page,
         pageSize: pageSize,
       },

@@ -259,6 +259,8 @@ const envSchema = z.object({
   STOCK_UPDATE_CRON_EXP: z.string(),
   MINI_ERP_DATA_CRON_EXP: z.string(),
   SQL_WAITLIST: z.string().default("waitlist"),
+  MINI_ERP_DATA_PAGE_SIZE: z.coerce.number().default(1000),
+  MINI_ERP_DATA_HOURS_SINCE_UPDATE: z.coerce.number().default(100),
 });
 
 export function validateConfig() {
