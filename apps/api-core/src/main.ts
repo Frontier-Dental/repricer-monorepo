@@ -30,6 +30,7 @@ import { startV2AlgoHtmlFileCleanupCron } from "./services/algo-html-file-cleanu
 import { applicationConfig, validateConfig } from "./utility/config";
 import { errorMiddleware } from "./utility/error-middleware";
 import { initializeThresholdScraping } from "./utility/reprice-algo/v2/threshold-scraping";
+import { startNet32StockUpdateCrons } from "./services/net32-stock-update";
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
@@ -101,6 +102,7 @@ nodeApp.listen(port, async () => {
     await startProxySwitchResetCronLogic();
     await startScrapeCronLogic();
     startV2AlgoHtmlFileCleanupCron();
+    startNet32StockUpdateCrons();
     console.info("All enabled crons started on startup");
   }
   if (!fs.existsSync("./activeProducts.json")) {
