@@ -21,7 +21,7 @@ export async function recreateCronHandler(
       setError422CronAndStart(cronDetails);
       continue;
     }
-    if (jobName === "Opportunity-Cron") {
+    if (jobName === "Cron-Opportunity") {
       setOpportunityCronAndStart(cronDetails);
       continue;
     }

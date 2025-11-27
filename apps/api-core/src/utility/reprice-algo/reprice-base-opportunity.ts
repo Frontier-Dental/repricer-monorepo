@@ -24,32 +24,37 @@ export async function RepriceOpportunityItemV2(
     time: cronInitTime,
     keyGen: keyGen,
     logs: [],
-    cronId: "DUMMY-OPPORTUNITY",
+    cronId: "Cron-Opportunity",
     type: "OpportunityItem",
     EligibleCount: productList.length,
   };
+
   let _contextCronStatus = new CronStatusModel(
     cronInitTime,
     0,
     productList.length,
     "In-Progress",
-    "DUMMY-OPPORTUNITY",
+    "Cron-Opportunity",
     keyGen,
   );
+
   await initCronStatus(_contextCronStatus);
   var deltaList = await filterDeltaProducts(productList, keyGen);
   productList = await scanDeltaListOfProducts(productList, deltaList!);
   let cronProdCounter = 1;
+
   for (let prod of productList) {
     console.log(
       `OPPORTUNITY: Processing ${prod.mpId} for opportunity at ${new Date()}`,
     );
+
     const repriceOpportunityItemResponse = await RepriceOpportunityItem(
       prod,
       cronInitTime,
       prod.cronSettingsResponse,
       prod.contextVendor,
     );
+
     if (
       repriceOpportunityItemResponse &&
       repriceOpportunityItemResponse.logs &&
@@ -59,20 +64,25 @@ export async function RepriceOpportunityItemV2(
         cronLogs.logs.push(_.first(repriceOpportunityItemResponse.logs));
       } else if (repriceOpportunityItemResponse.logs.length > 1) {
         const tempLog = [];
+
         for (const $ of repriceOpportunityItemResponse.logs) {
           tempLog.push(_.first($));
         }
+
         cronLogs.logs.push(tempLog);
       }
     }
+
     _contextCronStatus.SetProductCount(cronProdCounter);
     await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
     cronProdCounter++;
   }
+
   if (cronLogs.logs && cronLogs.logs.length > 0) {
     cronLogs.completionTime = new Date();
     await dbHelper.PushLogsAsync(cronLogs);
   }
+
   _contextCronStatus.SetStatus("Complete");
   await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
   cleanActiveProductList(keyGen);
@@ -110,6 +120,7 @@ function updateLowestVendor(
       }
     }
   }
+
   return prod;
 }
 
@@ -125,29 +136,36 @@ export async function RepriceOpportunityItem(
     cronId: cronSetting.CronId,
     type: "OpportunityItem",
   };
+
   const contextOpportunityDetails =
     await dbHelper.GetEligibleContextOpportunityItems(
       true,
       details.mpId,
       _contextVendor,
     );
+
   const prioritySequence = await requestGenerator.GetPrioritySequence(
     details,
     contextOpportunityDetails,
     true,
   );
+
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
+
   if (prioritySequence && prioritySequence.length > 0) {
     const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace(
       "{mpId}",
       details.mpId,
     );
+
     var net32result = await axiosHelper.getAsync(
       searchRequest,
-      "DUMMY-OPPORTUNITY",
+      "Cron-Opportunity",
       seqString,
     );
+
     let isPriceUpdatedForVendor = false;
+
     if (
       details.algo_execution_mode === AlgoExecutionMode.V2_ONLY ||
       details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY ||
@@ -156,10 +174,11 @@ export async function RepriceOpportunityItem(
       await repriceProductV2Wrapper(
         net32result.data,
         details,
-        cronSetting ? cronSetting.CronName : "ExpressCron",
+        cronSetting ? cronSetting.CronName : "Cron-Opportunity",
         false,
       );
     }
+
     if (
       details.algo_execution_mode === AlgoExecutionMode.V1_ONLY ||
       details.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY ||
@@ -172,37 +191,41 @@ export async function RepriceOpportunityItem(
             details,
             contextVendor,
           );
+
           let tempProd = _.cloneDeep(prod);
           prod.last_cron_time = new Date();
           let isPriceUpdated = false;
           if (prod.scrapeOn == true && prod.activated == true) {
-            // const postUrl = applicationConfig.REPRICE_OWN_URL.replace(
-            //   "{mpId}",
-            //   prod.mpid,
-            // );
             console.log(
               `REPRICE : Opportunity : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid} at Time :  ${new Date().toISOString()}`,
             );
+
             prod.last_attempted_time = new Date();
-            prod.lastCronRun = `Opportunity-Cron`;
+            prod.lastCronRun = `Cron-Opportunity`;
             tempProd.cronName =
-              applicationConfig.CRON_NAME_OPPORTUNITY || "Opportunity-Cron";
+              applicationConfig.CRON_NAME_OPPORTUNITY || "Cron-Opportunity";
             tempProd.contextVendor = contextVendor;
-            tempProd.contextCronName = `ExpressCron`;
+            tempProd.contextCronName = `Cron-Opportunity`;
             let data: any = {};
             data.result = net32result ? net32result.data : [];
             data.prod = tempProd;
             data.contextVendor = contextVendor;
+
             const repriceResult = await repriceProduct(
               prod.mpid!,
               net32result.data.filter((p: any) => p.priceBreaks !== undefined),
               tempProd as unknown as FrontierProduct,
               contextVendor,
             );
-            // const repriceResult: AxiosResponse<RepriceProductHttpResponse> =
-            // await axiosHelper.postAsync(data, postUrl);
+
+            console.log(
+              "repriceResult.priceUpdateResponse",
+              repriceResult.priceUpdateResponse,
+            );
+
             if (repriceResult) {
               if (
+                // Price update happened
                 repriceResult.priceUpdateResponse &&
                 repriceResult.priceUpdateResponse != null
               ) {
@@ -230,60 +253,62 @@ export async function RepriceOpportunityItem(
                       priceUpdateResponse: repriceResult.priceUpdateResponse,
                     },
                   ]);
+
                   prod.last_update_time = new Date();
                   isPriceUpdated = true;
-                  prod.lastUpdatedBy = `Opportunity-Cron`;
+                  prod.lastUpdatedBy = `Cron-Opportunity`;
                   isPriceUpdatedForVendor = true;
-                  if (prod.wait_update_period == true) {
-                    prod.next_cron_time = calculateNextCronTime(new Date(), 12);
-                    const priceUpdatedItem = new ErrorItemModel(
-                      prod.mpid,
-                      prod.next_cron_time,
-                      true,
-                      prod.cronId,
-                      "PRICE_UPDATE",
-                      contextVendor,
-                    );
-                    await dbHelper.UpsertOpportunityItemLog(priceUpdatedItem);
-                    console.log({
-                      message: `${prod.mpid} processed by Opportunity Cron`,
-                      obj: JSON.stringify(priceUpdatedItem),
-                    });
-                  } else {
-                    prod.next_cron_time = null;
-                    const priceUpdatedItem = new ErrorItemModel(
-                      prod.mpid,
-                      prod.next_cron_time,
-                      false,
-                      prod.cronId,
-                      "IGNORE",
-                      contextVendor,
-                    );
-                    await dbHelper.UpsertOpportunityItemLog(priceUpdatedItem);
-                    console.log(`GHOST : ${prod.mpid} - ${contextVendor}`);
-                  }
+                  prod.next_cron_time = calculateNextCronTime(new Date(), 12);
+
+                  const expressItem = new ErrorItemModel(
+                    prod.mpid,
+                    prod.next_cron_time,
+                    true,
+                    prod.cronId,
+                    "PRICE_UPDATE",
+                    contextVendor,
+                  );
+
+                  await dbHelper.UpsertErrorItemLog(expressItem);
+                  console.log({
+                    message: `${prod.mpid} moved to Express Cron from Opportunity Cron`,
+                    obj: JSON.stringify(expressItem),
+                  });
+
+                  // Remove from Opportunity cron (one-shot)
+                  const opportunityItem = new ErrorItemModel(
+                    prod.mpid,
+                    null,
+                    false,
+                    prod.cronId,
+                    "PROCESSED",
+                    contextVendor,
+                  );
+
+                  await dbHelper.UpsertOpportunityItemLog(opportunityItem);
+                  console.log(
+                    `${prod.mpid} removed from Opportunity Cron after successful update`,
+                  );
                 } else if (
                   JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
                     "ERROR:422",
                   ) > -1
                 ) {
-                  prod.next_cron_time = await getNextCronTime(
-                    repriceResult.priceUpdateResponse,
-                  );
-                  // Add the product to Error Item Table.
-                  const errorItem = new ErrorItemModel(
+                  // 422 error - remove from Opportunity cron (back to regular cron)
+                  const opportunityItem = new ErrorItemModel(
                     prod.mpid,
-                    prod.next_cron_time,
-                    true,
+                    null,
+                    false,
                     prod.cronId,
-                    "OPPORTUNITY_ERROR",
+                    "422_ERROR",
                     contextVendor,
                   );
-                  await dbHelper.UpsertOpportunityItemLog(errorItem);
-                  console.log({
-                    message: `${prod.mpid} encountered error in Opportunity Cron`,
-                    obj: JSON.stringify(errorItem),
-                  });
+
+                  await dbHelper.UpsertOpportunityItemLog(opportunityItem);
+                  console.log(
+                    `${prod.mpid} removed from Opportunity Cron (422 error) - back to regular cron`,
+                  );
+
                   cronLogs.logs.push([
                     {
                       productId: prod.mpid,
@@ -303,12 +328,16 @@ export async function RepriceOpportunityItem(
                     "IGNORE",
                     contextVendor,
                   );
+
                   await dbHelper.UpsertOpportunityItemLog(priceUpdatedItem);
                   console.log(
                     `ERROR WHILE PRICE UPDATE : ${prod.mpid} - ${contextVendor}`,
                   );
                 }
-              } else {
+              }
+
+              // Price update did not happen
+              else {
                 prod.next_cron_time = null;
                 const errorItem = new ErrorItemModel(
                   prod.mpid,
@@ -318,7 +347,9 @@ export async function RepriceOpportunityItem(
                   `IGNORE`,
                   contextVendor,
                 );
+
                 await dbHelper.UpsertOpportunityItemLog(errorItem);
+
                 cronLogs.logs.push([
                   {
                     productId: prod.mpid,
@@ -344,23 +375,26 @@ export async function RepriceOpportunityItem(
                   repriceResult,
                   histItem.minQty,
                 );
+
                 await sqlHelper.UpdateHistoryWithMessage(
                   histItem.historyIdentifier,
                   prod.last_cron_message,
                 );
+
                 console.log(
                   `History Updated for ${prod.mpid} with Identifier : ${histItem.historyIdentifier} and Message : ${prod.last_cron_message}`,
                 );
               }
             }
+
             prod = updateLowestVendor(repriceResult as any, prod);
             prod = updateCronBasedDetails(repriceResult, prod, false);
+
             await sqlHelper.UpdateProductAsync(
               prod,
               isPriceUpdated,
               contextVendor,
             );
-            //dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
           } else {
             prod.next_cron_time = null;
             const errorItem = new ErrorItemModel(
@@ -371,61 +405,79 @@ export async function RepriceOpportunityItem(
               "IGNORE",
               contextVendor,
             );
+
             await dbHelper.UpsertOpportunityItemLog(errorItem);
             await sqlHelper.UpdateProductAsync(
               prod,
               isPriceUpdated,
               contextVendor,
-            ); //dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
+            );
           }
         }
       }
     }
   }
+
   if (applicationConfig.ENABLE_SLOW_CRON_FEATURE) {
     let productUpdateNeeded = false;
+
     if (details.tradentDetails) {
       details.tradentDetails.slowCronId = null;
       details.tradentDetails.slowCronName = null;
       productUpdateNeeded = true;
     }
+
     if (details.frontierDetails) {
       details.frontierDetails.slowCronId = null;
       details.frontierDetails.slowCronName = null;
       productUpdateNeeded = true;
     }
+
     if (details.mvpDetails) {
       details.mvpDetails.slowCronId = null;
       details.mvpDetails.slowCronName = null;
       productUpdateNeeded = true;
     }
+
     if (details.topDentDetails) {
       details.topDentDetails.slowCronId = null;
       details.topDentDetails.slowCronName = null;
       productUpdateNeeded = true;
     }
+
     if (details.firstDentDetails) {
       details.firstDentDetails.slowCronId = null;
       details.firstDentDetails.slowCronName = null;
       productUpdateNeeded = true;
     }
+
     if (details.triadDetails) {
       details.triadDetails.slowCronId = null;
       details.triadDetails.slowCronName = null;
       productUpdateNeeded = true;
     }
+
     if (productUpdateNeeded) {
       details.isSlowActivated = false;
       await sqlHelper.UpdateCronForProductAsync(details); //await dbHelper.UpdateCronForProductAsync(details);
-      console.log(`MOVEMENT(OPPORTUNITY-CRON) : Product : ${details.mpId}`);
+      console.log(`MOVEMENT(CRON-OPPORTUNITY) : Product : ${details.mpId}`);
     }
   }
-  // if (cronLogs.logs && cronLogs.logs.length > 0) {
-  //     cronLogs.completionTime = new Date();
-  //     dbHelper.PushLogsAsync(cronLogs);
-  // }
-  // Extra code to Ignore Opportunity Items if context vendor is null or is deactivated.
-  alignErrorItems(details, _contextVendor);
+
+  // Always remove from Opportunity cron (one-shot) - ensure active=false
+  const finalOpportunityItem = new ErrorItemModel(
+    details.mpId,
+    null,
+    false,
+    details.cronId || null,
+    "PROCESSED",
+    _contextVendor,
+  );
+
+  await dbHelper.UpsertOpportunityItemLog(finalOpportunityItem);
+  console.log(
+    `${details.mpId} - ${_contextVendor} removed from Opportunity Cron (one-shot complete)`,
+  );
   return cronLogs;
 }
 
@@ -473,9 +525,11 @@ function updateCronBasedDetails(
       }
     }
   }
+
   if (isPriceUpdated && isPriceUpdated == true) {
     prod.latest_price = prod.lastSuggestedPrice;
   }
+
   return prod;
 }
 
@@ -532,8 +586,7 @@ function filterDeltaProducts(productList: any[], keygen: string) {
     contextVendor: i.contextVendor,
   }));
   if (freshProducts && freshProducts.length > 0) {
-    //Read Existing Active Products
-    const filePath = "./activeProducts.json";
+    const filePath = "./activeOpportunityProducts.json";
     let contentsToWrite = [{ key: keygen, products: freshProducts }];
     let activeProducts: any[] = [];
     let details = fs.readFileSync(filePath, "utf8");
@@ -544,7 +597,6 @@ function filterDeltaProducts(productList: any[], keygen: string) {
         activeProducts = activeProducts.concat(item.products);
       });
     }
-    //Find the delta
 
     const fieldsToCompare = ["mpId", "contextVendor"];
     const pickFields = (obj: any) => _.pick(obj, fieldsToCompare);
@@ -557,14 +609,13 @@ function filterDeltaProducts(productList: any[], keygen: string) {
       console.log(
         `Delta Found for KeyGen : ${keygen} : Fresh Products : ${freshProducts.length} || Active Products : ${activeProducts.length} || Delta Products : ${finalList.length}`,
       );
-      //Write in Existing File
       fs.writeFileSync(filePath, JSON.stringify(contentsToWrite));
     }
   }
 }
 
 function cleanActiveProductList(keyGen: string) {
-  const filePath = "./activeProducts.json";
+  const filePath = "./activeOpportunityProducts.json";
   let details = fs.readFileSync(filePath, "utf8");
   let fileContent = JSON.parse(details);
   if (fileContent && fileContent.length > 0) {

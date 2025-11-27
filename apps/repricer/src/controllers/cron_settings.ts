@@ -302,9 +302,7 @@ async function handleOpportunityCronUpdate(
   listOfUpdatedCronKey: any[],
 ) {
   const cronOpportunity = cronSettingsResponseFull.find(
-    (x: any) =>
-      x.IsHidden == true &&
-      (x.CronId === "Cron-Opportunity" || x.CronId === "Opportunity-Cron"),
+    (x: any) => x.IsHidden == true && x.CronId === "Cron-Opportunity",
   );
 
   if (!cronOpportunity) {

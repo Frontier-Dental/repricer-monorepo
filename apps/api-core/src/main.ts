@@ -111,4 +111,10 @@ nodeApp.listen(port, async () => {
       `Resetting complete for Active Products for Application Reset at ${new Date()}`,
     );
   }
+  if (!fs.existsSync("./activeOpportunityProducts.json")) {
+    fs.writeFileSync("./activeOpportunityProducts.json", JSON.stringify([]));
+    console.info(
+      `Resetting complete for Active Opportunity Products for Application Reset at ${new Date()}`,
+    );
+  }
 });

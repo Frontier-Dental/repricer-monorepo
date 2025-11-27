@@ -72,8 +72,7 @@ export function setOpportunityCronAndStart(cronSettings: CronSettingsDetail[]) {
   const opportunityCronSetting = cronSettings.find(
     (x) =>
       x.CronName == applicationConfig.CRON_NAME_OPPORTUNITY ||
-      x.CronId === "Cron-Opportunity" ||
-      x.CronId === "Opportunity-Cron",
+      x.CronId === "Cron-Opportunity",
   );
   if (!opportunityCronSetting) {
     throw new Error("Opportunity Cron setting not found");
@@ -124,10 +123,7 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
         sysTime.getTime() - new Date(result.initTime).getTime();
       const differenceInMinutes = Math.round(differenceInTime / 60000);
       const envVariables = await sqlV2Service.GetGlobalConfig();
-      const thresholdValue =
-        envVariables != null && envVariables.expressCronOverlapThreshold != null
-          ? envVariables.expressCronOverlapThreshold
-          : applicationConfig._422_CACHE_VALID_PERIOD;
+      const thresholdValue = 0.5;
       console.log(
         `Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
       );
@@ -335,6 +331,7 @@ async function getOpportunityEligibleProducts() {
     slowCronDetails,
   );
   const mongoResponse = await dbHelper.GetContextOpportunityItems(true);
+  console.log("mongoResponse", mongoResponse);
   let resultantOutput = [];
   if (mongoResponse && mongoResponse.length > 0) {
     for (const oppItem of mongoResponse) {
@@ -344,6 +341,7 @@ async function getOpportunityEligibleProducts() {
           productDetails,
           oppItem.vendorName,
         );
+
         if (contextCronId) {
           (productDetails as any).cronSettingsResponse =
             cronSettingDetailsResponse.find(
@@ -356,7 +354,9 @@ async function getOpportunityEligibleProducts() {
       }
     }
   }
-  resultantOutput = feedHelper.SetSkipReprice(resultantOutput, true);
+
+  console.log("resultantOutput", resultantOutput);
+  resultantOutput = feedHelper.SetSkipReprice(resultantOutput, false);
   return resultantOutput;
 }
 
