@@ -5,14 +5,12 @@ import CacheClient, { GetCacheClientOptions } from "../../client/cacheClient";
 import {
   MiniErpLoginResponse,
   MiniErpNormalizedResponse,
-  MiniErpPaginationMeta,
   MiniErpProduct,
-  PaginationDecision,
 } from ".";
 import { GetCurrentStock, WaitlistInsert } from "../mysql/mysql-helper";
 import { WaitlistModel } from "../../model/waitlist-model";
 
-const DEFAULT_MINI_ERP_PAGE_SIZE = 1000;
+const DEFAULT_MINI_ERP_PAGE_SIZE = applicationConfig.MINI_ERP_DATA_PAGE_SIZE;
 const CACHE_TTL_SECONDS = 60 * 60 * 20; // 20 hours
 
 /**
@@ -67,7 +65,7 @@ async function loginToMiniErp(): Promise<MiniErpLoginResponse | undefined> {
 
 /**
  * Fetches all products from Mini ERP by paginating through all pages
- * @returns Promise resolving to array of products, or empty array on error
+ * @returns Promise resolving to true if successful, false otherwise
  */
 export async function getProductsFromMiniErp(): Promise<boolean> {
   try {
@@ -97,7 +95,6 @@ export async function getProductsFromMiniErp(): Promise<boolean> {
  * Seeds products to database as they are fetched (sequential approach)
  * @param requestUrl - The GraphQL endpoint URL
  * @param accessToken - Authentication token
- * @returns Promise resolving to array of all fetched products
  */
 async function fetchAllMiniErpProducts(
   requestUrl: string,
@@ -108,61 +105,49 @@ async function fetchAllMiniErpProducts(
   let totalProductsFetched = 0;
 
   while (hasMore) {
-    const currentPage = page; // Store current page for logging
-    console.log(`Fetching products from Mini ERP page ${currentPage}`);
+    console.log(`Fetching products from Mini ERP page ${page}`);
 
     try {
       const productsResponse = await axiosHelper.getProductsFromMiniErp(
         requestUrl,
         accessToken,
-        { page: currentPage, pageSize: DEFAULT_MINI_ERP_PAGE_SIZE },
+        { page: page, pageSize: DEFAULT_MINI_ERP_PAGE_SIZE },
       );
 
       if (!productsResponse?.data) {
-        console.error(`Invalid response from Mini ERP for page ${currentPage}`);
+        console.error(`Invalid response from Mini ERP for page ${page}`);
         break;
       }
 
-      const { items, meta } = normalizeMiniErpProductsResponse(
-        productsResponse.data,
-      );
+      const { items, hasMore: hasMoreResponse } =
+        normalizeMiniErpProductsResponse(productsResponse.data);
 
       if (!items || items.length === 0) {
-        console.log(
-          `No items found on page ${currentPage}, stopping pagination`,
-        );
+        console.log(`No items found on page ${page}, stopping pagination`);
         break;
       }
 
       // Seed data to SQL table before fetching next page (sequential approach)
       try {
-        await seedProductsToDatabase(items, currentPage);
+        await seedProductsToDatabase(items, page);
         console.log(
-          `Seeded ${items.length} products from page ${currentPage} to database`,
+          `Seeded ${items.length} products from page ${page} to database`,
         );
       } catch (error: any) {
-        console.error(
-          `Error seeding page ${currentPage} to database:`,
-          error.message,
-        );
+        console.error(`Error seeding page ${page} to database:`, error.message);
       }
 
       totalProductsFetched += items.length;
 
-      const { hasNextPage, nextPage } = resolvePaginationDecision(meta);
-      hasMore = hasNextPage;
-      page = nextPage;
-
-      console.log(
-        `Fetched ${items.length} products from Mini ERP page ${currentPage}, has more: ${hasMore}`,
-      );
+      hasMore = hasMoreResponse;
+      page = hasMore ? page + 1 : page;
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.errors?.[0]?.message ||
         error.message ||
         "Unknown error";
       console.error(
-        `Error fetching page ${currentPage} from Mini ERP: ${errorMessage}`,
+        `Error fetching page ${page} from Mini ERP: ${errorMessage}`,
       );
       break;
     }
@@ -175,45 +160,32 @@ async function fetchAllMiniErpProducts(
 
 /**
  * Normalizes the Mini ERP GraphQL response into a structured format
- * @param payload - Raw response payload from GraphQL API
+ * @param payload - Response data from GraphQL API
  * @returns Normalized response with items and pagination metadata
  * @throws Error if payload structure is invalid
  */
 function normalizeMiniErpProductsResponse(
   payload: any,
 ): MiniErpNormalizedResponse {
-  if (!payload?.data?.getUpdatedProducts) {
+  if (!payload?.data?.getUpdatedProductsWithOffsetPagination) {
+    console.error(
+      "Invalid response structure: missing getUpdatedProducts",
+      payload,
+    );
     throw new Error("Invalid response structure: missing getUpdatedProducts");
   }
 
-  const { getUpdatedProducts } = payload.data;
-  const { items, page, pageSize, hasMore } = getUpdatedProducts;
+  const { getUpdatedProductsWithOffsetPagination } = payload.data;
+  const { items, hasMore } = getUpdatedProductsWithOffsetPagination;
 
   if (!Array.isArray(items)) {
+    console.error("Invalid response structure: items is not an array", items);
     throw new Error("Invalid response structure: items is not an array");
   }
 
   return {
     items: items as MiniErpProduct[],
-    meta: { page, pageSize, hasMore },
-  };
-}
-
-/**
- * Resolves pagination decision based on metadata
- * @param meta - Pagination metadata from API response
- * @returns Object containing hasNextPage flag and nextPage number
- */
-function resolvePaginationDecision(
-  meta: MiniErpPaginationMeta,
-): PaginationDecision {
-  const { page, hasMore } = meta;
-  const currentPage = page ?? 1;
-  const hasNextPage = hasMore ?? false;
-
-  return {
-    hasNextPage,
-    nextPage: hasNextPage ? currentPage + 1 : currentPage,
+    hasMore,
   };
 }
 
@@ -337,7 +309,7 @@ async function getInventoryStockMap(products: MiniErpProduct[]) {
   return stockDataMap;
 }
 
-export function getRandomizedNet32Quantity(sqlInventory: number): number {
+function getRandomizedNet32Quantity(sqlInventory: number): number {
   const DEFAULT_RANDOMIZATION_RANGE = { min: 5000, max: 9999 };
 
   const NET32_RANDOMIZATION_RULES = [
