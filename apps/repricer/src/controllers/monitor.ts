@@ -4,10 +4,11 @@ import * as httpMiddleware from "../utility/http-wrappers";
 import * as mongoMiddleware from "../services/mongo";
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
+import { GetCronSettingsList, GetSlowCronDetails } from "../services/mysql-v2";
 
 export async function GetInprogressCron(req: Request, res: Response) {
-  const cronSettings = await mongoMiddleware.GetCronSettingsList();
-  const slowCrons = await mongoMiddleware.GetSlowCronDetails();
+  const cronSettings = await GetCronSettingsList();
+  const slowCrons = await GetSlowCronDetails();
   const combinedArrayOfCrons = cronSettings.concat(slowCrons);
   let inProgressCrons = await mongoMiddleware.GetLatestCronStatus();
   for (let $ of inProgressCrons) {

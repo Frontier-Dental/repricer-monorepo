@@ -56,3 +56,9 @@ helpRouter.get(
   AuthToken,
   helpController.getProductDetails,
 );
+
+helpRouter.post(
+  "/migrate/cron-settings",
+  AuthToken,
+  helpController.migrateCronSettingsToSql,
+);

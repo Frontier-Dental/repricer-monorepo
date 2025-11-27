@@ -11,7 +11,12 @@ import Item from "../models/item";
 import { applicationConfig } from "../utility/config";
 import * as SessionHelper from "../utility/session-helper";
 import { ExcelExportService } from "../services/excel-export.service";
-import * as sqlV2Service from "../services/mysql-v2";
+import {
+  GetCronSettingsList,
+  GetEnvValueByKey,
+  ToggleCronStatus,
+  GetSlowCronDetails,
+} from "../services/mysql-v2";
 
 export const getMasterItemController = async (req: Request, res: Response) => {
   let query: any = {};
@@ -48,7 +53,7 @@ export const getMasterItemController = async (req: Request, res: Response) => {
     .skip(pageNumber * pageSize)
     .sort({ createdAt: -1 })
     .limit(pageSize);
-  const cronSettings = await mongoMiddleware.GetCronSettingsList();
+  const cronSettings = await GetCronSettingsList();
   masterItems.forEach((_: any) => {
     _.cronSettings = cronSettings;
     _.badge_indicator = parseBadgeIndicator(_.badgeIndicator, "KEY");
@@ -83,7 +88,7 @@ export const getMasterItemController = async (req: Request, res: Response) => {
 };
 
 export const addMasterItemController = async (req: Request, res: Response) => {
-  const cronSettings = await mongoMiddleware.GetCronSettingsList();
+  const cronSettings = await GetCronSettingsList();
   res.render("pages/itemmaster/add", {
     items: cronSettings,
     groupName: "item",
@@ -94,7 +99,7 @@ export const addMasterItemController = async (req: Request, res: Response) => {
 export async function editMasterItemController(req: Request, res: Response) {
   let id = req.params.id;
   let item: any = await Item.findById(id);
-  const cronSettings = await mongoMiddleware.GetCronSettingsList();
+  const cronSettings = await GetCronSettingsList();
   item.cronSettings = cronSettings;
   item.badge_indicator = item.badgeIndicator;
   item.cronName = item.cronId
@@ -273,7 +278,7 @@ export async function excelDownload(req: Request, res: Response) {
 
       // Use lean() to get plain objects instead of Mongoose documents (uses less memory)
       let ItemCollection: any = await Item.find();
-      const cronSettings = await mongoMiddleware.GetCronSettingsList();
+      const cronSettings = await GetCronSettingsList();
       ItemCollection.forEach((_: any) => {
         if (_.cronId) {
           _.cronName = cronSettings.find(
@@ -432,13 +437,13 @@ export async function excelDownload(req: Request, res: Response) {
 }
 
 export async function runAllCron(req: Request, res: Response) {
-  const cronSettings = await mongoMiddleware.GetCronSettingsList();
+  const cronSettings = await GetCronSettingsList();
   if (cronSettings && cronSettings.length > 0) {
     for (const cron of cronSettings) {
       if (cron.IsHidden && cron.IsHidden == true) {
         // do nothing
       } else {
-        await mongoMiddleware.ToggleCronStatus(cron.CronId, true as any, req);
+        await ToggleCronStatus(cron.CronId, true as any, req);
       }
     }
   }
@@ -465,7 +470,7 @@ export async function runManualCron(req: Request, res: Response) {
     for (const prod of selectedProducts) {
       const query = { mpid: prod };
       const itemDetails = await Item.find(query);
-      const source = await sqlV2Service.GetEnvValueByKey("SOURCE"); //await mongoMiddleware.GetEnvValueByKey("SOURCE");
+      const source = await GetEnvValueByKey("SOURCE"); //await mongoMiddleware.GetEnvValueByKey("SOURCE");
       const repriceResult = await httpMiddleware.runManualCron(
         prod,
         _.first(itemDetails),
@@ -538,8 +543,8 @@ export async function deleteAll(req: Request, res: Response) {
 export async function addExcelData(req: Request, res: Response) {
   let input = req.body;
   const sessionInfo = await SessionHelper.GetAuditInfo(req);
-  const cronSettings = await mongoMiddleware.GetCronSettingsList();
-  const slowCrons = await mongoMiddleware.GetSlowCronDetails();
+  const cronSettings = await GetCronSettingsList();
+  const slowCrons = await GetSlowCronDetails();
   const combinedArray = cronSettings.concat(slowCrons);
   const scrapeOnlyCrons = await mongoMiddleware.GetScrapeCrons();
   const slowCronIds = _.map(slowCrons, "CronId");
@@ -793,17 +798,13 @@ async function GetUniqueProductIds(collatedList: any[]) {
 export async function stopAllCron(req: Request, res: Response) {
   var cronStopResponse: any = await httpMiddleware.stopAllCron();
   if (cronStopResponse && cronStopResponse.status == 200) {
-    const cronSettings = await mongoMiddleware.GetCronSettingsList();
+    const cronSettings = await GetCronSettingsList();
     if (cronSettings && cronSettings.length > 0) {
       for (const cron of cronSettings) {
         if (cron.IsHidden) {
           // do nothing
         } else {
-          await mongoMiddleware.ToggleCronStatus(
-            cron.CronId,
-            false as any,
-            req,
-          );
+          await ToggleCronStatus(cron.CronId, false as any, req);
         }
       }
     }
@@ -850,7 +851,7 @@ async function createDummyCronLog(item: any, updatedResponse: any) {
 }
 
 async function getSecretKey(_cronId: string) {
-  const cronDetails = await mongoMiddleware.GetCronSettingsList();
+  const cronDetails = await GetCronSettingsList();
   const contextCron = cronDetails.find((x: any) => x.CronId == _cronId);
   return contextCron ? contextCron.SecretKey : null;
 }

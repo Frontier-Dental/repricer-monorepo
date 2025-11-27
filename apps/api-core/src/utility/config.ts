@@ -9,15 +9,12 @@ const envSchema = z.object({
   GET_PRICE_LIST_COLLECTION_NAME: z.string().default("items"),
   CRON_LOGS_COLLECTION_NAME: z.string().default("cronLogs"),
   CRON_STATUS_COLLECTION_NAME: z.string().default("cronStatusLogs"),
-  CRON_SETTINGS_COLLECTION_NAME: z.string().default("cronSettings"),
   ERROR_ITEM_COLLECTION: z.string().default("errorItems"),
   MANAGED_MONGO_PRODUCT_COLLECTION: z.string().default("products"),
   MANAGED_MONGO_COLLECTION: z.string().default("results"),
   IP_CONFIG: z.string().default("ipConfig"),
   HISTORY_DB: z.string().default("historyData"),
   ENV_SETTINGS: z.string().default("envsettings"),
-  SLOW_CRON_GROUP_COLLECTION_NAME: z.string().default("slowCronSettings"),
-  SCRAPE_CRON_NAME: z.string().default("scrapeCronSettings"),
   SCRAPE_PRODUCTS_COLLECTION_NAME: z.string().default("scrapeProducts"),
   SCRAPE_PRODUCTS_LOGS_COLLECTION_NAME: z.string().default("scrapeCronLogs"),
   SCRAPE_ITEMS_COLLECTION_NAME: z.string().default("scrapeItems"),
@@ -204,7 +201,7 @@ const envSchema = z.object({
     .string()
     .default("https://api.net32.com/inventory/products/update"),
   SQL_TRIAD_DETAILS: z.string().default("table_triadDetails"),
-  SQL_PROXY_NET_32: z.string().default("table_proxiesNet32"),
+  SQL_PROXY_NET_32: z.string().default("tinyproxy_configs"),
   ENABLE_SLOW_CRON_FEATURE: z
     .string()
     .toLowerCase()

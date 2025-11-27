@@ -212,6 +212,64 @@ export const ToEnvSettingsModel = (incomingSqlData: any): any => {
   return mappedItem;
 };
 
+export function ToCronSettingsModel(incomingSqlData: any): any {
+  const mappedList: any[] = [];
+  if (!incomingSqlData || incomingSqlData.length === 0) {
+    return mappedList;
+  }
+  const groupedList = _.groupBy(incomingSqlData, (sqlData) => sqlData.CronId);
+  if (!groupedList || groupedList === null) {
+    return mappedList;
+  }
+  const listOfCronsIds = _.keys(groupedList);
+  for (const cronId of listOfCronsIds) {
+    const cronSettingSqlEntity = groupedList[cronId];
+    const mappedCronSetting = {
+      CronId: cronSettingSqlEntity[0].CronId,
+      CronName: cronSettingSqlEntity[0].CronName,
+      CronTimeUnit: cronSettingSqlEntity[0].CronTimeUnit,
+      CronTime: cronSettingSqlEntity[0].CronTime,
+      CronStatus: cronSettingSqlEntity[0].CronStatus == 1 ? true : false,
+      Offset: cronSettingSqlEntity[0].Offset,
+      ProxyProvider: cronSettingSqlEntity[0].ProxyProvider,
+      IpType: cronSettingSqlEntity[0].IpType,
+      FixedIp: cronSettingSqlEntity[0].FixedIp,
+      CreatedTime: cronSettingSqlEntity[0].CreatedTime,
+      SwitchSequence: cronSettingSqlEntity[0].SwitchSequence,
+      IsHidden: cronSettingSqlEntity[0].IsHidden == 1 ? true : false,
+      UpdatedTime: cronSettingSqlEntity[0].UpdatedTime,
+      CronType: cronSettingSqlEntity[0].CronType,
+      SecretKey: toSecretKeysForCron(cronSettingSqlEntity),
+      AlternateProxyProvider:
+        toAlternateProxyProvidersForCron(cronSettingSqlEntity),
+      AuditInfo: {
+        UpdatedBy: cronSettingSqlEntity[0].UpdatedBy,
+        UpdatedOn: cronSettingSqlEntity[0].UpdatedTime,
+      },
+    };
+    mappedList.push(mappedCronSetting as any);
+  }
+  return mappedList;
+}
+
+export function ToFilterSettingsModel(incomingSqlData: any): any {
+  let mappedItem: any = [];
+  if (!incomingSqlData) {
+    return mappedItem;
+  }
+  for (let sqlItem of incomingSqlData) {
+    // Remove 'UpdatedBy' and add 'AuditInfo'
+    const { updatedBy, updatedTime, ...rest } = sqlItem;
+    mappedItem.push({
+      ...rest,
+      AuditInfo: {
+        UpdatedBy: sqlItem.updatedBy,
+        UpdatedOn: sqlItem.updatedTime,
+      },
+    });
+  }
+  return mappedItem;
+}
 /********************************** PRIVATE FUNCTIONS **********************************/
 
 function getMappedVendorDetails(
@@ -269,4 +327,45 @@ function getPriority(incomingSqlData: any, vendorName: string) {
     (x: any) => x.EntityName && x.EntityName.toUpperCase() == vendorName,
   );
   return vendorEntity ? vendorEntity.Priority.toString() : null;
+}
+
+function toSecretKeysForCron(cronSettingSqlEntity: any[]) {
+  const secretKeys = [];
+  const groupedSecretKeys = _.groupBy(
+    cronSettingSqlEntity,
+    (sqlData) => sqlData.VendorName,
+  );
+  if (!groupedSecretKeys || groupedSecretKeys === null) {
+    return null;
+  }
+  const listOfVendorNames = _.keys(groupedSecretKeys);
+  for (const vendor of listOfVendorNames) {
+    const secretKeySqlEntity = groupedSecretKeys[vendor];
+    const secretKey = {
+      vendorName: vendor,
+      secretKey: secretKeySqlEntity[0].SecretKey,
+    };
+    secretKeys.push(secretKey);
+  }
+  return secretKeys;
+}
+function toAlternateProxyProvidersForCron(cronSettingSqlEntity: any[]) {
+  const alternateProxyProviders = [];
+  const groupedAlternateProviders = _.groupBy(
+    cronSettingSqlEntity,
+    (sqlData) => sqlData.AltProxySequence,
+  );
+  if (!groupedAlternateProviders || groupedAlternateProviders === null) {
+    return null;
+  }
+  const listOfSequences = _.keys(groupedAlternateProviders);
+  for (const sequence of listOfSequences) {
+    const alternateProviderSqlEntity = groupedAlternateProviders[sequence];
+    const alternateProvider = {
+      Sequence: parseInt(sequence),
+      ProxyProvider: alternateProviderSqlEntity[0].AltProxyProvider,
+    };
+    alternateProxyProviders.push(alternateProvider);
+  }
+  return alternateProxyProviders;
 }

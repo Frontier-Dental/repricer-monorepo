@@ -5,11 +5,11 @@ import {
   startCron,
   startError422Cron,
 } from "./shared";
-import { CacheKeyName } from "../../resources/cache-key-name";
-import * as cacheHelper from "../../utility/cache-helper";
+import { GetCronSettingsDetailsByName } from "../../utility/mysql/mysql-v2";
 import * as _codes from "http-status-codes";
 import * as dbHelper from "../../utility/mongo/db-helper";
 import { BadRequest } from "http-errors";
+import { UpdateCronSettings } from "../../utility/mysql/mysql-v2";
 
 export async function startCronHandler(
   req: Request,
@@ -26,12 +26,12 @@ export async function startCronHandler(
   if (!cronName) {
     throw BadRequest(`Invalid Job Name: ${jobName}`);
   }
-  const settings = await dbHelper.GetCronSettingsDetailsByName(cronName);
+  const settings = await GetCronSettingsDetailsByName(cronName);
   if (!settings) {
     throw BadRequest(`Cron settings not found for ${cronName}`);
   }
   setCronAndStart(cronName, settings);
-  await dbHelper.UpdateCronSettings(cronId);
+  await UpdateCronSettings(cronId);
   return res
     .status(_codes.StatusCodes.OK)
     .send(`Cron job started successfully for jobName : ${jobName}`);

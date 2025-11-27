@@ -7,7 +7,6 @@ import { apiMapping } from "../resources/api-mapping";
 import { CronSettings } from "../types/cron-settings";
 import { applicationConfig } from "./config";
 import * as dbHelper from "./mongo/db-helper";
-// import * as mongoHelper from "./mongo/mongo-helper";
 import * as axiosRetryHelper from "./proxy/axios-retry-helper";
 import * as brightDataHelper from "./proxy/bright-data-helper";
 import * as scrapflyHelper from "./proxy/scrapfly-helper";
@@ -35,10 +34,10 @@ export async function getAsync(
   seqString?: string | null,
 ) {
   let responseData = null;
-  let cronDetails = await dbHelper.GetCronSettingsList();
-  const slowCronDetails = await dbHelper.GetSlowCronDetails();
+  let cronDetails = await sqlV2Service.GetCronSettingsList();
+  const slowCronDetails = await sqlV2Service.GetSlowCronDetails();
   cronDetails = _.concat(cronDetails, slowCronDetails);
-  const cronName = cronDetails.find((x) => x.CronId == cronId)?.CronName;
+  const cronName = cronDetails.find((x: any) => x.CronId == cronId)?.CronName;
   if (applicationConfig.IS_DEBUG) {
     return getMorphedResponse();
   }

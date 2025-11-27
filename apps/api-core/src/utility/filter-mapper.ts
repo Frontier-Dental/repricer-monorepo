@@ -18,8 +18,6 @@ export async function FilterProducts(filterCronDetails: any) {
     .subtract(filterDuration, "h")
     .format();
   let filterDate = new Date(filterDateValue);
-  //const regularCronDetails = await dbHelper.GetCronSettingsList();
-  //const regularCronSet = _.map(regularCronDetails, "CronId");
   console.log(
     `Filter Cron : Running ${filterCronDetails.cronName} for Filter Date : ${filterDate} at ${new Date()}`,
   );

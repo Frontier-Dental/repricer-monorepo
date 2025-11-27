@@ -5,7 +5,7 @@ import { FrontierProduct } from "../../../types/frontier";
 import { RepriceData, RepriceModel } from "../../../model/reprice-model";
 import { applicationConfig } from "../../config";
 import * as sqlV2Service from "../../../utility/mysql/mysql-v2";
-import * as dbHelper from "../../mongo/db-helper";
+import { GetCronSettingsDetailsById } from "../../../utility/mysql/mysql-v2";
 
 export function isPriceUpdateRequired(
   repriceResult: RepriceModel,
@@ -74,11 +74,11 @@ export function notQ2VsQ1(minQty: number, compareWithQ1: boolean) {
 }
 
 export async function getSecretKey(cronId: string, contextVendor: string) {
-  const cronSettingDetails = await dbHelper.GetCronSettingsDetailsById(cronId);
-  if (cronSettingDetails.length === 0) {
+  const cronSettingDetails = await GetCronSettingsDetailsById(cronId);
+  if (!cronSettingDetails) {
     throw new Error(`Cron setting details not found for ${cronId}`);
   }
-  const secretKey = cronSettingDetails[0].SecretKey?.find(
+  const secretKey = cronSettingDetails?.SecretKey?.find(
     (x: any) => x.vendorName == contextVendor,
   )?.secretKey;
   if (!secretKey) {

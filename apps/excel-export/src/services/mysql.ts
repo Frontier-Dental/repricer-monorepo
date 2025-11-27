@@ -2,6 +2,7 @@ import SqlConnectionPool from "../models/sql-models/mysql-db";
 import * as SqlMapper from "../utility/mapper/mysql-mapper";
 import { applicationConfig } from "../utility/config";
 import { getKnexInstance } from "./knex-wrapper";
+import { getKnexInstance } from "./knex-wrapper";
 import bcrypt from "bcrypt";
 import Encrypto from "../utility/encrypto";
 import mysql from "mysql2";
@@ -1113,7 +1114,7 @@ export async function GetCronSettingsList() {
   const db = getKnexInstance();
   const result = await db.raw(`call GetRegularCronSettingsList()`);
   if (result && result[0] && result[0].length > 0) {
-    //cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
+    cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
   }
   return cronSettingsDetails;
 }

@@ -3,7 +3,7 @@ import _codes from "http-status-codes";
 import _ from "lodash";
 import moment from "moment";
 import cron from "node-cron";
-import { GetCronSettingsList } from "../services/mongo";
+import { GetCronSettingsList } from "../services/mysql-v2";
 import { applicationConfig } from "../utility/config";
 import { postData } from "../middleware/storage-sense-helpers/axios-helper";
 import { TriggerEmail } from "../middleware/storage-sense-helpers/email-helper";

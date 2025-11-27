@@ -4,6 +4,7 @@ import * as filterMapper from "../../utility/filter-mapper";
 import { filterCrons } from "./shared";
 import { schedule } from "node-cron";
 import * as _codes from "http-status-codes";
+import { GetFilteredCrons } from "../../utility/mysql/mysql-v2";
 
 export async function startAllFilterCronHandler(
   req: Request,
@@ -14,7 +15,7 @@ export async function startAllFilterCronHandler(
 }
 
 export async function startFilterCronLogic() {
-  const filterCronDetails = await dbHelper.GetFilterCronDetails();
+  const filterCronDetails = await GetFilteredCrons();
   for (const cronDetails of filterCronDetails) {
     filterCrons[cronDetails.cronName] = schedule(
       cronDetails.cronExpression,

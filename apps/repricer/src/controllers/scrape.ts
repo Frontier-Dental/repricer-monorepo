@@ -89,18 +89,16 @@ export const ToggleCronStatus = async (req: Request, res: Response) => {
   const cronId = req.body.id;
   const cronStatus = parseInt(req.body.status);
   const jobName = cronMapping.find((x) => x.cronId == cronId)?.cronVariable;
-
+  await sqlV2Service.ToggleCronStatus(
+    cronId,
+    cronStatus == 1 ? "true" : "false",
+    req,
+  );
   const response = await httpMiddleware.toggleScrapeCron({
     jobName: jobName,
     status: cronStatus,
   });
   if (response && response.status == 200) {
-    await mongoMiddleware.UpdateScrapeCronDetails(cronId, {
-      $set: {
-        status: cronStatus == 1 ? "true" : "false",
-        AuditInfo: await SessionHelper.GetAuditInfo(req),
-      },
-    });
     return res.json({
       status: true,
       message: response.data,
@@ -178,27 +176,16 @@ export const UpdateScrapeCronExp = async (req: Request, res: Response) => {
   }
 
   if (updatedList.length > 0) {
-    const updateResponse = await mongoMiddleware.updateScrapeCron(
-      updatedList,
-      req,
-    );
-
-    if (updateResponse) {
-      if (listOfUpdatedCronKey.length > 0) {
-        for (const jobName of listOfUpdatedCronKey) {
-          await httpMiddleware.recreateScrapeCron({ jobName: jobName });
-        }
+    await sqlV2Service.UpdateCronSettingsList(updatedList, req);
+    if (listOfUpdatedCronKey.length > 0) {
+      for (const jobName of listOfUpdatedCronKey) {
+        await httpMiddleware.recreateScrapeCron({ jobName: jobName });
       }
-      return res.json({
-        status: true,
-        message: "Scrape Cron updated successfully.",
-      });
-    } else {
-      return res.json({
-        status: false,
-        message: "Something went wrong ,Please try again.",
-      });
     }
+    return res.json({
+      status: true,
+      message: "Scrape Cron updated successfully.",
+    });
   } else {
     return res.json({
       status: true,

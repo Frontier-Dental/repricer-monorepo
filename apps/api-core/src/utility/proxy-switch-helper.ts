@@ -86,7 +86,7 @@ export const SwitchProxy = async (): Promise<void> => {
 
         // Changing Proxy Provider To All Linked Cron to Next Available Proxy Provider.
         const linkedCronWithExistingProxyProvider =
-          await dbHelper.GetLinkedCronSettingsByProviderId(
+          await sqlV2Service.GetLinkedCronSettingsByProviderId(
             record.proxyProvider,
           );
 
@@ -180,7 +180,7 @@ async function updateProxyForCron(
         thresholdReached: true,
       };
       payloadForEmail = cronInfo;
-      await dbHelper.UpdateProxyDetailsByCronId(
+      await sqlV2Service.UpdateProxyDetailsByCronId(
         cronSettings.CronId,
         cronSettings.ProxyProvider,
         -1,
@@ -190,7 +190,7 @@ async function updateProxyForCron(
         await sqlV2Service.GetProxyConfigByProviderId(newProxyProvider),
       ) as ProxyConfig | undefined;
 
-      await dbHelper.UpdateProxyDetailsByCronId(
+      await sqlV2Service.UpdateProxyDetailsByCronId(
         cronSettings.CronId as unknown as string,
         newProxyProvider,
         sequence,

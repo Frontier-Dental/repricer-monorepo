@@ -86,6 +86,9 @@ export async function recreateCron(cronDetails: any) {
     },
     data: JSON.stringify(cronDetails),
   };
+  console.info(
+    `Recreating cron at ${new Date().toISOString()} with payload url : ${config.url} || data : ${config.data}`,
+  );
   return await axios(config);
 }
 
