@@ -64,7 +64,6 @@ async function updateNet32Stock(): Promise<boolean> {
   //get items from waitlist table where status is pending
   const items: WaitlistModel[] = await GetWaitlistPendingItems();
   for (const item of items) {
-    console.log("Updating net32 stock for item", item);
     const vendorData: VendorData = {
       vendor: item.vendor_name.toLowerCase(),
       quantity: item.net32_inventory,
@@ -76,9 +75,7 @@ async function updateNet32Stock(): Promise<boolean> {
     const results = await processUpdateProductQuantities(
       updateProductQuantityRequest,
     );
-    console.log("Results for item", item, results[0]);
     if (results[0].success) {
-      console.log("Successfully updated net32 stock for item", item);
       await UpdateWaitlistStatus(item.id!, "success");
       await UpdateVendorStock(item.vendor_name, item.mp_id, item.new_inventory);
     } else {

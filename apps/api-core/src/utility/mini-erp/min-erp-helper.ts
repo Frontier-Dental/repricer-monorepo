@@ -309,7 +309,7 @@ async function getInventoryStockMap(products: MiniErpProduct[]) {
   return stockDataMap;
 }
 
-function getRandomizedNet32Quantity(sqlInventory: number): number {
+export function getRandomizedNet32Quantity(sqlInventory: number): number {
   const DEFAULT_RANDOMIZATION_RANGE = { min: 5000, max: 9999 };
 
   const NET32_RANDOMIZATION_RULES = [
