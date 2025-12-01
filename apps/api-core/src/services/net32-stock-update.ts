@@ -46,6 +46,11 @@ fetchProductsFromMiniErpCron = schedule(
       console.error(`Error fetching products from mini erp: ${errorMessage}`);
     }
   },
+  {
+    scheduled: true,
+    timezone: "UTC",
+    runOnInit: true,
+  },
 );
 
 net32StockUpdateCron = schedule(
@@ -56,6 +61,11 @@ net32StockUpdateCron = schedule(
     if (!success) {
       console.error("Failed to update net32 stock");
     }
+  },
+  {
+    scheduled: true,
+    timezone: "UTC",
+    runOnInit: true,
   },
 );
 
@@ -84,4 +94,44 @@ async function updateNet32Stock(): Promise<boolean> {
     }
   }
   return true;
+}
+
+/**
+ * Stops the net32 stock update cron
+ */
+export function stopNet32StockUpdateCron(): void {
+  if (net32StockUpdateCron) {
+    net32StockUpdateCron.stop();
+    console.log("Net32 stock update cron stopped");
+  }
+}
+
+/**
+ * Stops the fetch products from mini erp cron
+ */
+export function stopFetchProductsFromMiniErpCron(): void {
+  if (fetchProductsFromMiniErpCron) {
+    fetchProductsFromMiniErpCron.stop();
+    console.log("Fetch products from mini erp cron stopped");
+  }
+}
+
+/**
+ * Starts the fetch products from mini erp cron
+ */
+export function startFetchProductsFromMiniErpCron(): void {
+  if (fetchProductsFromMiniErpCron) {
+    fetchProductsFromMiniErpCron.start();
+    console.log("Fetch products from mini erp cron started");
+  }
+}
+
+/**
+ * Starts the net32 stock update cron
+ */
+export function startNet32StockUpdateCron(): void {
+  if (net32StockUpdateCron) {
+    net32StockUpdateCron.start();
+    console.log("Net32 stock update cron started");
+  }
 }
