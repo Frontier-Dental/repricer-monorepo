@@ -37,7 +37,7 @@ export async function manualRepriceHandler(
     "{mpId}",
     mpid,
   );
-  const cronSetting = _.first(await GetCronSettingsDetailsById(contextCronId));
+  const cronSetting = await GetCronSettingsDetailsById(contextCronId);
   let cronLogs = {
     time: new Date(),
     keyGen: jobId,
