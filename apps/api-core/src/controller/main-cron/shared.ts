@@ -121,11 +121,11 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
     } else {
       const differenceInTime =
         sysTime.getTime() - new Date(result.initTime).getTime();
-      const differenceInMinutes = Math.round(differenceInTime / 60000);
+      const differenceInMinutes = differenceInTime / 60000;
       const envVariables = await sqlV2Service.GetGlobalConfig();
-      const thresholdValue = 0.5;
+      const thresholdValue = 1.5;
       console.log(
-        `Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
+        `Checking Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
       );
       await cacheClient.disconnect();
       return !(typeof thresholdValue === "string"
@@ -331,7 +331,6 @@ async function getOpportunityEligibleProducts() {
     slowCronDetails,
   );
   const mongoResponse = await dbHelper.GetContextOpportunityItems(true);
-  console.log("mongoResponse", mongoResponse);
   let resultantOutput = [];
   if (mongoResponse && mongoResponse.length > 0) {
     for (const oppItem of mongoResponse) {
@@ -355,7 +354,6 @@ async function getOpportunityEligibleProducts() {
     }
   }
 
-  console.log("resultantOutput", resultantOutput);
   resultantOutput = feedHelper.SetSkipReprice(resultantOutput, false);
   return resultantOutput;
 }

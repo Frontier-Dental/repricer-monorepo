@@ -8,6 +8,7 @@ const envSchema = z.object({
   GET_PRICE_LIST_DBNAME: z.string().default("repricer"),
   GET_PRICE_LIST_COLLECTION_NAME: z.string().default("items"),
   CRON_LOGS_COLLECTION_NAME: z.string().default("cronLogs"),
+  CRON_SETTINGS_COLLECTION_NAME: z.string().default("cronSettings"),
   CRON_STATUS_COLLECTION_NAME: z.string().default("cronStatusLogs"),
   ERROR_ITEM_COLLECTION: z.string().default("errorItems"),
   OPPORTUNITY_ITEM_COLLECTION: z.string().default("opportunityItems"),

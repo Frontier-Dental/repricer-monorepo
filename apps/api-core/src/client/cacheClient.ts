@@ -29,7 +29,7 @@ class CacheClient {
     });
 
     this.client.connect().then(() => {
-      console.info("✅ Redis connected successfully");
+      // console.info("✅ Redis connected successfully");
     });
   }
 
@@ -103,7 +103,7 @@ class CacheClient {
 
   public async disconnect(): Promise<void> {
     if (this.client.isOpen === true) {
-      console.debug("Disconnected Redis client");
+      // console.debug("Disconnected Redis client");
       await this.client.quit();
     } else {
       console.debug("Redis client already disconnected");

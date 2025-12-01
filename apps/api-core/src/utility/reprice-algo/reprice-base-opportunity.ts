@@ -124,12 +124,24 @@ function updateLowestVendor(
   return prod;
 }
 
+/**
+ * Reprices a single product from the Opportunity Cron queue.
+ * This is a "one-shot" cron - products are processed once and then removed from the queue.
+ *
+ * @param details - Product details including mpId and vendor-specific info
+ * @param cronInitTime - When this cron run started
+ * @param cronSetting - Cron configuration settings
+ * @param _contextVendor - The vendor to reprice for (e.g., "FRONTIER", "TRADENT")
+ */
 export async function RepriceOpportunityItem(
   details: any,
   cronInitTime: any,
   cronSetting: any,
   _contextVendor: string,
 ) {
+  // ============================================================================
+  // STEP 1: Initialize cron logs for tracking this product's processing
+  // ============================================================================
   let cronLogs: any = {
     time: cronInitTime,
     logs: [] as any[],
@@ -137,6 +149,9 @@ export async function RepriceOpportunityItem(
     type: "OpportunityItem",
   };
 
+  // ============================================================================
+  // STEP 2: Get existing opportunity items for this product/vendor from MongoDB
+  // ============================================================================
   const contextOpportunityDetails =
     await dbHelper.GetEligibleContextOpportunityItems(
       true,
@@ -144,6 +159,12 @@ export async function RepriceOpportunityItem(
       _contextVendor,
     );
 
+  console.log("contextOpportunityDetails", contextOpportunityDetails);
+
+  // ============================================================================
+  // STEP 3: Determine vendor priority sequence for repricing
+  // This decides which vendors to try repricing with and in what order
+  // ============================================================================
   const prioritySequence = await requestGenerator.GetPrioritySequence(
     details,
     contextOpportunityDetails,
@@ -152,11 +173,18 @@ export async function RepriceOpportunityItem(
 
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
 
+  console.log("prioritySequence", prioritySequence);
+
   if (prioritySequence && prioritySequence.length > 0) {
+    // ==========================================================================
+    // STEP 4: Fetch current market prices from Net32 API
+    // ==========================================================================
     const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace(
       "{mpId}",
       details.mpId,
     );
+
+    console.log("searchRequest", searchRequest);
 
     var net32result = await axiosHelper.getAsync(
       searchRequest,
@@ -166,6 +194,10 @@ export async function RepriceOpportunityItem(
 
     let isPriceUpdatedForVendor = false;
 
+    // ==========================================================================
+    // STEP 5: Run V2 Algorithm (if configured)
+    // V2 is the newer repricing algorithm
+    // ==========================================================================
     if (
       details.algo_execution_mode === AlgoExecutionMode.V2_ONLY ||
       details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY ||
@@ -179,14 +211,22 @@ export async function RepriceOpportunityItem(
       );
     }
 
+    // ==========================================================================
+    // STEP 6: Run V1 Algorithm (if configured)
+    // V1 is the original repricing algorithm - iterates through vendors
+    // ==========================================================================
     if (
       details.algo_execution_mode === AlgoExecutionMode.V1_ONLY ||
       details.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY ||
       details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY
     ) {
+      // Loop through each vendor in priority order
       for (const seq of prioritySequence) {
+        // Stop if we already updated price for one vendor (only update once per product)
         if (!isPriceUpdatedForVendor) {
           const contextVendor = seq.name;
+
+          // Get vendor-specific product details
           let prod = await filterMapper.GetProductDetailsByVendor(
             details,
             contextVendor,
@@ -195,11 +235,17 @@ export async function RepriceOpportunityItem(
           let tempProd = _.cloneDeep(prod);
           prod.last_cron_time = new Date();
           let isPriceUpdated = false;
+
+          // ====================================================================
+          // STEP 6a: Check if product is eligible for repricing
+          // Must have scrapeOn=true AND activated=true
+          // ====================================================================
           if (prod.scrapeOn == true && prod.activated == true) {
             console.log(
               `REPRICE : Opportunity : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid} at Time :  ${new Date().toISOString()}`,
             );
 
+            // Set up product metadata for repricing
             prod.last_attempted_time = new Date();
             prod.lastCronRun = `Cron-Opportunity`;
             tempProd.cronName =
@@ -211,6 +257,10 @@ export async function RepriceOpportunityItem(
             data.prod = tempProd;
             data.contextVendor = contextVendor;
 
+            // ==================================================================
+            // STEP 6b: Execute the repricing algorithm
+            // This calculates the optimal price and attempts to update it
+            // ==================================================================
             const repriceResult = await repriceProduct(
               prod.mpid!,
               net32result.data.filter((p: any) => p.priceBreaks !== undefined),
@@ -224,11 +274,14 @@ export async function RepriceOpportunityItem(
             );
 
             if (repriceResult) {
+              // ================================================================
+              // STEP 6c: Handle repricing result - price update was ATTEMPTED
+              // ================================================================
               if (
-                // Price update happened
                 repriceResult.priceUpdateResponse &&
                 repriceResult.priceUpdateResponse != null
               ) {
+                // Check if update was successful (no errors)
                 if (
                   JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
                     "ERROR:422",
@@ -243,6 +296,12 @@ export async function RepriceOpportunityItem(
                     "ERROR:",
                   ) == -1
                 ) {
+                  // ==============================================================
+                  // SUCCESS: Price was updated successfully
+                  // - Log the successful update
+                  // - Move product to Express Cron (422 cron) for 12-hour monitoring
+                  // - Remove from Opportunity Cron
+                  // ==============================================================
                   cronLogs.logs.push([
                     {
                       productId: prod.mpid,
@@ -260,6 +319,7 @@ export async function RepriceOpportunityItem(
                   isPriceUpdatedForVendor = true;
                   prod.next_cron_time = calculateNextCronTime(new Date(), 12);
 
+                  // Add to Express/422 Cron for monitoring (runs again in 12 hours)
                   const expressItem = new ErrorItemModel(
                     prod.mpid,
                     prod.next_cron_time,
@@ -275,7 +335,7 @@ export async function RepriceOpportunityItem(
                     obj: JSON.stringify(expressItem),
                   });
 
-                  // Remove from Opportunity cron (one-shot)
+                  // Remove from Opportunity cron (mark as processed)
                   const opportunityItem = new ErrorItemModel(
                     prod.mpid,
                     null,
@@ -287,14 +347,18 @@ export async function RepriceOpportunityItem(
 
                   await dbHelper.UpsertOpportunityItemLog(opportunityItem);
                   console.log(
-                    `${prod.mpid} removed from Opportunity Cron after successful update`,
+                    `[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): REPRICED SUCCESSFULLY - moved to Express Cron`,
                   );
                 } else if (
                   JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
                     "ERROR:422",
                   ) > -1
                 ) {
-                  // 422 error - remove from Opportunity cron (back to regular cron)
+                  // ==============================================================
+                  // 422 ERROR: Rate limited by Net32
+                  // - Remove from Opportunity Cron
+                  // - Product will be picked up by 422 Cron automatically
+                  // ==============================================================
                   const opportunityItem = new ErrorItemModel(
                     prod.mpid,
                     null,
@@ -306,7 +370,7 @@ export async function RepriceOpportunityItem(
 
                   await dbHelper.UpsertOpportunityItemLog(opportunityItem);
                   console.log(
-                    `${prod.mpid} removed from Opportunity Cron (422 error) - back to regular cron`,
+                    `[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): 422 ERROR - moved to 422 Cron`,
                   );
 
                   cronLogs.logs.push([
@@ -319,6 +383,11 @@ export async function RepriceOpportunityItem(
                     },
                   ]);
                 } else {
+                  // ==============================================================
+                  // OTHER ERROR: 429 (too many requests), 404 (not found), etc.
+                  // - Remove from Opportunity Cron
+                  // - Don't retry automatically
+                  // ==============================================================
                   prod.next_cron_time = null;
                   const priceUpdatedItem = new ErrorItemModel(
                     prod.mpid,
@@ -331,12 +400,15 @@ export async function RepriceOpportunityItem(
 
                   await dbHelper.UpsertOpportunityItemLog(priceUpdatedItem);
                   console.log(
-                    `ERROR WHILE PRICE UPDATE : ${prod.mpid} - ${contextVendor}`,
+                    `[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): OTHER ERROR - removed from Opportunity Cron`,
                   );
                 }
               }
 
-              // Price update did not happen
+              // ================================================================
+              // STEP 6d: Handle repricing result - NO price update was needed
+              // The algorithm determined the current price is optimal
+              // ================================================================
               else {
                 prod.next_cron_time = null;
                 const errorItem = new ErrorItemModel(
@@ -349,6 +421,9 @@ export async function RepriceOpportunityItem(
                 );
 
                 await dbHelper.UpsertOpportunityItemLog(errorItem);
+                console.log(
+                  `[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): NO REPRICE NEEDED - removed from Opportunity Cron`,
+                );
 
                 cronLogs.logs.push([
                   {
@@ -359,12 +434,17 @@ export async function RepriceOpportunityItem(
                 ]);
               }
             }
-            // Add Last_Cron_Reprice_Message
+
+            // ==================================================================
+            // STEP 6e: Update product metadata after repricing attempt
+            // ==================================================================
+
+            // Set the last cron message (human-readable result)
             prod.last_cron_message = filterMapper.GetLastCronMessageSimple(
               repriceResult as any,
             );
 
-            // Update History With Proper Message
+            // Update price history records with the result message
             if (
               repriceResult &&
               repriceResult.historyIdentifier &&
@@ -387,15 +467,21 @@ export async function RepriceOpportunityItem(
               }
             }
 
+            // Update lowest vendor info and cron-based details
             prod = updateLowestVendor(repriceResult as any, prod);
             prod = updateCronBasedDetails(repriceResult, prod, false);
 
+            // Save updated product to MySQL
             await sqlHelper.UpdateProductAsync(
               prod,
               isPriceUpdated,
               contextVendor,
             );
           } else {
+            // ==================================================================
+            // STEP 6f: Product is NOT eligible for repricing
+            // Either scrapeOn=false or activated=false
+            // ==================================================================
             prod.next_cron_time = null;
             const errorItem = new ErrorItemModel(
               prod.mpid,
@@ -407,6 +493,9 @@ export async function RepriceOpportunityItem(
             );
 
             await dbHelper.UpsertOpportunityItemLog(errorItem);
+            console.log(
+              `[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): SKIPPED - scrapeOn=${prod.scrapeOn}, activated=${prod.activated}`,
+            );
             await sqlHelper.UpdateProductAsync(
               prod,
               isPriceUpdated,
@@ -418,6 +507,10 @@ export async function RepriceOpportunityItem(
     }
   }
 
+  // ============================================================================
+  // STEP 7: Clean up Slow Cron assignments (if feature is enabled)
+  // Remove this product from any slow cron queues since it's been processed
+  // ============================================================================
   if (applicationConfig.ENABLE_SLOW_CRON_FEATURE) {
     let productUpdateNeeded = false;
 
@@ -459,12 +552,15 @@ export async function RepriceOpportunityItem(
 
     if (productUpdateNeeded) {
       details.isSlowActivated = false;
-      await sqlHelper.UpdateCronForProductAsync(details); //await dbHelper.UpdateCronForProductAsync(details);
+      await sqlHelper.UpdateCronForProductAsync(details);
       console.log(`MOVEMENT(CRON-OPPORTUNITY) : Product : ${details.mpId}`);
     }
   }
 
-  // Always remove from Opportunity cron (one-shot) - ensure active=false
+  // ============================================================================
+  // STEP 8: Final cleanup - ensure product is removed from Opportunity Cron
+  // This is a "one-shot" cron, so always mark as inactive when done
+  // ============================================================================
   const finalOpportunityItem = new ErrorItemModel(
     details.mpId,
     null,
@@ -612,6 +708,7 @@ function filterDeltaProducts(productList: any[], keygen: string) {
       fs.writeFileSync(filePath, JSON.stringify(contentsToWrite));
     }
   }
+  return finalList;
 }
 
 function cleanActiveProductList(keyGen: string) {

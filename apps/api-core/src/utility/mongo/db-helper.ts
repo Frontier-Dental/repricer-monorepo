@@ -46,6 +46,7 @@ export async function UpdateCronStatusAsync(payload: any) {
 
 export async function PushLogsAsync(payload: any) {
   const dbo = await getMongoDb();
+  console.log("payload", payload);
   const { insertedId } = await dbo
     .collection(applicationConfig.CRON_LOGS_COLLECTION_NAME)
     .insertOne(payload);
@@ -561,7 +562,9 @@ export async function GetEligibleContextOpportunityItems(
         mpId: parseInt(_mpId),
       },
       {
-        vendorName: _contextVendor,
+        vendorName: {
+          $ne: _contextVendor,
+        },
       },
     ],
   };

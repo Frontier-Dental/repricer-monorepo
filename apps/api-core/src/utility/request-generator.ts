@@ -21,6 +21,7 @@ export async function GetPrioritySequence(
   contextErrorDetails: ErrorItem[] | null,
   includeErrorItems: boolean,
 ) {
+  console.log("productInfo", productInfo);
   const _tradent = { name: VendorName.TRADENT, value: "tradentDetails" };
   const _frontier = { name: VendorName.FRONTIER, value: "frontierDetails" };
   const _mvp = { name: VendorName.MVP, value: "mvpDetails" };
