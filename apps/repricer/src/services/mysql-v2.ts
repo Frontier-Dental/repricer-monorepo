@@ -450,16 +450,96 @@ export async function ToggleFilterCronStatus(
   auditInfo: AuditInfo,
 ) {
   const db = getKnexInstance();
-  await db("filter_cron_settings")
-    .where({ CronId: cronId })
-    .update({
-      Status: status,
-      UpdatedBy: auditInfo.UpdatedBy,
-      UpdatedTime: auditInfo.UpdatedOn,
-    });
+  await db("filter_cron_settings").where({ CronId: cronId }).update({
+    Status: status,
+    UpdatedBy: auditInfo.UpdatedBy,
+    UpdatedTime: auditInfo.UpdatedOn,
+  });
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
   );
   await cacheClient.delete(CacheKey.FILTER_CRON_DETAILS);
   await cacheClient.disconnect();
+}
+
+export async function GetWaitlistItems(queryData: any) {
+  const { page, pageSize, offset, sort, status, startDate, endDate, search } =
+    queryData;
+  const knex = getKnexInstance();
+
+  // Build the base query
+  let query = knex("waitlist").select("*");
+
+  // Apply status filter if provided
+  if (status) {
+    query = query.where("api_status", status);
+  }
+
+  // Apply date range filter if provided
+  if (startDate && endDate) {
+    query = query.whereBetween("created_at", [startDate, endDate]);
+  }
+
+  // Apply search filter if provided
+  if (search) {
+    query = query.where("vendor_name", "like", `%${search}%`);
+  }
+
+  // Apply sorting
+  if (sort) {
+    const [column, direction] = sort.split(" ");
+    const sortDirection = direction?.toUpperCase() === "ASC" ? "asc" : "desc";
+    query = query.orderBy(column || "created_at", sortDirection);
+  } else {
+    query = query.orderBy("created_at", "desc");
+  }
+
+  // Get total count for pagination
+  const countQuery = query
+    .clone()
+    .clearSelect()
+    .clearOrder()
+    .count("* as total")
+    .first();
+  const totalResult = await countQuery;
+  const total = totalResult ? Number(totalResult.total) : 0;
+
+  // Apply pagination
+  if (pageSize) {
+    query = query.limit(pageSize);
+  }
+  if (offset !== undefined) {
+    query = query.offset(offset);
+  }
+
+  // Execute query
+  const results = await query;
+
+  return {
+    data: results,
+    pagination: {
+      page: page || 1,
+      pageSize: pageSize || 10,
+      total,
+      totalPages: Math.ceil(total / (pageSize || 10)),
+    },
+  };
+}
+
+export async function DeleteWaitlistItem(id: number) {
+  const db = getKnexInstance();
+  await db("waitlist").where({ id }).delete();
+  return {
+    status: true,
+    message: "Waitlist item deleted successfully",
+  };
+}
+
+export async function BulkDeleteWaitlistItems(ids: number[]) {
+  const db = getKnexInstance();
+  await db("waitlist").whereIn("id", ids).delete();
+  return {
+    status: true,
+    message: "Waitlist items deleted successfully",
+  };
 }
