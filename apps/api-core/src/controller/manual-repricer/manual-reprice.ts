@@ -38,6 +38,7 @@ export async function manualRepriceHandler(
     mpid,
   );
   const cronSetting = await GetCronSettingsDetailsById(contextCronId);
+
   let cronLogs = {
     time: new Date(),
     keyGen: jobId,
