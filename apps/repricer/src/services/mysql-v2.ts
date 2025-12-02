@@ -363,10 +363,10 @@ export async function GetScrapeCrons() {
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
   );
-  const slowCronDetails = await cacheClient.get(CacheKey.SCRAPE_CRON_DETAILS);
-  if (slowCronDetails != null) {
+  const scrapeCronDetails = await cacheClient.get(CacheKey.SCRAPE_CRON_DETAILS);
+  if (scrapeCronDetails != null) {
     await cacheClient.disconnect();
-    return slowCronDetails;
+    return scrapeCronDetails;
   }
   let cronSettingsDetails = null;
   const db = getKnexInstance();
@@ -450,13 +450,11 @@ export async function ToggleFilterCronStatus(
   auditInfo: AuditInfo,
 ) {
   const db = getKnexInstance();
-  await db("filter_cron_settings")
-    .where({ CronId: cronId })
-    .update({
-      Status: status,
-      UpdatedBy: auditInfo.UpdatedBy,
-      UpdatedTime: auditInfo.UpdatedOn,
-    });
+  await db("filter_cron_settings").where({ CronId: cronId }).update({
+    Status: status,
+    UpdatedBy: auditInfo.UpdatedBy,
+    UpdatedTime: auditInfo.UpdatedOn,
+  });
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
   );

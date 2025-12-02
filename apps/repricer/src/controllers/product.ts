@@ -16,6 +16,7 @@ import {
   GetEnvValueByKey,
   ToggleCronStatus,
   GetSlowCronDetails,
+  GetScrapeCrons,
 } from "../services/mysql-v2";
 
 export const getMasterItemController = async (req: Request, res: Response) => {
@@ -546,7 +547,7 @@ export async function addExcelData(req: Request, res: Response) {
   const cronSettings = await GetCronSettingsList();
   const slowCrons = await GetSlowCronDetails();
   const combinedArray = cronSettings.concat(slowCrons);
-  const scrapeOnlyCrons = await mongoMiddleware.GetScrapeCrons();
+  const scrapeOnlyCrons = await GetScrapeCrons();
   const slowCronIds = _.map(slowCrons, "CronId");
   let items: any[] = [];
   for (let k = 0; k < parseInt(input.count); k++) {
