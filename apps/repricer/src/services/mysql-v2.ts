@@ -363,10 +363,10 @@ export async function GetScrapeCrons() {
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
   );
-  const slowCronDetails = await cacheClient.get(CacheKey.SCRAPE_CRON_DETAILS);
-  if (slowCronDetails != null) {
+  const scrapeCronDetails = await cacheClient.get(CacheKey.SCRAPE_CRON_DETAILS);
+  if (scrapeCronDetails != null) {
     await cacheClient.disconnect();
-    return slowCronDetails;
+    return scrapeCronDetails;
   }
   let cronSettingsDetails = null;
   const db = getKnexInstance();

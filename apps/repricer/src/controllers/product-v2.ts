@@ -12,7 +12,11 @@ import * as mySqlHelper from "../services/mysql";
 import { applicationConfig } from "../utility/config";
 import * as httpHelper from "../utility/http-wrappers";
 import * as SessionHelper from "../utility/session-helper";
-import { GetCronSettingsList, GetSlowCronDetails } from "../services/mysql-v2";
+import {
+  GetCronSettingsList,
+  GetSlowCronDetails,
+  GetScrapeCrons,
+} from "../services/mysql-v2";
 
 export async function showAllProducts(req: Request, res: Response) {
   let pgNo = 0;
@@ -133,8 +137,7 @@ export async function editItemView(req: Request, res: Response) {
   _.first(productDetails).cronSettings = cronSettingsResponse.filter(
     (x: any) => x.IsHidden != true,
   );
-  _.first(productDetails).scrapeOnlyCrons =
-    await mongoMiddleware.GetScrapeCrons();
+  _.first(productDetails).scrapeOnlyCrons = await GetScrapeCrons();
 
   res.render("pages/products/index", {
     model: _.first(productDetails),
@@ -303,7 +306,7 @@ export async function addItems(req: Request, res: Response) {
   productDetails.slowCrons = slowCronSettings.filter(
     (x: any) => x.IsHidden != true,
   );
-  productDetails.scrapeOnlyCrons = await mongoMiddleware.GetScrapeCrons();
+  productDetails.scrapeOnlyCrons = await GetScrapeCrons();
   res.render("pages/products/add", {
     model: productDetails,
     groupName: "item",
@@ -314,7 +317,7 @@ export async function addItems(req: Request, res: Response) {
 export async function addItemToDatabase(req: Request, res: Response) {
   var details = req.body;
   let productDetails: any = {};
-  const scrapeOnlyCronSettings = await mongoMiddleware.GetScrapeCrons();
+  const scrapeOnlyCronSettings = await GetScrapeCrons();
   if (details.tradentDetails && details.tradentDetails != null) {
     productDetails.tradentDetails = {};
     productDetails.tradentDetails = await mapper.MapFormData(
@@ -576,7 +579,7 @@ export async function saveRootDetails(req: Request, res: Response) {
   const mpidTrimmed = mpid.trim();
 
   const regularCronSettingsDetails = await GetCronSettingsList();
-  const scrapeOnlyCronSettingsDetails = await mongoMiddleware.GetScrapeCrons();
+  const scrapeOnlyCronSettingsDetails = await GetScrapeCrons();
   const linkedRegularCronName = regularCronSettingsDetails.find(
     (x: any) => x.CronId == rootDetailsForPayload.cronGroup,
   )?.CronName;

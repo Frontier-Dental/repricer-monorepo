@@ -19,6 +19,7 @@ import {
   GetCronSettingsList,
   GetSlowCronDetails,
   GetFilteredCrons,
+  GetScrapeCrons,
 } from "../services/mysql-v2";
 
 let _contextLog: any = null;
@@ -1153,7 +1154,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
     // Only fetch minimal data needed for dropdowns
     const cronSettingsBase = await GetCronSettingsList();
     const slowCronSettings = await GetSlowCronDetails();
-    const scrapeOnlyCronSettings = await mongoMiddleware.GetScrapeCrons();
+    const scrapeOnlyCronSettings = await GetScrapeCrons();
     // Combine all cron settings
     let cronSettings = _.concat(
       cronSettingsBase,
@@ -1204,7 +1205,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   // Normal search flow - fetch all data
   const cronSettingsBase = await GetCronSettingsList();
   const slowCronSettings = await GetSlowCronDetails();
-  const scrapeOnlyCronSettings = await mongoMiddleware.GetScrapeCrons();
+  const scrapeOnlyCronSettings = await GetScrapeCrons();
   const cronStatus = await mongoMiddleware.GetLatestCronStatus();
 
   // Combine all cron settings
