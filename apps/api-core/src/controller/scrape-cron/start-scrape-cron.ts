@@ -34,10 +34,10 @@ export async function startScrapeCronLogic() {
                 console.error(`Error running ${cronDetail.CronName}:`, error);
               }
             },
-            { scheduled: JSON.parse(cronDetail.status) },
+            { scheduled: JSON.parse(cronDetail.CronStatus) },
           );
-          if (JSON.parse(cronDetail.status)) {
-            console.log(`Started ${cronDetail.CronName}`);
+          if (JSON.parse(cronDetail.CronStatus)) {
+            console.info(`Started ${cronDetail.CronName}`);
           }
         } catch (exception) {
           console.error(

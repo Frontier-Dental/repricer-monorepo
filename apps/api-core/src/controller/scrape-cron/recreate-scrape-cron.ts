@@ -41,9 +41,9 @@ export async function recreateScrapeCron(
           console.error(`Error running ${details.CronName}:`, error);
         }
       },
-      { scheduled: JSON.parse(details.status) },
+      { scheduled: JSON.parse(details.CronStatus) },
     );
-    console.log(`Re-created ${jobName} with new details at ${new Date()}`);
+    console.info(`Re-created ${jobName} with new details at ${new Date()}`);
 
     return res.json({
       status: true,
