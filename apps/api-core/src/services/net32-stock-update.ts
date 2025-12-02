@@ -46,11 +46,6 @@ fetchProductsFromMiniErpCron = schedule(
       console.error(`Error fetching products from mini erp: ${errorMessage}`);
     }
   },
-  {
-    scheduled: true,
-    timezone: "UTC",
-    runOnInit: true,
-  },
 );
 
 net32StockUpdateCron = schedule(
@@ -61,11 +56,6 @@ net32StockUpdateCron = schedule(
     if (!success) {
       console.error("Failed to update net32 stock");
     }
-  },
-  {
-    scheduled: true,
-    timezone: "UTC",
-    runOnInit: true,
   },
 );
 
@@ -86,6 +76,7 @@ async function updateNet32Stock(): Promise<boolean> {
       updateProductQuantityRequest,
     );
     if (results[0].success) {
+      console.log("Updated net32 stock for item", item);
       await UpdateWaitlistStatus(item.id!, "success");
       await UpdateVendorStock(item.vendor_name, item.mp_id, item.new_inventory);
     } else {
