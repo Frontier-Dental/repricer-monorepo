@@ -266,5 +266,13 @@
   {
     "cronId": "02fbec5e287c95ccd463ed1d9bb1e8b4",
     "cronVariable": "_SOC30Cron"
+  },
+  {
+    "cronId": "MiniErpFetchCron",
+    "cronVariable": "MiniErpFetchCron"
+  },
+  {
+    "cronId": "StockUpdateCron",
+    "cronVariable": "StockUpdateCron"
   }
 ]
