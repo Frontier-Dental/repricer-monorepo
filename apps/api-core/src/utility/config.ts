@@ -256,8 +256,6 @@ const envSchema = z.object({
   MINI_ERP_BASE_URL: z.string(),
   MINI_ERP_USERNAME: z.string(),
   MINI_ERP_PASSWORD: z.string(),
-  STOCK_UPDATE_CRON_EXP: z.string(),
-  MINI_ERP_DATA_CRON_EXP: z.string(),
   SQL_WAITLIST: z.string().default("waitlist"),
   MINI_ERP_DATA_PAGE_SIZE: z.coerce.number().default(1000),
   MINI_ERP_DATA_HOURS_SINCE_UPDATE: z.coerce.number().default(100),
