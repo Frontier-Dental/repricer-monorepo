@@ -25,6 +25,7 @@ import { ipHealthController } from "../controllers/ip-health";
 import { monitorSenseController } from "../controllers/monitor-sense";
 import { v2AlgoRouter } from "./v2-algo";
 import { waitlistRouter } from "./waitlist";
+import { miniErpRouter } from "./mini-erp";
 
 const router = Express.Router();
 
@@ -48,6 +49,7 @@ router.use("/monitor", monitorRouter);
 router.use("/app-log", appLogRouter);
 router.use("/scrape", scrapeLogsRouter);
 router.use("/waitlist", waitlistRouter);
+router.use("/mini-erp", miniErpRouter);
 router.use(storageSenseController);
 router.use(notifyController);
 router.use(ipHealthController);

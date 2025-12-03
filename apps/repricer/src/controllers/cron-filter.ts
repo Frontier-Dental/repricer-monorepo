@@ -17,6 +17,7 @@ import {
   GetFilteredCrons,
   ToggleFilterCronStatus,
   UpsertFilterCronSettings,
+  GetMiniErpCronDetails,
 } from "../services/mysql-v2";
 
 export async function GetFilterCron(req: Request, res: Response) {
@@ -105,10 +106,88 @@ export async function GetFilterCron(req: Request, res: Response) {
     item.ThresholdReached = false; //await MapperHelper.GetIsStepReached(item, item.AlternateProxyProvider.length-1);
     item.CloseToThresholdReached = false; //await MapperHelper.GetIsStepReached(item, item.AlternateProxyProvider.length - 2);
   }
+  let miniErpCronDetails = await GetMiniErpCronDetails();
+  if (miniErpCronDetails) {
+    for (let item of miniErpCronDetails) {
+      item.lastUpdatedBy = await SessionHelper.GetAuditValue(
+        item as any,
+        "U_NAME",
+      );
+      item.lastUpdatedOn = await SessionHelper.GetAuditValue(
+        item as any,
+        "U_TIME",
+      );
+      item.UpdatedTime = moment(item.UpdatedTime).format("DD-MM-YYYY HH:mm:ss");
+      item.ProxyProvider_1 = await MapperHelper.GetAlternateProxyProviderId(
+        item,
+        1,
+      );
+      item.ProxyProvider_2 = await MapperHelper.GetAlternateProxyProviderId(
+        item,
+        2,
+      );
+      item.ProxyProvider_3 = await MapperHelper.GetAlternateProxyProviderId(
+        item,
+        3,
+      );
+      item.ProxyProvider_4 = await MapperHelper.GetAlternateProxyProviderId(
+        item,
+        4,
+      );
+      item.ProxyProvider_5 = await MapperHelper.GetAlternateProxyProviderId(
+        item,
+        5,
+      );
+      item.ProxyProvider_6 = await MapperHelper.GetAlternateProxyProviderId(
+        item,
+        6,
+      );
+      item.ProxyProvider_1_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider_1,
+        );
+      item.ProxyProvider_2_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider_2,
+        );
+      item.ProxyProvider_3_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider_3,
+        );
+      item.ProxyProvider_4_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider_4,
+        );
+      item.ProxyProvider_5_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider_5,
+        );
+      item.ProxyProvider_6_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider_6,
+        );
+      item.ProxyProvider_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider,
+        );
+      item.ThresholdReached = false;
+      item.CloseToThresholdReached = false;
+    }
+  }
+  console.log(miniErpCronDetails, "miniErpCronDetails>>>>>");
+
   res.render("pages/filter/filteredList", {
     configItems: configItems,
     slowCronData: slowCronDetails,
     filterCronData: filterCronDetails,
+    miniErpCronData: miniErpCronDetails || [],
     groupName: "filter",
     userRole: (req as any).session.users_id.userRole,
   });
