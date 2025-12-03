@@ -69,6 +69,7 @@ async function loginToMiniErp(): Promise<MiniErpLoginResponse | undefined> {
  */
 export async function getProductsFromMiniErp(): Promise<boolean> {
   try {
+    console.log(`Fetching products from Mini ERP cron at ${new Date()}`);
     const loginResponse = await loginToMiniErp();
     if (!loginResponse?.access_token) {
       console.error("Failed to obtain access token from Mini ERP");
