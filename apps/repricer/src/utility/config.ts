@@ -265,6 +265,10 @@ export const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
+  MINI_ERP_CRON_TOGGLE_STATUS_ENDPOINT: z
+    .string()
+    .default("/mini_erp/toggleCronStatus"),
+  MINI_ERP_CRON_RECREATE_ENDPOINT: z.string().default("/mini_erp/recreate"),
 });
 
 export function validateConfig() {
