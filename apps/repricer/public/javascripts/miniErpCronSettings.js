@@ -81,7 +81,7 @@ function switchOffMiniErpCron(cronId) {
         }
       },
       error: function () {
-        alert("Oops unable to connect with server !!");
+        showErrorToast("Oops unable to connect with server !!");
       },
     });
   }
@@ -112,7 +112,7 @@ function switchOnMiniErpCron(cronId) {
         }
       },
       error: function () {
-        alert("Oops unable to connect with server!!");
+        showErrorToast("Oops unable to connect with server!!");
       },
     });
   }

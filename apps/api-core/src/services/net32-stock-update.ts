@@ -29,7 +29,7 @@ export async function updateNet32Stock(): Promise<boolean> {
       mpid: item.mp_id,
       vendorData: [vendorData],
     };
-    await delay(5); // delay to avoid rate limiting
+    await delay(3); // delay to avoid rate limiting
     const results = await processUpdateProductQuantities(
       updateProductQuantityRequest,
     );
@@ -37,7 +37,6 @@ export async function updateNet32Stock(): Promise<boolean> {
       `Net32 stock update status for item: ${item.mp_id} vendor: ${item.vendor_name} net32_inventory: ${item.net32_inventory} results: ${JSON.stringify(results[0])}`,
     );
     if (results[0].success) {
-      console.log("Updated net32 stock for item", item);
       await UpdateWaitlistStatus(item.id!, "success");
       await UpdateVendorStock(item.vendor_name, item.mp_id, item.new_inventory);
     } else {
@@ -50,44 +49,4 @@ export async function updateNet32Stock(): Promise<boolean> {
     }
   }
   return true;
-}
-
-/**
- * Stops the net32 stock update cron
- */
-export function stopNet32StockUpdateCron(): void {
-  if (net32StockUpdateCron) {
-    net32StockUpdateCron.stop();
-    console.log("Net32 stock update cron stopped");
-  }
-}
-
-/**
- * Stops the fetch products from mini erp cron
- */
-export function stopFetchProductsFromMiniErpCron(): void {
-  if (fetchProductsFromMiniErpCron) {
-    fetchProductsFromMiniErpCron.stop();
-    console.log("Fetch products from mini erp cron stopped");
-  }
-}
-
-/**
- * Starts the fetch products from mini erp cron
- */
-export function startFetchProductsFromMiniErpCron(): void {
-  if (fetchProductsFromMiniErpCron) {
-    fetchProductsFromMiniErpCron.start();
-    console.log("Fetch products from mini erp cron started");
-  }
-}
-
-/**
- * Starts the net32 stock update cron
- */
-export function startNet32StockUpdateCron(): void {
-  if (net32StockUpdateCron) {
-    net32StockUpdateCron.start();
-    console.log("Net32 stock update cron started");
-  }
 }

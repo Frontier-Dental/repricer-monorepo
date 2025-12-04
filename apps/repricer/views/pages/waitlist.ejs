@@ -186,7 +186,7 @@ lowVal = totalPages } else { upVal = pageNumber - 2; lowVal = pageNumber + 3 }
               </li>
               <li class="page-item p-2">
                 <a
-                  href="/waitlist?page=<%= Math.max(1, pageNumber) %><%= queryString %>"
+                  href="/waitlist?page=<%= Math.max(1, pageNumber - 1) %><%= queryString %>"
                   ><button class="btn tracknumlisting-pagination-button">
                     Previous
                   </button></a
@@ -208,7 +208,7 @@ lowVal = totalPages } else { upVal = pageNumber - 2; lowVal = pageNumber + 3 }
               <% }) %>
               <li class="page-item p-2">
                 <a
-                  href="/waitlist?page=<%= Math.min(totalPages, Number(pageNumber) + 2) %><%= queryString %>"
+                  href="/waitlist?page=<%= Math.min(totalPages, Number(pageNumber) + 1) %><%= queryString %>"
                   ><button class="btn tracknumlisting-pagination-button">
                     Next
                   </button></a

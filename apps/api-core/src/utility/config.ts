@@ -258,7 +258,7 @@ const envSchema = z.object({
   MINI_ERP_PASSWORD: z.string(),
   SQL_WAITLIST: z.string().default("waitlist"),
   MINI_ERP_DATA_PAGE_SIZE: z.coerce.number().default(1000),
-  MINI_ERP_DATA_HOURS_SINCE_UPDATE: z.coerce.number().default(100),
+  MINI_ERP_DATA_HOURS_SINCE_UPDATE: z.coerce.number().default(4),
 });
 
 export function validateConfig() {

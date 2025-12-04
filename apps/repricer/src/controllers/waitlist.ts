@@ -48,13 +48,23 @@ export async function getWaitlistItems(req: Request, res: Response) {
 }
 
 export async function deleteWaitlistItem(req: Request, res: Response) {
-  const id = parseInt(req.params.id);
-  const waitlistItem = await DeleteWaitlistItem(id);
-  res.json(waitlistItem);
+  try {
+    const id = parseInt(req.params.id);
+    const waitlistItem = await DeleteWaitlistItem(id);
+    res.json(waitlistItem);
+  } catch (error) {
+    console.error("Error in deleteWaitlistItem", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 }
 
 export async function bulkDeleteWaitlistItems(req: Request, res: Response) {
   const ids = req.body.ids;
-  const waitlistItems = await BulkDeleteWaitlistItems(ids);
-  res.json(waitlistItems);
+  try {
+    const waitlistItems = await BulkDeleteWaitlistItems(ids);
+    res.json(waitlistItems);
+  } catch (error) {
+    console.error("Error in bulkDeleteWaitlistItems", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 }
