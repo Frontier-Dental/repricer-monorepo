@@ -15,6 +15,10 @@ export const errorMiddleware = (
     console.error(err);
   }
 
+  if (err?.response?.data) {
+    console.error("Response data:", JSON.stringify(err.response.data, null, 2));
+  }
+
   if (res.headersSent) {
     return next(err);
   }
