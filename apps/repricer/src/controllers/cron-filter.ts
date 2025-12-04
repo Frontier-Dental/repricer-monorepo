@@ -181,7 +181,6 @@ export async function GetFilterCron(req: Request, res: Response) {
       item.CloseToThresholdReached = false;
     }
   }
-  console.log(miniErpCronDetails, "miniErpCronDetails>>>>>");
 
   res.render("pages/filter/filteredList", {
     configItems: configItems,

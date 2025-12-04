@@ -19,8 +19,10 @@ export async function recreateMiniErpCronHandler(
       .status(_codes.StatusCodes.NOT_FOUND)
       .send(`Cron not found for jobName : ${jobName}`);
   }
-  miniErpCrons[jobName].stop();
-  delete miniErpCrons[jobName];
+  if (miniErpCrons.hasOwnProperty(jobName)) {
+    miniErpCrons[jobName].stop();
+    delete miniErpCrons[jobName];
+  }
   miniErpCrons[jobName] = schedule(
     responseUtility.GetCronGeneric(
       details.CronTimeUnit,

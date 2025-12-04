@@ -12,6 +12,17 @@ import { applicationConfig } from "../utility/config";
 import { CacheKey } from "@repricer-monorepo/shared";
 import cronSettings from "../models/cron-settings";
 
+// Helper function to normalize numeric values for comparison
+function normalizeToNumber(value: any): number {
+  if (value == null) return 0;
+  if (typeof value === "string") {
+    const parsed = parseInt(value);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+  const num = Number(value);
+  return isNaN(num) ? 0 : num;
+}
+
 export const toggleCronStatus = async (req: Request, res: Response) => {
   const cronId = req.body.id;
   const cronStatus = parseInt(req.body.status);
@@ -56,7 +67,6 @@ export const RecreateCron = async (req: Request, res: Response) => {
 };
 
 export async function UpdateMiniErpCronExpression(req: Request, res: Response) {
-  console.log("UpdateMiniErpCronExpression", req.body);
   const payload = req.body;
   const miniErpCronResponse = await GetMiniErpCronDetails();
   if (!miniErpCronResponse || miniErpCronResponse.length === 0) {
@@ -82,6 +92,8 @@ export async function UpdateMiniErpCronExpression(req: Request, res: Response) {
       ? payload[`me_offset_${cId}`]
       : miniErpCronResponse[index].Offset;
 
+    const normalizedOffset = normalizeToNumber(offset);
+
     const cronSettingPayload: any = new cronSettings(
       cId,
       cronName,
@@ -89,39 +101,36 @@ export async function UpdateMiniErpCronExpression(req: Request, res: Response) {
       cronTime,
       null as any,
       miniErpCronResponse[index].CronStatus,
-      offset,
+      normalizedOffset,
       miniErpCronResponse[index].IpType,
       miniErpCronResponse[index].FixedIp,
       miniErpCronResponse[index].AlternateProxyProvider || [],
     );
+
+    const dbCronTime = normalizeToNumber(miniErpCronResponse[index].CronTime);
+    const dbOffset = normalizeToNumber(miniErpCronResponse[index].Offset);
 
     if (
       !_.isEqual(
         cronSettingPayload.CronName,
         miniErpCronResponse[index].CronName,
       ) ||
-      !_.isEqual(
-        cronSettingPayload.CronTime,
-        miniErpCronResponse[index].CronTime,
-      ) ||
+      !_.isEqual(cronSettingPayload.CronTime, dbCronTime) ||
       !_.isEqual(
         cronSettingPayload.CronTimeUnit,
         miniErpCronResponse[index].CronTimeUnit,
       ) ||
-      !_.isEqual(cronSettingPayload.Offset, miniErpCronResponse[index].Offset)
+      !_.isEqual(cronSettingPayload.Offset, dbOffset)
     ) {
       updatedList.push(cronSettingPayload as unknown as never);
     }
     if (
-      !_.isEqual(
-        cronSettingPayload.CronTime,
-        miniErpCronResponse[index].CronTime,
-      ) ||
+      !_.isEqual(cronSettingPayload.CronTime, dbCronTime) ||
       !_.isEqual(
         cronSettingPayload.CronTimeUnit,
         miniErpCronResponse[index].CronTimeUnit,
       ) ||
-      !_.isEqual(cronSettingPayload.Offset, miniErpCronResponse[index].Offset)
+      !_.isEqual(cronSettingPayload.Offset, dbOffset)
     ) {
       recreatePayload.push(cronSettingPayload.CronId as unknown as never);
     }
