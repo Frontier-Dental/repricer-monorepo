@@ -983,7 +983,7 @@ export async function UpdateWaitlistStatus(
     const knex = getKnexInstance();
     await knex(applicationConfig.SQL_WAITLIST!)
       .where("id", id)
-      .update({ api_status: status, message: message });
+      .update({ api_status: status, message: message, updated_at: new Date() });
   } catch (error) {
     console.log("Error in UpdateWaitlistStatus", id, status, message, error);
     throw error;
