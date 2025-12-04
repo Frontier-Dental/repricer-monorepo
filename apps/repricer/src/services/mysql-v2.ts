@@ -238,7 +238,7 @@ export async function GetCronSettingsList() {
     CacheKey.CRON_SETTINGS_LIST,
   );
   if (cronSettingsList != null) {
-    // Don't disconnect - keep the singleton connection alive for other operations
+    await cacheClient.disconnect();
     return cronSettingsList;
   }
   let cronSettingsDetails = null;
@@ -248,7 +248,7 @@ export async function GetCronSettingsList() {
     cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
     await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, cronSettingsDetails); // Cache for 1 hour
   }
-  // Don't disconnect - keep the singleton connection alive for other operations
+  await cacheClient.disconnect();
   return cronSettingsDetails;
 }
 
@@ -311,7 +311,7 @@ export async function UpdateCronSettingsList(payload: any, req: any) {
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
   await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
   await cacheClient.delete(CacheKey.SCRAPE_CRON_DETAILS);
-  // Don't disconnect - keep the singleton connection alive for other operations
+  await cacheClient.disconnect();
 }
 
 export async function ToggleCronStatus(
