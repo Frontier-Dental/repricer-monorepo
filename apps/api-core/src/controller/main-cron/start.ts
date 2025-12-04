@@ -10,10 +10,6 @@ import * as _codes from "http-status-codes";
 import * as dbHelper from "../../utility/mongo/db-helper";
 import { BadRequest } from "http-errors";
 import { UpdateCronSettings } from "../../utility/mysql/mysql-v2";
-import {
-  startFetchProductsFromMiniErpCron,
-  startNet32StockUpdateCron,
-} from "../../services/net32-stock-update";
 
 export async function startCronHandler(
   req: Request,
@@ -22,16 +18,6 @@ export async function startCronHandler(
   const { jobName, cronId } = req.body;
   if (jobName === "Cron-422") {
     startError422Cron();
-    return res
-      .status(_codes.StatusCodes.OK)
-      .send(`Cron job started successfully for jobName : ${jobName}`);
-  } else if (jobName === "net32StockUpdateCron") {
-    startNet32StockUpdateCron();
-    return res
-      .status(_codes.StatusCodes.OK)
-      .send(`Cron job started successfully for jobName : ${jobName}`);
-  } else if (jobName === "fetchProductsFromMiniErpCron") {
-    startFetchProductsFromMiniErpCron();
     return res
       .status(_codes.StatusCodes.OK)
       .send(`Cron job started successfully for jobName : ${jobName}`);

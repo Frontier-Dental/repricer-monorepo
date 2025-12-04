@@ -4,10 +4,6 @@ import * as _codes from "http-status-codes";
 import { CacheKeyName } from "../../resources/cache-key-name";
 import * as cacheHelper from "../../utility/cache-helper";
 import { BadRequest } from "http-errors";
-import {
-  stopFetchProductsFromMiniErpCron,
-  stopNet32StockUpdateCron,
-} from "../../services/net32-stock-update";
 
 export async function stopCronHandler(
   req: Request,
@@ -16,10 +12,6 @@ export async function stopCronHandler(
   const { jobName } = req.body;
   if (jobName === "Cron-422") {
     stop422Cron();
-  } else if (jobName === "net32StockUpdateCron") {
-    stopNet32StockUpdateCron();
-  } else if (jobName === "fetchProductsFromMiniErpCron") {
-    stopFetchProductsFromMiniErpCron();
   } else {
     const cronName = getMainCronNameFromJobName(jobName);
     if (!cronName) {
