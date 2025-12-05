@@ -43,26 +43,11 @@ class CacheClient {
     return CacheClient.instance;
   }
 
-  public async ensureConnected(): Promise<void> {
-    try {
-      if (!this.client.isOpen) {
-        console.debug("Redis client is not connected, connecting...");
-        await this.client.connect();
-        console.debug("✅ Redis client connected successfully");
-      } else {
-        console.debug("✅ Redis client already connected");
-      }
-    } catch (error) {
-      console.error("❌ Error ensuring connected to Redis:", error);
-    }
-  }
-
   public async set<T>(
     key: string,
     value: T,
     ttlInSeconds?: number,
   ): Promise<void> {
-    await this.ensureConnected();
     const serialized = JSON.stringify(value);
     if (ttlInSeconds) {
       await this.client.setEx(key, ttlInSeconds, serialized);
@@ -72,24 +57,20 @@ class CacheClient {
   }
 
   public async get<T>(key: string): Promise<T | null> {
-    await this.ensureConnected();
     const data = await this.client.get(key);
     return data ? (JSON.parse(data) as T) : null;
   }
 
   public async delete(key: string): Promise<number> {
-    await this.ensureConnected();
     return this.client.del(key);
   }
 
   public async exists(key: string): Promise<boolean> {
-    await this.ensureConnected();
     const result = await this.client.exists(key);
     return result === 1;
   }
 
   public async flushAll(): Promise<void> {
-    await this.ensureConnected();
     await this.client.flushAll();
   }
 
@@ -99,7 +80,6 @@ class CacheClient {
   public async getAllKeys(
     withValues = false,
   ): Promise<string[] | Record<string, unknown>> {
-    await this.ensureConnected();
     const keys: string[] = [];
     let cursor = "0"; // must be string, not number
 
@@ -123,12 +103,8 @@ class CacheClient {
   }
 
   public async disconnect(): Promise<void> {
-    if (this.client.isOpen === true) {
-      console.debug("Disconnected Redis client");
-      await this.client.quit();
-    } else {
-      console.debug("Redis client already disconnected");
-    }
+    console.debug("Disconnected Redis client");
+    await this.client.quit();
   }
 }
 
