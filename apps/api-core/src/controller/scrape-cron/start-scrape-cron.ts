@@ -33,9 +33,9 @@ export async function startScrapeCronLogic() {
               console.error(`Error running ${cronDetail.CronName}:`, error);
             }
           },
-          { scheduled: JSON.parse(cronDetail.status) },
+          { scheduled: JSON.parse(cronDetail.CronStatus) },
         );
-        if (JSON.parse(cronDetail.status)) {
+        if (JSON.parse(cronDetail.CronStatus)) {
           console.log(`Started ${cronDetail.CronName}`);
         }
       }

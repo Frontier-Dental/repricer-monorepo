@@ -253,6 +253,13 @@ const envSchema = z.object({
   REPRICER_ENCRYPTION_KEY: z
     .string()
     .default("3v9sKkLZ2z1Yq9eU8 + XgJk1YbZ9n3vLQ0mF9ZkQhJxgE="),
+  MINI_ERP_BASE_URL: z.string(),
+  MINI_ERP_USERNAME: z.string(),
+  MINI_ERP_PASSWORD: z.string(),
+  SQL_WAITLIST: z.string().default("waitlist"),
+  MINI_ERP_DATA_PAGE_SIZE: z.coerce.number().default(1000),
+  MINI_ERP_DATA_HOURS_SINCE_UPDATE: z.coerce.number().default(4),
+  NET32_UPDATE_QUANTITY_DELAY: z.coerce.number().default(3),
 });
 
 export function validateConfig() {
