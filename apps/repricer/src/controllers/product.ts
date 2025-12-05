@@ -797,18 +797,18 @@ async function GetUniqueProductIds(collatedList: any[]) {
 }
 
 export async function stopAllCron(req: Request, res: Response) {
-  var cronStopResponse: any = await httpMiddleware.stopAllCron();
-  if (cronStopResponse && cronStopResponse.status == 200) {
-    const cronSettings = await GetCronSettingsList();
-    if (cronSettings && cronSettings.length > 0) {
-      for (const cron of cronSettings) {
-        if (cron.IsHidden) {
-          // do nothing
-        } else {
-          await ToggleCronStatus(cron.CronId, false as any, req);
-        }
+  const cronSettings = await GetCronSettingsList();
+  if (cronSettings && cronSettings.length > 0) {
+    for (const cron of cronSettings) {
+      if (cron.IsHidden) {
+        // do nothing
+      } else {
+        await ToggleCronStatus(cron.CronId, false as any, req);
       }
     }
+  }
+  var cronStopResponse: any = await httpMiddleware.stopAllCron();
+  if (cronStopResponse && cronStopResponse.status == 200) {
     return res.json({
       status: true,
       message: cronStopResponse.data,

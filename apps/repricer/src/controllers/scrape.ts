@@ -157,14 +157,14 @@ export const UpdateScrapeCronExp = async (req: Request, res: Response) => {
         scrapeSettingPayload.CronTimeUnit,
         scrapeCronDetails[en].CronTimeUnit,
       ) ||
-      !_.isEqual(scrapeSettingPayload.Offset, offset) ||
+      !_.isEqual(scrapeSettingPayload.Offset.toString(), offset.toString()) ||
       !_.isEqual(
         scrapeSettingPayload.ProxyProvider,
         scrapeCronDetails[en].ProxyProvider,
       ) ||
       !_.isEqual(
-        altProxyProviderDetails,
-        scrapeCronDetails[en].AlternateProxyProvider,
+        JSON.stringify(altProxyProviderDetails),
+        JSON.stringify(scrapeCronDetails[en].AlternateProxyProvider),
       )
     ) {
       updatedList.push(scrapeSettingPayload as never);

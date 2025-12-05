@@ -1,6 +1,5 @@
 import { createClient, RedisClientType } from "redis";
 import Encrypto from "../utility/encrypto";
-
 class CacheClient {
   private static instance: CacheClient;
   private client: RedisClientType;
@@ -30,7 +29,7 @@ class CacheClient {
     });
 
     this.client.connect().then(() => {
-      console.info("✅ Redis connected successfully");
+      //console.info("✅ Redis connected successfully");
     });
   }
 
@@ -49,6 +48,7 @@ class CacheClient {
     ttlInSeconds?: number,
   ): Promise<void> {
     const serialized = JSON.stringify(value);
+    await this.ensureConnected();
     if (ttlInSeconds) {
       await this.client.setEx(key, ttlInSeconds, serialized);
     } else {
@@ -57,21 +57,31 @@ class CacheClient {
   }
 
   public async get<T>(key: string): Promise<T | null> {
+    await this.ensureConnected();
     const data = await this.client.get(key);
     return data ? (JSON.parse(data) as T) : null;
   }
 
   public async delete(key: string): Promise<number> {
+    await this.ensureConnected();
     return this.client.del(key);
   }
 
   public async exists(key: string): Promise<boolean> {
+    await this.ensureConnected();
     const result = await this.client.exists(key);
     return result === 1;
   }
 
   public async flushAll(): Promise<void> {
+    await this.ensureConnected();
     await this.client.flushAll();
+  }
+
+  private async ensureConnected() {
+    if (!this.client.isOpen) {
+      await this.client.connect();
+    }
   }
 
   /**
@@ -103,8 +113,12 @@ class CacheClient {
   }
 
   public async disconnect(): Promise<void> {
-    console.debug("Disconnected Redis client");
-    await this.client.quit();
+    if (this.client.isOpen === true) {
+      //console.debug("Disconnected Redis client");
+      await this.client.quit();
+    } else {
+      //console.debug("Redis client already disconnected");
+    }
   }
 }
 

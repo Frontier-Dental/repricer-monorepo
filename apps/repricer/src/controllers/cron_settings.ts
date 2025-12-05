@@ -236,7 +236,7 @@ export async function updateCronSettings(req: Request, res: Response) {
         cronSettingPayload.CronTimeUnit,
         cronSettingsResponse[$cr as any].CronTimeUnit,
       ) ||
-      !_.isEqual(cronSettingPayload.Offset, offset) ||
+      !_.isEqual(cronSettingPayload.Offset.toString(), offset.toString()) ||
       !_.isEqual(
         cronSettingPayload.ProxyProvider,
         cronSettingsResponse[$cr as any].ProxyProvider,
@@ -250,8 +250,8 @@ export async function updateCronSettings(req: Request, res: Response) {
         cronSettingsResponse[$cr as any].FixedIp,
       ) ||
       !_.isEqual(
-        alternateProxyProviderDetails,
-        cronSettingsResponse[$cr as any].AlternateProxyProvider,
+        JSON.stringify(alternateProxyProviderDetails),
+        JSON.stringify(cronSettingsResponse[$cr as any].AlternateProxyProvider),
       )
     ) {
       listOfUpdates.push(cronSettingPayload);
@@ -284,10 +284,10 @@ export async function updateCronSettings(req: Request, res: Response) {
     cron422?.IpType != payload[`ip_type_${cron422?.CronId}`] ||
     cron422?.CronTime != payload.cron_time_422 ||
     cron422?.CronTimeUnit != payload.cron_time_unit_422 ||
-    cron422?.Offset != payload.offset_422 ||
+    cron422?.Offset.toString() != payload.offset_422.toString() ||
     !_.isEqual(
-      alternateProxyProviderDetailsFor422,
-      cron422?.AlternateProxyProvider,
+      JSON.stringify(alternateProxyProviderDetailsFor422),
+      JSON.stringify(cron422?.AlternateProxyProvider),
     )
   ) {
     const cronSetting422Payload = new cronSettings(

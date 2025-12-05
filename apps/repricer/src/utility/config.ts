@@ -24,7 +24,7 @@ export const envSchema = z.object({
   HISTORY_DB: z.string().default("historyData"),
   ENV_SETTINGS: z.string().default("envsettings"),
   HISTORY_LIMIT: z.coerce.number().default(50),
-  STOP_ALL_CRON_ENDPOINT: z.string().default("1/schedule/StopAll"),
+  STOP_ALL_CRON_ENDPOINT: z.string().default("/schedule/StopAll"),
   EXPORT_STATUS: z.string().default("exportStatus"),
   START_OVERRIDE_URL_ENDPOINT: z.string().default("/schedule/startOverride"),
   HISTORY_BASE_PATH: z.string().default("/repricer-api-core/history/"),
