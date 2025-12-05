@@ -259,6 +259,7 @@ const envSchema = z.object({
   SQL_WAITLIST: z.string().default("waitlist"),
   MINI_ERP_DATA_PAGE_SIZE: z.coerce.number().default(1000),
   MINI_ERP_DATA_HOURS_SINCE_UPDATE: z.coerce.number().default(4),
+  NET32_UPDATE_QUANTITY_DELAY: z.coerce.number().default(3),
 });
 
 export function validateConfig() {

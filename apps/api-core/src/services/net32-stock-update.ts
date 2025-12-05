@@ -10,6 +10,7 @@ import {
 } from "../utility/net32/updateProductQuantity";
 import { WaitlistModel } from "../model/waitlist-model";
 import { delay } from "../utility/reprice-algo/v1/shared";
+import { applicationConfig } from "../utility/config";
 
 export async function updateNet32Stock(): Promise<boolean> {
   console.log(`Running net32 stock update cron at ${new Date()}`);
@@ -29,7 +30,7 @@ export async function updateNet32Stock(): Promise<boolean> {
       mpid: item.mp_id,
       vendorData: [vendorData],
     };
-    await delay(3); // delay to avoid rate limiting
+    await delay(applicationConfig.NET32_UPDATE_QUANTITY_DELAY);
     const results = await processUpdateProductQuantities(
       updateProductQuantityRequest,
     );
