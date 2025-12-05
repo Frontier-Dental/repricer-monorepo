@@ -13,7 +13,7 @@ import { applicationConfig } from "../utility/config";
 import * as sqlV2Service from "../services/mysql-v2";
 
 export const GetScrapeCron = async (req: Request, res: Response) => {
-  let scrapeCronDetails = await mongoMiddleware.GetScrapeCrons();
+  let scrapeCronDetails = await sqlV2Service.GetScrapeCrons();
   let configItems = await sqlV2Service.GetConfigurations(true);
   for (let item of scrapeCronDetails) {
     item.lastUpdatedBy = await SessionHelper.GetAuditValue(item, "U_NAME");
@@ -89,17 +89,16 @@ export const ToggleCronStatus = async (req: Request, res: Response) => {
   const cronId = req.body.id;
   const cronStatus = parseInt(req.body.status);
   const jobName = cronMapping.find((x) => x.cronId == cronId)?.cronVariable;
-
+  await sqlV2Service.ToggleCronStatus(
+    cronId,
+    cronStatus == 1 ? "true" : "false",
+    req,
+  );
   const response = await httpMiddleware.toggleScrapeCron({
     jobName: jobName,
     status: cronStatus,
   });
   if (response && response.status == 200) {
-    await sqlV2Service.ToggleCronStatus(
-      cronId,
-      cronStatus == 1 ? "true" : "false",
-      req,
-    );
     return res.json({
       status: true,
       message: response.data,
@@ -116,7 +115,7 @@ export const UpdateScrapeCronExp = async (req: Request, res: Response) => {
   const requestedPayload = req.body;
   const updatedList: any[] = [];
   const listOfUpdatedCronKey: any[] = [];
-  let scrapeCronDetails = await mongoMiddleware.GetScrapeCrons();
+  let scrapeCronDetails = await sqlV2Service.GetScrapeCrons();
   const normalizedRequestPayload = await normalizePayload(requestedPayload);
 
   for (const en in normalizedRequestPayload.cron_id_hdn) {
@@ -243,7 +242,7 @@ export const GetLatestPriceInfo = async (req: Request, res: Response) => {
 // ----------- Products Section ----------------------------
 
 export const GetScrapeProducts = async (req: Request, res: Response) => {
-  let scrapeCronDetails = await mongoMiddleware.GetScrapeCrons();
+  let scrapeCronDetails = await sqlV2Service.GetScrapeCrons();
   let pgNo = 0;
   let incomingFilter: any = null;
   let tags = "";
@@ -335,7 +334,7 @@ export const exportItems = async (req: Request, res: Response) => {
 export const importItems = async (req: Request, res: Response) => {
   let input = req.body;
   const auditInfo = await SessionHelper.GetAuditInfo(req);
-  const scrapeCron = await mongoMiddleware.GetScrapeCrons();
+  const scrapeCron = await sqlV2Service.GetScrapeCrons();
 
   let items: any[] = [];
   for (let k = 0; k < parseInt(input.count) - 1; k++) {

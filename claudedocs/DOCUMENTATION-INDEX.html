@@ -263,7 +263,7 @@
             <h1>📚 Documentation Index</h1>
             <p>Repricer Monorepo - Comprehensive Technical Documentation</p>
             <div class="meta-info" style="margin-top: 1rem; background: rgba(255,255,255,0.1); color: white;">
-                <strong>Last Updated:</strong> 2025-11-18 | <strong>Repository:</strong> repricer-monorepo | <strong>Total Applications:</strong> 5 + 1 Shared Package
+                <strong>Last Updated:</strong> 2025-11-26 | <strong>Repository:</strong> repricer-monorepo | <strong>Total Applications:</strong> 5 + 1 Shared Package
             </div>
         </header>
 
@@ -300,7 +300,10 @@ claudedocs/
 ├── DOCUMENTATION-INDEX.md         # This file - summary of all documentation
 ├── api-core/
 │   ├── analysis-api-core.md
-│   └── api-core-technical-documentation.html
+│   ├── api-core-technical-documentation.html
+│   ├── v1-algorithm-detailed-documentation.html
+│   ├── v1-vs-v2-algorithm-comparison.html
+│   └── v2-algorithm-detailed-documentation.html
 ├── db-migrations/
 │   ├── analysis-db-migrations.md
 │   └── db-migrations-technical-documentation.html
@@ -312,7 +315,11 @@ claudedocs/
 │   └── technical-documentation.html
 └── repricer/
     ├── analysis-repricer.md
-    └── repricer-technical-documentation.html
+    ├── repricer-technical-documentation.html
+    ├── v1-algorithm-field-guide.html
+    ├── <strong>v1-algorithm-rules-integration-guide.html</strong>  # NEW: V1 Rules with Flowchart
+    ├── v2-algorithm-field-guide.html
+    └── <strong>v2-algorithm-flowchart.html</strong>                 # NEW: V2 Interactive Flowchart
                     </pre>
                 </div>
             </section>
@@ -517,9 +524,11 @@ claudedocs/
                         <strong style="color: #3b82f6;">📚 Algorithm Deep Dive Documentation:</strong>
                         <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
                             <li><a href="repricer/v2-algorithm-field-guide.html" style="color: #2563eb; font-weight: 500;">🎯 V2 Algorithm Field-by-Field Guide</a> - Complete explanation of all 27 settings fields with business examples</li>
+                            <li><a href="repricer/v2-algorithm-flowchart.html" style="color: #10b981; font-weight: 500;">📊 V2 Algorithm Interactive Flowchart</a> - <strong>NEW:</strong> Mermaid.js diagrams with 10 phases, 12 blocking rules, 5 examples</li>
                             <li><a href="api-core/v1-vs-v2-algorithm-comparison.html" style="color: #2563eb; font-weight: 500;">⚖️ V1 vs V2 Algorithm Comparison</a> - Technical comparison and migration guide</li>
                             <li><a href="api-core/v2-algorithm-detailed-documentation.html" style="color: #2563eb; font-weight: 500;">🔬 V2 Algorithm Technical Documentation</a> - Complete technical implementation details</li>
                             <li><a href="api-core/v1-algorithm-detailed-documentation.html" style="color: #2563eb; font-weight: 500;">📜 V1 Algorithm Technical Documentation</a> - Legacy algorithm reference</li>
+                            <li><a href="repricer/v1-algorithm-rules-integration-guide.html" style="color: #f59e0b; font-weight: 500;">🔀 V1 Algorithm Rules & Integration Guide</a> - <strong>NEW:</strong> 12+ business rules, flowcharts, decision trees</li>
                         </ul>
                     </div>
 
@@ -609,6 +618,20 @@ claudedocs/
                         <p><strong>Content:</strong> Legacy V1 algorithm documentation with 4-component architecture and original business logic</p>
                         <p style="margin-top: 0.5rem;"><a href="api-core/v1-algorithm-detailed-documentation.html" style="display: inline-block; padding: 0.5rem 1rem; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">📖 Read V1 Technical Docs</a></p>
                     </div>
+
+                    <div class="feature-item" style="border-left-color: #f59e0b;">
+                        <strong>🔀 V1 Algorithm Rules & Integration Guide</strong>
+                        <p><strong>For:</strong> Developers, integration engineers, QA teams</p>
+                        <p><strong>Content:</strong> Complete V1 algorithm integration with 12+ business rules, visual flowcharts, decision trees, and code-to-rule mapping</p>
+                        <p style="margin-top: 0.5rem;"><a href="repricer/v1-algorithm-rules-integration-guide.html" style="display: inline-block; padding: 0.5rem 1rem; background: #f59e0b; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">🔀 Read V1 Rules Guide</a></p>
+                    </div>
+
+                    <div class="feature-item" style="border-left-color: #10b981;">
+                        <strong>📊 V2 Algorithm Interactive Flowchart</strong>
+                        <p><strong>For:</strong> All teams - visual learners, architects, debugging</p>
+                        <p><strong>Content:</strong> Mermaid.js interactive diagrams showing 10-phase algorithm flow, 12 blocking rules, 5 competition filters, buy-box logic, and 5 detailed examples</p>
+                        <p style="margin-top: 0.5rem;"><a href="repricer/v2-algorithm-flowchart.html" style="display: inline-block; padding: 0.5rem 1rem; background: #10b981; color: white; text-decoration: none; border-radius: 6px; font-weight: 500;">📊 View V2 Flowchart</a></p>
+                    </div>
                 </div>
 
                 <h3>Quick Reference Matrix</h3>
@@ -651,6 +674,21 @@ claudedocs/
                             <td><a href="api-core/v1-vs-v2-algorithm-comparison.html">V1 vs V2 Comparison</a></td>
                             <td><a href="db-migrations/db-migrations-user-guide.html">DB Migrations Guide</a></td>
                         </tr>
+                        <tr>
+                            <td><strong>Visual Learner</strong></td>
+                            <td><a href="repricer/v2-algorithm-flowchart.html" style="color: #10b981; font-weight: 600;">V2 Interactive Flowchart</a></td>
+                            <td><a href="repricer/v1-algorithm-rules-integration-guide.html">V1 Rules & Flowchart</a></td>
+                        </tr>
+                        <tr>
+                            <td><strong>QA/Testing</strong></td>
+                            <td><a href="repricer/v2-algorithm-flowchart.html" style="color: #10b981; font-weight: 600;">V2 Flowchart (Examples)</a></td>
+                            <td><a href="repricer/v1-algorithm-rules-integration-guide.html" style="color: #f59e0b; font-weight: 600;">V1 Rules Guide</a></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Debugging Issues</strong></td>
+                            <td><a href="repricer/v2-algorithm-flowchart.html" style="color: #10b981; font-weight: 600;">V2 Flowchart (12 Rules)</a></td>
+                            <td><a href="repricer/v1-algorithm-rules-integration-guide.html" style="color: #f59e0b; font-weight: 600;">V1 Decision Trees</a></td>
+                        </tr>
                     </tbody>
                 </table>
 
@@ -659,6 +697,14 @@ claudedocs/
                     <div class="stat-card">
                         <h4>27</h4>
                         <p>V2 Algorithm Fields Documented</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>12</h4>
+                        <p>V2 Blocking Rules (Flowchart)</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>5</h4>
+                        <p>Competition Filters</p>
                     </div>
                     <div class="stat-card">
                         <h4>4</h4>
@@ -771,7 +817,7 @@ claudedocs/
                         <p>Applications/Packages Documented</p>
                     </div>
                     <div class="stat-card">
-                        <h4>21</h4>
+                        <h4>23</h4>
                         <p>HTML Documentation Files</p>
                     </div>
                     <div class="stat-card">
@@ -930,7 +976,7 @@ claudedocs/
         </main>
 
         <footer>
-            <p><strong>Generated:</strong> 2025-11-18 | <strong>Documentation Version:</strong> 2.0</p>
+            <p><strong>Generated:</strong> 2025-11-26 | <strong>Documentation Version:</strong> 2.1</p>
             <p><strong>Monorepo:</strong> repricer-monorepo | <strong>Total Applications:</strong> 5 (api-core, db-migrations, excel-export, front-end, repricer) + 1 Package (shared)</p>
             <p style="margin-top: 1rem; opacity: 0.8;">Comprehensive user guides, technical documentation, and analysis for the repricer monorepo</p>
         </footer>

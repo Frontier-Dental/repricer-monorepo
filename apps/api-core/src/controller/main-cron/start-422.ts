@@ -17,5 +17,9 @@ export async function start422Handler(
 
 export async function start422Logic() {
   const cronSettings = await GetCronSettingsList();
-  setError422CronAndStart(cronSettings);
+  try {
+    setError422CronAndStart(cronSettings);
+  } catch (exception) {
+    console.error(`Error initialising 422 Cron || ${exception}`);
+  }
 }

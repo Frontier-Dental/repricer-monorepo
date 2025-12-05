@@ -144,7 +144,7 @@
                                                 <%= item.UpdatedTime %>
                                             </td>
                                             <td style="text-align: center;">
-                                                <% if(item.status=="true" ) { %>
+                                                <% if(item.CronStatus) { %>
                                                     <button type="button" onclick="switchOffCron('<%= item.CronId %>')"
                                                         class="btn btn-danger" style="width:70px;">STOP</button>
                                                     <% }else{ %>

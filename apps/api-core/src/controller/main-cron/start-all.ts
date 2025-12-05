@@ -20,6 +20,12 @@ export async function startAllCronLogic() {
     (x: any) => !x.IsHidden,
   )) {
     const cronName = cronSetting.CronName;
-    setCronAndStart(cronName, cronSetting);
+    try {
+      setCronAndStart(cronName, cronSetting);
+    } catch (exception) {
+      console.error(
+        `Exception while initialising Cron : ${cronName} || ${exception}`,
+      );
+    }
   }
 }

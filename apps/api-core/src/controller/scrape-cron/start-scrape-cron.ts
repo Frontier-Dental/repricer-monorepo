@@ -17,7 +17,7 @@ export async function startScrapeCron(
 export async function startScrapeCronLogic() {
   const scrapeCronDetails = await GetScrapeCronDetails();
   if (scrapeCronDetails && scrapeCronDetails.length > 0) {
-    for (var i = 0; i < scrapeCronDetails.length; i++) {
+    for (let i = 0; i < scrapeCronDetails.length; i++) {
       if (scrapeCronDetails[i]) {
         const cronDetail = scrapeCronDetails[i];
         scrapeCrons[cronDetail.CronName] = cron.schedule(
