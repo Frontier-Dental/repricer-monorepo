@@ -8,14 +8,6 @@ import { GetCacheClientOptions } from "../../client/cacheClient";
 import CacheClient from "../../client/cacheClient";
 import { CacheKey } from "@repricer-monorepo/shared";
 
-export async function GetProxySwitchCronDetails(ignoreCache = false) {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.PROXY_SWITCHER_CRON_COLLECTION_NAME!)
-    .find()
-    .toArray();
-}
-
 export async function InitCronStatusAsync(payload: any) {
   const dbo = await getMongoDb();
   const { insertedId } = await dbo

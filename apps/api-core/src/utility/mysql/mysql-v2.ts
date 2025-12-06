@@ -250,3 +250,28 @@ export async function GetFilterCronDetailsByName($cronName: any) {
   const filterCronDetails = await GetFilteredCrons();
   return filterCronDetails.find((x: any) => x.cronName == $cronName);
 }
+
+export async function GetProxySwitchCronDetails(ignoreCache = false) {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const proxySwitchCronDetails = await cacheClient.get(
+    CacheKey.PROXY_SWITCH_CRON_DETAILS,
+  );
+  if (proxySwitchCronDetails != null && !ignoreCache) {
+    await cacheClient.disconnect();
+    return proxySwitchCronDetails;
+  }
+  let cronSettingsDetails = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetProxySwitcherCronList()`);
+  if (result && result[0] && result[0].length > 0) {
+    cronSettingsDetails = result[0][0];
+    await cacheClient.set(
+      CacheKey.PROXY_SWITCH_CRON_DETAILS,
+      cronSettingsDetails,
+    ); // Cache for 1 hour
+  }
+  await cacheClient.disconnect();
+  return cronSettingsDetails;
+}
