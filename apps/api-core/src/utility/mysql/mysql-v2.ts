@@ -320,7 +320,7 @@ export async function ResetProxyFailureDetails(proxyProvId: any, userId: any) {
     .where({ ProxyProviderId: parseInt(proxyProvId) })
     .update({
       LastResetTime: new Date(),
-      InitTime: new Date("1970-01-01"),
+      InitTime: new Date("1990-01-01"),
       FailureCount: 0,
       UpdatedBy: userId,
       UpdatedTime: new Date(),
