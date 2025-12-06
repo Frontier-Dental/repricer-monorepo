@@ -268,7 +268,7 @@ export function ToCronSettingsModel(incomingSqlData: any): any {
   return mappedList;
 }
 
-export function ToFilterSettingsModel(incomingSqlData: any): any {
+export function MapWithAuditInfo(incomingSqlData: any): any {
   let mappedItem: any = [];
   if (!incomingSqlData) {
     return mappedItem;
