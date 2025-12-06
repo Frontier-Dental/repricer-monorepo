@@ -239,7 +239,7 @@ export async function GetFilteredCrons(ignoreCache = false) {
   const db = getKnexInstance();
   const result = await db.raw(`call GetFilterCronList()`);
   if (result && result[0] && result[0].length > 0) {
-    cronSettingsDetails = await SqlMapper.ToFilterSettingsModel(result[0][0]);
+    cronSettingsDetails = await SqlMapper.MapWithAuditInfo(result[0][0]);
     await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, cronSettingsDetails); // Cache for 1 hour
   }
   await cacheClient.disconnect();
@@ -274,4 +274,55 @@ export async function GetProxySwitchCronDetails(ignoreCache = false) {
   }
   await cacheClient.disconnect();
   return cronSettingsDetails;
+}
+
+export async function GetProxyFailureDetails() {
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetProxyFailureDetails()`);
+  if (result && result[0] && result[0].length > 0) {
+    return await SqlMapper.MapWithAuditInfo(result[0][0]);
+  }
+  return [];
+}
+
+export async function UpdateProxyFailureDetails(proxyProvId: any, count: any) {
+  const db = getKnexInstance();
+  await db("proxy_failure_details")
+    .where({ ProxyProviderId: parseInt(proxyProvId) })
+    .update({
+      FailureCount: parseInt(count),
+      UpdatedTime: new Date(),
+    });
+}
+
+export async function GetProxyFailureDetailsByProxyProviderId(
+  proxyProvId: any,
+) {
+  const proxyProviderFailureDetails = await GetProxyFailureDetails();
+  return proxyProviderFailureDetails.find(
+    (x: any) => x.proxyProvider == proxyProvId,
+  );
+}
+
+export async function InitProxyFailureDetails(proxyProvId: any, count: any) {
+  const db = getKnexInstance();
+  await db("proxy_failure_details")
+    .where({ ProxyProviderId: parseInt(proxyProvId) })
+    .update({
+      FailureCount: parseInt(count),
+      InitTime: new Date(),
+    });
+}
+
+export async function ResetProxyFailureDetails(proxyProvId: any, userId: any) {
+  const db = getKnexInstance();
+  await db("proxy_failure_details")
+    .where({ ProxyProviderId: parseInt(proxyProvId) })
+    .update({
+      LastResetTime: new Date(),
+      InitTime: new Date("1970-01-01"),
+      FailureCount: 0,
+      UpdatedBy: userId,
+      UpdatedTime: new Date(),
+    });
 }

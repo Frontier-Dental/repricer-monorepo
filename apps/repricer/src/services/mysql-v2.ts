@@ -437,7 +437,7 @@ export async function GetFilteredCrons() {
   const db = getKnexInstance();
   const result = await db.raw(`call GetFilterCronList()`);
   if (result && result[0] && result[0].length > 0) {
-    cronSettingsDetails = await SqlMapper.ToFilterSettingsModel(result[0][0]);
+    cronSettingsDetails = await SqlMapper.MapWithAuditInfo(result[0][0]);
     await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, cronSettingsDetails); // Cache for 1 hour
   }
   await cacheClient.disconnect();
@@ -461,3 +461,23 @@ export async function ToggleFilterCronStatus(
   await cacheClient.delete(CacheKey.FILTER_CRON_DETAILS);
   await cacheClient.disconnect();
 }
+
+export const GetProxyFailureDetails = async () => {
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetProxyFailureDetails()`);
+  if (result && result[0] && result[0].length > 0) {
+    return await SqlMapper.MapWithAuditInfo(result[0][0]);
+  }
+  return [];
+};
+
+export const UpdateThresholdValue = async (payload: any, updatedBy: string) => {
+  const db = getKnexInstance();
+  await db("proxy_failure_details")
+    .where({ ProxyProviderId: parseInt(payload.proxyProvider) })
+    .update({
+      ThresholdCount: parseInt(payload.value),
+      UpdatedBy: updatedBy,
+      UpdatedTime: new Date(),
+    });
+};

@@ -43,21 +43,21 @@ export const ExecuteCounter = async (
   proxyProviderId: number,
 ): Promise<void> => {
   const existingRecord =
-    await dbHelper.GetProxyFailureDetailsByProxyProviderId(proxyProviderId);
+    await sqlV2Service.GetProxyFailureDetailsByProxyProviderId(proxyProviderId);
 
   // Item Does not exist. So create the Item object with Count as 1
   if (existingRecord && existingRecord.failureCount == 0) {
     console.log(
       `PROXY SWITCH COUNTER INIT : PROXY_PROV - ${proxyProviderId} || INIT_TIME : ${new Date()}`,
     );
-    await dbHelper.InitProxyFailureDetails(proxyProviderId, 1);
+    await sqlV2Service.InitProxyFailureDetails(proxyProviderId, 1);
   }
   // Cache exist, so update the counter
   else {
     console.log(
       `PROXY SWITCH COUNTER UPDATE : PROXY_PROV - ${proxyProviderId} || INIT_TIME : ${existingRecord?.initTime} || FAILURE_COUNT : ${existingRecord?.failureCount}`,
     );
-    await dbHelper.UpdateProxyFailureDetails(
+    await sqlV2Service.UpdateProxyFailureDetails(
       proxyProviderId,
       existingRecord?.failureCount + 1,
     );
@@ -65,14 +65,14 @@ export const ExecuteCounter = async (
 };
 
 export const ResetFailureCounter = async (): Promise<void> => {
-  const proxyFailureDetails = await dbHelper.GetProxyFailureDetails();
+  const proxyFailureDetails = await sqlV2Service.GetProxyFailureDetails();
   for (const record of proxyFailureDetails || []) {
     await ResetCounterForProvider(record as any, "SYSTEM", false);
   }
 };
 
 export const SwitchProxy = async (): Promise<void> => {
-  const proxyFailureDetails = await dbHelper.GetProxyFailureDetails();
+  const proxyFailureDetails = await sqlV2Service.GetProxyFailureDetails();
   for (const record of proxyFailureDetails || []) {
     if (record.failureCount > 0) {
       const failureCountThreshold = parseInt(record.thresholdCount.toString());
@@ -142,7 +142,7 @@ export const ResetProxyCounterForProvider = async (
   userId: string,
 ): Promise<void> => {
   const proxyFailureDetails =
-    await dbHelper.GetProxyFailureDetailsByProxyProviderId(providerId);
+    await sqlV2Service.GetProxyFailureDetailsByProxyProviderId(providerId);
   await ResetCounterForProvider(proxyFailureDetails as any, userId, true);
 };
 
@@ -227,7 +227,7 @@ async function ResetCounterForProvider(
     console.log(
       `PROXY SWITCH COUNTER RESET : Resetting Counter for ${providerIdDetails.providerName} with failure Count : ${providerIdDetails.failureCount} and Init Time : ${providerIdDetails.initTime} || Force Reset : TRUE`,
     );
-    await dbHelper.ResetProxyFailureDetails(
+    await sqlV2Service.ResetProxyFailureDetails(
       providerIdDetails.proxyProvider,
       userId,
     );
@@ -239,7 +239,7 @@ async function ResetCounterForProvider(
     console.log(
       `PROXY SWITCH COUNTER RESET : Resetting Counter for ${providerIdDetails.providerName} with failure Count : ${providerIdDetails.failureCount} and Init Time : ${providerIdDetails.initTime}`,
     );
-    await dbHelper.ResetProxyFailureDetails(
+    await sqlV2Service.ResetProxyFailureDetails(
       providerIdDetails.proxyProvider,
       userId,
     );

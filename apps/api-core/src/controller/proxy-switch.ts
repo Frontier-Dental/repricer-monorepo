@@ -44,7 +44,9 @@ export async function startProxySwitchCronLogic() {
             );
           }
         },
-        { scheduled: JSON.parse(proxySwitchCronDetails[0].status) },
+        {
+          scheduled: JSON.parse(proxySwitchCronDetails[0].status),
+        },
       );
       if (JSON.parse(proxySwitchCronDetails[0].status)) {
         console.log(

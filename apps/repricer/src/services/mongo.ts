@@ -993,16 +993,6 @@ export const InsertOrUpdateProductWithQuery = async (mpid: any, query: any) => {
   return mongoResult;
 };
 
-export const GetProxyFailureDetails = async () => {
-  let mongoResult: any = null;
-  const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.PROXY_FAILURE_COLLECTION!)
-    .find()
-    .toArray();
-  return mongoResult;
-};
-
 export const InsertUserLogin = async (userDetails: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
@@ -1020,26 +1010,6 @@ export const UpdateUserPassword = async (_userName: any, newPassword: any) => {
     .findOneAndUpdate(
       { userName: _userName },
       { $set: { userPassword: newPassword } },
-    );
-  return mongoResult;
-};
-
-export const UpdateProxyProviderThresholdValue = async (
-  payload: any,
-  req: any,
-) => {
-  let mongoResult: any = null;
-  const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.PROXY_FAILURE_COLLECTION!)
-    .findOneAndUpdate(
-      { proxyProvider: parseInt(payload.proxyProvider) },
-      {
-        $set: {
-          thresholdCount: parseInt(payload.value),
-          AuditInfo: await SessionHelper.GetAuditInfo(req),
-        },
-      },
     );
   return mongoResult;
 };
