@@ -502,42 +502,6 @@ export const GetTotalHistoryCount = async () => {
   return dbo.collection(applicationConfig.HISTORY_DB).countDocuments();
 };
 
-export const InitExportStatus = async (payload: any) => {
-  const dbo = await getMongoDb();
-  const { insertedId } = await dbo
-    .collection(applicationConfig.EXPORT_STATUS)
-    .insertOne(payload);
-  return insertedId.toString();
-};
-
-export const UpdateExportStatusV2 = async (payload: any) => {
-  const dbo = await getMongoDb();
-  return dbo.collection(applicationConfig.EXPORT_STATUS).findOneAndUpdate(
-    { fileName: payload.fileName },
-    {
-      $set: {
-        status: payload.status,
-        updatedTime: new Date(),
-      },
-    },
-  );
-};
-
-export const GetExportFileStatus = async (_fileName: any) => {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.EXPORT_STATUS)
-    .findOne({ fileName: _fileName });
-};
-
-export const GetExportFileNamesByStatus = async (_fileStatus: any) => {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.EXPORT_STATUS!)
-    .find({ status: _fileStatus })
-    .toArray();
-};
-
 export const Get422ProductDetailsByType = async (_type: any) => {
   const dbo = await getMongoDb();
   let query = {

@@ -11,6 +11,7 @@ import {
 import { getKnexInstance } from "./knex-wrapper";
 import { GetAuditInfo } from "../utility/session-helper";
 import AuditInfo from "../models/audit-info";
+import ExportModel from "../models/export-model";
 
 export async function GetConfigurations(activeOnly = true) {
   const cacheClient = CacheClient.getInstance(
@@ -480,4 +481,41 @@ export const UpdateThresholdValue = async (payload: any, updatedBy: string) => {
       UpdatedBy: updatedBy,
       UpdatedTime: new Date(),
     });
+};
+
+export const InitExportStatus = async (payload: ExportModel) => {
+  const db = getKnexInstance();
+  const [insertId] = await db("export_status").insert({
+    fileName: payload.fileName,
+    status: payload.status,
+    createdTime: payload.createdTime,
+    updatedTime: payload.updatedTime,
+    requestedBy: payload.requestedBy,
+  });
+  return insertId;
+};
+
+export const GetExportFileNamesByStatus = async (_fileStatus: any) => {
+  const db = getKnexInstance();
+  const dbResult = await db("export_status")
+    .select("*")
+    .where({ status: _fileStatus });
+  return dbResult;
+};
+
+export const GetExportFileStatus = async (_fileName: string) => {
+  const db = getKnexInstance();
+  const dbResult = await db("export_status")
+    .select("*")
+    .where({ fileName: _fileName })
+    .first();
+  return dbResult;
+};
+
+export const UpdateExportStatusV2 = async (payload: any) => {
+  const db = getKnexInstance();
+  await db("export_status").where({ fileName: payload.fileName }).update({
+    status: payload.status,
+    updatedTime: new Date(),
+  });
 };
