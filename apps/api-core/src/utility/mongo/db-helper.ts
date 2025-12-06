@@ -8,14 +8,6 @@ import { GetCacheClientOptions } from "../../client/cacheClient";
 import CacheClient from "../../client/cacheClient";
 import { CacheKey } from "@repricer-monorepo/shared";
 
-export async function GetProxySwitchCronDetails(ignoreCache = false) {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.PROXY_SWITCHER_CRON_COLLECTION_NAME!)
-    .find()
-    .toArray();
-}
-
 export async function InitCronStatusAsync(payload: any) {
   const dbo = await getMongoDb();
   const { insertedId } = await dbo
@@ -348,72 +340,6 @@ export async function UpdateCronForProductAsync(payload: any) {
         $set: setVal,
       },
     );
-}
-
-export async function GetProxyFailureDetailsByProxyProviderId(
-  proxyProvId: any,
-) {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.PROXY_FAILURE_COLLECTION)
-    .findOne({ proxyProvider: proxyProvId });
-}
-
-export async function ResetProxyFailureDetails(proxyProvId: any, userId: any) {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.PROXY_FAILURE_COLLECTION)
-    .findOneAndUpdate(
-      { proxyProvider: proxyProvId },
-      {
-        $set: {
-          lastResetTime: new Date(),
-          initTime: new Date("01-01-1900"),
-          failureCount: 0,
-          AuditInfo: {
-            UpdatedBy: userId,
-            UpdatedOn: new Date(),
-          },
-        },
-      },
-    );
-}
-
-export async function InitProxyFailureDetails(proxyProvId: any, count: any) {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.PROXY_FAILURE_COLLECTION)
-    .findOneAndUpdate(
-      { proxyProvider: proxyProvId },
-      {
-        $set: {
-          initTime: new Date(),
-          failureCount: count,
-        },
-      },
-    );
-}
-
-export async function UpdateProxyFailureDetails(proxyProvId: any, count: any) {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.PROXY_FAILURE_COLLECTION)
-    .findOneAndUpdate(
-      { proxyProvider: proxyProvId },
-      {
-        $set: {
-          failureCount: count,
-        },
-      },
-    );
-}
-
-export async function GetProxyFailureDetails() {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.PROXY_FAILURE_COLLECTION)
-    .find()
-    .toArray();
 }
 
 export async function Push422LogsAsync(payload: any) {

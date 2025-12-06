@@ -20,6 +20,8 @@ import {
   GetSlowCronDetails,
   GetFilteredCrons,
   GetScrapeCrons,
+  GetExportFileNamesByStatus,
+  GetExportFileStatus,
 } from "../services/mysql-v2";
 
 let _contextLog: any = null;
@@ -614,9 +616,7 @@ export async function listDownloads(req: Request, res: Response) {
   let exportsList: any[] = [];
   if (fileNames && fileNames.length > 0) {
     for (const fileName of fileNames) {
-      const fileDetailsInDb = await mongoMiddleware.GetExportFileStatus(
-        fileName.name as any,
-      );
+      const fileDetailsInDb = await GetExportFileStatus(fileName.name);
       if (fileDetailsInDb) {
         let obj = {
           name: fileName.name,
@@ -635,8 +635,7 @@ export async function listDownloads(req: Request, res: Response) {
       }
     }
   }
-  const inProgressFiles =
-    await mongoMiddleware.GetExportFileNamesByStatus("IN-PROGRESS");
+  const inProgressFiles = await GetExportFileNamesByStatus("IN-PROGRESS");
   if (inProgressFiles && inProgressFiles.length > 0) {
     _.forEach(inProgressFiles, (file) => {
       let obj = {

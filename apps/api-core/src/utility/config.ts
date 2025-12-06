@@ -20,7 +20,6 @@ const envSchema = z.object({
   SCRAPE_ITEMS_COLLECTION_NAME: z.string().default("scrapeItems"),
   FILTER_CRON_COLLECTION_NAME: z.string().default("filterCronSettings"),
   FILTER_CRON_LOGS: z.string().default("filterCronLogs"),
-  PROXY_FAILURE_COLLECTION: z.string().default("proxyFailureDetails"),
   ERROR_422_CRON_LOGS: z.string().default("422cronLogs"),
   PROXY_SWITCHER_CRON_COLLECTION_NAME: z
     .string()

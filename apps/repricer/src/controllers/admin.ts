@@ -6,12 +6,17 @@ import * as httpHelper from "../utility/http-wrappers";
 import * as SessionHelper from "../utility/session-helper";
 import { Request, Response } from "express";
 import { applicationConfig } from "../utility/config";
-import { GetCronSettingsList } from "../services/mysql-v2";
+import {
+  GetCronSettingsList,
+  GetProxyFailureDetails,
+  UpdateThresholdValue,
+} from "../services/mysql-v2";
+import { GetAuditInfo } from "../utility/session-helper";
 
 export async function getAdminSettings(req: Request, res: Response) {
   const cronResults = await GetCronSettingsList();
-  const cacheResults = await cacheController.GetAllCacheItems();
-  let proxyFailureDetails = await mongoMiddleware.GetProxyFailureDetails();
+  //const cacheResults = await cacheController.GetAllCacheItems();
+  let proxyFailureDetails = await GetProxyFailureDetails();
   if (proxyFailureDetails && proxyFailureDetails.length > 0) {
     _.forEach(proxyFailureDetails, (data) => {
       data.lastResetTime = moment(data.lastResetTime).format(
@@ -25,9 +30,9 @@ export async function getAdminSettings(req: Request, res: Response) {
     });
   }
   let cacheModel: any = [];
-  if (cacheResults != null) {
-    cacheModel = cacheResults;
-  }
+  // if (cacheResults != null) {
+  //   cacheModel = cacheResults;
+  // }
   let adminModel: any = {};
   adminModel.items = cronResults;
   adminModel.cacheItems = cacheModel;
@@ -84,7 +89,8 @@ export async function UpdateProxyProviderThresholdValue(
   res: Response,
 ) {
   const payload = req.body;
-  await mongoMiddleware.UpdateProxyProviderThresholdValue(payload, req);
+  const auditInfo = await GetAuditInfo(req);
+  await UpdateThresholdValue(payload, auditInfo.UpdatedBy);
   return res.json({
     status: true,
     message: `Updated successfully`,

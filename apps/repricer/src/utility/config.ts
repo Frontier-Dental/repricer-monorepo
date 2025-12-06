@@ -25,7 +25,6 @@ export const envSchema = z.object({
   ENV_SETTINGS: z.string().default("envsettings"),
   HISTORY_LIMIT: z.coerce.number().default(50),
   STOP_ALL_CRON_ENDPOINT: z.string().default("/schedule/StopAll"),
-  EXPORT_STATUS: z.string().default("exportStatus"),
   START_OVERRIDE_URL_ENDPOINT: z.string().default("/schedule/startOverride"),
   HISTORY_BASE_PATH: z.string().default("/repricer-api-core/history/"),
   FILE_DELIMITER: z.string().default("/"),
@@ -61,7 +60,6 @@ export const envSchema = z.object({
     .string()
     .default("/slow_cron/RecreateSlowCron"),
   GET_DATA_URL_ENDPOINT: z.string().default("/debug/get-data"),
-  PROXY_FAILURE_COLLECTION: z.string().default("proxyFailureDetails"),
   USER_CREATION_EMAIL_TRIGGER_URL: z
     .string()
     .default("http://localhost:5421/notify/user_creation_email"),
