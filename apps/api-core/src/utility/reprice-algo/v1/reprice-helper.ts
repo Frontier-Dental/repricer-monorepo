@@ -1025,7 +1025,7 @@ export async function RepriceIndividualPriceBreak(
                     contextPriceResult.Type,
                   );
               }
-            } else {
+            } else if (productItem.maxPrice && productItem.maxPrice != null) {
               repriceModel.repriceDetails!.newPrice =
                 productItem.maxPrice.toFixed(2);
               repriceModel.repriceDetails!.isRepriced = true;
@@ -1055,6 +1055,8 @@ export async function RepriceIndividualPriceBreak(
         //2. Max Price is Not Equal to Existing Price
         //SET: Max Price
         else if (
+          productItem.maxPrice &&
+          productItem.maxPrice != null &&
           nextLowestPrice > productItem.maxPrice &&
           productItem.maxPrice != existingPrice
         ) {
