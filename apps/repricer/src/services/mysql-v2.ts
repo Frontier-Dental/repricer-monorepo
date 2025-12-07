@@ -131,6 +131,8 @@ export async function UpsertEnvSettings(payload: any) {
         payload.expressCronOverlapThreshold,
       ),
       ExpressCronInstanceLimit: parseInt(payload.expressCronInstanceLimit),
+      SlowCronBatchSize: parseInt(payload.slowCronBatchSize),
+      SlowCronInstanceLimit: parseInt(payload.slowCronInstanceLimit),
       UpdatedBy: payload.updatedBy,
       UpdatedOn: payload.updatedOn,
     });
