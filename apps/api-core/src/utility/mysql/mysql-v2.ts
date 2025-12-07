@@ -62,7 +62,7 @@ export async function GetGlobalConfig() {
       return envSettingsResult;
     }
   } catch (err) {
-    console.error(`Error in GetGlobalConfig while getting from cache:`, err);
+    //console.error(`Error in GetGlobalConfig while getting from cache:`, err);
   }
   let envSettings = null;
   try {
@@ -325,4 +325,43 @@ export async function ResetProxyFailureDetails(proxyProvId: any, userId: any) {
       UpdatedBy: userId,
       UpdatedTime: new Date(),
     });
+}
+
+export const UpdateCronStatusAsync = async (payload: any): Promise<any> => {
+  const db = getKnexInstance();
+  await db("cron_status_logs")
+    .where({ KeyGenId: payload.keyGenId })
+    .update({
+      CronTime: payload.cronTime,
+      ProductsCount: payload.productsCount
+        ? parseInt(payload.productsCount)
+        : 0,
+      MaximumProductCount: payload.maximumProductCount
+        ? parseInt(payload.maximumProductCount)
+        : 0,
+      Status: payload.status,
+      CronId: payload.cronId,
+    });
+};
+
+export async function ResetPendingCronLogs() {
+  const db = getKnexInstance();
+  await db("cron_status_logs")
+    .whereNot({ status: "Complete" })
+    .update({ status: "Complete" });
+}
+
+export async function InitCronStatusAsync(payload: any) {
+  const db = getKnexInstance();
+  const [insertId] = await db("cron_status_logs").insert({
+    CronId: payload.cronId,
+    KeyGenId: payload.keyGenId,
+    CronTime: payload.cronTime,
+    ProductsCount: payload.productsCount ? parseInt(payload.productsCount) : 0,
+    MaximumProductCount: payload.maximumProductCount
+      ? parseInt(payload.maximumProductCount)
+      : 0,
+    Status: payload.status,
+  });
+  return insertId;
 }
