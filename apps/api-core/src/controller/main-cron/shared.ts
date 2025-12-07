@@ -275,23 +275,46 @@ export async function runCoreCronLogic(
   const eligibleProductList = isSlowCron
     ? await getSlowCronEligibleProductsV3(cronSettingsResponse.CronId)
     : await getCronEligibleProductsV3(cronSettingsResponse.CronId);
+  let batchSize = applicationConfig.BATCH_SIZE;
+  const envVariables = await sqlV2Service.GetGlobalConfig();
   if (eligibleProductList && eligibleProductList.length > 0) {
+    if (isSlowCron) {
+      batchSize =
+        envVariables?.slowCronBatchSize || applicationConfig.BATCH_SIZE;
+    }
     const jobId = keyGenHelper.Generate();
     console.debug(
       `${cronSettingsResponse.CronName} running on ${initTime.toISOString()} with Eligible Product count : ${eligibleProductList.length}  || Job ID : ${jobId}`,
     );
-    let chunkedList = _.chunk(
-      eligibleProductList,
-      applicationConfig.BATCH_SIZE,
-    );
-    for (let chunk of chunkedList) {
-      await repriceBase.Execute(
-        jobId,
-        chunk,
-        new Date(),
-        cronSettingsResponse,
-        isSlowCron,
+    let chunkedList = _.chunk(eligibleProductList, batchSize);
+    if (isSlowCron) {
+      let chunkedBatch = _.chunk(
+        chunkedList,
+        parseInt(envVariables.slowCronInstanceLimit!),
       );
+      let batchCount = 1;
+      for (let itemList of chunkedBatch) {
+        if (itemList.length > 0) {
+          await ParallelExecuteCron(
+            itemList,
+            new Date(),
+            `${jobId}-${batchCount}`,
+            cronSettingsResponse,
+            isSlowCron,
+          );
+          batchCount++;
+        }
+      }
+    } else {
+      for (let chunk of chunkedList) {
+        await repriceBase.Execute(
+          jobId,
+          chunk,
+          new Date(),
+          cronSettingsResponse,
+          isSlowCron,
+        );
+      }
     }
   } else {
     await logBlankCronDetailsV3(cronSettingsResponse.CronId);
@@ -489,4 +512,28 @@ export function updateCronBasedDetails(
     prod.latest_price = prod.lastSuggestedPrice;
   }
   return prod;
+}
+
+export async function ParallelExecuteCron(
+  itemList: any,
+  initTime: any,
+  keyGen: any,
+  cronSettingsResponse: any,
+  isSlowCron: boolean,
+) {
+  if (itemList && itemList.length > 0) {
+    const tasks = itemList.map((item: any, index: any) =>
+      repriceBase.Execute(
+        `${keyGen}-${index}`,
+        item,
+        initTime,
+        cronSettingsResponse,
+        isSlowCron,
+      ),
+    );
+    await Promise.all(tasks);
+    console.info(
+      `PARALLEL EXECUTION CRON : ${keyGen} All tasks completed at ${new Date().toISOString()}`,
+    );
+  }
 }
