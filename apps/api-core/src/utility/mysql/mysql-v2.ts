@@ -328,20 +328,25 @@ export async function ResetProxyFailureDetails(proxyProvId: any, userId: any) {
 }
 
 export const UpdateCronStatusAsync = async (payload: any): Promise<any> => {
-  const db = getKnexInstance();
-  await db("cron_status_logs")
-    .where({ KeyGenId: payload.keyGenId })
-    .update({
-      CronTime: payload.cronTime,
-      ProductsCount: payload.productsCount
-        ? parseInt(payload.productsCount)
-        : 0,
-      MaximumProductCount: payload.maximumProductCount
-        ? parseInt(payload.maximumProductCount)
-        : 0,
-      Status: payload.status,
-      CronId: payload.cronId,
-    });
+  console.log(
+    `Updating cron status for KeyGenId: ${payload.keyGenId} || Status: ${payload.status} || ProductsCount: ${payload.productsCount}`,
+  );
+  try {
+    const db = getKnexInstance();
+    await db("cron_status_logs")
+      .where({ KeyGenId: payload.keyGenId, CronId: payload.cronId })
+      .update({
+        CronTime: payload.cronTime,
+        ProductsCount: payload.productsCount
+          ? parseInt(payload.productsCount)
+          : 0,
+        Status: payload.status,
+      });
+  } catch (error) {
+    console.error(
+      `Error updating cron status for KeyGenId: ${payload.keyGenId} || Error: ${error}`,
+    );
+  }
 };
 
 export async function ResetPendingCronLogs() {
