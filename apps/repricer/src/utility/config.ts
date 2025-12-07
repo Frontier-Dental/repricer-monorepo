@@ -11,18 +11,14 @@ export const envSchema = z.object({
   NET32_UPDATE_PRICE_URL: z
     .string()
     .default("https://api.net32.com/products/offers/update"),
-  CRON_STATUS_COLLECTION_NAME: z.string().default("cronStatusLogs"),
-  FILTER_CRON_COLLECTION_NAME: z.string().default("filterCronSettings"),
   IP_CONFIG: z.string().default("ipConfig"),
   REPRICE_OWN_ENDPOINT: z.string().default("/search/RepriceProduct/"),
-  CRON_SETTINGS_COLLECTION_NAME: z.string().default("cronSettings"),
   CRON_START_ENDPOINT: z.string().default("/schedule/StartCron"),
   CRON_STOP_ENDPOINT: z.string().default("/schedule/StopCron"),
   RECREATE_CRON_ENDPOINT: z.string().default("/schedule/RecreateCron"),
   ERROR_ITEM_COLLECTION: z.string().default("errorItems"),
   MANUAL_PROD_UPDATE_ENDPOINT: z.string().default("/product/updateManualProd/"),
   HISTORY_DB: z.string().default("historyData"),
-  ENV_SETTINGS: z.string().default("envsettings"),
   HISTORY_LIMIT: z.coerce.number().default(50),
   STOP_ALL_CRON_ENDPOINT: z.string().default("/schedule/StopAll"),
   START_OVERRIDE_URL_ENDPOINT: z.string().default("/schedule/startOverride"),
@@ -41,7 +37,6 @@ export const envSchema = z.object({
     .default("/schedule/start_specific_cron"),
   ERROR_ONE: z.string().default("Error: Invalid response found in Net32 Api"),
   ERROR_TWO: z.string().default("Error: Could not find own vendor Id"),
-  SLOW_CRON_GROUP_COLLECTION_NAME: z.string().default("slowCronSettings"),
   FILTER_CRON_LOGS: z.string().default("filterCronLogs"),
   FILTER_CRON_LOGS_LIMIT: z.coerce.number().default(10),
   FILTER_CRON_TOGGLE_STATUS_ENDPOINT: z

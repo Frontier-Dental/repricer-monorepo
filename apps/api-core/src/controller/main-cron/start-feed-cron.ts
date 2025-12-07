@@ -88,7 +88,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
     let isPriceUpdated = false;
     if (prod.scrapeOn == true) {
       _contextCronStatus.SetProductCount(cronProdCounter);
-      await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
+      await sqlV2Service.UpdateCronStatusAsync(_contextCronStatus);
       const postUrl = applicationConfig.FEED_REPRICER_OWN_URL.replace(
         "{mpId}",
         prod.mpid,
@@ -200,7 +200,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
   const logInDb = await dbHelper.PushLogsAsync(cronLogs);
 
   _contextCronStatus.SetStatus("Complete");
-  await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
+  await sqlV2Service.UpdateCronStatusAsync(_contextCronStatus);
 
   if (logInDb) {
     console.log(
@@ -210,5 +210,5 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
 }
 
 async function initCronStatus(_contextCronStatus: any) {
-  await dbHelper.InitCronStatusAsync(_contextCronStatus);
+  await sqlV2Service.InitCronStatusAsync(_contextCronStatus);
 }

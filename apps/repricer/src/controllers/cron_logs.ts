@@ -22,6 +22,7 @@ import {
   GetScrapeCrons,
   GetExportFileNamesByStatus,
   GetExportFileStatus,
+  GetLatestCronStatus,
 } from "../services/mysql-v2";
 
 let _contextLog: any = null;
@@ -134,7 +135,7 @@ export async function getCronLogs(req: Request, res: Response) {
       }
     }
   }
-  let cronStatus = await mongoMiddleware.GetLatestCronStatus();
+  let cronStatus = await GetLatestCronStatus();
   if (cronStatus && cronStatus.length > 0) {
     cronStatus.forEach((x: any) => {
       if (x.cronId) {
@@ -1006,7 +1007,7 @@ async function getInProgressRegularSecondaryAndExpressCrons() {
   let cronSettings = await GetCronSettingsList();
   const slowCronSettings = await GetSlowCronDetails();
   cronSettings = _.concat(cronSettings, slowCronSettings);
-  let cronStatus = await mongoMiddleware.GetLatestCronStatus();
+  let cronStatus = await GetLatestCronStatus();
 
   if (cronStatus && cronStatus.length > 0) {
     cronStatus.forEach((x: any) => {
@@ -1205,7 +1206,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   const cronSettingsBase = await GetCronSettingsList();
   const slowCronSettings = await GetSlowCronDetails();
   const scrapeOnlyCronSettings = await GetScrapeCrons();
-  const cronStatus = await mongoMiddleware.GetLatestCronStatus();
+  const cronStatus = await GetLatestCronStatus();
 
   // Combine all cron settings
   let cronSettings = _.concat(

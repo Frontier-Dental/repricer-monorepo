@@ -8,22 +8,16 @@ const envSchema = z.object({
   GET_PRICE_LIST_DBNAME: z.string().default("repricer"),
   GET_PRICE_LIST_COLLECTION_NAME: z.string().default("items"),
   CRON_LOGS_COLLECTION_NAME: z.string().default("cronLogs"),
-  CRON_STATUS_COLLECTION_NAME: z.string().default("cronStatusLogs"),
   ERROR_ITEM_COLLECTION: z.string().default("errorItems"),
   MANAGED_MONGO_PRODUCT_COLLECTION: z.string().default("products"),
   MANAGED_MONGO_COLLECTION: z.string().default("results"),
   IP_CONFIG: z.string().default("ipConfig"),
   HISTORY_DB: z.string().default("historyData"),
-  ENV_SETTINGS: z.string().default("envsettings"),
   SCRAPE_PRODUCTS_COLLECTION_NAME: z.string().default("scrapeProducts"),
   SCRAPE_PRODUCTS_LOGS_COLLECTION_NAME: z.string().default("scrapeCronLogs"),
   SCRAPE_ITEMS_COLLECTION_NAME: z.string().default("scrapeItems"),
-  FILTER_CRON_COLLECTION_NAME: z.string().default("filterCronSettings"),
   FILTER_CRON_LOGS: z.string().default("filterCronLogs"),
   ERROR_422_CRON_LOGS: z.string().default("422cronLogs"),
-  PROXY_SWITCHER_CRON_COLLECTION_NAME: z
-    .string()
-    .default("proxySwitcherCronSettings"),
   // SQL
   SQL_HOSTNAME: z.string(),
   SQL_PORT: z.coerce.number(),

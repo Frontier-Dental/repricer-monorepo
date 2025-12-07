@@ -11,7 +11,12 @@ import { Client } from "basic-ftp";
 import path from "path";
 import fs from "fs";
 import * as mongoHelper from "../services/mongo";
-import { GetCronSettingsList, GetSlowCronDetails } from "../services/mysql-v2";
+import {
+  GetCronSettingsList,
+  GetSlowCronDetails,
+  GetLatestCronStatus,
+  IgnoreCronStatusLog,
+} from "../services/mysql-v2";
 
 export const monitorSenseController = express.Router();
 var monitorCrons: Record<string, ScheduledTask> = {};
@@ -85,7 +90,7 @@ monitorSenseController.get(
 /************* PRIVATE FUNCTIONS *************/
 async function ValidateCronDetails() {
   console.info(`Running IN-PROGRESS Cron Validation Check at ${new Date()}`);
-  const inProgressCronDetails = await mongoHelper.GetLatestCronStatus();
+  const inProgressCronDetails = await GetLatestCronStatus();
   const maxCount = applicationConfig.CRON_PROGRESS_MAX_COUNT;
   if (inProgressCronDetails && inProgressCronDetails.length > maxCount) {
     const regularCronDetails = await GetCronSettingsList();
@@ -105,7 +110,7 @@ async function ValidateCronDetails() {
         ) > 120
       ) {
         //If Cron is more than 120 seconds & still Product Count is 0 -> IGNORE the CRON STATUS LOG
-        mongoHelper.IgnoreCronStatusLog(cronDetail.cronId, cronDetail.keyGenId);
+        IgnoreCronStatusLog(cronDetail.cronId, cronDetail.keyGenId);
       }
     });
     const emailBody = await getEmailBodyForInProgressCron(

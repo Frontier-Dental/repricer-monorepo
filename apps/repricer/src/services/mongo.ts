@@ -298,16 +298,6 @@ export const FindOneProductModel = async (query: any) => {
   return product;
 };
 
-export const GetLatestCronStatus = async () => {
-  const dbo = await getMongoDb();
-  const query: any = { status: "In-Progress" };
-  return dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
-    .find(query)
-    .sort({ _id: -1 })
-    .toArray();
-};
-
 export const PushManualCronLogAsync = async (payload: any) => {
   const dbo = await getMongoDb();
   return dbo
@@ -316,26 +306,7 @@ export const PushManualCronLogAsync = async (payload: any) => {
 };
 
 export const GetCronSettingsList = async () => {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const cronSettingsList = await cacheClient.get<any>(
-    CacheKey.CRON_SETTINGS_LIST,
-  );
-  if (cronSettingsList != null) {
-    await cacheClient.disconnect();
-    return cronSettingsList;
-  }
-  const dbo = await getMongoDb();
-  let dbResponse = await dbo
-    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
-    .find()
-    .toArray();
-  if (dbResponse != null) {
-    await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, dbResponse);
-  }
-  await cacheClient.disconnect();
-  return dbResponse;
+  return [];
 };
 
 export const PurgeCronBasedOnId = async (cronId: string) => {
@@ -876,45 +847,11 @@ export const GetLogsBasedOnQuery = async (query: any) => {
 };
 
 export const GetFilteredCrons = async () => {
-  let mongoResult: any = null;
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const filterCronDetails = await cacheClient.get(CacheKey.FILTER_CRON_DETAILS);
-  if (filterCronDetails != null) {
-    await cacheClient.disconnect();
-    return filterCronDetails;
-  }
-  const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME!)
-    .find()
-    .toArray();
-  if (mongoResult != null)
-    await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, mongoResult);
-  await cacheClient.disconnect();
-  return mongoResult;
+  return [];
 };
 
 export const GetSlowCronDetails = async () => {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const slowCronDetails = await cacheClient.get(CacheKey.SLOW_CRON_DETAILS);
-  if (slowCronDetails != null) {
-    await cacheClient.disconnect();
-    return slowCronDetails;
-  }
-  let mongoResult: any = null;
-  const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME!)
-    .find()
-    .toArray();
-  if (mongoResult != null)
-    await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, mongoResult);
-  await cacheClient.disconnect();
-  return mongoResult;
+  return [];
 };
 
 export const GetFilterCronLogsByLimit = async (_limit: any) => {
@@ -1157,22 +1094,6 @@ export const GetScrapeLogsList = async (id: any) => {
     .collection(applicationConfig.SCRAPE_LOGS_COLLECTION!)
     .find({ _id: new ObjectId(id) })
     .toArray();
-  return mongoResult;
-};
-
-export const IgnoreCronStatusLog = async (_cronId: any, _keygen: any) => {
-  let mongoResult: any = null;
-  const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME!)
-    .findOneAndUpdate(
-      { $and: [{ keyGenId: _keygen }, { cronId: _cronId }] },
-      {
-        $set: {
-          status: "IGNORE",
-        },
-      },
-    );
   return mongoResult;
 };
 
