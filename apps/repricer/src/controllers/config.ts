@@ -107,6 +107,8 @@ export async function UpdateEnvInfo(req: Request, res: Response) {
     cronOverlapThreshold,
     cronBatchSize,
     cronInstanceLimit,
+    slowBatchSize,
+    slowInstanceLimit,
   } = req.body;
   const payload = {
     delay: globalDelay,
@@ -116,6 +118,8 @@ export async function UpdateEnvInfo(req: Request, res: Response) {
     expressCronBatchSize: cronBatchSize,
     expressCronOverlapThreshold: cronOverlapThreshold,
     expressCronInstanceLimit: cronInstanceLimit,
+    slowCronBatchSize: slowBatchSize,
+    slowCronInstanceLimit: slowInstanceLimit,
     AuditInfo: await SessionHelper.GetAuditInfo(req),
   };
   await sqlV2Service.UpsertEnvSettings(payload); //await mongoMiddleware.UpsertEnvSettings(payload);
