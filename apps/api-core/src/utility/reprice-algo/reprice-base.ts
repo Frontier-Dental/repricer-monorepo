@@ -159,21 +159,21 @@ export async function Execute(
       if (productLogs.length > 0) {
         cronLogs.logs.push(productLogs);
       }
-      cronProdCounter++;
+      //cronProdCounter++;
     } catch (error) {
       console.log(
         `Exception while repricing product: ${prod.mpId}. Error: ${error}`,
       );
-      console.error(error);
       cronLogs.logs.push({
         productId: prod.mpId,
         logs: error,
         vendor: "UNKNOWN",
       });
     } finally {
+      cronProdCounter++;
+      productIndex++;
       console.log(`Repricing product ${prod.mpId} completed`);
     }
-    productIndex++;
   }
 
   //Update End Time
@@ -549,26 +549,33 @@ export async function RepriceErrorItemV2(
   let cronProdCounter = 1;
   for (let prod of productList) {
     console.log(`422_ERROR: Repricing ${prod.mpId} for 422 at ${new Date()}`);
-    const repriceErrorItemResponse = await RepriceErrorItem(
-      prod,
-      cronInitTime,
-      prod.cronSettingsResponse,
-      prod.contextVendor,
-    );
-    if (
-      repriceErrorItemResponse &&
-      repriceErrorItemResponse.logs &&
-      repriceErrorItemResponse.logs.length > 0
-    ) {
-      if (repriceErrorItemResponse.logs.length == 1) {
-        cronLogs.logs.push(_.first(repriceErrorItemResponse.logs));
-      } else if (repriceErrorItemResponse.logs.length > 1) {
-        const tempLog = [];
-        for (const $ of repriceErrorItemResponse.logs) {
-          tempLog.push(_.first($));
+    try {
+      const repriceErrorItemResponse = await RepriceErrorItem(
+        prod,
+        cronInitTime,
+        prod.cronSettingsResponse,
+        prod.contextVendor,
+      );
+      if (
+        repriceErrorItemResponse &&
+        repriceErrorItemResponse.logs &&
+        repriceErrorItemResponse.logs.length > 0
+      ) {
+        if (repriceErrorItemResponse.logs.length == 1) {
+          cronLogs.logs.push(_.first(repriceErrorItemResponse.logs));
+        } else if (repriceErrorItemResponse.logs.length > 1) {
+          const tempLog = [];
+          for (const $ of repriceErrorItemResponse.logs) {
+            tempLog.push(_.first($));
+          }
+          cronLogs.logs.push(tempLog);
         }
-        cronLogs.logs.push(tempLog);
       }
+    } catch (error) {
+      console.error(
+        `Error in RepriceErrorItemV2 for product ${prod.mpId}:`,
+        error,
+      );
     }
     _contextCronStatus.SetProductCount(cronProdCounter);
     await UpdateCronStatusAsync(_contextCronStatus);
