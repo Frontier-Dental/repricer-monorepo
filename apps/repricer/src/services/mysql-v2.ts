@@ -519,3 +519,18 @@ export const UpdateExportStatusV2 = async (payload: any) => {
     updatedTime: new Date(),
   });
 };
+
+export const GetLatestCronStatus = async () => {
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetCronStatusLogsByStatus(?)`, [
+    "In-Progress",
+  ]);
+  return result[0][0];
+};
+
+export const IgnoreCronStatusLog = async (_cronId: any, _keygen: any) => {
+  const db = getKnexInstance();
+  await db("cron_status_logs")
+    .where({ CronId: _cronId, KeyGenId: _keygen })
+    .update({ Status: "IGNORE" });
+};

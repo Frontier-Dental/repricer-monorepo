@@ -70,39 +70,6 @@ export const UpdateProductAsync = async (
   }
 };
 
-export const InitCronStatusAsync = async (payload: any): Promise<any> => {
-  const dbo = await getMongoDb();
-  const result = await dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
-    .insertOne(payload);
-  return result.insertedId.toString();
-};
-
-export const UpdateCronStatusAsync = async (payload: any): Promise<any> => {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
-    .updateOne(
-      { cronTime: payload.cronTime },
-      {
-        $set: {
-          cronTime: payload.cronTime,
-          productsCount: payload.productsCount,
-          maximumProductCount: payload.maximumProductCount,
-          status: payload.status,
-          cronId: payload.cronId,
-        },
-      },
-    );
-};
-
-export const ResetPendingCronLogs = async (): Promise<any> => {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
-    .updateMany({}, { $set: { status: "Complete" } });
-};
-
 export const UpsertErrorItemLog = async (payload: any): Promise<any> => {
   const dbo = await getMongoDb();
   const existingItem = await dbo

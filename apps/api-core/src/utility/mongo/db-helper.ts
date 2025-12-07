@@ -8,34 +8,6 @@ import { GetCacheClientOptions } from "../../client/cacheClient";
 import CacheClient from "../../client/cacheClient";
 import { CacheKey } from "@repricer-monorepo/shared";
 
-export async function InitCronStatusAsync(payload: any) {
-  const dbo = await getMongoDb();
-  const { insertedId } = await dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
-    .insertOne(payload);
-  return insertedId;
-}
-
-export async function UpdateCronStatusAsync(payload: any) {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
-    .findOneAndUpdate(
-      {
-        $and: [{ cronTime: payload.cronTime }, { keyGenId: payload.keyGenId }],
-      },
-      {
-        $set: {
-          cronTime: payload.cronTime,
-          productsCount: payload.productsCount,
-          maximumProductCount: payload.maximumProductCount,
-          status: payload.status,
-          cronId: payload.cronId,
-        },
-      },
-    );
-}
-
 export async function PushLogsAsync(payload: any) {
   const dbo = await getMongoDb();
   const { insertedId } = await dbo
@@ -157,13 +129,6 @@ export async function UpdateProductAsync(
       },
     );
   return mongoResult;
-}
-
-export async function ResetPendingCronLogs() {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
-    .updateMany({}, { $set: { status: "Complete" } });
 }
 
 export async function UpsertErrorItemLog(payload: any) {

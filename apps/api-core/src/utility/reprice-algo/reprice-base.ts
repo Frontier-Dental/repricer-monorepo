@@ -22,6 +22,8 @@ import {
   GetCronSettingsList,
   GetCronSettingsDetailsByName,
   GetSlowCronDetails,
+  UpdateCronStatusAsync,
+  InitCronStatusAsync,
 } from "../../utility/mysql/mysql-v2";
 
 export async function Execute(
@@ -76,7 +78,7 @@ export async function Execute(
       if (!isProceed) break;
 
       _contextCronStatus.SetProductCount(cronProdCounter);
-      await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
+      await UpdateCronStatusAsync(_contextCronStatus);
       const prioritySequence = await requestGenerator.GetPrioritySequence(
         prod,
         null,
@@ -185,7 +187,7 @@ export async function Execute(
     );
   }
   _contextCronStatus.SetStatus("Complete");
-  await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
+  await UpdateCronStatusAsync(_contextCronStatus);
 }
 
 export async function RepriceErrorItem(
@@ -569,7 +571,7 @@ export async function RepriceErrorItemV2(
       }
     }
     _contextCronStatus.SetProductCount(cronProdCounter);
-    await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
+    await UpdateCronStatusAsync(_contextCronStatus);
     cronProdCounter++;
   }
   if (cronLogs.logs && cronLogs.logs.length > 0) {
@@ -577,7 +579,7 @@ export async function RepriceErrorItemV2(
     await dbHelper.Push422LogsAsync(cronLogs);
   }
   _contextCronStatus.SetStatus("Complete");
-  await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
+  await UpdateCronStatusAsync(_contextCronStatus);
   cleanActiveProductList(keyGen);
 }
 
@@ -705,7 +707,7 @@ export async function UpdateToMax(
 }
 
 async function initCronStatus(_contextCronStatus: any) {
-  await dbHelper.InitCronStatusAsync(_contextCronStatus);
+  await InitCronStatusAsync(_contextCronStatus);
 }
 
 async function proceedWithExecution(cronId: string) {
