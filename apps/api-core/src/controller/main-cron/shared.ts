@@ -290,7 +290,7 @@ export async function runCoreCronLogic(
     if (isSlowCron) {
       let chunkedBatch = _.chunk(
         chunkedList,
-        parseInt(envVariables.expressCronInstanceLimit!),
+        parseInt(envVariables.slowCronInstanceLimit!),
       );
       let batchCount = 1;
       for (let itemList of chunkedBatch) {
