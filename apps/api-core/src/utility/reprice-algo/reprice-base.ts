@@ -63,7 +63,7 @@ export async function Execute(
   for (let prod of productList) {
     //Set cronSetting if it is Null
     console.log(
-      `Repricing product: ${prod.mpId} (${productIndex + 1}/${productList.length}). Cron name: ${cronSetting != null ? cronSetting.CronName : "N/A"}`,
+      `Repricing product ${jobId} : ${prod.mpId} (${productIndex + 1}/${productList.length}). Cron name: ${cronSetting != null ? cronSetting.CronName : "N/A"}`,
     );
     try {
       if (!cronSetting) {
@@ -162,7 +162,7 @@ export async function Execute(
       //cronProdCounter++;
     } catch (error) {
       console.log(
-        `Exception while repricing product: ${prod.mpId}. Error: ${error}`,
+        `Exception while repricing product ${jobId} : ${prod.mpId}. Error: ${error}`,
       );
       cronLogs.logs.push({
         productId: prod.mpId,
@@ -172,10 +172,11 @@ export async function Execute(
     } finally {
       cronProdCounter++;
       productIndex++;
-      console.log(`Repricing product ${prod.mpId} completed`);
+      console.log(`Repricing product ${prod.mpId} completed for ${jobId}`);
     }
   }
-
+  _contextCronStatus.SetStatus("Complete");
+  await UpdateCronStatusAsync(_contextCronStatus);
   //Update End Time
   cronLogs.completionTime = new Date();
   cronLogs.EligibleCount = eligibleCount;
@@ -186,8 +187,6 @@ export async function Execute(
       `Successfully logged Cron Logs in DB at ${cronLogs.time} || Id : ${logInDb}`,
     );
   }
-  _contextCronStatus.SetStatus("Complete");
-  await UpdateCronStatusAsync(_contextCronStatus);
 }
 
 export async function RepriceErrorItem(
@@ -548,7 +547,9 @@ export async function RepriceErrorItemV2(
   productList = await scanDeltaListOfProducts(productList, deltaList!);
   let cronProdCounter = 1;
   for (let prod of productList) {
-    console.log(`422_ERROR: Repricing ${prod.mpId} for 422 at ${new Date()}`);
+    console.log(
+      `422_ERROR : ${keyGen} : Repricing ${prod.mpId} for 422 at ${new Date()}`,
+    );
     try {
       const repriceErrorItemResponse = await RepriceErrorItem(
         prod,
@@ -573,7 +574,7 @@ export async function RepriceErrorItemV2(
       }
     } catch (error) {
       console.error(
-        `Error in RepriceErrorItemV2 for product ${prod.mpId}:`,
+        `Error in RepriceErrorItemV2 for product ${prod.mpId} : ${keyGen} :`,
         error,
       );
     }

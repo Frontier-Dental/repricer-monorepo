@@ -1146,6 +1146,8 @@ export async function RepriceIndividualPriceBreak(
         //2. Max Price is Not Equal to Existing Price
         //SET: Max Price
         else if (
+          productItem.maxPrice &&
+          productItem.maxPrice != null &&
           nextLowestPrice > productItem.maxPrice &&
           productItem.maxPrice != existingPrice
         ) {
