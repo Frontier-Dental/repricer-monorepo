@@ -142,6 +142,8 @@ export function ToEnvSettingsModel(incomingSqlData: any): any {
     expressCronBatchSize: incomingSqlData[0].ExpressCronBatchSize,
     expressCronOverlapThreshold: incomingSqlData[0].ExpressCronOverlapThreshold,
     expressCronInstanceLimit: incomingSqlData[0].ExpressCronInstanceLimit,
+    slowCronBatchSize: incomingSqlData[0].SlowCronBatchSize,
+    slowCronInstanceLimit: incomingSqlData[0].SlowCronInstanceLimit,
     AuditInfo: {
       UpdatedBy: incomingSqlData[0].UpdatedBy,
       UpdatedOn: incomingSqlData[0].UpdatedOn,
