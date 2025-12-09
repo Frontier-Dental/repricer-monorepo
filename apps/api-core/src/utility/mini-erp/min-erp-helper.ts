@@ -149,7 +149,7 @@ async function fetchAllMiniErpProducts(
 
       hasMore = hasMoreResponse;
       page = hasMore ? page + 1 : page;
-      shouldContinue = !(await isCancelled("StockUpdateCron"));
+      shouldContinue = !(await isCancelled("MiniErpFetchCron"));
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.errors?.[0]?.message ||
@@ -346,5 +346,6 @@ export async function isCancelled(cronName: string): Promise<boolean> {
   const cronDetail = cronDetails.find(
     (cron: any) => cron.CronName === cronName,
   );
+  console.log(`Cron ${cronName} status: ${cronDetail?.CronStatus}`);
   return cronDetail?.CronStatus == false;
 }
