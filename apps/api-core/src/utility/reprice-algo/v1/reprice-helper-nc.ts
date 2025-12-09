@@ -578,22 +578,42 @@ export async function Reprice(
         //SET: Offset Price
         if (repriceModel.repriceDetails!.isRepriced !== true) {
           if (offsetPrice > floorPrice) {
-            const tempPriceUpdated = await getSetPrice(
-              offsetPrice,
-              refProduct.standardShipping,
-              refProduct.freeShippingThreshold,
-              1,
-            );
-            repriceModel = new RepriceModel(
-              sourceId,
-              refProduct,
-              productItem.productName,
-              parseFloat(tempPriceUpdated),
-              true,
-              false,
-              [],
-              RepriceRenewedMessageEnum.PRICE_UP_NEXT,
-            );
+            if (offsetPrice > maxPrice) {
+              offsetPrice = maxPrice;
+              const tempPriceMax = await getSetPrice(
+                offsetPrice,
+                refProduct.standardShipping,
+                refProduct.freeShippingThreshold,
+                1,
+              );
+              repriceModel = new RepriceModel(
+                sourceId,
+                refProduct,
+                productItem.productName,
+                parseFloat(tempPriceMax),
+                true,
+                false,
+                [],
+                RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL,
+              );
+            } else {
+              const tempPriceUpdated = await getSetPrice(
+                offsetPrice,
+                refProduct.standardShipping,
+                refProduct.freeShippingThreshold,
+                1,
+              );
+              repriceModel = new RepriceModel(
+                sourceId,
+                refProduct,
+                productItem.productName,
+                parseFloat(tempPriceUpdated),
+                true,
+                false,
+                [],
+                RepriceRenewedMessageEnum.PRICE_UP_NEXT,
+              );
+            }
           } else {
             const tempPriceUpdated = await getSetPrice(
               offsetPrice,

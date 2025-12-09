@@ -62,7 +62,7 @@ export async function GetGlobalConfig() {
       return envSettingsResult;
     }
   } catch (err) {
-    console.error(`Error in GetGlobalConfig while getting from cache:`, err);
+    //console.error(`Error in GetGlobalConfig while getting from cache:`, err);
   }
   let envSettings = null;
   try {
