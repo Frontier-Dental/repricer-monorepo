@@ -9,6 +9,7 @@ import {
 } from ".";
 import { GetCurrentStock, WaitlistInsert } from "../mysql/mysql-helper";
 import { WaitlistModel } from "../../model/waitlist-model";
+import { GetMiniErpCronDetails } from "../mysql/mysql-v2";
 
 const DEFAULT_MINI_ERP_PAGE_SIZE = applicationConfig.MINI_ERP_DATA_PAGE_SIZE;
 const CACHE_TTL_SECONDS = 60 * 60 * 20; // 20 hours
@@ -104,11 +105,17 @@ async function fetchAllMiniErpProducts(
   let page = 1;
   let hasMore = true;
   let totalProductsFetched = 0;
+  let shouldContinue = true;
 
   while (hasMore) {
     console.log(`Fetching products from Mini ERP page ${page}`);
 
     try {
+      if (!shouldContinue) {
+        console.log(`MiniErpFetchCron cancelled, stopped at page ${page}`);
+        break;
+      }
+
       const productsResponse = await axiosHelper.getProductsFromMiniErp(
         requestUrl,
         accessToken,
@@ -142,6 +149,7 @@ async function fetchAllMiniErpProducts(
 
       hasMore = hasMoreResponse;
       page = hasMore ? page + 1 : page;
+      shouldContinue = !isCancelled("MiniErpFetchCron");
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.errors?.[0]?.message ||
@@ -331,4 +339,12 @@ export function getRandomizedNet32Quantity(sqlInventory: number): number {
   const upperBound = Math.floor(range.max);
 
   return Math.floor(Math.random() * (upperBound - lowerBound + 1)) + lowerBound;
+}
+
+export async function isCancelled(cronName: string): Promise<boolean> {
+  const cronDetails = await GetMiniErpCronDetails();
+  const cronDetail = cronDetails.find(
+    (cron: any) => cron.CronName === cronName,
+  );
+  return cronDetail?.CronStatus == false;
 }
