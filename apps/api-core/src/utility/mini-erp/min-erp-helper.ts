@@ -149,7 +149,7 @@ async function fetchAllMiniErpProducts(
 
       hasMore = hasMoreResponse;
       page = hasMore ? page + 1 : page;
-      shouldContinue = !isCancelled("MiniErpFetchCron");
+      shouldContinue = !(await isCancelled("StockUpdateCron"));
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.errors?.[0]?.message ||
