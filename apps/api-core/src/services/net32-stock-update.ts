@@ -11,6 +11,7 @@ import {
 import { WaitlistModel } from "../model/waitlist-model";
 import { delay } from "../utility/reprice-algo/v1/shared";
 import { applicationConfig } from "../utility/config";
+import { isCancelled } from "../utility/mini-erp/min-erp-helper";
 
 export async function updateNet32Stock(): Promise<boolean> {
   console.log(`Running net32 stock update cron at ${new Date()}`);
@@ -18,7 +19,12 @@ export async function updateNet32Stock(): Promise<boolean> {
   console.log(
     `Found ${items.length} items in waitlist to update in net32 stock`,
   );
+  let shouldContinue = true;
   for (const item of items) {
+    if (!shouldContinue) {
+      console.log("Net32 stock update cron cancelled");
+      break;
+    }
     console.log(
       `Updating net32 stock for item ${item.mp_id} ${item.vendor_name} ${item.net32_inventory}`,
     );
@@ -48,6 +54,7 @@ export async function updateNet32Stock(): Promise<boolean> {
       );
       await UpdateWaitlistStatus(item.id!, "failed", results[0]?.data?.message);
     }
+    shouldContinue = !(await isCancelled("StockUpdateCron"));
   }
   return true;
 }
