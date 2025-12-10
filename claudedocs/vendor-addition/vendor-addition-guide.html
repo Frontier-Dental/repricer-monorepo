@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Guide: Adding a New Vendor - Repricer System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px;
+            margin-bottom: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .section {
+            background: white;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            font-size: 1.8rem;
+        }
+
+        h3 {
+            color: #764ba2;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+
+        h4 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+
+        pre code {
+            background: none;
+            color: #f8f8f2;
+            padding: 0;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .warning-box {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .location {
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+
+        .key-points {
+            background: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 15px 0;
+        }
+
+        .key-points ul {
+            margin-left: 20px;
+        }
+
+        hr {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 30px 0;
+        }
+
+        .toc {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        .toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .toc li {
+            margin: 8px 0;
+        }
+
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Complete Guide: Adding a New Vendor</h1>
+            <p class="subtitle">Repricer Monorepo System</p>
+        </header>
+
+        <div class="section">
+            <h2>Overview</h2>
+            <p>This document provides a comprehensive, step-by-step guide for adding a new vendor to the repricer monorepo system. The system currently supports 6 vendors: <strong>TRADENT</strong>, <strong>FRONTIER</strong>, <strong>MVP</strong>, <strong>TOPDENT</strong>, <strong>FIRSTDENT</strong>, and <strong>TRIAD</strong>. This guide will walk you through all necessary changes required to add a new vendor.</p>
+        </div>
+
+        <div class="section">
+            <h2>Prerequisites</h2>
+            <ul>
+                <li>Access to MySQL database (<code>repricerDb</code>)</li>
+                <li>Understanding of the codebase structure</li>
+                <li>Knowledge of TypeScript/JavaScript</li>
+                <li>Understanding of EJS templating (for frontend views)</li>
+                <li>Database migration tools (Knex.js)</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Step-by-Step Process</h2>
+
+            <h3><span class="step-number">1</span>Database Schema - Create Vendor Details Table</h3>
+            <div class="location"><strong>Location:</strong> <code>apps/repricer/MYSQL/NEW_VENDOR_ADDITION/STEP1_INIT_TABLE_VENDOR_ADDITION_[VENDORNAME].sql</code></div>
+            <p>Create a new SQL file following the pattern of existing vendors. For example, if adding "NEWVENDOR":</p>
+            <pre><code>USE repricerDb;
+
+CREATE TABLE "table_newVendorDetails" (
+  "Id" int NOT NULL AUTO_INCREMENT,
+  "ChannelName" varchar(50) DEFAULT NULL,
+  "ScrapeOn" tinyint(1) DEFAULT NULL,
+  "AllowReprice" tinyint(1) DEFAULT NULL,
+  "Activated" tinyint(1) DEFAULT NULL,
+  "UnitPrice" decimal(10, 2) DEFAULT NULL,
+  "FocusId" varchar(50) DEFAULT NULL,
+  "RequestInterval" int DEFAULT NULL,
+  "FloorPrice" decimal(10, 2) DEFAULT NULL,
+  "MaxPrice" decimal(10, 2) DEFAULT NULL,
+  "ChannelId" varchar(50) DEFAULT NULL,
+  "CreatedAt" datetime DEFAULT NULL,
+  "UpdatedAt" datetime DEFAULT NULL,
+  "UpdatedBy" varchar(50) DEFAULT NULL,
+  "LastCronTime" datetime DEFAULT NULL,
+  "LastUpdateTime" datetime DEFAULT NULL,
+  "LastAttemptedTime" datetime DEFAULT NULL,
+  "IsNCNeeded" tinyint(1) DEFAULT NULL,
+  "RepricingRule" int DEFAULT NULL,
+  "RequestIntervalUnit" varchar(12) DEFAULT NULL,
+  "SuppressPriceBreak" tinyint(1) DEFAULT NULL,
+  "PriorityValue" int DEFAULT NULL,
+  "LastCronMessage" varchar(1024) DEFAULT NULL,
+  "LowestVendor" varchar(255) DEFAULT NULL,
+  "LowestVendorPrice" varchar(255) DEFAULT NULL,
+  "LastExistingPrice" varchar(255) DEFAULT NULL,
+  "LastSuggestedPrice" varchar(255) DEFAULT NULL,
+  "NextCronTime" datetime DEFAULT NULL,
+  "BeatQPrice" tinyint(1) DEFAULT NULL,
+  "CompeteAll" tinyint(1) DEFAULT NULL,
+  "PercentageIncrease" int DEFAULT NULL,
+  "SuppressPriceBreakForOne" tinyint(1) DEFAULT NULL,
+  "CompareWithQ1" tinyint(1) DEFAULT NULL,
+  "WaitUpdatePeriod" tinyint(1) DEFAULT NULL,
+  "LastCronRun" varchar(50) DEFAULT NULL,
+  "AbortDeactivatingQPriceBreak" tinyint(1) DEFAULT NULL,
+  "BadgeIndicator" varchar(50) DEFAULT NULL,
+  "BadgePercentage" int DEFAULT NULL,
+  "LastUpdatedBy" varchar(50) DEFAULT NULL,
+  "InactiveVendorId" varchar(50) DEFAULT NULL,
+  "IncludeInactiveVendors" tinyint(1) DEFAULT NULL,
+  "OverrideBulkRule" int DEFAULT NULL,
+  "OverrideBulkUpdate" tinyint(1) DEFAULT NULL,
+  "LatestPrice" int DEFAULT NULL,
+  "ExecutionPriority" int DEFAULT NULL,
+  "ApplyBuyBoxLogic" tinyint(1) DEFAULT NULL,
+  "ApplyNcForBuyBox" tinyint(1) DEFAULT NULL,
+  "MpId" int DEFAULT NULL,
+  "SisterVendorId" varchar(255) DEFAULT NULL,
+  "HandlingTimeFilter" varchar(50) DEFAULT NULL,
+  "KeepPosition" tinyint(1) DEFAULT NULL,
+  "InventoryThreshold" int DEFAULT NULL,
+  "ExcludedVendors" varchar(255) DEFAULT NULL,
+  "BadgePercentageDown" decimal(5, 3) DEFAULT NULL,
+  "PercentageDown" decimal(5, 3) DEFAULT NULL,
+  "CompeteWithNext" tinyint(1) DEFAULT NULL,
+  "IgnorePhantomBreak" tinyint(1) DEFAULT NULL,
+  "OwnVendorThreshold" int DEFAULT NULL,
+  "GetBBBadge" tinyint(1) DEFAULT NULL,
+  "GetBBShipping" tinyint(1) DEFAULT NULL,
+  "GetBBBadgeValue" decimal(5, 3) DEFAULT NULL,
+  "GetBBShippingValue" decimal(5, 3) DEFAULT NULL,
+  "CurrentInStock" tinyint(1) DEFAULT NULL,
+  "CurrentInventory" int DEFAULT NULL,
+  "OurLastPrice" decimal(10, 2) DEFAULT NULL,
+  "MarketStateUpdatedAt" timestamp DEFAULT NULL,
+  PRIMARY KEY ("Id"),
+  UNIQUE KEY "unique_idx_newvendor_mpid" ("MpId"),
+  KEY "idx_item_newvendor_activated" ("Activated"),
+  KEY "idx_item_newvendor_mpid" ("MpId"),
+  KEY "idx_table_newvendor_in_stock" ("CurrentInStock")
+);</code></pre>
+            <div class="key-points">
+                <strong>Key Points:</strong>
+                <ul>
+                    <li>Table name format: <code>table_[vendorName]Details</code> (camelCase)</li>
+                    <li>Must include <code>MpId</code> as foreign key to <code>table_scrapeProductList</code></li>
+                    <li>Include all standard vendor fields</li>
+                    <li>Add market state fields: <code>CurrentInStock</code>, <code>CurrentInventory</code>, <code>OurLastPrice</code>, <code>MarketStateUpdatedAt</code></li>
+                    <li>Create appropriate indexes</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <h3><span class="step-number">2</span>Alter Master Product Table</h3>
+            <div class="location"><strong>Location:</strong> <code>apps/repricer/MYSQL/NEW_VENDOR_ADDITION/STEP2_ALTER_SCRAPE_PRODUCT_LIST.sql</code></div>
+            <p>Add a new column to link the vendor details table:</p>
+            <pre><code>USE repricerDb;
+
+ALTER TABLE table_scrapeProductList
+ADD COLUMN LinkedNewVendorDetailsInfo int;
+
+-- Verify the change
+SELECT * FROM table_scrapeProductList LIMIT 1;</code></pre>
+            <div class="warning-box">
+                <strong>Note:</strong> This step may already be partially done if other vendors were added. Check existing file and append if needed.
+            </div>
+
+            <hr>
+
+            <h3><span class="step-number">3</span>Populate Vendor Details Table with Initial Data</h3>
+            <div class="location"><strong>Location:</strong> <code>apps/repricer/MYSQL/NEW_VENDOR_ADDITION/STEP3_INSERT_DATA_[VENDORNAME]_TABLE.sql</code></div>
+            <p>Create initial records for all existing products. See the full guide for the complete SQL INSERT statement.</p>
+
+            <hr>
+
+            <h3><span class="step-number">4</span>Link Vendor Data to Root Product Table</h3>
+            <div class="location"><strong>Location:</strong> <code>apps/repricer/MYSQL/NEW_VENDOR_ADDITION/STEP4_LINK_VENDORDATA_ROOT.sql</code></div>
+            <pre><code>USE repricerDb;
+
+UPDATE table_scrapeProductList scpl
+JOIN table_newVendorDetails nv ON scpl.MpId = nv.MpId
+SET scpl.LinkedNewVendorDetailsInfo = nv.Id;</code></pre>
+
+            <hr>
+
+            <h3><span class="step-number">5</span>Create Upsert Stored Procedure</h3>
+            <div class="location"><strong>Location:</strong> <code>apps/repricer/MYSQL/UPSERT_VENDOR/sp_UpsertNewVendorDetails.sql</code></div>
+            <p>Create a stored procedure for inserting/updating vendor data. The procedure should use <code>ON DUPLICATE KEY UPDATE</code> for upsert logic and return <code>updatedIdentifier</code>.</p>
+            <div class="key-points">
+                <strong>Key Points:</strong>
+                <ul>
+                    <li>Procedure name format: <code>sp_Upsert[VendorName]Details</code></li>
+                    <li>Uses <code>ON DUPLICATE KEY UPDATE</code> for upsert logic</li>
+                    <li>Returns <code>updatedIdentifier</code> (the Id of the record)</li>
+                </ul>
+            </div>
+
+            <hr>
+
+            <h3><span class="step-number">6</span>Create Update Stored Procedure</h3>
+            <div class="location"><strong>Location:</strong> <code>apps/repricer/MYSQL/UPDATE_VENDOR/sp_UpdateNewVendorDetailsById.sql</code></div>
+            <p>Create a stored procedure for updating vendor data by MpId.</p>
+
+            <hr>
+
+            <h3><span class="step-number">7</span>Update Shared Package - Add Vendor Enum</h3>
+            <div class="location"><strong>Location:</strong> <code>packages/shared/src/index.ts</code></div>
+            <p>Add the new vendor to the enums:</p>
+            <pre><code>export enum VendorId {
+  FRONTIER = 20722,
+  TRADENT = 17357,
+  MVP = 20755,
+  TOPDENT = 20727,
+  FIRSTDENT = 20533,
+  TRIAD = 5,
+  NEWVENDOR = 12345, // Add your vendor ID here
+}
+
+export enum VendorName {
+  FRONTIER = "FRONTIER",
+  MVP = "MVP",
+  TRADENT = "TRADENT",
+  FIRSTDENT = "FIRSTDENT",
+  TOPDENT = "TOPDENT",
+  TRIAD = "TRIAD",
+  NEWVENDOR = "NEWVENDOR", // Add your vendor name here
+}
+
+export const VendorNameLookup: Record&lt;number, VendorName&gt; = {
+  [VendorId.FRONTIER]: VendorName.FRONTIER,
+  [VendorId.TRADENT]: VendorName.TRADENT,
+  [VendorId.MVP]: VendorName.MVP,
+  [VendorId.TOPDENT]: VendorName.TOPDENT,
+  [VendorId.FIRSTDENT]: VendorName.FIRSTDENT,
+  [VendorId.TRIAD]: VendorName.TRIAD,
+  [VendorId.NEWVENDOR]: VendorName.NEWVENDOR, // Add mapping
+};
+
+export const VendorIdLookup: Record&lt;VendorName, VendorId&gt; = {
+  [VendorName.FRONTIER]: VendorId.FRONTIER,
+  [VendorName.TRADENT]: VendorId.TRADENT,
+  [VendorName.MVP]: VendorId.MVP,
+  [VendorName.TOPDENT]: VendorId.TOPDENT,
+  [VendorName.FIRSTDENT]: VendorId.FIRSTDENT,
+  [VendorName.TRIAD]: VendorId.TRIAD,
+  [VendorName.NEWVENDOR]: VendorId.NEWVENDOR, // Add mapping
+};</code></pre>
+            <div class="warning-box">
+                <strong>Important:</strong> Replace <code>NEWVENDOR</code> with your actual vendor name and use the correct vendor ID from your system.
+            </div>
+
+            <hr>
+
+            <h3><span class="step-number">8</span>Update Configuration Files</h3>
+            <div class="location"><strong>Location:</strong> <code>apps/repricer/src/utility/config.ts</code> and <code>apps/api-core/src/utility/config.ts</code></div>
+            <p>Add stored procedure names to the configuration:</p>
+            <pre><code>// In envSchema, add:
+SQL_SP_UPSERT_NEWVENDOR: z.string().default("sp_UpsertNewVendorDetails"),
+SQL_SP_UPDATE_NEWVENDOR: z.string().default("sp_UpdateNewVendorDetailsById"),
+SQL_NEWVENDOR_DETAILS: z.string().default("table_newVendorDetails"),</code></pre>
+
+            <hr>
+
+            <h3><span class="step-number">9</span>Update MySQL Helper Functions</h3>
+            <div class="location"><strong>Location:</strong> <code>apps/repricer/src/services/mysql.ts</code> and <code>apps/api-core/src/utility/mysql/mysql-helper.ts</code></div>
+            <h4>9.1 Update UpsertVendorData Function</h4>
+            <p>In <code>apps/repricer/src/services/mysql.ts</code>, add the new vendor case to the switch statement:</p>
+            <pre><code>case "NEWVENDOR": // Add this case
+  contextSpName = applicationConfig.SQL_SP_UPSERT_NEWVENDOR;
+  break;</code></pre>
+            <div class="info-box">
+                <strong>Note:</strong> Apply the same change to:
+                <ul>
+                    <li><code>apps/excel-export/src/services/mysql.ts</code></li>
+                    <li><code>apps/repricer/src/middleware/mysql.ts</code></li>
+                </ul>
+            </div>
+            <h4>9.2 Update getContextTableNameByVendorName Function</h4>
+            <p>In <code>apps/api-core/src/utility/mysql/mysql-helper.ts</code>, add the new vendor case.</p>
+
+            <hr>
+
+            <h3><span class="step-number">10</span>Update Product Controllers</h3>
+            <div class="location"><strong>Location:</strong> <code>apps/repricer/src/controllers/product-v2.ts</code></div>
+            <p>In the <code>updateProductDetails</code> function, add handling for the new vendor following the pattern of existing vendors.</p>
+
+            <hr>
+
+            <h3><span class="step-number">11</span>Update Database Migration Files</h3>
+            <div class="location"><strong>Location:</strong> <code>apps/db-migrations/migrations/</code></div>
+            <p>Update migration files to include the new vendor table in vendor-related migrations.</p>
+
+            <hr>
+
+            <h3><span class="step-number">12</span>Create Frontend View Files</h3>
+            <h4>12.1 Edit View Partial</h4>
+            <div class="location"><strong>Location:</strong> <code>apps/repricer/views/pages/products/partials/newvendor.ejs</code></div>
+            <p>Create a view file for editing vendor details. Copy from an existing vendor (e.g., <code>firstdent.ejs</code>) and modify.</p>
+            <h4>12.2 Add View Partial</h4>
+            <div class="location"><strong>Location:</strong> <code>apps/repricer/views/pages/products/add-partials/addnewvendor.ejs</code></div>
+            <p>Create a view file for adding new products with this vendor.</p>
+            <h4>12.3 Update Main Product View</h4>
+            <div class="location"><strong>Location:</strong> <code>apps/repricer/views/pages/products/get_all.ejs</code></div>
+            <p>Add the new vendor to the product detail view.</p>
+
+            <hr>
+
+            <h3><span class="step-number">13-15</span>Additional Updates</h3>
+            <ul>
+                <li><strong>Step 13:</strong> Update Mapper Helper functions</li>
+                <li><strong>Step 14:</strong> Update Scrape Helper (if applicable)</li>
+                <li><strong>Step 15:</strong> Update Repricing Algorithm (if applicable)</li>
+            </ul>
+
+            <hr>
+
+            <h3><span class="step-number">16</span>Testing Checklist</h3>
+            <h4>Database Tests</h4>
+            <ul>
+                <li>Verify table creation</li>
+                <li>Verify stored procedures execute correctly</li>
+                <li>Test upsert functionality</li>
+                <li>Test update functionality</li>
+                <li>Verify foreign key relationships</li>
+            </ul>
+            <h4>Backend Tests</h4>
+            <ul>
+                <li>Test <code>UpsertVendorData</code> with new vendor name</li>
+                <li>Test product update endpoint with new vendor</li>
+                <li>Test product retrieval includes new vendor data</li>
+                <li>Verify mapper functions work correctly</li>
+            </ul>
+            <h4>Frontend Tests</h4>
+            <ul>
+                <li>Verify vendor appears in product detail view</li>
+                <li>Test adding new product with new vendor</li>
+                <li>Test updating existing product with new vendor</li>
+                <li>Verify form submission works correctly</li>
+            </ul>
+            <h4>Integration Tests</h4>
+            <ul>
+                <li>Test cron job execution with new vendor</li>
+                <li>Test scraping functionality (if applicable)</li>
+                <li>Test repricing functionality (if applicable)</li>
+                <li>Verify data flows correctly through the system</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Summary of Files to Modify/Create</h2>
+            <h3>Database Files (SQL)</h3>
+            <ol>
+                <li><code>apps/repricer/MYSQL/NEW_VENDOR_ADDITION/STEP1_INIT_TABLE_VENDOR_ADDITION_[VENDOR].sql</code></li>
+                <li><code>apps/repricer/MYSQL/NEW_VENDOR_ADDITION/STEP2_ALTER_SCRAPE_PRODUCT_LIST.sql</code> (may need update)</li>
+                <li><code>apps/repricer/MYSQL/NEW_VENDOR_ADDITION/STEP3_INSERT_DATA_[VENDOR]_TABLE.sql</code></li>
+                <li><code>apps/repricer/MYSQL/NEW_VENDOR_ADDITION/STEP4_LINK_VENDORDATA_ROOT.sql</code> (may need update)</li>
+                <li><code>apps/repricer/MYSQL/UPSERT_VENDOR/sp_Upsert[Vendor]Details.sql</code></li>
+                <li><code>apps/repricer/MYSQL/UPDATE_VENDOR/sp_Update[Vendor]DetailsById.sql</code></li>
+            </ol>
+            <h3>TypeScript/JavaScript Files</h3>
+            <ol>
+                <li><code>packages/shared/src/index.ts</code> - Add vendor enums</li>
+                <li><code>apps/repricer/src/utility/config.ts</code> - Add config values</li>
+                <li><code>apps/api-core/src/utility/config.ts</code> - Add config values</li>
+                <li><code>apps/repricer/src/services/mysql.ts</code> - Update switch statement</li>
+                <li><code>apps/api-core/src/utility/mysql/mysql-helper.ts</code> - Update helper functions</li>
+                <li><code>apps/repricer/src/controllers/product-v2.ts</code> - Add vendor handling</li>
+                <li><code>apps/db-migrations/migrations/*.ts</code> - Update vendor configs (if needed)</li>
+            </ol>
+            <h3>Frontend View Files</h3>
+            <ol>
+                <li><code>apps/repricer/views/pages/products/partials/[vendor].ejs</code> - Edit view</li>
+                <li><code>apps/repricer/views/pages/products/add-partials/add[vendor].ejs</code> - Add view</li>
+                <li><code>apps/repricer/views/pages/products/get_all.ejs</code> - Include new vendor</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>Important Notes</h2>
+            <ol>
+                <li><strong>Vendor ID:</strong> Ensure you have the correct vendor ID from your system. This is typically a numeric identifier used in the Net32 system.</li>
+                <li><strong>Naming Conventions:</strong>
+                    <ul>
+                        <li>Table names: <code>table_[vendorName]Details</code> (camelCase)</li>
+                        <li>Stored procedures: <code>sp_Upsert[VendorName]Details</code>, <code>sp_Update[VendorName]DetailsById</code></li>
+                        <li>Enum values: UPPERCASE (e.g., <code>NEWVENDOR</code>)</li>
+                    </ul>
+                </li>
+                <li><strong>Case Sensitivity:</strong> Vendor names in switch statements and comparisons are typically case-sensitive. Use consistent casing throughout.</li>
+                <li><strong>Backward Compatibility:</strong> Ensure new changes don't break existing functionality for other vendors.</li>
+                <li><strong>Migration Order:</strong> Execute SQL scripts in the correct order (STEP1 → STEP2 → STEP3 → STEP4).</li>
+                <li><strong>Testing:</strong> Thoroughly test in a development environment before deploying to production.</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>Troubleshooting</h2>
+            <h3>Common Issues:</h3>
+            <h4>1. Stored Procedure Not Found</h4>
+            <ul>
+                <li>Verify procedure name matches configuration</li>
+                <li>Check database connection</li>
+                <li>Ensure procedure was created successfully</li>
+            </ul>
+            <h4>2. Table Not Found</h4>
+            <ul>
+                <li>Verify table name in configuration matches actual table name</li>
+                <li>Check database schema</li>
+            </ul>
+            <h4>3. Vendor Not Appearing in UI</h4>
+            <ul>
+                <li>Check view files are included correctly</li>
+                <li>Verify vendor name matches in all switch statements</li>
+                <li>Check browser console for JavaScript errors</li>
+            </ul>
+            <h4>4. Data Not Saving</h4>
+            <ul>
+                <li>Verify stored procedure parameters match function call</li>
+                <li>Check database constraints and foreign keys</li>
+                <li>Review error logs</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Additional Resources</h2>
+            <ul>
+                <li>Existing vendor implementations can be used as reference:
+                    <ul>
+                        <li><strong>FIRSTDENT:</strong> Most recent addition, good reference</li>
+                        <li><strong>TRIAD:</strong> Another recent addition</li>
+                        <li><strong>TRADENT/FRONTIER/MVP:</strong> Original vendors</li>
+                    </ul>
+                </li>
+                <li>Database schema documentation: See <code>apps/repricer/MYSQL/INIT_TABLE_CREATION.sql</code></li>
+                <li>Migration examples: See <code>apps/db-migrations/migrations/</code> for vendor-related migrations</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+

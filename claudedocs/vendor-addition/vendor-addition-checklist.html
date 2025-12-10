@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Reference Checklist: Adding a New Vendor - Repricer System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px;
+            margin-bottom: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .section {
+            background: white;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            font-size: 1.8rem;
+        }
+
+        h3 {
+            color: #764ba2;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+
+        ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        li {
+            margin-bottom: 12px;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        li:before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            font-size: 1.2em;
+            color: #667eea;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+
+        pre code {
+            background: none;
+            color: #f8f8f2;
+            padding: 0;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .command-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .command-box h4 {
+            color: #667eea;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        hr {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Quick Reference Checklist</h1>
+            <p class="subtitle">Adding a New Vendor to Repricer System</p>
+        </header>
+
+        <div class="section">
+            <div class="info-box">
+                <strong>Note:</strong> Use this checklist as a quick reference when adding a new vendor. For detailed instructions, see <a href="vendor-addition-guide.html" style="color: #2196f3;">Vendor Addition Guide</a>.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Pre-requisites</h2>
+            <ul>
+                <li>Vendor ID from Net32 system</li>
+                <li>Vendor name (e.g., "NEWVENDOR")</li>
+                <li>Database access credentials</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Database Setup</h2>
+            <ul>
+                <li>Step 1: Create vendor details table (<code>STEP1_INIT_TABLE_VENDOR_ADDITION_[VENDOR].sql</code>)</li>
+                <li>Step 2: Alter <code>table_scrapeProductList</code> to add link column</li>
+                <li>Step 3: Insert initial data for all products</li>
+                <li>Step 4: Link vendor data to root product table</li>
+                <li>Step 5: Create upsert stored procedure (<code>sp_Upsert[Vendor]Details</code>)</li>
+                <li>Step 6: Create update stored procedure (<code>sp_Update[Vendor]DetailsById</code>)</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Code Changes - Shared Package</h2>
+            <ul>
+                <li>Add vendor to <code>VendorId</code> enum in <code>packages/shared/src/index.ts</code></li>
+                <li>Add vendor to <code>VendorName</code> enum</li>
+                <li>Add to <code>VendorNameLookup</code> mapping</li>
+                <li>Add to <code>VendorIdLookup</code> mapping</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Code Changes - Configuration</h2>
+            <ul>
+                <li>Add <code>SQL_SP_UPSERT_[VENDOR]</code> to <code>apps/repricer/src/utility/config.ts</code></li>
+                <li>Add <code>SQL_SP_UPDATE_[VENDOR]</code> to config</li>
+                <li>Add <code>SQL_[VENDOR]_DETAILS</code> table name to config</li>
+                <li>Repeat for <code>apps/api-core/src/utility/config.ts</code></li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Code Changes - Services</h2>
+            <ul>
+                <li>Update <code>UpsertVendorData</code> switch in <code>apps/repricer/src/services/mysql.ts</code></li>
+                <li>Update <code>UpsertVendorData</code> in <code>apps/excel-export/src/services/mysql.ts</code></li>
+                <li>Update <code>UpsertVendorData</code> in <code>apps/repricer/src/middleware/mysql.ts</code></li>
+                <li>Update <code>getContextTableNameByVendorName</code> in <code>apps/api-core/src/utility/mysql/mysql-helper.ts</code></li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Code Changes - Controllers</h2>
+            <ul>
+                <li>Add vendor case in <code>updateProductDetails</code> in <code>apps/repricer/src/controllers/product-v2.ts</code></li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Code Changes - Migrations</h2>
+            <ul>
+                <li>Add vendor table to <code>20241120000009_add_market_state_fields.ts</code> (if needed)</li>
+                <li>Add vendor config to <code>20251208000010_populate_market_state_fields.ts</code> (if needed)</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Frontend Views</h2>
+            <ul>
+                <li>Create <code>apps/repricer/views/pages/products/partials/[vendor].ejs</code> (edit view)</li>
+                <li>Create <code>apps/repricer/views/pages/products/add-partials/add[vendor].ejs</code> (add view)</li>
+                <li>Update <code>apps/repricer/views/pages/products/get_all.ejs</code> to include new vendor</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Testing</h2>
+            <ul>
+                <li>Database: Verify table and procedures</li>
+                <li>Backend: Test upsert and update functions</li>
+                <li>Backend: Test product retrieval</li>
+                <li>Frontend: Test product detail view</li>
+                <li>Frontend: Test add product form</li>
+                <li>Frontend: Test update product form</li>
+                <li>Integration: Test cron jobs</li>
+                <li>Integration: Test scraping (if applicable)</li>
+                <li>Integration: Test repricing (if applicable)</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Verification</h2>
+            <ul>
+                <li>All SQL scripts executed successfully</li>
+                <li>No TypeScript compilation errors</li>
+                <li>No runtime errors in logs</li>
+                <li>Vendor appears in UI correctly</li>
+                <li>Data saves and retrieves correctly</li>
+                <li>Existing vendors still work correctly</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Deployment Notes</h2>
+            <ul>
+                <li>Document vendor ID and name</li>
+                <li>Note any vendor-specific configuration</li>
+                <li>Update team documentation</li>
+                <li>Create deployment ticket with all changes</li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>Quick Command Reference</h2>
+            <div class="command-box">
+                <h4>SQL Verification Commands</h4>
+                <pre><code>-- Verify table exists
+SHOW TABLES LIKE 'table_%Vendor%Details';
+
+-- Verify stored procedure exists
+SHOW PROCEDURE STATUS WHERE Name LIKE 'sp_%Vendor%';
+
+-- Test upsert
+CALL sp_Upsert[Vendor]Details(...);
+
+-- Check data
+SELECT COUNT(*) FROM table_[vendor]Details;</code></pre>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
