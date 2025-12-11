@@ -192,6 +192,8 @@ export const ToEnvSettingsModel = (incomingSqlData: any): any => {
     expressCronBatchSize: incomingSqlData[0].ExpressCronBatchSize,
     expressCronOverlapThreshold: incomingSqlData[0].ExpressCronOverlapThreshold,
     expressCronInstanceLimit: incomingSqlData[0].ExpressCronInstanceLimit,
+    slowCronBatchSize: incomingSqlData[0].SlowCronBatchSize,
+    slowCronInstanceLimit: incomingSqlData[0].SlowCronInstanceLimit,
     AuditInfo: {
       UpdatedBy: incomingSqlData[0].UpdatedBy,
       UpdatedOn: incomingSqlData[0].UpdatedOn,
@@ -252,7 +254,7 @@ export function ToCronSettingsModel(incomingSqlData: any): any {
   return mappedList;
 }
 
-export function ToFilterSettingsModel(incomingSqlData: any): any {
+export function MapWithAuditInfo(incomingSqlData: any): any {
   let mappedItem: any = [];
   if (!incomingSqlData) {
     return mappedItem;

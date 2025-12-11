@@ -11,6 +11,7 @@ import * as mongoMiddleware from "../services/mongo";
 import ExportModel from "../models/export-model";
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
+import { InitExportStatus } from "../services/mysql-v2";
 
 export async function getHistory(req: Request, res: Response) {
   const maxProductsCount = 65; //await Item.countDocuments({ activated: true });
@@ -121,7 +122,7 @@ export async function getAllHistory(req: Request, res: Response) {
     new Date(),
     auditInfo.UpdatedBy,
   );
-  await mongoMiddleware.InitExportStatus(initPayload);
+  await InitExportStatus(initPayload);
   historyExportMiddleware.ExportAndSaveV2(
     startDate,
     endDate,
@@ -149,7 +150,7 @@ export async function getHistoryById(req: Request, res: Response) {
     new Date(),
     auditInfo.UpdatedBy,
   );
-  await mongoMiddleware.InitExportStatus(initPayload);
+  await InitExportStatus(initPayload);
   historyExportMiddleware.ExportAndSaveByIdV2(
     mpid,
     startDate,
