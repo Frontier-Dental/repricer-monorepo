@@ -10,6 +10,7 @@ import {
 import { applicationConfig } from "../config";
 import { GetTriggeredByValue, MapProductDetailsList } from "./mySql-mapper";
 import {
+  CurrentStock,
   PriceBreakInfo,
   ProductInfo,
   ProxyNet32,
@@ -18,6 +19,7 @@ import {
   UpdateCronForProductPayload,
   UpdateProductPayload,
 } from "./types";
+import { WaitlistModel } from "../../model/waitlist-model";
 
 export async function InsertRunInfo(runInfo: RunInfo) {
   try {
@@ -321,6 +323,11 @@ export async function UpdateProductAsync(
   payload: UpdateProductPayload,
   isPriceUpdated: boolean,
   contextVendor: string,
+  marketData?: {
+    inStock?: boolean;
+    inventory?: number;
+    ourPrice?: number | null;
+  },
 ) {
   try {
     const knex = getKnexInstance();
@@ -339,6 +346,21 @@ export async function UpdateProductAsync(
       LastSuggestedPrice: payload.lastSuggestedPrice,
     };
 
+    // Add market state fields if provided (backward compatible)
+    if (marketData) {
+      if (marketData.inStock !== undefined) {
+        updateObj.CurrentInStock = marketData.inStock;
+      }
+      if (marketData.inventory !== undefined) {
+        updateObj.CurrentInventory = marketData.inventory;
+      }
+      if (marketData.ourPrice !== undefined) {
+        updateObj.OurLastPrice = marketData.ourPrice;
+      }
+      // Update timestamp when market data is provided
+      updateObj.MarketStateUpdatedAt = new Date();
+    }
+
     if (payload.next_cron_time && payload.next_cron_time !== "") {
       updateObj.NextCronTime = payload.next_cron_time;
     }
@@ -356,11 +378,68 @@ export async function UpdateProductAsync(
       payload,
       isPriceUpdated,
       contextVendor,
+      marketData,
       error,
     );
     throw error;
   } finally {
     //destroyKnexInstance();
+  }
+}
+
+// New function to update ONLY market state fields (for scraping)
+export async function UpdateMarketStateOnly(
+  mpid: string | number,
+  vendorName: string,
+  marketData: {
+    inStock?: boolean;
+    inventory?: number;
+    ourPrice?: number;
+  },
+) {
+  try {
+    const knex = getKnexInstance();
+    const contextTableName = getContextTableNameByVendorName(vendorName);
+
+    if (!contextTableName) {
+      console.log(`No table found for vendor: ${vendorName}`);
+      return null;
+    }
+
+    const updateObj: Record<string, any> = {};
+
+    // Only update fields that have data
+    if (marketData.inStock !== undefined) {
+      updateObj.CurrentInStock = marketData.inStock;
+    }
+    if (marketData.inventory !== undefined) {
+      updateObj.CurrentInventory = marketData.inventory;
+    }
+    if (marketData.ourPrice !== undefined) {
+      updateObj.OurLastPrice = marketData.ourPrice;
+    }
+
+    // Only perform update if we have fields to update
+    if (Object.keys(updateObj).length > 0) {
+      updateObj.MarketStateUpdatedAt = new Date();
+
+      const result = await knex(contextTableName)
+        .update(updateObj)
+        .where("MpId", parseInt(mpid.toString()));
+
+      return result;
+    }
+
+    return 0; // No updates performed
+  } catch (error) {
+    console.log(
+      "Error in UpdateMarketStateOnly",
+      mpid,
+      vendorName,
+      marketData,
+      error,
+    );
+    throw error;
   }
 }
 
@@ -835,6 +914,105 @@ export async function ExecuteQuery(_query: string, _params: any) {
     return result[0];
   } catch (error) {
     console.log("Error in ExecuteQuery", _query, _params, error);
+    throw error;
+  } finally {
+    //destroyKnexInstance();
+  }
+}
+
+export async function GetCurrentStock(
+  mpids: string[],
+  vendorName: string,
+): Promise<CurrentStock[]> {
+  const contextTableName = getContextTableNameByVendorName(
+    vendorName?.toUpperCase(),
+  );
+  try {
+    const knex = getKnexInstance();
+    const result = await knex(contextTableName!)
+      .whereIn("mpid", mpids)
+      .select("mpid", "CurrentInStock", "CurrentInventory");
+    return result;
+  } catch (error) {
+    console.log(
+      "Error in GetCurrentStock",
+      mpids,
+      vendorName,
+      contextTableName,
+      error,
+    );
+    throw error;
+  } finally {
+    //destroyKnexInstance();
+  }
+}
+
+export async function WaitlistInsert(waitlistItems: WaitlistModel[]) {
+  try {
+    const knex = getKnexInstance();
+    await knex(applicationConfig.SQL_WAITLIST!).insert(waitlistItems);
+  } catch (error) {
+    console.log("Error in WaitlistInsert", waitlistItems, error);
+    throw error;
+  } finally {
+    //destroyKnexInstance();
+  }
+}
+
+export async function GetWaitlistPendingItems(): Promise<WaitlistModel[]> {
+  try {
+    const knex = getKnexInstance();
+    const result = await knex(applicationConfig.SQL_WAITLIST!)
+      .where("api_status", "pending")
+      .select("*");
+    return result;
+  } catch (error) {
+    console.log("Error in GetWaitlistPendingItems", error);
+    throw error;
+  } finally {
+    //destroyKnexInstance();
+  }
+}
+
+export async function UpdateWaitlistStatus(
+  id: number,
+  status: string,
+  message?: string,
+) {
+  try {
+    const knex = getKnexInstance();
+    await knex(applicationConfig.SQL_WAITLIST!)
+      .where("id", id)
+      .update({ api_status: status, message: message, updated_at: new Date() });
+  } catch (error) {
+    console.log("Error in UpdateWaitlistStatus", id, status, message, error);
+    throw error;
+  } finally {
+    //destroyKnexInstance();
+  }
+}
+
+export async function UpdateVendorStock(
+  vendorName: string,
+  mpid: number,
+  inventory: number,
+) {
+  const contextTableName = getContextTableNameByVendorName(
+    vendorName?.toUpperCase(),
+  );
+  try {
+    const knex = getKnexInstance();
+    await knex(contextTableName!)
+      .where("MpId", mpid)
+      .update({ CurrentInventory: inventory });
+  } catch (error) {
+    console.log(
+      "Error in UpdateVendorStock",
+      vendorName,
+      mpid,
+      inventory,
+      error,
+    );
     throw error;
   } finally {
     //destroyKnexInstance();

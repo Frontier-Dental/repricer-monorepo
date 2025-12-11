@@ -68,6 +68,10 @@ interface SqlEntity {
   GetBBShippingValue?: number;
   GetBBBadge?: number;
   GetBBShipping?: number;
+  CurrentInStock?: boolean | null;
+  CurrentInventory?: number | null;
+  OurLastPrice?: number | null;
+  MarketStateUpdatedAt?: Date | string | null;
 }
 
 export class OwnVendorProductDetails {
@@ -143,6 +147,12 @@ export class OwnVendorProductDetails {
   getBBBadge?: number;
   getBBShipping?: number;
   algo_execution_mode: string;
+
+  // New market state fields
+  currentInStock: boolean | null;
+  currentInventory: number | null;
+  ourLastPrice: number | null;
+  marketStateUpdatedAt: Date | string | null;
 
   constructor(sqlEntity: SqlEntity, _algo_execution_mode: string) {
     this.channelName = sqlEntity["ChannelName"] || "";
@@ -222,6 +232,12 @@ export class OwnVendorProductDetails {
     this.getBBBadge = sqlEntity["GetBBBadge"] || 0;
     this.getBBShipping = sqlEntity["GetBBShipping"] || 0;
     this.algo_execution_mode = _algo_execution_mode;
+
+    // Initialize market state fields
+    this.currentInStock = sqlEntity["CurrentInStock"] ?? null;
+    this.currentInventory = sqlEntity["CurrentInventory"] ?? null;
+    this.ourLastPrice = sqlEntity["OurLastPrice"] ?? null;
+    this.marketStateUpdatedAt = sqlEntity["MarketStateUpdatedAt"] ?? null;
   }
 }
 

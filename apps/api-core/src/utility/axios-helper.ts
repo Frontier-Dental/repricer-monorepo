@@ -355,3 +355,44 @@ export async function fetchGetAsyncV2(proxy: any, _url: string): Promise<any> {
   }
   return responseData;
 }
+
+export async function getProductsFromMiniErp(
+  _url: string,
+  accessToken: string,
+  queryData: { page: number; pageSize: number },
+): Promise<any> {
+  const { page, pageSize } = queryData;
+
+  const graphqlQuery = `
+  query getUpdatedProductsWithOffsetPagination($hoursSinceUpdate: Int, $page: Int, $pageSize: Int) {
+    getUpdatedProductsWithOffsetPagination(hoursSinceUpdate: $hoursSinceUpdate, page: $page, pageSize: $pageSize) {
+      items {
+        mpid,
+        vendorName,
+        quantityAvailable
+      }
+      hasMore
+    }
+  }
+`;
+
+  const config = {
+    method: "post",
+    url: _url,
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      query: graphqlQuery,
+      variables: {
+        hoursSinceUpdate: applicationConfig.MINI_ERP_DATA_HOURS_SINCE_UPDATE,
+        page: page,
+        pageSize: pageSize,
+      },
+    },
+  };
+  return axios(config);
+}

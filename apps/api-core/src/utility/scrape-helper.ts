@@ -194,6 +194,69 @@ async function executeScrapeLogic(
             console.log(
               `SCRAPE-ONLY : ${cronSetting.CronName} : ${keyGen} : Inserted Product Info for MPID : ${prod.MpId} | VENDOR : ${productInfo.VendorId}`,
             );
+
+            // Update vendor detail tables with market state for our own vendor
+            if (isOwnVendor) {
+              try {
+                // Determine which vendor detail table to update based on the response vendorId
+                const vendorIdStr = resp.vendorId.toString();
+                let vendorName = "";
+
+                // Match the response vendorId to the correct vendor name
+                switch (vendorIdStr) {
+                  case "17357":
+                    vendorName = "TRADENT";
+                    break;
+                  case "20722":
+                    vendorName = "FRONTIER";
+                    break;
+                  case "20755":
+                    vendorName = "MVP";
+                    break;
+                  case "20727":
+                    vendorName = "TOPDENT";
+                    break;
+                  case "20533":
+                    vendorName = "FIRSTDENT";
+                    break;
+                  case "5":
+                    vendorName = "TRIAD";
+                    break;
+                }
+
+                if (vendorName) {
+                  // Use the new function that ONLY updates market state columns
+
+                  // Get price from priceBreaks for minQty=1
+                  const basePrice = resp.priceBreaks?.find(
+                    (pb: { minQty: number }) => pb.minQty === 1,
+                  )?.unitPrice;
+
+                  const marketData = {
+                    inStock: resp.inStock === "true" || resp.inStock === true,
+                    inventory: parseInt(resp.inventory) || 0,
+                    ourPrice: basePrice ? parseFloat(basePrice) : undefined,
+                  };
+
+                  await mySqlHelper.UpdateMarketStateOnly(
+                    prod.MpId,
+                    vendorName,
+                    marketData,
+                  );
+
+                  console.log(
+                    `SCRAPE-ONLY : Updated market state for ${vendorName} - MPID: ${prod.MpId}, InStock: ${resp.inStock}, Inventory: ${resp.inventory}, Price: ${resp.price}`,
+                  );
+                }
+              } catch (error) {
+                // Log error but don't stop scraping process
+                console.error(
+                  `SCRAPE-ONLY : Failed to update market state for MPID: ${prod.MpId}`,
+                  error,
+                );
+              }
+            }
+
             if (productInfoResult && productInfoResult[0] && resp.priceBreaks) {
               for (const pb of resp.priceBreaks) {
                 const priceBreakInfo = new PriceBreakInfo(

@@ -246,6 +246,40 @@ export async function GetFilteredCrons(ignoreCache = false) {
   return cronSettingsDetails;
 }
 
+export async function GetMiniErpCronDetails(ignoreCache = false) {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const miniErpCronDetails = await cacheClient.get(
+    CacheKey.MINI_ERP_CRON_DETAILS,
+  );
+  if (miniErpCronDetails != null && !ignoreCache) {
+    await cacheClient.disconnect();
+    return miniErpCronDetails;
+  }
+  let cronSettingsDetails = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`
+    SELECT 
+      cs.*,
+      sk.VendorName,
+      sk.SecretKey,
+      app.Sequence,
+      app.ProxyProvider as AlternateProxyProvider
+    FROM cron_settings cs
+    LEFT JOIN secret_keys sk ON cs.CronId = sk.CronId
+    LEFT JOIN alternate_proxy_providers app ON cs.CronId = app.CronId
+    WHERE cs.CronType = 'MINI_ERP'
+    ORDER BY cs.CronId, sk.VendorName, app.Sequence
+  `);
+  if (result && result[0] && result[0].length > 0) {
+    cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0]);
+    await cacheClient.set(CacheKey.MINI_ERP_CRON_DETAILS, cronSettingsDetails); // Cache for 1 hour
+  }
+  await cacheClient.disconnect();
+  return cronSettingsDetails;
+}
+
 export async function GetFilterCronDetailsByName($cronName: any) {
   const filterCronDetails = await GetFilteredCrons();
   return filterCronDetails.find((x: any) => x.cronName == $cronName);

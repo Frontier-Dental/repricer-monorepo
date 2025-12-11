@@ -70,6 +70,10 @@ export default class CustomProduct {
   getBBShippingValue: any;
   getBBBadge: boolean;
   getBBShipping: boolean;
+  currentInStock: boolean;
+  currentInventory: number;
+  ourLastPrice: number;
+  marketStateUpdatedAt: Date;
 
   constructor(sqlEntity: any) {
     this.channelName = sqlEntity["ChannelName"];
@@ -149,5 +153,9 @@ export default class CustomProduct {
     this.getBBShippingValue = sqlEntity["GetBBShippingValue"];
     this.getBBBadge = sqlEntity["GetBBBadge"] == 1 ? true : false;
     this.getBBShipping = sqlEntity["GetBBShipping"] == 1 ? true : false;
+    this.currentInStock = sqlEntity["CurrentInStock"] == 1 ? true : false;
+    this.currentInventory = sqlEntity["CurrentInventory"];
+    this.ourLastPrice = sqlEntity["OurLastPrice"];
+    this.marketStateUpdatedAt = sqlEntity["MarketStateUpdatedAt"];
   }
 }
