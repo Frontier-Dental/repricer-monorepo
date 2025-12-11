@@ -33,7 +33,7 @@ import * as buyBoxHelper from "../../../utility/buy-box-helper";
 export async function repriceProduct(
   mpid: string,
   net32Products: Net32Product[],
-  internalProduct: FrontierProduct,
+  internalProduct: any,
   contextVendor: string,
 ) {
   let productItem = internalProduct;
@@ -243,24 +243,24 @@ export async function repriceProduct(
   // Apply Reprice Rule for Product
   const isOverrideEnabled = await isOverrideEnabledForProduct(
     productItem.override_bulk_update,
+    productItem.isSlowCronRun,
   );
   const isNcToBeApplied = isNcForBuyBoxApplied
     ? true
     : productItem.is_nc_needed;
 
-  if (productItem.repricingRule != null && !isOverrideEnabled) {
-    repriceResult = await Rule.ApplyRule(
-      repriceResult!,
-      productItem.repricingRule,
-      isNcToBeApplied,
-      ownProduct,
-    );
-  }
-
   if (isOverrideEnabled) {
     repriceResult = await Rule.ApplyRule(
       repriceResult!,
       productItem.override_bulk_rule,
+      isNcToBeApplied,
+      ownProduct,
+    );
+  }
+  if (productItem.repricingRule != null && !isOverrideEnabled) {
+    repriceResult = await Rule.ApplyRule(
+      repriceResult!,
+      productItem.repricingRule,
       isNcToBeApplied,
       ownProduct,
     );
