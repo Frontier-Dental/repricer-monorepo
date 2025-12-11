@@ -280,8 +280,8 @@ export async function UpdateSlowCronExpression(req: Request, res: Response) {
         cronSlowCronResponse[index].CronTimeUnit,
       ) ||
       !_.isEqual(
-        cronSettingPayload.Offset,
-        cronSlowCronResponse[index].Offset,
+        cronSettingPayload.Offset.toString(),
+        cronSlowCronResponse[index].Offset.toString(),
       ) ||
       !_.isEqual(
         cronSettingPayload.ProxyProvider,
@@ -296,8 +296,8 @@ export async function UpdateSlowCronExpression(req: Request, res: Response) {
         cronSlowCronResponse[index].FixedIp,
       ) ||
       !_.isEqual(
-        cronSettingPayload.AlternateProxyProvider,
-        cronSlowCronResponse[index].AlternateProxyProvider,
+        JSON.stringify(cronSettingPayload.AlternateProxyProvider),
+        JSON.stringify(cronSlowCronResponse[index].AlternateProxyProvider),
       )
     ) {
       updatedList.push(cronSettingPayload as unknown as never);
@@ -311,7 +311,10 @@ export async function UpdateSlowCronExpression(req: Request, res: Response) {
         cronSettingPayload.CronTimeUnit,
         cronSlowCronResponse[index].CronTimeUnit,
       ) ||
-      !_.isEqual(cronSettingPayload.Offset, cronSlowCronResponse[index].Offset)
+      !_.isEqual(
+        cronSettingPayload.Offset.toString(),
+        cronSlowCronResponse[index].Offset.toString(),
+      )
     ) {
       recreatePayload.push(cronSettingPayload.CronId as unknown as never);
     }
