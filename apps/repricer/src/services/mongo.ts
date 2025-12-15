@@ -59,7 +59,10 @@ export const GetCronLogsV2 = async (
         query["type"] = "FEED_RUN";
         break;
       case "ALL_EXCEPT_422":
-        query["type"] = { $nin: ["422Error"] };
+        query["type"] = { $nin: ["422Error", "OpportunityItem"] };
+        break;
+      case "Opportunity":
+        query["type"] = "OpportunityItem";
         break;
       default:
         query["type"] = type;
