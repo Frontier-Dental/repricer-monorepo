@@ -158,6 +158,7 @@ export async function Execute(
                 jobId,
                 prioritySequence,
                 idx,
+                isSlowCronRun,
               );
               eligibleCount++;
               if (repriceResponse) {
@@ -858,12 +859,13 @@ async function proceedWithExecution(cronId: string) {
 
 async function repriceSingleVendor(
   net32resp: Net32Response,
-  prod: ProductDetailsListItem,
+  prod: any,
   cronSetting: CronSettings,
   isOverrideRun: boolean,
   keyGen: string,
   contextVendor: string,
   isManualRun = false,
+  isSlowCronRun = false,
 ) {
   const cronLogs: any[] = [];
   let isPriceUpdated = false;
@@ -877,6 +879,7 @@ async function repriceSingleVendor(
   prod.last_cron_time = new Date();
   prod.cronName = cronSetting.CronName;
   prod.contextCronName = cronSetting.CronName;
+  prod.isSlowCronRun = isSlowCronRun;
   //Add isOverrideRun if sent as True to Payload
   if (isOverrideRun) {
     prod.isOverrideRun = isOverrideRun;
@@ -1156,6 +1159,7 @@ export async function repriceWrapper(
   prioritySequence: { name: string; value: string }[],
   idx: number,
   isManualRun = false,
+  isSlowCronRun = false,
 ) {
   return repriceSingleVendor(
     net32resp,
@@ -1165,6 +1169,7 @@ export async function repriceWrapper(
     keyGen,
     prioritySequence[idx].name,
     isManualRun,
+    isSlowCronRun,
   );
 }
 
