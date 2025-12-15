@@ -242,18 +242,20 @@ export async function GetContextPrice(
   floorPrice: any,
   percentageDown: any,
   minQty: any,
+  heavyShippingPrice: number = 0,
 ): Promise<any> {
   let returnObj: any = {};
   returnObj.Price = new Decimal(nextLowestPrice)
     .minus(processOffset)
-    .toNumber(); // Math.trunc((nextLowestPrice - processOffset) * 100) / 100 ;
+    .toNumber();
   returnObj.Type = "OFFSET";
   try {
     if (percentageDown != 0 && minQty == 1) {
-      const percentageDownPrice = subtractPercentage(
-        nextLowestPrice,
-        percentageDown,
-      );
+      const percentageDownPrice =
+        subtractPercentage(
+          nextLowestPrice + heavyShippingPrice,
+          percentageDown,
+        ) - heavyShippingPrice;
       if (percentageDownPrice > floorPrice) {
         returnObj.Price = percentageDownPrice;
         returnObj.Type = "PERCENTAGE";
@@ -323,6 +325,9 @@ export async function VerifyFloorWithSister(
         floorPrice,
         parseFloat(productItem.percentageDown),
         1,
+        sortedPayload[k].heavyShipping
+          ? parseFloat(sortedPayload[k].heavyShipping)
+          : 0,
       );
       if (updatePrice.Price > floorPrice) {
         aboveFloorVendors.push(sortedPayload[k]);
@@ -353,6 +358,9 @@ export async function VerifyFloorWithSister(
       floorPrice,
       parseFloat(productItem.percentageDown),
       1,
+      _.first(aboveFloorVendors).heavyShipping
+        ? parseFloat(_.first(aboveFloorVendors).heavyShipping)
+        : 0,
     );
     var contextPrice = contextPriceResult.Price;
     model.repriceDetails!.goToPrice = contextPrice.toFixed(2);

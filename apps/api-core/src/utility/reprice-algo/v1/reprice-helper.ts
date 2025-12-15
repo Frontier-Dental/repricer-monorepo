@@ -36,6 +36,9 @@ export async function Reprice(
   const floorPrice = productItem.floorPrice
     ? parseFloat(productItem.floorPrice)
     : 0;
+  const heavyShippingPrice = refProduct.heavyShipping
+    ? parseFloat(refProduct.heavyShipping)
+    : 0;
   let lowestPrice = 0;
   const processOffset = applicationConfig.OFFSET;
   let excludedVendors =
@@ -227,6 +230,7 @@ export async function Reprice(
             floorPrice,
             parseFloat(productItem.percentageDown),
             1,
+            heavyShippingPrice,
           );
           const contextPrice = contextPriceResult.Price;
           if (nextLowestPrice > contextPrice) {
@@ -348,6 +352,7 @@ export async function Reprice(
           floorPrice,
           parseFloat(productItem.percentageDown),
           1,
+          heavyShippingPrice,
         );
         const contextPrice = contextPriceResult.Price;
         model.repriceDetails!.goToPrice = contextPrice.toFixed(2);
@@ -381,6 +386,7 @@ export async function Reprice(
           floorPrice,
           parseFloat(productItem.percentageDown),
           1,
+          heavyShippingPrice,
         );
         const offsetPrice = contextPriceResult.Price;
         //1. If the Offset Price is less than Floor Price
@@ -471,6 +477,7 @@ export async function Reprice(
                 floorPrice,
                 parseFloat(productItem.percentageDown),
                 1,
+                heavyShippingPrice,
               );
               const contextPrice = contextPriceResult.Price;
               if (contextPrice < existingPrice && floorSisterResult !== false) {
@@ -579,6 +586,7 @@ export async function Reprice(
                   floorPrice,
                   parseFloat(productItem.percentageDown),
                   1,
+                  heavyShippingPrice,
                 );
                 repriceModel = new RepriceModel(
                   sourceId,
@@ -765,6 +773,9 @@ export async function RepriceIndividualPriceBreak(
   const maxPrice = productItem.maxPrice ? productItem.maxPrice : 99999;
   const floorPrice = productItem.floorPrice
     ? parseFloat(productItem.floorPrice)
+    : 0;
+  const heavyShippingPrice = refProduct.heavyShipping
+    ? parseFloat(refProduct.heavyShipping)
     : 0;
   let lowestPrice = 0;
   let excludedVendors =
@@ -1012,6 +1023,7 @@ export async function RepriceIndividualPriceBreak(
             floorPrice,
             parseFloat(productItem.percentageDown),
             priceBreak.minQty,
+            heavyShippingPrice,
           );
           const contextPrice = contextPriceResult.Price;
           if (nextLowestPrice > contextPrice) {
@@ -1105,6 +1117,7 @@ export async function RepriceIndividualPriceBreak(
           floorPrice,
           parseFloat(productItem.percentageDown),
           priceBreak.minQty,
+          heavyShippingPrice,
         );
         repriceModel.repriceDetails!.goToPrice =
           contextPriceResult.Price.toFixed(2);
@@ -1137,6 +1150,7 @@ export async function RepriceIndividualPriceBreak(
           floorPrice,
           parseFloat(productItem.percentageDown),
           priceBreak.minQty,
+          heavyShippingPrice,
         );
         let offsetPrice = contextPriceResult.Price;
         //1. If the Offset Price is less than Floor Price
@@ -1213,6 +1227,7 @@ export async function RepriceIndividualPriceBreak(
                   floorPrice,
                   parseFloat(productItem.percentageDown),
                   priceBreak.minQty,
+                  heavyShippingPrice,
                 );
                 const contextPrice = contextPriceResult.Price;
                 if (
