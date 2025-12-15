@@ -524,7 +524,7 @@ export function AppendNewPriceBreakActivation(
 
 export async function ApplyRepriceDownBadgeCheckRule(
   repriceResult: RepriceModel,
-  net32Result: Net32Product[],
+  net32Result: any[],
   productItem: FrontierProduct,
   badgePercentageDown: number,
 ): Promise<RepriceModel> {
@@ -539,7 +539,10 @@ export async function ApplyRepriceDownBadgeCheckRule(
     (x: any) => x.vendorId.toString() == productItem.ownVendorId!.toString(),
   );
   const existingPrice = ownVendorItem
-    ? ownVendorItem.priceBreaks!.find((x) => x.minQty == 1)!.unitPrice
+    ? ownVendorItem.priceBreaks!.find((x: any) => x.minQty == 1)!.unitPrice
+    : 0;
+  const heavyShippingPrice = ownVendorItem.heavyShipping
+    ? parseFloat(ownVendorItem.heavyShipping)
     : 0;
   const calculatedSuggestedPrice = getSuggestedPriceForMinQty(repriceResult, 1);
   tempProductItem.badgeIndicator = "BADGE_ONLY";
@@ -590,10 +593,11 @@ export async function ApplyRepriceDownBadgeCheckRule(
         }
       });
       const lowestAuthVendorPrice = lowestUnitPrice;
-      let effectivePrice = subtractPercentage(
-        lowestAuthVendorPrice as unknown as number,
-        parseFloat(productItem.badgePercentageDown),
-      );
+      let effectivePrice =
+        subtractPercentage(
+          (lowestAuthVendorPrice as unknown as number) + heavyShippingPrice,
+          parseFloat(productItem.badgePercentageDown),
+        ) - heavyShippingPrice;
       const floorPriceOfProduct = parseFloat(productItem.floorPrice);
 
       if (calculatedSuggestedPrice <= effectivePrice) {
