@@ -168,7 +168,7 @@ const envSchema = z.object({
     .default(true),
   NO_OF_RETRIES: z.coerce.number().default(2),
   RETRY_INTERVAL: z.coerce.number().default(2000),
-  _422_CACHE_VALID_PERIOD: z.coerce.number().default(59),
+  _422_CACHE_VALID_PERIOD: z.coerce.number().default(120),
   CRON_NAME_422: z.string().default("Cron-422"),
   CRON_NAME_OPPORTUNITY: z.string().default("Cron-Opportunity"),
   VENDOR_ID: z.coerce.number().default(17357),

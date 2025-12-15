@@ -121,9 +121,14 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
     } else {
       const differenceInTime =
         sysTime.getTime() - new Date(result.initTime).getTime();
-      const differenceInMinutes = differenceInTime / 60000;
+      const differenceInMinutes = Math.round(differenceInTime / 60000);
       const envVariables = await sqlV2Service.GetGlobalConfig();
-      const thresholdValue = 1.5;
+
+      const thresholdValue =
+        envVariables != null && envVariables.expressCronOverlapThreshold != null
+          ? envVariables.expressCronOverlapThreshold
+          : applicationConfig._422_CACHE_VALID_PERIOD;
+
       console.log(
         `Checking Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
       );
@@ -140,7 +145,13 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
 
 export async function runCoreCronLogicFor422() {
   const cacheKey = CacheKey._422_RUNNING_CACHE;
-  const isCacheValid = await IsCacheValid(cacheKey, new Date());
+  const skipLockCheck = process.env.SKIP_CRON_LOCK === "true";
+  const isCacheValid = skipLockCheck
+    ? false
+    : await IsCacheValid(cacheKey, new Date());
+  if (skipLockCheck) {
+    console.info(`Bypassing cron lock check (SKIP_CRON_LOCK=true)`);
+  }
   if (!isCacheValid) {
     console.info(`Getting List of Eligible Products for Cron-422`);
     const runningCacheObj = { cronRunning: true, initTime: new Date() };

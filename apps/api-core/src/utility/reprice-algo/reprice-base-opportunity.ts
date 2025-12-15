@@ -173,8 +173,6 @@ export async function RepriceOpportunityItem(
 
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
 
-  console.log("prioritySequence", prioritySequence);
-
   if (prioritySequence && prioritySequence.length > 0) {
     // ==========================================================================
     // STEP 4: Fetch current market prices from Net32 API
@@ -183,8 +181,6 @@ export async function RepriceOpportunityItem(
       "{mpId}",
       details.mpId,
     );
-
-    console.log("searchRequest", searchRequest);
 
     var net32result = await axiosHelper.getAsync(
       searchRequest,
