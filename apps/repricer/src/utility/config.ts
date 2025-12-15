@@ -20,6 +20,7 @@ export const envSchema = z.object({
   CRON_STOP_ENDPOINT: z.string().default("/schedule/StopCron"),
   RECREATE_CRON_ENDPOINT: z.string().default("/schedule/RecreateCron"),
   ERROR_ITEM_COLLECTION: z.string().default("errorItems"),
+  OPPORTUNITY_ITEM_COLLECTION: z.string().default("opportunityItems"),
   MANUAL_PROD_UPDATE_ENDPOINT: z.string().default("/product/updateManualProd/"),
   HISTORY_DB: z.string().default("historyData"),
   ENV_SETTINGS: z.string().default("envsettings"),

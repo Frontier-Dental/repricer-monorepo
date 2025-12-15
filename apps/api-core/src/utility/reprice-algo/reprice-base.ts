@@ -233,6 +233,7 @@ export async function RepriceErrorItem(
     details.mpId,
     _contextVendor,
   );
+
   const prioritySequence = await requestGenerator.GetPrioritySequence(
     details,
     contextErrorDetails,
@@ -244,11 +245,13 @@ export async function RepriceErrorItem(
       "{mpId}",
       details.mpId,
     );
+
     var net32result = await axiosHelper.getAsync(
       searchRequest,
       "DUMMY-422-Error",
       seqString,
     );
+
     let isPriceUpdatedForVendor = false;
     if (
       details.algo_execution_mode === AlgoExecutionMode.V2_ONLY ||
@@ -410,6 +413,7 @@ export async function RepriceErrorItem(
                   );
                 }
               } else {
+                // No price update needed - remove from 422 cron and add to opportunity cron
                 prod.next_cron_time = null;
                 const errorItem = new ErrorItemModel(
                   prod.mpid,
@@ -420,6 +424,24 @@ export async function RepriceErrorItem(
                   contextVendor,
                 );
                 await dbHelper.UpsertErrorItemLog(errorItem);
+
+                // Add to opportunity cron for future monitoring (30 minutes from now)
+                const opportunityNextCronTime = new Date(
+                  Date.now() + 30 * 60 * 1000,
+                );
+                const opportunityItem = new ErrorItemModel(
+                  prod.mpid,
+                  opportunityNextCronTime,
+                  true,
+                  prod.cronId,
+                  "NO_REPRICE_NEEDED",
+                  contextVendor,
+                );
+                await dbHelper.UpsertOpportunityItemLog(opportunityItem);
+                console.log(
+                  `${prod.mpid} - ${contextVendor} added to Opportunity Cron (no reprice needed in 422 cron) - next run: ${opportunityNextCronTime.toISOString()}`,
+                );
+
                 cronLogs.logs.push([
                   {
                     productId: prod.mpid,

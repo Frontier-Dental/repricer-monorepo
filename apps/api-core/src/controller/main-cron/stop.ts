@@ -1,5 +1,10 @@
 import { Request, Response } from "express";
-import { getMainCronNameFromJobName, stop422Cron, stopCron } from "./shared";
+import {
+  getMainCronNameFromJobName,
+  stop422Cron,
+  stopCron,
+  stopOpportunityCron,
+} from "./shared";
 import * as _codes from "http-status-codes";
 import { CacheKeyName } from "../../resources/cache-key-name";
 import * as cacheHelper from "../../utility/cache-helper";
@@ -12,6 +17,8 @@ export async function stopCronHandler(
   const { jobName } = req.body;
   if (jobName === "Cron-422") {
     stop422Cron();
+  } else if (jobName === "Cron-Opportunity") {
+    stopOpportunityCron();
   } else {
     const cronName = getMainCronNameFromJobName(jobName);
     if (!cronName) {
