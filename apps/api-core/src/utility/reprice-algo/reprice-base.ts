@@ -246,15 +246,11 @@ export async function RepriceErrorItem(
       details.mpId,
     );
 
-    console.log("searchRequest", searchRequest);
-
     var net32result = await axiosHelper.getAsync(
       searchRequest,
       "DUMMY-422-Error",
       seqString,
     );
-
-    console.log("net32result", net32result);
 
     let isPriceUpdatedForVendor = false;
     if (

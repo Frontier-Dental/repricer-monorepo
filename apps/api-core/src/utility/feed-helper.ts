@@ -23,7 +23,10 @@ export async function FilterEligibleProducts(
   if (productItemList.length === 0) {
     throw new Error("No products found");
   }
-  const active422CronItems = await getActive422CronItems();
+  const [active422CronItems, activeOpportunityCronItems] = await Promise.all([
+    getActive422CronItems(),
+    getActiveOpportunityCronItems(),
+  ]);
   for (let prod of productItemList) {
     //Tradent
     if (prod.tradentDetails) {
@@ -33,6 +36,7 @@ export async function FilterEligibleProducts(
         cronId,
         isSlowCron,
         active422CronItems,
+        activeOpportunityCronItems,
       );
     }
     //Frontier
@@ -43,6 +47,7 @@ export async function FilterEligibleProducts(
         cronId,
         isSlowCron,
         active422CronItems,
+        activeOpportunityCronItems,
       );
     }
     //MVP
@@ -53,6 +58,7 @@ export async function FilterEligibleProducts(
         cronId,
         isSlowCron,
         active422CronItems,
+        activeOpportunityCronItems,
       );
     }
     //TOPDENT
@@ -63,6 +69,7 @@ export async function FilterEligibleProducts(
         cronId,
         isSlowCron,
         active422CronItems,
+        activeOpportunityCronItems,
       );
     }
     //FIRSTDENT
@@ -73,6 +80,7 @@ export async function FilterEligibleProducts(
         cronId,
         isSlowCron,
         active422CronItems,
+        activeOpportunityCronItems,
       );
     }
     //TRIAD
@@ -83,6 +91,7 @@ export async function FilterEligibleProducts(
         cronId,
         isSlowCron,
         active422CronItems,
+        activeOpportunityCronItems,
       );
     }
   }
@@ -142,12 +151,24 @@ async function getActive422CronItems(): Promise<ErrorItem[]> {
   return result as ErrorItem[];
 }
 
+async function getActiveOpportunityCronItems(): Promise<ErrorItem[]> {
+  const dbo = await getMongoDb();
+  const result = await dbo
+    .collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION)
+    .find({
+      active: true,
+    })
+    .toArray();
+  return result as ErrorItem[];
+}
+
 function getSkipReprice(
   prod: any,
   vendor: string,
   cronId: number,
   isSlowCron: boolean = false,
   active422CronItems: ErrorItem[],
+  activeOpportunityCronItems: ErrorItem[],
 ) {
   if (
     (isSlowCron == false && prod.cronId == cronId) ||
@@ -157,6 +178,12 @@ function getSkipReprice(
       (item) => item.mpId === prod.mpid && item.vendorName === vendor,
     );
     if (isErrorItem) {
+      return true;
+    }
+    const isOpportunityItem = activeOpportunityCronItems.find(
+      (item) => item.mpId === prod.mpid && item.vendorName === vendor,
+    );
+    if (isOpportunityItem) {
       return true;
     }
     if (

@@ -130,7 +130,7 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
           : applicationConfig._422_CACHE_VALID_PERIOD;
 
       console.log(
-        `Checking Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
+        `Checking Cron Validity for Threshold : ${thresholdValue} || Cache Key: ${cacheKey} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
       );
       await cacheClient.disconnect();
       return !(typeof thresholdValue === "string"
@@ -145,13 +145,8 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
 
 export async function runCoreCronLogicFor422() {
   const cacheKey = CacheKey._422_RUNNING_CACHE;
-  const skipLockCheck = process.env.SKIP_CRON_LOCK === "true";
-  const isCacheValid = skipLockCheck
-    ? false
-    : await IsCacheValid(cacheKey, new Date());
-  if (skipLockCheck) {
-    console.info(`Bypassing cron lock check (SKIP_CRON_LOCK=true)`);
-  }
+  const isCacheValid = await IsCacheValid(cacheKey, new Date());
+
   if (!isCacheValid) {
     console.info(`Getting List of Eligible Products for Cron-422`);
     const runningCacheObj = { cronRunning: true, initTime: new Date() };
