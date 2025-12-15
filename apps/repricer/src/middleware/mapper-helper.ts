@@ -40,6 +40,9 @@ export function MapV2(productDetails: any[]) {
       item.tradent.lastAttemptedTime = item.tradent.last_attempted_time
         ? moment(item.tradent.last_attempted_time).format("DD-MM-YY HH:mm:ss")
         : item.tradent.last_attempted_time;
+      item.tradent.marketStateUpdatedAt = item.tradent.marketStateUpdatedAt
+        ? moment(item.tradent.marketStateUpdatedAt).format("DD-MM-YY HH:mm:ss")
+        : item.tradent.marketStateUpdatedAt;
       item.tradent.tags = removeBackslashes(item.tradent.tags);
     }
     if (item.frontier) {
@@ -55,6 +58,9 @@ export function MapV2(productDetails: any[]) {
       item.frontier.lastAttemptedTime = item.frontier.last_attempted_time
         ? moment(item.frontier.last_attempted_time).format("DD-MM-YY HH:mm:ss")
         : item.frontier.last_attempted_time;
+      item.frontier.marketStateUpdatedAt = item.frontier.marketStateUpdatedAt
+        ? moment(item.frontier.marketStateUpdatedAt).format("DD-MM-YY HH:mm:ss")
+        : item.frontier.marketStateUpdatedAt;
       item.frontier.tags = removeBackslashes(item.frontier.tags);
     }
     if (item.mvp) {
@@ -70,6 +76,9 @@ export function MapV2(productDetails: any[]) {
       item.mvp.lastAttemptedTime = item.mvp.last_attempted_time
         ? moment(item.mvp.last_attempted_time).format("DD-MM-YY HH:mm:ss")
         : item.mvp.last_attempted_time;
+      item.mvp.marketStateUpdatedAt = item.mvp.marketStateUpdatedAt
+        ? moment(item.mvp.marketStateUpdatedAt).format("DD-MM-YY HH:mm:ss")
+        : item.mvp.marketStateUpdatedAt;
       item.mvp.tags = removeBackslashes(item.mvp.tags);
     }
     if (item.topDent) {
@@ -85,6 +94,9 @@ export function MapV2(productDetails: any[]) {
       item.topDent.lastAttemptedTime = item.topDent.last_attempted_time
         ? moment(item.topDent.last_attempted_time).format("DD-MM-YY HH:mm:ss")
         : item.topDent.last_attempted_time;
+      item.topDent.marketStateUpdatedAt = item.topDent.marketStateUpdatedAt
+        ? moment(item.topDent.marketStateUpdatedAt).format("DD-MM-YY HH:mm:ss")
+        : item.topDent.marketStateUpdatedAt;
       item.topDent.tags = removeBackslashes(item.topDent.tags);
     }
     if (item.firstDent) {
@@ -100,6 +112,11 @@ export function MapV2(productDetails: any[]) {
       item.firstDent.lastAttemptedTime = item.firstDent.last_attempted_time
         ? moment(item.firstDent.last_attempted_time).format("DD-MM-YY HH:mm:ss")
         : item.firstDent.last_attempted_time;
+      item.firstDent.marketStateUpdatedAt = item.firstDent.marketStateUpdatedAt
+        ? moment(item.firstDent.marketStateUpdatedAt).format(
+            "DD-MM-YY HH:mm:ss",
+          )
+        : item.firstDent.marketStateUpdatedAt;
       item.firstDent.tags = removeBackslashes(item.firstDent.tags);
     }
     if (item.triad) {
@@ -115,6 +132,9 @@ export function MapV2(productDetails: any[]) {
       item.triad.lastAttemptedTime = item.triad.last_attempted_time
         ? moment(item.triad.last_attempted_time).format("DD-MM-YY HH:mm:ss")
         : item.triad.last_attempted_time;
+      item.triad.marketStateUpdatedAt = item.triad.marketStateUpdatedAt
+        ? moment(item.triad.marketStateUpdatedAt).format("DD-MM-YY HH:mm:ss")
+        : item.triad.marketStateUpdatedAt;
       item.triad.tags = removeBackslashes(item.triad.tags);
     }
     return item;

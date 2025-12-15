@@ -614,42 +614,6 @@ export const GetTotalHistoryCount = async () => {
   return dbo.collection(applicationConfig.HISTORY_DB).countDocuments();
 };
 
-export const InitExportStatus = async (payload: any) => {
-  const dbo = await getMongoDb();
-  const { insertedId } = await dbo
-    .collection(applicationConfig.EXPORT_STATUS)
-    .insertOne(payload);
-  return insertedId.toString();
-};
-
-export const UpdateExportStatusV2 = async (payload: any) => {
-  const dbo = await getMongoDb();
-  return dbo.collection(applicationConfig.EXPORT_STATUS).findOneAndUpdate(
-    { fileName: payload.fileName },
-    {
-      $set: {
-        status: payload.status,
-        updatedTime: new Date(),
-      },
-    },
-  );
-};
-
-export const GetExportFileStatus = async (_fileName: any) => {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.EXPORT_STATUS)
-    .findOne({ fileName: _fileName });
-};
-
-export const GetExportFileNamesByStatus = async (_fileStatus: any) => {
-  const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.EXPORT_STATUS!)
-    .find({ status: _fileStatus })
-    .toArray();
-};
-
 export const Get422ProductDetailsByType = async (_type: any) => {
   const dbo = await getMongoDb();
   let query = {
@@ -1123,16 +1087,6 @@ export const InsertOrUpdateProductWithQuery = async (mpid: any, query: any) => {
   return mongoResult;
 };
 
-export const GetProxyFailureDetails = async () => {
-  let mongoResult: any = null;
-  const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.PROXY_FAILURE_COLLECTION!)
-    .find()
-    .toArray();
-  return mongoResult;
-};
-
 export const InsertUserLogin = async (userDetails: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
@@ -1150,26 +1104,6 @@ export const UpdateUserPassword = async (_userName: any, newPassword: any) => {
     .findOneAndUpdate(
       { userName: _userName },
       { $set: { userPassword: newPassword } },
-    );
-  return mongoResult;
-};
-
-export const UpdateProxyProviderThresholdValue = async (
-  payload: any,
-  req: any,
-) => {
-  let mongoResult: any = null;
-  const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.PROXY_FAILURE_COLLECTION!)
-    .findOneAndUpdate(
-      { proxyProvider: parseInt(payload.proxyProvider) },
-      {
-        $set: {
-          thresholdCount: parseInt(payload.value),
-          AuditInfo: await SessionHelper.GetAuditInfo(req),
-        },
-      },
     );
   return mongoResult;
 };

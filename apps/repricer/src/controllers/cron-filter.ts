@@ -17,6 +17,7 @@ import {
   GetFilteredCrons,
   ToggleFilterCronStatus,
   UpsertFilterCronSettings,
+  GetMiniErpCronDetails,
 } from "../services/mysql-v2";
 
 export async function GetFilterCron(req: Request, res: Response) {
@@ -105,10 +106,87 @@ export async function GetFilterCron(req: Request, res: Response) {
     item.ThresholdReached = false; //await MapperHelper.GetIsStepReached(item, item.AlternateProxyProvider.length-1);
     item.CloseToThresholdReached = false; //await MapperHelper.GetIsStepReached(item, item.AlternateProxyProvider.length - 2);
   }
+  let miniErpCronDetails = await GetMiniErpCronDetails();
+  if (miniErpCronDetails) {
+    for (let item of miniErpCronDetails) {
+      item.lastUpdatedBy = await SessionHelper.GetAuditValue(
+        item as any,
+        "U_NAME",
+      );
+      item.lastUpdatedOn = await SessionHelper.GetAuditValue(
+        item as any,
+        "U_TIME",
+      );
+      item.UpdatedTime = moment(item.UpdatedTime).format("DD-MM-YYYY HH:mm:ss");
+      item.ProxyProvider_1 = await MapperHelper.GetAlternateProxyProviderId(
+        item,
+        1,
+      );
+      item.ProxyProvider_2 = await MapperHelper.GetAlternateProxyProviderId(
+        item,
+        2,
+      );
+      item.ProxyProvider_3 = await MapperHelper.GetAlternateProxyProviderId(
+        item,
+        3,
+      );
+      item.ProxyProvider_4 = await MapperHelper.GetAlternateProxyProviderId(
+        item,
+        4,
+      );
+      item.ProxyProvider_5 = await MapperHelper.GetAlternateProxyProviderId(
+        item,
+        5,
+      );
+      item.ProxyProvider_6 = await MapperHelper.GetAlternateProxyProviderId(
+        item,
+        6,
+      );
+      item.ProxyProvider_1_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider_1,
+        );
+      item.ProxyProvider_2_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider_2,
+        );
+      item.ProxyProvider_3_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider_3,
+        );
+      item.ProxyProvider_4_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider_4,
+        );
+      item.ProxyProvider_5_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider_5,
+        );
+      item.ProxyProvider_6_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider_6,
+        );
+      item.ProxyProvider_Name =
+        await MapperHelper.GetAlternateProxyProviderName(
+          configItems,
+          item.ProxyProvider,
+        );
+      item.ThresholdReached = false;
+      item.CloseToThresholdReached = false;
+    }
+  }
+
   res.render("pages/filter/filteredList", {
     configItems: configItems,
     slowCronData: slowCronDetails,
     filterCronData: filterCronDetails,
+    miniErpCronData: miniErpCronDetails || [],
     groupName: "filter",
     userRole: (req as any).session.users_id.userRole,
   });
@@ -202,8 +280,8 @@ export async function UpdateSlowCronExpression(req: Request, res: Response) {
         cronSlowCronResponse[index].CronTimeUnit,
       ) ||
       !_.isEqual(
-        cronSettingPayload.Offset,
-        cronSlowCronResponse[index].Offset,
+        cronSettingPayload.Offset.toString(),
+        cronSlowCronResponse[index].Offset.toString(),
       ) ||
       !_.isEqual(
         cronSettingPayload.ProxyProvider,
@@ -218,8 +296,8 @@ export async function UpdateSlowCronExpression(req: Request, res: Response) {
         cronSlowCronResponse[index].FixedIp,
       ) ||
       !_.isEqual(
-        cronSettingPayload.AlternateProxyProvider,
-        cronSlowCronResponse[index].AlternateProxyProvider,
+        JSON.stringify(cronSettingPayload.AlternateProxyProvider),
+        JSON.stringify(cronSlowCronResponse[index].AlternateProxyProvider),
       )
     ) {
       updatedList.push(cronSettingPayload as unknown as never);
@@ -233,7 +311,10 @@ export async function UpdateSlowCronExpression(req: Request, res: Response) {
         cronSettingPayload.CronTimeUnit,
         cronSlowCronResponse[index].CronTimeUnit,
       ) ||
-      !_.isEqual(cronSettingPayload.Offset, cronSlowCronResponse[index].Offset)
+      !_.isEqual(
+        cronSettingPayload.Offset.toString(),
+        cronSlowCronResponse[index].Offset.toString(),
+      )
     ) {
       recreatePayload.push(cronSettingPayload.CronId as unknown as never);
     }
@@ -246,7 +327,7 @@ export async function UpdateSlowCronExpression(req: Request, res: Response) {
         const jobName = cronMapping.find(
           (x) => x.cronId == cronId,
         )?.cronVariable;
-        // await httpMiddleware.recreateSlowCron({ jobName: jobName });
+        await httpMiddleware.recreateSlowCron({ jobName: jobName });
       }
     }
     return res.json({
@@ -322,32 +403,32 @@ export async function ToggleCronStatus(req: Request, res: Response) {
     (x: any) => x.CronId == contextCronId,
   );
   if (!slowCronData) {
+    const cronStatusStr = cronStatus == 1 ? true : false;
+    await ToggleFilterCronStatus(
+      contextCronId,
+      cronStatusStr,
+      await SessionHelper.GetAuditInfo(req),
+    );
     //Update FilterCron Details
     const response = await httpMiddleware.toggleFilterCron({
       jobName: jobName,
       status: cronStatus,
     });
     if (response && response.status == 200) {
-      const cronStatusStr = cronStatus == 1 ? true : false;
-      await ToggleFilterCronStatus(
-        contextCronId,
-        cronStatusStr,
-        await SessionHelper.GetAuditInfo(req),
-      );
       return res.json({
         status: true,
         message: response.data,
       });
     }
   } else if (slowCronData) {
+    const cronStatusStr = cronStatus == 1 ? true : false;
+    await SqlToggleCronStatus(contextCronId, cronStatusStr.toString(), req);
     //Update SlowCron Details
     const response = await httpMiddleware.toggleSlowCron({
       jobName: jobName,
       status: cronStatus,
     });
     if (response && response.status == 200) {
-      const cronStatusStr = cronStatus == 1 ? true : false;
-      await SqlToggleCronStatus(contextCronId, cronStatusStr.toString(), req);
       return res.json({
         status: true,
         message: response.data,

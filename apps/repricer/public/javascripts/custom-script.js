@@ -672,6 +672,8 @@ function saveEnvConfigurations() {
   const expressCronOverlapThreshold = $("#txtOverlapThreshold").val();
   const expressCronBatchSize = $("#txtCronBatchSize").val();
   const expressCronInstanceLimit = $("#txtExpressInstanceCount").val();
+  const slowCronBatchSize = $("#txtSlowCronBatchSize").val();
+  const slowCronInstanceLimit = $("#txtSlowCronInstanceCount").val();
   const execPriorityObj = {
     override_priority: executionPriorityOverride,
     priority_settings: {
@@ -699,6 +701,8 @@ function saveEnvConfigurations() {
         cronOverlapThreshold: expressCronOverlapThreshold,
         cronBatchSize: expressCronBatchSize,
         cronInstanceLimit: expressCronInstanceLimit,
+        slowBatchSize: slowCronBatchSize,
+        slowInstanceLimit: slowCronInstanceLimit
       },
       dataType: "json",
       cache: false,
@@ -1328,7 +1332,7 @@ function showScrapeData(element) {
   $("#showModal").modal("show");
 }
 
-function editSlowCron() {}
+function editSlowCron() { }
 
 function exportShowDetails(paramName) {
   window.open("/cronSettings/export_view/" + paramName, "_blank");

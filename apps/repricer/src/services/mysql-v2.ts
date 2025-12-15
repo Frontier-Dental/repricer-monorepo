@@ -11,6 +11,7 @@ import {
 import { getKnexInstance } from "./knex-wrapper";
 import { GetAuditInfo } from "../utility/session-helper";
 import AuditInfo from "../models/audit-info";
+import ExportModel from "../models/export-model";
 
 export async function GetConfigurations(activeOnly = true) {
   const cacheClient = CacheClient.getInstance(
@@ -130,6 +131,8 @@ export async function UpsertEnvSettings(payload: any) {
         payload.expressCronOverlapThreshold,
       ),
       ExpressCronInstanceLimit: parseInt(payload.expressCronInstanceLimit),
+      SlowCronBatchSize: parseInt(payload.slowCronBatchSize),
+      SlowCronInstanceLimit: parseInt(payload.slowCronInstanceLimit),
       UpdatedBy: payload.updatedBy,
       UpdatedOn: payload.updatedOn,
     });
@@ -336,6 +339,7 @@ export async function ToggleCronStatus(
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
   await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
   await cacheClient.delete(CacheKey.SCRAPE_CRON_DETAILS);
+  await cacheClient.delete(CacheKey.MINI_ERP_CRON_DETAILS);
   await cacheClient.disconnect();
 }
 
@@ -363,10 +367,10 @@ export async function GetScrapeCrons() {
   const cacheClient = CacheClient.getInstance(
     GetCacheClientOptions(applicationConfig),
   );
-  const slowCronDetails = await cacheClient.get(CacheKey.SCRAPE_CRON_DETAILS);
-  if (slowCronDetails != null) {
+  const scrapeCronDetails = await cacheClient.get(CacheKey.SCRAPE_CRON_DETAILS);
+  if (scrapeCronDetails != null) {
     await cacheClient.disconnect();
-    return slowCronDetails;
+    return scrapeCronDetails;
   }
   let cronSettingsDetails = null;
   const db = getKnexInstance();
@@ -374,6 +378,40 @@ export async function GetScrapeCrons() {
   if (result && result[0] && result[0].length > 0) {
     cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
     await cacheClient.set(CacheKey.SCRAPE_CRON_DETAILS, cronSettingsDetails); // Cache for 1 hour
+  }
+  await cacheClient.disconnect();
+  return cronSettingsDetails;
+}
+
+export async function GetMiniErpCronDetails() {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const miniErpCronDetails = await cacheClient.get(
+    CacheKey.MINI_ERP_CRON_DETAILS,
+  );
+  if (miniErpCronDetails != null) {
+    await cacheClient.disconnect();
+    return miniErpCronDetails;
+  }
+  let cronSettingsDetails = null;
+  const db = getKnexInstance();
+  const result = await db.raw(`
+    SELECT 
+      cs.*,
+      sk.VendorName,
+      sk.SecretKey,
+      app.Sequence,
+      app.ProxyProvider as AlternateProxyProvider
+    FROM cron_settings cs
+    LEFT JOIN secret_keys sk ON cs.CronId = sk.CronId
+    LEFT JOIN alternate_proxy_providers app ON cs.CronId = app.CronId
+    WHERE cs.CronType = 'MINI_ERP'
+    ORDER BY cs.CronId, sk.VendorName, app.Sequence
+  `);
+  if (result && result[0] && result[0].length > 0) {
+    cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0]);
+    await cacheClient.set(CacheKey.MINI_ERP_CRON_DETAILS, cronSettingsDetails);
   }
   await cacheClient.disconnect();
   return cronSettingsDetails;
@@ -437,7 +475,7 @@ export async function GetFilteredCrons() {
   const db = getKnexInstance();
   const result = await db.raw(`call GetFilterCronList()`);
   if (result && result[0] && result[0].length > 0) {
-    cronSettingsDetails = await SqlMapper.ToFilterSettingsModel(result[0][0]);
+    cronSettingsDetails = await SqlMapper.MapWithAuditInfo(result[0][0]);
     await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, cronSettingsDetails); // Cache for 1 hour
   }
   await cacheClient.disconnect();
@@ -460,4 +498,143 @@ export async function ToggleFilterCronStatus(
   );
   await cacheClient.delete(CacheKey.FILTER_CRON_DETAILS);
   await cacheClient.disconnect();
+}
+
+export const GetProxyFailureDetails = async () => {
+  const db = getKnexInstance();
+  const result = await db.raw(`call GetProxyFailureDetails()`);
+  if (result && result[0] && result[0].length > 0) {
+    return await SqlMapper.MapWithAuditInfo(result[0][0]);
+  }
+  return [];
+};
+
+export const UpdateThresholdValue = async (payload: any, updatedBy: string) => {
+  const db = getKnexInstance();
+  await db("proxy_failure_details")
+    .where({ ProxyProviderId: parseInt(payload.proxyProvider) })
+    .update({
+      ThresholdCount: parseInt(payload.value),
+      UpdatedBy: updatedBy,
+      UpdatedTime: new Date(),
+    });
+};
+
+export const InitExportStatus = async (payload: ExportModel) => {
+  const db = getKnexInstance();
+  const [insertId] = await db("export_status").insert({
+    fileName: payload.fileName,
+    status: payload.status,
+    createdTime: payload.createdTime,
+    updatedTime: payload.updatedTime,
+    requestedBy: payload.requestedBy,
+  });
+  return insertId;
+};
+
+export const GetExportFileNamesByStatus = async (_fileStatus: any) => {
+  const db = getKnexInstance();
+  const dbResult = await db("export_status")
+    .select("*")
+    .where({ status: _fileStatus });
+  return dbResult;
+};
+
+export const GetExportFileStatus = async (_fileName: string) => {
+  const db = getKnexInstance();
+  const dbResult = await db("export_status")
+    .select("*")
+    .where({ fileName: _fileName })
+    .first();
+  return dbResult;
+};
+
+export const UpdateExportStatusV2 = async (payload: any) => {
+  const db = getKnexInstance();
+  await db("export_status").where({ fileName: payload.fileName }).update({
+    status: payload.status,
+    updatedTime: new Date(),
+  });
+};
+
+export async function GetWaitlistItems(queryData: any) {
+  const { page, pageSize, offset, sort, status, startDate, endDate, search } =
+    queryData;
+  const knex = getKnexInstance();
+
+  // Build the base query
+  let query = knex("waitlist").select("*");
+
+  // Apply status filter if provided
+  if (status) {
+    query = query.where("api_status", status);
+  }
+
+  // Apply date range filter if provided
+  if (startDate && endDate) {
+    query = query.whereBetween("created_at", [startDate, endDate]);
+  }
+
+  // Apply search filter if provided
+  if (search) {
+    query = query.where("vendor_name", "like", `%${search}%`);
+  }
+
+  // Apply sorting
+  if (sort) {
+    const [column, direction] = sort.split(" ");
+    const sortDirection = direction?.toUpperCase() === "ASC" ? "asc" : "desc";
+    query = query.orderBy(column || "created_at", sortDirection);
+  } else {
+    query = query.orderBy("created_at", "desc");
+  }
+
+  // Get total count for pagination
+  const countQuery = query
+    .clone()
+    .clearSelect()
+    .clearOrder()
+    .count("* as total")
+    .first();
+  const totalResult = await countQuery;
+  const total = totalResult ? Number(totalResult.total) : 0;
+
+  // Apply pagination
+  if (pageSize) {
+    query = query.limit(pageSize);
+  }
+  if (offset !== undefined) {
+    query = query.offset(offset);
+  }
+
+  // Execute query
+  const results = await query;
+
+  return {
+    data: results,
+    pagination: {
+      page: page || 1,
+      pageSize: pageSize || 10,
+      total,
+      totalPages: Math.ceil(total / (pageSize || 10)),
+    },
+  };
+}
+
+export async function DeleteWaitlistItem(id: number) {
+  const db = getKnexInstance();
+  await db("waitlist").where({ id }).delete();
+  return {
+    status: true,
+    message: "Waitlist item deleted successfully",
+  };
+}
+
+export async function BulkDeleteWaitlistItems(ids: number[]) {
+  const db = getKnexInstance();
+  await db("waitlist").whereIn("id", ids).delete();
+  return {
+    status: true,
+    message: "Waitlist items deleted successfully",
+  };
 }

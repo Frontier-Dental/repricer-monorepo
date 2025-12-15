@@ -2,9 +2,11 @@ import _ from "lodash";
 import cron from "node-cron";
 import express, { Request, Response } from "express";
 import * as _codes from "http-status-codes";
-import * as dbHelper from "../utility/mongo/db-helper";
 import * as proxySwitchHelper from "../utility/proxy-switch-helper";
-import { GetCronSettingsDetailsByName } from "../utility/mysql/mysql-v2";
+import {
+  GetCronSettingsDetailsByName,
+  GetProxySwitchCronDetails,
+} from "../utility/mysql/mysql-v2";
 
 export const proxySwitchController = express.Router();
 
@@ -21,7 +23,7 @@ proxySwitchController.get(
 );
 
 export async function startProxySwitchCronLogic() {
-  const proxySwitchCronDetails = await dbHelper.GetProxySwitchCronDetails();
+  const proxySwitchCronDetails = await GetProxySwitchCronDetails();
   if (proxySwitchCronDetails && proxySwitchCronDetails.length > 0) {
     if (proxySwitchCronDetails[0]) {
       _PS1Cron = cron.schedule(
@@ -42,7 +44,9 @@ export async function startProxySwitchCronLogic() {
             );
           }
         },
-        { scheduled: JSON.parse(proxySwitchCronDetails[0].status) },
+        {
+          scheduled: JSON.parse(proxySwitchCronDetails[0].status),
+        },
       );
       if (JSON.parse(proxySwitchCronDetails[0].status)) {
         console.log(

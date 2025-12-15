@@ -15,7 +15,11 @@ import * as sqlHelper from "../mysql/mysql-helper";
 import { ProductDetailsListItem } from "../mysql/mySql-mapper";
 import * as requestGenerator from "../request-generator";
 import { repriceProduct, repriceProductToMax } from "./v1/algo-v1";
-import { AlgoExecutionMode, VendorName } from "@repricer-monorepo/shared";
+import {
+  AlgoExecutionMode,
+  VendorName,
+  VendorIdLookup,
+} from "@repricer-monorepo/shared";
 import { repriceProductV2Wrapper } from "./v2/wrapper";
 import * as filterMapper from "../filter-mapper";
 import {
@@ -23,6 +27,29 @@ import {
   GetCronSettingsDetailsByName,
   GetSlowCronDetails,
 } from "../../utility/mysql/mysql-v2";
+
+/**
+ * Safely parse a price value to number, filtering out non-numeric values like 'N/A'
+ * Returns null if the value cannot be parsed to a valid number
+ */
+export function parseNumericPrice(value: any): number | null {
+  if (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    value === "N/A"
+  ) {
+    return null;
+  }
+
+  const parsed = typeof value === "number" ? value : parseFloat(value);
+
+  if (isNaN(parsed) || !isFinite(parsed)) {
+    return null;
+  }
+
+  return parsed;
+}
 
 export async function Execute(
   jobId: string,
@@ -131,6 +158,7 @@ export async function Execute(
                 jobId,
                 prioritySequence,
                 idx,
+                isSlowCronRun,
               );
               eligibleCount++;
               if (repriceResponse) {
@@ -454,10 +482,47 @@ export async function RepriceErrorItem(
             }
             prod = updateLowestVendor(repriceResult as any, prod);
             prod = updateCronBasedDetails(repriceResult, prod, false);
+
+            // Extract market data for 422 error recovery
+            let marketData:
+              | {
+                  inStock?: boolean;
+                  inventory?: number;
+                  ourPrice?: number | null;
+                }
+              | undefined;
+            try {
+              const ownVendorList = (
+                applicationConfig.OWN_VENDOR_LIST || ""
+              ).split(";");
+              const ownVendorData = net32result.data.find(
+                (v: any) =>
+                  v.vendorId && ownVendorList.includes(v.vendorId.toString()),
+              );
+
+              if (ownVendorData) {
+                const unitPriceBreak = ownVendorData.priceBreaks?.find(
+                  (pb: { minQty: number }) => pb.minQty === 1,
+                );
+
+                marketData = {
+                  inStock: ownVendorData.inStock ?? undefined,
+                  inventory: ownVendorData.inventory ?? undefined,
+                  ourPrice: parseNumericPrice(unitPriceBreak?.unitPrice),
+                };
+              }
+            } catch (error) {
+              console.log(
+                `Market data extraction error for 422 recovery ${prod.mpid}:`,
+                error,
+              );
+            }
+
             await sqlHelper.UpdateProductAsync(
               prod,
               isPriceUpdated,
               contextVendor,
+              marketData, // Pass market data for 422 error recovery
             );
             //dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
           } else {
@@ -471,10 +536,47 @@ export async function RepriceErrorItem(
               contextVendor,
             );
             await dbHelper.UpsertErrorItemLog(errorItem);
+
+            // Still capture market data even for ignored products
+            let ignoreMarketData:
+              | {
+                  inStock?: boolean;
+                  inventory?: number;
+                  ourPrice?: number | null;
+                }
+              | undefined;
+            try {
+              const ownVendorList = (
+                applicationConfig.OWN_VENDOR_LIST || ""
+              ).split(";");
+
+              const ownVendorData = net32result.data.find(
+                (v: any) =>
+                  v.vendorId && ownVendorList.includes(v.vendorId.toString()),
+              );
+
+              if (ownVendorData) {
+                const unitPriceBreak = ownVendorData.priceBreaks?.find(
+                  (pb: { minQty: number }) => pb.minQty === 1,
+                );
+                ignoreMarketData = {
+                  inStock: ownVendorData.inStock ?? undefined,
+                  inventory: ownVendorData.inventory ?? undefined,
+                  ourPrice: parseNumericPrice(unitPriceBreak?.unitPrice),
+                };
+              }
+            } catch (error) {
+              console.log(
+                `Market data extraction error for ignored product ${prod.mpid}:`,
+                error,
+              );
+            }
+
             await sqlHelper.UpdateProductAsync(
               prod,
               isPriceUpdated,
               contextVendor,
+              ignoreMarketData, // Pass market data even for ignored products
             ); //dbHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
           }
         }
@@ -713,7 +815,44 @@ export async function UpdateToMax(
     prod.last_cron_message = prod.last_cron_message + " #MANUAL";
     prod = await updateLowestVendor((repriceResult as any)!, prod);
     prod = await updateCronBasedDetails(repriceResult, prod, false);
-    await sqlHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
+
+    // Extract market data for manual reprice
+    let marketData:
+      | { inStock?: boolean; inventory?: number; ourPrice?: number | null }
+      | undefined;
+    try {
+      const contextVendorId =
+        VendorIdLookup[contextVendor as VendorName]?.toString();
+
+      const ownVendorData = net32resp.data.find(
+        (v: { vendorId: { toString: () => string } }) =>
+          v.vendorId && v.vendorId.toString() === contextVendorId,
+      );
+
+      if (ownVendorData) {
+        const unitPriceBreak = ownVendorData.priceBreaks?.find(
+          (pb: { minQty: number }) => pb.minQty === 1,
+        );
+
+        marketData = {
+          inStock: ownVendorData.inStock ?? undefined,
+          inventory: ownVendorData.inventory ?? undefined,
+          ourPrice: parseNumericPrice(unitPriceBreak?.unitPrice),
+        };
+      }
+    } catch (error) {
+      console.log(
+        `Market data extraction error for manual reprice ${prod.mpid}:`,
+        error,
+      );
+    }
+
+    await sqlHelper.UpdateProductAsync(
+      prod,
+      isPriceUpdated,
+      contextVendor,
+      marketData,
+    );
   } else {
     cronLogs.push({
       productId: prod.mpid,
@@ -746,12 +885,13 @@ async function proceedWithExecution(cronId: string) {
 
 async function repriceSingleVendor(
   net32resp: Net32Response,
-  prod: ProductDetailsListItem,
+  prod: any,
   cronSetting: CronSettings,
   isOverrideRun: boolean,
   keyGen: string,
   contextVendor: string,
   isManualRun = false,
+  isSlowCronRun = false,
 ) {
   const cronLogs: any[] = [];
   let isPriceUpdated = false;
@@ -765,6 +905,7 @@ async function repriceSingleVendor(
   prod.last_cron_time = new Date();
   prod.cronName = cronSetting.CronName;
   prod.contextCronName = cronSetting.CronName;
+  prod.isSlowCronRun = isSlowCronRun;
   //Add isOverrideRun if sent as True to Payload
   if (isOverrideRun) {
     prod.isOverrideRun = isOverrideRun;
@@ -876,10 +1017,44 @@ async function repriceSingleVendor(
   }
   prod = updateLowestVendor(repriceResult!, prod);
   prod = await updateCronBasedDetails(repriceResult, prod, false);
+
+  // Extract market data from our vendor in the API response
+  let marketData:
+    | { inStock?: boolean; inventory?: number; ourPrice?: number | null }
+    | undefined;
+  try {
+    // Get the vendor ID for the specific vendor being repriced
+    const contextVendorId =
+      VendorIdLookup[contextVendor as VendorName]?.toString();
+
+    // Find the specific vendor's data in the Net32 response
+    const ownVendorData = net32resp.data.find(
+      (v) => v.vendorId && v.vendorId.toString() === contextVendorId,
+    );
+
+    if (ownVendorData) {
+      // Get unit price from minQty=1 price break in the Net32 API response
+      const unitPriceBreak = ownVendorData.priceBreaks?.find(
+        (pb) => pb.minQty === 1,
+      );
+
+      marketData = {
+        inStock: ownVendorData.inStock ?? undefined,
+        inventory: ownVendorData.inventory ?? undefined,
+        ourPrice: parseNumericPrice(unitPriceBreak?.unitPrice),
+      };
+    }
+  } catch (error) {
+    // Log but don't fail if market data extraction fails
+    console.log(`Market data extraction error for ${prod.mpid}:`, error);
+  }
+
+  // Pass market data to UpdateProductAsync (backward compatible)
   await sqlHelper.UpdateProductAsync(
     prod as any,
     isPriceUpdated,
     contextVendor,
+    marketData, // New optional parameter
   );
   return {
     cronLogs: cronLogs,
@@ -1010,6 +1185,7 @@ export async function repriceWrapper(
   prioritySequence: { name: string; value: string }[],
   idx: number,
   isManualRun = false,
+  isSlowCronRun = false,
 ) {
   return repriceSingleVendor(
     net32resp,
@@ -1019,6 +1195,7 @@ export async function repriceWrapper(
     keyGen,
     prioritySequence[idx].name,
     isManualRun,
+    isSlowCronRun,
   );
 }
 

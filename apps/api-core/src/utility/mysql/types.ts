@@ -88,3 +88,9 @@ export interface UpdateCronForProductPayload {
   frontierDetails?: Record<string, any>;
   mvpDetails?: Record<string, any>;
 }
+
+export interface CurrentStock {
+  mpid: string;
+  CurrentInStock: number;
+  CurrentInventory: number;
+}

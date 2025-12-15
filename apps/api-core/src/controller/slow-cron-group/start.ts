@@ -21,32 +21,35 @@ export async function startSlowCronLogic() {
   if (slowCronDetails && slowCronDetails.length > 0) {
     for (let i = 0; i < slowCronDetails.length; i++) {
       const cronDetail = slowCronDetails[i];
-      if (cronDetail) {
-        const jobName = `_SCG${i + 1}Cron`;
-        const cronName = getCronNameByJobName(jobName);
-
-        const cronExpression = responseUtility.GetCronGeneric(
-          cronDetail.CronTimeUnit,
-          cronDetail.CronTime,
-          cronDetail.Offset,
-        );
-
-        slowCrons[cronName] = cron.schedule(
-          cronExpression,
-          async () => {
-            try {
-              await runCoreCronLogic(cronDetail, true);
-            } catch (error) {
-              console.error(`Error running ${cronDetail.CronName}:`, error);
-            }
-          },
-          { scheduled: JSON.parse(cronDetail.CronStatus) },
-        );
-        if (JSON.parse(cronDetail.CronStatus)) {
-          console.log(
-            `Started ${cronDetail.CronName} at ${new Date()} with expression ${cronExpression}`,
+      const jobName = `_SCG${i + 1}Cron`;
+      const cronName = getCronNameByJobName(jobName);
+      try {
+        if (cronDetail) {
+          const cronExpression = responseUtility.GetCronGeneric(
+            cronDetail.CronTimeUnit,
+            cronDetail.CronTime,
+            cronDetail.Offset,
           );
+
+          slowCrons[cronName] = cron.schedule(
+            cronExpression,
+            async () => {
+              try {
+                await runCoreCronLogic(cronDetail, true);
+              } catch (error) {
+                console.error(`Error running ${cronDetail.CronName}:`, error);
+              }
+            },
+            { scheduled: JSON.parse(cronDetail.CronStatus) },
+          );
+          if (JSON.parse(cronDetail.CronStatus)) {
+            console.log(
+              `Started ${cronDetail.CronName} at ${new Date()} with expression ${cronExpression}`,
+            );
+          }
         }
+      } catch (exception) {
+        console.error(`Error running ${cronName}: || ${exception}`, exception);
       }
     }
   }

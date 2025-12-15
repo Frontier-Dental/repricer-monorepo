@@ -89,7 +89,9 @@ export async function getSecretKey(cronId: string, contextVendor: string) {
 
 export async function isOverrideEnabledForProduct(
   override_bulk_update: boolean,
+  is_slow_cron_run: boolean,
 ): Promise<boolean> {
+  if (is_slow_cron_run) return true;
   if (override_bulk_update) {
     const globalConfig = await sqlV2Service.GetGlobalConfig();
     if (globalConfig && globalConfig.override_all) {

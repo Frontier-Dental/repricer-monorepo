@@ -10,12 +10,12 @@ const HTTP_STATUS = {
   SERVER_ERROR_START: 500,
 } as const;
 
-interface VendorData {
+export interface VendorData {
   vendor: string;
   quantity: number;
 }
 
-interface UpdateProductQuantityRequest {
+export interface UpdateProductQuantityRequest {
   mpid: number;
   vendorData: VendorData[];
 }

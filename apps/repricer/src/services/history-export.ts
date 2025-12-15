@@ -1,5 +1,4 @@
 import _ from "lodash";
-import * as mongoMiddleware from "../services/mongo";
 import excelJs from "exceljs";
 import moment from "moment";
 import fs from "fs";
@@ -8,6 +7,7 @@ import ExportModel from "../models/export-model";
 import path from "path";
 import * as httpMiddleware from "../utility/http-wrappers";
 import { applicationConfig } from "../utility/config";
+import { UpdateExportStatusV2 } from "./mysql-v2";
 export async function FindAllDownloads() {
   return fs
     .readdirSync("./exports", { withFileTypes: true })
@@ -96,7 +96,7 @@ export async function ExportAndSaveById(
     new Date(),
     auditInfo.UpdatedBy,
   );
-  await mongoMiddleware.UpdateExportStatusV2(finalPayload);
+  await UpdateExportStatusV2(finalPayload);
 }
 
 export async function ExportAndSave(
@@ -148,7 +148,7 @@ export async function ExportAndSave(
     new Date(),
     auditInfo.UpdatedBy,
   );
-  await mongoMiddleware.UpdateExportStatusV2(finalPayload);
+  await UpdateExportStatusV2(finalPayload);
   console.log(
     `Completed ExportAndSave for Date ${new Date(startDate)} | ${new Date(endDate)} | ContextPath : ${historyBasePath} `,
   );

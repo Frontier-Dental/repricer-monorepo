@@ -17,20 +17,26 @@ export async function startAllFilterCronHandler(
 export async function startFilterCronLogic() {
   const filterCronDetails = await GetFilteredCrons();
   for (const cronDetails of filterCronDetails) {
-    filterCrons[cronDetails.cronName] = schedule(
-      cronDetails.cronExpression,
-      async () => {
-        try {
-          await filterMapper.FilterProducts(cronDetails);
-        } catch (error) {
-          console.error(`Error running ${cronDetails.cronName}:`, error);
-        }
-      },
-      { scheduled: JSON.parse(cronDetails.status) },
-    );
-    if (JSON.parse(cronDetails.status)) {
-      console.log(
-        `Started ${cronDetails.cronName} at ${new Date()} with expression ${cronDetails.cronExpression}`,
+    try {
+      filterCrons[cronDetails.cronName] = schedule(
+        cronDetails.cronExpression,
+        async () => {
+          try {
+            await filterMapper.FilterProducts(cronDetails);
+          } catch (error) {
+            console.error(`Error running ${cronDetails.cronName}:`, error);
+          }
+        },
+        { scheduled: JSON.parse(cronDetails.status) },
+      );
+      if (JSON.parse(cronDetails.status)) {
+        console.log(
+          `Started ${cronDetails.cronName} at ${new Date()} with expression ${cronDetails.cronExpression}`,
+        );
+      }
+    } catch (exception) {
+      console.error(
+        `Error initialising ${cronDetails.cronName} || ${exception}`,
       );
     }
   }

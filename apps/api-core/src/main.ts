@@ -31,6 +31,8 @@ import { startV2AlgoHtmlFileCleanupCron } from "./services/algo-html-file-cleanu
 import { applicationConfig, validateConfig } from "./utility/config";
 import { errorMiddleware } from "./utility/error-middleware";
 import { initializeThresholdScraping } from "./utility/reprice-algo/v2/threshold-scraping";
+import { startMiniErpCronLogic } from "./controller/mini-erp-cron/start-cron";
+import { minErpCronController } from "./controller/mini-erp-cron";
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
@@ -76,6 +78,7 @@ nodeApp.use(slowCronGroupRouter);
 nodeApp.use(proxySwitchController);
 nodeApp.use(appLogController);
 nodeApp.use(scrapeCronController);
+nodeApp.use(minErpCronController);
 
 // Health check endpoint
 nodeApp.get("/health", (req: Request, res: Response) => {
@@ -102,6 +105,7 @@ nodeApp.listen(port, async () => {
     await startProxySwitchCronLogic();
     await startProxySwitchResetCronLogic();
     await startScrapeCronLogic();
+    await startMiniErpCronLogic();
     startV2AlgoHtmlFileCleanupCron();
     console.info("All enabled crons started on startup");
   }
