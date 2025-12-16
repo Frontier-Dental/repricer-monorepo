@@ -1,6 +1,5 @@
 import _ from "lodash";
 import { RepriceModel } from "../../../model/reprice-model";
-import { RepriceMessageEnum } from "../../../model/reprice-message";
 import { RepriceRenewedMessageEnum } from "../../../model/reprice-renewed-message";
 import * as globalParam from "../../../model/global-param";
 import * as badgeHelper from "../../badge-helper";
@@ -614,6 +613,17 @@ export async function Reprice(
                 RepriceRenewedMessageEnum.PRICE_UP_NEXT,
               );
             }
+          } else if (parseFloat(existingPrice) > maxPrice) {
+            const maxPriceToBeSet = await getSetPrice(
+              maxPrice,
+              refProduct.standardShipping,
+              refProduct.freeShippingThreshold,
+              1,
+            );
+            repriceModel.repriceDetails!.newPrice = maxPriceToBeSet;
+            repriceModel.repriceDetails!.isRepriced = true;
+            repriceModel.repriceDetails!.explained =
+              RepriceRenewedMessageEnum.PRICE_MAXED;
           } else {
             const tempPriceUpdated = await getSetPrice(
               offsetPrice,
@@ -847,6 +857,7 @@ export async function RepriceIndividualPriceBreak(
       if (comparePrice && (comparePrice as any).Price > 0) {
         // Check if comparable Price is available for Sister.
         if (
+          comparePrice.Type == "Q2" &&
           q2EligibleListAll.length > 0 &&
           _.includes(
             excludedVendors,
@@ -1451,6 +1462,20 @@ export async function RepriceIndividualPriceBreak(
               RepriceRenewedMessageEnum.REPRICE_DEFAULT,
               contextPriceResult.Type,
             );
+        } else if (
+          parseFloat(existingPrice) > maxPrice &&
+          repriceModel.repriceDetails!.isRepriced !== true
+        ) {
+          const maxPriceToBeSet = await getSetPrice(
+            maxPrice,
+            refProduct.standardShipping,
+            refProduct.freeShippingThreshold,
+            priceBreak.minQty,
+          );
+          repriceModel.repriceDetails!.newPrice = maxPriceToBeSet;
+          repriceModel.repriceDetails!.isRepriced = true;
+          repriceModel.repriceDetails!.explained =
+            RepriceRenewedMessageEnum.PRICE_MAXED;
         } else if (
           repriceModel.repriceDetails!.isRepriced !== true &&
           offsetPrice > floorPrice &&
