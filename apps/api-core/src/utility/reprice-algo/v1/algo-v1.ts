@@ -110,21 +110,10 @@ export async function repriceProduct(
       ownProduct.priceBreaks &&
       (ownProduct.priceBreaks.length === 1 || productItem.suppressPriceBreak)
     ) {
-      if (productItem.is_nc_needed) {
-        repriceResult = await repriceHelperNc.Reprice(
-          ownProduct,
-          output,
-          productItem,
-          mpid,
-        );
-      } else {
-        repriceResult = await repriceHelper.Reprice(
-          ownProduct,
-          output,
-          productItem,
-          mpid,
-        );
-      }
+      repriceResult =
+        productItem.is_nc_needed == true
+          ? await repriceHelperNc.Reprice(ownProduct, output, productItem, mpid)
+          : await repriceHelper.Reprice(ownProduct, output, productItem, mpid);
     } else if (ownProduct.priceBreaks && ownProduct.priceBreaks.length > 1) {
       let multipleRepriceData = new RepriceModel(
         mpid,
@@ -143,23 +132,22 @@ export async function repriceProduct(
         );
 
         let indRepriceResult: RepriceModel;
-        if (productItem.is_nc_needed) {
-          indRepriceResult = await repriceHelperNc.RepriceIndividualPriceBreak(
-            ownProduct,
-            output,
-            productItem,
-            mpid,
-            priceBreak,
-          );
-        } else {
-          indRepriceResult = await repriceHelper.RepriceIndividualPriceBreak(
-            ownProduct,
-            output,
-            productItem,
-            mpid,
-            priceBreak,
-          );
-        }
+        indRepriceResult =
+          productItem.is_nc_needed == true
+            ? await repriceHelperNc.RepriceIndividualPriceBreak(
+                ownProduct,
+                output,
+                productItem,
+                mpid,
+                priceBreak,
+              )
+            : await repriceHelper.RepriceIndividualPriceBreak(
+                ownProduct,
+                output,
+                productItem,
+                mpid,
+                priceBreak,
+              );
 
         if (
           otherVendorRepriceDetails &&
