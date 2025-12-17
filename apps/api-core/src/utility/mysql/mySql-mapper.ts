@@ -96,6 +96,10 @@ export const MapProductDetailsList = (
         groupedList[parseInt(prodId)],
         VendorName.TRIAD,
       ),
+      biteSupplyLinkInfo: getLinkedInfoForVendor(
+        groupedList[parseInt(prodId)],
+        VendorName.BITESUPPLY,
+      ),
       tradentDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
         groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(),
@@ -125,6 +129,11 @@ export const MapProductDetailsList = (
         groupedList[parseInt(prodId)],
         groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(),
         VendorName.TRIAD,
+      ),
+      biteSupplyDetails: getMappedVendorDetails(
+        groupedList[parseInt(prodId)],
+        groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(),
+        VendorName.BITESUPPLY,
       ),
     };
     mappedList.push(mappedProduct);

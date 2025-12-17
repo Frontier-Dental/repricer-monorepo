@@ -298,6 +298,10 @@ export async function GetItemListById(mpId: string | number) {
     );
     const topDentQuery = buildSubquery("topDent", "LinkedTopDentDetailsInfo");
     const triadQuery = buildSubquery("triad", "LinkedTriadDetailsInfo");
+    const biteSupplyQuery = buildSubquery(
+      "biteSupply",
+      "LinkedBiteSupplyDetailsInfo",
+    );
 
     // Combine all queries using UNION
     const result = await knex.union([
@@ -307,6 +311,7 @@ export async function GetItemListById(mpId: string | number) {
       firstDentQuery,
       topDentQuery,
       triadQuery,
+      biteSupplyQuery,
     ]);
     // .whereNotNull("ChannelName");
 
@@ -785,6 +790,34 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
       .whereNotNull("triadDl.ChannelName")
       .where("triadDl.Activated", true);
 
+    const biteSupplyQuery = knex
+      .select(
+        "pl.Id as ProductIdentifier",
+        "pl.MpId as ProductId",
+        "pl.ProductName",
+        "pl.Net32Url",
+        "pl.IsActive as ScrapeOnlyActive",
+        "pl.LinkedCronName as LinkedScrapeOnlyCron",
+        "pl.LinkedCronId as LinkedScrapeOnlyCronId",
+        "pl.RegularCronName",
+        "pl.RegularCronId",
+        "pl.SlowCronName",
+        "pl.SlowCronId",
+        "pl.IsSlowActivated",
+        "pl.algo_execution_mode",
+        knex.raw("biteSupplyDl.*"),
+      )
+      .from("table_scrapeProductList as pl")
+      .leftJoin(
+        "table_biteSupplyDetails as biteSupplyDl",
+        "biteSupplyDl.id",
+        "pl.LinkedBiteSupplyDetailsInfo",
+      )
+      .where("pl.RegularCronId", cronId)
+      .where("pl.IsSlowActivated", "!=", true)
+      .whereNotNull("biteSupplyDl.ChannelName")
+      .where("biteSupplyDl.Activated", true);
+
     // Use raw SQL for the UNION query to ensure MySQL2 compatibility
     const unionQuery = `
     (${tradentQuery.toString()})
@@ -798,6 +831,8 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
     (${topDentQuery.toString()})
     UNION
     (${triadQuery.toString()})
+    UNION
+    (${biteSupplyQuery.toString()})
     ORDER BY ProductId
   `;
 
