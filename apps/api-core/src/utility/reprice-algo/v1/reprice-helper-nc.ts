@@ -475,6 +475,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
       }
     }
 
+    let sortedPriceBreakAllVendors = _.cloneDeep(sortedPayload);
     //Remove Sister Vendor if Both UP & DOWN selected or Compete with Next is true
     if (allowCompeteWithNextForFloor === true || productItem.repricingRule === 2) {
       sortedPayload = await filterMapper.FilterBasedOnParams(sortedPayload, productItem, "SISTER_VENDOR_EXCLUSION");
@@ -508,14 +509,14 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
         3. If the Next Lowest vendor is sister vendor, then skip that price break change
       */
       if (priceBreak.minQty != 1) {
-        const existingPriceOfOwnProduct = _.first(sortedPayload)?.priceBreaks.find((x) => x.minQty == priceBreak.minQty)?.unitPrice;
-        if (existingPriceOfOwnProduct == 0 && sortedPayload[1]) {
+        const existingPriceOfOwnProduct = _.first(sortedPriceBreakAllVendors)?.priceBreaks.find((x) => x.minQty == priceBreak.minQty)?.unitPrice;
+        if (existingPriceOfOwnProduct == 0 && sortedPriceBreakAllVendors[1]) {
           isDummyPriceBreak = true;
-          const nextLowestVendor = sortedPayload[1].vendorId.toString();
+          const nextLowestVendor = sortedPriceBreakAllVendors[1].vendorId.toString();
           if (_.includes(excludedVendors, nextLowestVendor)) {
             repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.NO_COMPETITOR_SISTER_VENDOR;
-            repriceModel.updateLowest(sortedPayload[1].vendorName, sortedPayload[1].priceBreaks.find((x) => x.minQty == priceBreak.minQty)!.unitPrice);
-            repriceModel.updateTriggeredBy(sortedPayload[1]!.vendorName, sortedPayload[1]!.vendorId, priceBreak.minQty);
+            repriceModel.updateLowest(sortedPriceBreakAllVendors[1].vendorName, sortedPriceBreakAllVendors[1].priceBreaks.find((x) => x.minQty == priceBreak.minQty)!.unitPrice);
+            repriceModel.updateTriggeredBy(sortedPriceBreakAllVendors[1]!.vendorName, sortedPriceBreakAllVendors[1]!.vendorId, priceBreak.minQty);
             return repriceModel;
           }
         }
