@@ -288,7 +288,7 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
 export async function UpsertProductDetailsV2(payload: any) {
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV4}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
     const upsertResult = await db.query(queryToCall, [
       payload.MpId,
       payload.IsActive,
@@ -686,6 +686,9 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
       case "TRIAD":
         contextSpName = applicationConfig.SQL_SP_UPDATE_TRIAD;
         break;
+      case "BITESUPPLY":
+        contextSpName = applicationConfig.SQL_SP_UPDATE_BITESUPPLY;
+        break;
       default:
         break;
     }
@@ -835,6 +838,9 @@ export async function GetLinkedVendorDetails(mpId: any, vendorName: any) {
     if (vendorName == "TRIAD") {
       tableName = "table_triadDetails";
     }
+    if (vendorName == "BITESUPPLY") {
+      tableName = "table_biteSupplyDetails";
+    }
     const queryToCall = `select Id from ${tableName} where MpId=${mpId}`;
     const noOfRecords = await db.execute(queryToCall);
     return (noOfRecords[0] as any)[0]["Id"];
@@ -904,6 +910,11 @@ export async function ChangeProductActivation(mpid: any, status: any) {
       `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
     );
     queryToCall = `update table_triadDetails set Activated=? where MpId=?`;
+    noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
+    console.log(
+      `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
+    );
+    queryToCall = `update table_biteSupplyDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
     console.log(
       `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
@@ -990,6 +1001,9 @@ export async function UpdateBranchDataForVendor(
     }
     if (vendorName == "TRIAD") {
       tableName = "table_triadDetails";
+    }
+    if (vendorName == "BITESUPPLY") {
+      tableName = "table_biteSupplyDetails";
     }
     const queryToCall = `Update ${tableName} set Activated=?,ChannelId=?,IsNCNeeded=?,BadgeIndicator=?,RepricingRule=?,FloorPrice=?,MaxPrice=?,UnitPrice=? where MpId=?`;
     const noOfRecords = await db.execute(queryToCall, [
