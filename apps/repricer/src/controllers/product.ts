@@ -772,6 +772,20 @@ export async function addExcelData(req: Request, res: Response) {
     ) {
       itemData.triadDetails.executionPriority = 6;
     }
+
+    itemData.biteSupplyDetails = items.find(
+      (x: any) =>
+        x.channelName &&
+        x.channelName.toUpperCase() == "BITESUPPLY" &&
+        x.mpid == pId,
+    );
+
+    if (
+      itemData.biteSupplyDetails &&
+      itemData.biteSupplyDetails.executionPriority == null
+    ) {
+      itemData.biteSupplyDetails.executionPriority = 7;
+    }
     //Align Cron Details
     await mapperHelper.AlignProducts(itemData, combinedArray, slowCronIds);
     if (applicationConfig.USE_MYSQL) {
