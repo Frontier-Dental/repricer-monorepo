@@ -10,16 +10,13 @@ appLogController.get("/app/clear-logs", async (req: Request, res: Response) => {
 appLogController.get("/app/logs", async (req: Request, res: Response) => {
   const today = new Date().toISOString().slice(0, 10);
 
-  let startDate: any =
-    req.query.startDate !== undefined ? req.query.startDate : today;
+  let startDate: any = req.query.startDate !== undefined ? req.query.startDate : today;
   startDate = moment(startDate);
 
-  let endDate: any =
-    req.query.endDate !== undefined ? req.query.endDate : today;
+  let endDate: any = req.query.endDate !== undefined ? req.query.endDate : today;
   endDate = moment(endDate as any);
 
-  const logLevel =
-    req.query.logLevel !== undefined ? req.query.logLevel : "ALL";
+  const logLevel = req.query.logLevel !== undefined ? req.query.logLevel : "ALL";
 
   const keyWord = req.query.keyWord;
 

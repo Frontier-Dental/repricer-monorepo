@@ -6,14 +6,7 @@ class FilterCronItem {
   destCronName: string;
   lastUpdateTime: string;
 
-  constructor(
-    _mpid: string | number,
-    _sourceCronId: string,
-    _sourceCronName: string,
-    _destCronId: string,
-    _destCronName: string,
-    _lastUpdateStr: string,
-  ) {
+  constructor(_mpid: string | number, _sourceCronId: string, _sourceCronName: string, _destCronId: string, _destCronName: string, _lastUpdateStr: string) {
     this.productId = _mpid;
     this.sourceCronId = _sourceCronId;
     this.sourceCronName = _sourceCronName;
@@ -32,12 +25,7 @@ class FilterCronLog {
   startTime: Date;
   endTime: Date;
 
-  constructor(
-    _cronKey: string,
-    _contextCronId: string,
-    _filterDate: string,
-    _cronItems: FilterCronItem[],
-  ) {
+  constructor(_cronKey: string, _contextCronId: string, _filterDate: string, _cronItems: FilterCronItem[]) {
     this.cronKey = _cronKey;
     this.contextCronId = _contextCronId;
     this.cronItem = _cronItems;

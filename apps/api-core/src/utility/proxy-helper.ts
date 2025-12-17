@@ -6,9 +6,7 @@ export const GetProxy = async (cronName: string): Promise<any | null> => {
   let proxyResult: any = { protocol: "http" };
   const cronDetails = await sqlV2Service.GetCronSettingsDetailsByName(cronName);
   if (cronDetails) {
-    const proxyDetails = await sqlV2Service.GetProxyConfigByProviderId(
-      _.first(cronDetails as any[]).ProxyProvider,
-    );
+    const proxyDetails = await sqlV2Service.GetProxyConfigByProviderId(_.first(cronDetails as any[]).ProxyProvider);
     switch (_.first(cronDetails as any[]).ProxyProvider) {
       case 0:
         proxyResult.host = _.first(proxyDetails as any[])?.hostUrl;
@@ -18,13 +16,8 @@ export const GetProxy = async (cronName: string): Promise<any | null> => {
         proxyResult.auth.password = _.first(proxyDetails as any[])?.password;
         break;
       case 1:
-        const contextProxy = proxyDetails.find(
-          (x: any) => x.ipType == _.first(cronDetails as any[])?.IpType,
-        );
-        proxyResult.host =
-          contextProxy?.ipType == 0
-            ? _.first(cronDetails as any[])?.FixedIp
-            : contextProxy?.hostUrl;
+        const contextProxy = proxyDetails.find((x: any) => x.ipType == _.first(cronDetails as any[])?.IpType);
+        proxyResult.host = contextProxy?.ipType == 0 ? _.first(cronDetails as any[])?.FixedIp : contextProxy?.hostUrl;
         proxyResult.port = contextProxy?.port;
         proxyResult.auth = {};
         proxyResult.auth.username = contextProxy?.userName;
@@ -45,9 +38,7 @@ export const GetProxy = async (cronName: string): Promise<any | null> => {
   return proxyResult;
 };
 
-export const GetProxyDetailsByName = async (
-  cronName: string,
-): Promise<any | null> => {
+export const GetProxyDetailsByName = async (cronName: string): Promise<any | null> => {
   return sqlV2Service.GetCronSettingsDetailsByName(cronName);
 };
 
@@ -55,9 +46,7 @@ export const GetProxyDetailsById = async (cronId: number): Promise<any[]> => {
   const regularCronDetails = await sqlV2Service.GetCronSettingsList();
   const slowCronDetails = await sqlV2Service.GetSlowCronDetails();
   const cronDetails = _.concat(regularCronDetails, slowCronDetails);
-  return [cronDetails.find((x: any) => x.CronId == cronId)].filter(
-    Boolean,
-  ) as any[];
+  return [cronDetails.find((x: any) => x.CronId == cronId)].filter(Boolean) as any[];
 };
 
 export const InitProxy = async (proxyConfigDetails: any): Promise<any> => {
@@ -72,14 +61,10 @@ export const InitProxy = async (proxyConfigDetails: any): Promise<any> => {
   return proxyResult;
 };
 
-export const GetProxyV2 = async (
-  cronSettings: any,
-  proxyProvider: number,
-): Promise<any | null> => {
+export const GetProxyV2 = async (cronSettings: any, proxyProvider: number): Promise<any | null> => {
   let proxyResult: any = { protocol: "http" };
   if (cronSettings) {
-    const proxyDetails =
-      await sqlV2Service.GetProxyConfigByProviderId(proxyProvider);
+    const proxyDetails = await sqlV2Service.GetProxyConfigByProviderId(proxyProvider);
     switch (proxyProvider) {
       case 0:
         proxyResult.host = _.first(proxyDetails as any[])?.hostUrl;
@@ -89,13 +74,8 @@ export const GetProxyV2 = async (
         proxyResult.auth.password = _.first(proxyDetails as any[])?.password;
         break;
       case 1:
-        const contextProxy = proxyDetails.find(
-          (x: any) => x.ipType == cronSettings.IpType,
-        );
-        proxyResult.host =
-          contextProxy?.ipType == 0
-            ? cronSettings.FixedIp
-            : contextProxy?.hostUrl;
+        const contextProxy = proxyDetails.find((x: any) => x.ipType == cronSettings.IpType);
+        proxyResult.host = contextProxy?.ipType == 0 ? cronSettings.FixedIp : contextProxy?.hostUrl;
         proxyResult.port = contextProxy?.port;
         proxyResult.auth = {};
         proxyResult.auth.username = contextProxy?.userName;

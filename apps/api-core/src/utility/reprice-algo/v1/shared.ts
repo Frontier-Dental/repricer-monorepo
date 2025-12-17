@@ -7,29 +7,13 @@ import { applicationConfig } from "../../config";
 import * as sqlV2Service from "../../../utility/mysql/mysql-v2";
 import { GetCronSettingsDetailsById } from "../../../utility/mysql/mysql-v2";
 
-export function isPriceUpdateRequired(
-  repriceResult: RepriceModel,
-  isRepriceOn: boolean,
-) {
-  if (
-    isRepriceOn &&
-    repriceResult.repriceDetails &&
-    repriceResult.repriceDetails.newPrice !== "N/A" &&
-    repriceResult.repriceDetails.newPrice?.toString() !==
-      repriceResult.repriceDetails.oldPrice.toString()
-  ) {
+export function isPriceUpdateRequired(repriceResult: RepriceModel, isRepriceOn: boolean) {
+  if (isRepriceOn && repriceResult.repriceDetails && repriceResult.repriceDetails.newPrice !== "N/A" && repriceResult.repriceDetails.newPrice?.toString() !== repriceResult.repriceDetails.oldPrice.toString()) {
     return true;
-  } else if (
-    isRepriceOn &&
-    repriceResult.isMultiplePriceBreakAvailable &&
-    repriceResult.listOfRepriceDetails.length > 0
-  ) {
+  } else if (isRepriceOn && repriceResult.isMultiplePriceBreakAvailable && repriceResult.listOfRepriceDetails.length > 0) {
     let $eval = false;
     repriceResult.listOfRepriceDetails.forEach(($rp) => {
-      if (
-        $rp.newPrice !== "N/A" &&
-        $rp.newPrice?.toString() !== $rp.oldPrice.toString()
-      ) {
+      if ($rp.newPrice !== "N/A" && $rp.newPrice?.toString() !== $rp.oldPrice.toString()) {
         $eval = true;
       } else if ($rp.active == false) {
         $eval = true;
@@ -40,25 +24,14 @@ export function isPriceUpdateRequired(
   return false;
 }
 
-export async function getSamePriceBreakDetails(
-  outputList: Net32Product[],
-  priceBreak: Net32PriceBreak,
-  productItem: FrontierProduct,
-) {
+export async function getSamePriceBreakDetails(outputList: Net32Product[], priceBreak: Net32PriceBreak, productItem: FrontierProduct) {
   if (!applicationConfig.FLAG_MULTI_PRICE_UPDATE) return outputList;
   if (outputList.length == 1) return outputList;
   let result: Net32Product[] = [];
   for (let out of outputList) {
     const $ = await globalParam.GetInfo(out.vendorId, productItem);
-    let excludedVendors = productItem.competeAll
-      ? []
-      : $.EXCLUDED_VENDOR_ID.split(";");
-    if (
-      out.vendorId != $.VENDOR_ID &&
-      !_.includes(excludedVendors, out.vendorId.toString()) &&
-      out.priceBreaks &&
-      out.priceBreaks.length > 0
-    ) {
+    let excludedVendors = productItem.competeAll ? [] : $.EXCLUDED_VENDOR_ID.split(";");
+    if (out.vendorId != $.VENDOR_ID && !_.includes(excludedVendors, out.vendorId.toString()) && out.priceBreaks && out.priceBreaks.length > 0) {
       out.priceBreaks.forEach((pb) => {
         if (pb.minQty == priceBreak.minQty) {
           result.push(out);
@@ -78,19 +51,14 @@ export async function getSecretKey(cronId: string, contextVendor: string) {
   if (!cronSettingDetails) {
     throw new Error(`Cron setting details not found for ${cronId}`);
   }
-  const secretKey = cronSettingDetails?.SecretKey?.find(
-    (x: any) => x.vendorName == contextVendor,
-  )?.secretKey;
+  const secretKey = cronSettingDetails?.SecretKey?.find((x: any) => x.vendorName == contextVendor)?.secretKey;
   if (!secretKey) {
     throw new Error(`Secret key not found for ${cronId} and ${contextVendor}`);
   }
   return secretKey;
 }
 
-export async function isOverrideEnabledForProduct(
-  override_bulk_update: boolean,
-  is_slow_cron_run: boolean,
-): Promise<boolean> {
+export async function isOverrideEnabledForProduct(override_bulk_update: boolean, is_slow_cron_run: boolean): Promise<boolean> {
   if (is_slow_cron_run) return true;
   if (override_bulk_update) {
     const globalConfig = await sqlV2Service.GetGlobalConfig();
@@ -101,13 +69,9 @@ export async function isOverrideEnabledForProduct(
   return false;
 }
 
-export const delay = (s: number) =>
-  new Promise((res: any) => setTimeout(res, s * 1000));
+export const delay = (s: number) => new Promise((res: any) => setTimeout(res, s * 1000));
 
-export function MinQtyPricePresent(
-  priceBreaks: Net32PriceBreak[],
-  minQty: number,
-) {
+export function MinQtyPricePresent(priceBreaks: Net32PriceBreak[], minQty: number) {
   if (priceBreaks == null || priceBreaks.length == 0) return false;
   let present = false;
   for (const pb of priceBreaks) {
@@ -127,10 +91,7 @@ export const getIsFloorReached = async (repricerDetails: RepriceData) => {
 
 export const getPriceStepValue = async (repricerDetails: any) => {
   const oldPrice = parseFloat(repricerDetails.oldPrice);
-  const newPrice =
-    repricerDetails.newPrice == "N/A"
-      ? 0
-      : parseFloat(repricerDetails.newPrice);
+  const newPrice = repricerDetails.newPrice == "N/A" ? 0 : parseFloat(repricerDetails.newPrice);
   if (oldPrice > newPrice) {
     return "$DOWN";
   } else if (oldPrice < newPrice) {

@@ -28,13 +28,7 @@ export class ProductInfo {
   StartTime: any;
   EndTime: any;
 
-  constructor(
-    _mpid: any,
-    details: any,
-    _linkedCronInfoId: any,
-    _rank: any,
-    _isOwnVendor: any,
-  ) {
+  constructor(_mpid: any, details: any, _linkedCronInfoId: any, _rank: any, _isOwnVendor: any) {
     this.LinkedCronInfo = _linkedCronInfoId;
     this.Mpid = _mpid.toString();
     this.VendorProductId = details.vendorProductId.toString();

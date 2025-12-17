@@ -21,9 +21,7 @@ const envSchema = z.object({
   FILTER_CRON_COLLECTION_NAME: z.string().default("filterCronSettings"),
   FILTER_CRON_LOGS: z.string().default("filterCronLogs"),
   ERROR_422_CRON_LOGS: z.string().default("422cronLogs"),
-  PROXY_SWITCHER_CRON_COLLECTION_NAME: z
-    .string()
-    .default("proxySwitcherCronSettings"),
+  PROXY_SWITCHER_CRON_COLLECTION_NAME: z.string().default("proxySwitcherCronSettings"),
   // SQL
   SQL_HOSTNAME: z.string(),
   SQL_PORT: z.coerce.number(),
@@ -34,22 +32,12 @@ const envSchema = z.object({
   SQL_PRODUCTINFO: z.string().default("table_productInfo"),
   SQL_PRICEBREAKINFO: z.string().default("table_priceBreaks"),
   SQL_RUNCOMPLETIONSTATUS: z.string().default("table_runCompletionStatus"),
-  SQL_GET_SCRAPE_PRODUCTS_BY_CRON: z
-    .string()
-    .default("sp_GetActiveScrapeProductDetailsByCron"),
+  SQL_GET_SCRAPE_PRODUCTS_BY_CRON: z.string().default("sp_GetActiveScrapeProductDetailsByCron"),
   SQL_SCRAPE_PRODUCT_LIST: z.string().default("table_scrapeProductList"),
-  SQL_GET_PRODUCT_BYID_CRON: z
-    .string()
-    .default("sp_GetProductDetailsByCronAndId"),
-  SQL_SP_GET_REGULAR_CRON_PRODUCTS_BY_CRON: z
-    .string()
-    .default("sp_GetActiveFullProductDetailsListByCronV3"),
-  SQL_SP_GET_SLOW_CRON_PRODUCTS_BY_CRON: z
-    .string()
-    .default("sp_GetActiveFullProductDetailsListBySlowCronV3"),
-  SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID: z
-    .string()
-    .default("sp_GetFullProductDetailsByIdV3"),
+  SQL_GET_PRODUCT_BYID_CRON: z.string().default("sp_GetProductDetailsByCronAndId"),
+  SQL_SP_GET_REGULAR_CRON_PRODUCTS_BY_CRON: z.string().default("sp_GetActiveFullProductDetailsListByCronV3"),
+  SQL_SP_GET_SLOW_CRON_PRODUCTS_BY_CRON: z.string().default("sp_GetActiveFullProductDetailsListBySlowCronV3"),
+  SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID: z.string().default("sp_GetFullProductDetailsByIdV3"),
   SQL_TRADENT_DETAILS: z.string().default("table_tradentDetails"),
   SQL_FRONTIER_DETAILS: z.string().default("table_frontierDetails"),
   SQL_MVP_DETAILS: z.string().default("table_mvpDetails"),
@@ -57,9 +45,7 @@ const envSchema = z.object({
   SQL_FIRSTDENT_DETAILS: z.string().default("table_firstDentDetails"),
   SQL_HISTORY_API_RESPONSE: z.string().default("table_history_apiResponse"),
   SQL_HISTORY: z.string().default("table_history"),
-  SQL_SP_FILTER_ELIGIBLE_PRODUCT: z
-    .string()
-    .default("sp_GetFilterEligibleProductsByFilterDateV3"),
+  SQL_SP_FILTER_ELIGIBLE_PRODUCT: z.string().default("sp_GetFilterEligibleProductsByFilterDateV3"),
   // App
   PORT: z.coerce.number().default(5001),
   OFFSET: z.coerce.number().default(0.01),
@@ -103,55 +89,29 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(false),
-  REPRICER_UI_CACHE_CLEAR: z
-    .string()
-    .default("http://localhost:3000/cache/flush_repricer_all"),
-  MANAGED_SERVICE_CRON_RUN_URL: z
-    .string()
-    .default("http://localhost:5001/schedule/startManagedServiceCron"),
-  CRON_RUN_PRODUCT_URL: z
-    .string()
-    .default("http://localhost:5001/schedule/startProductCron"),
-  CRON_RUN_FEED_URL: z
-    .string()
-    .default("http://localhost:5001/schedule/startFeedCron"),
+  REPRICER_UI_CACHE_CLEAR: z.string().default("http://localhost:3000/cache/flush_repricer_all"),
+  MANAGED_SERVICE_CRON_RUN_URL: z.string().default("http://localhost:5001/schedule/startManagedServiceCron"),
+  CRON_RUN_PRODUCT_URL: z.string().default("http://localhost:5001/schedule/startProductCron"),
+  CRON_RUN_FEED_URL: z.string().default("http://localhost:5001/schedule/startFeedCron"),
   // Misc
-  PROXY_SWITCH_EMAIL_NOTIFIER: z
-    .string()
-    .default("http://localhost:5421/notify/proxy_switch_email"),
-  PROXY_SWITCH_EMAIL_THRESHOLD_NOTIFIER: z
-    .string()
-    .default("http://localhost:5421/notify/proxy_switch_threshold_email"),
+  PROXY_SWITCH_EMAIL_NOTIFIER: z.string().default("http://localhost:5421/notify/proxy_switch_email"),
+  PROXY_SWITCH_EMAIL_THRESHOLD_NOTIFIER: z.string().default("http://localhost:5421/notify/proxy_switch_threshold_email"),
   PROXYSWITCH_TIMER: z.coerce.number().default(3600000),
   PROXYSWITCH_COUNTER_MAXLIMIT: z.coerce.number().default(200),
   BATCH_SIZE: z.coerce.number().default(700),
-  GET_SEARCH_RESULTS: z
-    .string()
-    .default("https://www.net32.com/rest/neo/pdp/{mpId}/vendor-options"),
-  REPRICE_OWN_URL: z
-    .string()
-    .default("http://localhost:5001/search/RepriceProduct/{mpId}"),
-  UPDATE_TO_MAX_OWN_URL: z
-    .string()
-    .default("http://localhost:5001/search/RepriceProductToMax/{mpId}"),
-  GET_PRODUCT_RESULTS: z
-    .string()
-    .default("https://www.net32.com/feeds/vendors/Net32.json"),
+  GET_SEARCH_RESULTS: z.string().default("https://www.net32.com/rest/neo/pdp/{mpId}/vendor-options"),
+  REPRICE_OWN_URL: z.string().default("http://localhost:5001/search/RepriceProduct/{mpId}"),
+  UPDATE_TO_MAX_OWN_URL: z.string().default("http://localhost:5001/search/RepriceProductToMax/{mpId}"),
+  GET_PRODUCT_RESULTS: z.string().default("https://www.net32.com/feeds/vendors/Net32.json"),
   FEED_FILE_NAME: z.string().default("feed.json"),
   FEED_FILE_PATH: z.string().default("/root/repricer/feed/"),
   PRODUCT_LOCAL_PATH: z.string().default("../../product"),
-  FEED_REPRICER_OWN_URL: z
-    .string()
-    .default("http://localhost:5001/feed/RepriceProduct/{mpId}"),
-  PRODUCT_REPRICER_URL: z
-    .string()
-    .default("http://localhost:5001/data/GetProductList"),
+  FEED_REPRICER_OWN_URL: z.string().default("http://localhost:5001/feed/RepriceProduct/{mpId}"),
+  PRODUCT_REPRICER_URL: z.string().default("http://localhost:5001/data/GetProductList"),
   FEED_CRON_EXP: z.string().default("15 */4 * * *"),
   PRODUCT_CRON_EXP: z.string().default("0 */4 * * *"),
   MANAGED_CRON_EXP: z.string().default("0 */2 * * *"),
-  COLLATE_DATA_URL: z
-    .string()
-    .default("http://localhost:5001/data/collate_feed"),
+  COLLATE_DATA_URL: z.string().default("http://localhost:5001/data/collate_feed"),
   IS_SCRAPER: z
     .string()
     .toLowerCase()
@@ -196,9 +156,7 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
-  NET32_UPDATE_QUANTITY_URL: z
-    .string()
-    .default("https://api.net32.com/inventory/products/update"),
+  NET32_UPDATE_QUANTITY_URL: z.string().default("https://api.net32.com/inventory/products/update"),
   SQL_TRIAD_DETAILS: z.string().default("table_triadDetails"),
   SQL_PROXY_NET_32: z.string().default("tinyproxy_configs"),
   ENABLE_SLOW_CRON_FEATURE: z
@@ -233,11 +191,7 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(false),
-  SHIPPING_DATA_PROXY_SCRAPE_URL: z
-    .string()
-    .default(
-      "https://api.scrapfly.io/scrape?tags=player%2Cproject%3Adefault&asp=true&country=US",
-    ),
+  SHIPPING_DATA_PROXY_SCRAPE_URL: z.string().default("https://api.scrapfly.io/scrape?tags=player%2Cproject%3Adefault&asp=true&country=US"),
   SHIPPING_DATA_PROXY_SCRAPE_API_KEY: z.string(),
   RUN_SHIPPING_THRESHOLD_SCRAPE_ON_STARTUP: z
     .string()
@@ -249,9 +203,7 @@ const envSchema = z.object({
   CACHE_USERNAME: z.string(),
   CACHE_PASSWORD: z.string(),
   CACHE_PORT: z.coerce.number(),
-  REPRICER_ENCRYPTION_KEY: z
-    .string()
-    .default("3v9sKkLZ2z1Yq9eU8 + XgJk1YbZ9n3vLQ0mF9ZkQhJxgE="),
+  REPRICER_ENCRYPTION_KEY: z.string().default("3v9sKkLZ2z1Yq9eU8 + XgJk1YbZ9n3vLQ0mF9ZkQhJxgE="),
   MINI_ERP_BASE_URL: z.string(),
   MINI_ERP_USERNAME: z.string(),
   MINI_ERP_PASSWORD: z.string(),
@@ -265,10 +217,7 @@ export function validateConfig() {
   const parsed = envSchema.safeParse(process.env);
 
   if (!parsed.success) {
-    throw new Error(
-      "Invalid or missing environment variables:\n" +
-        JSON.stringify(parsed.error.format(), null, 2),
-    );
+    throw new Error("Invalid or missing environment variables:\n" + JSON.stringify(parsed.error.format(), null, 2));
   }
 
   return parsed.data;

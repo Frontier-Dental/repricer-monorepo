@@ -6,13 +6,8 @@ import { applicationConfig } from "../../utility/config";
 
 let productCron: ScheduledTask | null = null;
 
-export async function startProductCronHandler(
-  req: Request,
-  res: Response,
-): Promise<any> {
-  console.log(
-    `Started Product Cron with ${applicationConfig.PRODUCT_CRON_EXP}`,
-  );
+export async function startProductCronHandler(req: Request, res: Response): Promise<any> {
+  console.log(`Started Product Cron with ${applicationConfig.PRODUCT_CRON_EXP}`);
   productCron = schedule(applicationConfig.PRODUCT_CRON_EXP, async () => {
     try {
       const url = applicationConfig.PRODUCT_REPRICER_URL;

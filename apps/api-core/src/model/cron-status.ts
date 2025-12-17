@@ -6,14 +6,7 @@ export class CronStatusModel {
   cronId: string;
   keyGenId: string;
 
-  constructor(
-    cronTime: string,
-    productsCount: number,
-    maxProdCount: number,
-    status: string,
-    cronId: string,
-    keyGen: string,
-  ) {
+  constructor(cronTime: string, productsCount: number, maxProdCount: number, status: string, cronId: string, keyGen: string) {
     this.cronTime = cronTime;
     this.productsCount = productsCount;
     this.maximumProductCount = maxProdCount;

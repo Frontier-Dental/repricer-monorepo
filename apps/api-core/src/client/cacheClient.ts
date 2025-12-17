@@ -33,20 +33,14 @@ class CacheClient {
     });
   }
 
-  public static getInstance(
-    option: CacheClientOptions | null = null,
-  ): CacheClient {
+  public static getInstance(option: CacheClientOptions | null = null): CacheClient {
     if (!CacheClient.instance || CacheClient.instance.client.isOpen === false) {
       CacheClient.instance = new CacheClient(option);
     }
     return CacheClient.instance;
   }
 
-  public async set<T>(
-    key: string,
-    value: T,
-    ttlInSeconds?: number,
-  ): Promise<void> {
+  public async set<T>(key: string, value: T, ttlInSeconds?: number): Promise<void> {
     const serialized = JSON.stringify(value);
     await this.ensureConnected();
     if (ttlInSeconds) {
@@ -87,9 +81,7 @@ class CacheClient {
   /**
    * Get all keys (optionally with values).
    */
-  public async getAllKeys(
-    withValues = false,
-  ): Promise<string[] | Record<string, unknown>> {
+  public async getAllKeys(withValues = false): Promise<string[] | Record<string, unknown>> {
     const keys: string[] = [];
     let cursor = "0"; // must be string, not number
 
@@ -133,9 +125,7 @@ interface CacheClientOptions {
   caCertPath?: string;
 }
 
-export function GetCacheClientOptions(
-  applicationConfig: any,
-): CacheClientOptions {
+export function GetCacheClientOptions(applicationConfig: any): CacheClientOptions {
   const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
   const valkeyPassword = encrypto.decrypt(applicationConfig.CACHE_PASSWORD);
   return {
