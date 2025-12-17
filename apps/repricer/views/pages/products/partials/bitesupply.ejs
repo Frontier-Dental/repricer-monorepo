@@ -1,39 +1,39 @@
 
 <div class="card">
     <div class="card-body">
-      <% if(model.triadDetails!=null){ %>
-        <form method="post" autocomplete="off" id="update_product_form_triad">
-          <input type="hidden" value="Triad" name="vendors" />
+      <% if(model.biteSupplyDetails!=null){ %>
+        <form method="post" autocomplete="off" id="update_product_form_biteSupply">
+          <input type="hidden" value="Bite Supply" name="vendors" />
           <input type="hidden" value="<%= model.mpId %>" name="mpid" />
           <div class="row no-gutters">
             <div class="form-group col-3">
               <label for="channel_name" class="font-weight-bold">
                 Channel Name <span style="color: red;font-weight: bold;">*</span>
               </label>
-              <input type="text" class="form-control" value="<%= model.triadDetails.channelName %>" name="channel_name"
+              <input type="text" class="form-control" value="<%= model.biteSupplyDetails.channelName %>" name="channel_name"
                 placeholder="Channel Name" />
             </div>
             <div class="form-group col-3">
               <label for="executionPriority" class="font-weight-bold">Execution Priority:</label>
               <br>
               <select class="form-select form-control" name="executionPriority" aria-label="Default select example">
-                <option <%=model.triadDetails.executionPriority==1 ? "selected" : "" %> value=1>1</option>
-                <option <%=model.triadDetails.executionPriority==2 ? "selected" : "" %> value=2>2</option>
-                <option <%=model.triadDetails.executionPriority==3 ? "selected" : "" %> value=3>3</option>
-                <option <%=model.triadDetails.executionPriority==4 ? "selected" : "" %> value=4>4</option>
-                <option <%=model.triadDetails.executionPriority==5 ? "selected" : "" %> value=5>5</option>
-                <option <%=model.triadDetails.executionPriority==6 ? "selected" : "" %> value=6>6</option>
-                <option <%=model.triadDetails.executionPriority==7 ? "selected" : "" %> value=7>7</option>
+                <option <%=model.biteSupplyDetails.executionPriority==1 ? "selected" : "" %> value=1>1</option>
+                <option <%=model.biteSupplyDetails.executionPriority==2 ? "selected" : "" %> value=2>2</option>
+                <option <%=model.biteSupplyDetails.executionPriority==3 ? "selected" : "" %> value=3>3</option>
+                <option <%=model.biteSupplyDetails.executionPriority==4 ? "selected" : "" %> value=4>4</option>
+                <option <%=model.biteSupplyDetails.executionPriority==5 ? "selected" : "" %> value=5>5</option>
+                <option <%=model.biteSupplyDetails.executionPriority==6 ? "selected" : "" %> value=6>6</option>
+                <option <%=model.biteSupplyDetails.executionPriority==7 ? "selected" : "" %> value=7>7</option>
               </select>
             </div>
             <div class="form-group col-3">
               <label for="percentageIncrease" class="font-weight-bold">Reprice Up %</label>
-              <input type="number" class="form-control" value="<%= model.triadDetails.percentageIncrease %>"
+              <input type="number" class="form-control" value="<%= model.biteSupplyDetails.percentageIncrease %>"
                 name="percentageIncrease" placeholder="Reprice Up %" min="0" max="100" />
             </div>
             <div class="form-group col-3" name="divBadgePercentage">
               <label for="badgePercentage" class="font-weight-bold">Reprice UP Badge Percentage %</label>
-              <input type="number" class="form-control" value="<%= model.triadDetails.badgePercentage %>"
+              <input type="number" class="form-control" value="<%= model.biteSupplyDetails.badgePercentage %>"
                 name="badgePercentage" placeholder="Badge Percentage (%)" min="0" max="100" />
             </div>
           </div>
@@ -41,13 +41,13 @@
             <div class="form-group col-3">
               <label for="sisterVendorId" class="font-weight-bold">Sister Vendor Id (Separated by
                 [;])</label>
-              <input type="text" class="form-control" value="<%= model.triadDetails.sisterVendorId %>"
+              <input type="text" class="form-control" value="<%= model.biteSupplyDetails.sisterVendorId %>"
                 name="sisterVendorId" placeholder="Sister Vendor Id" />
             </div>
             <div class="form-group col-3">
               <label for="inactiveVendorId" class="font-weight-bold">Inactive Vendor Id (Separated by
                 [;])</label>
-              <input type="text" class="form-control" value="<%= model.triadDetails.inactiveVendorId %>"
+              <input type="text" class="form-control" value="<%= model.biteSupplyDetails.inactiveVendorId %>"
                 name="inactiveVendorId" placeholder="Inactive Vendor Id" />
             </div>
             <div class="form-group col-3">
@@ -55,22 +55,22 @@
                 :</label>
               <select class="form-select form-control" name="override_bulk_rule_select"
                 aria-label="Default select example">
-                <option <%=model.triadDetails.override_bulk_rule==-1 ? "selected" : "" %> value=-1>-- Please Select --</option>
-                <option <%=model.triadDetails.override_bulk_rule==0 ? "selected" : "" %> value=0>Only Up</option>
-                <option <%=model.triadDetails.override_bulk_rule==1 ? "selected" : "" %> value=1>Only Down</option>
-                <option <%=model.triadDetails.override_bulk_rule==2 ? "selected" : "" %> value=2>Both</option>
+                <option <%=model.biteSupplyDetails.override_bulk_rule==-1 ? "selected" : "" %> value=-1>-- Please Select --</option>
+                <option <%=model.biteSupplyDetails.override_bulk_rule==0 ? "selected" : "" %> value=0>Only Up</option>
+                <option <%=model.biteSupplyDetails.override_bulk_rule==1 ? "selected" : "" %> value=1>Only Down</option>
+                <option <%=model.biteSupplyDetails.override_bulk_rule==2 ? "selected" : "" %> value=2>Both</option>
               </select>
             </div>
             <div class="form-group col-3">
               <label for="handling_time_filter" class="font-weight-bold">Handling Time Group :</label>
               <select class="form-select form-control" name="handling_time_filter" aria-label="Default select example"
                 onchange="enablePercentageData(this)">
-                <option <%=model.triadDetails.handlingTimeFilter=='ALL' ? "selected" : "" %> value='ALL'>All</option>
-                <option <%=model.triadDetails.handlingTimeFilter=='FAST_SHIPPING' ? "selected" : "" %>
+                <option <%=model.biteSupplyDetails.handlingTimeFilter=='ALL' ? "selected" : "" %> value='ALL'>All</option>
+                <option <%=model.biteSupplyDetails.handlingTimeFilter=='FAST_SHIPPING' ? "selected" : "" %>
                   value='FAST_SHIPPING'>1-2 days (Fast Shipping)</option>
-                <option <%=model.triadDetails.handlingTimeFilter=='STOCKED' ? "selected" : "" %> value='STOCKED'>1-5
+                <option <%=model.biteSupplyDetails.handlingTimeFilter=='STOCKED' ? "selected" : "" %> value='STOCKED'>1-5
                   days (Stocked)</option>
-                <option <%=model.triadDetails.handlingTimeFilter=='LONG_HANDLING' ? "selected" : "" %>
+                <option <%=model.biteSupplyDetails.handlingTimeFilter=='LONG_HANDLING' ? "selected" : "" %>
                   value='LONG_HANDLING'>6+ days (Long Handling)</option>
               </select>
             </div>
@@ -79,44 +79,44 @@
             <div class="form-group col-3">
               <label for="excludedVendors" class="font-weight-bold">Exclude Vendor(s) (Separated by
                 [;])</label>
-              <input type="text" class="form-control" value="<%= model.triadDetails.excludedVendors %>"
+              <input type="text" class="form-control" value="<%= model.biteSupplyDetails.excludedVendors %>"
                 name="excludedVendors" placeholder="Excluded Vendor Ids" />
             </div>
             <div class="form-group col-3">
               <label for="inventoryThreshold" class="font-weight-bold">Inventory Competition Threshold</label>
-              <input type="number" class="form-control" value="<%= model.triadDetails.inventoryThreshold %>"
+              <input type="number" class="form-control" value="<%= model.biteSupplyDetails.inventoryThreshold %>"
                 name="inventoryThreshold" placeholder="Inventory Competition Threshold" min="0" max="100" />
             </div>
             <div class="form-group col-3">
               <label for="percentageDown" class="font-weight-bold">Reprice Down %</label>
-              <input type="number" class="form-control" value="<%= model.triadDetails.percentageDown %>"
+              <input type="number" class="form-control" value="<%= model.biteSupplyDetails.percentageDown %>"
                 name="percentageDown" placeholder="Reprice Down %" min="0" max="1" />
             </div>
             <div class="form-group col-3">
               <label for="badgePercentageDown" class="font-weight-bold">Reprice Down Badge %</label>
-              <input type="number" class="form-control" value="<%= model.triadDetails.badgePercentageDown %>"
+              <input type="number" class="form-control" value="<%= model.biteSupplyDetails.badgePercentageDown %>"
                 name="badgePercentageDown" placeholder="Reprice Down Badge %" min="0" max="1" step="0.001" />
             </div>
             <div class="form-group col-3">
               <label for="ownVendorThreshold" class="font-weight-bold">Own Vendor Threshold</label>
-              <input type="number" class="form-control" value="<%= model.triadDetails.ownVendorThreshold %>"
+              <input type="number" class="form-control" value="<%= model.biteSupplyDetails.ownVendorThreshold %>"
                 name="ownVendorThreshold" placeholder="Own Vendor Threshold" min="0" step="1" />
             </div>
             <div class="form-group col-3">
               <label for="badgePercentageDown" class="font-weight-bold">Get BB - Shipping %</label>
-              <input type="number" class="form-control" value="<%= model.triadDetails.getBBShippingValue %>"
+              <input type="number" class="form-control" value="<%= model.biteSupplyDetails.getBBShippingValue %>"
                 name="getBBShippingValue" placeholder="Get BB - Shipping %" min="0" max="1" step="0.001" />
             </div>
             <div class="form-group col-3">
               <label for="badgePercentageDown" class="font-weight-bold">Get BB - Badge %</label>
-              <input type="number" class="form-control" value="<%= model.triadDetails.getBBBadgeValue %>" name="getBBBadgeValue"
+              <input type="number" class="form-control" value="<%= model.biteSupplyDetails.getBBBadgeValue %>" name="getBBBadgeValue"
                 placeholder="Get BB - Badge %" min="0" max="1" step="0.001" />
             </div>
           </div>
           <div class="row no-gutters">
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="Scrape_on_off" <%=model.triadDetails.scrapeOn==true ? 'checked' : '' %> />
+                <input type="checkbox" name="Scrape_on_off" <%=model.biteSupplyDetails.scrapeOn==true ? 'checked' : '' %> />
                 <span class="slider"></span>
               </label>
               <label for="" class="font-weight-bold">
@@ -125,7 +125,7 @@
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="Reprice_on_off" <%=model.triadDetails.allowReprice==true ? 'checked' : ''
+                <input type="checkbox" name="Reprice_on_off" <%=model.biteSupplyDetails.allowReprice==true ? 'checked' : ''
                   %> />
                 <span class="slider"></span>
               </label>
@@ -133,7 +133,7 @@
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="suppressPriceBreak" <%=model.triadDetails.suppressPriceBreak==true
+                <input type="checkbox" name="suppressPriceBreak" <%=model.biteSupplyDetails.suppressPriceBreak==true
                   ? 'checked' : '' %> />
                 <span class="slider"></span>
               </label>
@@ -141,14 +141,14 @@
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="competeAll" <%=model.triadDetails.competeAll==true ? 'checked' : '' %> />
+                <input type="checkbox" name="competeAll" <%=model.biteSupplyDetails.competeAll==true ? 'checked' : '' %> />
                 <span class="slider"></span>
               </label>
               <label for="" class="font-weight-bold">Compete with all vendors</label>
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="compareWithQ1" <%=model.triadDetails.compareWithQ1==true ? 'checked' : ''
+                <input type="checkbox" name="compareWithQ1" <%=model.biteSupplyDetails.compareWithQ1==true ? 'checked' : ''
                   %> />
                 <span class="slider"></span>
               </label>
@@ -156,7 +156,7 @@
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="applyBuyBox" <%=model.triadDetails.applyBuyBoxLogic==true ? 'checked' : ''
+                <input type="checkbox" name="applyBuyBox" <%=model.biteSupplyDetails.applyBuyBoxLogic==true ? 'checked' : ''
                   %> />
                 <span class="slider"></span>
               </label>
@@ -164,7 +164,7 @@
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="applyNcForBuyBox" <%=model.triadDetails.applyNcForBuyBox==true ? 'checked'
+                <input type="checkbox" name="applyNcForBuyBox" <%=model.biteSupplyDetails.applyNcForBuyBox==true ? 'checked'
                   : '' %> />
                 <span class="slider"></span>
               </label>
@@ -172,7 +172,7 @@
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="includeInactiveVendors" <%=model.triadDetails.includeInactiveVendors==true
+                <input type="checkbox" name="includeInactiveVendors" <%=model.biteSupplyDetails.includeInactiveVendors==true
                   ? 'checked' : '' %> />
                 <span class="slider"></span>
               </label>
@@ -180,7 +180,7 @@
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="override_bulk_update" <%=model.triadDetails.override_bulk_update==true
+                <input type="checkbox" name="override_bulk_update" <%=model.biteSupplyDetails.override_bulk_update==true
                   ? 'checked' : '' %> />
                 <span class="slider"></span>
               </label>
@@ -189,7 +189,7 @@
             <div class="form-group col-3">
               <label class="switch">
                 <input type="checkbox" name="suppressPriceBreakForOne"
-                  <%=model.triadDetails.suppressPriceBreakForOne==true ? 'checked' : '' %> />
+                  <%=model.biteSupplyDetails.suppressPriceBreakForOne==true ? 'checked' : '' %> />
                 <span class="slider"></span>
               </label>
               <label for="" class="font-weight-bold">Suppress Price Break if Qty 1 not
@@ -197,14 +197,14 @@
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="beatQPrice" <%=model.triadDetails.beatQPrice==true ? 'checked' : '' %> />
+                <input type="checkbox" name="beatQPrice" <%=model.biteSupplyDetails.beatQPrice==true ? 'checked' : '' %> />
                 <span class="slider"></span>
               </label>
               <label for="" class="font-weight-bold">Compete On Price Breaks Only</label>
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="keepPosition" <%=model.triadDetails.keepPosition==true ? 'checked' : '' %>
+                <input type="checkbox" name="keepPosition" <%=model.biteSupplyDetails.keepPosition==true ? 'checked' : '' %>
                 />
                 <span class="slider"></span>
               </label>
@@ -214,7 +214,7 @@
           <div class="row no-gutters">
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="competeWithNext" <%=model.triadDetails.competeWithNext==true ? 'checked'
+                <input type="checkbox" name="competeWithNext" <%=model.biteSupplyDetails.competeWithNext==true ? 'checked'
                   : '' %> />
                 <span class="slider"></span>
               </label>
@@ -224,7 +224,7 @@
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="ignorePhantomQBreak" <%=model.triadDetails.ignorePhantomQBreak==true ? 'checked' : ''
+                <input type="checkbox" name="ignorePhantomQBreak" <%=model.biteSupplyDetails.ignorePhantomQBreak==true ? 'checked' : ''
                   %> />
                 <span class="slider"></span>
               </label>
@@ -234,7 +234,7 @@
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="getBBShipping" <%=model.triadDetails.getBBShipping==true ? 'checked' : '' %> />
+                <input type="checkbox" name="getBBShipping" <%=model.biteSupplyDetails.getBBShipping==true ? 'checked' : '' %> />
                 <span class="slider"></span>
               </label>
               <label for="" class="font-weight-bold">
@@ -243,7 +243,7 @@
             </div>
             <div class="form-group col-3">
               <label class="switch">
-                <input type="checkbox" name="getBBBadge" <%=model.triadDetails.getBBBadge==true ? 'checked' : '' %> />
+                <input type="checkbox" name="getBBBadge" <%=model.biteSupplyDetails.getBBBadge==true ? 'checked' : '' %> />
                 <span class="slider"></span>
               </label>
               <label for="" class="font-weight-bold">
@@ -256,7 +256,7 @@
           </button>
         </form>
         <% } else { %>
-          <h5 id="show_text_triad">No Data</h5>
+          <h5 id="show_text_biteSupply">No Data</h5>
           <% } %>
     </div>
   </div>
