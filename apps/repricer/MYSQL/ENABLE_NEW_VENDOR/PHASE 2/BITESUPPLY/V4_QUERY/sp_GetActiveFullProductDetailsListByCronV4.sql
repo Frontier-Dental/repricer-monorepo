@@ -183,6 +183,7 @@ FROM
         AND pl.IsSlowActivated != TRUE
         AND bsd.ChannelName IS NOT NULL
         AND bsd.Activated = TRUE
+    )
   ) subQuery
 WHERE
   ChannelName IS NOT NULL

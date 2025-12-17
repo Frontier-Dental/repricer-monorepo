@@ -1,5 +1,7 @@
 USE repricerDb;
 
+DROP TABLE IF EXISTS "table_biteSupplyDetails";
+
 CREATE TABLE "table_biteSupplyDetails" (
   "Id" int NOT NULL AUTO_INCREMENT,
   "ChannelName" varchar(50) DEFAULT NULL,
@@ -57,16 +59,18 @@ CREATE TABLE "table_biteSupplyDetails" (
   "BadgePercentageDown" decimal(5, 3) DEFAULT NULL,
   "PercentageDown" decimal(5, 3) DEFAULT NULL,
   "CompeteWithNext" tinyint(1) DEFAULT NULL,
+  "TriggeredByVendor" varchar(500) DEFAULT NULL,
   "IgnorePhantomBreak" tinyint(1) DEFAULT NULL,
   "OwnVendorThreshold" int DEFAULT NULL,
-  "GetBBBadge" tinyint(1) DEFAULT NULL,
-  "GetBBShipping" tinyint(1) DEFAULT NULL,
+  "RepriceResult" varchar(128) DEFAULT NULL,
   "GetBBBadgeValue" decimal(5, 3) DEFAULT NULL,
   "GetBBShippingValue" decimal(5, 3) DEFAULT NULL,
+  "GetBBBadge" tinyint(1) DEFAULT NULL,
+  "GetBBShipping" tinyint(1) DEFAULT NULL,
   "CurrentInStock" tinyint(1) DEFAULT NULL,
   "CurrentInventory" int DEFAULT NULL,
   "OurLastPrice" decimal(10, 2) DEFAULT NULL,
-  "MarketStateUpdatedAt" timestamp DEFAULT NULL,
+  "MarketStateUpdatedAt" timestamp NULL DEFAULT NULL,
   PRIMARY KEY ("Id"),
   UNIQUE KEY "unique_idx_bite_supply_mpid" ("MpId"),
   KEY "idx_item_bite_supply_activated" ("Activated"),
