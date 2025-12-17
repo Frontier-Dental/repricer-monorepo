@@ -117,7 +117,7 @@ export const envSchema = z.object({
     .default(true),
   SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID: z
     .string()
-    .default("sp_GetFullProductDetailsByIdV3"),
+    .default("sp_GetFullProductDetailsByIdV4"),
   SQL_SP_UPDATE_TRADENT: z.string().default("sp_UpdateTradentDetailsById"),
   SQL_SP_UPDATE_FRONTIER: z.string().default("sp_UpdateFrontierDetailsById"),
   SQL_SP_UPDATE_MVP: z.string().default("sp_UpdateMvpDetailsById"),
@@ -130,12 +130,19 @@ export const envSchema = z.object({
   SQL_SP_UPDATE_FIRSTDENT: z.string().default("sp_UpdateFirstDentDetailsById"),
   SQL_SP_UPDATE_TOPDENT: z.string().default("sp_UpdateTopDentDetailsById"),
   SQL_SP_UPDATE_TRIAD: z.string().default("sp_UpdateTriadDetailsById"),
+  SQL_SP_UPDATE_BITESUPPLY: z
+    .string()
+    .default("sp_UpdateBiteSupplyDetailsById"),
   SQL_SP_UPSERT_TOPDENT: z.string().default("sp_UpsertTopDentDetails"),
   SQL_SP_UPSERT_FIRSTDENT: z.string().default("sp_UpsertFirstDentDetails"),
   SQL_SP_UPSERT_TRIAD: z.string().default("sp_UpsertTriadDetails"),
+  SQL_SP_UPSERT_BITESUPPLY: z.string().default("sp_UpsertBiteSupplyDetails"),
   SQL_SP_UPSERT_PRODUCT_DETAILSV3: z
     .string()
     .default("sp_UpsertProductDetailsV3"),
+  SQL_SP_UPSERT_PRODUCT_DETAILSV4: z
+    .string()
+    .default("sp_UpsertProductDetailsV4"),
   SQL_SP_GET_PRODUCT_LIST_BY_TAGV2: z
     .string()
     .default("sp_GetFullProductDetailsListByTagV2"),
@@ -144,7 +151,7 @@ export const envSchema = z.object({
     .default("sp_GetFullProductDetailsListByFilterV2"),
   SQL_SP_GET_ALL_PRODUCT_DETAILS: z
     .string()
-    .default("sp_GetFullProductDetailsListV3"),
+    .default("sp_GetFullProductDetailsListV4"),
   HISTORY_EXPORT_URL_BY_ID: z
     .string()
     .default(

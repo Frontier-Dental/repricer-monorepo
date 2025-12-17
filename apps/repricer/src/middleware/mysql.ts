@@ -151,6 +151,9 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
       case "TRIAD":
         contextSpName = applicationConfig.SQL_SP_UPSERT_TRIAD;
         break;
+      case "BITESUPPLY":
+        contextSpName = applicationConfig.SQL_SP_UPSERT_BITESUPPLY;
+        break;
       default:
         break;
     }
@@ -299,7 +302,7 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
 export async function UpsertProductDetailsV2(payload: any) {
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV4}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
     const slowCronId =
       payload.IsSlowActivated == true ? payload.SlowCronId : null;
     const slowCronName =
@@ -326,6 +329,7 @@ export async function UpsertProductDetailsV2(payload: any) {
       payload.LinkedTopDentDetailsInfo,
       payload.LinkedFirstDentDetailsInfo,
       payload.LinkedTriadDetailsInfo,
+      payload.LinkedBiteSupplyDetailsInfo,
     ]);
     return upsertResult[0];
   } finally {
@@ -437,6 +441,9 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
         break;
       case "TRIAD":
         contextSpName = applicationConfig.SQL_SP_UPDATE_TRIAD;
+        break;
+      case "BITESUPPLY":
+        contextSpName = applicationConfig.SQL_SP_UPDATE_BITESUPPLY;
         break;
       default:
         break;
@@ -682,6 +689,10 @@ export async function MapVendorToRoot(data: any) {
   const froId = await GetLinkedVendorDetails(parseInt(data.MPID), "FRONTIER");
   const mvpId = await GetLinkedVendorDetails(parseInt(data.MPID), "MVP");
   const triId = await GetLinkedVendorDetails(parseInt(data.MPID), "TRIAD");
+  const biteSupplyId = await GetLinkedVendorDetails(
+    parseInt(data.MPID),
+    "BITESUPPLY",
+  );
   const db = await SqlConnectionPool.getConnection();
   try {
     let queryToCall = `UPDATE ${applicationConfig.SQL_SCRAPEPRODUCTLIST} SET `;
@@ -689,6 +700,7 @@ export async function MapVendorToRoot(data: any) {
     queryToCall += `LinkedFrontiersDetailsInfo = ?, `;
     queryToCall += `LinkedMvpDetailsInfo = ?, `;
     queryToCall += `LinkedTriadDetailsInfo = ?, `;
+    queryToCall += `LinkedBiteSupplyDetailsInfo = ?, `;
     queryToCall += `RegularCronName = ?, `;
     queryToCall += `RegularCronId = ? `;
     queryToCall += `WHERE MpId = ?`;
@@ -697,6 +709,7 @@ export async function MapVendorToRoot(data: any) {
       froId,
       mvpId,
       triId,
+      biteSupplyId,
       data.CronName.trim(),
       data.CronId,
       parseInt(data.MPID),

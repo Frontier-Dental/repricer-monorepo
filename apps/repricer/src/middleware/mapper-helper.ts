@@ -20,6 +20,7 @@ export function MapV2(productDetails: any[]) {
     item.triad = p.triadDetails;
     item.mvp = p.mvpDetails;
     item.triad = p.triadDetails;
+    item.biteSupply = p.biteSupplyDetails;
     item.cronName = getCommonEntityValue(item, "cronName", false);
     item.cronId = getCommonEntityValue(item, "cronId", false);
     item.net32Url = getCommonEntityValue(item, "net32url", true);
@@ -137,6 +138,29 @@ export function MapV2(productDetails: any[]) {
         : item.triad.marketStateUpdatedAt;
       item.triad.tags = removeBackslashes(item.triad.tags);
     }
+    if (item.biteSupply) {
+      item.biteSupply.updatedAt = item.biteSupply.updatedAt
+        ? moment(item.biteSupply.updatedAt).format("DD-MM-YY HH:mm:ss")
+        : item.biteSupply.updatedAt;
+      item.biteSupply.lastCronTime = item.biteSupply.last_cron_time
+        ? moment(item.biteSupply.last_cron_time).format("DD-MM-YY HH:mm:ss")
+        : item.biteSupply.last_cron_time;
+      item.biteSupply.lastUpdateTime = item.biteSupply.last_update_time
+        ? moment(item.biteSupply.last_update_time).format("DD-MM-YY HH:mm:ss")
+        : item.biteSupply.last_update_time;
+      item.biteSupply.lastAttemptedTime = item.biteSupply.last_attempted_time
+        ? moment(item.biteSupply.last_attempted_time).format(
+            "DD-MM-YY HH:mm:ss",
+          )
+        : item.biteSupply.last_attempted_time;
+      item.biteSupply.marketStateUpdatedAt = item.biteSupply
+        .marketStateUpdatedAt
+        ? moment(item.biteSupply.marketStateUpdatedAt).format(
+            "DD-MM-YY HH:mm:ss",
+          )
+        : item.biteSupply.marketStateUpdatedAt;
+      item.biteSupply.tags = removeBackslashes(item.biteSupply.tags);
+    }
     return item;
   });
 }
@@ -176,6 +200,12 @@ export function MapBadgeIndicator(product: any) {
   if (product.triadDetails) {
     product.triadDetails.badge_indicator = parseBadgeIndicator(
       product.triadDetails.badgeIndicator,
+      "KEY",
+    );
+  }
+  if (product.biteSupplyDetails) {
+    product.biteSupplyDetails.badge_indicator = parseBadgeIndicator(
+      product.biteSupplyDetails.badgeIndicator,
       "KEY",
     );
   }
@@ -547,6 +577,14 @@ export const AlignProducts = async (
         product.triadDetails.slowCronName = dbSlowCronName;
       }
     }
+    if (product.biteSupplyDetails) {
+      product.biteSupplyDetails.cronId = currentCronId;
+      product.biteSupplyDetails.cronName = currentCronName;
+      if (dbProductDetails.isSlowActivated == true) {
+        product.biteSupplyDetails.slowCronId = dbSlowCronId;
+        product.biteSupplyDetails.slowCronName = dbSlowCronName;
+      }
+    }
   }
 };
 
@@ -812,6 +850,37 @@ export const UpsertProductDetailsInSql = async (
     }
   }
 
+  if (payload && payload.biteSupplyDetails) {
+    if (sqlProductDetails != null && sqlProductDetails.biteSupplyDetails) {
+      payload.biteSupplyDetails = mapUserDataToDbData(
+        payload.biteSupplyDetails,
+        sqlProductDetails.biteSupplyDetails,
+        AuditInfo,
+      );
+      await mySqlUtility.UpdateVendorData(
+        payload.biteSupplyDetails,
+        "BITESUPPLY",
+      );
+      console.log(`Updated Bite Supply Info for ${mpid} at ${new Date()}`);
+    } else {
+      if (!sqlProductDetails) {
+        sqlProductDetails = {};
+      }
+      payload.biteSupplyDetails.updatedBy = AuditInfo.UpdatedBy;
+      payload.biteSupplyDetails.updatedAt = moment(AuditInfo.UpdatedOn).format(
+        "YYYY-MM-DD HH:mm:ss",
+      );
+      sqlProductDetails.biteSupplyLinkInfo =
+        await mySqlUtility.UpsertVendorData(
+          payload.biteSupplyDetails,
+          "BITESUPPLY",
+        );
+      console.log(
+        `Inserted Bite Supply Info for ${mpid} with insertId : ${sqlProductDetails.biteSupplyLinkInfo}`,
+      );
+    }
+  }
+
   await mySqlUtility.UpsertProductDetailsV2(
     new MySqlProduct(payload, sqlProductDetails, mpid, AuditInfo),
   );
@@ -900,6 +969,9 @@ function getCommonEntityValue(item: any, keyType: any, checkAll: any) {
     if (item.triad && item.triad[keyType]) {
       return item.triad[keyType];
     }
+    if (item.biteSupply && item.biteSupply[keyType]) {
+      return item.biteSupply[keyType];
+    }
   } else if (checkAll == false) {
     if (item.tradent) {
       return item.tradent[keyType];
@@ -912,6 +984,9 @@ function getCommonEntityValue(item: any, keyType: any, checkAll: any) {
     }
     if (item.triad) {
       return item.triad[keyType];
+    }
+    if (item.biteSupply) {
+      return item.biteSupply[keyType];
     }
   }
   return null;
