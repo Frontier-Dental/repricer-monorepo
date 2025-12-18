@@ -1,7 +1,4 @@
-import {
-  getKnexInstance,
-  destroyKnexInstance,
-} from "../../model/sql-models/knex-wrapper";
+import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
 
 export interface TinyproxyConfigData {
   id?: number;
@@ -13,27 +10,18 @@ export interface TinyproxyConfigData {
   vendor_id: number;
 }
 
-export async function findTinyproxyConfigByVendorId(
-  vendorId: number,
-): Promise<TinyproxyConfigData | null> {
+export async function findTinyproxyConfigByVendorId(vendorId: number): Promise<TinyproxyConfigData | null> {
   const knex = getKnexInstance();
 
-  const result = await knex("tinyproxy_configs")
-    .where({ vendor_id: vendorId })
-    .first();
+  const result = await knex("tinyproxy_configs").where({ vendor_id: vendorId }).first();
   //destroyKnexInstance();
   return result || null;
 }
 
-export async function findTinyproxyConfigsByVendorIds(
-  vendorIds: number[],
-): Promise<TinyproxyConfigData[]> {
+export async function findTinyproxyConfigsByVendorIds(vendorIds: number[]): Promise<TinyproxyConfigData[]> {
   const knex = getKnexInstance();
 
-  const result = await knex("tinyproxy_configs").whereIn(
-    "vendor_id",
-    vendorIds,
-  );
+  const result = await knex("tinyproxy_configs").whereIn("vendor_id", vendorIds);
   //destroyKnexInstance();
   return result;
 }

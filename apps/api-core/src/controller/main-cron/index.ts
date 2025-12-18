@@ -20,18 +20,9 @@ mainCronController.post("/schedule/StopCron", stopCronHandler);
 mainCronController.post("/schedule/StartCron", startCronHandler);
 mainCronController.post("/schedule/RecreateCron", recreateCronHandler);
 mainCronController.get("/schedule/start422", start422Handler);
-mainCronController.post(
-  "/product/updateManualProd/:id",
-  updateProductManualHandler,
-);
+mainCronController.post("/product/updateManualProd/:id", updateProductManualHandler);
 mainCronController.get("/schedule/startOverride", startOverrideHandler);
 mainCronController.get("/schedule/startFeedCron", startFeedCronHandler);
 mainCronController.get("/schedule/startProductCron", startProductCronHandler);
-mainCronController.get(
-  "/schedule/startManagedServiceCron",
-  startManagedServiceCronHandler,
-);
-mainCronController.get(
-  "/schedule/start_specific_cron/:key",
-  startSpecificCronHandler,
-);
+mainCronController.get("/schedule/startManagedServiceCron", startManagedServiceCronHandler);
+mainCronController.get("/schedule/start_specific_cron/:key", startSpecificCronHandler);

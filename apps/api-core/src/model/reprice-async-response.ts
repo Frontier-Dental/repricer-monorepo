@@ -8,9 +8,7 @@ export class RepriceAsyncResponse {
   sourceResult: Net32Product[];
 
   constructor(_repriceModel: RepriceModel, _apiResponse: Net32Product[]) {
-    this.scrapedOn = _repriceModel.repriceDetails
-      ? _repriceModel.repriceDetails.updatedOn
-      : new Date();
+    this.scrapedOn = _repriceModel.repriceDetails ? _repriceModel.repriceDetails.updatedOn : new Date();
     this.mpId = _repriceModel.net32id;
     this.repriceData = _repriceModel;
     this.sourceResult = _apiResponse;

@@ -9,9 +9,7 @@ import { GetScrapeCronDetails } from "../../utility/mysql/mysql-v2";
 export async function runCron(req: Request, res: Response): Promise<any> {
   const requestedCron = req.params.cronName;
   const scrapeCronDetails = await GetScrapeCronDetails();
-  const contextCronDetails = scrapeCronDetails.find(
-    (x: any) => x.CronName == requestedCron,
-  );
+  const contextCronDetails = scrapeCronDetails.find((x: any) => x.CronName == requestedCron);
   await scrapeProductList(contextCronDetails);
   return res.status(_codes.StatusCodes.OK).send(`Done at ${new Date()}`);
 }
@@ -20,24 +18,16 @@ export async function runProduct(req: Request, res: Response): Promise<any> {
   const requestedCron = req.params.cronName;
   const productId = req.params.product;
   const scrapeCronDetails = await GetScrapeCronDetails();
-  const contextCronDetails = scrapeCronDetails.find(
-    (x: any) => x.CronName == requestedCron,
-  );
+  const contextCronDetails = scrapeCronDetails.find((x: any) => x.CronName == requestedCron);
   await scrapeProductListForProduct(contextCronDetails!, productId);
   return res.status(_codes.StatusCodes.OK).send(`Done at ${new Date()}`);
 }
 
-async function scrapeProductListForProduct(
-  cronSettingsResponse: ScrapeCronDetail,
-  productId: string,
-) {
-  const scrapeProductList = (await mySqlHelper.GetItemListById(
-    productId,
-  )) as any;
+async function scrapeProductListForProduct(cronSettingsResponse: ScrapeCronDetail, productId: string) {
+  const scrapeProductList = (await mySqlHelper.GetItemListById(productId)) as any;
   if (scrapeProductList) {
     scrapeProductList.MpId = scrapeProductList.mpId;
-    scrapeProductList.LinkedTradentDetailsInfo =
-      scrapeProductList.tradentLinkInfo;
+    scrapeProductList.LinkedTradentDetailsInfo = scrapeProductList.tradentLinkInfo;
     await scrapeHelper.Execute([scrapeProductList], cronSettingsResponse);
   }
 }

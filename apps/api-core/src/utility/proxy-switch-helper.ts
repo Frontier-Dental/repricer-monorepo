@@ -39,28 +39,18 @@ interface CronInfo {
   thresholdReached: boolean;
 }
 
-export const ExecuteCounter = async (
-  proxyProviderId: number,
-): Promise<void> => {
-  const existingRecord =
-    await sqlV2Service.GetProxyFailureDetailsByProxyProviderId(proxyProviderId);
+export const ExecuteCounter = async (proxyProviderId: number): Promise<void> => {
+  const existingRecord = await sqlV2Service.GetProxyFailureDetailsByProxyProviderId(proxyProviderId);
 
   // Item Does not exist. So create the Item object with Count as 1
   if (existingRecord && existingRecord.failureCount == 0) {
-    console.log(
-      `PROXY SWITCH COUNTER INIT : PROXY_PROV - ${proxyProviderId} || INIT_TIME : ${new Date()}`,
-    );
+    console.log(`PROXY SWITCH COUNTER INIT : PROXY_PROV - ${proxyProviderId} || INIT_TIME : ${new Date()}`);
     await sqlV2Service.InitProxyFailureDetails(proxyProviderId, 1);
   }
   // Cache exist, so update the counter
   else {
-    console.log(
-      `PROXY SWITCH COUNTER UPDATE : PROXY_PROV - ${proxyProviderId} || INIT_TIME : ${existingRecord?.initTime} || FAILURE_COUNT : ${existingRecord?.failureCount}`,
-    );
-    await sqlV2Service.UpdateProxyFailureDetails(
-      proxyProviderId,
-      existingRecord?.failureCount + 1,
-    );
+    console.log(`PROXY SWITCH COUNTER UPDATE : PROXY_PROV - ${proxyProviderId} || INIT_TIME : ${existingRecord?.initTime} || FAILURE_COUNT : ${existingRecord?.failureCount}`);
+    await sqlV2Service.UpdateProxyFailureDetails(proxyProviderId, existingRecord?.failureCount + 1);
   }
 };
 
@@ -80,20 +70,12 @@ export const SwitchProxy = async (): Promise<void> => {
       let payloadForEmail: CronInfo[] = [];
 
       if (record.failureCount > failureCountThreshold) {
-        console.log(
-          `Maximum Threshold for Failures Reached for ProxyProvider ${record.providerName} with count :${record.failureCount}`,
-        );
+        console.log(`Maximum Threshold for Failures Reached for ProxyProvider ${record.providerName} with count :${record.failureCount}`);
 
         // Changing Proxy Provider To All Linked Cron to Next Available Proxy Provider.
-        const linkedCronWithExistingProxyProvider =
-          await sqlV2Service.GetLinkedCronSettingsByProviderId(
-            record.proxyProvider,
-          );
+        const linkedCronWithExistingProxyProvider = await sqlV2Service.GetLinkedCronSettingsByProviderId(record.proxyProvider);
 
-        if (
-          linkedCronWithExistingProxyProvider &&
-          linkedCronWithExistingProxyProvider.length > 0
-        ) {
+        if (linkedCronWithExistingProxyProvider && linkedCronWithExistingProxyProvider.length > 0) {
           for (const linkedCron of linkedCronWithExistingProxyProvider) {
             const result = await executeProxySwitch(linkedCron as any);
             if (result) {
@@ -104,30 +86,15 @@ export const SwitchProxy = async (): Promise<void> => {
 
         // Send Email Notification
         if (payloadForEmail && payloadForEmail.length > 0) {
-          const payloadForProxyChange = _.filter(
-            payloadForEmail,
-            (p) => !p.thresholdReached,
-          );
-          const payloadForThresholdReached = _.filter(
-            payloadForEmail,
-            (p) => p.thresholdReached,
-          );
+          const payloadForProxyChange = _.filter(payloadForEmail, (p) => !p.thresholdReached);
+          const payloadForThresholdReached = _.filter(payloadForEmail, (p) => p.thresholdReached);
 
           if (payloadForProxyChange && payloadForProxyChange.length > 0) {
-            await axiosHelper.postAsync(
-              payloadForProxyChange,
-              applicationConfig.PROXY_SWITCH_EMAIL_NOTIFIER!,
-            );
+            await axiosHelper.postAsync(payloadForProxyChange, applicationConfig.PROXY_SWITCH_EMAIL_NOTIFIER!);
           }
 
-          if (
-            payloadForThresholdReached &&
-            payloadForThresholdReached.length > 0
-          ) {
-            await axiosHelper.postAsync(
-              payloadForThresholdReached,
-              applicationConfig.PROXY_SWITCH_EMAIL_THRESHOLD_NOTIFIER!,
-            );
+          if (payloadForThresholdReached && payloadForThresholdReached.length > 0) {
+            await axiosHelper.postAsync(payloadForThresholdReached, applicationConfig.PROXY_SWITCH_EMAIL_THRESHOLD_NOTIFIER!);
           }
 
           console.log(`Email sent for Proxy Switch at ${new Date()}`);
@@ -137,73 +104,42 @@ export const SwitchProxy = async (): Promise<void> => {
   }
 };
 
-export const ResetProxyCounterForProvider = async (
-  providerId: number,
-  userId: string,
-): Promise<void> => {
-  const proxyFailureDetails =
-    await sqlV2Service.GetProxyFailureDetailsByProxyProviderId(providerId);
+export const ResetProxyCounterForProvider = async (providerId: number, userId: string): Promise<void> => {
+  const proxyFailureDetails = await sqlV2Service.GetProxyFailureDetailsByProxyProviderId(providerId);
   await ResetCounterForProvider(proxyFailureDetails as any, userId, true);
 };
 
-export const DebugProxySwitch = async (
-  cronDetails: CronSettings,
-): Promise<CronInfo | null> => {
+export const DebugProxySwitch = async (cronDetails: CronSettings): Promise<CronInfo | null> => {
   return executeProxySwitch(cronDetails);
 };
 
-async function updateProxyForCron(
-  listOfCrons: CronSettings[],
-  existingProxyProviderId: number,
-  newProxyProvider: number,
-  sequence: number = -1,
-): Promise<CronInfo | null> {
+async function updateProxyForCron(listOfCrons: CronSettings[], existingProxyProviderId: number, newProxyProvider: number, sequence: number = -1): Promise<CronInfo | null> {
   let payloadForEmail: CronInfo | null = null;
-  const existingProxyDetails = _.first(
-    await sqlV2Service.GetProxyConfigByProviderId(existingProxyProviderId),
-  ) as ProxyConfig | undefined;
+  const existingProxyDetails = _.first(await sqlV2Service.GetProxyConfigByProviderId(existingProxyProviderId)) as ProxyConfig | undefined;
 
   for (let cronSettings of listOfCrons) {
-    console.log(
-      `PROXY PROVIDER CHANGE : ${cronSettings.CronName} || Existing Proxy Provider : ${cronSettings.ProxyProvider} || New Proxy Provider : ${newProxyProvider}`,
-    );
+    console.log(`PROXY PROVIDER CHANGE : ${cronSettings.CronName} || Existing Proxy Provider : ${cronSettings.ProxyProvider} || New Proxy Provider : ${newProxyProvider}`);
 
     // Threshold Reached. So Do nothing and Send Email About Threshold
     if (newProxyProvider == 99) {
       const cronInfo: CronInfo = {
         cronName: cronSettings.CronName,
-        existingProxyProvider: existingProxyDetails
-          ? existingProxyDetails.proxyProviderName || ""
-          : "",
+        existingProxyProvider: existingProxyDetails ? existingProxyDetails.proxyProviderName || "" : "",
         newProxyProvider: null,
         cronId: cronSettings.CronId,
         thresholdReached: true,
       };
       payloadForEmail = cronInfo;
-      await sqlV2Service.UpdateProxyDetailsByCronId(
-        cronSettings.CronId,
-        cronSettings.ProxyProvider,
-        -1,
-      );
+      await sqlV2Service.UpdateProxyDetailsByCronId(cronSettings.CronId, cronSettings.ProxyProvider, -1);
     } else {
-      const newProxyDetails = _.first(
-        await sqlV2Service.GetProxyConfigByProviderId(newProxyProvider),
-      ) as ProxyConfig | undefined;
+      const newProxyDetails = _.first(await sqlV2Service.GetProxyConfigByProviderId(newProxyProvider)) as ProxyConfig | undefined;
 
-      await sqlV2Service.UpdateProxyDetailsByCronId(
-        cronSettings.CronId as unknown as string,
-        newProxyProvider,
-        sequence,
-      );
+      await sqlV2Service.UpdateProxyDetailsByCronId(cronSettings.CronId as unknown as string, newProxyProvider, sequence);
 
       const cronInfo: CronInfo = {
         cronName: cronSettings.CronName,
-        existingProxyProvider: existingProxyDetails
-          ? existingProxyDetails.proxyProviderName || ""
-          : "",
-        newProxyProvider: newProxyDetails
-          ? newProxyDetails.proxyProviderName || ""
-          : "",
+        existingProxyProvider: existingProxyDetails ? existingProxyDetails.proxyProviderName || "" : "",
+        newProxyProvider: newProxyDetails ? newProxyDetails.proxyProviderName || "" : "",
         cronId: cronSettings.CronId,
         thresholdReached: false,
       };
@@ -216,88 +152,39 @@ async function updateProxyForCron(
   return payloadForEmail;
 }
 
-async function ResetCounterForProvider(
-  providerIdDetails: ProxyFailureDetails,
-  userId: string,
-  isForceReset: boolean,
-): Promise<void> {
+async function ResetCounterForProvider(providerIdDetails: ProxyFailureDetails, userId: string, isForceReset: boolean): Promise<void> {
   const proxySwitchTimer = applicationConfig.PROXYSWITCH_TIMER;
 
   if (isForceReset == true) {
-    console.log(
-      `PROXY SWITCH COUNTER RESET : Resetting Counter for ${providerIdDetails.providerName} with failure Count : ${providerIdDetails.failureCount} and Init Time : ${providerIdDetails.initTime} || Force Reset : TRUE`,
-    );
-    await sqlV2Service.ResetProxyFailureDetails(
-      providerIdDetails.proxyProvider,
-      userId,
-    );
-  } else if (
-    providerIdDetails.failureCount > 0 &&
-    new Date().getTime() - providerIdDetails.initTime.getTime() >
-      proxySwitchTimer
-  ) {
-    console.log(
-      `PROXY SWITCH COUNTER RESET : Resetting Counter for ${providerIdDetails.providerName} with failure Count : ${providerIdDetails.failureCount} and Init Time : ${providerIdDetails.initTime}`,
-    );
-    await sqlV2Service.ResetProxyFailureDetails(
-      providerIdDetails.proxyProvider,
-      userId,
-    );
+    console.log(`PROXY SWITCH COUNTER RESET : Resetting Counter for ${providerIdDetails.providerName} with failure Count : ${providerIdDetails.failureCount} and Init Time : ${providerIdDetails.initTime} || Force Reset : TRUE`);
+    await sqlV2Service.ResetProxyFailureDetails(providerIdDetails.proxyProvider, userId);
+  } else if (providerIdDetails.failureCount > 0 && new Date().getTime() - providerIdDetails.initTime.getTime() > proxySwitchTimer) {
+    console.log(`PROXY SWITCH COUNTER RESET : Resetting Counter for ${providerIdDetails.providerName} with failure Count : ${providerIdDetails.failureCount} and Init Time : ${providerIdDetails.initTime}`);
+    await sqlV2Service.ResetProxyFailureDetails(providerIdDetails.proxyProvider, userId);
   }
 }
 
-async function executeProxySwitch(
-  cronDetails: CronSettings,
-): Promise<CronInfo | null> {
+async function executeProxySwitch(cronDetails: CronSettings): Promise<CronInfo | null> {
   let payloadForEmail: CronInfo | null = null;
 
-  if (
-    cronDetails.AlternateProxyProvider &&
-    cronDetails.AlternateProxyProvider.length > 0
-  ) {
+  if (cronDetails.AlternateProxyProvider && cronDetails.AlternateProxyProvider.length > 0) {
     const existingProxyProvider = cronDetails.ProxyProvider;
-    const existingAlternateProxyDetails =
-      cronDetails.AlternateProxyProvider.find(
-        (x) => x.ProxyProvider == existingProxyProvider,
-      );
+    const existingAlternateProxyDetails = cronDetails.AlternateProxyProvider.find((x) => x.ProxyProvider == existingProxyProvider);
 
     if (existingAlternateProxyDetails) {
       let existingSequence = existingAlternateProxyDetails.Sequence;
-      const availableMatchingAlternateProviders = _.filter(
-        cronDetails.AlternateProxyProvider,
-        (proxy) =>
-          proxy.ProxyProvider === existingProxyProvider &&
-          proxy.Sequence != cronDetails.SwitchSequence,
-      );
-      if (
-        availableMatchingAlternateProviders &&
-        availableMatchingAlternateProviders.length > 1
-      ) {
-        const sortedMatchingProviders = _.sortBy(
-          availableMatchingAlternateProviders,
-          (proxy) => proxy.Sequence,
-        );
+      const availableMatchingAlternateProviders = _.filter(cronDetails.AlternateProxyProvider, (proxy) => proxy.ProxyProvider === existingProxyProvider && proxy.Sequence != cronDetails.SwitchSequence);
+      if (availableMatchingAlternateProviders && availableMatchingAlternateProviders.length > 1) {
+        const sortedMatchingProviders = _.sortBy(availableMatchingAlternateProviders, (proxy) => proxy.Sequence);
         existingSequence = sortedMatchingProviders[0].Sequence;
       }
 
-      const availableAlternateSolution = _.filter(
-        cronDetails.AlternateProxyProvider,
-        (proxy) => proxy.Sequence > existingSequence,
-      );
+      const availableAlternateSolution = _.filter(cronDetails.AlternateProxyProvider, (proxy) => proxy.Sequence > existingSequence);
 
       if (availableAlternateSolution && availableAlternateSolution.length > 0) {
-        payloadForEmail = await updateProxyForCron(
-          [cronDetails],
-          existingProxyProvider,
-          _.first(availableAlternateSolution)!.ProxyProvider,
-          _.first(availableAlternateSolution)!.Sequence,
-        );
+        payloadForEmail = await updateProxyForCron([cronDetails], existingProxyProvider, _.first(availableAlternateSolution)!.ProxyProvider, _.first(availableAlternateSolution)!.Sequence);
       } else {
-        payloadForEmail = await updateProxyForCron(
-          [cronDetails],
-          existingProxyProvider,
-          99,
-        ); // Threshold Reached. So Do nothing and Send Email About Threshold
+        payloadForEmail = await updateProxyForCron([cronDetails], existingProxyProvider, 99); // Threshold Reached. So Do nothing and Send Email About Threshold
       }
     }
   }

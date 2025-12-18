@@ -7,8 +7,7 @@ import { VendorName } from "@repricer-monorepo/shared";
 export function FormatActiveField(data: Net32Product[]) {
   // Return a new array with all priceBreaks' active property set to true, without mutating input
   return data.map((x) => {
-    let newPriceBreaks =
-      x.priceBreaks?.map((p) => ({ ...p, active: true })) || [];
+    let newPriceBreaks = x.priceBreaks?.map((p) => ({ ...p, active: true })) || [];
     return { ...x, priceBreaks: newPriceBreaks };
   });
 }
@@ -20,20 +19,9 @@ export function FormatShippingThreshold(data: Net32Product[]): Net32Product[] {
     if (x.priceBreaks && x.priceBreaks.length > 0) {
       const minQtyPrice = x.priceBreaks.find((p) => p.minQty === 1);
       if (minQtyPrice) {
-        if (
-          x.standardShippingStatus &&
-          x.standardShippingStatus === "STANDARD_SHIPPING" &&
-          x.freeShippingGap &&
-          x.freeShippingGap > 0
-        ) {
-          freeShippingThreshold =
-            parseFloat(minQtyPrice.unitPrice as unknown as string) +
-            parseFloat(x.freeShippingGap as unknown as string);
-        } else if (
-          x.standardShippingStatus &&
-          x.standardShippingStatus === "STANDARD_SHIPPING" &&
-          x.freeShippingGap === 0
-        ) {
+        if (x.standardShippingStatus && x.standardShippingStatus === "STANDARD_SHIPPING" && x.freeShippingGap && x.freeShippingGap > 0) {
+          freeShippingThreshold = parseFloat(minQtyPrice.unitPrice as unknown as string) + parseFloat(x.freeShippingGap as unknown as string);
+        } else if (x.standardShippingStatus && x.standardShippingStatus === "STANDARD_SHIPPING" && x.freeShippingGap === 0) {
           freeShippingThreshold = 999999;
         } else {
           freeShippingThreshold = 0;
@@ -44,10 +32,7 @@ export function FormatShippingThreshold(data: Net32Product[]): Net32Product[] {
   });
 }
 
-export function SetGlobalDetails(
-  productItem: FrontierProduct,
-  contextVendor: string,
-) {
+export function SetGlobalDetails(productItem: FrontierProduct, contextVendor: string) {
   // Create a shallow copy to avoid mutating the original
   const updatedProductItem = { ...productItem };
   switch (contextVendor.toUpperCase()) {
@@ -147,10 +132,7 @@ export function FormatSingleScrapeResponse(singleResponse: any) {
   res.arrivalBusinessDays = parseInt(singleResponse.arrivalBusinessDays);
   res.inStock = singleResponse.inStock == "true" ? true : false;
   let pbItems = [];
-  if (
-    singleResponse.priceBreaks &&
-    singleResponse.priceBreaks["priceBreaks"].length > 0
-  ) {
+  if (singleResponse.priceBreaks && singleResponse.priceBreaks["priceBreaks"].length > 0) {
     for (let pb of singleResponse.priceBreaks["priceBreaks"]) {
       const customPb = {
         pmId: pb.pmId,
@@ -160,16 +142,11 @@ export function FormatSingleScrapeResponse(singleResponse: any) {
       };
       pbItems.push(customPb);
     }
-  } else if (
-    singleResponse.priceBreaks &&
-    singleResponse.priceBreaks["priceBreaks"]
-  ) {
+  } else if (singleResponse.priceBreaks && singleResponse.priceBreaks["priceBreaks"]) {
     const customPb = {
       pmId: singleResponse.priceBreaks["priceBreaks"].pmId,
       minQty: parseInt(singleResponse.priceBreaks["priceBreaks"].minQty),
-      unitPrice: parseFloat(
-        singleResponse.priceBreaks["priceBreaks"].unitPrice,
-      ),
+      unitPrice: parseFloat(singleResponse.priceBreaks["priceBreaks"].unitPrice),
       promoAddlDescr: singleResponse.priceBreaks["priceBreaks"].promoAddlDescr,
     };
     pbItems.push(customPb);
@@ -178,20 +155,14 @@ export function FormatSingleScrapeResponse(singleResponse: any) {
   return [res];
 }
 
-export async function SetOwnVendorThreshold(
-  productItem: FrontierProduct,
-  net32Result: Net32Product[],
-) {
+export async function SetOwnVendorThreshold(productItem: FrontierProduct, net32Result: Net32Product[]) {
   const $ = await globalParam.GetInfo(productItem.mpid, productItem);
   return net32Result.map((x) => {
     if (x.vendorId !== $.VENDOR_ID) {
       return { ...x };
     }
 
-    if (
-      parseInt(x.inventory as unknown as string) >=
-      productItem.ownVendorThreshold
-    ) {
+    if (parseInt(x.inventory as unknown as string) >= productItem.ownVendorThreshold) {
       return { ...x, inStock: true };
     } else {
       return { ...x, inStock: false };

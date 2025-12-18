@@ -3,22 +3,10 @@ import _ from "lodash";
 import moment from "moment";
 import { RepriceResultEnum } from "../../model/enumerations";
 import { HistoryModel } from "../../model/sql-models/history";
-import {
-  getKnexInstance,
-  destroyKnexInstance,
-} from "../../model/sql-models/knex-wrapper";
+import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
 import { applicationConfig } from "../config";
 import { GetTriggeredByValue, MapProductDetailsList } from "./mySql-mapper";
-import {
-  CurrentStock,
-  PriceBreakInfo,
-  ProductInfo,
-  ProxyNet32,
-  RunInfo,
-  StatusInfo,
-  UpdateCronForProductPayload,
-  UpdateProductPayload,
-} from "./types";
+import { CurrentStock, PriceBreakInfo, ProductInfo, ProxyNet32, RunInfo, StatusInfo, UpdateCronForProductPayload, UpdateProductPayload } from "./types";
 import { WaitlistModel } from "../../model/waitlist-model";
 
 export async function InsertRunInfo(runInfo: RunInfo) {
@@ -36,9 +24,7 @@ export async function InsertRunInfo(runInfo: RunInfo) {
       ScrapedSuccessCount: runInfo.ScrapedSuccessCount,
       ScrapedFailureCount: runInfo.ScrapedFailureCount,
     };
-    const insertResult = await knex(applicationConfig.SQL_RUNINFO!).insert(
-      insertObj,
-    );
+    const insertResult = await knex(applicationConfig.SQL_RUNINFO!).insert(insertObj);
     return insertResult;
   } catch (error) {
     console.log("Error in InsertRunInfo", runInfo, error);
@@ -62,9 +48,7 @@ export async function UpdateRunInfo(query: string) {
   }
 }
 
-export async function InsertProductInfo(
-  productInfo: ProductInfo,
-): Promise<any> {
+export async function InsertProductInfo(productInfo: ProductInfo): Promise<any> {
   try {
     const knex = getKnexInstance();
     const insertObj = {
@@ -95,9 +79,7 @@ export async function InsertProductInfo(
       StartTime: productInfo.StartTime,
       EndTime: productInfo.EndTime,
     };
-    const insertResult = await knex(applicationConfig.SQL_PRODUCTINFO!).insert(
-      insertObj,
-    );
+    const insertResult = await knex(applicationConfig.SQL_PRODUCTINFO!).insert(insertObj);
     return insertResult;
   } catch (error) {
     console.log("Error in InsertProductInfo", productInfo, error);
@@ -118,9 +100,7 @@ export async function InsertPriceBreakInfo(priceBreakInfo: PriceBreakInfo) {
       PromoAddlDescr: priceBreakInfo.PromoAddlDescr,
       IsActive: priceBreakInfo.IsActive,
     };
-    const insertResult = await knex(
-      applicationConfig.SQL_PRICEBREAKINFO!,
-    ).insert(insertObj);
+    const insertResult = await knex(applicationConfig.SQL_PRICEBREAKINFO!).insert(insertObj);
     return insertResult;
   } catch (error) {
     console.log("Error in InsertPriceBreakInfo", priceBreakInfo, error);
@@ -138,9 +118,7 @@ export async function InsertRunCompletionStatus(statusInfo: StatusInfo) {
       RunType: statusInfo.RunType,
       IsCompleted: statusInfo.IsCompleted,
     };
-    const insertResult = await knex(
-      applicationConfig.SQL_RUNCOMPLETIONSTATUS!,
-    ).insert(insertObj);
+    const insertResult = await knex(applicationConfig.SQL_RUNCOMPLETIONSTATUS!).insert(insertObj);
     return insertResult;
   } catch (error) {
     console.log("Error in InsertRunCompletionStatus", statusInfo, error);
@@ -153,9 +131,7 @@ export async function InsertRunCompletionStatus(statusInfo: StatusInfo) {
 export async function UpdateRunCompletionStatus(statusInfo: StatusInfo) {
   try {
     const knex = getKnexInstance();
-    const updateResult = await knex(applicationConfig.SQL_RUNCOMPLETIONSTATUS!)
-      .update({ IsCompleted: statusInfo.IsCompleted })
-      .where("KeyGenId", statusInfo.KeyGenId);
+    const updateResult = await knex(applicationConfig.SQL_RUNCOMPLETIONSTATUS!).update({ IsCompleted: statusInfo.IsCompleted }).where("KeyGenId", statusInfo.KeyGenId);
     return updateResult;
   } catch (error) {
     console.log("Error in UpdateRunCompletionStatus", statusInfo, error);
@@ -183,9 +159,7 @@ export async function GetEligibleScrapeProductList(cronId: string) {
 export async function UpdateLastScrapeInfo(mpid: string, time: string) {
   try {
     const knex = getKnexInstance();
-    const updateResult = await knex(applicationConfig.SQL_SCRAPE_PRODUCT_LIST!)
-      .update({ LastScrapedDate: time })
-      .where("MpId", mpid);
+    const updateResult = await knex(applicationConfig.SQL_SCRAPE_PRODUCT_LIST!).update({ LastScrapedDate: time }).where("MpId", mpid);
     return updateResult;
   } catch (error) {
     console.log("Error in UpdateLastScrapeInfo", mpid, time, error);
@@ -195,10 +169,7 @@ export async function UpdateLastScrapeInfo(mpid: string, time: string) {
   }
 }
 
-export async function GetScrapeProductDetailsByIdAndCron(
-  cronId: string,
-  productId: string,
-) {
+export async function GetScrapeProductDetailsByIdAndCron(cronId: string, productId: string) {
   // Stored procedure, must use raw
   try {
     const knex = getKnexInstance();
@@ -206,22 +177,14 @@ export async function GetScrapeProductDetailsByIdAndCron(
     const productList = await knex.raw(queryToCall, [cronId, productId]);
     return (productList as any)?.[0]?.[0];
   } catch (error) {
-    console.log(
-      "Error in GetScrapeProductDetailsByIdAndCron",
-      cronId,
-      productId,
-      error,
-    );
+    console.log("Error in GetScrapeProductDetailsByIdAndCron", cronId, productId, error);
     throw error;
   } finally {
     //destroyKnexInstance();
   }
 }
 
-export async function GetActiveProductListByCronId(
-  cronId: string,
-  isSlowCron = false,
-) {
+export async function GetActiveProductListByCronId(cronId: string, isSlowCron = false) {
   // Stored procedure, must use raw
   try {
     const knex = getKnexInstance();
@@ -233,12 +196,7 @@ export async function GetActiveProductListByCronId(
     const productList = (rows as any)[0];
     return MapProductDetailsList(productList);
   } catch (error) {
-    console.log(
-      "Error in GetActiveProductListByCronId",
-      cronId,
-      isSlowCron,
-      error,
-    );
+    console.log("Error in GetActiveProductListByCronId", cronId, isSlowCron, error);
     throw error;
   } finally {
     //destroyKnexInstance();
@@ -250,69 +208,30 @@ export async function GetItemListById(mpId: string | number) {
     const knex = getKnexInstance();
 
     // Common select fields for all queries - use explicit column names
-    const selectFields = [
-      "pl.Id as ProductIdentifier",
-      "pl.MpId as ProductId",
-      "pl.ProductName",
-      "pl.Net32Url",
-      "pl.IsActive as ScrapeOnlyActive",
-      "pl.LinkedCronName as LinkedScrapeOnlyCron",
-      "pl.LinkedCronId as LinkedScrapeOnlyCronId",
-      "pl.RegularCronName",
-      "pl.RegularCronId",
-      "pl.SlowCronName",
-      "pl.SlowCronId",
-      "pl.IsSlowActivated",
-      "pl.IsBadgeItem",
-      "pl.algo_execution_mode",
-    ];
+    const selectFields = ["pl.Id as ProductIdentifier", "pl.MpId as ProductId", "pl.ProductName", "pl.Net32Url", "pl.IsActive as ScrapeOnlyActive", "pl.LinkedCronName as LinkedScrapeOnlyCron", "pl.LinkedCronId as LinkedScrapeOnlyCronId", "pl.RegularCronName", "pl.RegularCronId", "pl.SlowCronName", "pl.SlowCronId", "pl.IsSlowActivated", "pl.IsBadgeItem", "pl.algo_execution_mode"];
 
     // Helper function to build each subquery
     const buildSubquery = (tableAlias: string, linkedField: string) => {
       return knex("table_scrapeProductList as pl")
         .select([...selectFields, `${tableAlias}.*`])
-        .leftJoin(
-          `table_${tableAlias}Details as ${tableAlias}`,
-          `${tableAlias}.id`,
-          `pl.${linkedField}`,
-        )
+        .leftJoin(`table_${tableAlias}Details as ${tableAlias}`, `${tableAlias}.id`, `pl.${linkedField}`)
         .where("pl.MpId", mpId)
         .whereExists(function () {
-          this.select(1)
-            .from(`table_${tableAlias}Details`)
-            .whereNotNull("ChannelName")
-            .andWhere("MpId", mpId);
+          this.select(1).from(`table_${tableAlias}Details`).whereNotNull("ChannelName").andWhere("MpId", mpId);
         });
     };
 
     // Build all subqueries
     const tradentQuery = buildSubquery("tradent", "LinkedTradentDetailsInfo");
-    const frontierQuery = buildSubquery(
-      "frontier",
-      "LinkedFrontiersDetailsInfo",
-    );
+    const frontierQuery = buildSubquery("frontier", "LinkedFrontiersDetailsInfo");
     const mvpQuery = buildSubquery("mvp", "LinkedMvpDetailsInfo");
-    const firstDentQuery = buildSubquery(
-      "firstDent",
-      "LinkedFirstDentDetailsInfo",
-    );
+    const firstDentQuery = buildSubquery("firstDent", "LinkedFirstDentDetailsInfo");
     const topDentQuery = buildSubquery("topDent", "LinkedTopDentDetailsInfo");
     const triadQuery = buildSubquery("triad", "LinkedTriadDetailsInfo");
-    const biteSupplyQuery = buildSubquery(
-      "biteSupply",
-      "LinkedBiteSupplyDetailsInfo",
-    );
+    const biteSupplyQuery = buildSubquery("biteSupply", "LinkedBiteSupplyDetailsInfo");
 
     // Combine all queries using UNION
-    const result = await knex.union([
-      tradentQuery,
-      frontierQuery,
-      mvpQuery,
-      firstDentQuery,
-      topDentQuery,
-      triadQuery,
-      biteSupplyQuery,
-    ]);
+    const result = await knex.union([tradentQuery, frontierQuery, mvpQuery, firstDentQuery, topDentQuery, triadQuery, biteSupplyQuery]);
     // .whereNotNull("ChannelName");
 
     return _.first(MapProductDetailsList(result));
@@ -332,7 +251,7 @@ export async function UpdateProductAsync(
     inStock?: boolean;
     inventory?: number;
     ourPrice?: number | null;
-  },
+  }
 ) {
   try {
     const knex = getKnexInstance();
@@ -378,14 +297,7 @@ export async function UpdateProductAsync(
       .where("MpId", parseInt(payload.mpid as string));
     return result;
   } catch (error) {
-    console.log(
-      "Error in UpdateProductAsync",
-      payload,
-      isPriceUpdated,
-      contextVendor,
-      marketData,
-      error,
-    );
+    console.log("Error in UpdateProductAsync", payload, isPriceUpdated, contextVendor, marketData, error);
     throw error;
   } finally {
     //destroyKnexInstance();
@@ -400,7 +312,7 @@ export async function UpdateMarketStateOnly(
     inStock?: boolean;
     inventory?: number;
     ourPrice?: number;
-  },
+  }
 ) {
   try {
     const knex = getKnexInstance();
@@ -428,29 +340,19 @@ export async function UpdateMarketStateOnly(
     if (Object.keys(updateObj).length > 0) {
       updateObj.MarketStateUpdatedAt = new Date();
 
-      const result = await knex(contextTableName)
-        .update(updateObj)
-        .where("MpId", parseInt(mpid.toString()));
+      const result = await knex(contextTableName).update(updateObj).where("MpId", parseInt(mpid.toString()));
 
       return result;
     }
 
     return 0; // No updates performed
   } catch (error) {
-    console.log(
-      "Error in UpdateMarketStateOnly",
-      mpid,
-      vendorName,
-      marketData,
-      error,
-    );
+    console.log("Error in UpdateMarketStateOnly", mpid, vendorName, marketData, error);
     throw error;
   }
 }
 
-export async function UpdateCronForProductAsync(
-  payload: UpdateCronForProductPayload,
-) {
+export async function UpdateCronForProductAsync(payload: UpdateCronForProductPayload) {
   try {
     const knex = getKnexInstance();
     const slowCronId = await getContextItemByKey(payload, "slowCronId");
@@ -488,27 +390,17 @@ export async function GetFilterEligibleProductsList(filterDate: Date | string) {
   }
 }
 
-export async function InsertHistoricalApiResponse(
-  jsonData: any,
-  refTime: Date,
-) {
+export async function InsertHistoricalApiResponse(jsonData: any, refTime: Date) {
   try {
     const knex = getKnexInstance();
     const insertObj = {
       RefTime: refTime,
       ApiResponse: JSON.stringify(jsonData),
     };
-    const insertResult = await knex(
-      applicationConfig.SQL_HISTORY_API_RESPONSE!,
-    ).insert(insertObj);
+    const insertResult = await knex(applicationConfig.SQL_HISTORY_API_RESPONSE!).insert(insertObj);
     return insertResult[0];
   } catch (error) {
-    console.log(
-      "Error in InsertHistoricalApiResponse",
-      jsonData,
-      refTime,
-      error,
-    );
+    console.log("Error in InsertHistoricalApiResponse", jsonData, refTime, error);
     throw error;
   } finally {
     //destroyKnexInstance();
@@ -537,9 +429,7 @@ export async function InsertHistory(history: HistoryModel, refTime: Date) {
       TriggeredByVendor: history.TriggeredByVendor,
       RepriceResult: history.RepriceResult,
     };
-    const insertResult = await knex(applicationConfig.SQL_HISTORY!).insert(
-      insertObj,
-    );
+    const insertResult = await knex(applicationConfig.SQL_HISTORY!).insert(insertObj);
     return insertResult[0];
   } catch (error) {
     console.log("Error in InsertHistory", history, refTime, error);
@@ -549,11 +439,7 @@ export async function InsertHistory(history: HistoryModel, refTime: Date) {
   }
 }
 
-export async function UpdateTriggeredByVendor(
-  payload: any,
-  contextVendor: string,
-  mpid: string | number,
-): Promise<any> {
+export async function UpdateTriggeredByVendor(payload: any, contextVendor: string, mpid: string | number): Promise<any> {
   let updatedResult = null;
   let triggeredByValue = null;
   const db = getKnexInstance();
@@ -583,37 +469,22 @@ export async function UpdateTriggeredByVendor(
     }
     triggeredByValue = GetTriggeredByValue(payload);
     let updateQuery = `UPDATE ${contextTableName} SET TriggeredByVendor=? WHERE MpId =?`;
-    updatedResult = await db.raw(updateQuery, [
-      triggeredByValue,
-      parseInt(mpid as string),
-    ]);
+    updatedResult = await db.raw(updateQuery, [triggeredByValue, parseInt(mpid as string)]);
   } catch (exception) {
-    console.log(
-      `Exception while UpdateTriggeredByVendor : ${exception} for Vendor ${contextVendor} || MPID : ${payload.mpid}`,
-    );
+    console.log(`Exception while UpdateTriggeredByVendor : ${exception} for Vendor ${contextVendor} || MPID : ${payload.mpid}`);
   } finally {
     //destroyKnexInstance();
   }
   return triggeredByValue;
 }
 
-export async function UpdateHistoryWithMessage(
-  identifier: string | number,
-  history: string,
-) {
+export async function UpdateHistoryWithMessage(identifier: string | number, history: string) {
   try {
     const knex = getKnexInstance();
-    const updateResult = await knex(applicationConfig.SQL_HISTORY!)
-      .update({ RepriceComment: history })
-      .where("Id", identifier);
+    const updateResult = await knex(applicationConfig.SQL_HISTORY!).update({ RepriceComment: history }).where("Id", identifier);
     return updateResult;
   } catch (error) {
-    console.log(
-      "Error in UpdateHistoryWithMessage",
-      identifier,
-      history,
-      error,
-    );
+    console.log("Error in UpdateHistoryWithMessage", identifier, history, error);
     throw error;
   } finally {
     //destroyKnexInstance();
@@ -625,33 +496,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
     const knex = getKnexInstance();
 
     // Build the base query for each vendor using UNION
-    const tradentQuery = knex
-      .select(
-        "pl.Id as ProductIdentifier",
-        "pl.MpId as ProductId",
-        "pl.ProductName",
-        "pl.Net32Url",
-        "pl.IsActive as ScrapeOnlyActive",
-        "pl.LinkedCronName as LinkedScrapeOnlyCron",
-        "pl.LinkedCronId as LinkedScrapeOnlyCronId",
-        "pl.RegularCronName",
-        "pl.RegularCronId",
-        "pl.SlowCronName",
-        "pl.SlowCronId",
-        "pl.IsSlowActivated",
-        "pl.algo_execution_mode",
-        knex.raw("tdl.*"),
-      )
-      .from("table_scrapeProductList as pl")
-      .leftJoin(
-        "table_tradentDetails as tdl",
-        "tdl.id",
-        "pl.LinkedTradentDetailsInfo",
-      )
-      .where("pl.RegularCronId", cronId)
-      .where("pl.IsSlowActivated", "!=", true)
-      .whereNotNull("tdl.ChannelName")
-      .where("tdl.Activated", true);
+    const tradentQuery = knex.select("pl.Id as ProductIdentifier", "pl.MpId as ProductId", "pl.ProductName", "pl.Net32Url", "pl.IsActive as ScrapeOnlyActive", "pl.LinkedCronName as LinkedScrapeOnlyCron", "pl.LinkedCronId as LinkedScrapeOnlyCronId", "pl.RegularCronName", "pl.RegularCronId", "pl.SlowCronName", "pl.SlowCronId", "pl.IsSlowActivated", "pl.algo_execution_mode", knex.raw("tdl.*")).from("table_scrapeProductList as pl").leftJoin("table_tradentDetails as tdl", "tdl.id", "pl.LinkedTradentDetailsInfo").where("pl.RegularCronId", cronId).where("pl.IsSlowActivated", "!=", true).whereNotNull("tdl.ChannelName").where("tdl.Activated", true);
 
     const frontierQuery = knex
       .select(
@@ -669,154 +514,24 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
         "pl.IsSlowActivated",
         "pl.algo_execution_mode",
 
-        knex.raw("fdl.*"),
+        knex.raw("fdl.*")
       )
       .from("table_scrapeProductList as pl")
-      .leftJoin(
-        "table_frontierDetails as fdl",
-        "fdl.id",
-        "pl.LinkedFrontiersDetailsInfo",
-      )
+      .leftJoin("table_frontierDetails as fdl", "fdl.id", "pl.LinkedFrontiersDetailsInfo")
       .where("pl.RegularCronId", cronId)
       .where("pl.IsSlowActivated", "!=", true)
       .whereNotNull("fdl.ChannelName")
       .where("fdl.Activated", true);
 
-    const mvpQuery = knex
-      .select(
-        "pl.Id as ProductIdentifier",
-        "pl.MpId as ProductId",
-        "pl.ProductName",
-        "pl.Net32Url",
-        "pl.IsActive as ScrapeOnlyActive",
-        "pl.LinkedCronName as LinkedScrapeOnlyCron",
-        "pl.LinkedCronId as LinkedScrapeOnlyCronId",
-        "pl.RegularCronName",
-        "pl.RegularCronId",
-        "pl.SlowCronName",
-        "pl.SlowCronId",
-        "pl.IsSlowActivated",
-        "pl.algo_execution_mode",
-        knex.raw("mdl.*"),
-      )
-      .from("table_scrapeProductList as pl")
-      .leftJoin("table_mvpDetails as mdl", "mdl.id", "pl.LinkedMvpDetailsInfo")
-      .where("pl.RegularCronId", cronId)
-      .where("pl.IsSlowActivated", "!=", true)
-      .whereNotNull("mdl.ChannelName")
-      .where("mdl.Activated", true);
+    const mvpQuery = knex.select("pl.Id as ProductIdentifier", "pl.MpId as ProductId", "pl.ProductName", "pl.Net32Url", "pl.IsActive as ScrapeOnlyActive", "pl.LinkedCronName as LinkedScrapeOnlyCron", "pl.LinkedCronId as LinkedScrapeOnlyCronId", "pl.RegularCronName", "pl.RegularCronId", "pl.SlowCronName", "pl.SlowCronId", "pl.IsSlowActivated", "pl.algo_execution_mode", knex.raw("mdl.*")).from("table_scrapeProductList as pl").leftJoin("table_mvpDetails as mdl", "mdl.id", "pl.LinkedMvpDetailsInfo").where("pl.RegularCronId", cronId).where("pl.IsSlowActivated", "!=", true).whereNotNull("mdl.ChannelName").where("mdl.Activated", true);
 
-    const firstDentQuery = knex
-      .select(
-        "pl.Id as ProductIdentifier",
-        "pl.MpId as ProductId",
-        "pl.ProductName",
-        "pl.Net32Url",
-        "pl.IsActive as ScrapeOnlyActive",
-        "pl.LinkedCronName as LinkedScrapeOnlyCron",
-        "pl.LinkedCronId as LinkedScrapeOnlyCronId",
-        "pl.RegularCronName",
-        "pl.RegularCronId",
-        "pl.SlowCronName",
-        "pl.SlowCronId",
-        "pl.IsSlowActivated",
-        "pl.algo_execution_mode",
-        knex.raw("firstDl.*"),
-      )
-      .from("table_scrapeProductList as pl")
-      .leftJoin(
-        "table_firstDentDetails as firstDl",
-        "firstDl.id",
-        "pl.LinkedFirstDentDetailsInfo",
-      )
-      .where("pl.RegularCronId", cronId)
-      .where("pl.IsSlowActivated", "!=", true)
-      .whereNotNull("firstDl.ChannelName")
-      .where("firstDl.Activated", true);
+    const firstDentQuery = knex.select("pl.Id as ProductIdentifier", "pl.MpId as ProductId", "pl.ProductName", "pl.Net32Url", "pl.IsActive as ScrapeOnlyActive", "pl.LinkedCronName as LinkedScrapeOnlyCron", "pl.LinkedCronId as LinkedScrapeOnlyCronId", "pl.RegularCronName", "pl.RegularCronId", "pl.SlowCronName", "pl.SlowCronId", "pl.IsSlowActivated", "pl.algo_execution_mode", knex.raw("firstDl.*")).from("table_scrapeProductList as pl").leftJoin("table_firstDentDetails as firstDl", "firstDl.id", "pl.LinkedFirstDentDetailsInfo").where("pl.RegularCronId", cronId).where("pl.IsSlowActivated", "!=", true).whereNotNull("firstDl.ChannelName").where("firstDl.Activated", true);
 
-    const topDentQuery = knex
-      .select(
-        "pl.Id as ProductIdentifier",
-        "pl.MpId as ProductId",
-        "pl.ProductName",
-        "pl.Net32Url",
-        "pl.IsActive as ScrapeOnlyActive",
-        "pl.LinkedCronName as LinkedScrapeOnlyCron",
-        "pl.LinkedCronId as LinkedScrapeOnlyCronId",
-        "pl.RegularCronName",
-        "pl.RegularCronId",
-        "pl.SlowCronName",
-        "pl.SlowCronId",
-        "pl.IsSlowActivated",
-        "pl.algo_execution_mode",
-        knex.raw("topDl.*"),
-      )
-      .from("table_scrapeProductList as pl")
-      .leftJoin(
-        "table_topDentDetails as topDl",
-        "topDl.id",
-        "pl.LinkedTopDentDetailsInfo",
-      )
-      .where("pl.RegularCronId", cronId)
-      .where("pl.IsSlowActivated", "!=", true)
-      .whereNotNull("topDl.ChannelName")
-      .where("topDl.Activated", true);
+    const topDentQuery = knex.select("pl.Id as ProductIdentifier", "pl.MpId as ProductId", "pl.ProductName", "pl.Net32Url", "pl.IsActive as ScrapeOnlyActive", "pl.LinkedCronName as LinkedScrapeOnlyCron", "pl.LinkedCronId as LinkedScrapeOnlyCronId", "pl.RegularCronName", "pl.RegularCronId", "pl.SlowCronName", "pl.SlowCronId", "pl.IsSlowActivated", "pl.algo_execution_mode", knex.raw("topDl.*")).from("table_scrapeProductList as pl").leftJoin("table_topDentDetails as topDl", "topDl.id", "pl.LinkedTopDentDetailsInfo").where("pl.RegularCronId", cronId).where("pl.IsSlowActivated", "!=", true).whereNotNull("topDl.ChannelName").where("topDl.Activated", true);
 
-    const triadQuery = knex
-      .select(
-        "pl.Id as ProductIdentifier",
-        "pl.MpId as ProductId",
-        "pl.ProductName",
-        "pl.Net32Url",
-        "pl.IsActive as ScrapeOnlyActive",
-        "pl.LinkedCronName as LinkedScrapeOnlyCron",
-        "pl.LinkedCronId as LinkedScrapeOnlyCronId",
-        "pl.RegularCronName",
-        "pl.RegularCronId",
-        "pl.SlowCronName",
-        "pl.SlowCronId",
-        "pl.IsSlowActivated",
-        "pl.algo_execution_mode",
-        knex.raw("triadDl.*"),
-      )
-      .from("table_scrapeProductList as pl")
-      .leftJoin(
-        "table_triadDetails as triadDl",
-        "triadDl.id",
-        "pl.LinkedTriadDetailsInfo",
-      )
-      .where("pl.RegularCronId", cronId)
-      .where("pl.IsSlowActivated", "!=", true)
-      .whereNotNull("triadDl.ChannelName")
-      .where("triadDl.Activated", true);
+    const triadQuery = knex.select("pl.Id as ProductIdentifier", "pl.MpId as ProductId", "pl.ProductName", "pl.Net32Url", "pl.IsActive as ScrapeOnlyActive", "pl.LinkedCronName as LinkedScrapeOnlyCron", "pl.LinkedCronId as LinkedScrapeOnlyCronId", "pl.RegularCronName", "pl.RegularCronId", "pl.SlowCronName", "pl.SlowCronId", "pl.IsSlowActivated", "pl.algo_execution_mode", knex.raw("triadDl.*")).from("table_scrapeProductList as pl").leftJoin("table_triadDetails as triadDl", "triadDl.id", "pl.LinkedTriadDetailsInfo").where("pl.RegularCronId", cronId).where("pl.IsSlowActivated", "!=", true).whereNotNull("triadDl.ChannelName").where("triadDl.Activated", true);
 
-    const biteSupplyQuery = knex
-      .select(
-        "pl.Id as ProductIdentifier",
-        "pl.MpId as ProductId",
-        "pl.ProductName",
-        "pl.Net32Url",
-        "pl.IsActive as ScrapeOnlyActive",
-        "pl.LinkedCronName as LinkedScrapeOnlyCron",
-        "pl.LinkedCronId as LinkedScrapeOnlyCronId",
-        "pl.RegularCronName",
-        "pl.RegularCronId",
-        "pl.SlowCronName",
-        "pl.SlowCronId",
-        "pl.IsSlowActivated",
-        "pl.algo_execution_mode",
-        knex.raw("biteSupplyDl.*"),
-      )
-      .from("table_scrapeProductList as pl")
-      .leftJoin(
-        "table_biteSupplyDetails as biteSupplyDl",
-        "biteSupplyDl.id",
-        "pl.LinkedBiteSupplyDetailsInfo",
-      )
-      .where("pl.RegularCronId", cronId)
-      .where("pl.IsSlowActivated", "!=", true)
-      .whereNotNull("biteSupplyDl.ChannelName")
-      .where("biteSupplyDl.Activated", true);
+    const biteSupplyQuery = knex.select("pl.Id as ProductIdentifier", "pl.MpId as ProductId", "pl.ProductName", "pl.Net32Url", "pl.IsActive as ScrapeOnlyActive", "pl.LinkedCronName as LinkedScrapeOnlyCron", "pl.LinkedCronId as LinkedScrapeOnlyCronId", "pl.RegularCronName", "pl.RegularCronId", "pl.SlowCronName", "pl.SlowCronId", "pl.IsSlowActivated", "pl.algo_execution_mode", knex.raw("biteSupplyDl.*")).from("table_scrapeProductList as pl").leftJoin("table_biteSupplyDetails as biteSupplyDl", "biteSupplyDl.id", "pl.LinkedBiteSupplyDetailsInfo").where("pl.RegularCronId", cronId).where("pl.IsSlowActivated", "!=", true).whereNotNull("biteSupplyDl.ChannelName").where("biteSupplyDl.Activated", true);
 
     // Use raw SQL for the UNION query to ensure MySQL2 compatibility
     const unionQuery = `
@@ -849,10 +564,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
 export async function getNet32UrlById(mpId: number) {
   try {
     const knex = getKnexInstance();
-    const result = await knex("table_scrapeProductList")
-      .where("MpId", mpId)
-      .select("Net32Url")
-      .first();
+    const result = await knex("table_scrapeProductList").where("MpId", mpId).select("Net32Url").first();
     return result?.Net32Url || null;
   } catch (error) {
     console.log("Error in getNet32UrlById", mpId, error);
@@ -862,11 +574,7 @@ export async function getNet32UrlById(mpId: number) {
   }
 }
 
-export async function UpdateRepriceResultStatus(
-  repriceResultStatus: RepriceResultEnum,
-  mpid: string,
-  contextVendor: string,
-) {
+export async function UpdateRepriceResultStatus(repriceResultStatus: RepriceResultEnum, mpid: string, contextVendor: string) {
   try {
     let contextTableName = getContextTableNameByVendorName(contextVendor);
     const knex = getKnexInstance();
@@ -874,22 +582,14 @@ export async function UpdateRepriceResultStatus(
       .where("MpId", parseInt(mpid as string))
       .update({ RepriceResult: repriceResultStatus });
   } catch (error) {
-    console.log(
-      "Error in UpdateRepriceResultStatus",
-      repriceResultStatus,
-      mpid,
-      contextVendor,
-      error,
-    );
+    console.log("Error in UpdateRepriceResultStatus", repriceResultStatus, mpid, contextVendor, error);
     throw error;
   } finally {
     //destroyKnexInstance();
   }
 }
 
-export async function GetProxiesNet32(
-  usernames: string[],
-): Promise<ProxyNet32[]> {
+export async function GetProxiesNet32(usernames: string[]): Promise<ProxyNet32[]> {
   try {
     let proxyList: ProxyNet32[] = [];
     const knex = getKnexInstance();
@@ -897,9 +597,7 @@ export async function GetProxiesNet32(
       return [];
     }
 
-    proxyList = await knex(applicationConfig.SQL_PROXY_NET_32!)
-      .whereIn("proxy_username", usernames)
-      .select("*");
+    proxyList = await knex(applicationConfig.SQL_PROXY_NET_32!).whereIn("proxy_username", usernames).select("*");
 
     return proxyList;
   } catch (error) {
@@ -910,20 +608,14 @@ export async function GetProxiesNet32(
   }
 }
 
-export async function GetVendorKeys(
-  vendors: string[],
-): Promise<Map<string, string | null> | null> {
+export async function GetVendorKeys(vendors: string[]): Promise<Map<string, string | null> | null> {
   try {
     const knex = getKnexInstance();
     if (vendors.length === 0) {
       return new Map<string, string | null>();
     }
 
-    const rows = await knex(applicationConfig.SQL_VENDOR_KEYS)
-      .whereIn("vendor", vendors)
-      .where("is_primary", 1)
-      .where("is_active", 1)
-      .select("vendor", "value");
+    const rows = await knex(applicationConfig.SQL_VENDOR_KEYS).whereIn("vendor", vendors).where("is_primary", 1).where("is_active", 1).select("vendor", "value");
 
     const vendorKeyMap = new Map<string, string | null>();
 
@@ -955,27 +647,14 @@ export async function ExecuteQuery(_query: string, _params: any) {
   }
 }
 
-export async function GetCurrentStock(
-  mpids: string[],
-  vendorName: string,
-): Promise<CurrentStock[]> {
-  const contextTableName = getContextTableNameByVendorName(
-    vendorName?.toUpperCase(),
-  );
+export async function GetCurrentStock(mpids: string[], vendorName: string): Promise<CurrentStock[]> {
+  const contextTableName = getContextTableNameByVendorName(vendorName?.toUpperCase());
   try {
     const knex = getKnexInstance();
-    const result = await knex(contextTableName!)
-      .whereIn("mpid", mpids)
-      .select("mpid", "CurrentInStock", "CurrentInventory");
+    const result = await knex(contextTableName!).whereIn("mpid", mpids).select("mpid", "CurrentInStock", "CurrentInventory");
     return result;
   } catch (error) {
-    console.log(
-      "Error in GetCurrentStock",
-      mpids,
-      vendorName,
-      contextTableName,
-      error,
-    );
+    console.log("Error in GetCurrentStock", mpids, vendorName, contextTableName, error);
     throw error;
   } finally {
     //destroyKnexInstance();
@@ -997,9 +676,7 @@ export async function WaitlistInsert(waitlistItems: WaitlistModel[]) {
 export async function GetWaitlistPendingItems(): Promise<WaitlistModel[]> {
   try {
     const knex = getKnexInstance();
-    const result = await knex(applicationConfig.SQL_WAITLIST!)
-      .where("api_status", "pending")
-      .select("*");
+    const result = await knex(applicationConfig.SQL_WAITLIST!).where("api_status", "pending").select("*");
     return result;
   } catch (error) {
     console.log("Error in GetWaitlistPendingItems", error);
@@ -1009,16 +686,10 @@ export async function GetWaitlistPendingItems(): Promise<WaitlistModel[]> {
   }
 }
 
-export async function UpdateWaitlistStatus(
-  id: number,
-  status: string,
-  message?: string,
-) {
+export async function UpdateWaitlistStatus(id: number, status: string, message?: string) {
   try {
     const knex = getKnexInstance();
-    await knex(applicationConfig.SQL_WAITLIST!)
-      .where("id", id)
-      .update({ api_status: status, message: message, updated_at: new Date() });
+    await knex(applicationConfig.SQL_WAITLIST!).where("id", id).update({ api_status: status, message: message, updated_at: new Date() });
   } catch (error) {
     console.log("Error in UpdateWaitlistStatus", id, status, message, error);
     throw error;
@@ -1027,27 +698,13 @@ export async function UpdateWaitlistStatus(
   }
 }
 
-export async function UpdateVendorStock(
-  vendorName: string,
-  mpid: number,
-  inventory: number,
-) {
-  const contextTableName = getContextTableNameByVendorName(
-    vendorName?.toUpperCase(),
-  );
+export async function UpdateVendorStock(vendorName: string, mpid: number, inventory: number) {
+  const contextTableName = getContextTableNameByVendorName(vendorName?.toUpperCase());
   try {
     const knex = getKnexInstance();
-    await knex(contextTableName!)
-      .where("MpId", mpid)
-      .update({ CurrentInventory: inventory });
+    await knex(contextTableName!).where("MpId", mpid).update({ CurrentInventory: inventory });
   } catch (error) {
-    console.log(
-      "Error in UpdateVendorStock",
-      vendorName,
-      mpid,
-      inventory,
-      error,
-    );
+    console.log("Error in UpdateVendorStock", vendorName, mpid, inventory, error);
     throw error;
   } finally {
     //destroyKnexInstance();
