@@ -13,30 +13,15 @@ function tryDecrypt(value: string): string {
 }
 
 const sqlPassword = tryDecrypt(applicationConfig.SQL_PASSWORD);
-export async function GetLatestRunInfo(
-  noOfRecords: any,
-  startDateTime: any,
-  endDateTime: any,
-) {
+export async function GetLatestRunInfo(noOfRecords: any, startDateTime: any, endDateTime: any) {
   const db = getKnexInstance();
-  const result = await db.raw(
-    `CALL ${applicationConfig.SQL_SP_GETRUN_INFO}(?,?,?)`,
-    [noOfRecords, startDateTime, endDateTime],
-  );
+  const result = await db.raw(`CALL ${applicationConfig.SQL_SP_GETRUN_INFO}(?,?,?)`, [noOfRecords, startDateTime, endDateTime]);
   return result[0];
 }
 
-export async function GetLatestRunInfoForCron(
-  noOfRecords: any,
-  startDateTime: any,
-  endDateTime: any,
-  cronId: any,
-) {
+export async function GetLatestRunInfoForCron(noOfRecords: any, startDateTime: any, endDateTime: any, cronId: any) {
   const db = getKnexInstance();
-  const result = await db.raw(
-    `CALL ${applicationConfig.SQL_SP_GETRUN_INFO_BY_CRON}(?,?,?,?)`,
-    [noOfRecords, startDateTime, endDateTime, cronId],
-  );
+  const result = await db.raw(`CALL ${applicationConfig.SQL_SP_GETRUN_INFO_BY_CRON}(?,?,?,?)`, [noOfRecords, startDateTime, endDateTime, cronId]);
   return result[0];
 }
 
@@ -55,29 +40,18 @@ export async function GetScrapeProductList(pageNumber: any, pageSize: any) {
   const db = await SqlConnectionPool.getConnection();
   try {
     const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_SCRAPEPRODUCT_DETAILS}(?,?)`;
-    const scrapeProductList = await db.query(queryToCall, [
-      pageNumber,
-      pageSize,
-    ]);
+    const scrapeProductList = await db.query(queryToCall, [pageNumber, pageSize]);
     return (scrapeProductList[0] as any)[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }
 }
 
-export async function GetScrapeProductListByFilter(
-  filterText: any,
-  pageSize: any,
-  pageNumber: any,
-) {
+export async function GetScrapeProductListByFilter(filterText: any, pageSize: any, pageNumber: any) {
   const db = await SqlConnectionPool.getConnection();
   try {
     const queryToCall = `CALL ${applicationConfig.SQL_SP_GET_SCRAPEPRODUCT_DETAILS_FILTER}(?,?, ?)`;
-    const scrapeProductList = await db.query(queryToCall, [
-      pageSize,
-      filterText,
-      pageNumber,
-    ]);
+    const scrapeProductList = await db.query(queryToCall, [pageSize, filterText, pageNumber]);
     return (scrapeProductList[0] as any)[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);
@@ -99,16 +73,7 @@ export async function UpsertProductDetails(payload: any) {
   const db = await SqlConnectionPool.getConnection();
   try {
     const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILS}(?,?,?,?,?,?,?,?)`;
-    const upsertResult = await db.query(queryToCall, [
-      payload.mpId,
-      payload.isActive,
-      payload.net32Url,
-      payload.linkedCron,
-      payload.linkedCronId,
-      payload.lastUpdatedBy,
-      payload.lastUpdatedOn,
-      payload.isBadgeItem,
-    ]);
+    const upsertResult = await db.query(queryToCall, [payload.mpId, payload.isActive, payload.net32Url, payload.linkedCron, payload.linkedCronId, payload.lastUpdatedBy, payload.lastUpdatedOn, payload.isBadgeItem]);
     return upsertResult[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);
@@ -172,35 +137,19 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
     if (!payload.badgePercentageDown) {
       payload.badgePercentageDown = 0;
     }
-    if (
-      typeof payload.competeWithNext == "undefined" ||
-      payload.competeWithNext == null
-    ) {
+    if (typeof payload.competeWithNext == "undefined" || payload.competeWithNext == null) {
       payload.competeWithNext = false;
     }
-    if (
-      typeof payload.ignorePhantomQBreak == "undefined" ||
-      payload.ignorePhantomQBreak == null
-    ) {
+    if (typeof payload.ignorePhantomQBreak == "undefined" || payload.ignorePhantomQBreak == null) {
       payload.ignorePhantomQBreak = true;
     }
-    if (
-      payload.ownVendorThreshold === undefined ||
-      payload.ownVendorThreshold === null ||
-      payload.ownVendorThreshold === ""
-    ) {
+    if (payload.ownVendorThreshold === undefined || payload.ownVendorThreshold === null || payload.ownVendorThreshold === "") {
       payload.ownVendorThreshold = 1;
     }
-    if (
-      typeof payload.getBBBadge == "undefined" ||
-      payload.getBBBadge == null
-    ) {
+    if (typeof payload.getBBBadge == "undefined" || payload.getBBBadge == null) {
       payload.getBBBadge = false;
     }
-    if (
-      typeof payload.getBBShipping == "undefined" ||
-      payload.getBBShipping == null
-    ) {
+    if (typeof payload.getBBShipping == "undefined" || payload.getBBShipping == null) {
       payload.getBBShipping = false;
     }
     if (!payload.getBBBadgeValue) {
@@ -288,29 +237,8 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
 export async function UpsertProductDetailsV2(payload: any) {
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
-    const upsertResult = await db.query(queryToCall, [
-      payload.MpId,
-      payload.IsActive,
-      payload.Net32Url,
-      payload.LinkedCronName,
-      payload.LinkedCronId,
-      payload.LastUpdatedBy,
-      payload.LastUpdatedAt,
-      payload.ProductName,
-      payload.RegularCronName,
-      payload.RegularCronId,
-      payload.SlowCronName,
-      payload.SlowCronId,
-      payload.LinkedTradentDetailsInfo,
-      payload.LinkedFrontiersDetailsInfo,
-      payload.LinkedMvpDetailsInfo,
-      false,
-      payload.IsBadgeItem,
-      payload.LinkedTopDentDetailsInfo,
-      payload.LinkedFirstDentDetailsInfo,
-      payload.LinkedTriadDetailsInfo,
-    ]);
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV4}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+    const upsertResult = await db.query(queryToCall, [payload.MpId, payload.IsActive, payload.Net32Url, payload.LinkedCronName, payload.LinkedCronId, payload.LastUpdatedBy, payload.LastUpdatedAt, payload.ProductName, payload.RegularCronName, payload.RegularCronId, payload.SlowCronName, payload.SlowCronId, payload.LinkedTradentDetailsInfo, payload.LinkedFrontiersDetailsInfo, payload.LinkedMvpDetailsInfo, false, payload.IsBadgeItem, payload.LinkedTopDentDetailsInfo, payload.LinkedFirstDentDetailsInfo, payload.LinkedTriadDetailsInfo, payload.LinkedBiteSupplyDetailsInfo]);
     return upsertResult[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);
@@ -334,56 +262,24 @@ export async function GetCompleteProductDetails() {
 
 export async function GetNumberOfRepriceEligibleProductCount() {
   const db = getKnexInstance();
-  const totalCount = await db("table_scrapeProductList")
-    .count("* as count")
-    .first();
-  const nullCount = await db("table_scrapeProductList")
-    .count("* as count")
-    .whereNull("LinkedTradentDetailsInfo")
-    .whereNull("LinkedFrontiersDetailsInfo")
-    .whereNull("LinkedMvpDetailsInfo")
-    .whereNull("LinkedTopDentDetailsInfo")
-    .whereNull("LinkedFirstDentDetailsInfo")
-    .first();
+  const totalCount = await db("table_scrapeProductList").count("* as count").first();
+  const nullCount = await db("table_scrapeProductList").count("* as count").whereNull("LinkedTradentDetailsInfo").whereNull("LinkedFrontiersDetailsInfo").whereNull("LinkedMvpDetailsInfo").whereNull("LinkedTopDentDetailsInfo").whereNull("LinkedFirstDentDetailsInfo").first();
 
   const result = (totalCount?.count as number) - (nullCount?.count as number);
   return result;
 }
 
-export async function GetAllRepriceEligibleProductByFilter(
-  pageNumber: any,
-  pageSize: any,
-) {
+export async function GetAllRepriceEligibleProductByFilter(pageNumber: any, pageSize: any) {
   const knex = getKnexInstance();
 
   // Calculate offset for pagination
   const offset = pageNumber * pageSize;
 
   // Common select fields for all queries
-  const selectFields = [
-    "pl.Id as ProductIdentifier",
-    "pl.MpId as ProductId",
-    "pl.ProductName",
-    "pl.Net32Url",
-    "pl.IsActive as ScrapeOnlyActive",
-    "pl.LinkedCronName as LinkedScrapeOnlyCron",
-    "pl.LinkedCronId as LinkedScrapeOnlyCronId",
-    "pl.RegularCronName",
-    "pl.RegularCronId",
-    "pl.SlowCronName",
-    "pl.SlowCronId",
-    "pl.IsSlowActivated",
-    "pl.IsBadgeItem",
-    "pl.algo_execution_mode",
-  ];
+  const selectFields = ["pl.Id as ProductIdentifier", "pl.MpId as ProductId", "pl.ProductName", "pl.Net32Url", "pl.IsActive as ScrapeOnlyActive", "pl.LinkedCronName as LinkedScrapeOnlyCron", "pl.LinkedCronId as LinkedScrapeOnlyCronId", "pl.RegularCronName", "pl.RegularCronId", "pl.SlowCronName", "pl.SlowCronId", "pl.IsSlowActivated", "pl.IsBadgeItem", "pl.algo_execution_mode"];
 
   // Get paginated MpIds first
-  const paginatedMpIds = await knex("table_scrapeProductList")
-    .select("MpId")
-    .whereNotNull("RegularCronName")
-    .orderBy("Id", "desc")
-    .limit(pageSize)
-    .offset(offset);
+  const paginatedMpIds = await knex("table_scrapeProductList").select("MpId").whereNotNull("RegularCronName").orderBy("Id", "desc").limit(pageSize).offset(offset);
 
   const mpIds = paginatedMpIds.map((row) => row.MpId);
 
@@ -394,20 +290,12 @@ export async function GetAllRepriceEligibleProductByFilter(
   // Build subqueries for each table join
   const tradentQuery = knex("table_scrapeProductList as pl")
     .select([...selectFields, "tdl.*"])
-    .leftJoin(
-      "table_tradentDetails as tdl",
-      "tdl.id",
-      "pl.LinkedTradentDetailsInfo",
-    )
+    .leftJoin("table_tradentDetails as tdl", "tdl.id", "pl.LinkedTradentDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
   const frontierQuery = knex("table_scrapeProductList as pl")
     .select([...selectFields, "fdl.*"])
-    .leftJoin(
-      "table_frontierDetails as fdl",
-      "fdl.id",
-      "pl.LinkedFrontiersDetailsInfo",
-    )
+    .leftJoin("table_frontierDetails as fdl", "fdl.id", "pl.LinkedFrontiersDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
   const mvpQuery = knex("table_scrapeProductList as pl")
@@ -417,69 +305,30 @@ export async function GetAllRepriceEligibleProductByFilter(
 
   const firstDentQuery = knex("table_scrapeProductList as pl")
     .select([...selectFields, "firstDl.*"])
-    .leftJoin(
-      "table_firstDentDetails as firstDl",
-      "firstDl.id",
-      "pl.LinkedFirstDentDetailsInfo",
-    )
+    .leftJoin("table_firstDentDetails as firstDl", "firstDl.id", "pl.LinkedFirstDentDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
   const topDentQuery = knex("table_scrapeProductList as pl")
     .select([...selectFields, "topDl.*"])
-    .leftJoin(
-      "table_topDentDetails as topDl",
-      "topDl.id",
-      "pl.LinkedTopDentDetailsInfo",
-    )
+    .leftJoin("table_topDentDetails as topDl", "topDl.id", "pl.LinkedTopDentDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
   const triadQuery = knex("table_scrapeProductList as pl")
     .select([...selectFields, "triadDl.*"])
-    .leftJoin(
-      "table_triadDetails as triadDl",
-      "triadDl.id",
-      "pl.LinkedTriadDetailsInfo",
-    )
+    .leftJoin("table_triadDetails as triadDl", "triadDl.id", "pl.LinkedTriadDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
   // Combine all queries using UNION
-  const result = await knex
-    .union([
-      tradentQuery,
-      frontierQuery,
-      mvpQuery,
-      firstDentQuery,
-      topDentQuery,
-      triadQuery,
-    ])
-    .orderBy("ProductId");
+  const result = await knex.union([tradentQuery, frontierQuery, mvpQuery, firstDentQuery, topDentQuery, triadQuery]).orderBy("ProductId");
   //destroyKnexInstance();
   return SqlMapper.MapProductDetailsList(result);
 }
 
-export async function GetAllRepriceEligibleProductByTag(
-  mpId: any,
-  channelId: any,
-) {
+export async function GetAllRepriceEligibleProductByTag(mpId: any, channelId: any) {
   const knex = getKnexInstance();
 
   // Common select fields for all queries
-  const selectFields = [
-    "pl.Id as ProductIdentifier",
-    "pl.MpId as ProductId",
-    "pl.ProductName",
-    "pl.Net32Url",
-    "pl.IsActive as ScrapeOnlyActive",
-    "pl.LinkedCronName as LinkedScrapeOnlyCron",
-    "pl.LinkedCronId as LinkedScrapeOnlyCronId",
-    "pl.RegularCronName",
-    "pl.RegularCronId",
-    "pl.SlowCronName",
-    "pl.SlowCronId",
-    "pl.IsSlowActivated",
-    "pl.IsBadgeItem",
-    "pl.algo_execution_mode",
-  ];
+  const selectFields = ["pl.Id as ProductIdentifier", "pl.MpId as ProductId", "pl.ProductName", "pl.Net32Url", "pl.IsActive as ScrapeOnlyActive", "pl.LinkedCronName as LinkedScrapeOnlyCron", "pl.LinkedCronId as LinkedScrapeOnlyCronId", "pl.RegularCronName", "pl.RegularCronId", "pl.SlowCronName", "pl.SlowCronId", "pl.IsSlowActivated", "pl.IsBadgeItem", "pl.algo_execution_mode"];
 
   // Use exact matches for MPID, wildcards for channelId
   const mpIdSearch = mpId ? mpId : null;
@@ -492,11 +341,7 @@ export async function GetAllRepriceEligibleProductByTag(
         .select("MpId")
         .where(function () {
           if (mpIdSearch) {
-            this.where("MpId", "=", mpIdSearch).orWhere(
-              "FocusId",
-              "=",
-              mpIdSearch,
-            );
+            this.where("MpId", "=", mpIdSearch).orWhere("FocusId", "=", mpIdSearch);
           }
           if (channelIdSearch) {
             this.orWhere("ChannelId", "like", channelIdSearch);
@@ -506,11 +351,7 @@ export async function GetAllRepriceEligibleProductByTag(
         .select("MpId")
         .where(function () {
           if (mpIdSearch) {
-            this.where("MpId", "=", mpIdSearch).orWhere(
-              "FocusId",
-              "=",
-              mpIdSearch,
-            );
+            this.where("MpId", "=", mpIdSearch).orWhere("FocusId", "=", mpIdSearch);
           }
           if (channelIdSearch) {
             this.orWhere("ChannelId", "like", channelIdSearch);
@@ -520,11 +361,7 @@ export async function GetAllRepriceEligibleProductByTag(
         .select("MpId")
         .where(function () {
           if (mpIdSearch) {
-            this.where("MpId", "=", mpIdSearch).orWhere(
-              "FocusId",
-              "=",
-              mpIdSearch,
-            );
+            this.where("MpId", "=", mpIdSearch).orWhere("FocusId", "=", mpIdSearch);
           }
           if (channelIdSearch) {
             this.orWhere("ChannelId", "like", channelIdSearch);
@@ -534,11 +371,7 @@ export async function GetAllRepriceEligibleProductByTag(
         .select("MpId")
         .where(function () {
           if (mpIdSearch) {
-            this.where("MpId", "=", mpIdSearch).orWhere(
-              "FocusId",
-              "=",
-              mpIdSearch,
-            );
+            this.where("MpId", "=", mpIdSearch).orWhere("FocusId", "=", mpIdSearch);
           }
           if (channelIdSearch) {
             this.orWhere("ChannelId", "like", channelIdSearch);
@@ -548,11 +381,7 @@ export async function GetAllRepriceEligibleProductByTag(
         .select("MpId")
         .where(function () {
           if (mpIdSearch) {
-            this.where("MpId", "=", mpIdSearch).orWhere(
-              "FocusId",
-              "=",
-              mpIdSearch,
-            );
+            this.where("MpId", "=", mpIdSearch).orWhere("FocusId", "=", mpIdSearch);
           }
           if (channelIdSearch) {
             this.orWhere("ChannelId", "like", channelIdSearch);
@@ -562,11 +391,7 @@ export async function GetAllRepriceEligibleProductByTag(
         .select("MpId")
         .where(function () {
           if (mpIdSearch) {
-            this.where("MpId", "=", mpIdSearch).orWhere(
-              "FocusId",
-              "=",
-              mpIdSearch,
-            );
+            this.where("MpId", "=", mpIdSearch).orWhere("FocusId", "=", mpIdSearch);
           }
           if (channelIdSearch) {
             this.orWhere("ChannelId", "like", channelIdSearch);
@@ -584,20 +409,12 @@ export async function GetAllRepriceEligibleProductByTag(
   // Build subqueries for each table join
   const tradentQuery = knex("table_scrapeProductList as pl")
     .select([...selectFields, "tdl.*"])
-    .leftJoin(
-      "table_tradentDetails as tdl",
-      "tdl.id",
-      "pl.LinkedTradentDetailsInfo",
-    )
+    .leftJoin("table_tradentDetails as tdl", "tdl.id", "pl.LinkedTradentDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
   const frontierQuery = knex("table_scrapeProductList as pl")
     .select([...selectFields, "fdl.*"])
-    .leftJoin(
-      "table_frontierDetails as fdl",
-      "fdl.id",
-      "pl.LinkedFrontiersDetailsInfo",
-    )
+    .leftJoin("table_frontierDetails as fdl", "fdl.id", "pl.LinkedFrontiersDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
   const mvpQuery = knex("table_scrapeProductList as pl")
@@ -607,41 +424,22 @@ export async function GetAllRepriceEligibleProductByTag(
 
   const firstDentQuery = knex("table_scrapeProductList as pl")
     .select([...selectFields, "firstDl.*"])
-    .leftJoin(
-      "table_firstDentDetails as firstDl",
-      "firstDl.id",
-      "pl.LinkedFirstDentDetailsInfo",
-    )
+    .leftJoin("table_firstDentDetails as firstDl", "firstDl.id", "pl.LinkedFirstDentDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
   const topDentQuery = knex("table_scrapeProductList as pl")
     .select([...selectFields, "topDl.*"])
-    .leftJoin(
-      "table_topDentDetails as topDl",
-      "topDl.id",
-      "pl.LinkedTopDentDetailsInfo",
-    )
+    .leftJoin("table_topDentDetails as topDl", "topDl.id", "pl.LinkedTopDentDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
   const triadQuery = knex("table_scrapeProductList as pl")
     .select([...selectFields, "triadDl.*"])
-    .leftJoin(
-      "table_triadDetails as triadDl",
-      "triadDl.id",
-      "pl.LinkedTriadDetailsInfo",
-    )
+    .leftJoin("table_triadDetails as triadDl", "triadDl.id", "pl.LinkedTriadDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
   // Combine all queries using UNION
   const result = await knex
-    .union([
-      tradentQuery,
-      frontierQuery,
-      mvpQuery,
-      firstDentQuery,
-      topDentQuery,
-      triadQuery,
-    ])
+    .union([tradentQuery, frontierQuery, mvpQuery, firstDentQuery, topDentQuery, triadQuery])
     // .whereNotNull("ChannelName")
     .orderBy("ProductId");
   //destroyKnexInstance();
@@ -686,6 +484,9 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
       case "TRIAD":
         contextSpName = applicationConfig.SQL_SP_UPDATE_TRIAD;
         break;
+      case "BITESUPPLY":
+        contextSpName = applicationConfig.SQL_SP_UPDATE_BITESUPPLY;
+        break;
       default:
         break;
     }
@@ -698,35 +499,19 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
     if (!payload.badgePercentageDown) {
       payload.badgePercentageDown = 0;
     }
-    if (
-      typeof payload.competeWithNext == "undefined" ||
-      payload.competeWithNext == null
-    ) {
+    if (typeof payload.competeWithNext == "undefined" || payload.competeWithNext == null) {
       payload.competeWithNext = false;
     }
-    if (
-      typeof payload.ignorePhantomQBreak == "undefined" ||
-      payload.ignorePhantomQBreak == null
-    ) {
+    if (typeof payload.ignorePhantomQBreak == "undefined" || payload.ignorePhantomQBreak == null) {
       payload.ignorePhantomQBreak = true;
     }
-    if (
-      payload.ownVendorThreshold === undefined ||
-      payload.ownVendorThreshold === null ||
-      payload.ownVendorThreshold === ""
-    ) {
+    if (payload.ownVendorThreshold === undefined || payload.ownVendorThreshold === null || payload.ownVendorThreshold === "") {
       payload.ownVendorThreshold = 1;
     }
-    if (
-      typeof payload.getBBBadge == "undefined" ||
-      payload.getBBBadge == null
-    ) {
+    if (typeof payload.getBBBadge == "undefined" || payload.getBBBadge == null) {
       payload.getBBBadge = false;
     }
-    if (
-      typeof payload.getBBShipping == "undefined" ||
-      payload.getBBShipping == null
-    ) {
+    if (typeof payload.getBBShipping == "undefined" || payload.getBBShipping == null) {
       payload.getBBShipping = false;
     }
     if (!payload.getBBBadgeValue) {
@@ -801,9 +586,7 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
     let upsertResult: any = null;
     if (rows != null && (rows as any)[0] != null) {
       upsertResult = (rows as any)[0][0];
-      console.log(
-        `UPDATE_RESULT : ${payload.mpid} : ${JSON.stringify(upsertResult)}`,
-      );
+      console.log(`UPDATE_RESULT : ${payload.mpid} : ${JSON.stringify(upsertResult)}`);
     }
     if (upsertResult && upsertResult != null) {
       return upsertResult["updatedIdentifier"];
@@ -835,6 +618,9 @@ export async function GetLinkedVendorDetails(mpId: any, vendorName: any) {
     if (vendorName == "TRIAD") {
       tableName = "table_triadDetails";
     }
+    if (vendorName == "BITESUPPLY") {
+      tableName = "table_biteSupplyDetails";
+    }
     const queryToCall = `select Id from ${tableName} where MpId=${mpId}`;
     const noOfRecords = await db.execute(queryToCall);
     return (noOfRecords[0] as any)[0]["Id"];
@@ -843,31 +629,13 @@ export async function GetLinkedVendorDetails(mpId: any, vendorName: any) {
   }
 }
 
-export async function UpdateProductV2(
-  mpid: any,
-  itemData: any,
-  tId: any,
-  fId: any,
-  mId: any,
-) {
+export async function UpdateProductV2(mpid: any, itemData: any, tId: any, fId: any, mId: any) {
   const db = await SqlConnectionPool.getConnection();
   try {
     let tableName = applicationConfig.SQL_SCRAPEPRODUCTLIST;
     const queryToCall = `update ${tableName} set RegularCronName=?,RegularCronId=?,SlowCronName=?,SlowCronId=?,LinkedTradentDetailsInfo=?,LinkedFrontiersDetailsInfo=?,LinkedMvpDetailsInfo=?,IsSlowActivated=? where MpId=?`;
-    const noOfRecords = await db.execute(queryToCall, [
-      itemData.cronName,
-      itemData.cronId,
-      itemData.slowCronName,
-      itemData.slowCronId,
-      tId,
-      fId,
-      mId,
-      itemData.isSlowActivated,
-      parseInt(mpid),
-    ]);
-    console.log(
-      `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
-    );
+    const noOfRecords = await db.execute(queryToCall, [itemData.cronName, itemData.cronId, itemData.slowCronName, itemData.slowCronId, tId, fId, mId, itemData.isSlowActivated, parseInt(mpid)]);
+    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
     return noOfRecords;
   } finally {
     SqlConnectionPool.releaseConnection(db);
@@ -880,34 +648,25 @@ export async function ChangeProductActivation(mpid: any, status: any) {
     let noOfRecords: any = null;
     let queryToCall = `update table_tradentDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(
-      `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
-    );
+    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
     queryToCall = `update table_frontierDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(
-      `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
-    );
+    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
     queryToCall = `update table_mvpDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(
-      `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
-    );
+    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
     queryToCall = `update table_firstDentDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(
-      `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
-    );
+    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
     queryToCall = `update table_topDentDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(
-      `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
-    );
+    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
     queryToCall = `update table_triadDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(
-      `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
-    );
+    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
+    queryToCall = `update table_biteSupplyDetails set Activated=? where MpId=?`;
+    noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
+    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
     return noOfRecords;
   } finally {
     SqlConnectionPool.releaseConnection(db);
@@ -927,14 +686,7 @@ export async function MapVendorToRoot(data: any) {
     queryToCall += `RegularCronName = ?, `;
     queryToCall += `RegularCronId = ? `;
     queryToCall += `WHERE MpId = ?`;
-    const noOfRecords = await db.execute(queryToCall, [
-      traId,
-      froId,
-      mvpId,
-      data.CronName.trim(),
-      data.CronId,
-      parseInt(data.MPID),
-    ]);
+    const noOfRecords = await db.execute(queryToCall, [traId, froId, mvpId, data.CronName.trim(), data.CronId, parseInt(data.MPID)]);
     console.trace((noOfRecords[0] as any)[0]);
     return (noOfRecords[0] as any)[0];
   } finally {
@@ -942,34 +694,19 @@ export async function MapVendorToRoot(data: any) {
   }
 }
 
-export async function ToggleDataScrapeForId(
-  mpid: any,
-  status: any,
-  auditInfo: any,
-) {
+export async function ToggleDataScrapeForId(mpid: any, status: any, auditInfo: any) {
   const db = await SqlConnectionPool.getConnection();
   try {
     let queryToCall = `update ${applicationConfig.SQL_SCRAPEPRODUCTLIST} set IsActive=?,LastUpdatedBy=?,LastUpdatedAt=? where MpId=?`;
-    const noOfRecords = await db.execute(queryToCall, [
-      status,
-      auditInfo.UpdatedBy,
-      auditInfo.UpdatedOn,
-      parseInt(mpid),
-    ]);
-    console.log(
-      `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
-    );
+    const noOfRecords = await db.execute(queryToCall, [status, auditInfo.UpdatedBy, auditInfo.UpdatedOn, parseInt(mpid)]);
+    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
     return noOfRecords;
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }
 }
 
-export async function UpdateBranchDataForVendor(
-  mpId: any,
-  vendorName: any,
-  payLoad: any,
-) {
+export async function UpdateBranchDataForVendor(mpId: any, vendorName: any, payLoad: any) {
   const db = await SqlConnectionPool.getConnection();
   try {
     let tableName: any = null;
@@ -991,18 +728,11 @@ export async function UpdateBranchDataForVendor(
     if (vendorName == "TRIAD") {
       tableName = "table_triadDetails";
     }
+    if (vendorName == "BITESUPPLY") {
+      tableName = "table_biteSupplyDetails";
+    }
     const queryToCall = `Update ${tableName} set Activated=?,ChannelId=?,IsNCNeeded=?,BadgeIndicator=?,RepricingRule=?,FloorPrice=?,MaxPrice=?,UnitPrice=? where MpId=?`;
-    const noOfRecords = await db.execute(queryToCall, [
-      JSON.parse(payLoad.activated),
-      payLoad.channelId,
-      JSON.parse(payLoad.is_nc_needed),
-      payLoad.badgeIndicator,
-      parseInt(payLoad.repricingRule),
-      parseFloat(payLoad.floorPrice),
-      parseFloat(payLoad.maxPrice),
-      parseFloat(payLoad.unitPrice),
-      parseInt(mpId),
-    ]);
+    const noOfRecords = await db.execute(queryToCall, [JSON.parse(payLoad.activated), payLoad.channelId, JSON.parse(payLoad.is_nc_needed), payLoad.badgeIndicator, parseInt(payLoad.repricingRule), parseFloat(payLoad.floorPrice), parseFloat(payLoad.maxPrice), parseFloat(payLoad.unitPrice), parseInt(mpId)]);
     return (noOfRecords[0] as any)[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);
@@ -1029,10 +759,7 @@ export async function CreateUser(username: string, password: string) {
 
 export async function AuthenticateUser(username: string, password: string) {
   const db = getKnexInstance();
-  const user = await db("users")
-    .select("id", "username", "password")
-    .where("username", username)
-    .first();
+  const user = await db("users").select("id", "username", "password").where("username", username).first();
 
   if (!user) {
     return null;
@@ -1063,10 +790,7 @@ export async function ChangePassword(username: string, newPassword: string) {
 
 export async function CheckUserExists(username: string) {
   const db = getKnexInstance();
-  const user = await db("users")
-    .select("id", "username")
-    .where("username", username)
-    .first();
+  const user = await db("users").select("id", "username").where("username", username).first();
   return user || null;
 }
 
@@ -1080,9 +804,7 @@ export async function GetAllRepriceEligibleProductByMpid(mpid: any) {
       scrapeDetails = (rows as any)[0];
     }
   } catch (exception) {
-    console.log(
-      `Exception while GetAllRepriceEligibleProductByMpid : ${exception}`,
-    );
+    console.log(`Exception while GetAllRepriceEligibleProductByMpid : ${exception}`);
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }
@@ -1099,9 +821,7 @@ export async function GetAllRepriceEligibleProductByChannelId(channelId: any) {
       scrapeDetails = (rows as any)[0];
     }
   } catch (exception) {
-    console.log(
-      `Exception while GetAllRepriceEligibleProductByChannelId : ${exception}`,
-    );
+    console.log(`Exception while GetAllRepriceEligibleProductByChannelId : ${exception}`);
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }

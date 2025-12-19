@@ -176,6 +176,7 @@ export async function updateProductDetails(req: Request, res: Response) {
     productDetails.firstDentDetails = null;
     productDetails.topDentDetails = null;
     productDetails.triadDetails = null;
+    productDetails.biteSupplyDetails = null;
   }
   if (details.channel_name.toUpperCase() == "FRONTIER") {
     productDetails.frontierDetails = await mapper.MapUserResponse(
@@ -195,6 +196,7 @@ export async function updateProductDetails(req: Request, res: Response) {
     productDetails.firstDentDetails = null;
     productDetails.topDentDetails = null;
     productDetails.triadDetails = null;
+    productDetails.biteSupplyDetails = null;
   }
   if (details.channel_name.toUpperCase() == "MVP") {
     productDetails.mvpDetails = await mapper.MapUserResponse(
@@ -214,6 +216,7 @@ export async function updateProductDetails(req: Request, res: Response) {
     productDetails.firstDentDetails = null;
     productDetails.topDentDetails = null;
     productDetails.triadDetails = null;
+    productDetails.biteSupplyDetails = null;
   }
   if (details.channel_name.toUpperCase() == "FIRSTDENT") {
     productDetails.firstDentDetails = await mapper.MapUserResponse(
@@ -233,6 +236,7 @@ export async function updateProductDetails(req: Request, res: Response) {
     productDetails.mvpDetails = null;
     productDetails.topDentDetails = null;
     productDetails.triadDetails = null;
+    productDetails.biteSupplyDetails = null;
   }
   if (details.channel_name.toUpperCase() == "TOPDENT") {
     productDetails.topDentDetails = await mapper.MapUserResponse(
@@ -252,6 +256,7 @@ export async function updateProductDetails(req: Request, res: Response) {
     productDetails.mvpDetails = null;
     productDetails.firstDentDetails = null;
     productDetails.triadDetails = null;
+    productDetails.biteSupplyDetails = null;
   }
   if (details.channel_name.toUpperCase() == "TRIAD") {
     productDetails.triadDetails = await mapper.MapUserResponse(
@@ -271,6 +276,27 @@ export async function updateProductDetails(req: Request, res: Response) {
     productDetails.mvpDetails = null;
     productDetails.firstDentDetails = null;
     productDetails.topDentDetails = null;
+    productDetails.biteSupplyDetails = null;
+  }
+  if (details.channel_name.toUpperCase() == "BITESUPPLY") {
+    productDetails.biteSupplyDetails = await mapper.MapUserResponse(
+      productDetails.biteSupplyDetails,
+      details,
+      cronSettingsResponse,
+    );
+    productDetails.biteSupplyDetails.isScrapeOnlyActivated =
+      productDetails.isScrapeOnlyActivated;
+    productDetails.biteSupplyDetails.scrapeOnlyCronId =
+      productDetails.scrapeOnlyCronId;
+    productDetails.biteSupplyDetails.scrapeOnlyCronName =
+      productDetails.scrapeOnlyCronName;
+    productDetails.biteSupplyDetails.isBadgeItem = productDetails.isBadgeItem;
+    productDetails.frontierDetails = null;
+    productDetails.tradentDetails = null;
+    productDetails.mvpDetails = null;
+    productDetails.firstDentDetails = null;
+    productDetails.topDentDetails = null;
+    productDetails.triadDetails = null;
   }
 
   await mapper.UpsertProductDetailsInSql(productDetails, details.mpid, req); //await mongoMiddleware.InsertOrUpdateProduct(_.first(productDetails), req);
@@ -654,6 +680,7 @@ export async function saveBranches(req: Request, res: Response) {
     topDentDetails,
     firstDentDetails,
     triadDetails,
+    biteSupplyDetails,
   } = req.body;
 
   // Ensure only specific missing detail objects are initialized without overwriting existing objects
@@ -703,6 +730,13 @@ export async function saveBranches(req: Request, res: Response) {
     Object.keys(triadDetails).length > 0
   ) {
     updateInitialization.triadDetails = {};
+  }
+  if (
+    !existingProduct.biteSupplyDetails &&
+    biteSupplyDetails &&
+    Object.keys(biteSupplyDetails).length > 0
+  ) {
+    updateInitialization.biteSupplyDetails = {};
   }
 
   // if (Object.keys(updateInitialization).length > 0) {
@@ -798,6 +832,23 @@ export async function saveBranches(req: Request, res: Response) {
       mpidTrimmed,
       "TRIAD",
       updateData["triadDetails"],
+    );
+  }
+
+  if (biteSupplyDetails && Object.keys(biteSupplyDetails).length > 0) {
+    updateData[`biteSupplyDetails`] = {};
+    for (const key in biteSupplyDetails) {
+      if (
+        biteSupplyDetails[key] !== null &&
+        biteSupplyDetails[key] !== undefined
+      ) {
+        updateData[`biteSupplyDetails`][`${key}`] = biteSupplyDetails[key];
+      }
+    }
+    await mySqlHelper.UpdateBranchDataForVendor(
+      mpidTrimmed,
+      "BITESUPPLY",
+      updateData["biteSupplyDetails"],
     );
   }
 

@@ -68,12 +68,14 @@ export const MapProductDetailsList = (payload: FullProductDetailsV2[]): ProductD
       topDentLinkInfo: getLinkedInfoForVendor(groupedList[parseInt(prodId)], VendorName.TOPDENT),
       firstDentLinkInfo: getLinkedInfoForVendor(groupedList[parseInt(prodId)], VendorName.FIRSTDENT),
       triadLinkInfo: getLinkedInfoForVendor(groupedList[parseInt(prodId)], VendorName.TRIAD),
+      biteSupplyLinkInfo: getLinkedInfoForVendor(groupedList[parseInt(prodId)], VendorName.BITESUPPLY),
       tradentDetails: getMappedVendorDetails(groupedList[parseInt(prodId)], groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(), VendorName.TRADENT),
       frontierDetails: getMappedVendorDetails(groupedList[parseInt(prodId)], groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(), VendorName.FRONTIER),
       mvpDetails: getMappedVendorDetails(groupedList[parseInt(prodId)], groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(), VendorName.MVP),
       topDentDetails: getMappedVendorDetails(groupedList[parseInt(prodId)], groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(), VendorName.TOPDENT),
       firstDentDetails: getMappedVendorDetails(groupedList[parseInt(prodId)], groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(), VendorName.FIRSTDENT),
       triadDetails: getMappedVendorDetails(groupedList[parseInt(prodId)], groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(), VendorName.TRIAD),
+      biteSupplyDetails: getMappedVendorDetails(groupedList[parseInt(prodId)], groupedList[parseInt(prodId)][0].algo_execution_mode?.toString(), VendorName.BITESUPPLY),
     };
     mappedList.push(mappedProduct);
   }

@@ -182,6 +182,13 @@ export async function streamProductDetails(req: Request, res: Response) {
             val.triadDetails.isBadgeItem = val.isBadgeItem;
             AllItems.push(val.triadDetails);
           }
+          if (val.biteSupplyDetails && val.biteSupplyDetails != null) {
+            val.biteSupplyDetails.scrapeOnlyCronName = val.scrapeOnlyCronName;
+            val.biteSupplyDetails.isScrapeOnlyActivated =
+              val.isScrapeOnlyActivated;
+            val.biteSupplyDetails.isBadgeItem = val.isBadgeItem;
+            AllItems.push(val.biteSupplyDetails);
+          }
         });
         if (AllItems && AllItems.length > 0) {
           AllItems.forEach((data: any) => {

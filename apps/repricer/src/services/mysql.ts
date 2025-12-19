@@ -159,6 +159,9 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
       case "TRIAD":
         contextSpName = applicationConfig.SQL_SP_UPSERT_TRIAD;
         break;
+      case "BITESUPPLY":
+        contextSpName = applicationConfig.SQL_SP_UPSERT_BITESUPPLY;
+        break;
       default:
         break;
     }
@@ -287,7 +290,7 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
 export async function UpsertProductDetailsV2(payload: any) {
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV4}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
     const upsertResult = await db.query(queryToCall, [
       payload.MpId,
       payload.IsActive,
@@ -309,6 +312,7 @@ export async function UpsertProductDetailsV2(payload: any) {
       payload.LinkedTopDentDetailsInfo,
       payload.LinkedFirstDentDetailsInfo,
       payload.LinkedTriadDetailsInfo,
+      payload.LinkedBiteSupplyDetailsInfo,
     ]);
     return upsertResult[0];
   } finally {
@@ -343,6 +347,8 @@ export async function GetNumberOfRepriceEligibleProductCount() {
     .whereNull("LinkedMvpDetailsInfo")
     .whereNull("LinkedTopDentDetailsInfo")
     .whereNull("LinkedFirstDentDetailsInfo")
+    .whereNull("LinkedTriadDetailsInfo")
+    .whereNull("LinkedBiteSupplyDetailsInfo")
     .first();
 
   const result = (totalCount?.count as number) - (nullCount?.count as number);
@@ -441,6 +447,15 @@ export async function GetAllRepriceEligibleProductByFilter(
     )
     .whereIn("pl.MpId", mpIds);
 
+  const biteSupplyQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "biteSupplyDl.*"])
+    .leftJoin(
+      "table_biteSupplyDetails as biteSupplyDl",
+      "biteSupplyDl.id",
+      "pl.LinkedBiteSupplyDetailsInfo",
+    )
+    .whereIn("pl.MpId", mpIds);
+
   // Combine all queries using UNION
   const result = await knex
     .union([
@@ -450,6 +465,7 @@ export async function GetAllRepriceEligibleProductByFilter(
       firstDentQuery,
       topDentQuery,
       triadQuery,
+      biteSupplyQuery,
     ])
     .orderBy("ProductId");
   //destroyKnexInstance();
@@ -571,6 +587,20 @@ export async function GetAllRepriceEligibleProductByTag(
             this.orWhere("ChannelId", "like", channelIdSearch);
           }
         }),
+      knex("table_biteSupplyDetails")
+        .select("MpId")
+        .where(function () {
+          if (mpIdSearch) {
+            this.where("MpId", "=", mpIdSearch).orWhere(
+              "FocusId",
+              "=",
+              mpIdSearch,
+            );
+          }
+          if (channelIdSearch) {
+            this.orWhere("ChannelId", "like", channelIdSearch);
+          }
+        }),
     ])
     .distinct();
 
@@ -631,6 +661,15 @@ export async function GetAllRepriceEligibleProductByTag(
     )
     .whereIn("pl.MpId", mpIds);
 
+  const biteSupplyQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "biteSupplyDl.*"])
+    .leftJoin(
+      "table_biteSupplyDetails as biteSupplyDl",
+      "biteSupplyDl.id",
+      "pl.LinkedBiteSupplyDetailsInfo",
+    )
+    .whereIn("pl.MpId", mpIds);
+
   // Combine all queries using UNION
   const result = await knex
     .union([
@@ -640,6 +679,7 @@ export async function GetAllRepriceEligibleProductByTag(
       firstDentQuery,
       topDentQuery,
       triadQuery,
+      biteSupplyQuery,
     ])
     // .whereNotNull("ChannelName")
     .orderBy("ProductId");
@@ -684,6 +724,9 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
         break;
       case "TRIAD":
         contextSpName = applicationConfig.SQL_SP_UPDATE_TRIAD;
+        break;
+      case "BITESUPPLY":
+        contextSpName = applicationConfig.SQL_SP_UPDATE_BITESUPPLY;
         break;
       default:
         break;
@@ -834,6 +877,9 @@ export async function GetLinkedVendorDetails(mpId: any, vendorName: any) {
     if (vendorName == "TRIAD") {
       tableName = "table_triadDetails";
     }
+    if (vendorName == "BITESUPPLY") {
+      tableName = "table_biteSupplyDetails";
+    }
     const queryToCall = `select Id from ${tableName} where MpId=${mpId}`;
     const noOfRecords = await db.execute(queryToCall);
     return (noOfRecords[0] as any)[0]["Id"];
@@ -903,6 +949,12 @@ export async function ChangeProductActivation(mpid: any, status: any) {
       `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
     );
     queryToCall = `update table_triadDetails set Activated=? where MpId=?`;
+    noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
+    console.log(
+      `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
+    );
+
+    queryToCall = `update table_biteSupplyDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
     console.log(
       `Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`,
@@ -989,6 +1041,9 @@ export async function UpdateBranchDataForVendor(
     }
     if (vendorName == "TRIAD") {
       tableName = "table_triadDetails";
+    }
+    if (vendorName == "BITESUPPLY") {
+      tableName = "table_biteSupplyDetails";
     }
     const queryToCall = `Update ${tableName} set Activated=?,ChannelId=?,IsNCNeeded=?,BadgeIndicator=?,RepricingRule=?,FloorPrice=?,MaxPrice=?,UnitPrice=? where MpId=?`;
     const noOfRecords = await db.execute(queryToCall, [

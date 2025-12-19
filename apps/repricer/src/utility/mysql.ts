@@ -234,8 +234,8 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
 export async function UpsertProductDetailsV2(payload: any) {
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV3}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
-    const upsertResult = await db.query(queryToCall, [payload.MpId, payload.IsActive, payload.Net32Url, payload.LinkedCronName, payload.LinkedCronId, payload.LastUpdatedBy, payload.LastUpdatedAt, payload.ProductName, payload.RegularCronName, payload.RegularCronId, payload.SlowCronName, payload.SlowCronId, payload.LinkedTradentDetailsInfo, payload.LinkedFrontiersDetailsInfo, payload.LinkedMvpDetailsInfo, false, payload.IsBadgeItem, payload.LinkedTopDentDetailsInfo, payload.LinkedFirstDentDetailsInfo, payload.LinkedTriadDetailsInfo]);
+    const queryToCall = `CALL ${applicationConfig.SQL_SP_UPSERT_PRODUCT_DETAILSV4}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+    const upsertResult = await db.query(queryToCall, [payload.MpId, payload.IsActive, payload.Net32Url, payload.LinkedCronName, payload.LinkedCronId, payload.LastUpdatedBy, payload.LastUpdatedAt, payload.ProductName, payload.RegularCronName, payload.RegularCronId, payload.SlowCronName, payload.SlowCronId, payload.LinkedTradentDetailsInfo, payload.LinkedFrontiersDetailsInfo, payload.LinkedMvpDetailsInfo, false, payload.IsBadgeItem, payload.LinkedTopDentDetailsInfo, payload.LinkedFirstDentDetailsInfo, payload.LinkedTriadDetailsInfo, payload.LinkedBiteSupplyDetailsInfo]);
     return upsertResult[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);

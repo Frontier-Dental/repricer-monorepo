@@ -67,6 +67,10 @@ export function MapProductDetailsList(payload: any) {
         groupedList[parseInt(prodId)],
         VendorName.TRIAD,
       ),
+      biteSupplyLinkInfo: getLinkedInfoForVendor(
+        groupedList[parseInt(prodId)],
+        VendorName.BITESUPPLY,
+      ),
       tradentDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
         VendorName.TRADENT,
@@ -90,6 +94,10 @@ export function MapProductDetailsList(payload: any) {
       triadDetails: getMappedVendorDetails(
         groupedList[parseInt(prodId)],
         VendorName.TRIAD,
+      ),
+      biteSupplyDetails: getMappedVendorDetails(
+        groupedList[parseInt(prodId)],
+        VendorName.BITESUPPLY,
       ),
     };
     mappedList.push(mappedProduct as any);
@@ -158,6 +166,7 @@ export function ToEnvSettingsModel(incomingSqlData: any): any {
         firstDent_priority: getPriority(incomingSqlData, "FIRSTDENT"),
         topDent_priority: getPriority(incomingSqlData, "TOPDENT"),
         triad_priority: getPriority(incomingSqlData, "TRIAD"),
+        biteSupply_priority: getPriority(incomingSqlData, "BITESUPPLY"),
       },
     },
   };
