@@ -20,6 +20,8 @@ import { AlgoExecutionMode } from "@repricer-monorepo/shared";
 import * as ResultParser from "../../../utility/repriceResultParser";
 import * as filterMapper from "../../../utility/filter-mapper";
 import * as buyBoxHelper from "../../../utility/buy-box-helper";
+import { findTinyProxyConfigByVendorId } from "../../mysql/tinyproxy-configs";
+import { updatePrice } from "../v2/wrapper";
 
 export async function repriceProduct(mpid: string, net32Products: Net32Product[], internalProduct: any, contextVendor: string) {
   let productItem = internalProduct;
@@ -242,12 +244,16 @@ export async function repriceProduct(mpid: string, net32Products: Net32Product[]
     let priceUpdatedResponse = null;
 
     const priceChangeAllowed = productItem.algo_execution_mode === AlgoExecutionMode.V1_ONLY || productItem.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY;
-
+    const contextVendorId = productItem.ownVendorId;
+    const proxyConfig = await findTinyProxyConfigByVendorId(parseInt(contextVendorId));
     if (repriceResult?.isMultiplePriceBreakAvailable !== true) {
       priceUpdatedRequest.payload = new UpdateRequest(mpid, repriceResult?.repriceDetails?.newPrice, 1, productItem.cronName);
-
       if (!isDev && priceChangeAllowed) {
-        priceUpdatedResponse = await axiosHelper.postAsync(priceUpdatedRequest, priceUpdateUrl!);
+        if (applicationConfig.PRICE_UPDATE_V2_ENABLED) {
+          priceUpdatedResponse = await updatePrice(proxyConfig, priceUpdatedRequest.secretKey, priceUpdatedRequest.payload);
+        } else {
+          priceUpdatedResponse = await axiosHelper.postAsync(priceUpdatedRequest, priceUpdateUrl!);
+        }
       } else {
         priceUpdatedResponse = {
           data: {
@@ -271,7 +277,11 @@ export async function repriceProduct(mpid: string, net32Products: Net32Product[]
       });
       if (priceUpdatedRequest.payload.priceList.length > 0) {
         if (!isDev && priceChangeAllowed) {
-          priceUpdatedResponse = await axiosHelper.postAsync(priceUpdatedRequest, priceUpdateUrl!);
+          if (applicationConfig.PRICE_UPDATE_V2_ENABLED) {
+            priceUpdatedResponse = await updatePrice(proxyConfig, priceUpdatedRequest.secretKey, priceUpdatedRequest.payload);
+          } else {
+            priceUpdatedResponse = await axiosHelper.postAsync(priceUpdatedRequest, priceUpdateUrl!);
+          }
         } else {
           priceUpdatedResponse = {
             data: {
