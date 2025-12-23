@@ -239,11 +239,6 @@ export async function GetEligibleContextErrorItems(_activeStatus: any, _mpId: an
         mpId: parseInt(_mpId),
       },
       {
-        nextCronTime: {
-          $lte: new Date(),
-        },
-      },
-      {
         vendorName: {
           $ne: _contextVendor,
         },
