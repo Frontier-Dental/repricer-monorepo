@@ -197,7 +197,7 @@ export async function GetActiveProductListByCronId(cronId: string, isSlowCron = 
     return MapProductDetailsList(productList);
   } catch (error) {
     console.log("Error in GetActiveProductListByCronId", cronId, isSlowCron, error);
-    //throw error;
+    throw error;
   } finally {
     //destroyKnexInstance();
   }
@@ -478,16 +478,14 @@ export async function UpdateTriggeredByVendor(payload: any, contextVendor: strin
   return triggeredByValue;
 }
 
-export async function UpdateHistoryWithMessage(identifier: string | number, history: string) {
+export async function UpdateHistoryWithMessage(identifier: any, history: string) {
   try {
     const knex = getKnexInstance();
-    const updateResult = await knex(applicationConfig.SQL_HISTORY!).update({ RepriceComment: history }).where("Id", identifier);
+    const updateResult = await knex(applicationConfig.SQL_HISTORY!).update({ RepriceComment: history }).where("Id", parseInt(identifier));
     return updateResult;
   } catch (error) {
     console.log("Error in UpdateHistoryWithMessage", identifier, history, error);
     //throw error;
-  } finally {
-    //destroyKnexInstance();
   }
 }
 
@@ -555,7 +553,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
     return MapProductDetailsList(result[0]);
   } catch (error) {
     console.log("Error in GetActiveFullProductDetailsList", cronId, error);
-    //throw error;
+    throw error;
   } finally {
     //destroyKnexInstance();
   }
