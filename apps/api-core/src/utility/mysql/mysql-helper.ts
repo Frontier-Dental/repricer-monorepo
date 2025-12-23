@@ -652,7 +652,7 @@ export async function GetCurrentStock(mpids: string[], vendorName: string): Prom
     return result;
   } catch (error) {
     console.log("Error in GetCurrentStock", mpids, vendorName, contextTableName, error);
-    //throw error;
+    throw error;
   } finally {
     //destroyKnexInstance();
   }
@@ -664,7 +664,7 @@ export async function WaitlistInsert(waitlistItems: WaitlistModel[]) {
     await knex(applicationConfig.SQL_WAITLIST!).insert(waitlistItems);
   } catch (error) {
     console.log("Error in WaitlistInsert", waitlistItems, error);
-    //throw error;
+    throw error;
   } finally {
     //destroyKnexInstance();
   }
@@ -677,7 +677,7 @@ export async function GetWaitlistPendingItems(): Promise<WaitlistModel[]> {
     return result;
   } catch (error) {
     console.log("Error in GetWaitlistPendingItems", error);
-    //throw error;
+    throw error;
   } finally {
     //destroyKnexInstance();
   }
@@ -689,7 +689,7 @@ export async function UpdateWaitlistStatus(id: number, status: string, message?:
     await knex(applicationConfig.SQL_WAITLIST!).where("id", id).update({ api_status: status, message: message, updated_at: new Date() });
   } catch (error) {
     console.log("Error in UpdateWaitlistStatus", id, status, message, error);
-    //throw error;
+    throw error;
   } finally {
     //destroyKnexInstance();
   }
@@ -702,7 +702,7 @@ export async function UpdateVendorStock(vendorName: string, mpid: number, invent
     await knex(contextTableName!).where("MpId", mpid).update({ CurrentInventory: inventory });
   } catch (error) {
     console.log("Error in UpdateVendorStock", vendorName, mpid, inventory, error);
-    //throw error;
+    throw error;
   } finally {
     //destroyKnexInstance();
   }
