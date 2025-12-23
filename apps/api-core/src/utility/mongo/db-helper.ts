@@ -245,8 +245,10 @@ export async function GetEligibleContextErrorItems(_activeStatus: any, _mpId: an
       },
     ],
   };
+  console.log(`DB_HELPER: Fetching GetEligibleContextErrorItems for mpId: ${_mpId} excluding vendor: ${_contextVendor}`);
   const dbo = await getMongoDb();
   const result = await dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).find(query).toArray();
+  console.log(`DB_HELPER: Retrieved ${result.length} eligible context error items for mpId: ${_mpId} : ${JSON.stringify(result)}`);
   return result as ErrorItem[];
 }
 
@@ -331,5 +333,6 @@ export const GetContextErrorItems = async (_activeStatus: any): Promise<any> => 
     active: _activeStatus,
   };
   const dbo = await getMongoDb();
+  console.log(`DB_HELPER: Fetching GetContextErrorItems with active status: ${_activeStatus} || Query: ${JSON.stringify(query)}`);
   return dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).find(query).toArray();
 };
