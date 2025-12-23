@@ -14,35 +14,16 @@ import Decimal from "decimal.js";
 
 export async function FilterProducts(filterCronDetails: any) {
   const filterDuration = parseInt(filterCronDetails.filterValue);
-  let filterDateValue = moment(Date.now())
-    .subtract(filterDuration, "h")
-    .format();
+  let filterDateValue = moment(Date.now()).subtract(filterDuration, "h").format();
   let filterDate = new Date(filterDateValue);
-  console.log(
-    `Filter Cron : Running ${filterCronDetails.cronName} for Filter Date : ${filterDate} at ${new Date()}`,
-  );
+  console.log(`Filter Cron : Running ${filterCronDetails.cronName} for Filter Date : ${filterDate} at ${new Date()}`);
   //const filterQuery = await getFilterQuery(filterDate, regularCronSet);
-  let listOfEligibleProducts =
-    await sqlHelper.GetFilterEligibleProductsList(filterDate); //ait dbHelper.GetProductListByQuery(filterQuery);
-  console.log(
-    `Received Filter Products for ${filterCronDetails.cronName} | Product Count : ${listOfEligibleProducts.length}`,
-  );
+  let listOfEligibleProducts = await sqlHelper.GetFilterEligibleProductsList(filterDate); //ait dbHelper.GetProductListByQuery(filterQuery);
+  console.log(`Received Filter Products for ${filterCronDetails.cronName} | Product Count : ${listOfEligibleProducts.length}`);
   if (listOfEligibleProducts && listOfEligibleProducts.length > 0) {
-    let filterCronLog = new FilterCronLog(
-      Generate(),
-      filterCronDetails.cronId,
-      filterDate as any,
-      [],
-    );
+    let filterCronLog = new FilterCronLog(Generate(), filterCronDetails.cronId, filterDate as any, []);
     for (let product of listOfEligibleProducts) {
-      const logItem = new FilterCronItem(
-        product.MpId,
-        product.RegularCronId,
-        product.RegularCronName,
-        filterCronDetails.linkedCronId,
-        filterCronDetails.linkedCronName,
-        getLastUpdateTime(product),
-      );
+      const logItem = new FilterCronItem(product.MpId, product.RegularCronId, product.RegularCronName, filterCronDetails.linkedCronId, filterCronDetails.linkedCronName, getLastUpdateTime(product));
       // Set CronId to Slow Cron Group & update the Parent Cron Details
       if (applicationConfig.ENABLE_SLOW_CRON_FEATURE) {
         product.tradentDetails = {};
@@ -63,16 +44,9 @@ export async function FilterProducts(filterCronDetails: any) {
 
 export function GetLastCronMessageSimple(repriceResult: any): string {
   let resultStr = "";
-  if (
-    repriceResult &&
-    repriceResult.cronResponse &&
-    repriceResult.cronResponse.repriceData
-  ) {
+  if (repriceResult && repriceResult.cronResponse && repriceResult.cronResponse.repriceData) {
     const repriceResultInfo = repriceResult.cronResponse.repriceData;
-    if (
-      repriceResultInfo.listOfRepriceDetails &&
-      repriceResultInfo.listOfRepriceDetails.length > 0
-    ) {
+    if (repriceResultInfo.listOfRepriceDetails && repriceResultInfo.listOfRepriceDetails.length > 0) {
       for (const rep of repriceResultInfo.listOfRepriceDetails) {
         resultStr += `${rep.minQty}@${rep.explained}/`;
       }
@@ -83,21 +57,12 @@ export function GetLastCronMessageSimple(repriceResult: any): string {
   return resultStr;
 }
 
-export async function FilterBasedOnParams(
-  inputResult: Net32Product[],
-  productItem: FrontierProduct,
-  filterType: string,
-) {
+export async function FilterBasedOnParams(inputResult: Net32Product[], productItem: FrontierProduct, filterType: string) {
   let outputResult: Net32Product[] = [];
   const $ = await GetInfo(productItem.mpid, productItem);
   switch (filterType) {
     case "EXCLUDED_VENDOR":
-      const excludedVendorList =
-        productItem.excludedVendors != null && productItem.excludedVendors != ""
-          ? productItem.excludedVendors
-              .split(";")
-              .filter((element) => element.trim() !== "")
-          : [];
+      const excludedVendorList = productItem.excludedVendors != null && productItem.excludedVendors != "" ? productItem.excludedVendors.split(";").filter((element) => element.trim() !== "") : [];
       outputResult = _.filter(inputResult, (item) => {
         return !_.includes(excludedVendorList, item.vendorId.toString());
       });
@@ -105,18 +70,11 @@ export async function FilterBasedOnParams(
     case "INVENTORY_THRESHOLD":
       if (productItem.includeInactiveVendors) {
         outputResult = _.filter(inputResult, (item) => {
-          return (
-            parseInt(item.inventory as unknown as string) >=
-            parseInt(productItem.inventoryThreshold as unknown as string)
-          );
+          return parseInt(item.inventory as unknown as string) >= parseInt(productItem.inventoryThreshold as unknown as string);
         });
       } else {
         outputResult = inputResult.filter((item) => {
-          return (
-            item.inStock &&
-            parseInt(item.inventory as unknown as string) >=
-              parseInt(productItem.inventoryThreshold as unknown as string)
-          );
+          return item.inStock && parseInt(item.inventory as unknown as string) >= parseInt(productItem.inventoryThreshold as unknown as string);
         });
       }
       break;
@@ -163,9 +121,7 @@ export async function FilterBasedOnParams(
           });
         } else {
           badgedItems = _.filter(inputResult, (item) => {
-            return (
-              item.badgeId && item.badgeId > 0 && item.badgeName && item.inStock
-            );
+            return item.badgeId && item.badgeId > 0 && item.badgeName && item.inStock;
           });
         }
         if (
@@ -210,22 +166,12 @@ export async function FilterBasedOnParams(
     case "PHANTOM_PRICE_BREAK":
       if (parseInt(productItem.contextMinQty as unknown as string) != 1) {
         outputResult = inputResult.filter((item) => {
-          return (
-            item.inStock &&
-            item.inventory &&
-            item.inventory >=
-              parseInt(productItem.contextMinQty as unknown as string)
-          );
+          return item.inStock && item.inventory && item.inventory >= parseInt(productItem.contextMinQty as unknown as string);
         });
       } else outputResult = inputResult;
       break;
     case "SISTER_VENDOR_EXCLUSION":
-      const excludedSisterList =
-        $.EXCLUDED_VENDOR_ID != null && $.EXCLUDED_VENDOR_ID != ""
-          ? $.EXCLUDED_VENDOR_ID.split(";").filter(
-              (element: any) => element.trim() !== "",
-            )
-          : [];
+      const excludedSisterList = $.EXCLUDED_VENDOR_ID != null && $.EXCLUDED_VENDOR_ID != "" ? $.EXCLUDED_VENDOR_ID.split(";").filter((element: any) => element.trim() !== "") : [];
       outputResult = inputResult.filter((item) => {
         return !_.includes(excludedSisterList, item.vendorId.toString());
       });
@@ -236,24 +182,13 @@ export async function FilterBasedOnParams(
   return outputResult;
 }
 
-export async function GetContextPrice(
-  nextLowestPrice: any,
-  processOffset: any,
-  floorPrice: any,
-  percentageDown: any,
-  minQty: any,
-): Promise<any> {
+export async function GetContextPrice(nextLowestPrice: any, processOffset: any, floorPrice: any, percentageDown: any, minQty: any): Promise<any> {
   let returnObj: any = {};
-  returnObj.Price = new Decimal(nextLowestPrice)
-    .minus(processOffset)
-    .toNumber(); // Math.trunc((nextLowestPrice - processOffset) * 100) / 100 ;
+  returnObj.Price = new Decimal(nextLowestPrice).minus(processOffset).toNumber(); // Math.trunc((nextLowestPrice - processOffset) * 100) / 100 ;
   returnObj.Type = "OFFSET";
   try {
     if (percentageDown != 0 && minQty == 1) {
-      const percentageDownPrice = subtractPercentage(
-        nextLowestPrice,
-        percentageDown,
-      );
+      const percentageDownPrice = subtractPercentage(nextLowestPrice, percentageDown);
       if (percentageDownPrice > floorPrice) {
         returnObj.Price = percentageDownPrice;
         returnObj.Type = "PERCENTAGE";
@@ -273,42 +208,21 @@ export function AppendPriceFactorTag(strValue: string, objType: string) {
   else return strValue;
 }
 
-export function IsVendorFloorPrice(
-  priceBreakList: any,
-  minQty: any,
-  floorPrice: any,
-  shippingCharge: any,
-  isNc: any,
-) {
+export function IsVendorFloorPrice(priceBreakList: any, minQty: any, floorPrice: any, shippingCharge: any, isNc: any) {
   const contextPriceBreak = priceBreakList.find((x: any) => x.minQty == minQty);
   const shippingPrice = shippingCharge ? parseFloat(shippingCharge) : 0;
   if (contextPriceBreak) {
-    const contextPrice = isNc
-      ? parseFloat(contextPriceBreak.unitPrice) +
-        parseFloat(shippingPrice as unknown as string)
-      : parseFloat(contextPriceBreak.unitPrice);
+    const contextPrice = isNc ? parseFloat(contextPriceBreak.unitPrice) + parseFloat(shippingPrice as unknown as string) : parseFloat(contextPriceBreak.unitPrice);
     return contextPrice <= floorPrice;
   }
   return false;
 }
 
-export async function VerifyFloorWithSister(
-  productItem: any,
-  refProduct: any,
-  sortedPayload: any,
-  excludedVendors: any,
-  ownVendorId: any,
-  minQty: any,
-  sourceId: any,
-): Promise<any> {
+export async function VerifyFloorWithSister(productItem: any, refProduct: any, sortedPayload: any, excludedVendors: any, ownVendorId: any, minQty: any, sourceId: any): Promise<any> {
   let aboveFloorVendors: any[] = [];
   const processOffset = applicationConfig.OFFSET;
-  const floorPrice = productItem.floorPrice
-    ? parseFloat(productItem.floorPrice)
-    : 0;
-  const existingPrice = refProduct.priceBreaks.find(
-    (x: any) => x.minQty == minQty,
-  ).unitPrice;
+  const floorPrice = productItem.floorPrice ? parseFloat(productItem.floorPrice) : 0;
+  const existingPrice = refProduct.priceBreaks.find((x: any) => x.minQty == minQty).unitPrice;
   for (let k = 1; k <= sortedPayload.length; k++) {
     if (sortedPayload[k] && sortedPayload[k].priceBreaks) {
       if (sortedPayload[k].vendorId == ownVendorId) continue;
@@ -317,65 +231,27 @@ export async function VerifyFloorWithSister(
           return true;
         }
       }).unitPrice;
-      const updatePrice = await GetContextPrice(
-        parseFloat(pbPrice),
-        processOffset,
-        floorPrice,
-        parseFloat(productItem.percentageDown),
-        1,
-      );
+      const updatePrice = await GetContextPrice(parseFloat(pbPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1);
       if (updatePrice.Price > floorPrice) {
         aboveFloorVendors.push(sortedPayload[k]);
       }
     }
   }
-  if (
-    aboveFloorVendors.length > 0 &&
-    _.includes(excludedVendors, _.first(aboveFloorVendors).vendorId.toString())
-  ) {
-    let model = new RepriceModel(
-      sourceId,
-      refProduct,
-      productItem.productName,
-      existingPrice,
-      false,
-      false,
-      [],
-      `${RepriceRenewedMessageEnum.NO_COMPETITOR_SISTER_VENDOR} #HitFloor`,
-    );
-    const effectiveLowest = _.first(aboveFloorVendors).priceBreaks.find(
-      (x: any) => x.minQty == 1 && x.active == true,
-    ).unitPrice;
+  if (aboveFloorVendors.length > 0 && _.includes(excludedVendors, _.first(aboveFloorVendors).vendorId.toString())) {
+    let model = new RepriceModel(sourceId, refProduct, productItem.productName, existingPrice, false, false, [], `${RepriceRenewedMessageEnum.NO_COMPETITOR_SISTER_VENDOR} #HitFloor`);
+    const effectiveLowest = _.first(aboveFloorVendors).priceBreaks.find((x: any) => x.minQty == 1 && x.active == true).unitPrice;
     model.updateLowest(_.first(aboveFloorVendors).vendorName, effectiveLowest);
-    const contextPriceResult = await GetContextPrice(
-      parseFloat(effectiveLowest),
-      processOffset,
-      floorPrice,
-      parseFloat(productItem.percentageDown),
-      1,
-    );
+    const contextPriceResult = await GetContextPrice(parseFloat(effectiveLowest), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1);
     var contextPrice = contextPriceResult.Price;
     model.repriceDetails!.goToPrice = contextPrice.toFixed(2);
-    model.updateTriggeredBy(
-      _.first(aboveFloorVendors).vendorName,
-      _.first(aboveFloorVendors).vendorId,
-      1,
-    );
+    model.updateTriggeredBy(_.first(aboveFloorVendors).vendorName, _.first(aboveFloorVendors).vendorId, 1);
     return model;
   } else return false;
 }
 
-export async function IsWaitingForNextRun(
-  mpId: any,
-  contextVendor: string,
-  prod: any,
-) {
+export async function IsWaitingForNextRun(mpId: any, contextVendor: string, prod: any) {
   if (prod.cronName == applicationConfig.CRON_NAME_422) return false; // If the product is Express Cron, no need to check for waiting status
-  const dbResult = await dbHelper.FindErrorItemByIdAndStatus(
-    parseInt(mpId),
-    true,
-    contextVendor.toUpperCase(),
-  );
+  const dbResult = await dbHelper.FindErrorItemByIdAndStatus(parseInt(mpId), true, contextVendor.toUpperCase());
   return dbResult > 0;
 }
 
@@ -387,11 +263,7 @@ async function getFilterQuery(filterDate: any, regularCronSet: any) {
           {
             $and: [
               {
-                $or: [
-                  { "tradentDetails.last_update_time": { $exists: false } },
-                  { "tradentDetails.last_update_time": null },
-                  { "tradentDetails.last_update_time": { $lte: filterDate } },
-                ],
+                $or: [{ "tradentDetails.last_update_time": { $exists: false } }, { "tradentDetails.last_update_time": null }, { "tradentDetails.last_update_time": { $lte: filterDate } }],
               },
               { "tradentDetails.cronId": { $in: regularCronSet } },
               { "tradentDetails.activated": true },
@@ -407,11 +279,7 @@ async function getFilterQuery(filterDate: any, regularCronSet: any) {
           {
             $and: [
               {
-                $or: [
-                  { "frontierDetails.last_update_time": { $exists: false } },
-                  { "frontierDetails.last_update_time": null },
-                  { "frontierDetails.last_update_time": { $lte: filterDate } },
-                ],
+                $or: [{ "frontierDetails.last_update_time": { $exists: false } }, { "frontierDetails.last_update_time": null }, { "frontierDetails.last_update_time": { $lte: filterDate } }],
               },
               { "frontierDetails.cronId": { $in: regularCronSet } },
               { "frontierDetails.activated": true },
@@ -427,11 +295,7 @@ async function getFilterQuery(filterDate: any, regularCronSet: any) {
           {
             $and: [
               {
-                $or: [
-                  { "mvpDetails.last_update_time": { $exists: false } },
-                  { "mvpDetails.last_update_time": null },
-                  { "mvpDetails.last_update_time": { $lte: filterDate } },
-                ],
+                $or: [{ "mvpDetails.last_update_time": { $exists: false } }, { "mvpDetails.last_update_time": null }, { "mvpDetails.last_update_time": { $lte: filterDate } }],
               },
               { "mvpDetails.cronId": { $in: regularCronSet } },
               { "mvpDetails.activated": true },
@@ -479,17 +343,10 @@ function getLastUpdateTime(product: any) {
 }
 
 export function subtractPercentage(originalNumber: number, percentage: number) {
-  return parseFloat(
-    (
-      Math.floor((originalNumber - originalNumber * percentage) * 100) / 100
-    ).toFixed(2),
-  );
+  return parseFloat((Math.floor((originalNumber - originalNumber * percentage) * 100) / 100).toFixed(2));
 }
 
-export async function GetProductDetailsByVendor(
-  details: any,
-  contextVendor: string,
-) {
+export async function GetProductDetailsByVendor(details: any, contextVendor: string) {
   if (contextVendor == "TRADENT") {
     return details.tradentDetails;
   }
@@ -510,51 +367,26 @@ export async function GetProductDetailsByVendor(
   }
 }
 
-export async function GetTriggeredByVendor(
-  repriceResult: any,
-  mpId: string,
-  contextVendor: string,
-): Promise<{ resultStr: string; updateRequired: boolean }> {
+export async function GetTriggeredByVendor(repriceResult: any, mpId: string, contextVendor: string): Promise<{ resultStr: string; updateRequired: boolean }> {
   const productDetails = await sqlHelper.GetItemListById(mpId);
   let updateRequired = hasPriceChanged(repriceResult);
   let resultStr = "";
   if (productDetails && repriceResult) {
-    const contextVendorDetails = await GetProductDetailsByVendor(
-      productDetails,
-      contextVendor,
-    );
+    const contextVendorDetails = await GetProductDetailsByVendor(productDetails, contextVendor);
     if (contextVendorDetails) {
-      const existingTriggeredByVendorValue =
-        contextVendorDetails.triggeredByVendor;
-      if (
-        existingTriggeredByVendorValue != null ||
-        existingTriggeredByVendorValue != ""
-      ) {
+      const existingTriggeredByVendorValue = contextVendorDetails.triggeredByVendor;
+      if (existingTriggeredByVendorValue != null || existingTriggeredByVendorValue != "") {
         if (repriceResult.repriceDetails) {
-          resultStr = repriceResult.repriceDetails.isRepriced
-            ? repriceResult.repriceDetails.triggeredByVendor
-            : existingTriggeredByVendorValue;
-        } else if (
-          repriceResult.listOfRepriceDetails &&
-          repriceResult.listOfRepriceDetails.length > 0
-        ) {
-          const existingSegregatedMessage: any = await flattenExistingValue(
-            existingTriggeredByVendorValue,
-            ",",
-            /^(\d+)\s*@\s*(.+)$/,
-          );
-          const repricedPriceBreak = _.filter(
-            repriceResult.listOfRepriceDetails,
-            (rp: any) => rp.isRepriced === true,
-          );
+          resultStr = repriceResult.repriceDetails.isRepriced ? repriceResult.repriceDetails.triggeredByVendor : existingTriggeredByVendorValue;
+        } else if (repriceResult.listOfRepriceDetails && repriceResult.listOfRepriceDetails.length > 0) {
+          const existingSegregatedMessage: any = await flattenExistingValue(existingTriggeredByVendorValue, ",", /^(\d+)\s*@\s*(.+)$/);
+          const repricedPriceBreak = _.filter(repriceResult.listOfRepriceDetails, (rp: any) => rp.isRepriced === true);
           if (repricedPriceBreak && repricedPriceBreak.length > 0) {
             let recordsOfMessages = [];
             //If Existing Price breaks are Available
             for (let record of existingSegregatedMessage) {
               if (record) {
-                const priceUpdaterPriceBreak = repricedPriceBreak.find(
-                  (x: any) => x.minQty === record.minQty,
-                );
+                const priceUpdaterPriceBreak = repricedPriceBreak.find((x: any) => x.minQty === record.minQty);
                 if (priceUpdaterPriceBreak)
                   recordsOfMessages.push({
                     minQty: record.minQty,
@@ -566,9 +398,7 @@ export async function GetTriggeredByVendor(
             }
             //If New Price breaks are Added
             for (let pb of repricedPriceBreak) {
-              const hasPriceBreak = existingSegregatedMessage?.some(
-                (item: { minQty: any }) => item.minQty === pb.minQty,
-              );
+              const hasPriceBreak = existingSegregatedMessage?.some((item: { minQty: any }) => item.minQty === pb.minQty);
               if (!hasPriceBreak) {
                 recordsOfMessages.push({
                   minQty: pb.minQty,
@@ -590,10 +420,7 @@ export async function GetTriggeredByVendor(
         } else resultStr = `TriggeredByVendorValue is empty`;
       } else if (repriceResult.repriceDetails) {
         resultStr = repriceResult.repriceDetails.triggeredByVendor;
-      } else if (
-        repriceResult.listOfRepriceDetails &&
-        repriceResult.listOfRepriceDetails.length > 0
-      ) {
+      } else if (repriceResult.listOfRepriceDetails && repriceResult.listOfRepriceDetails.length > 0) {
         for (const rep of repriceResult.listOfRepriceDetails) {
           resultStr += `${rep.triggeredByVendor},`;
         }
@@ -605,13 +432,7 @@ export async function GetTriggeredByVendor(
   return { resultStr, updateRequired };
 }
 
-async function flattenExistingValue(
-  existingLastCronMessage: string,
-  delimiter: string,
-  pattern: RegExp,
-): Promise<
-  Array<{ minQty: number; message: string; isExistingMessage: true }>
-> {
+async function flattenExistingValue(existingLastCronMessage: string, delimiter: string, pattern: RegExp): Promise<Array<{ minQty: number; message: string; isExistingMessage: true }>> {
   const segments = existingLastCronMessage
     .split(delimiter)
     .map((s) => s.trim())
@@ -636,9 +457,7 @@ function cleanRepeatedPrefix(input: string): string {
 
 function hasPriceChanged(repriceResult: any): boolean {
   if ((repriceResult.listOfRepriceDetails ?? []).length > 0) {
-    return (repriceResult.listOfRepriceDetails ?? []).some(
-      (x: { isRepriced: boolean }) => x.isRepriced,
-    );
+    return (repriceResult.listOfRepriceDetails ?? []).some((x: { isRepriced: boolean }) => x.isRepriced);
   } else return repriceResult.repriceDetails?.isRepriced;
 }
 
@@ -646,9 +465,7 @@ function stripPrefix(input: string, regex: RegExp): string {
   return input.replace(regex, "");
 }
 
-async function flattenExistingMessages(
-  existingLastCronMessage: any,
-): Promise<[]> {
+async function flattenExistingMessages(existingLastCronMessage: any): Promise<[]> {
   const segments = existingLastCronMessage.split("/").filter(Boolean); // Remove empty segments
   return segments.map((segment: string) => {
     const match = segment.match(/^(\d+)@(.+)$/);
@@ -660,53 +477,25 @@ async function flattenExistingMessages(
   });
 }
 
-export async function GetLastCronMessage(
-  repriceResult: any,
-  mpId: string,
-  contextVendor: string,
-): Promise<string> {
+export async function GetLastCronMessage(repriceResult: any, mpId: string, contextVendor: string): Promise<string> {
   const productDetails = await sqlHelper.GetItemListById(mpId);
   let resultStr = "";
-  if (
-    productDetails &&
-    repriceResult &&
-    repriceResult.data &&
-    repriceResult.data.cronResponse &&
-    repriceResult.data.cronResponse.repriceData
-  ) {
-    const contextVendorDetails = await GetProductDetailsByVendor(
-      productDetails,
-      contextVendor,
-    );
+  if (productDetails && repriceResult && repriceResult.data && repriceResult.data.cronResponse && repriceResult.data.cronResponse.repriceData) {
+    const contextVendorDetails = await GetProductDetailsByVendor(productDetails, contextVendor);
     if (contextVendorDetails) {
       const existingLastCronMessage = contextVendorDetails.last_cron_message;
       if (existingLastCronMessage != null || existingLastCronMessage != "") {
         if (repriceResult.data.cronResponse.repriceData.repriceDetails) {
-          resultStr = repriceResult.data.cronResponse.repriceData.repriceDetails
-            .isRepriced
-            ? repriceResult.data.cronResponse.repriceData.repriceDetails
-                .explained
-            : existingLastCronMessage;
-        } else if (
-          repriceResult.data.cronResponse.repriceData.listOfRepriceDetails &&
-          repriceResult.data.cronResponse.repriceData.listOfRepriceDetails
-            .length > 0
-        ) {
-          const existingSegregatedMessage: any = await flattenExistingMessages(
-            existingLastCronMessage,
-          );
-          const repricedPriceBreak = _.filter(
-            repriceResult.data.cronResponse.repriceData.listOfRepriceDetails,
-            (rp: any) => rp.isRepriced === true,
-          );
+          resultStr = repriceResult.data.cronResponse.repriceData.repriceDetails.isRepriced ? repriceResult.data.cronResponse.repriceData.repriceDetails.explained : existingLastCronMessage;
+        } else if (repriceResult.data.cronResponse.repriceData.listOfRepriceDetails && repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.length > 0) {
+          const existingSegregatedMessage: any = await flattenExistingMessages(existingLastCronMessage);
+          const repricedPriceBreak = _.filter(repriceResult.data.cronResponse.repriceData.listOfRepriceDetails, (rp: any) => rp.isRepriced === true);
           if (repricedPriceBreak && repricedPriceBreak.length > 0) {
             let recordsOfMessages = [];
             //If Existing Price breaks are Available
             for (let record of existingSegregatedMessage) {
               if (record) {
-                const priceUpdaterPriceBreak = repricedPriceBreak.find(
-                  (x: any) => x.minQty === record.minQty,
-                );
+                const priceUpdaterPriceBreak = repricedPriceBreak.find((x: any) => x.minQty === record.minQty);
                 if (priceUpdaterPriceBreak)
                   recordsOfMessages.push({
                     minQty: record.minQty,
@@ -717,9 +506,7 @@ export async function GetLastCronMessage(
             }
             //If New Price breaks are Added
             for (let pb of repricedPriceBreak) {
-              const hasPriceBreak = existingSegregatedMessage.some(
-                (item: { minQty: any }) => item.minQty === pb.minQty,
-              );
+              const hasPriceBreak = existingSegregatedMessage.some((item: { minQty: any }) => item.minQty === pb.minQty);
               if (!hasPriceBreak) {
                 recordsOfMessages.push({
                   minQty: pb.minQty,
@@ -737,19 +524,11 @@ export async function GetLastCronMessage(
           }
         } else resultStr = `Reprice Result is empty`;
       } else if (repriceResult.data.cronResponse.repriceData.repriceDetails) {
-        resultStr =
-          repriceResult.data.cronResponse.repriceData.repriceDetails.explained;
-      } else if (
-        !(
-          repriceResult.data.cronResponse.repriceData.listOfRepriceDetails &&
-          repriceResult.data.cronResponse.repriceData.listOfRepriceDetails
-            .length > 0
-        )
-      ) {
+        resultStr = repriceResult.data.cronResponse.repriceData.repriceDetails.explained;
+      } else if (!(repriceResult.data.cronResponse.repriceData.listOfRepriceDetails && repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.length > 0)) {
         resultStr = `Reprice Result is empty`;
       } else {
-        for (const rep of repriceResult.data.cronResponse.repriceData
-          .listOfRepriceDetails) {
+        for (const rep of repriceResult.data.cronResponse.repriceData.listOfRepriceDetails) {
           resultStr += `${rep.minQty}@${rep.explained}/`;
         }
       }

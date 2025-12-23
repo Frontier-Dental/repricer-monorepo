@@ -20,7 +20,10 @@ EXPOSE 5001
 
 # Set environment variables
 ENV NODE_ENV=production
+RUN apt-get update && apt-get install -y tzdata
 ENV TZ=Canada/Eastern
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 
 # Start the application
 WORKDIR /app/apps/api-core

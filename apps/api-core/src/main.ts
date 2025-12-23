@@ -60,6 +60,7 @@ nodeApp.use(
   })
 );
 const port = applicationConfig.PORT;
+process.env.TZ = "Canada/Eastern";
 nodeApp.use(searchController);
 nodeApp.use(mainCronController);
 nodeApp.use(cacheController);

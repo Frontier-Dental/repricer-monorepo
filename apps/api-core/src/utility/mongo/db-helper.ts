@@ -323,24 +323,6 @@ export async function UpdateScrapeProducts(mpId: any) {
   );
 }
 
-// export const GetRotatingProxyUrl = async (): Promise<any> => {
-//   const query = {
-//     $and: [
-//       {
-//         proxyProvider: 1,
-//       },
-//       {
-//         ipType: 1,
-//       },
-//     ],
-//   };
-//   const dbo = await getMongoDb();
-//   const result = await dbo
-//     .collection(applicationConfig.IP_CONFIG)
-//     .findOne(query);
-//   return result?.hostUrl;
-// };
-
 export const GetContextErrorItems = async (_activeStatus: any): Promise<any> => {
   const query = {
     nextCronTime: {
