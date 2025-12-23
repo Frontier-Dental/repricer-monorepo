@@ -15,6 +15,9 @@ RUN npm prune --production
 EXPOSE 3003
 
 ENV NODE_ENV=production
+RUN apt-get update && apt-get install -y tzdata
+ENV TZ=Canada/Eastern
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3003/health', (r) => {r.statusCode === 200 ? process.exit(0) : process.exit(1)})"

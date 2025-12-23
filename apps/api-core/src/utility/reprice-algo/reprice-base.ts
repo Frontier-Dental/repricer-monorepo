@@ -165,10 +165,6 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
           prod.last_cron_time = new Date();
           let isPriceUpdated = false;
           if (prod.scrapeOn == true && prod.activated == true) {
-            // const postUrl = applicationConfig.REPRICE_OWN_URL.replace(
-            //   "{mpId}",
-            //   prod.mpid,
-            // );
             console.log(`REPRICE : Cron-422 : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid} at Time :  ${new Date().toISOString()}`);
             prod.last_attempted_time = new Date();
             prod.lastCronRun = `Cron-422`;
