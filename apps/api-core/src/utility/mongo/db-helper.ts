@@ -10,45 +10,35 @@ import { CacheKey } from "@repricer-monorepo/shared";
 
 export async function InitCronStatusAsync(payload: any) {
   const dbo = await getMongoDb();
-  const { insertedId } = await dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
-    .insertOne(payload);
+  const { insertedId } = await dbo.collection(applicationConfig.CRON_STATUS_COLLECTION_NAME).insertOne(payload);
   return insertedId;
 }
 
 export async function UpdateCronStatusAsync(payload: any) {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
-    .findOneAndUpdate(
-      {
-        $and: [{ cronTime: payload.cronTime }, { keyGenId: payload.keyGenId }],
+  return dbo.collection(applicationConfig.CRON_STATUS_COLLECTION_NAME).findOneAndUpdate(
+    {
+      $and: [{ cronTime: payload.cronTime }, { keyGenId: payload.keyGenId }],
+    },
+    {
+      $set: {
+        cronTime: payload.cronTime,
+        productsCount: payload.productsCount,
+        maximumProductCount: payload.maximumProductCount,
+        status: payload.status,
+        cronId: payload.cronId,
       },
-      {
-        $set: {
-          cronTime: payload.cronTime,
-          productsCount: payload.productsCount,
-          maximumProductCount: payload.maximumProductCount,
-          status: payload.status,
-          cronId: payload.cronId,
-        },
-      },
-    );
+    }
+  );
 }
 
 export async function PushLogsAsync(payload: any) {
   const dbo = await getMongoDb();
-  const { insertedId } = await dbo
-    .collection(applicationConfig.CRON_LOGS_COLLECTION_NAME)
-    .insertOne(payload);
+  const { insertedId } = await dbo.collection(applicationConfig.CRON_LOGS_COLLECTION_NAME).insertOne(payload);
   return insertedId.toString();
 }
 
-export async function UpdateProductAsync(
-  payload: any,
-  isPriceUpdated: any,
-  contextVendor: any,
-): Promise<any> {
+export async function UpdateProductAsync(payload: any, isPriceUpdated: any, contextVendor: any): Promise<any> {
   let mongoResult = null;
   const dbo = await getMongoDb();
   let setVal = {};
@@ -148,59 +138,45 @@ export async function UpdateProductAsync(
       };
     }
   }
-  mongoResult = await dbo
-    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
-    .findOneAndUpdate(
-      { mpId: payload.mpid },
-      {
-        $set: setVal,
-      },
-    );
+  mongoResult = await dbo.collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION).findOneAndUpdate(
+    { mpId: payload.mpid },
+    {
+      $set: setVal,
+    }
+  );
   return mongoResult;
 }
 
 export async function ResetPendingCronLogs() {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
-    .updateMany({}, { $set: { status: "Complete" } });
+  return dbo.collection(applicationConfig.CRON_STATUS_COLLECTION_NAME).updateMany({}, { $set: { status: "Complete" } });
 }
 
 export async function UpsertErrorItemLog(payload: any) {
   const dbo = await getMongoDb();
-  const existingItem = await dbo
-    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
-    .findOne({
-      $and: [{ mpId: payload.mpId }, { vendorName: payload.vendorName }],
-    });
+  const existingItem = await dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).findOne({
+    $and: [{ mpId: payload.mpId }, { vendorName: payload.vendorName }],
+  });
   if (existingItem) {
-    return dbo
-      .collection(applicationConfig.ERROR_ITEM_COLLECTION)
-      .findOneAndUpdate(
-        {
-          $and: [{ mpId: payload.mpId }, { vendorName: payload.vendorName }],
+    return dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).findOneAndUpdate(
+      {
+        $and: [{ mpId: payload.mpId }, { vendorName: payload.vendorName }],
+      },
+      {
+        $set: {
+          nextCronTime: payload.nextCronTime,
+          active: payload.active,
+          updatedOn: new Date(),
+          insertReason: payload.insertReason,
         },
-        {
-          $set: {
-            nextCronTime: payload.nextCronTime,
-            active: payload.active,
-            updatedOn: new Date(),
-            insertReason: payload.insertReason,
-          },
-        },
-      );
+      }
+    );
   } else {
-    return dbo
-      .collection(applicationConfig.ERROR_ITEM_COLLECTION)
-      .insertOne(payload);
+    return dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).insertOne(payload);
   }
 }
 
-export async function FindErrorItemByIdAndStatus(
-  _mpId: any,
-  _status: any,
-  _vendor: any,
-) {
+export async function FindErrorItemByIdAndStatus(_mpId: any, _status: any, _vendor: any) {
   const dbo = await getMongoDb();
   const query = {
     $and: [
@@ -216,67 +192,44 @@ export async function FindErrorItemByIdAndStatus(
     ],
   };
 
-  return dbo
-    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
-    .countDocuments(query);
+  return dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).countDocuments(query);
 }
 
 export async function FindProductById(mpid: any) {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
-    .findOne({ mpId: mpid });
+  return dbo.collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION).findOne({ mpId: mpid });
 }
 
 export const GetListOfOverrideProducts = async (): Promise<any> => {
   const query = {
-    $and: [
-      { activated: true },
-      { override_bulk_update: true },
-      { scrapeOn: true },
-    ],
+    $and: [{ activated: true }, { override_bulk_update: true }, { scrapeOn: true }],
   };
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.GET_PRICE_LIST_COLLECTION_NAME)
-    .find(query)
-    .toArray();
+  return dbo.collection(applicationConfig.GET_PRICE_LIST_COLLECTION_NAME).find(query).toArray();
 };
 
 export async function ExecuteProductQuery(query: any) {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
-    .find(query)
-    .toArray();
+  return dbo.collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION).find(query).toArray();
 }
 
 export async function ExecuteProductUpdate(mpid: any, setVal: any) {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
-    .findOneAndUpdate(
-      { mpId: mpid },
-      {
-        $set: setVal,
-      },
-    );
+  return dbo.collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION).findOneAndUpdate(
+    { mpId: mpid },
+    {
+      $set: setVal,
+    }
+  );
 }
 
 export async function GetErrorItemsByMpId(mpId: number): Promise<ErrorItem[]> {
   const dbo = await getMongoDb();
-  const result = await dbo
-    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
-    .find({ mpId: mpId, active: true })
-    .toArray();
+  const result = await dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).find({ mpId: mpId, active: true }).toArray();
   return result as ErrorItem[];
 }
 
-export async function GetEligibleContextErrorItems(
-  _activeStatus: any,
-  _mpId: any,
-  _contextVendor: any,
-): Promise<ErrorItem[]> {
+export async function GetEligibleContextErrorItems(_activeStatus: any, _mpId: any, _contextVendor: any): Promise<ErrorItem[]> {
   const query = {
     $and: [
       {
@@ -286,6 +239,11 @@ export async function GetEligibleContextErrorItems(
         mpId: parseInt(_mpId),
       },
       {
+        nextCronTime: {
+          $lte: new Date(),
+        },
+      },
+      {
         vendorName: {
           $ne: _contextVendor,
         },
@@ -293,19 +251,13 @@ export async function GetEligibleContextErrorItems(
     ],
   };
   const dbo = await getMongoDb();
-  const result = await dbo
-    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
-    .find(query)
-    .toArray();
+  const result = await dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).find(query).toArray();
   return result as ErrorItem[];
 }
 
 export async function GetProductListByQuery(query: any) {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
-    .find(query)
-    .toArray();
+  return dbo.collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION).find(query).toArray();
 }
 
 export async function SaveFilterCronLogs(payload: any) {
@@ -322,8 +274,7 @@ export async function UpdateCronForProductAsync(payload: any) {
   }
   if (payload.frontierDetails) {
     setVal["frontierDetails.slowCronId"] = payload.frontierDetails.slowCronId;
-    setVal["frontierDetails.slowCronName"] =
-      payload.frontierDetails.slowCronName;
+    setVal["frontierDetails.slowCronName"] = payload.frontierDetails.slowCronName;
   }
   if (payload.mvpDetails) {
     setVal["mvpDetails.slowCronId"] = payload.mvpDetails.slowCronId;
@@ -332,24 +283,18 @@ export async function UpdateCronForProductAsync(payload: any) {
   if (typeof payload.isSlowActivated != "undefined") {
     setVal["isSlowActivated"] = payload.isSlowActivated;
   }
-  return dbo
-    .collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION)
-    .findOneAndUpdate(
-      { mpId: payload.mpId },
-      {
-        $set: setVal,
-      },
-    );
+  return dbo.collection(applicationConfig.MANAGED_MONGO_PRODUCT_COLLECTION).findOneAndUpdate(
+    { mpId: payload.mpId },
+    {
+      $set: setVal,
+    }
+  );
 }
 
 export async function Push422LogsAsync(payload: any) {
   const dbo = await getMongoDb();
-  const mongoResult = await dbo
-    .collection(applicationConfig.ERROR_422_CRON_LOGS)
-    .insertOne(payload);
-  return mongoResult && mongoResult.insertedId
-    ? mongoResult.insertedId.toString()
-    : null;
+  const mongoResult = await dbo.collection(applicationConfig.ERROR_422_CRON_LOGS).insertOne(payload);
+  return mongoResult && mongoResult.insertedId ? mongoResult.insertedId.toString() : null;
 }
 
 export async function GetScrapeProductList(cronId: any, _isActive: any) {
@@ -357,40 +302,30 @@ export async function GetScrapeProductList(cronId: any, _isActive: any) {
   const query = {
     $and: [{ isActive: _isActive }, { linkedCronId: cronId }],
   };
-  const mongoResult = await dbo
-    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION_NAME)
-    .find(query)
-    .sort({ _id: 1 })
-    .toArray();
+  const mongoResult = await dbo.collection(applicationConfig.SCRAPE_ITEMS_COLLECTION_NAME).find(query).sort({ _id: 1 }).toArray();
   return mongoResult;
 }
 
 export async function InsertScrapeProduct(payload: any) {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.SCRAPE_PRODUCTS_COLLECTION_NAME)
-    .insertOne(payload);
+  return dbo.collection(applicationConfig.SCRAPE_PRODUCTS_COLLECTION_NAME).insertOne(payload);
 }
 
 export async function PushLogs(payload: any) {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.SCRAPE_PRODUCTS_LOGS_COLLECTION_NAME)
-    .insertOne(payload);
+  return dbo.collection(applicationConfig.SCRAPE_PRODUCTS_LOGS_COLLECTION_NAME).insertOne(payload);
 }
 
 export async function UpdateScrapeProducts(mpId: any) {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION_NAME)
-    .findOneAndUpdate(
-      { mpId: mpId },
-      {
-        $set: {
-          last_scrape_time: new Date(),
-        },
+  return dbo.collection(applicationConfig.SCRAPE_ITEMS_COLLECTION_NAME).findOneAndUpdate(
+    { mpId: mpId },
+    {
+      $set: {
+        last_scrape_time: new Date(),
       },
-    );
+    }
+  );
 }
 
 // export const GetRotatingProxyUrl = async (): Promise<any> => {
@@ -411,9 +346,7 @@ export async function UpdateScrapeProducts(mpId: any) {
 //   return result?.hostUrl;
 // };
 
-export const GetContextErrorItems = async (
-  _activeStatus: any,
-): Promise<any> => {
+export const GetContextErrorItems = async (_activeStatus: any): Promise<any> => {
   const query = {
     nextCronTime: {
       $lte: new Date(),
@@ -421,8 +354,5 @@ export const GetContextErrorItems = async (
     active: _activeStatus,
   };
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.ERROR_ITEM_COLLECTION)
-    .find(query)
-    .toArray();
+  return dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).find(query).toArray();
 };
