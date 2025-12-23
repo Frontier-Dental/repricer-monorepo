@@ -131,6 +131,7 @@ async function get422EligibleProducts() {
   const mongoResponse = await dbHelper.GetContextErrorItems(true);
   let resultantOutput = [];
   if (mongoResponse && mongoResponse.length > 0) {
+    console.info(`Fetched ${mongoResponse.length} eligible error items from MongoDB for Express Cron at ${new Date()}`);
     for (const errItem of mongoResponse) {
       let productDetails = await mySqlHelper.GetItemListById(errItem.mpId);
       if (productDetails) {

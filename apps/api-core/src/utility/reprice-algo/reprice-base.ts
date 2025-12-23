@@ -149,6 +149,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
   const contextErrorDetails = await dbHelper.GetEligibleContextErrorItems(true, details.mpId, _contextVendor);
   const prioritySequence = await requestGenerator.GetPrioritySequence(details, contextErrorDetails, true);
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
+  console.log(`EXPRESS_CRON : Repricing ${details.mpId} for ${_contextVendor} with sequence ${seqString} at ${new Date()}`);
   if (prioritySequence && prioritySequence.length > 0) {
     const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", details.mpId);
     var net32result = await axiosHelper.getAsync(searchRequest, "DUMMY-422-Error", seqString);
