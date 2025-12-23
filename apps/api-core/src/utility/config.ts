@@ -211,6 +211,12 @@ const envSchema = z.object({
   MINI_ERP_DATA_PAGE_SIZE: z.coerce.number().default(1000),
   MINI_ERP_DATA_HOURS_SINCE_UPDATE: z.coerce.number().default(4),
   NET32_UPDATE_QUANTITY_DELAY: z.coerce.number().default(3),
+  PRICE_UPDATE_V2_ENABLED: z
+    .string()
+    .toLowerCase()
+    .transform(JSON.parse as any)
+    .pipe(z.boolean())
+    .default(true),
 });
 
 export function validateConfig() {
