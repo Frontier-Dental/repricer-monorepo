@@ -441,8 +441,8 @@ describe("min-erp-helper", () => {
       const result = await getProductsFromMiniErp();
 
       expect(result).toBe(true);
-      // Should only process valid product (mpid3)
-      // Products are grouped by vendor, so GetCurrentStock is called with all mpids for Vendor1
+      // Should only process valid product (7092)
+      // Products are grouped by vendor, so GetCurrentStock is called with all mpids for MVP
       expect(GetCurrentStock).toHaveBeenCalledWith(["7092"], "MVP");
       expect(WaitlistInsert).toHaveBeenCalled();
     });
