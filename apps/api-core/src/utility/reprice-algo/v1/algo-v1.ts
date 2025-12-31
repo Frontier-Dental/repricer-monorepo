@@ -205,6 +205,9 @@ export async function repriceProduct(mpid: string, net32Products: Net32Product[]
   //Last Reprice Check for Identical Sister Price
   repriceResult = await Rule.ApplySisterComparisonCheck(repriceResult, result, productItem);
 
+  //Apply MAX Price Check
+  repriceResult = await Rule.ApplyMaxPriceCheck(repriceResult, productItem);
+
   // Align IsRepriced Field Based on Price Suggestion
   repriceResult = await Rule.AlignIsRepriced(repriceResult);
 
