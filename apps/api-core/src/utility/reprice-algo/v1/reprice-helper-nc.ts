@@ -186,7 +186,7 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
             for (let i = nextIndex; i <= sortedPayload.length; i++) {
               if (sortedPayload[i] && (_.includes(excludedVendors, sortedPayload[i].vendorId.toString()) || sortedPayload[i].vendorId == $.VENDOR_ID)) {
                 nextIndex++;
-              } else if ((await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, 1, floorPrice, GetShippingPrice(sortedPayload[i]), true)) === true) {
+              } else if (sortedPayload[i] && (await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, 1, floorPrice, GetShippingPrice(sortedPayload[i]), true)) === true) {
                 nextIndex++;
               } else {
                 break;
@@ -238,20 +238,27 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
             for (let i = nextIndex; i <= sortedPayload.length; i++) {
               if (sortedPayload[i] && (_.includes(excludedVendors, sortedPayload[i].vendorId.toString()) || sortedPayload[i].vendorId == $.VENDOR_ID)) {
                 nextIndex++;
-              } else if ((await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, 1, floorPrice, GetShippingPrice(sortedPayload[i]), true)) == true) {
+              } else if (sortedPayload[i] && (await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, 1, floorPrice, GetShippingPrice(sortedPayload[i]), true)) == true) {
                 nextIndex++;
               } else {
                 break;
               }
             }
-            const secondLowestPrice = (sortedPayload[nextIndex].priceBreaks!.find((x: any) => x.minQty == 1 && x.active == true) as any).unitPrice + GetShippingPrice(sortedPayload[nextIndex]);
-            if (secondLowestPrice && (secondLowestPrice >= existingPrice || allowCompeteWithNextForFloor === true)) {
-              const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(secondLowestPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1);
-              contextPrice = contextPriceResult.Price;
-              repriceModel = new RepriceModel(sourceId, refProduct, productItem.productName, contextPrice - standardShippingPrice, true, false, [], await filterMapper.AppendPriceFactorTag(RepriceRenewedMessageEnum.PRICE_UP_SECOND_FLOOR_HIT, contextPriceResult.Type));
-              offsetPrice = contextPrice - standardShippingPrice;
+            if (sortedPayload[nextIndex]) {
+              const secondLowestPrice = (sortedPayload[nextIndex].priceBreaks!.find((x: any) => x.minQty == 1 && x.active == true) as any).unitPrice + GetShippingPrice(sortedPayload[nextIndex]);
+              if (secondLowestPrice && (secondLowestPrice >= existingPrice || allowCompeteWithNextForFloor === true)) {
+                const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(secondLowestPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1);
+                contextPrice = contextPriceResult.Price;
+                repriceModel = new RepriceModel(sourceId, refProduct, productItem.productName, contextPrice - standardShippingPrice, true, false, [], await filterMapper.AppendPriceFactorTag(RepriceRenewedMessageEnum.PRICE_UP_SECOND_FLOOR_HIT, contextPriceResult.Type));
+                offsetPrice = contextPrice - standardShippingPrice;
+                repriceModel.repriceDetails!.isRepriced = true;
+                repriceModel.updateTriggeredBy(sortedPayload[nextIndex].vendorName, sortedPayload[nextIndex].vendorId, 1);
+              }
+            } else {
+              const maxPriceToBeSet = await getSetPrice(maxPrice, refProduct.standardShipping, refProduct.freeShippingThreshold, 1);
+              repriceModel.repriceDetails!.newPrice = maxPriceToBeSet;
               repriceModel.repriceDetails!.isRepriced = true;
-              repriceModel.updateTriggeredBy(sortedPayload[nextIndex].vendorName, sortedPayload[nextIndex].vendorId, 1);
+              repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.PRICE_MAXED;
             }
           } else {
             repriceModel = new RepriceModel(sourceId, refProduct, productItem.productName, unitPrice, false, false, [], RepriceRenewedMessageEnum.IGNORE_OWN);
