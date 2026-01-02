@@ -16,11 +16,7 @@ import { startAllCronLogic } from "./controller/main-cron/start-all";
 import { manualRepriceController } from "./controller/manual-repricer";
 import { masterDataController } from "./controller/master-data";
 import { dataController } from "./controller/product-data";
-import {
-  proxySwitchController,
-  startProxySwitchCronLogic,
-  startProxySwitchResetCronLogic,
-} from "./controller/proxy-switch";
+import { proxySwitchController, startProxySwitchCronLogic, startProxySwitchResetCronLogic } from "./controller/proxy-switch";
 import { scrapeCronController } from "./controller/scrape-cron";
 import { startScrapeCronLogic } from "./controller/scrape-cron/start-scrape-cron";
 import { searchController } from "./controller/search";
@@ -30,6 +26,8 @@ import { startV2AlgoHtmlFileCleanupCron } from "./services/algo-html-file-cleanu
 import { applicationConfig, validateConfig } from "./utility/config";
 import { errorMiddleware } from "./utility/error-middleware";
 import { initializeThresholdScraping } from "./utility/reprice-algo/v2/threshold-scraping";
+import { startMiniErpCronLogic } from "./controller/mini-erp-cron/start-cron";
+import { minErpCronController } from "./controller/mini-erp-cron";
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
@@ -59,9 +57,10 @@ nodeApp.use(
     },
     threshold: 0,
     level: 9,
-  }),
+  })
 );
 const port = applicationConfig.PORT;
+process.env.TZ = "Canada/Eastern";
 nodeApp.use(searchController);
 nodeApp.use(mainCronController);
 nodeApp.use(cacheController);
@@ -75,6 +74,7 @@ nodeApp.use(slowCronGroupRouter);
 nodeApp.use(proxySwitchController);
 nodeApp.use(appLogController);
 nodeApp.use(scrapeCronController);
+nodeApp.use(minErpCronController);
 
 // Health check endpoint
 nodeApp.get("/health", (req: Request, res: Response) => {
@@ -100,13 +100,12 @@ nodeApp.listen(port, async () => {
     await startProxySwitchCronLogic();
     await startProxySwitchResetCronLogic();
     await startScrapeCronLogic();
+    await startMiniErpCronLogic();
     startV2AlgoHtmlFileCleanupCron();
     console.info("All enabled crons started on startup");
   }
   if (!fs.existsSync("./activeProducts.json")) {
     fs.writeFileSync("./activeProducts.json", JSON.stringify([]));
-    console.info(
-      `Resetting complete for Active Products for Application Reset at ${new Date()}`,
-    );
+    console.info(`Resetting complete for Active Products for Application Reset at ${new Date()}`);
   }
 });

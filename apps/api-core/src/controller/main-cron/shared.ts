@@ -28,20 +28,12 @@ export function stopAllMainCrons() {
 }
 
 export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
-  const _422CronSetting = cronSettings.find(
-    (x) => x.CronName == applicationConfig.CRON_NAME_422,
-  );
+  const _422CronSetting = cronSettings.find((x) => x.CronName == applicationConfig.CRON_NAME_422);
   if (!_422CronSetting) {
     throw new Error("422 Cron setting not found");
   }
-  const cronString = responseUtility.GetCronGeneric(
-    _422CronSetting.CronTimeUnit,
-    _422CronSetting.CronTime,
-    parseInt(_422CronSetting.Offset),
-  );
-  console.info(
-    `Setting up 422 cron with schedule: ${cronString} at ${new Date().toISOString()}`,
-  );
+  const cronString = responseUtility.GetCronGeneric(_422CronSetting.CronTimeUnit, _422CronSetting.CronTime, parseInt(_422CronSetting.Offset));
+  console.info(`Setting up 422 cron with schedule: ${cronString} at ${new Date().toISOString()}`);
   if (error422Cron) {
     error422Cron.stop();
   }
@@ -57,9 +49,8 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
     },
     {
       scheduled: _422CronSetting.CronStatus,
-      runOnInit:
-        _422CronSetting.CronStatus && applicationConfig.RUN_CRONS_ON_INIT,
-    },
+      runOnInit: _422CronSetting.CronStatus && applicationConfig.RUN_CRONS_ON_INIT,
+    }
   );
   if (_422CronSetting.CronStatus) {
     console.info("Started 422 cron.");
@@ -68,28 +59,18 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
 
 async function IsCacheValid(cacheKey: any, sysTime: any) {
   try {
-    const cacheClient = CacheClient.getInstance(
-      GetCacheClientOptions(applicationConfig),
-    );
+    const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
     const result = await cacheClient.get<any>(cacheKey);
     if (result == null) {
       return false;
     } else {
-      const differenceInTime =
-        sysTime.getTime() - new Date(result.initTime).getTime();
+      const differenceInTime = sysTime.getTime() - new Date(result.initTime).getTime();
       const differenceInMinutes = Math.round(differenceInTime / 60000);
       const envVariables = await sqlV2Service.GetGlobalConfig();
-      const thresholdValue =
-        envVariables != null && envVariables.expressCronOverlapThreshold != null
-          ? envVariables.expressCronOverlapThreshold
-          : applicationConfig._422_CACHE_VALID_PERIOD;
-      console.log(
-        `Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`,
-      );
+      const thresholdValue = envVariables != null && envVariables.expressCronOverlapThreshold != null ? envVariables.expressCronOverlapThreshold : applicationConfig._422_CACHE_VALID_PERIOD;
+      console.log(`Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`);
       await cacheClient.disconnect();
-      return !(typeof thresholdValue === "string"
-        ? parseFloat(thresholdValue!)
-        : thresholdValue < differenceInMinutes);
+      return !(typeof thresholdValue === "string" ? parseFloat(thresholdValue!) : thresholdValue < differenceInMinutes);
     }
   } catch (error) {
     console.error(`Error in IsCacheValid for 422 Cron:`, error);
@@ -103,67 +84,39 @@ export async function runCoreCronLogicFor422() {
   if (!isCacheValid) {
     console.info(`Getting List of Eligible Products for Cron-422`);
     const runningCacheObj = { cronRunning: true, initTime: new Date() };
-    let cacheClient = CacheClient.getInstance(
-      GetCacheClientOptions(applicationConfig),
-    );
+    let cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
     await cacheClient.set(cacheKey, runningCacheObj);
     const eligibleProductList = await get422EligibleProducts();
     const keyGen = keyGenHelper.Generate();
-    console.info(
-      `Cron-422 running on ${new Date().toISOString()} with Eligible Products Count : ${eligibleProductList.length} with KeyGen : ${keyGen}`,
-    );
+    console.info(`Cron-422 running on ${new Date().toISOString()} with Eligible Products Count : ${eligibleProductList.length} with KeyGen : ${keyGen}`);
     if (eligibleProductList.length > 0) {
       const envVariables = await sqlV2Service.GetGlobalConfig();
-      let chunkedList = _.chunk(
-        eligibleProductList,
-        parseInt(envVariables.expressCronBatchSize!),
-      );
-      let chunkedBatch = _.chunk(
-        chunkedList,
-        parseInt(envVariables.expressCronInstanceLimit!),
-      );
+      let chunkedList = _.chunk(eligibleProductList, parseInt(envVariables.expressCronBatchSize!));
+      let chunkedBatch = _.chunk(chunkedList, parseInt(envVariables.expressCronInstanceLimit!));
       let batchCount = 1;
       for (let itemList of chunkedBatch) {
         if (itemList.length > 0) {
-          await ParallelExecute(
-            itemList,
-            new Date(),
-            `${keyGen}-${batchCount}`,
-          );
+          await ParallelExecute(itemList, new Date(), `${keyGen}-${batchCount}`);
           batchCount++;
         }
       }
     }
-    cacheClient = CacheClient.getInstance(
-      GetCacheClientOptions(applicationConfig),
-    );
+    cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
     await cacheClient.delete(cacheKey);
     await cacheClient.disconnect();
   } else {
-    const cacheClient = CacheClient.getInstance(
-      GetCacheClientOptions(applicationConfig),
-    );
+    const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
     const runningCronDetails = await cacheClient.get<any>(cacheKey);
-    console.warn(
-      `Skipped Cron-422 as another 422 cron is already running. CURR_TIME : ${new Date().toISOString()} || RUNNING_CRON_TIME : ${runningCronDetails.initTime}`,
-    );
+    console.warn(`Skipped Cron-422 as another 422 cron is already running. CURR_TIME : ${new Date().toISOString()} || RUNNING_CRON_TIME : ${runningCronDetails.initTime}`);
     await cacheClient.disconnect();
   }
 }
 
-export async function ParallelExecute(
-  itemList: any,
-  initTime: any,
-  keyGen: any,
-) {
+export async function ParallelExecute(itemList: any, initTime: any, keyGen: any) {
   if (itemList && itemList.length > 0) {
-    const tasks = itemList.map((item: any, index: any) =>
-      repriceBase.RepriceErrorItemV2(item, initTime, `${keyGen}-${index}`),
-    );
+    const tasks = itemList.map((item: any, index: any) => repriceBase.RepriceErrorItemV2(item, initTime, `${keyGen}-${index}`));
     await Promise.all(tasks);
-    console.info(
-      `PARALLEL EXECUTION : ${keyGen} All tasks completed at ${new Date().toISOString()}`,
-    );
+    console.info(`PARALLEL EXECUTION : ${keyGen} All tasks completed at ${new Date().toISOString()}`);
   }
 }
 
@@ -174,25 +127,17 @@ async function get422EligibleProducts() {
   }
   let cronSettingDetailsResponse = await sqlV2Service.GetCronSettingsList();
   let slowCronDetails = await sqlV2Service.GetSlowCronDetails();
-  cronSettingDetailsResponse = _.concat(
-    cronSettingDetailsResponse,
-    slowCronDetails,
-  );
+  cronSettingDetailsResponse = _.concat(cronSettingDetailsResponse, slowCronDetails);
   const mongoResponse = await dbHelper.GetContextErrorItems(true);
   let resultantOutput = [];
   if (mongoResponse && mongoResponse.length > 0) {
+    console.info(`Fetched ${mongoResponse.length} eligible error items from MongoDB for Express Cron at ${new Date()}`);
     for (const errItem of mongoResponse) {
       let productDetails = await mySqlHelper.GetItemListById(errItem.mpId);
       if (productDetails) {
-        const contextCronId = await getContextCronId(
-          productDetails,
-          errItem.vendorName,
-        );
+        const contextCronId = await getContextCronId(productDetails, errItem.vendorName);
         if (contextCronId) {
-          (productDetails as any).cronSettingsResponse =
-            cronSettingDetailsResponse.find(
-              (x: any) => x.CronId == contextCronId,
-            );
+          (productDetails as any).cronSettingsResponse = cronSettingDetailsResponse.find((x: any) => x.CronId == contextCronId);
           (productDetails as any).insertReason = errItem.insertReason;
           (productDetails as any).contextVendor = errItem.vendorName;
           resultantOutput.push(productDetails);
@@ -207,46 +152,25 @@ async function get422EligibleProducts() {
 export async function getContextCronId(productDetails: any, vendorName: any) {
   switch (vendorName) {
     case VendorName.TRADENT:
-      return productDetails.tradentDetails
-        ? productDetails.tradentDetails.cronId
-        : null;
+      return productDetails.tradentDetails ? productDetails.tradentDetails.cronId : null;
     case VendorName.FRONTIER:
-      return productDetails.frontierDetails
-        ? productDetails.frontierDetails.cronId
-        : null;
+      return productDetails.frontierDetails ? productDetails.frontierDetails.cronId : null;
     case VendorName.MVP:
-      return productDetails.mvpDetails
-        ? productDetails.mvpDetails.cronId
-        : null;
+      return productDetails.mvpDetails ? productDetails.mvpDetails.cronId : null;
     case VendorName.TOPDENT:
-      return productDetails.topDentDetails
-        ? productDetails.topDentDetails.cronId
-        : null;
+      return productDetails.topDentDetails ? productDetails.topDentDetails.cronId : null;
     case VendorName.FIRSTDENT:
-      return productDetails.firstDentDetails
-        ? productDetails.firstDentDetails.cronId
-        : null;
+      return productDetails.firstDentDetails ? productDetails.firstDentDetails.cronId : null;
     case VendorName.TRIAD:
-      return productDetails.triadDetails
-        ? productDetails.triadDetails.cronId
-        : null;
+      return productDetails.triadDetails ? productDetails.triadDetails.cronId : null;
     default:
       throw new Error(`Invalid vendor name: ${vendorName}`);
   }
 }
 
-export function setCronAndStart(
-  cronName: string,
-  cronSetting: CronSettingsDetail,
-) {
-  const cronString = responseUtility.GetCronGeneric(
-    cronSetting.CronTimeUnit,
-    cronSetting.CronTime,
-    parseInt(cronSetting.Offset),
-  );
-  console.info(
-    `Setting up cron ${cronName} with schedule: ${cronString} at ${new Date().toISOString()}`,
-  );
+export function setCronAndStart(cronName: string, cronSetting: CronSettingsDetail) {
+  const cronString = responseUtility.GetCronGeneric(cronSetting.CronTimeUnit, cronSetting.CronTime, parseInt(cronSetting.Offset));
+  console.info(`Setting up cron ${cronName} with schedule: ${cronString} at ${new Date().toISOString()}`);
   mainCrons[cronName] = schedule(
     cronString,
     async () => {
@@ -259,45 +183,43 @@ export function setCronAndStart(
     {
       scheduled: cronSetting.CronStatus,
       runOnInit: cronSetting.CronStatus && applicationConfig.RUN_CRONS_ON_INIT,
-    },
+    }
   );
   if (cronSetting.CronStatus) {
     console.info(`Started cron ${cronName}`);
   }
 }
 
-export async function runCoreCronLogic(
-  cronSettingsResponse: CronSettingsDetail,
-  isSlowCron: boolean,
-) {
+export async function runCoreCronLogic(cronSettingsResponse: CronSettingsDetail, isSlowCron: boolean) {
   console.info(`Running cron execution for ${cronSettingsResponse.CronName}`);
   const initTime = new Date();
-  const eligibleProductList = isSlowCron
-    ? await getSlowCronEligibleProductsV3(cronSettingsResponse.CronId)
-    : await getCronEligibleProductsV3(cronSettingsResponse.CronId);
+  const eligibleProductList = isSlowCron ? await getSlowCronEligibleProductsV3(cronSettingsResponse.CronId) : await getCronEligibleProductsV3(cronSettingsResponse.CronId);
+  let batchSize = applicationConfig.BATCH_SIZE;
+  const envVariables = await sqlV2Service.GetGlobalConfig();
   if (eligibleProductList && eligibleProductList.length > 0) {
+    if (isSlowCron) {
+      batchSize = envVariables?.slowCronBatchSize || applicationConfig.BATCH_SIZE;
+    }
     const jobId = keyGenHelper.Generate();
-    console.debug(
-      `${cronSettingsResponse.CronName} running on ${initTime.toISOString()} with Eligible Product count : ${eligibleProductList.length}  || Job ID : ${jobId}`,
-    );
-    let chunkedList = _.chunk(
-      eligibleProductList,
-      applicationConfig.BATCH_SIZE,
-    );
-    for (let chunk of chunkedList) {
-      await repriceBase.Execute(
-        jobId,
-        chunk,
-        new Date(),
-        cronSettingsResponse,
-        isSlowCron,
-      );
+    console.debug(`${cronSettingsResponse.CronName} running on ${initTime.toISOString()} with Eligible Product count : ${eligibleProductList.length}  || Job ID : ${jobId}`);
+    let chunkedList = _.chunk(eligibleProductList, batchSize);
+    if (isSlowCron) {
+      let chunkedBatch = _.chunk(chunkedList, parseInt(envVariables.slowCronInstanceLimit!));
+      let batchCount = 1;
+      for (let itemList of chunkedBatch) {
+        if (itemList.length > 0) {
+          await ParallelExecuteCron(itemList, new Date(), `${jobId}-${batchCount}`, cronSettingsResponse, isSlowCron);
+          batchCount++;
+        }
+      }
+    } else {
+      for (let chunk of chunkedList) {
+        await repriceBase.Execute(jobId, chunk, new Date(), cronSettingsResponse, isSlowCron);
+      }
     }
   } else {
     await logBlankCronDetailsV3(cronSettingsResponse.CronId);
-    console.warn(
-      `No eligible products found for ${cronSettingsResponse.CronName} at ${new Date().toISOString()}`,
-    );
+    console.warn(`No eligible products found for ${cronSettingsResponse.CronName} at ${new Date().toISOString()}`);
   }
   console.info(`Completed cron execution for ${cronSettingsResponse.CronName}`);
 }
@@ -306,9 +228,7 @@ export async function logBlankCronDetailsV3(cronId: any) {
   let cronLogs = { time: new Date(), logs: [], cronId: cronId };
   const logInDb = await dbHelper.PushLogsAsync(cronLogs);
   if (logInDb) {
-    console.debug(
-      `Successfully logged blank reprice data at ${cronLogs.time} for cron ${cronId}`,
-    );
+    console.debug(`Successfully logged blank reprice data at ${cronLogs.time} for cron ${cronId}`);
   }
 }
 
@@ -329,33 +249,18 @@ export async function getCronEligibleProductsV3(cronId: any) {
   if (globalConfig && globalConfig.source == "FEED") {
     return eligibleProductList;
   }
-  eligibleProductList =
-    await mySqlHelper.GetActiveFullProductDetailsList(cronId); //await dbHelper.GetActiveProductList(cronId);
-  eligibleProductList = await feedHelper.FilterEligibleProducts(
-    eligibleProductList,
-    cronId,
-    false,
-  );
+  eligibleProductList = await mySqlHelper.GetActiveFullProductDetailsList(cronId); //await dbHelper.GetActiveProductList(cronId);
+  eligibleProductList = await feedHelper.FilterEligibleProducts(eligibleProductList, cronId, false);
   return eligibleProductList;
 }
 
 export async function getSlowCronEligibleProductsV3(cronId: any) {
   let eligibleProductList: any[] = [];
   try {
-    eligibleProductList = await mySqlHelper.GetActiveProductListByCronId(
-      cronId,
-      true,
-    );
-    eligibleProductList = await feedHelper.FilterEligibleProducts(
-      eligibleProductList,
-      cronId,
-      true,
-    );
+    eligibleProductList = await mySqlHelper.GetActiveProductListByCronId(cronId, true);
+    eligibleProductList = await feedHelper.FilterEligibleProducts(eligibleProductList, cronId, true);
   } catch (exception) {
-    console.error(
-      `Error while getSlowCronEligibleProductsV3 || Error : ${exception}`,
-      exception,
-    );
+    console.error(`Error while getSlowCronEligibleProductsV3 || Error : ${exception}`, exception);
   }
   return eligibleProductList;
 }
@@ -414,35 +319,21 @@ export function getNextCronTime(priceUpdateResponse: any) {
   const messageText = priceUpdateResponse.message;
   if (messageText && typeof messageText == "string") {
     const timeStr = messageText.split("this time:")[1];
-    return timeStr
-      ? new Date(timeStr.trim())
-      : calculateNextCronTime(new Date(), 12);
+    return timeStr ? new Date(timeStr.trim()) : calculateNextCronTime(new Date(), 12);
   } else {
     throw new Error("Invalid price update response");
   }
 }
 
 export function updateLowestVendor(repriceResult: any, prod: any) {
-  if (
-    repriceResult &&
-    repriceResult.data &&
-    repriceResult.data.cronResponse &&
-    repriceResult.data.cronResponse.repriceData
-  ) {
+  if (repriceResult && repriceResult.data && repriceResult.data.cronResponse && repriceResult.data.cronResponse.repriceData) {
     if (repriceResult.data.cronResponse.repriceData.repriceDetails) {
-      prod.lowest_vendor =
-        repriceResult.data.cronResponse.repriceData.repriceDetails.lowestVendor;
-      prod.lowest_vendor_price =
-        repriceResult.data.cronResponse.repriceData.repriceDetails.lowestVendorPrice;
-    } else if (
-      repriceResult.data.cronResponse.repriceData.listOfRepriceDetails &&
-      repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.length >
-        0
-    ) {
+      prod.lowest_vendor = repriceResult.data.cronResponse.repriceData.repriceDetails.lowestVendor;
+      prod.lowest_vendor_price = repriceResult.data.cronResponse.repriceData.repriceDetails.lowestVendorPrice;
+    } else if (repriceResult.data.cronResponse.repriceData.listOfRepriceDetails && repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.length > 0) {
       prod.lowest_vendor = "";
       prod.lowest_vendor_price = "";
-      for (const rep of repriceResult.data.cronResponse.repriceData
-        .listOfRepriceDetails) {
+      for (const rep of repriceResult.data.cronResponse.repriceData.listOfRepriceDetails) {
         prod.lowest_vendor += `${rep.minQty}@${rep.lowestVendor} / `;
         prod.lowest_vendor_price += `${rep.minQty}@${rep.lowestVendorPrice} / `;
       }
@@ -451,37 +342,17 @@ export function updateLowestVendor(repriceResult: any, prod: any) {
   return prod;
 }
 
-export function updateCronBasedDetails(
-  repriceResult: any,
-  prod: any,
-  isPriceUpdated: any,
-) {
-  if (
-    repriceResult &&
-    repriceResult.data &&
-    repriceResult.data.cronResponse &&
-    repriceResult.data.cronResponse.repriceData
-  ) {
+export function updateCronBasedDetails(repriceResult: any, prod: any, isPriceUpdated: any) {
+  if (repriceResult && repriceResult.data && repriceResult.data.cronResponse && repriceResult.data.cronResponse.repriceData) {
     if (repriceResult.data.cronResponse.repriceData.repriceDetails) {
-      prod.lastExistingPrice =
-        repriceResult.data.cronResponse.repriceData.repriceDetails.oldPrice.toString();
-      prod.lastSuggestedPrice = repriceResult.data.cronResponse.repriceData
-        .repriceDetails.goToPrice
-        ? repriceResult.data.cronResponse.repriceData.repriceDetails.goToPrice
-        : repriceResult.data.cronResponse.repriceData.repriceDetails.newPrice;
-    } else if (
-      repriceResult.data.cronResponse.repriceData.listOfRepriceDetails &&
-      repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.length >
-        0
-    ) {
+      prod.lastExistingPrice = repriceResult.data.cronResponse.repriceData.repriceDetails.oldPrice.toString();
+      prod.lastSuggestedPrice = repriceResult.data.cronResponse.repriceData.repriceDetails.goToPrice ? repriceResult.data.cronResponse.repriceData.repriceDetails.goToPrice : repriceResult.data.cronResponse.repriceData.repriceDetails.newPrice;
+    } else if (repriceResult.data.cronResponse.repriceData.listOfRepriceDetails && repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.length > 0) {
       prod.lastExistingPrice = "";
       prod.lastSuggestedPrice = "";
-      for (const rep of repriceResult.data.cronResponse.repriceData
-        .listOfRepriceDetails) {
+      for (const rep of repriceResult.data.cronResponse.repriceData.listOfRepriceDetails) {
         prod.lastExistingPrice += `${rep.minQty}@${rep.oldPrice} / `;
-        prod.lastSuggestedPrice += rep.goToPrice
-          ? `${rep.minQty}@${rep.goToPrice} / `
-          : `${rep.minQty}@${rep.newPrice} / `;
+        prod.lastSuggestedPrice += rep.goToPrice ? `${rep.minQty}@${rep.goToPrice} / ` : `${rep.minQty}@${rep.newPrice} / `;
       }
     }
   }
@@ -489,4 +360,12 @@ export function updateCronBasedDetails(
     prod.latest_price = prod.lastSuggestedPrice;
   }
   return prod;
+}
+
+export async function ParallelExecuteCron(itemList: any, initTime: any, keyGen: any, cronSettingsResponse: any, isSlowCron: boolean) {
+  if (itemList && itemList.length > 0) {
+    const tasks = itemList.map((item: any, index: any) => repriceBase.Execute(`${keyGen}-${index}`, item, initTime, cronSettingsResponse, isSlowCron));
+    await Promise.all(tasks);
+    console.info(`PARALLEL EXECUTION CRON : ${keyGen} All tasks completed at ${new Date().toISOString()}`);
+  }
 }

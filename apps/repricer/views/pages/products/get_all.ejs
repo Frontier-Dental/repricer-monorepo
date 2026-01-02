@@ -168,13 +168,17 @@
                                                     <th class="t-head">Last Reprice Comment</th>
                                                     <th class="t-head">Last Suggested Price</th>
                                                     <th class="t-head">Lowest Vendor Price</th>
-                                                    <th class="t-head">Unit Price</th>
+                                                    <!-- <th class="t-head">Unit Price</th> -->
                                                     <th class="t-head">Floor Price</th>
                                                     <th class="t-head">Max Price</th>
+                                                    <th class="t-head">Our Last Price</th>
+                                                    <th class="t-head">Current In Stock</th>
+                                                    <th class="t-head">Current Inventory</th>
+                                                    <th class="t-head">Market State Updated At</th>
                                                     <th class="t-head">NC</th>
-                                                    <th class="t-head long-txt">Suppress Price Break if Qty 1 not updated</th>
-                                                    <th class="t-head long-txt">Apply Buy Box</th>
-                                                    <th class="t-head long-txt">Apply NC For Buy Box</th>
+                                                    <!-- <th class="t-head long-txt">Suppress Price Break if Qty 1 not updated</th> -->
+                                                    <!-- <th class="t-head long-txt">Apply Buy Box</th> -->
+                                                    <!-- <th class="t-head long-txt">Apply NC For Buy Box</th> -->
                                                     <th class="t-head">Triggered By Vendor</th>
                                                     <th class="t-head">Result</th>
                                                     <th class="t-head">Algo Mode</th>
@@ -809,7 +813,7 @@
                                                                                                                         <% } %>
                                                                                                         </span>
                                                         </td>
-                                                        <td>
+                                                        <!-- <td>
                                                             <span class="tr-row">
                                                             <% if(item.tradent==null){ %>
                                                                 <b>TRA:</b> <br>N/A
@@ -861,7 +865,7 @@
                                                                                                                     <%= item.triad.unitPrice %>
                                                                                                                         <% } %>
                                                                                                         </span>
-                                                        </td>
+                                                        </td> -->
                                                         <td>
                                                             <span class="tr-row">
                                                             <% if(item.tradent==null){ %>
@@ -968,6 +972,224 @@
                                                                                                                         <% } %>
                                                                                                         </span>
                                                         </td>
+
+                                                        <td>
+                                                            <span class="tr-row">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.ourLastPrice %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b >FRO: </b><br>
+                                                                                    <%= item.frontier.ourLastPrice %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                           <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.ourLastPrice
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="mvp-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.ourLastPrice %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="mvp-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.ourLastPrice %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.ourLastPrice %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+
+                                                        <td>
+                                                            <span class="tr-row">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.currentInStock %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b >FRO: </b><br>
+                                                                                    <%= item.frontier.currentInStock %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                           <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.currentInStock
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="mvp-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.currentInStock %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="mvp-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.currentInStock %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.currentInStock %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+
+                                                        <td>
+                                                            <span class="tr-row">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.currentInventory %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b >FRO: </b><br>
+                                                                                    <%= item.frontier.currentInventory %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                           <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.currentInventory
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="mvp-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.currentInventory %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="mvp-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.currentInventory %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.currentInventory %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+
+                                                        <td>
+                                                            <span class="tr-row tr-wid">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.marketStateUpdatedAt %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                            <span class="fr-row tr-wid">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br>
+                                                                                    <%= item.frontier.marketStateUpdatedAt %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                            <span class="mvp-row tr-wid">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.marketStateUpdatedAt
+                                                                                                        %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="fir-row tr-wid">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.marketStateUpdatedAt %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="top-row tr-wid">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.marketStateUpdatedAt %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row tr-wid">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.marketStateUpdatedAt %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+
+
                                                         <td>
                                                             <span class="tr-row">
                                                             <% if(item.tradent==null){ %>
@@ -1034,7 +1256,7 @@
                                                                                                                     <% } %>
                                                                                                         </span>
                                                         </td>
-                                                        <td>
+                                                        <!-- <td>
                                                             <span class="tr-row tr-cwid">
                                                             <% if(item.tradent==null){ %>
                                                                 <b>TRA:</b> <br>N/A
@@ -1086,8 +1308,8 @@
                                                                                                                     <%= item.triad.suppressPriceBreakForOne==true ? "On" : "Off" %>
                                                                                                                         <% } %>
                                                                                                         </span>
-                                                        </td>
-                                                        <td>
+                                                        </td> -->
+                                                        <!-- <td>
                                                             <span class="tr-row tr-cwid">
                                                                 <% if(item.tradent==null){ %>
                                                                     <b>TRA:</b> <br>N/A
@@ -1141,9 +1363,9 @@
                                                                         <%= item.triad.applyBuyBoxLogic==true ? "On" : "Off" %>
                                                                             <% } %>
                                                             </span>
-                                                        </td>
+                                                        </td> -->
 
-                                                        <td>
+                                                        <!-- <td>
                                                             <span class="tr-row tr-cwid">
                                                                 <% if(item.tradent==null){ %>
                                                                     <b>TRA:</b> <br>N/A
@@ -1197,7 +1419,7 @@
                                                                         <%= item.triad.applyNcForBuyBox==true ? "On" : "Off" %>
                                                                             <% } %>
                                                             </span>
-                                                        </td>
+                                                        </td> -->
                                                         <td>
                                                             <span class="tr-row tr-cwid">
                                                                 <% if(item.tradent==null){ %>

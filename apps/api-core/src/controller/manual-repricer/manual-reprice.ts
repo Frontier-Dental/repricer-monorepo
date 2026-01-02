@@ -82,35 +82,42 @@ export async function manualRepriceHandler(
         contextCronId,
       );
     }
-    for (let idx = 0; idx < prioritySequence.length; idx++) {
-      const proceedNextVendor = proceedNext(prod!, prioritySequence[idx].value);
-      const isVendorActivated = (prod as any)[prioritySequence[idx].value]
-        .activated;
-      if (proceedNextVendor && isVendorActivated) {
-        let repriceResponse = await repriceBase.repriceWrapper(
-          net32resp,
+
+    if (
+      prod.algo_execution_mode === AlgoExecutionMode.V1_ONLY ||
+      prod.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY ||
+      prod.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY
+    ) {
+      for (let idx = 0; idx < prioritySequence.length; idx++) {
+        const proceedNextVendor = proceedNext(
           prod!,
-          cronSetting!,
-          isOverrideRun,
-          jobId,
-          prioritySequence,
-          idx,
-          true,
+          prioritySequence[idx].value,
         );
-        //eligibleCount++;
-        if (repriceResponse) {
-          productLogs = repriceResponse.cronLogs;
-          (prod as any)[prioritySequence[idx].value] = repriceResponse.prod;
-          if (repriceResponse.skipNextVendor) {
-            break;
+        const isVendorActivated = (prod as any)[prioritySequence[idx].value]
+          .activated;
+        if (proceedNextVendor && isVendorActivated) {
+          let repriceResponse = await repriceBase.repriceWrapper(
+            net32resp,
+            prod!,
+            cronSetting!,
+            isOverrideRun,
+            jobId,
+            prioritySequence,
+            idx,
+            true,
+            isSlowCronRun,
+          );
+          //eligibleCount++;
+          if (repriceResponse) {
+            cronLogs.logs.push(repriceResponse.cronLogs);
+            (prod as any)[prioritySequence[idx].value] = repriceResponse.prod;
+            if (repriceResponse.skipNextVendor) {
+              break;
+            }
           }
         }
       }
     }
-  }
-
-  if (productLogs.length > 0) {
-    cronLogs.logs.push(productLogs);
   }
   (cronLogs as any).completionTime = new Date();
   const logInDb = await mongoHelper.PushLogsAsync(cronLogs);

@@ -1,7 +1,12 @@
 {
-  "trailingComma": "all",
+  "trailingComma": "es5",
   "tabWidth": 2,
-  "plugins": ["prettier-plugin-sql", "prettier-plugin-ejs"],
+  "useTabs": false,
+  "printWidth": 1000,
+  "plugins": [
+    "prettier-plugin-sql",
+    "prettier-plugin-ejs"
+  ],
   "overrides": [
     {
       "files": "*.sql",

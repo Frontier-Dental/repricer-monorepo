@@ -20,6 +20,9 @@ EXPOSE 3000
 
 # Set environment variables
 ENV NODE_ENV=production
+RUN npm install tzdata
+ENV TZ=Canada/Eastern
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Set working directory to repricer for the final command
 WORKDIR /app/apps/repricer

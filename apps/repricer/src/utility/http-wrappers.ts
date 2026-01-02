@@ -256,6 +256,38 @@ export async function native_get_V2(_url: any, _headers: any) {
   return await axios(config);
 }
 
+export async function recreateMiniErpCron(payload: any) {
+  const config = {
+    method: "post",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.MINI_ERP_CRON_RECREATE_ENDPOINT,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(payload),
+  };
+  return await axios(config);
+}
+
+export async function toggleMiniErpCron(payload: any) {
+  const config = {
+    method: "post",
+    url:
+      applicationConfig.REPRICER_API_BASE_URL +
+      applicationConfig.MINI_ERP_CRON_TOGGLE_STATUS_ENDPOINT,
+    headers: {
+      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+    },
+    data: JSON.stringify(payload),
+  };
+  return await axios(config);
+}
+
 async function getManualCronUrl(mpid: any, source: any) {
   const baseUri =
     source == "FEED"

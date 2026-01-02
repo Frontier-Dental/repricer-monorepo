@@ -32,7 +32,7 @@ app.use(
     limit: "500mb",
     extended: true,
     parameterLimit: 10000000,
-  }),
+  })
 );
 
 app.set("view engine", "ejs");
@@ -41,7 +41,7 @@ app.set("views", "views");
 app.use(
   express.urlencoded({
     extended: false,
-  }),
+  })
 );
 app.use(express.json());
 
@@ -60,7 +60,7 @@ app.use(
     store: new MemoryStore({
       checkPeriod: 86400000,
     }),
-  }),
+  })
 );
 
 app.get("/health", (req: Request, res: Response) => {
@@ -81,10 +81,9 @@ app.use("/public/images", express.static("./public/images"));
 app.use(errorMiddleware);
 
 const PORT = applicationConfig.PORT || 3000;
+process.env.TZ = "Canada/Eastern";
 app.listen(PORT, async () => {
-  console.info(
-    `Server running with node environment ${process.env.NODE_ENV} on port ${PORT} at ${new Date()}`,
-  );
+  console.info(`Server running with node environment ${process.env.NODE_ENV} on port ${PORT} at ${new Date()}`);
   console.info(`Application version: ${packageJson.version}`);
   console.info("Scheduling enabled crons on startup");
   await startAllMonitorCrons();
