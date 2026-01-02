@@ -334,5 +334,5 @@ export const GetContextErrorItems = async (_activeStatus: any): Promise<any> => 
   };
   const dbo = await getMongoDb();
   console.log(`DB_HELPER: Fetching GetContextErrorItems with active status: ${_activeStatus} || Query: ${JSON.stringify(query)}`);
-  return dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).find(query).limit(250).toArray();
+  return dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).find(query).limit(750).toArray();
 };
