@@ -644,6 +644,9 @@ function getContextItem(product: any, key: any) {
   if (product.triadDetails && !contextData) {
     contextData = product.triadDetails[key];
   }
+  if (product.biteSupplyDetails && !contextData) {
+    contextData = product.biteSupplyDetails[key];
+  }
   return contextData;
 }
 

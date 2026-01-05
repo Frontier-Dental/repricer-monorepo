@@ -50,6 +50,11 @@ debugController.get("/debug/reprice/:key", async (req: Request, res: Response) =
     (productDetails as any).triadDetails.allowReprice = false;
     contextCronName = (productDetails as any).triadDetails.cronName;
   }
+  if (productDetails!.biteSupplyDetails) {
+    (productDetails as any).biteSupplyDetails.skipReprice = false;
+    (productDetails as any).biteSupplyDetails.allowReprice = false;
+    contextCronName = (productDetails as any).biteSupplyDetails.cronName;
+  }
   let cronSettingsResponse = await sqlV2Service.GetCronSettingsDetailsByName(contextCronName);
   if (!cronSettingsResponse || (cronSettingsResponse && cronSettingsResponse.length == 0)) {
     const slowCronDetails = await sqlV2Service.GetSlowCronDetails();
@@ -306,6 +311,8 @@ function getContextCronId(productDetails: any, vendorName: string) {
       return productDetails.firstDentDetails ? productDetails.firstDentDetails.cronId : null;
     case "TRIAD":
       return productDetails.triadDetails ? productDetails.triadDetails.cronId : null;
+    case "BITESUPPLY":
+      return productDetails.biteSupplyDetails ? productDetails.biteSupplyDetails.cronId : null;
     default:
       return null;
   }

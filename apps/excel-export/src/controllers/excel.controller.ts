@@ -48,43 +48,32 @@ export async function exportItems(req: Request, res: Response) {
       val.triadDetails.isBadgeItem = val.isBadgeItem;
       AllItems.push(val.triadDetails);
     }
+    if (val.biteSupplyDetails && val.biteSupplyDetails != null) {
+      val.biteSupplyDetails.scrapeOnlyCronName = val.scrapeOnlyCronName;
+      val.biteSupplyDetails.isScrapeOnlyActivated = val.isScrapeOnlyActivated;
+      val.biteSupplyDetails.isBadgeItem = val.isBadgeItem;
+      AllItems.push(val.biteSupplyDetails);
+    }
   });
   AllItems.forEach(($item) => {
-    $item.lastCronTime = $item.last_cron_time
-      ? moment($item.last_cron_time).format("YYYY-MM-DD HH:mm:ss")
-      : $item.last_cron_time;
-    $item.lastUpdateTime = $item.last_update_time
-      ? moment($item.last_update_time).format("YYYY-MM-DD HH:mm:ss")
-      : $item.last_update_time;
-    $item.lastAttemptedTime = $item.last_attempted_time
-      ? moment($item.last_attempted_time).format("YYYY-MM-DD HH:mm:ss")
-      : $item.last_attempted_time;
-    $item.nextCronTime = $item.next_cron_time
-      ? moment($item.next_cron_time).format("YYYY-MM-DD HH:mm:ss")
-      : $item.next_cron_time;
+    $item.lastCronTime = $item.last_cron_time ? moment($item.last_cron_time).format("YYYY-MM-DD HH:mm:ss") : $item.last_cron_time;
+    $item.lastUpdateTime = $item.last_update_time ? moment($item.last_update_time).format("YYYY-MM-DD HH:mm:ss") : $item.last_update_time;
+    $item.lastAttemptedTime = $item.last_attempted_time ? moment($item.last_attempted_time).format("YYYY-MM-DD HH:mm:ss") : $item.last_attempted_time;
+    $item.nextCronTime = $item.next_cron_time ? moment($item.next_cron_time).format("YYYY-MM-DD HH:mm:ss") : $item.next_cron_time;
     $item.badge_indicator = parseBadgeIndicator($item.badgeIndicator, "KEY");
-    $item.lastUpdatedOn = $item.lastUpdatedOn
-      ? moment($item.lastUpdatedOn).format("YYYY-MM-DD HH:mm:ss")
-      : null;
+    $item.lastUpdatedOn = $item.lastUpdatedOn ? moment($item.lastUpdatedOn).format("YYYY-MM-DD HH:mm:ss") : null;
     //$item.lastUpdatedByUser = $item.AuditInfo ? $item.AuditInfo.UpdatedBy : null;
     $item.mpid = parseInt($item.mpid);
     $item.unitPrice = $item.unitPrice ? parseFloat($item.unitPrice) : null;
     $item.floorPrice = $item.floorPrice ? parseFloat($item.floorPrice) : null;
     $item.maxPrice = $item.maxPrice ? parseFloat($item.maxPrice) : null;
     $item.priority = $item.priority ? parseInt($item.priority) : null;
-    $item.requestInterval = $item.requestInterval
-      ? parseInt($item.requestInterval)
-      : null;
-    $item.override_bulk_rule = $item.override_bulk_rule
-      ? parseInt($item.override_bulk_rule)
-      : null;
+    $item.requestInterval = $item.requestInterval ? parseInt($item.requestInterval) : null;
+    $item.override_bulk_rule = $item.override_bulk_rule ? parseInt($item.override_bulk_rule) : null;
     $item.lastExistingPrice = `${$item.lastExistingPrice} /`;
     $item.lastSuggestedPrice = `${$item.lastSuggestedPrice} /`;
     $item.lowest_vendor_price = `${$item.lowest_vendor_price} /`;
-    $item.handling_time_filter = $item.handlingTimeFilter
-      ? handlingTimeGroupResx.find((x) => x.key == $item.handlingTimeFilter)!
-          .value
-      : null;
+    $item.handling_time_filter = $item.handlingTimeFilter ? handlingTimeGroupResx.find((x) => x.key == $item.handlingTimeFilter)!.value : null;
   });
 
   const workbook = new excelJs.Workbook();
@@ -195,14 +184,8 @@ export async function exportItems(req: Request, res: Response) {
     { header: "Get BB - Badge Value", key: "getBBBadgeValue", width: 20 },
   ];
   worksheet.addRows(AllItems);
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  );
-  res.setHeader(
-    "Content-Disposition",
-    "attachment; filename=" + "itemExcel.xlsx",
-  );
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", "attachment; filename=" + "itemExcel.xlsx");
 
   return workbook.xlsx.write(res).then(function () {
     res.status(200).end();
@@ -211,14 +194,10 @@ export async function exportItems(req: Request, res: Response) {
 
 function parseBadgeIndicator(stringValue: any, evalType: any) {
   if (_.isEqual(evalType, "KEY")) {
-    const $eval = badgeResx.find((x: any) =>
-      _.isEqual(x.key, stringValue.trim().toUpperCase()),
-    );
+    const $eval = badgeResx.find((x: any) => _.isEqual(x.key, stringValue.trim().toUpperCase()));
     return $eval ? $eval.value.trim() : _.first(badgeResx)!.value.trim();
   } else if (_.isEqual(evalType, "VALUE")) {
-    const $eval = badgeResx.find((x) =>
-      _.isEqual(x.value.toUpperCase(), stringValue.trim().toUpperCase()),
-    );
+    const $eval = badgeResx.find((x) => _.isEqual(x.value.toUpperCase(), stringValue.trim().toUpperCase()));
     return $eval ? $eval.key : _.first(badgeResx)!.key;
   }
   return undefined;

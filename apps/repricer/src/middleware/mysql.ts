@@ -470,6 +470,9 @@ export async function GetLinkedVendorDetails(mpId: any, vendorName: any) {
     if (vendorName == "TRIAD") {
       tableName = "table_triadDetails";
     }
+    if (vendorName == "BITESUPPLY") {
+      tableName = "table_biteSupplyDetails";
+    }
 
     const queryToCall = `select Id from ${tableName} where MpId=${mpId}`;
     const noOfRecords = await db.execute(queryToCall);
@@ -512,6 +515,9 @@ export async function ChangeProductActivation(mpid: any, status: any) {
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
     console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
     queryToCall = `update table_triadDetails set Activated=? where MpId=?`;
+    noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
+    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
+    queryToCall = `update table_biteSupplyDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
     console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
 
@@ -579,6 +585,9 @@ export async function UpdateBranchDataForVendor(mpId: any, vendorName: any, payL
     }
     if (vendorName == "TRIAD") {
       tableName = "table_triadDetails";
+    }
+    if (vendorName == "BITESUPPLY") {
+      tableName = "table_biteSupplyDetails";
     }
 
     const queryToCall = `Update ${tableName} set Activated=?,ChannelId=?,IsNCNeeded=?,BadgeIndicator=?,RepricingRule=?,FloorPrice=?,MaxPrice=?,UnitPrice=? where MpId=?`;

@@ -594,6 +594,15 @@
                                                                                                                     <%= item.triad.lastCronRun %>
                                                                                                                         <% } %>
                                                                                                         </span>
+                                                                                                        <hr>
+                                                                                                        <span class="bite-supply-row tr-wid">
+                                                                                                            <% if(item.biteSupply==null){ %>
+                                                                                                                <b>BIT:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>BIT:</b><br>
+                                                                                                                    <%= item.biteSupply.lastCronRun %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
                                                         </td>
                                                         <td>
                                                             <span class="tr-row tr-wid">
@@ -904,6 +913,16 @@
                                                                                                                     <b>CAR:</b><br>
                                                                                                                     <%= item.triad.lowest_vendor_price ? (item.triad.lowest_vendor_price).toString().replace(/ \//g,",") :
                                                                                                                         item.triad.lowest_vendor_price %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="bite-supply-row">
+                                                                                                            <% if(item.biteSupply==null){ %>
+                                                                                                                <b>BIT:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>BIT:</b><br>
+                                                                                                                    <%= item.biteSupply.lowest_vendor_price ? (item.biteSupply.lowest_vendor_price).toString().replace(/ \//g,",") :
+                                                                                                                        item.biteSupply.lowest_vendor_price %>
                                                                                                                         <% } %>
                                                                                                         </span>
                                                         </td>

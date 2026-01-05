@@ -17,3 +17,6 @@ add column RepriceResult varchar(128);
 
 alter table table_triadDetails
 add column RepriceResult varchar(128);
+
+alter table table_biteSupplyDetails
+add column RepriceResult varchar(128);
