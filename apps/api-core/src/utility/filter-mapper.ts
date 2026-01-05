@@ -365,6 +365,9 @@ export async function GetProductDetailsByVendor(details: any, contextVendor: str
   if (contextVendor == "TRIAD") {
     return details.triadDetails;
   }
+  if (contextVendor == "BITESUPPLY") {
+    return details.biteSupplyDetails;
+  }
 }
 
 export async function GetTriggeredByVendor(repriceResult: any, mpId: string, contextVendor: string): Promise<{ resultStr: string; updateRequired: boolean }> {

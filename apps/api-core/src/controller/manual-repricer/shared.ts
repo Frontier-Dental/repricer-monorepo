@@ -8,6 +8,7 @@ export function getContextCronId(productDetails: any): string {
   if (productDetails.topDentDetails) return productDetails.topDentDetails.cronId;
   if (productDetails.firstDentDetails) return productDetails.firstDentDetails.cronId;
   if (productDetails.triadDetails) return productDetails.triadDetails.cronId;
+  if (productDetails.biteSupplyDetails) return productDetails.biteSupplyDetails.cronId;
   return "";
 }
 

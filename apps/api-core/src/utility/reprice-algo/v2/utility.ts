@@ -4,60 +4,27 @@ import { AlgoResult } from "./types";
 import { Net32PriceBreak } from "../../../types/net32";
 
 export function getAllOwnVendorNames() {
-  return [
-    { name: VendorName.TRADENT },
-    { name: VendorName.FRONTIER },
-    { name: VendorName.MVP },
-    { name: VendorName.TOPDENT },
-    { name: VendorName.FIRSTDENT },
-    { name: VendorName.TRIAD },
-  ];
+  return [{ name: VendorName.TRADENT }, { name: VendorName.FRONTIER }, { name: VendorName.MVP }, { name: VendorName.TOPDENT }, { name: VendorName.FIRSTDENT }, { name: VendorName.TRIAD }, { name: VendorName.BITESUPPLY }];
 }
 
-export function isShortExpiryProduct(
-  priceBreaks: Net32PriceBreak[],
-  quantity: number,
-) {
-  const priceBreakForQuantity = priceBreaks.find(
-    (pb) => pb.minQty === quantity,
-  );
+export function isShortExpiryProduct(priceBreaks: Net32PriceBreak[], quantity: number) {
+  const priceBreakForQuantity = priceBreaks.find((pb) => pb.minQty === quantity);
   return priceBreakForQuantity?.promoAddlDescr?.includes("EXP");
 }
 
 export function isChangeResult(result: AlgoResult) {
-  return (
-    result === AlgoResult.CHANGE_UP ||
-    result === AlgoResult.CHANGE_DOWN ||
-    result === AlgoResult.CHANGE_NEW
-  );
+  return result === AlgoResult.CHANGE_UP || result === AlgoResult.CHANGE_DOWN || result === AlgoResult.CHANGE_NEW;
 }
 
 export function getAllOwnVendorIds() {
-  return [
-    VendorId.TRADENT,
-    VendorId.FRONTIER,
-    VendorId.MVP,
-    VendorId.TOPDENT,
-    VendorId.FIRSTDENT,
-    VendorId.TRIAD,
-  ];
+  return [VendorId.TRADENT, VendorId.FRONTIER, VendorId.MVP, VendorId.TOPDENT, VendorId.FIRSTDENT, VendorId.TRIAD, VendorId.BITESUPPLY];
 }
 
-export function getPriceListFormatted(
-  priceList: { minQty: number; activeCd: number; price?: number }[],
-) {
-  return priceList
-    .map(
-      (p) =>
-        `Q${p.minQty}@${p.price ? p.price.toFixed(2) : ""}${p.activeCd === 0 ? "REMOVED" : ""}`,
-    )
-    .join(", ");
+export function getPriceListFormatted(priceList: { minQty: number; activeCd: number; price?: number }[]) {
+  return priceList.map((p) => `Q${p.minQty}@${p.price ? p.price.toFixed(2) : ""}${p.activeCd === 0 ? "REMOVED" : ""}`).join(", ");
 }
 
-export function getInternalProducts(
-  prod: ProductDetailsListItem,
-  allVendors: { name: string }[],
-) {
+export function getInternalProducts(prod: ProductDetailsListItem, allVendors: { name: string }[]) {
   return allVendors
     .map((x, i) => {
       switch (x.name) {
@@ -66,12 +33,8 @@ export function getInternalProducts(
             ...prod.frontierDetails,
             ownVendorId: VendorId.FRONTIER,
             ownVendorName: VendorName.FRONTIER,
-            floorPrice: prod.frontierDetails?.floorPrice
-              ? parseFloat(prod.frontierDetails.floorPrice as unknown as string)
-              : 0,
-            maxPrice: prod.frontierDetails?.maxPrice
-              ? parseFloat(prod.frontierDetails.maxPrice as unknown as string)
-              : Infinity,
+            floorPrice: prod.frontierDetails?.floorPrice ? parseFloat(prod.frontierDetails.floorPrice as unknown as string) : 0,
+            maxPrice: prod.frontierDetails?.maxPrice ? parseFloat(prod.frontierDetails.maxPrice as unknown as string) : Infinity,
             priority: i,
           };
         case VendorName.MVP:
@@ -79,12 +42,8 @@ export function getInternalProducts(
             ...prod.mvpDetails,
             ownVendorId: VendorId.MVP,
             ownVendorName: VendorName.MVP,
-            floorPrice: prod.mvpDetails?.floorPrice
-              ? parseFloat(prod.mvpDetails.floorPrice as unknown as string)
-              : 0,
-            maxPrice: prod.mvpDetails?.maxPrice
-              ? parseFloat(prod.mvpDetails.maxPrice as unknown as string)
-              : Infinity,
+            floorPrice: prod.mvpDetails?.floorPrice ? parseFloat(prod.mvpDetails.floorPrice as unknown as string) : 0,
+            maxPrice: prod.mvpDetails?.maxPrice ? parseFloat(prod.mvpDetails.maxPrice as unknown as string) : Infinity,
             priority: i,
           };
         case VendorName.TRADENT:
@@ -92,12 +51,8 @@ export function getInternalProducts(
             ...prod.tradentDetails,
             ownVendorId: VendorId.TRADENT,
             ownVendorName: VendorName.TRADENT,
-            floorPrice: prod.tradentDetails?.floorPrice
-              ? parseFloat(prod.tradentDetails.floorPrice as unknown as string)
-              : 0,
-            maxPrice: prod.tradentDetails?.maxPrice
-              ? parseFloat(prod.tradentDetails.maxPrice as unknown as string)
-              : Infinity,
+            floorPrice: prod.tradentDetails?.floorPrice ? parseFloat(prod.tradentDetails.floorPrice as unknown as string) : 0,
+            maxPrice: prod.tradentDetails?.maxPrice ? parseFloat(prod.tradentDetails.maxPrice as unknown as string) : Infinity,
             priority: i,
           };
         case VendorName.FIRSTDENT:
@@ -105,14 +60,8 @@ export function getInternalProducts(
             ...prod.firstDentDetails,
             ownVendorId: VendorId.FIRSTDENT,
             ownVendorName: VendorName.FIRSTDENT,
-            floorPrice: prod.firstDentDetails?.floorPrice
-              ? parseFloat(
-                  prod.firstDentDetails.floorPrice as unknown as string,
-                )
-              : 0,
-            maxPrice: prod.firstDentDetails?.maxPrice
-              ? parseFloat(prod.firstDentDetails.maxPrice as unknown as string)
-              : Infinity,
+            floorPrice: prod.firstDentDetails?.floorPrice ? parseFloat(prod.firstDentDetails.floorPrice as unknown as string) : 0,
+            maxPrice: prod.firstDentDetails?.maxPrice ? parseFloat(prod.firstDentDetails.maxPrice as unknown as string) : Infinity,
             priority: i,
           };
         case VendorName.TOPDENT:
@@ -120,12 +69,8 @@ export function getInternalProducts(
             ...prod.topDentDetails,
             ownVendorId: VendorId.TOPDENT,
             ownVendorName: VendorName.TOPDENT,
-            floorPrice: prod.topDentDetails?.floorPrice
-              ? parseFloat(prod.topDentDetails.floorPrice as unknown as string)
-              : 0,
-            maxPrice: prod.topDentDetails?.maxPrice
-              ? parseFloat(prod.topDentDetails.maxPrice as unknown as string)
-              : Infinity,
+            floorPrice: prod.topDentDetails?.floorPrice ? parseFloat(prod.topDentDetails.floorPrice as unknown as string) : 0,
+            maxPrice: prod.topDentDetails?.maxPrice ? parseFloat(prod.topDentDetails.maxPrice as unknown as string) : Infinity,
             priority: i,
           };
         case VendorName.TRIAD:
@@ -133,12 +78,17 @@ export function getInternalProducts(
             ...prod.triadDetails,
             ownVendorId: VendorId.TRIAD,
             ownVendorName: VendorName.TRIAD,
-            floorPrice: prod.triadDetails?.floorPrice
-              ? parseFloat(prod.triadDetails.floorPrice as unknown as string)
-              : 0,
-            maxPrice: prod.triadDetails?.maxPrice
-              ? parseFloat(prod.triadDetails.maxPrice as unknown as string)
-              : Infinity,
+            floorPrice: prod.triadDetails?.floorPrice ? parseFloat(prod.triadDetails.floorPrice as unknown as string) : 0,
+            maxPrice: prod.triadDetails?.maxPrice ? parseFloat(prod.triadDetails.maxPrice as unknown as string) : Infinity,
+            priority: i,
+          };
+        case VendorName.BITESUPPLY:
+          return {
+            ...prod.biteSupplyDetails,
+            ownVendorId: VendorId.BITESUPPLY,
+            ownVendorName: VendorName.BITESUPPLY,
+            floorPrice: prod.biteSupplyDetails?.floorPrice ? parseFloat(prod.biteSupplyDetails.floorPrice as unknown as string) : 0,
+            maxPrice: prod.biteSupplyDetails?.maxPrice ? parseFloat(prod.biteSupplyDetails.maxPrice as unknown as string) : Infinity,
             priority: i,
           };
         default:

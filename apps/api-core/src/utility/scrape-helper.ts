@@ -68,6 +68,9 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
           if (prod.LinkedTriadDetailsInfo > 0) {
             historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "TRIAD"));
           }
+          if (prod.LinkedBiteSupplyDetailsInfo > 0) {
+            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "BITESUPPLY"));
+          }
           if (historyList && historyList.length > 0) {
             for (const historyItem of historyList) {
               await mySqlHelper.InsertHistory(historyItem, scrapeStartTime);
@@ -118,6 +121,9 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
                     break;
                   case "5":
                     vendorName = "TRIAD";
+                    break;
+                  case "10":
+                    vendorName = "BITESUPPLY";
                     break;
                 }
 
@@ -254,6 +260,9 @@ function getOwnVendorId(vendorName: string): string | null {
       break;
     case "TRIAD":
       vendorId = "5";
+      break;
+    case "BITESUPPLY":
+      vendorId = "10";
       break;
     default:
       break;

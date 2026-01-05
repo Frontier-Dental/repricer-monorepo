@@ -371,6 +371,11 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
       details.triadDetails.slowCronName = null;
       productUpdateNeeded = true;
     }
+    if (details.biteSupplyDetails) {
+      details.biteSupplyDetails.slowCronId = null;
+      details.biteSupplyDetails.slowCronName = null;
+      productUpdateNeeded = true;
+    }
     if (productUpdateNeeded) {
       details.isSlowActivated = false;
       await sqlHelper.UpdateCronForProductAsync(details); //await dbHelper.UpdateCronForProductAsync(details);
@@ -765,6 +770,9 @@ function getProductDetailsByVendor(details: any, contextVendor: string) {
   }
   if (contextVendor == VendorName.TRIAD) {
     return details.triadDetails;
+  }
+  if (contextVendor == VendorName.BITESUPPLY) {
+    return details.biteSupplyDetails;
   }
 }
 

@@ -29,6 +29,7 @@ const VENDOR_CONFIGS: VendorConfig[] = [
     channelName: "FIRSTDENT",
   },
   { tableName: "table_triadDetails", vendorId: 5, channelName: "TRIAD" },
+  { tableName: "table_biteSupplyDetails", vendorId: 10, channelName: "BITESUPPLY" },
 ];
 
 export async function up(knex: Knex): Promise<void> {
@@ -56,9 +57,7 @@ export async function up(knex: Knex): Promise<void> {
   `);
 
   for (const vendorConfig of VENDOR_CONFIGS) {
-    console.log(
-      `📊 Processing ${vendorConfig.channelName} (${vendorConfig.tableName})...`,
-    );
+    console.log(`📊 Processing ${vendorConfig.channelName} (${vendorConfig.tableName})...`);
 
     // Clear temp tables for this vendor
     await knex.raw(`DELETE FROM tmp_latest_product_info`);
@@ -82,7 +81,7 @@ export async function up(knex: Knex): Promise<void> {
       ) ranked
       WHERE rn = 1
     `,
-      [vendorConfig.vendorId],
+      [vendorConfig.vendorId]
     );
 
     // Populate temp table with latest history
@@ -103,7 +102,7 @@ export async function up(knex: Knex): Promise<void> {
       ) ranked
       WHERE rn = 1
     `,
-      [vendorConfig.channelName],
+      [vendorConfig.channelName]
     );
 
     // Update from product info
@@ -117,11 +116,10 @@ export async function up(knex: Knex): Promise<void> {
         vd.CurrentInventory = pi.Inventory
       WHERE vd.CurrentInStock IS NULL OR vd.CurrentInventory IS NULL
     `,
-      [vendorConfig.vendorId],
+      [vendorConfig.vendorId]
     );
 
-    const productInfoRowsAffected =
-      productInfoUpdateResult[0]?.affectedRows || 0;
+    const productInfoRowsAffected = productInfoUpdateResult[0]?.affectedRows || 0;
     console.log(`✅ Updated ${productInfoRowsAffected} rows with product info`);
 
     // Update from history
@@ -135,7 +133,7 @@ export async function up(knex: Knex): Promise<void> {
         vd.MarketStateUpdatedAt = h.RefTime
       WHERE vd.OurLastPrice IS NULL OR vd.MarketStateUpdatedAt IS NULL
     `,
-      [],
+      []
     );
 
     const historyRowsAffected = historyUpdateResult[0]?.affectedRows || 0;
@@ -153,9 +151,7 @@ export async function down(knex: Knex): Promise<void> {
   console.log("🔄 Reverting migration - clearing market state fields...");
 
   for (const vendorConfig of VENDOR_CONFIGS) {
-    console.log(
-      `📊 Clearing ${vendorConfig.channelName} (${vendorConfig.tableName})...`,
-    );
+    console.log(`📊 Clearing ${vendorConfig.channelName} (${vendorConfig.tableName})...`);
 
     await knex(vendorConfig.tableName).update({
       CurrentInStock: null,
@@ -164,9 +160,7 @@ export async function down(knex: Knex): Promise<void> {
       MarketStateUpdatedAt: null,
     });
 
-    console.log(
-      `✅ Cleared market state fields for ${vendorConfig.channelName}`,
-    );
+    console.log(`✅ Cleared market state fields for ${vendorConfig.channelName}`);
   }
 
   console.log("✅ Rollback completed successfully!");

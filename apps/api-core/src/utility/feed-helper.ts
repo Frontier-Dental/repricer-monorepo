@@ -44,6 +44,10 @@ export async function FilterEligibleProducts(productItemList: any[], cronId: num
     if (prod.triadDetails) {
       prod.triadDetails.skipReprice = getSkipReprice(prod.triadDetails, VendorName.TRIAD, cronId, isSlowCron, active422CronItems);
     }
+    //BITESUPPLY
+    if (prod.biteSupplyDetails) {
+      prod.biteSupplyDetails.skipReprice = getSkipReprice(prod.biteSupplyDetails, VendorName.BITESUPPLY, cronId, isSlowCron, active422CronItems);
+    }
   }
   return productItemList;
 }
@@ -62,6 +66,7 @@ export function SetSkipReprice(productItemList: ProductDetailsListItem[], value:
       topDentDetails: prod.topDentDetails ? { ...prod.topDentDetails, skipReprice: value } : prod.topDentDetails,
       firstDentDetails: prod.firstDentDetails ? { ...prod.firstDentDetails, skipReprice: value } : prod.firstDentDetails,
       triadDetails: prod.triadDetails ? { ...prod.triadDetails, skipReprice: value } : prod.triadDetails,
+      biteSupplyDetails: prod.biteSupplyDetails ? { ...prod.biteSupplyDetails, skipReprice: value } : prod.biteSupplyDetails,
     };
   });
 }

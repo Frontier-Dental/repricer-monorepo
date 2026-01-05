@@ -140,6 +140,8 @@ function getOwnVendorId(vendorName: string) {
       return "20727";
     case VendorName.TRIAD:
       return "5";
+    case VendorName.BITESUPPLY:
+      return "10";
     default:
       throw new Error(`Unknown vendor name: ${vendorName}`);
   }
