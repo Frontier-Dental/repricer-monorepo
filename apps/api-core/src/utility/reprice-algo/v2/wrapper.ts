@@ -201,33 +201,38 @@ export async function updatePrice(proxyConfig: any, subscriptionKey: string, pay
   // console.log("Request Data:", JSON.stringify(payload, null, 2));
   console.log("=============================");
 
-  const postResponse = await axios.post(
-    `${PROXY_URL}/proxy`,
-    {
-      url: targetUrl,
-      method: "POST",
-      data: payload,
-      headers: {
-        "Content-Type": "application/json",
-        "Subscription-Key": subscriptionKey,
+  try {
+    const postResponse = await axios.post(
+      `${PROXY_URL}/proxy`,
+      {
+        url: targetUrl,
+        method: "POST",
+        data: payload,
+        headers: {
+          "Content-Type": "application/json",
+          "Subscription-Key": subscriptionKey,
+        },
       },
-    },
-    {
-      auth: { username: USERNAME, password: PASSWORD },
-      headers: { "Content-Type": "application/json" },
-      timeout: 30000,
+      {
+        auth: { username: USERNAME, password: PASSWORD },
+        headers: { "Content-Type": "application/json" },
+        timeout: 30000,
+      }
+    );
+
+    console.log("=== CUSTOM PROXY RESPONSE ===");
+    console.log("Status:", postResponse.status);
+    console.log("Response Data:", JSON.stringify(postResponse.data));
+    console.log("==============================");
+
+    if (postResponse.data.statusCode !== 200) {
+      return { data: { status: false, message: `ERROR:${postResponse.data.statusCode}:Sorry some error occurred! Exception : ${postResponse.data.data.message}` } };
     }
-  );
-
-  console.log("=== CUSTOM PROXY RESPONSE ===");
-  console.log("Status:", postResponse.status);
-  console.log("Response Data:", JSON.stringify(postResponse.data));
-  console.log("==============================");
-
-  if (postResponse.data.statusCode !== 200) {
-    return { data: { status: false, message: `ERROR:${postResponse.data.statusCode}:Sorry some error occurred! Exception : ${postResponse.data.data.message}` } };
+    return { data: { status: true, message: postResponse.data.data.message } };
+  } catch (error) {
+    console.error("Error during custom proxy request:", error);
+    return { data: { status: false, message: `ERROR::Sorry some error occurred! Exception : ${error}` } };
   }
-  return { data: { status: true, message: postResponse.data.data.message } };
 }
 
 function priceIsWithinBounariesSafeguard(solution: Net32AlgoSolution) {
