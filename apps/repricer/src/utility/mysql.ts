@@ -122,6 +122,9 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
       case "TRIAD":
         contextSpName = applicationConfig.SQL_SP_UPSERT_TRIAD;
         break;
+      case "BITESUPPLY":
+        contextSpName = applicationConfig.SQL_SP_UPSERT_BITESUPPLY;
+        break;
       default:
         break;
     }
@@ -316,8 +319,13 @@ export async function GetAllRepriceEligibleProductByFilter(pageNumber: any, page
     .leftJoin("table_triadDetails as triadDl", "triadDl.id", "pl.LinkedTriadDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
+  const biteSupplyQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "biteSupplyDl.*"])
+    .leftJoin("table_biteSupplyDetails as biteSupplyDl", "biteSupplyDl.id", "pl.LinkedBiteSupplyDetailsInfo")
+    .whereIn("pl.MpId", mpIds);
+
   // Combine all queries using UNION
-  const result = await knex.union([tradentQuery, frontierQuery, mvpQuery, firstDentQuery, topDentQuery, triadQuery]).orderBy("ProductId");
+  const result = await knex.union([tradentQuery, frontierQuery, mvpQuery, firstDentQuery, topDentQuery, triadQuery, biteSupplyQuery]).orderBy("ProductId");
   //destroyKnexInstance();
   return SqlMapper.MapProductDetailsList(result);
 }
@@ -395,6 +403,16 @@ export async function GetAllRepriceEligibleProductByTag(mpId: any, channelId: an
             this.orWhere("ChannelId", "like", channelIdSearch);
           }
         }),
+      knex("table_biteSupplyDetails")
+        .select("MpId")
+        .where(function () {
+          if (mpIdSearch) {
+            this.where("MpId", "=", mpIdSearch).orWhere("FocusId", "=", mpIdSearch);
+          }
+          if (channelIdSearch) {
+            this.orWhere("ChannelId", "like", channelIdSearch);
+          }
+        }),
     ])
     .distinct();
 
@@ -436,9 +454,14 @@ export async function GetAllRepriceEligibleProductByTag(mpId: any, channelId: an
     .leftJoin("table_triadDetails as triadDl", "triadDl.id", "pl.LinkedTriadDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
+  const biteSupplyQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "biteSupplyDl.*"])
+    .leftJoin("table_biteSupplyDetails as biteSupplyDl", "biteSupplyDl.id", "pl.LinkedBiteSupplyDetailsInfo")
+    .whereIn("pl.MpId", mpIds);
+
   // Combine all queries using UNION
   const result = await knex
-    .union([tradentQuery, frontierQuery, mvpQuery, firstDentQuery, topDentQuery, triadQuery])
+    .union([tradentQuery, frontierQuery, mvpQuery, firstDentQuery, topDentQuery, triadQuery, biteSupplyQuery])
     // .whereNotNull("ChannelName")
     .orderBy("ProductId");
   //destroyKnexInstance();
@@ -482,6 +505,9 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
         break;
       case "TRIAD":
         contextSpName = applicationConfig.SQL_SP_UPDATE_TRIAD;
+        break;
+      case "BITESUPPLY":
+        contextSpName = applicationConfig.SQL_SP_UPDATE_BITESUPPLY;
         break;
       default:
         break;
@@ -614,6 +640,9 @@ export async function GetLinkedVendorDetails(mpId: any, vendorName: any) {
     if (vendorName == "TRIAD") {
       tableName = "table_triadDetails";
     }
+    if (vendorName == "BITESUPPLY") {
+      tableName = "table_biteSupplyDetails";
+    }
     const queryToCall = `select Id from ${tableName} where MpId=${mpId}`;
     const noOfRecords = await db.execute(queryToCall);
     return (noOfRecords[0] as any)[0]["Id"];
@@ -655,6 +684,9 @@ export async function ChangeProductActivation(mpid: any, status: any) {
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
     console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
     queryToCall = `update table_triadDetails set Activated=? where MpId=?`;
+    noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
+    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
+    queryToCall = `update table_biteSupplyDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
     console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
     return noOfRecords;
@@ -717,6 +749,9 @@ export async function UpdateBranchDataForVendor(mpId: any, vendorName: any, payL
     }
     if (vendorName == "TRIAD") {
       tableName = "table_triadDetails";
+    }
+    if (vendorName == "BITESUPPLY") {
+      tableName = "table_biteSupplyDetails";
     }
     const queryToCall = `Update ${tableName} set Activated=?,ChannelId=?,IsNCNeeded=?,BadgeIndicator=?,RepricingRule=?,FloorPrice=?,MaxPrice=?,UnitPrice=? where MpId=?`;
     const noOfRecords = await db.execute(queryToCall, [JSON.parse(payLoad.activated), payLoad.channelId, JSON.parse(payLoad.is_nc_needed), payLoad.badgeIndicator, parseInt(payLoad.repricingRule), parseFloat(payLoad.floorPrice), parseFloat(payLoad.maxPrice), parseFloat(payLoad.unitPrice), parseInt(mpId)]);

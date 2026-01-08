@@ -464,6 +464,9 @@ export async function UpdateTriggeredByVendor(payload: any, contextVendor: strin
       case "TRIAD":
         contextTableName = applicationConfig.SQL_TRIAD_DETAILS;
         break;
+      case "BITESUPPLY":
+        contextTableName = applicationConfig.SQL_BITESUPPLY_DETAILS;
+        break;
       default:
         break;
     }
@@ -719,6 +722,7 @@ function getContextItemByKey(payload: any, key: string): any {
   if (payload.topDentDetails != null) return payload.topDentDetails[key];
   if (payload.firstDentDetails != null) return payload.firstDentDetails[key];
   if (payload.triadDetails != null) return payload.triadDetails[key];
+  if (payload.biteSupplyDetails != null) return payload.biteSupplyDetails[key];
 }
 
 function getContextTableNameByVendorName(contextVendor: string) {
@@ -735,6 +739,8 @@ function getContextTableNameByVendorName(contextVendor: string) {
     contextTableName = applicationConfig.SQL_FIRSTDENT_DETAILS;
   } else if (contextVendor === VendorName.TRIAD) {
     contextTableName = applicationConfig.SQL_TRIAD_DETAILS;
+  } else if (contextVendor === VendorName.BITESUPPLY) {
+    contextTableName = applicationConfig.SQL_BITESUPPLY_DETAILS;
   }
   return contextTableName;
 }

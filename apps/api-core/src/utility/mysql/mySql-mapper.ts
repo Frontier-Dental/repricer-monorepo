@@ -24,6 +24,7 @@ export interface ProductDetailsListItem {
   topDentDetails: OwnVendorProductDetails | null;
   firstDentDetails: OwnVendorProductDetails | null;
   triadDetails: OwnVendorProductDetails | null;
+  biteSupplyDetails: OwnVendorProductDetails | null;
   mpid?: string;
   secretKey?: SecretKeyEntry[];
   last_attempted_time?: Date;
@@ -148,6 +149,7 @@ export const ToEnvSettingsModel = (incomingSqlData: any): any => {
         firstDent_priority: getPriority(incomingSqlData, "FIRSTDENT"),
         topDent_priority: getPriority(incomingSqlData, "TOPDENT"),
         triad_priority: getPriority(incomingSqlData, "TRIAD"),
+        biteSupply_priority: getPriority(incomingSqlData, "BITESUPPLY"),
       },
     },
   };

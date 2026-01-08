@@ -125,6 +125,9 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
       case "TRIAD":
         contextSpName = applicationConfig.SQL_SP_UPSERT_TRIAD;
         break;
+      case "BITESUPPLY":
+        contextSpName = applicationConfig.SQL_SP_UPSERT_BITESUPPLY;
+        break;
       default:
         break;
     }
@@ -318,8 +321,13 @@ export async function GetAllRepriceEligibleProductByFilter(pageNumber: any, page
     .leftJoin("table_triadDetails as triadDl", "triadDl.id", "pl.LinkedTriadDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
+  const biteSupplyQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "biteSupplyDl.*"])
+    .leftJoin("table_biteSupplyDetails as biteSupplyDl", "biteSupplyDl.id", "pl.LinkedBiteSupplyDetailsInfo")
+    .whereIn("pl.MpId", mpIds);
+
   // Combine all queries using UNION
-  const result = await knex.union([tradentQuery, frontierQuery, mvpQuery, firstDentQuery, topDentQuery, triadQuery]).orderBy("ProductId");
+  const result = await knex.union([tradentQuery, frontierQuery, mvpQuery, firstDentQuery, topDentQuery, triadQuery, biteSupplyQuery]).orderBy("ProductId");
   //destroyKnexInstance();
   return SqlMapper.MapProductDetailsList(result);
 }
@@ -397,6 +405,16 @@ export async function GetAllRepriceEligibleProductByTag(mpId: any, channelId: an
             this.orWhere("ChannelId", "like", channelIdSearch);
           }
         }),
+      knex("table_biteSupplyDetails")
+        .select("MpId")
+        .where(function () {
+          if (mpIdSearch) {
+            this.where("MpId", "=", mpIdSearch).orWhere("FocusId", "=", mpIdSearch);
+          }
+          if (channelIdSearch) {
+            this.orWhere("ChannelId", "like", channelIdSearch);
+          }
+        }),
     ])
     .distinct();
 
@@ -437,9 +455,14 @@ export async function GetAllRepriceEligibleProductByTag(mpId: any, channelId: an
     .leftJoin("table_triadDetails as triadDl", "triadDl.id", "pl.LinkedTriadDetailsInfo")
     .whereIn("pl.MpId", mpIds);
 
+  const biteSupplyQuery = knex("table_scrapeProductList as pl")
+    .select([...selectFields, "biteSupplyDl.*"])
+    .leftJoin("table_biteSupplyDetails as biteSupplyDl", "biteSupplyDl.id", "pl.LinkedBiteSupplyDetailsInfo")
+    .whereIn("pl.MpId", mpIds);
+
   // Combine all queries using UNION
   const result = await knex
-    .union([tradentQuery, frontierQuery, mvpQuery, firstDentQuery, topDentQuery, triadQuery])
+    .union([tradentQuery, frontierQuery, mvpQuery, firstDentQuery, topDentQuery, triadQuery, biteSupplyQuery])
     // .whereNotNull("ChannelName")
     .orderBy("ProductId");
   //destroyKnexInstance();

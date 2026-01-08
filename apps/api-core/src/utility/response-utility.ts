@@ -105,6 +105,9 @@ export function MapOverrideExecutionPriority(productDetails: any, priorityList: 
   if (productDetails.triadDetails) {
     productDetails.triadDetails.executionPriority = parseInt(priorityList.triad_priority);
   }
+  if (productDetails.biteSupplyDetails) {
+    productDetails.biteSupplyDetails.executionPriority = parseInt(priorityList.biteSupply_priority);
+  }
   return productDetails;
 }
 
