@@ -8,11 +8,7 @@ import xml2js from "xml2js";
 import * as formatWrapper from "./format-wrapper";
 import { applicationConfig } from "./config";
 
-export async function GetData(
-  _url: string,
-  proxyProviderDetails: any,
-  proxyParam: number,
-): Promise<any> {
+export async function GetData(_url: string, proxyProviderDetails: any, proxyParam: number): Promise<any> {
   let output = null;
   let inputRequest = null;
   switch (proxyParam) {
@@ -49,10 +45,7 @@ export async function GetData(
         requestData: `Custom Puppeteer Framework Based Input Request`,
         url: _url,
       };
-      output = await brightDataHelper.fetchDataForDebug(
-        _url,
-        proxyProviderDetails,
-      );
+      output = await brightDataHelper.fetchDataForDebug(_url, proxyProviderDetails);
       output["request"] = inputRequest;
       break;
     case 3:
@@ -73,25 +66,15 @@ export async function GetData(
       };
       inputRequest = config;
       const smartProxyResponse = await axios(config);
-      if (
-        smartProxyResponse &&
-        smartProxyResponse.status == 200 &&
-        smartProxyResponse.data &&
-        smartProxyResponse.data.results &&
-        smartProxyResponse.data.results.length > 0
-      ) {
+      if (smartProxyResponse && smartProxyResponse.status == 200 && smartProxyResponse.data && smartProxyResponse.data.results && smartProxyResponse.data.results.length > 0) {
         try {
           output = {
-            data: JSON.parse(
-              _.first(smartProxyResponse.data.results as any[])?.content as any,
-            ),
+            data: JSON.parse(_.first(smartProxyResponse.data.results as any[])?.content as any),
             request: inputRequest,
           };
         } catch (ex) {
           output = {
-            data: await convertFromXml(
-              _.first(smartProxyResponse.data.results as any[])?.content as any,
-            ),
+            data: await convertFromXml(_.first(smartProxyResponse.data.results as any[])?.content as any),
             request: inputRequest,
           };
         }
@@ -134,10 +117,7 @@ export async function GetData(
     case 11:
     case 12:
       const proxyDetails = await proxyHelper.InitProxy(proxyProviderDetails);
-      const axiosResponse = await axiosHelper.fetchGetAsyncV2(
-        proxyDetails,
-        _url,
-      );
+      const axiosResponse = await axiosHelper.fetchGetAsyncV2(proxyDetails, _url);
       inputRequest = { proxyDetails, _url };
       output = { data: axiosResponse.data, request: inputRequest };
       break;
@@ -159,9 +139,7 @@ export async function GetData(
           request: inputRequest,
         };
       } catch (ex) {
-        let responseStartIndex = (antResponse as any).indexOf(
-          '<List xmlns=\"\">',
-        );
+        let responseStartIndex = (antResponse as any).indexOf('<List xmlns=\"\">');
         if (responseStartIndex < 0) {
           responseStartIndex = (antResponse as any).indexOf("<List>");
         }
@@ -183,15 +161,8 @@ async function convertFromXml(payload: any): Promise<any> {
   let responseData = [];
   const options = { mergeAttrs: true, explicitArray: false };
   const scrapeResponseData = await xml2js.parseStringPromise(payload, options);
-  if (
-    scrapeResponseData &&
-    scrapeResponseData["List"] &&
-    scrapeResponseData["List"]["item"] &&
-    scrapeResponseData["List"]["item"].length > 0
-  ) {
-    responseData = await formatWrapper.FormatScrapeResponse(
-      scrapeResponseData["List"]["item"],
-    );
+  if (scrapeResponseData && scrapeResponseData["List"] && scrapeResponseData["List"]["item"] && scrapeResponseData["List"]["item"].length > 0) {
+    responseData = await formatWrapper.FormatScrapeResponse(scrapeResponseData["List"]["item"]);
   }
   return responseData;
 }

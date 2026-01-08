@@ -11,13 +11,7 @@ import Item from "../models/item";
 import { applicationConfig } from "../utility/config";
 import * as SessionHelper from "../utility/session-helper";
 import { ExcelExportService } from "../services/excel-export.service";
-import {
-  GetCronSettingsList,
-  GetEnvValueByKey,
-  ToggleCronStatus,
-  GetSlowCronDetails,
-  GetScrapeCrons,
-} from "../services/mysql-v2";
+import { GetCronSettingsList, GetEnvValueByKey, ToggleCronStatus, GetSlowCronDetails, GetScrapeCrons } from "../services/mysql-v2";
 
 export const getMasterItemController = async (req: Request, res: Response) => {
   let query: any = {};
@@ -27,14 +21,7 @@ export const getMasterItemController = async (req: Request, res: Response) => {
     let val = new RegExp(tags, "i");
     let tagsArr = (req.query.tags as string).split(" ");
     let tagsArrRegExp = tagsArr.map((tag) => new RegExp(tag, "i"));
-    query["$or"] = [
-      { mpid: val },
-      { productName: val },
-      { channelName: val },
-      { focusId: val },
-      { channelId: val },
-      { tags: { $all: tagsArrRegExp } },
-    ];
+    query["$or"] = [{ mpid: val }, { productName: val }, { channelName: val }, { focusId: val }, { channelId: val }, { tags: { $all: tagsArrRegExp } }];
   }
 
   let pgNo = 0;
@@ -59,22 +46,12 @@ export const getMasterItemController = async (req: Request, res: Response) => {
     _.cronSettings = cronSettings;
     _.badge_indicator = parseBadgeIndicator(_.badgeIndicator, "KEY");
     if (_.cronId) {
-      _.cronName = cronSettings.find(
-        (x: any) => x.CronId == _.cronId,
-      )?.CronName;
+      _.cronName = cronSettings.find((x: any) => x.CronId == _.cronId)?.CronName;
     }
-    _.lastCronTime = _.last_cron_time
-      ? moment(_.last_cron_time).format("DD-MM-YY HH:mm:ss")
-      : _.last_cron_time;
-    _.lastUpdateTime = _.last_update_time
-      ? moment(_.last_update_time).format("DD-MM-YY HH:mm:ss")
-      : _.last_update_time;
-    _.lastAttemptedTime = _.last_attempted_time
-      ? moment(_.last_attempted_time).format("DD-MM-YY HH:mm:ss")
-      : _.last_attempted_time;
-    _.nextCronTime = _.next_cron_time
-      ? moment(_.next_cron_time).format("DD-MM-YY HH:mm:ss")
-      : _.next_cron_time;
+    _.lastCronTime = _.last_cron_time ? moment(_.last_cron_time).format("DD-MM-YY HH:mm:ss") : _.last_cron_time;
+    _.lastUpdateTime = _.last_update_time ? moment(_.last_update_time).format("DD-MM-YY HH:mm:ss") : _.last_update_time;
+    _.lastAttemptedTime = _.last_attempted_time ? moment(_.last_attempted_time).format("DD-MM-YY HH:mm:ss") : _.last_attempted_time;
+    _.nextCronTime = _.next_cron_time ? moment(_.next_cron_time).format("DD-MM-YY HH:mm:ss") : _.next_cron_time;
   });
   res.render("pages/itemmaster/list", {
     items: masterItems,
@@ -103,9 +80,7 @@ export async function editMasterItemController(req: Request, res: Response) {
   const cronSettings = await GetCronSettingsList();
   item.cronSettings = cronSettings;
   item.badge_indicator = item.badgeIndicator;
-  item.cronName = item.cronId
-    ? cronSettings.find((x: any) => x.CronId == item.cronId)?.CronName
-    : "";
+  item.cronName = item.cronId ? cronSettings.find((x: any) => x.CronId == item.cronId)?.CronName : "";
   res.render("pages/itemmaster/edit", {
     item,
     groupName: "item",
@@ -145,40 +120,24 @@ export async function addMasterItemToDatabase(req: Request, res: Response) {
   data.is_nc_needed = req.body.is_nc_needed == "on" ? true : false;
   data.repricingRule = parseInt(req.body.reprice_rule_select);
   data.suppressPriceBreak = req.body.suppressPriceBreak == "on" ? true : false;
-  data.requestIntervalUnit = req.body.request_interval_unit
-    ? req.body.request_interval_unit
-    : "min";
+  data.requestIntervalUnit = req.body.request_interval_unit ? req.body.request_interval_unit : "min";
   data.priority = req.body.priority;
   data.competeAll = req.body.competeAll == "on" ? true : false;
-  data.suppressPriceBreakForOne =
-    req.body.suppressPriceBreakForOne == "on" ? true : false;
+  data.suppressPriceBreakForOne = req.body.suppressPriceBreakForOne == "on" ? true : false;
   data.beatQPrice = req.body.beatQPrice == "on" ? true : false;
-  data.percentageIncrease = req.body.percentageIncrease
-    ? parseFloat(req.body.percentageIncrease)
-    : 0;
+  data.percentageIncrease = req.body.percentageIncrease ? parseFloat(req.body.percentageIncrease) : 0;
   data.compareWithQ1 = req.body.compareWithQ1 == "on" ? true : false;
   data.wait_update_period = req.body.wait_update_period == "on" ? true : false;
-  data.badgeIndicator = req.body.badgeIndicator
-    ? req.body.badgeIndicator
-    : (_.first(badgeResx) as any).key;
-  data.badgePercentage = req.body.badgePercentage
-    ? parseFloat(req.body.badgePercentage)
-    : 0;
-  data.abortDeactivatingQPriceBreak =
-    req.body.abortDeactivatingQPriceBreak == "on" ? true : false;
+  data.badgeIndicator = req.body.badgeIndicator ? req.body.badgeIndicator : (_.first(badgeResx) as any).key;
+  data.badgePercentage = req.body.badgePercentage ? parseFloat(req.body.badgePercentage) : 0;
+  data.abortDeactivatingQPriceBreak = req.body.abortDeactivatingQPriceBreak == "on" ? true : false;
   data.ownVendorId = req.body.ownVendorId;
   data.sisterVendorId = req.body.sisterVendorId;
   data.inactiveVendorId = req.body.inactiveVendorId;
-  data.includeInactiveVendors =
-    req.body.includeInactiveVendors == "on" ? true : false;
-  data.override_bulk_update =
-    req.body.override_bulk_update == "on" ? true : false;
-  data.override_bulk_rule = req.body.override_bulk_rule
-    ? parseInt(req.body.override_bulk_rule)
-    : 2;
-  data.latest_price = req.body.latest_price
-    ? parseFloat(req.body.latest_price)
-    : 0;
+  data.includeInactiveVendors = req.body.includeInactiveVendors == "on" ? true : false;
+  data.override_bulk_update = req.body.override_bulk_update == "on" ? true : false;
+  data.override_bulk_rule = req.body.override_bulk_rule ? parseInt(req.body.override_bulk_rule) : 2;
+  data.latest_price = req.body.latest_price ? parseFloat(req.body.latest_price) : 0;
 
   const addMasterItems = await Item.create(data);
 
@@ -210,40 +169,24 @@ export async function updateMasterItemController(req: Request, res: Response) {
   data.is_nc_needed = req.body.is_nc_needed == "on" ? true : false;
   data.repricingRule = parseInt(req.body.reprice_rule_select);
   data.suppressPriceBreak = req.body.suppressPriceBreak == "on" ? true : false;
-  data.requestIntervalUnit = req.body.request_interval_unit
-    ? req.body.request_interval_unit
-    : "min";
+  data.requestIntervalUnit = req.body.request_interval_unit ? req.body.request_interval_unit : "min";
   data.priority = req.body.priority;
   data.competeAll = req.body.competeAll == "on" ? true : false;
-  data.suppressPriceBreakForOne =
-    req.body.suppressPriceBreakForOne == "on" ? true : false;
+  data.suppressPriceBreakForOne = req.body.suppressPriceBreakForOne == "on" ? true : false;
   data.beatQPrice = req.body.beatQPrice == "on" ? true : false;
-  data.percentageIncrease = req.body.percentageIncrease
-    ? parseFloat(req.body.percentageIncrease)
-    : 0;
+  data.percentageIncrease = req.body.percentageIncrease ? parseFloat(req.body.percentageIncrease) : 0;
   data.compareWithQ1 = req.body.compareWithQ1 == "on" ? true : false;
   data.wait_update_period = req.body.wait_update_period == "on" ? true : false;
-  data.badgeIndicator = req.body.badgeIndicator
-    ? req.body.badgeIndicator
-    : (_.first(badgeResx) as any).key;
-  data.badgePercentage = req.body.badgePercentage
-    ? parseFloat(req.body.badgePercentage)
-    : 0;
-  data.abortDeactivatingQPriceBreak =
-    req.body.abortDeactivatingQPriceBreak == "on" ? true : false;
+  data.badgeIndicator = req.body.badgeIndicator ? req.body.badgeIndicator : (_.first(badgeResx) as any).key;
+  data.badgePercentage = req.body.badgePercentage ? parseFloat(req.body.badgePercentage) : 0;
+  data.abortDeactivatingQPriceBreak = req.body.abortDeactivatingQPriceBreak == "on" ? true : false;
   data.ownVendorId = req.body.ownVendorId;
   data.sisterVendorId = req.body.sisterVendorId;
   data.inactiveVendorId = req.body.inactiveVendorId;
-  data.includeInactiveVendors =
-    req.body.includeInactiveVendors == "on" ? true : false;
-  data.override_bulk_update =
-    req.body.override_bulk_update == "on" ? true : false;
-  data.override_bulk_rule = req.body.override_bulk_rule
-    ? parseInt(req.body.override_bulk_rule)
-    : 2;
-  data.latest_price = req.body.latest_price
-    ? parseFloat(req.body.latest_price)
-    : 0;
+  data.includeInactiveVendors = req.body.includeInactiveVendors == "on" ? true : false;
+  data.override_bulk_update = req.body.override_bulk_update == "on" ? true : false;
+  data.override_bulk_rule = req.body.override_bulk_rule ? parseInt(req.body.override_bulk_rule) : 2;
+  data.latest_price = req.body.latest_price ? parseFloat(req.body.latest_price) : 0;
   let _id = req.body.id;
 
   const updateMasterItems = await Item.findByIdAndUpdate(_id, data);
@@ -273,40 +216,25 @@ export async function excelDownload(req: Request, res: Response) {
       await ExcelExportService.downloadExcel(filters, res);
     } else {
       // Fallback to the old implementation
-      console.log(
-        "Excel export service not available, using fallback implementation",
-      );
+      console.log("Excel export service not available, using fallback implementation");
 
       // Use lean() to get plain objects instead of Mongoose documents (uses less memory)
       let ItemCollection: any = await Item.find();
       const cronSettings = await GetCronSettingsList();
       ItemCollection.forEach((_: any) => {
         if (_.cronId) {
-          _.cronName = cronSettings.find(
-            (x: any) => x.CronId == _.cronId,
-          )?.CronName;
+          _.cronName = cronSettings.find((x: any) => x.CronId == _.cronId)?.CronName;
         }
         if (_.tags) {
           _.tags = _.tags.join(", ");
         }
       });
       ItemCollection.forEach(($item: any) => {
-        $item.lastCronTime = $item.last_cron_time
-          ? moment($item.last_cron_time).format("LLL")
-          : $item.last_cron_time;
-        $item.lastUpdateTime = $item.last_update_time
-          ? moment($item.last_update_time).format("LLL")
-          : $item.last_update_time;
-        $item.lastAttemptedTime = $item.last_attempted_time
-          ? moment($item.last_attempted_time).format("LLL")
-          : $item.last_attempted_time;
-        $item.nextCronTime = $item.next_cron_time
-          ? moment($item.next_cron_time).format("LLL")
-          : $item.next_cron_time;
-        $item.badge_indicator = parseBadgeIndicator(
-          $item.badgeIndicator,
-          "KEY",
-        );
+        $item.lastCronTime = $item.last_cron_time ? moment($item.last_cron_time).format("LLL") : $item.last_cron_time;
+        $item.lastUpdateTime = $item.last_update_time ? moment($item.last_update_time).format("LLL") : $item.last_update_time;
+        $item.lastAttemptedTime = $item.last_attempted_time ? moment($item.last_attempted_time).format("LLL") : $item.last_attempted_time;
+        $item.nextCronTime = $item.next_cron_time ? moment($item.next_cron_time).format("LLL") : $item.next_cron_time;
+        $item.badge_indicator = parseBadgeIndicator($item.badgeIndicator, "KEY");
       });
 
       const workbook = new excelJs.Workbook();
@@ -415,14 +343,8 @@ export async function excelDownload(req: Request, res: Response) {
         { header: "Latest Price", key: "latest_price", width: 20 },
       ];
       worksheet.addRows(ItemCollection);
-      res.setHeader(
-        "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      );
-      res.setHeader(
-        "Content-Disposition",
-        "attachment; filename=" + "itemExcel.xlsx",
-      );
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", "attachment; filename=" + "itemExcel.xlsx");
 
       return workbook.xlsx.write(res).then(function () {
         res.status(200).end();
@@ -463,36 +385,21 @@ export async function runAllCron(req: Request, res: Response) {
 }
 
 export async function runManualCron(req: Request, res: Response) {
-  const selectedProducts = Array.isArray(req.body.mpIds)
-    ? req.body.mpIds
-    : [req.body.mpIds];
+  const selectedProducts = Array.isArray(req.body.mpIds) ? req.body.mpIds : [req.body.mpIds];
   if (selectedProducts && selectedProducts.length > 0) {
     let cronLogs = { time: new Date(), logs: [], type: "Manual" };
     for (const prod of selectedProducts) {
       const query = { mpid: prod };
       const itemDetails = await Item.find(query);
       const source = await GetEnvValueByKey("SOURCE"); //await mongoMiddleware.GetEnvValueByKey("SOURCE");
-      const repriceResult = await httpMiddleware.runManualCron(
-        prod,
-        _.first(itemDetails),
-        source,
-      );
+      const repriceResult = await httpMiddleware.runManualCron(prod, _.first(itemDetails), source);
       let prodUpdateRequest: any = {};
       prodUpdateRequest.prod = _.first(itemDetails);
       prodUpdateRequest.resultant = repriceResult ? repriceResult.data : null;
       prodUpdateRequest.cronTime = new Date().toString();
-      const updateRes = await httpMiddleware.updateProductManual(
-        prod,
-        prodUpdateRequest,
-      );
+      const updateRes = await httpMiddleware.updateProductManual(prod, prodUpdateRequest);
       if (repriceResult) {
-        const priceUpdatedFlag =
-          repriceResult.data.priceUpdateResponse &&
-          JSON.stringify(repriceResult.data.priceUpdateResponse).indexOf(
-            "ERROR:422",
-          ) == -1
-            ? true
-            : false;
+        const priceUpdatedFlag = repriceResult.data.priceUpdateResponse && JSON.stringify(repriceResult.data.priceUpdateResponse).indexOf("ERROR:422") == -1 ? true : false;
         cronLogs.logs.push({
           productId: prod,
           logs: repriceResult.data.cronResponse,
@@ -504,11 +411,7 @@ export async function runManualCron(req: Request, res: Response) {
     }
     const mongoResult = await mongoMiddleware.PushManualCronLogAsync(cronLogs);
     if (mongoResult && mongoResult.insertedId) {
-      console.log(
-        "Manual Log with _id " +
-          mongoResult.insertedId.toString() +
-          ", added successfully",
-      );
+      console.log("Manual Log with _id " + mongoResult.insertedId.toString() + ", added successfully");
     }
     res.render("pages/cron/cronView", {
       response: "Manual repricing done",
@@ -520,10 +423,7 @@ export async function runManualCron(req: Request, res: Response) {
 
 export async function resetCron(req: Request, res: Response) {
   const sysDate = new Date();
-  const addMasterItems = await Item.updateMany(
-    {},
-    { $set: { last_cron_time: sysDate } },
-  );
+  const addMasterItems = await Item.updateMany({}, { $set: { last_cron_time: sysDate } });
   if (addMasterItems) {
     res.render("pages/cron/cronView", {
       response: `Last cron time reset to present time - ${sysDate}`,
@@ -565,29 +465,18 @@ export async function addExcelData(req: Request, res: Response) {
         is_nc_needed: row[7] ? JSON.parse(row[7]) : false,
         suppressPriceBreakForOne: row[8] != null ? JSON.parse(row[8]) : false,
         repricingRule: row[9] ? parseInt(row[9]) : 2,
-        suppressPriceBreak:
-          row[10] != null && row[10] != "" ? JSON.parse(row[10]) : false,
-        beatQPrice:
-          row[11] != null && row[11] != "" ? JSON.parse(row[11]) : false,
-        badgeIndicator: row[12]
-          ? parseBadgeIndicator(row[12].trim(), "VALUE")
-          : (_.first(badgeResx) as any).key,
+        suppressPriceBreak: row[10] != null && row[10] != "" ? JSON.parse(row[10]) : false,
+        beatQPrice: row[11] != null && row[11] != "" ? JSON.parse(row[11]) : false,
+        badgeIndicator: row[12] ? parseBadgeIndicator(row[12].trim(), "VALUE") : (_.first(badgeResx) as any).key,
         cronName: row[13],
-        cronId: row[13]
-          ? combinedArray.find((x: any) => x.CronName == row[13].trim())?.CronId
-          : "",
+        cronId: row[13] ? combinedArray.find((x: any) => x.CronName == row[13].trim())?.CronId : "",
         scrapeOn: row[14] != null && row[14] != "" ? JSON.parse(row[14]) : true,
-        allowReprice:
-          row[15] != null && row[15] != "" ? JSON.parse(row[15]) : true,
+        allowReprice: row[15] != null && row[15] != "" ? JSON.parse(row[15]) : true,
         net32url: row[16],
         executionPriority: row[17] ? parseInt(row[17]) : null,
-        isScrapeOnlyActivated:
-          row[18] != null && row[18] != "" ? JSON.parse(row[18]) : false,
+        isScrapeOnlyActivated: row[18] != null && row[18] != "" ? JSON.parse(row[18]) : false,
         scrapeOnlyCronName: row[19],
-        scrapeOnlyCronId: row[19]
-          ? scrapeOnlyCrons.find((x: any) => x.CronName == row[19].trim())
-              .CronId
-          : "",
+        scrapeOnlyCronId: row[19] ? scrapeOnlyCrons.find((x: any) => x.CronName == row[19].trim()).CronId : "",
         /***** Arranged Columns as Above *****/
         lastCronTime: row[20] && row[4] != "" ? row[20] : null,
         lastCronRun: row[21],
@@ -600,10 +489,8 @@ export async function addExcelData(req: Request, res: Response) {
         lastExistingPrice: row[28],
         lastSuggestedPrice: row[29],
         percentageIncrease: row[30] ? parseFloat(row[30]) : 0,
-        compareWithQ1:
-          row[31] != null && row[31] != "" ? JSON.parse(row[31]) : false,
-        competeAll:
-          row[32] != null && row[32] != "" ? JSON.parse(row[32]) : false,
+        compareWithQ1: row[31] != null && row[31] != "" ? JSON.parse(row[31]) : false,
+        competeAll: row[32] != null && row[32] != "" ? JSON.parse(row[32]) : false,
         badgePercentage: row[33] ? parseFloat(row[33]) : 0,
         nextCronTime: row[34] && row[34] != "" ? row[34] : null,
         productName: null,
@@ -616,49 +503,31 @@ export async function addExcelData(req: Request, res: Response) {
         abortDeactivatingQPriceBreak: true,
         ownVendorId: null,
         sisterVendorId: row[35],
-        includeInactiveVendors:
-          row[36] != null && row[36] != "" ? JSON.parse(row[36]) : false,
+        includeInactiveVendors: row[36] != null && row[36] != "" ? JSON.parse(row[36]) : false,
         inactiveVendorId: row[37],
-        override_bulk_update:
-          row[38] != null && row[38] != "" ? JSON.parse(row[38]) : true,
+        override_bulk_update: row[38] != null && row[38] != "" ? JSON.parse(row[38]) : true,
         override_bulk_rule: row[39] ? parseInt(row[39]) : 2,
         latest_price: row[40] ? parseFloat(row[40]) : 0,
         slowCronName: row[41] ? row[41].trim() : null,
-        slowCronId: row[41]
-          ? slowCrons.find((x: any) => x.CronName == row[41].trim()).CronId
-          : "", //Get Data
-        isSlowActivated:
-          row[42] != null && row[42] != "" ? JSON.parse(row[42]) : false,
+        slowCronId: row[41] ? slowCrons.find((x: any) => x.CronName == row[41].trim()).CronId : "", //Get Data
+        isSlowActivated: row[42] != null && row[42] != "" ? JSON.parse(row[42]) : false,
         lastUpdatedByUser: sessionInfo.UpdatedBy,
         lastUpdatedOn: sessionInfo.UpdatedOn,
-        applyBuyBoxLogic:
-          row[45] != null && row[45] != "" ? JSON.parse(row[45]) : false,
-        applyNcForBuyBox:
-          row[46] != null && row[46] != "" ? JSON.parse(row[46]) : false,
-        isBadgeItem:
-          row[47] != null && row[47] != "" ? JSON.parse(row[47]) : false,
-        handlingTimeFilter: row[48]
-          ? handlingTimeGroupResx.find((x: any) => x.value == row[48].trim())!
-              .key
-          : "ALL",
+        applyBuyBoxLogic: row[45] != null && row[45] != "" ? JSON.parse(row[45]) : false,
+        applyNcForBuyBox: row[46] != null && row[46] != "" ? JSON.parse(row[46]) : false,
+        isBadgeItem: row[47] != null && row[47] != "" ? JSON.parse(row[47]) : false,
+        handlingTimeFilter: row[48] ? handlingTimeGroupResx.find((x: any) => x.value == row[48].trim())!.key : "ALL",
         inventoryThreshold: row[50] ? parseInt(row[50]) : 0,
         excludedVendors: row[51],
         percentageDown: row[52] != null ? parseFloat(row[52]) : 0,
         badgePercentageDown: row[53] != null ? parseFloat(row[53]) : 0,
-        competeWithNext:
-          row[54] != null && row[54] != "" ? JSON.parse(row[54]) : false,
-        ignorePhantomQBreak:
-          row[56] != null && row[56] != "" ? JSON.parse(row[56]) : true,
-        ownVendorThreshold:
-          row[57] != null && row[57] != "" ? parseInt(row[57]) : 1,
-        getBBShipping:
-          row[59] != null && row[59] != "" ? JSON.parse(row[59]) : false,
-        getBBShippingValue:
-          row[60] != null && row[60] != "" ? parseFloat(row[60]) : 0,
-        getBBBadge:
-          row[61] != null && row[61] != "" ? JSON.parse(row[61]) : false,
-        getBBBadgeValue:
-          row[62] != null && row[62] != "" ? parseFloat(row[62]) : 0,
+        competeWithNext: row[54] != null && row[54] != "" ? JSON.parse(row[54]) : false,
+        ignorePhantomQBreak: row[56] != null && row[56] != "" ? JSON.parse(row[56]) : true,
+        ownVendorThreshold: row[57] != null && row[57] != "" ? parseInt(row[57]) : 1,
+        getBBShipping: row[59] != null && row[59] != "" ? JSON.parse(row[59]) : false,
+        getBBShippingValue: row[60] != null && row[60] != "" ? parseFloat(row[60]) : 0,
+        getBBBadge: row[61] != null && row[61] != "" ? JSON.parse(row[61]) : false,
+        getBBBadgeValue: row[62] != null && row[62] != "" ? parseFloat(row[62]) : 0,
       };
       items.push($item as never);
     } else {
@@ -678,14 +547,10 @@ export async function addExcelData(req: Request, res: Response) {
         percentageIncrease: row[22] ? parseFloat(row[22]) : 0,
         compareWithQ1: row[23] ? JSON.parse(row[23]) : false,
         competeAll: row[24] ? JSON.parse(row[24]) : false,
-        badgeIndicator: row[25]
-          ? parseBadgeIndicator(row[25].trim(), "VALUE")
-          : (_.first(badgeResx) as any).key,
+        badgeIndicator: row[25] ? parseBadgeIndicator(row[25].trim(), "VALUE") : (_.first(badgeResx) as any).key,
         badgePercentage: row[26] ? parseFloat(row[26]) : 0,
         productName: row[28] ? row[28] : "",
-        cronId: row[30]
-          ? combinedArray.find((x: any) => x.CronName == row[30].trim())?.CronId
-          : "",
+        cronId: row[30] ? combinedArray.find((x: any) => x.CronName == row[30].trim())?.CronId : "",
         cronName: row[30],
         requestInterval: row[31] ? parseInt(row[31]) : 1,
         requestIntervalUnit: row[32] ? row[32] : "min",
@@ -718,59 +583,35 @@ export async function addExcelData(req: Request, res: Response) {
   for (const pId of uniqueProductIds) {
     let itemData: any = {};
     itemData.mpId = pId;
-    itemData.tradentDetails = items.find(
-      (x: any) => x.channelName.toUpperCase() == "TRADENT" && x.mpid == pId,
-    );
-    if (
-      itemData.tradentDetails &&
-      itemData.tradentDetails.executionPriority == null
-    ) {
+    itemData.tradentDetails = items.find((x: any) => x.channelName.toUpperCase() == "TRADENT" && x.mpid == pId);
+    if (itemData.tradentDetails && itemData.tradentDetails.executionPriority == null) {
       itemData.tradentDetails.executionPriority = 1;
     }
-    itemData.frontierDetails = items.find(
-      (x: any) => x.channelName.toUpperCase() == "FRONTIER" && x.mpid == pId,
-    );
-    if (
-      itemData.frontierDetails &&
-      itemData.frontierDetails.executionPriority == null
-    ) {
+    itemData.frontierDetails = items.find((x: any) => x.channelName.toUpperCase() == "FRONTIER" && x.mpid == pId);
+    if (itemData.frontierDetails && itemData.frontierDetails.executionPriority == null) {
       itemData.frontierDetails.executionPriority = 2;
     }
-    itemData.mvpDetails = items.find(
-      (x: any) => x.channelName.toUpperCase() == "MVP" && x.mpid == pId,
-    );
+    itemData.mvpDetails = items.find((x: any) => x.channelName.toUpperCase() == "MVP" && x.mpid == pId);
     if (itemData.mvpDetails && itemData.mvpDetails.executionPriority == null) {
       itemData.mvpDetails.executionPriority = 3;
     }
-    itemData.topDentDetails = items.find(
-      (x: any) => x.channelName.toUpperCase() == "TOPDENT" && x.mpid == pId,
-    );
-    if (
-      itemData.topDentDetails &&
-      itemData.topDentDetails.executionPriority == null
-    ) {
+    itemData.topDentDetails = items.find((x: any) => x.channelName.toUpperCase() == "TOPDENT" && x.mpid == pId);
+    if (itemData.topDentDetails && itemData.topDentDetails.executionPriority == null) {
       itemData.topDentDetails.executionPriority = 4;
     }
-    itemData.firstDentDetails = items.find(
-      (x: any) => x.channelName.toUpperCase() == "FIRSTDENT" && x.mpid == pId,
-    );
-    if (
-      itemData.firstDentDetails &&
-      itemData.firstDentDetails.executionPriority == null
-    ) {
+    itemData.firstDentDetails = items.find((x: any) => x.channelName.toUpperCase() == "FIRSTDENT" && x.mpid == pId);
+    if (itemData.firstDentDetails && itemData.firstDentDetails.executionPriority == null) {
       itemData.firstDentDetails.executionPriority = 5;
     }
-    itemData.triadDetails = items.find(
-      (x: any) =>
-        x.channelName &&
-        x.channelName.toUpperCase() == "TRIAD" &&
-        x.mpid == pId,
-    );
-    if (
-      itemData.triadDetails &&
-      itemData.triadDetails.executionPriority == null
-    ) {
+    itemData.triadDetails = items.find((x: any) => x.channelName && x.channelName.toUpperCase() == "TRIAD" && x.mpid == pId);
+    if (itemData.triadDetails && itemData.triadDetails.executionPriority == null) {
       itemData.triadDetails.executionPriority = 6;
+    }
+
+    itemData.biteSupplyDetails = items.find((x: any) => x.channelName && x.channelName.toUpperCase() == "BITESUPPLY" && x.mpid == pId);
+
+    if (itemData.biteSupplyDetails && itemData.biteSupplyDetails.executionPriority == null) {
+      itemData.biteSupplyDetails.executionPriority = 7;
     }
     //Align Cron Details
     await mapperHelper.AlignProducts(itemData, combinedArray, slowCronIds);
@@ -788,11 +629,7 @@ export async function addExcelData(req: Request, res: Response) {
 }
 
 async function GetUniqueProductIds(collatedList: any[]) {
-  let unique_values = collatedList
-    .map((item) => item.mpid)
-    .filter(
-      (value, index, current_value) => current_value.indexOf(value) === index,
-    );
+  let unique_values = collatedList.map((item) => item.mpid).filter((value, index, current_value) => current_value.indexOf(value) === index);
   return _.filter(unique_values, (str) => str !== "" && str != null);
 }
 
@@ -844,10 +681,7 @@ async function createDummyCronLog(item: any, updatedResponse: any) {
   result.repriceData.repriceDetails = {};
   result.repriceData.repriceDetails.oldPrice = "N/A";
   result.repriceData.repriceDetails.newPrice = item.maxPrice;
-  result.repriceData.repriceDetails.explained =
-    updatedResponse && updatedResponse.message
-      ? updatedResponse.message
-      : "Price Updated to MAX.";
+  result.repriceData.repriceDetails.explained = updatedResponse && updatedResponse.message ? updatedResponse.message : "Price Updated to MAX.";
   return result;
 }
 
@@ -858,23 +692,15 @@ async function getSecretKey(_cronId: string) {
 }
 
 async function getPriceUpdatedField(updatedResponse: any) {
-  return (
-    updatedResponse &&
-    updatedResponse.message &&
-    updatedResponse.message.toUpperCase() == "UPDATE SUCCESSFUL"
-  );
+  return updatedResponse && updatedResponse.message && updatedResponse.message.toUpperCase() == "UPDATE SUCCESSFUL";
 }
 
 function parseBadgeIndicator(stringValue: any, evalType: any) {
   if (_.isEqual(evalType, "KEY")) {
-    const $eval = badgeResx.find((x: any) =>
-      _.isEqual(x.key, stringValue.trim().toUpperCase()),
-    );
+    const $eval = badgeResx.find((x: any) => _.isEqual(x.key, stringValue.trim().toUpperCase()));
     return $eval ? $eval.value.trim() : _.first(badgeResx)!.value.trim();
   } else if (_.isEqual(evalType, "VALUE")) {
-    const $eval = badgeResx.find((x: any) =>
-      _.isEqual(x.value.toUpperCase(), stringValue.trim().toUpperCase()),
-    );
+    const $eval = badgeResx.find((x: any) => _.isEqual(x.value.toUpperCase(), stringValue.trim().toUpperCase()));
     return $eval ? $eval.key : _.first(badgeResx)!.key;
   }
 }

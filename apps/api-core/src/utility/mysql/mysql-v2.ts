@@ -7,12 +7,8 @@ import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
 import * as SqlMapper from "./mySql-mapper";
 
 export async function GetFullCronSettingsList() {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const cronSettingsList = await cacheClient.get<any>(
-    CacheKey.CRON_SETTINGS_FULL_LIST,
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+  const cronSettingsList = await cacheClient.get<any>(CacheKey.CRON_SETTINGS_FULL_LIST);
   if (cronSettingsList != null) {
     await cacheClient.disconnect();
     return cronSettingsList;
@@ -22,10 +18,7 @@ export async function GetFullCronSettingsList() {
   const result = await db.raw(`call GetFullCronSettingsList()`);
   if (result && result[0] && result[0].length > 0) {
     cronSettingsDetails = await SqlMapper.ToCronSettingsModel(result[0][0]);
-    await cacheClient.set(
-      CacheKey.CRON_SETTINGS_FULL_LIST,
-      cronSettingsDetails,
-    ); // Cache for 1 hour
+    await cacheClient.set(CacheKey.CRON_SETTINGS_FULL_LIST, cronSettingsDetails); // Cache for 1 hour
   }
   await cacheClient.disconnect();
   return cronSettingsDetails;
@@ -40,9 +33,7 @@ export async function GetRotatingProxyUrl() {
   return null;
 }
 
-export async function GetProxyConfigByProviderId(
-  providerId: any,
-): Promise<any> {
+export async function GetProxyConfigByProviderId(providerId: any): Promise<any> {
   const knex = getKnexInstance();
   const result = await knex("ipConfig").where({ ProxyProvider: providerId });
   if (result && result.length > 0) {
@@ -52,9 +43,7 @@ export async function GetProxyConfigByProviderId(
 }
 
 export async function GetGlobalConfig() {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   try {
     const envSettingsResult = await cacheClient.get(CacheKey.ENV_SETTINGS);
     if (envSettingsResult != null) {
@@ -85,12 +74,8 @@ export async function GetDelay() {
 }
 
 export async function GetCronSettingsList() {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const cronSettingsList = await cacheClient.get<any>(
-    CacheKey.CRON_SETTINGS_LIST,
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+  const cronSettingsList = await cacheClient.get<any>(CacheKey.CRON_SETTINGS_LIST);
   if (cronSettingsList != null) {
     await cacheClient.disconnect();
     return cronSettingsList;
@@ -106,10 +91,7 @@ export async function GetCronSettingsList() {
   return cronSettingsDetails;
 }
 
-export async function UpdateCronDetailsByCronId(
-  cronId: string,
-  _status: any,
-): Promise<any> {
+export async function UpdateCronDetailsByCronId(cronId: string, _status: any): Promise<any> {
   const db = getKnexInstance();
   await db("cron_settings")
     .where({ CronId: cronId })
@@ -117,16 +99,12 @@ export async function UpdateCronDetailsByCronId(
       CronStatus: JSON.parse(_status),
       UpdatedTime: new Date(),
     });
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
   await cacheClient.disconnect();
 }
 
-export async function GetCronSettingsDetailsByName(
-  cronName: any,
-): Promise<any> {
+export async function GetCronSettingsDetailsByName(cronName: any): Promise<any> {
   const cronSettingsList = await GetFullCronSettingsList();
   if (cronSettingsList && cronSettingsList.length > 0) {
     return _.find(cronSettingsList, (o) => o.CronName === cronName);
@@ -147,21 +125,13 @@ export async function UpdateCronSettings(cronId: string): Promise<any> {
   await db("cron_settings").where({ CronId: cronId }).update({
     UpdatedTime: new Date(),
   });
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
   await cacheClient.disconnect();
 }
 
-export async function UpdateProxyDetailsByCronId(
-  cronId: any,
-  proxyProvider: any,
-  sequence: number,
-) {
-  console.debug(
-    `Updating proxy details for CronId: ${cronId} with ProxyProvider: ${proxyProvider} and Sequence: ${sequence}`,
-  );
+export async function UpdateProxyDetailsByCronId(cronId: any, proxyProvider: any, sequence: number) {
+  console.debug(`Updating proxy details for CronId: ${cronId} with ProxyProvider: ${proxyProvider} and Sequence: ${sequence}`);
   const db = getKnexInstance();
   await db("cron_settings")
     .where({ CronId: cronId })
@@ -170,26 +140,18 @@ export async function UpdateProxyDetailsByCronId(
       SwitchSequence: sequence,
       UpdatedTime: new Date(),
     });
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
   await cacheClient.disconnect();
 }
 
-export async function GetLinkedCronSettingsByProviderId(
-  proxyProviderId: number,
-) {
+export async function GetLinkedCronSettingsByProviderId(proxyProviderId: number) {
   const cronSettingsDetails = await GetFullCronSettingsList();
-  return cronSettingsDetails?.filter(
-    (c: any) => c.ProxyProvider === proxyProviderId,
-  );
+  return cronSettingsDetails?.filter((c: any) => c.ProxyProvider === proxyProviderId);
 }
 
 export async function GetSlowCronDetails(ignoreCache = false) {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   const slowCronDetails = await cacheClient.get(CacheKey.SLOW_CRON_DETAILS);
   if (slowCronDetails != null && !ignoreCache) {
     await cacheClient.disconnect();
@@ -207,9 +169,7 @@ export async function GetSlowCronDetails(ignoreCache = false) {
 }
 
 export async function GetScrapeCronDetails(ignoreCache = false) {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   const slowCronDetails = await cacheClient.get(CacheKey.SCRAPE_CRON_DETAILS);
   if (slowCronDetails != null && !ignoreCache) {
     await cacheClient.disconnect();
@@ -227,9 +187,7 @@ export async function GetScrapeCronDetails(ignoreCache = false) {
 }
 
 export async function GetFilteredCrons(ignoreCache = false) {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   const filterCronDetails = await cacheClient.get(CacheKey.FILTER_CRON_DETAILS);
   if (filterCronDetails != null && !ignoreCache) {
     await cacheClient.disconnect();
@@ -247,12 +205,8 @@ export async function GetFilteredCrons(ignoreCache = false) {
 }
 
 export async function GetMiniErpCronDetails(ignoreCache = false) {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const miniErpCronDetails = await cacheClient.get(
-    CacheKey.MINI_ERP_CRON_DETAILS,
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+  const miniErpCronDetails = await cacheClient.get(CacheKey.MINI_ERP_CRON_DETAILS);
   if (miniErpCronDetails != null && !ignoreCache) {
     await cacheClient.disconnect();
     return miniErpCronDetails;
@@ -286,12 +240,8 @@ export async function GetFilterCronDetailsByName($cronName: any) {
 }
 
 export async function GetProxySwitchCronDetails(ignoreCache = false) {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const proxySwitchCronDetails = await cacheClient.get(
-    CacheKey.PROXY_SWITCH_CRON_DETAILS,
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+  const proxySwitchCronDetails = await cacheClient.get(CacheKey.PROXY_SWITCH_CRON_DETAILS);
   if (proxySwitchCronDetails != null && !ignoreCache) {
     await cacheClient.disconnect();
     return proxySwitchCronDetails;
@@ -301,10 +251,7 @@ export async function GetProxySwitchCronDetails(ignoreCache = false) {
   const result = await db.raw(`call GetProxySwitcherCronList()`);
   if (result && result[0] && result[0].length > 0) {
     cronSettingsDetails = result[0][0];
-    await cacheClient.set(
-      CacheKey.PROXY_SWITCH_CRON_DETAILS,
-      cronSettingsDetails,
-    ); // Cache for 1 hour
+    await cacheClient.set(CacheKey.PROXY_SWITCH_CRON_DETAILS, cronSettingsDetails); // Cache for 1 hour
   }
   await cacheClient.disconnect();
   return cronSettingsDetails;
@@ -329,13 +276,9 @@ export async function UpdateProxyFailureDetails(proxyProvId: any, count: any) {
     });
 }
 
-export async function GetProxyFailureDetailsByProxyProviderId(
-  proxyProvId: any,
-) {
+export async function GetProxyFailureDetailsByProxyProviderId(proxyProvId: any) {
   const proxyProviderFailureDetails = await GetProxyFailureDetails();
-  return proxyProviderFailureDetails.find(
-    (x: any) => x.proxyProvider == proxyProvId,
-  );
+  return proxyProviderFailureDetails.find((x: any) => x.proxyProvider == proxyProvId);
 }
 
 export async function InitProxyFailureDetails(proxyProvId: any, count: any) {

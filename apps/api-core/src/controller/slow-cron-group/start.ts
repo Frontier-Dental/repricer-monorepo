@@ -6,14 +6,9 @@ import { runCoreCronLogic } from "../main-cron/shared";
 import { slowCrons, getCronNameByJobName } from "./shared";
 import { GetSlowCronDetails } from "../../utility/mysql/mysql-v2";
 
-export async function startAllSlowCronHandler(
-  req: Request,
-  res: Response,
-): Promise<any> {
+export async function startAllSlowCronHandler(req: Request, res: Response): Promise<any> {
   await startSlowCronLogic();
-  return res
-    .status(_codes.StatusCodes.OK)
-    .send(`Slow cron started successfully`);
+  return res.status(_codes.StatusCodes.OK).send(`Slow cron started successfully`);
 }
 
 export async function startSlowCronLogic() {
@@ -25,11 +20,7 @@ export async function startSlowCronLogic() {
       const cronName = getCronNameByJobName(jobName);
       try {
         if (cronDetail) {
-          const cronExpression = responseUtility.GetCronGeneric(
-            cronDetail.CronTimeUnit,
-            cronDetail.CronTime,
-            cronDetail.Offset,
-          );
+          const cronExpression = responseUtility.GetCronGeneric(cronDetail.CronTimeUnit, cronDetail.CronTime, cronDetail.Offset);
 
           slowCrons[cronName] = cron.schedule(
             cronExpression,
@@ -40,12 +31,10 @@ export async function startSlowCronLogic() {
                 console.error(`Error running ${cronDetail.CronName}:`, error);
               }
             },
-            { scheduled: JSON.parse(cronDetail.CronStatus) },
+            { scheduled: JSON.parse(cronDetail.CronStatus) }
           );
           if (JSON.parse(cronDetail.CronStatus)) {
-            console.log(
-              `Started ${cronDetail.CronName} at ${new Date()} with expression ${cronExpression}`,
-            );
+            console.log(`Started ${cronDetail.CronName} at ${new Date()} with expression ${cronExpression}`);
           }
         }
       } catch (exception) {

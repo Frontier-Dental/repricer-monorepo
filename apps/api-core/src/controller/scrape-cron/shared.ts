@@ -4,11 +4,7 @@ import * as scrapeHelper from "../../utility/scrape-helper";
 
 export const scrapeCrons: Record<string, ScheduledTask> = {};
 
-export function toggleCronStatus(
-  cronObject: ScheduledTask | null,
-  status: any,
-  cronName: string,
-) {
+export function toggleCronStatus(cronObject: ScheduledTask | null, status: any, cronName: string) {
   switch (parseInt(status)) {
     case 0:
       if (cronObject) {
@@ -28,9 +24,7 @@ export function toggleCronStatus(
 }
 
 export async function scrapeProductList(cronSettingsResponse: any) {
-  const scrapeProductList = await mySqlHelper.GetEligibleScrapeProductList(
-    cronSettingsResponse.CronId,
-  );
+  const scrapeProductList = await mySqlHelper.GetEligibleScrapeProductList(cronSettingsResponse.CronId);
   await scrapeHelper.Execute(scrapeProductList, cronSettingsResponse);
 }
 

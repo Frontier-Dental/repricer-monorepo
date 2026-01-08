@@ -17,11 +17,7 @@ import { startAllCronLogic } from "./controller/main-cron/start-all";
 import { manualRepriceController } from "./controller/manual-repricer";
 import { masterDataController } from "./controller/master-data";
 import { dataController } from "./controller/product-data";
-import {
-  proxySwitchController,
-  startProxySwitchCronLogic,
-  startProxySwitchResetCronLogic,
-} from "./controller/proxy-switch";
+import { proxySwitchController, startProxySwitchCronLogic, startProxySwitchResetCronLogic } from "./controller/proxy-switch";
 import { scrapeCronController } from "./controller/scrape-cron";
 import { startScrapeCronLogic } from "./controller/scrape-cron/start-scrape-cron";
 import { searchController } from "./controller/search";
@@ -62,9 +58,10 @@ nodeApp.use(
     },
     threshold: 0,
     level: 9,
-  }),
+  })
 );
 const port = applicationConfig.PORT;
+process.env.TZ = "Canada/Eastern";
 nodeApp.use(searchController);
 nodeApp.use(mainCronController);
 nodeApp.use(cacheController);
@@ -111,14 +108,10 @@ nodeApp.listen(port, async () => {
   }
   if (!fs.existsSync("./activeProducts.json")) {
     fs.writeFileSync("./activeProducts.json", JSON.stringify([]));
-    console.info(
-      `Resetting complete for Active Products for Application Reset at ${new Date()}`,
-    );
+    console.info(`Resetting complete for Active Products for Application Reset at ${new Date()}`);
   }
   if (!fs.existsSync("./activeOpportunityProducts.json")) {
     fs.writeFileSync("./activeOpportunityProducts.json", JSON.stringify([]));
-    console.info(
-      `Resetting complete for Active Opportunity Products for Application Reset at ${new Date()}`,
-    );
+    console.info(`Resetting complete for Active Opportunity Products for Application Reset at ${new Date()}`);
   }
 });

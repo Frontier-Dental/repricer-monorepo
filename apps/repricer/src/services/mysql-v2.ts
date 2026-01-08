@@ -2,40 +2,26 @@ import * as SqlMapper from "../utility/mapper/mysql-mapper";
 import { applicationConfig } from "../utility/config";
 import { GetCacheClientOptions } from "../client/cacheClient";
 import CacheClient from "../client/cacheClient";
-import {
-  CacheKey,
-  CronSettingsDto,
-  SecretKeyDto,
-  AlternateProxyProviderDto,
-} from "@repricer-monorepo/shared";
+import { CacheKey, CronSettingsDto, SecretKeyDto, AlternateProxyProviderDto } from "@repricer-monorepo/shared";
 import { getKnexInstance } from "./knex-wrapper";
 import { GetAuditInfo } from "../utility/session-helper";
 import AuditInfo from "../models/audit-info";
 import ExportModel from "../models/export-model";
 
 export async function GetConfigurations(activeOnly = true) {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const configurationResult = await cacheClient.get<any>(
-    `${CacheKey.IP_CONFIG}_${activeOnly}`,
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+  const configurationResult = await cacheClient.get<any>(`${CacheKey.IP_CONFIG}_${activeOnly}`);
   if (configurationResult != null) {
     await cacheClient.disconnect();
     return configurationResult;
   }
   let configurationDetails = [];
   const db = getKnexInstance();
-  const query = activeOnly
-    ? `SELECT * FROM ipConfig where Active=${activeOnly}`
-    : `SELECT * FROM ipConfig`;
+  const query = activeOnly ? `SELECT * FROM ipConfig where Active=${activeOnly}` : `SELECT * FROM ipConfig`;
   const result = await db.raw(query);
   if (result && result[0]) {
     configurationDetails = await SqlMapper.ToIpConfigModelList(result[0]);
-    await cacheClient.set(
-      `${CacheKey.IP_CONFIG}_${activeOnly}`,
-      configurationDetails,
-    ); // Cache for 1 hour
+    await cacheClient.set(`${CacheKey.IP_CONFIG}_${activeOnly}`, configurationDetails); // Cache for 1 hour
   }
   return configurationDetails;
 }
@@ -43,9 +29,7 @@ export async function GetConfigurations(activeOnly = true) {
 export async function UpdateConfiguration(payload: any, req: any) {
   const db = getKnexInstance();
   const auditInfo = await GetAuditInfo(req);
-  console.debug(
-    `Updating IP Configurations at ${new Date().toISOString()} || By : ${auditInfo.UpdatedBy}`,
-  );
+  console.debug(`Updating IP Configurations at ${new Date().toISOString()} || By : ${auditInfo.UpdatedBy}`);
   for (const element of payload) {
     await db("ipConfig")
       .where({ ProxyProvider: element.proxyProvider, IpType: element.ipType })
@@ -59,18 +43,14 @@ export async function UpdateConfiguration(payload: any, req: any) {
         UpdatedBy: auditInfo.UpdatedBy,
       });
   }
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   await cacheClient.delete(`${CacheKey.IP_CONFIG}_true`);
   await cacheClient.delete(`${CacheKey.IP_CONFIG}_false`);
   await cacheClient.disconnect();
 }
 
 export async function GetEnvSettings() {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   const envSettingsResult = await cacheClient.get(CacheKey.ENV_SETTINGS);
   if (envSettingsResult != null) {
     await cacheClient.disconnect();
@@ -111,12 +91,8 @@ export async function GetEnvValueByKey(keyName: string) {
 
 export async function UpsertEnvSettings(payload: any) {
   let mongoResult: any = null;
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  console.debug(
-    `Updating Env Settings at ${new Date().toISOString()} || By : ${payload.updatedBy}`,
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+  console.debug(`Updating Env Settings at ${new Date().toISOString()} || By : ${payload.updatedBy}`);
   const db = getKnexInstance();
   await db("env_settings")
     .where({ ConfigID: 1 })
@@ -127,9 +103,7 @@ export async function UpsertEnvSettings(payload: any) {
       FrontierApiKey: payload.FrontierApiKey,
       DevIntegrationKey: payload.DevIntegrationKey,
       ExpressCronBatchSize: parseInt(payload.expressCronBatchSize),
-      ExpressCronOverlapThreshold: parseInt(
-        payload.expressCronOverlapThreshold,
-      ),
+      ExpressCronOverlapThreshold: parseInt(payload.expressCronOverlapThreshold),
       ExpressCronInstanceLimit: parseInt(payload.expressCronInstanceLimit),
       SlowCronBatchSize: parseInt(payload.slowCronBatchSize),
       SlowCronInstanceLimit: parseInt(payload.slowCronInstanceLimit),
@@ -139,107 +113,69 @@ export async function UpsertEnvSettings(payload: any) {
   await db("env_override_execution_details")
     .where({ ConfigID: 1 })
     .update({
-      OverridePriority: JSON.parse(
-        payload.override_execution_priority_details.override_priority,
-      ),
+      OverridePriority: JSON.parse(payload.override_execution_priority_details.override_priority),
     });
   await db("env_execution_priorities")
     .where({ ConfigID: 1, EntityName: "TRADENT" })
     .update({
-      Priority: JSON.parse(
-        payload.override_execution_priority_details.priority_settings
-          .tradent_priority,
-      ),
+      Priority: JSON.parse(payload.override_execution_priority_details.priority_settings.tradent_priority),
     });
   await db("env_execution_priorities")
     .where({ ConfigID: 1, EntityName: "FRONTIER" })
     .update({
-      Priority: JSON.parse(
-        payload.override_execution_priority_details.priority_settings
-          .frontier_priority,
-      ),
+      Priority: JSON.parse(payload.override_execution_priority_details.priority_settings.frontier_priority),
     });
   await db("env_execution_priorities")
     .where({ ConfigID: 1, EntityName: "MVP" })
     .update({
-      Priority: JSON.parse(
-        payload.override_execution_priority_details.priority_settings
-          .mvp_priority,
-      ),
+      Priority: JSON.parse(payload.override_execution_priority_details.priority_settings.mvp_priority),
     });
   await db("env_execution_priorities")
     .where({ ConfigID: 1, EntityName: "TOPDENT" })
     .update({
-      Priority: JSON.parse(
-        payload.override_execution_priority_details.priority_settings
-          .topDent_priority,
-      ),
+      Priority: JSON.parse(payload.override_execution_priority_details.priority_settings.topDent_priority),
     });
   await db("env_execution_priorities")
     .where({ ConfigID: 1, EntityName: "FIRSTDENT" })
     .update({
-      Priority: JSON.parse(
-        payload.override_execution_priority_details.priority_settings
-          .firstDent_priority,
-      ),
+      Priority: JSON.parse(payload.override_execution_priority_details.priority_settings.firstDent_priority),
     });
   await db("env_execution_priorities")
     .where({ ConfigID: 1, EntityName: "TRIAD" })
     .update({
-      Priority: JSON.parse(
-        payload.override_execution_priority_details.priority_settings
-          .triad_priority,
-      ),
+      Priority: JSON.parse(payload.override_execution_priority_details.priority_settings.triad_priority),
+    });
+  await db("env_execution_priorities")
+    .where({ ConfigID: 1, EntityName: "BITESUPPLY" })
+    .update({
+      Priority: JSON.parse(payload.override_execution_priority_details.priority_settings.biteSupply_priority),
     });
   await cacheClient.delete(CacheKey.ENV_SETTINGS);
   await cacheClient.disconnect();
   return mongoResult;
 }
 
-export async function InsertOrUpdateCronSettings(
-  cronSettingEntity: CronSettingsDto,
-  cronSettingSecretKeys: SecretKeyDto[],
-  alternateProxyProviders: AlternateProxyProviderDto[],
-) {
+export async function InsertOrUpdateCronSettings(cronSettingEntity: CronSettingsDto, cronSettingSecretKeys: SecretKeyDto[], alternateProxyProviders: AlternateProxyProviderDto[]) {
   const db = getKnexInstance();
   await db.transaction(async (trx) => {
-    console.debug(
-      `Upserting Cron Setting : ${cronSettingEntity.CronId} || Name : ${cronSettingEntity.CronName}`,
-    );
-    await trx<CronSettingsDto>("cron_settings")
-      .insert(cronSettingEntity)
-      .onConflict("CronId")
-      .merge();
+    console.debug(`Upserting Cron Setting : ${cronSettingEntity.CronId} || Name : ${cronSettingEntity.CronName}`);
+    await trx<CronSettingsDto>("cron_settings").insert(cronSettingEntity).onConflict("CronId").merge();
 
     for (const secretKey of cronSettingSecretKeys) {
-      console.debug(
-        `Upserting Secret Key for Cron : ${secretKey.CronId} || Vendor : ${secretKey.VendorName} || Value : ${secretKey.SecretKey}`,
-      );
-      await trx<SecretKeyDto>("secret_keys")
-        .insert(secretKey)
-        .onConflict(["CronId", "VendorName"])
-        .merge();
+      console.debug(`Upserting Secret Key for Cron : ${secretKey.CronId} || Vendor : ${secretKey.VendorName} || Value : ${secretKey.SecretKey}`);
+      await trx<SecretKeyDto>("secret_keys").insert(secretKey).onConflict(["CronId", "VendorName"]).merge();
     }
 
     for (const alternateProvider of alternateProxyProviders) {
-      console.debug(
-        `Upserting Alternate Provider for Cron : ${cronSettingEntity.CronId} || Sequence : ${alternateProvider.Sequence} || Value : ${alternateProvider.ProxyProvider}`,
-      );
-      await trx<AlternateProxyProviderDto>("alternate_proxy_providers")
-        .insert(alternateProvider)
-        .onConflict(["CronId", "Sequence"])
-        .merge();
+      console.debug(`Upserting Alternate Provider for Cron : ${cronSettingEntity.CronId} || Sequence : ${alternateProvider.Sequence} || Value : ${alternateProvider.ProxyProvider}`);
+      await trx<AlternateProxyProviderDto>("alternate_proxy_providers").insert(alternateProvider).onConflict(["CronId", "Sequence"]).merge();
     }
   });
 }
 
 export async function GetCronSettingsList() {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const cronSettingsList = await cacheClient.get<any>(
-    CacheKey.CRON_SETTINGS_LIST,
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+  const cronSettingsList = await cacheClient.get<any>(CacheKey.CRON_SETTINGS_LIST);
   if (cronSettingsList != null) {
     await cacheClient.disconnect();
     return cronSettingsList;
@@ -258,18 +194,14 @@ export async function GetCronSettingsList() {
 export async function UpdateCronSettingsList(payload: any, req: any) {
   const db = getKnexInstance();
   for (const element of payload) {
-    console.debug(
-      `Updating Cron Settings at ${new Date().toISOString()} : ${element.CronId} || Name : ${element.CronName}`,
-    );
+    console.debug(`Updating Cron Settings at ${new Date().toISOString()} : ${element.CronId} || Name : ${element.CronName}`);
     await db("cron_settings")
       .where({ CronId: element.CronId })
       .update({
         CronTime: element.CronTime ? parseInt(element.CronTime) : null,
         CronTimeUnit: element.CronTimeUnit,
         Offset: element.Offset ? parseInt(element.Offset) : null,
-        ProxyProvider: element.ProxyProvider
-          ? parseInt(element.ProxyProvider)
-          : null,
+        ProxyProvider: element.ProxyProvider ? parseInt(element.ProxyProvider) : null,
         IpType: element.IpType ? parseInt(element.IpType) : null,
         FixedIp: element.FixedIp,
         UpdatedTime: (await GetAuditInfo(req)).UpdatedOn,
@@ -278,25 +210,16 @@ export async function UpdateCronSettingsList(payload: any, req: any) {
 
     if (element.SecretKey && element.SecretKey.length > 0) {
       for (const secret of element.SecretKey) {
-        console.debug(
-          `Updating Secret Key for Cron : ${element.CronId} || Vendor : ${secret.vendorName} || Value : ${secret.secretKey}`,
-        );
-        await db("secret_keys")
-          .where({ CronId: element.CronId, VendorName: secret.vendorName })
-          .update({
-            SecretKey: secret.secretKey,
-          });
+        console.debug(`Updating Secret Key for Cron : ${element.CronId} || Vendor : ${secret.vendorName} || Value : ${secret.secretKey}`);
+        await db("secret_keys").where({ CronId: element.CronId, VendorName: secret.vendorName }).update({
+          SecretKey: secret.secretKey,
+        });
       }
     }
 
-    if (
-      element.AlternateProxyProvider &&
-      element.AlternateProxyProvider.length > 0
-    ) {
+    if (element.AlternateProxyProvider && element.AlternateProxyProvider.length > 0) {
       for (const alternateProvider of element.AlternateProxyProvider) {
-        console.debug(
-          `Updating Alternate Provider for Cron : ${element.CronId} || Sequence : ${alternateProvider.Sequence} || Value : ${alternateProvider.ProxyProvider}`,
-        );
+        console.debug(`Updating Alternate Provider for Cron : ${element.CronId} || Sequence : ${alternateProvider.Sequence} || Value : ${alternateProvider.ProxyProvider}`);
         await db("alternate_proxy_providers")
           .where({
             CronId: element.CronId,
@@ -308,23 +231,15 @@ export async function UpdateCronSettingsList(payload: any, req: any) {
       }
     }
   }
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
   await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
   await cacheClient.delete(CacheKey.SCRAPE_CRON_DETAILS);
   await cacheClient.disconnect();
 }
 
-export async function ToggleCronStatus(
-  cronId: string,
-  cronStatus: string,
-  req: any,
-) {
-  console.debug(
-    `Toggling Cron Status at ${new Date().toISOString()} : ${cronId} || Status : ${cronStatus}`,
-  );
+export async function ToggleCronStatus(cronId: string, cronStatus: string, req: any) {
+  console.debug(`Toggling Cron Status at ${new Date().toISOString()} : ${cronId} || Status : ${cronStatus}`);
   const db = getKnexInstance();
   await db("cron_settings")
     .where({ CronId: cronId })
@@ -333,9 +248,7 @@ export async function ToggleCronStatus(
       UpdatedBy: (await GetAuditInfo(req)).UpdatedBy,
       UpdatedTime: (await GetAuditInfo(req)).UpdatedOn,
     });
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
   await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
   await cacheClient.delete(CacheKey.SCRAPE_CRON_DETAILS);
@@ -344,9 +257,7 @@ export async function ToggleCronStatus(
 }
 
 export async function GetSlowCronDetails() {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   const slowCronDetails = await cacheClient.get(CacheKey.SLOW_CRON_DETAILS);
   if (slowCronDetails != null) {
     await cacheClient.disconnect();
@@ -364,9 +275,7 @@ export async function GetSlowCronDetails() {
 }
 
 export async function GetScrapeCrons() {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   const scrapeCronDetails = await cacheClient.get(CacheKey.SCRAPE_CRON_DETAILS);
   if (scrapeCronDetails != null) {
     await cacheClient.disconnect();
@@ -384,12 +293,8 @@ export async function GetScrapeCrons() {
 }
 
 export async function GetMiniErpCronDetails() {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const miniErpCronDetails = await cacheClient.get(
-    CacheKey.MINI_ERP_CRON_DETAILS,
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+  const miniErpCronDetails = await cacheClient.get(CacheKey.MINI_ERP_CRON_DETAILS);
   if (miniErpCronDetails != null) {
     await cacheClient.disconnect();
     return miniErpCronDetails;
@@ -421,9 +326,7 @@ export async function UpsertFilterCronSettings(filterCronSettingsPayload: any) {
   if (filterCronSettingsPayload && filterCronSettingsPayload.length > 0) {
     const db = getKnexInstance();
     for (const filterCron of filterCronSettingsPayload) {
-      console.debug(
-        `Upserting Filter Cron Settings for Cron : ${filterCron.cronName} at ${new Date().toISOString()}`,
-      );
+      console.debug(`Upserting Filter Cron Settings for Cron : ${filterCron.cronName} at ${new Date().toISOString()}`);
       await db.transaction(async (trx) => {
         await trx("filter_cron_settings")
           .insert({
@@ -434,9 +337,7 @@ export async function UpsertFilterCronSettings(filterCronSettingsPayload: any) {
             FilterValue: parseInt(filterCron.filterValue),
             LinkedCronId: filterCron.linkedCronId,
             LinkedCronName: filterCron.linkedCronName,
-            UpdatedBy: filterCron.AuditInfo
-              ? filterCron.AuditInfo.UpdatedBy
-              : "ANONYMOUS",
+            UpdatedBy: filterCron.AuditInfo ? filterCron.AuditInfo.UpdatedBy : "ANONYMOUS",
             CreatedTime: new Date(),
             UpdatedTime: new Date(),
           })
@@ -447,25 +348,19 @@ export async function UpsertFilterCronSettings(filterCronSettingsPayload: any) {
             FilterValue: parseInt(filterCron.filterValue),
             LinkedCronId: filterCron.linkedCronId,
             LinkedCronName: filterCron.linkedCronName,
-            UpdatedBy: filterCron.AuditInfo
-              ? filterCron.AuditInfo.UpdatedBy
-              : "ANONYMOUS",
+            UpdatedBy: filterCron.AuditInfo ? filterCron.AuditInfo.UpdatedBy : "ANONYMOUS",
             UpdatedTime: new Date(),
           });
       });
     }
   }
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   await cacheClient.delete(CacheKey.FILTER_CRON_DETAILS);
   await cacheClient.disconnect();
 }
 
 export async function GetFilteredCrons() {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   const filterCronDetails = await cacheClient.get(CacheKey.FILTER_CRON_DETAILS);
   if (filterCronDetails != null) {
     await cacheClient.disconnect();
@@ -482,20 +377,14 @@ export async function GetFilteredCrons() {
   return cronSettingsDetails;
 }
 
-export async function ToggleFilterCronStatus(
-  cronId: string,
-  status: boolean,
-  auditInfo: AuditInfo,
-) {
+export async function ToggleFilterCronStatus(cronId: string, status: boolean, auditInfo: AuditInfo) {
   const db = getKnexInstance();
   await db("filter_cron_settings").where({ CronId: cronId }).update({
     Status: status,
     UpdatedBy: auditInfo.UpdatedBy,
     UpdatedTime: auditInfo.UpdatedOn,
   });
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   await cacheClient.delete(CacheKey.FILTER_CRON_DETAILS);
   await cacheClient.disconnect();
 }
@@ -534,18 +423,13 @@ export const InitExportStatus = async (payload: ExportModel) => {
 
 export const GetExportFileNamesByStatus = async (_fileStatus: any) => {
   const db = getKnexInstance();
-  const dbResult = await db("export_status")
-    .select("*")
-    .where({ status: _fileStatus });
+  const dbResult = await db("export_status").select("*").where({ status: _fileStatus });
   return dbResult;
 };
 
 export const GetExportFileStatus = async (_fileName: string) => {
   const db = getKnexInstance();
-  const dbResult = await db("export_status")
-    .select("*")
-    .where({ fileName: _fileName })
-    .first();
+  const dbResult = await db("export_status").select("*").where({ fileName: _fileName }).first();
   return dbResult;
 };
 
@@ -558,8 +442,7 @@ export const UpdateExportStatusV2 = async (payload: any) => {
 };
 
 export async function GetWaitlistItems(queryData: any) {
-  const { page, pageSize, offset, sort, status, startDate, endDate, search } =
-    queryData;
+  const { page, pageSize, offset, sort, status, startDate, endDate, search } = queryData;
   const knex = getKnexInstance();
 
   // Build the base query
@@ -590,12 +473,7 @@ export async function GetWaitlistItems(queryData: any) {
   }
 
   // Get total count for pagination
-  const countQuery = query
-    .clone()
-    .clearSelect()
-    .clearOrder()
-    .count("* as total")
-    .first();
+  const countQuery = query.clone().clearSelect().clearOrder().count("* as total").first();
   const totalResult = await countQuery;
   const total = totalResult ? Number(totalResult.total) : 0;
 

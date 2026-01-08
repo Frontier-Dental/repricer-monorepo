@@ -16,17 +16,14 @@ export async function GetProductItemListQuery(): Promise<{
   };
 }
 
-export async function GetPrioritySequence(
-  productInfo: ProductDetailsListItem,
-  contextErrorDetails: ErrorItem[] | null,
-  includeErrorItems: boolean,
-) {
+export async function GetPrioritySequence(productInfo: ProductDetailsListItem, contextErrorDetails: ErrorItem[] | null, includeErrorItems: boolean) {
   const _tradent = { name: VendorName.TRADENT, value: "tradentDetails" };
   const _frontier = { name: VendorName.FRONTIER, value: "frontierDetails" };
   const _mvp = { name: VendorName.MVP, value: "mvpDetails" };
   const _topDent = { name: VendorName.TOPDENT, value: "topDentDetails" };
   const _firstDent = { name: VendorName.FIRSTDENT, value: "firstDentDetails" };
   const _triad = { name: VendorName.TRIAD, value: "triadDetails" };
+  const _biteSupply = { name: VendorName.BITESUPPLY, value: "biteSupplyDetails" };
   let prioritySequence = [];
   const globalConfig = await sqlV2Service.GetGlobalConfig();
   const isOverrideEnabled = IsOverrideExecutionPriorityEnabled(globalConfig!);
@@ -34,10 +31,7 @@ export async function GetPrioritySequence(
 
   // Override Execution Priority List in case of Override Set to true
   if (isOverrideEnabled) {
-    productDetails = responseUtility.MapOverrideExecutionPriority(
-      productDetails,
-      globalConfig!.override_execution_priority_details!.priority_settings,
-    );
+    productDetails = responseUtility.MapOverrideExecutionPriority(productDetails, globalConfig!.override_execution_priority_details!.priority_settings);
   }
   for (let pty = 1; pty <= applicationConfig.VENDOR_COUNT; pty++) {
     const vendors = [
@@ -47,18 +41,12 @@ export async function GetPrioritySequence(
       { details: productDetails.topDentDetails, obj: _topDent },
       { details: productDetails.firstDentDetails, obj: _firstDent },
       { details: productDetails.triadDetails, obj: _triad },
+      { details: productDetails.biteSupplyDetails, obj: _biteSupply },
     ];
     for (const vendor of vendors) {
-      if (
-        vendor.details &&
-        vendor.details.activated &&
-        vendor.details.executionPriority === pty &&
-        proceedNext(productDetails, vendor.obj.value)
-      ) {
+      if (vendor.details && vendor.details.activated && vendor.details.executionPriority === pty && proceedNext(productDetails, vendor.obj.value)) {
         if (includeErrorItems && contextErrorDetails) {
-          const vendorDetails = contextErrorDetails.find(
-            (x) => x.vendorName === vendor.obj.name,
-          );
+          const vendorDetails = contextErrorDetails.find((x) => x.vendorName === vendor.obj.name);
           if (!vendorDetails) {
             prioritySequence.push(vendor.obj);
           }
@@ -72,17 +60,9 @@ export async function GetPrioritySequence(
 }
 
 function proceedNext(prod: any, key: string) {
-  return (
-    prod[key] && prod[key].scrapeOn == true && prod[key].skipReprice == false
-  );
+  return prod[key] && prod[key].scrapeOn == true && prod[key].skipReprice == false;
 }
 
-function IsOverrideExecutionPriorityEnabled(
-  globalConfig: GlobalConfig,
-): boolean {
-  return globalConfig && globalConfig.override_execution_priority_details
-    ? JSON.parse(
-        globalConfig.override_execution_priority_details.override_priority,
-      )
-    : false;
+function IsOverrideExecutionPriorityEnabled(globalConfig: GlobalConfig): boolean {
+  return globalConfig && globalConfig.override_execution_priority_details ? JSON.parse(globalConfig.override_execution_priority_details.override_priority) : false;
 }

@@ -18,10 +18,7 @@ export async function streamProductDetails(req: Request, res: Response) {
     useStyles: false,
   });
 
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  );
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
   res.setHeader("Content-Disposition", "attachment; filename=itemExcel.xlsx");
 
   const worksheet = workbook.addWorksheet("ItemList", {
@@ -144,15 +141,13 @@ export async function streamProductDetails(req: Request, res: Response) {
         productDetails.map((val: any) => {
           if (val.tradentDetails && val.tradentDetails != null) {
             val.tradentDetails.scrapeOnlyCronName = val.scrapeOnlyCronName;
-            val.tradentDetails.isScrapeOnlyActivated =
-              val.isScrapeOnlyActivated;
+            val.tradentDetails.isScrapeOnlyActivated = val.isScrapeOnlyActivated;
             val.tradentDetails.isBadgeItem = val.isBadgeItem;
             AllItems.push(val.tradentDetails);
           }
           if (val.frontierDetails && val.frontierDetails != null) {
             val.frontierDetails.scrapeOnlyCronName = val.scrapeOnlyCronName;
-            val.frontierDetails.isScrapeOnlyActivated =
-              val.isScrapeOnlyActivated;
+            val.frontierDetails.isScrapeOnlyActivated = val.isScrapeOnlyActivated;
             val.frontierDetails.isBadgeItem = val.isBadgeItem;
             AllItems.push(val.frontierDetails);
           }
@@ -164,15 +159,13 @@ export async function streamProductDetails(req: Request, res: Response) {
           }
           if (val.topDentDetails && val.topDentDetails != null) {
             val.topDentDetails.scrapeOnlyCronName = val.scrapeOnlyCronName;
-            val.topDentDetails.isScrapeOnlyActivated =
-              val.isScrapeOnlyActivated;
+            val.topDentDetails.isScrapeOnlyActivated = val.isScrapeOnlyActivated;
             val.topDentDetails.isBadgeItem = val.isBadgeItem;
             AllItems.push(val.topDentDetails);
           }
           if (val.firstDentDetails && val.firstDentDetails != null) {
             val.firstDentDetails.scrapeOnlyCronName = val.scrapeOnlyCronName;
-            val.firstDentDetails.isScrapeOnlyActivated =
-              val.isScrapeOnlyActivated;
+            val.firstDentDetails.isScrapeOnlyActivated = val.isScrapeOnlyActivated;
             val.firstDentDetails.isBadgeItem = val.isBadgeItem;
             AllItems.push(val.firstDentDetails);
           }
@@ -181,6 +174,12 @@ export async function streamProductDetails(req: Request, res: Response) {
             val.triadDetails.isScrapeOnlyActivated = val.isScrapeOnlyActivated;
             val.triadDetails.isBadgeItem = val.isBadgeItem;
             AllItems.push(val.triadDetails);
+          }
+          if (val.biteSupplyDetails && val.biteSupplyDetails != null) {
+            val.biteSupplyDetails.scrapeOnlyCronName = val.scrapeOnlyCronName;
+            val.biteSupplyDetails.isScrapeOnlyActivated = val.isScrapeOnlyActivated;
+            val.biteSupplyDetails.isBadgeItem = val.isBadgeItem;
+            AllItems.push(val.biteSupplyDetails);
           }
         });
         if (AllItems && AllItems.length > 0) {
@@ -248,15 +247,10 @@ function transformRow(item: any) {
     lastSuggestedPrice: `${item.lastSuggestedPrice} /`,
     lowest_vendor_price: `${item.lowest_vendor_price} /`,
 
-    handling_time_filter: item.handlingTimeFilter
-      ? handlingTimeGroupResx.find((x) => x.key === item.handlingTimeFilter)
-          ?.value
-      : null,
+    handling_time_filter: item.handlingTimeFilter ? handlingTimeGroupResx.find((x) => x.key === item.handlingTimeFilter)?.value : null,
   };
 }
 function parseBadge(key: string) {
-  const match = badgeResx.find((x) =>
-    _.isEqual(x.key, key?.trim()?.toUpperCase()),
-  );
+  const match = badgeResx.find((x) => _.isEqual(x.key, key?.trim()?.toUpperCase()));
   return match ? match.value : badgeResx[0].value;
 }

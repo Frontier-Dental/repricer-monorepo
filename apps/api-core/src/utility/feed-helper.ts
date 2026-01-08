@@ -1,6 +1,5 @@
 import fs from "fs";
 import _ from "lodash";
-import * as dbHelper from "./mongo/db-helper";
 import { ProductDetailsListItem } from "./mysql/mySql-mapper";
 import { applicationConfig } from "./config";
 import { VendorName } from "@repricer-monorepo/shared";
@@ -15,93 +14,41 @@ export async function GetContextDetails(mpid: string): Promise<any> {
   return itemData;
 }
 
-export async function FilterEligibleProducts(
-  productItemList: any[],
-  cronId: number,
-  isSlowCron: boolean = false,
-) {
+export async function FilterEligibleProducts(productItemList: any[], cronId: number, isSlowCron: boolean = false) {
   if (productItemList.length === 0) {
     throw new Error("No products found");
   }
-  const [active422CronItems, activeOpportunityCronItems] = await Promise.all([
-    getActive422CronItems(),
-    getActiveOpportunityCronItems(),
-  ]);
+  const [active422CronItems, activeOpportunityCronItems] = await Promise.all([getActive422CronItems(), getActiveOpportunityCronItems()]);
   for (let prod of productItemList) {
     //Tradent
     if (prod.tradentDetails) {
-      prod.tradentDetails.skipReprice = getSkipReprice(
-        prod.tradentDetails,
-        VendorName.TRADENT,
-        cronId,
-        isSlowCron,
-        active422CronItems,
-        activeOpportunityCronItems,
-      );
+      prod.tradentDetails.skipReprice = getSkipReprice(prod.tradentDetails, VendorName.TRADENT, cronId, isSlowCron, active422CronItems, activeOpportunityCronItems);
     }
     //Frontier
     if (prod.frontierDetails) {
-      prod.frontierDetails.skipReprice = getSkipReprice(
-        prod.frontierDetails,
-        VendorName.FRONTIER,
-        cronId,
-        isSlowCron,
-        active422CronItems,
-        activeOpportunityCronItems,
-      );
+      prod.frontierDetails.skipReprice = getSkipReprice(prod.frontierDetails, VendorName.FRONTIER, cronId, isSlowCron, active422CronItems, activeOpportunityCronItems);
     }
     //MVP
     if (prod.mvpDetails) {
-      prod.mvpDetails.skipReprice = getSkipReprice(
-        prod.mvpDetails,
-        VendorName.MVP,
-        cronId,
-        isSlowCron,
-        active422CronItems,
-        activeOpportunityCronItems,
-      );
+      prod.mvpDetails.skipReprice = getSkipReprice(prod.mvpDetails, VendorName.MVP, cronId, isSlowCron, active422CronItems, activeOpportunityCronItems);
     }
     //TOPDENT
     if (prod.topDentDetails) {
-      prod.topDentDetails.skipReprice = getSkipReprice(
-        prod.topDentDetails,
-        VendorName.TOPDENT,
-        cronId,
-        isSlowCron,
-        active422CronItems,
-        activeOpportunityCronItems,
-      );
+      prod.topDentDetails.skipReprice = getSkipReprice(prod.topDentDetails, VendorName.TOPDENT, cronId, isSlowCron, active422CronItems, activeOpportunityCronItems);
     }
     //FIRSTDENT
     if (prod.firstDentDetails) {
-      prod.firstDentDetails.skipReprice = getSkipReprice(
-        prod.firstDentDetails,
-        VendorName.FIRSTDENT,
-        cronId,
-        isSlowCron,
-        active422CronItems,
-        activeOpportunityCronItems,
-      );
+      prod.firstDentDetails.skipReprice = getSkipReprice(prod.firstDentDetails, VendorName.FIRSTDENT, cronId, isSlowCron, active422CronItems, activeOpportunityCronItems);
     }
     //TRIAD
     if (prod.triadDetails) {
-      prod.triadDetails.skipReprice = getSkipReprice(
-        prod.triadDetails,
-        VendorName.TRIAD,
-        cronId,
-        isSlowCron,
-        active422CronItems,
-        activeOpportunityCronItems,
-      );
+      prod.triadDetails.skipReprice = getSkipReprice(prod.triadDetails, VendorName.TRIAD, cronId, isSlowCron, active422CronItems, activeOpportunityCronItems);
     }
   }
   return productItemList;
 }
 
-export function SetSkipReprice(
-  productItemList: ProductDetailsListItem[],
-  value: boolean,
-) {
+export function SetSkipReprice(productItemList: ProductDetailsListItem[], value: boolean) {
   if (!productItemList || productItemList.length === 0) {
     throw new Error("No product items found");
   }
@@ -109,24 +56,13 @@ export function SetSkipReprice(
   return productItemList.map((prod) => {
     return {
       ...prod,
-      tradentDetails: prod.tradentDetails
-        ? { ...prod.tradentDetails, skipReprice: value }
-        : prod.tradentDetails,
-      frontierDetails: prod.frontierDetails
-        ? { ...prod.frontierDetails, skipReprice: value }
-        : prod.frontierDetails,
-      mvpDetails: prod.mvpDetails
-        ? { ...prod.mvpDetails, skipReprice: value }
-        : prod.mvpDetails,
-      topDentDetails: prod.topDentDetails
-        ? { ...prod.topDentDetails, skipReprice: value }
-        : prod.topDentDetails,
-      firstDentDetails: prod.firstDentDetails
-        ? { ...prod.firstDentDetails, skipReprice: value }
-        : prod.firstDentDetails,
-      triadDetails: prod.triadDetails
-        ? { ...prod.triadDetails, skipReprice: value }
-        : prod.triadDetails,
+      tradentDetails: prod.tradentDetails ? { ...prod.tradentDetails, skipReprice: value } : prod.tradentDetails,
+      frontierDetails: prod.frontierDetails ? { ...prod.frontierDetails, skipReprice: value } : prod.frontierDetails,
+      mvpDetails: prod.mvpDetails ? { ...prod.mvpDetails, skipReprice: value } : prod.mvpDetails,
+      topDentDetails: prod.topDentDetails ? { ...prod.topDentDetails, skipReprice: value } : prod.topDentDetails,
+      firstDentDetails: prod.firstDentDetails ? { ...prod.firstDentDetails, skipReprice: value } : prod.firstDentDetails,
+      triadDetails: prod.triadDetails ? { ...prod.triadDetails, skipReprice: value } : prod.triadDetails,
+      biteSupplyDetails: prod.biteSupplyDetails ? { ...prod.biteSupplyDetails, skipReprice: value } : prod.biteSupplyDetails,
     };
   });
 }
@@ -162,49 +98,24 @@ async function getActiveOpportunityCronItems(): Promise<ErrorItem[]> {
   return result as ErrorItem[];
 }
 
-function getSkipReprice(
-  prod: any,
-  vendor: string,
-  cronId: number,
-  isSlowCron: boolean = false,
-  active422CronItems: ErrorItem[],
-  activeOpportunityCronItems: ErrorItem[],
-) {
-  if (
-    (isSlowCron == false && prod.cronId == cronId) ||
-    (isSlowCron == true && prod.slowCronId == cronId)
-  ) {
-    const isErrorItem = active422CronItems.find(
-      (item) => item.mpId === prod.mpid && item.vendorName === vendor,
-    );
+function getSkipReprice(prod: any, vendor: string, cronId: number, isSlowCron: boolean = false, active422CronItems: ErrorItem[], activeOpportunityCronItems: ErrorItem[]) {
+  if ((isSlowCron == false && prod.cronId == cronId) || (isSlowCron == true && prod.slowCronId == cronId)) {
+    const isErrorItem = active422CronItems.find((item) => item.mpId === prod.mpid && item.vendorName === vendor);
     if (isErrorItem) {
       return true;
     }
-    const isOpportunityItem = activeOpportunityCronItems.find(
-      (item) => item.mpId === prod.mpid && item.vendorName === vendor,
-    );
+    const isOpportunityItem = activeOpportunityCronItems.find((item) => item.mpId === prod.mpid && item.vendorName === vendor);
     if (isOpportunityItem) {
       return true;
     }
-    if (
-      !prod.last_cron_time ||
-      prod.last_cron_time == null ||
-      applicationConfig.IS_DEBUG
-    ) {
+    if (!prod.last_cron_time || prod.last_cron_time == null || applicationConfig.IS_DEBUG) {
       return false;
     } else if (prod.requestIntervalUnit) {
-      if (
-        prod.next_cron_time == null ||
-        (prod.next_cron_time != null && prod.next_cron_time < new Date())
-      ) {
+      if (prod.next_cron_time == null || (prod.next_cron_time != null && prod.next_cron_time < new Date())) {
         if (prod.requestIntervalUnit == "min") {
           const lastCronTime = prod.last_cron_time;
-          const timeDiffInMinutes = Math.round(
-            ((new Date() as any) - lastCronTime) / 60000,
-          );
-          const requestEveryForProduct = getRequestIntervalDuration(
-            prod.requestInterval,
-          );
+          const timeDiffInMinutes = Math.round(((new Date() as any) - lastCronTime) / 60000);
+          const requestEveryForProduct = getRequestIntervalDuration(prod.requestInterval);
           if (requestEveryForProduct == -1) {
             return false;
           } else if (timeDiffInMinutes >= requestEveryForProduct) {
@@ -212,12 +123,8 @@ function getSkipReprice(
           }
         } else if (prod.requestIntervalUnit == "sec") {
           const lastCronTime = prod.last_cron_time;
-          const timeDiffInSeconds = Math.round(
-            ((new Date() as any) - lastCronTime) / 1000,
-          );
-          const requestEveryForProduct = getRequestIntervalDuration(
-            prod.requestInterval,
-          );
+          const timeDiffInSeconds = Math.round(((new Date() as any) - lastCronTime) / 1000);
+          const requestEveryForProduct = getRequestIntervalDuration(prod.requestInterval);
           if (requestEveryForProduct == -1) {
             return false;
           } else if (timeDiffInSeconds >= requestEveryForProduct) {

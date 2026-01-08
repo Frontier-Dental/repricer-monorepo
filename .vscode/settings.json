@@ -1,0 +1,13 @@
+{
+  "editor.fontSize": 13,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.wordWrap": "on",
+  "editor.tabSize": 2,
+  "editor.dropIntoEditor.preferences": ["moveCursorToEnd"],
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}

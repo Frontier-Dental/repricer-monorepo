@@ -6,7 +6,6 @@ import nodeFetch from "node-fetch";
 import { apiMapping } from "../resources/api-mapping";
 import { CronSettings } from "../types/cron-settings";
 import { applicationConfig } from "./config";
-import * as dbHelper from "./mongo/db-helper";
 import * as axiosRetryHelper from "./proxy/axios-retry-helper";
 import * as brightDataHelper from "./proxy/bright-data-helper";
 import * as scrapflyHelper from "./proxy/scrapfly-helper";
@@ -19,8 +18,7 @@ export async function postAsync(payload: any, _url: string) {
     method: "POST",
     url: _url,
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
       "Content-Type": "application/json",
     },
     data: JSON.stringify(payload),
@@ -28,11 +26,7 @@ export async function postAsync(payload: any, _url: string) {
   return axios(config);
 }
 
-export async function getAsync(
-  _url: string,
-  cronId: any,
-  seqString?: string | null,
-) {
+export async function getAsync(_url: string, cronId: any, seqString?: string | null) {
   let responseData = null;
   let cronDetails = await sqlV2Service.GetCronSettingsList();
   const slowCronDetails = await sqlV2Service.GetSlowCronDetails();
@@ -43,60 +37,29 @@ export async function getAsync(
   }
   const proxyDetailsResponse = await ProxyHelper.GetProxyDetailsById(cronId);
   let proxyProvider = _.first(proxyDetailsResponse)?.ProxyProvider;
-  const proxyConfigDetails =
-    await sqlV2Service.GetProxyConfigByProviderId(proxyProvider);
+  const proxyConfigDetails = await sqlV2Service.GetProxyConfigByProviderId(proxyProvider);
 
   switch (proxyProvider) {
     case 0:
-      responseData = await axiosRetryHelper.getScrapingBeeResponse(
-        _url,
-        _.first(proxyConfigDetails),
-        seqString,
-        false,
-      );
+      responseData = await axiosRetryHelper.getScrapingBeeResponse(_url, _.first(proxyConfigDetails), seqString, false);
       break;
     case 2:
-      responseData = await brightDataHelper.fetchData(
-        _url,
-        _.first(proxyConfigDetails),
-      );
+      responseData = await brightDataHelper.fetchData(_url, _.first(proxyConfigDetails));
       break;
     case 3:
-      responseData = await axiosRetryHelper.getScrappingResponse(
-        _url,
-        _.first(proxyConfigDetails),
-        seqString,
-      );
+      responseData = await axiosRetryHelper.getScrappingResponse(_url, _.first(proxyConfigDetails), seqString);
       break;
     case 4:
-      responseData = await brightDataHelper.fetchDataV2(
-        _url,
-        _.first(proxyConfigDetails),
-      );
+      responseData = await brightDataHelper.fetchDataV2(_url, _.first(proxyConfigDetails));
       break;
     case 5:
-      responseData = await axiosRetryHelper.getScrapingBeeResponse(
-        _url,
-        _.first(proxyConfigDetails),
-        seqString,
-        true,
-      );
+      responseData = await axiosRetryHelper.getScrapingBeeResponse(_url, _.first(proxyConfigDetails), seqString, true);
       break;
     case 8:
-      responseData = await scrapflyHelper.scrapflyFetchData(
-        _url,
-        _.first(proxyConfigDetails) as any,
-        null,
-        true,
-      );
+      responseData = await scrapflyHelper.scrapflyFetchData(_url, _.first(proxyConfigDetails) as any, null, true);
       break;
     case 9:
-      responseData = await scrapflyHelper.scrapflyFetchData(
-        _url,
-        _.first(proxyConfigDetails) as any,
-        null,
-        false,
-      );
+      responseData = await scrapflyHelper.scrapflyFetchData(_url, _.first(proxyConfigDetails) as any, null, false);
       break;
     default:
       const proxy = await ProxyHelper.GetProxy(cronName!);
@@ -105,9 +68,7 @@ export async function getAsync(
       } else {
         var startTime = process.hrtime();
         responseData = await axios.get(_url, proxy);
-        console.log(
-          `SCRAPE : ${(_.first(proxyConfigDetails) as any).proxyProviderName} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || ${seqString}`,
-        );
+        console.log(`SCRAPE : ${(_.first(proxyConfigDetails) as any).proxyProviderName} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || ${seqString}`);
       }
       break;
   }
@@ -118,64 +79,30 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings) {
   let responseData = null;
   const cronName = cronSetting.CronName;
 
-  let proxyProvider =
-    cronSetting.ProxyProvider == 11 || cronSetting.ProxyProvider == 12
-      ? 1
-      : cronSetting.ProxyProvider;
+  let proxyProvider = cronSetting.ProxyProvider == 11 || cronSetting.ProxyProvider == 12 ? 1 : cronSetting.ProxyProvider;
   if (proxyProvider != null) {
-    const proxyConfigDetails =
-      await sqlV2Service.GetProxyConfigByProviderId(proxyProvider);
+    const proxyConfigDetails = await sqlV2Service.GetProxyConfigByProviderId(proxyProvider);
     switch (proxyProvider) {
       case 0:
-        responseData = await axiosRetryHelper.getScrapingBeeResponse(
-          _url,
-          _.first(proxyConfigDetails),
-          null,
-          false,
-        );
+        responseData = await axiosRetryHelper.getScrapingBeeResponse(_url, _.first(proxyConfigDetails), null, false);
         break;
       case 2:
-        responseData = await brightDataHelper.fetchData(
-          _url,
-          _.first(proxyConfigDetails),
-        );
+        responseData = await brightDataHelper.fetchData(_url, _.first(proxyConfigDetails));
         break;
       case 3:
-        responseData = await axiosRetryHelper.getScrappingResponse(
-          _url,
-          _.first(proxyConfigDetails),
-          null,
-        );
+        responseData = await axiosRetryHelper.getScrappingResponse(_url, _.first(proxyConfigDetails), null);
         break;
       case 4:
-        responseData = await brightDataHelper.fetchDataV2(
-          _url,
-          _.first(proxyConfigDetails),
-        );
+        responseData = await brightDataHelper.fetchDataV2(_url, _.first(proxyConfigDetails));
         break;
       case 5:
-        responseData = await axiosRetryHelper.getScrapingBeeResponse(
-          _url,
-          _.first(proxyConfigDetails),
-          null,
-          true,
-        );
+        responseData = await axiosRetryHelper.getScrapingBeeResponse(_url, _.first(proxyConfigDetails), null, true);
         break;
       case 8:
-        responseData = await scrapflyHelper.scrapflyFetchData(
-          _url,
-          _.first(proxyConfigDetails) as any,
-          null,
-          true,
-        );
+        responseData = await scrapflyHelper.scrapflyFetchData(_url, _.first(proxyConfigDetails) as any, null, true);
         break;
       case 9:
-        responseData = await scrapflyHelper.scrapflyFetchData(
-          _url,
-          _.first(proxyConfigDetails) as any,
-          null,
-          false,
-        );
+        responseData = await scrapflyHelper.scrapflyFetchData(_url, _.first(proxyConfigDetails) as any, null, false);
         break;
       default:
         const proxy = await ProxyHelper.GetProxyV2(cronSetting, proxyProvider);
@@ -184,9 +111,7 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings) {
         } else {
           var startTime = process.hrtime();
           responseData = await axios.get(_url, proxy);
-          console.log(
-            `SCRAPE : ${(_.first(proxyConfigDetails) as any).proxyProviderName} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds `,
-          );
+          console.log(`SCRAPE : ${(_.first(proxyConfigDetails) as any).proxyProviderName} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds `);
         }
         break;
     }
@@ -195,10 +120,7 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings) {
   return responseData;
 }
 
-export async function GetSisterVendorItemDetails(
-  mpid: any,
-  globalParamInfo: any,
-): Promise<any[]> {
+export async function GetSisterVendorItemDetails(mpid: any, globalParamInfo: any): Promise<any[]> {
   let itemDetails: any[] = [];
   const requiredApiList = _.remove(apiMapping, ($: any) => {
     return $.vendorId != globalParamInfo.VENDOR_ID;
@@ -207,18 +129,11 @@ export async function GetSisterVendorItemDetails(
     for (const api of requiredApiList) {
       const formattedUrl = api.apiUrl.replace("{mpid}", mpid);
       const productDetailsResponse = await native_get(formattedUrl);
-      if (
-        productDetailsResponse &&
-        productDetailsResponse.data &&
-        productDetailsResponse.data.message &&
-        productDetailsResponse.data.message.length > 0
-      ) {
+      if (productDetailsResponse && productDetailsResponse.data && productDetailsResponse.data.message && productDetailsResponse.data.message.length > 0) {
         let respDetails: any = {};
         respDetails.vendorId = api.vendorId;
         respDetails.mpid = mpid;
-        respDetails.unitPrice = await responseUtility.GetLastExistingPrice(
-          _.first(productDetailsResponse.data.message),
-        );
+        respDetails.unitPrice = await responseUtility.GetLastExistingPrice(_.first(productDetailsResponse.data.message));
         itemDetails.push(respDetails);
       }
     }
@@ -239,8 +154,7 @@ export async function getProduct(_url: string): Promise<any> {
     method: "get",
     url: _url,
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
       "Content-Type": "application/json",
     },
   };
@@ -301,10 +215,7 @@ function getMorphedResponse(): Promise<any> {
   return response;
 }
 
-async function getScrappingResponse(
-  _url: string,
-  proxyDetailsResponse: any,
-): Promise<any> {
+async function getScrappingResponse(_url: string, proxyDetailsResponse: any): Promise<any> {
   console.log(`Calling SmartProxy - Web : ${_url}`);
   const response = await axios({
     method: "post",
@@ -322,17 +233,9 @@ async function getScrappingResponse(
       Authorization: `Basic ${proxyDetailsResponse.userName}`,
     },
   });
-  if (
-    response &&
-    response.status == 200 &&
-    response.data &&
-    response.data.results &&
-    response.data.results.length > 0
-  ) {
+  if (response && response.status == 200 && response.data && response.data.results && response.data.results.length > 0) {
     let responseData: any = {};
-    responseData.data = JSON.parse(
-      _.first(response.data.results as any[])?.content as any,
-    );
+    responseData.data = JSON.parse(_.first(response.data.results as any[])?.content as any);
     return responseData;
   }
 }
@@ -356,11 +259,7 @@ export async function fetchGetAsyncV2(proxy: any, _url: string): Promise<any> {
   return responseData;
 }
 
-export async function getProductsFromMiniErp(
-  _url: string,
-  accessToken: string,
-  queryData: { page: number; pageSize: number },
-): Promise<any> {
+export async function getProductsFromMiniErp(_url: string, accessToken: string, queryData: { page: number; pageSize: number }): Promise<any> {
   const { page, pageSize } = queryData;
 
   const graphqlQuery = `
@@ -380,8 +279,7 @@ export async function getProductsFromMiniErp(
     method: "post",
     url: _url,
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
