@@ -91,7 +91,7 @@ describe("net32-stock-update", () => {
         mpid: 12345,
         vendorData: [
           {
-            vendor: "MVP",
+            vendor: "mvp",
             quantity: 15,
           },
         ],
@@ -269,7 +269,7 @@ describe("net32-stock-update", () => {
         mpid: 12345,
         vendorData: [
           {
-            vendor: "TRADENT",
+            vendor: "tradent",
             quantity: 15,
           },
         ],
@@ -294,7 +294,7 @@ describe("net32-stock-update", () => {
         mpid: 12345,
         vendorData: [
           {
-            vendor: "TRADENT",
+            vendor: "tradent",
             quantity: 25,
           },
         ],
@@ -386,7 +386,7 @@ describe("net32-stock-update", () => {
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Running net32 stock update cron"));
       expect(console.log).toHaveBeenCalledWith("Found 1 items in waitlist to update in net32 stock");
-      expect(console.log).toHaveBeenCalledWith("Updating net32 stock for item 12345 VendorName 15");
+      expect(console.log).toHaveBeenCalledWith("Updating net32 stock for item 12345 TRADENT 15");
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Net32 stock update status for item"));
     });
 
