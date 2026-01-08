@@ -19,6 +19,7 @@ export default class MySqlProduct {
   LinkedTopDentDetailsInfo: string;
   LinkedTriadDetailsInfo: string;
   LinkedBiteSupplyDetailsInfo: string;
+  LinkedBiteSupplyDetailsInfo: string;
   IsBadgeItem: boolean;
   constructor(payload: any, sqlProductDetails: any, mpid: string, auditInfo: any) {
     this.MpId = parseInt(mpid);

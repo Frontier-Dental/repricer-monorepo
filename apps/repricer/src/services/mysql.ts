@@ -412,6 +412,26 @@ export async function GetAllRepriceEligibleProductByTag(mpId: any, channelId: an
             this.orWhere("ChannelId", "like", channelIdSearch);
           }
         }),
+      knex("table_biteSupplyDetails")
+        .select("MpId")
+        .where(function () {
+          if (mpIdSearch) {
+            this.where("MpId", "=", mpIdSearch).orWhere("FocusId", "=", mpIdSearch);
+          }
+          if (channelIdSearch) {
+            this.orWhere("ChannelId", "like", channelIdSearch);
+          }
+        }),
+      knex("table_biteSupplyDetails")
+        .select("MpId")
+        .where(function () {
+          if (mpIdSearch) {
+            this.where("MpId", "=", mpIdSearch).orWhere("FocusId", "=", mpIdSearch);
+          }
+          if (channelIdSearch) {
+            this.orWhere("ChannelId", "like", channelIdSearch);
+          }
+        }),
     ])
     .distinct();
 
