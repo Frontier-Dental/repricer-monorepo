@@ -493,7 +493,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
     });
 
     // If only Own Vendor or Sister Vendor is available, Shut down the Price Break
-    if (priceBreak.minQty != 1) {
+    if (priceBreak.minQty != 1 && priceBreak.unitPrice != 0) {
       const nonSisterVendorDetails = sortedPayload.filter((x) => x.vendorId != $.VENDOR_ID && !_.includes(excludedVendors, x.vendorId.toString()));
       if (nonSisterVendorDetails.length === 0) {
         repriceModel.repriceDetails!.newPrice = unitPrice;
