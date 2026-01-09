@@ -4,6 +4,7 @@ import * as responseUtility from "../../utility/response-utility";
 import * as keyGenHelper from "../../utility/job-id-helper";
 import * as dbHelper from "../../utility/mongo/db-helper";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
+import * as repriceBaseOpportunity from "../../utility/reprice-algo/reprice-base-opportunity";
 import * as mySqlHelper from "../../utility/mysql/mysql-helper";
 import * as feedHelper from "../../utility/feed-helper";
 import * as _ from "lodash";
@@ -16,6 +17,7 @@ import * as sqlV2Service from "../../utility/mysql/mysql-v2";
 
 var mainCrons: Record<string, ScheduledTask> = {};
 var error422Cron: ScheduledTask | null = null;
+var opportunityCron: ScheduledTask | null = null;
 
 export function stopAllMainCrons() {
   Object.values(mainCrons).forEach((cron) => {
@@ -57,6 +59,36 @@ export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
   }
 }
 
+export function setOpportunityCronAndStart(cronSettings: CronSettingsDetail[]) {
+  const opportunityCronSetting = cronSettings.find((x) => x.CronName == applicationConfig.CRON_NAME_OPPORTUNITY || x.CronId === "Cron-Opportunity");
+  if (!opportunityCronSetting) {
+    throw new Error("Opportunity Cron setting not found");
+  }
+  const cronString = responseUtility.GetCronGeneric(opportunityCronSetting.CronTimeUnit, opportunityCronSetting.CronTime, parseInt(opportunityCronSetting.Offset));
+  console.info(`Setting up opportunity cron with schedule: ${cronString} at ${new Date().toISOString()}`);
+  if (opportunityCron) {
+    opportunityCron.stop();
+  }
+  opportunityCron = null;
+  opportunityCron = schedule(
+    cronString,
+    async () => {
+      try {
+        await runCoreCronLogicForOpportunity();
+      } catch (error) {
+        console.error(`Error running opportunity cron:`, error);
+      }
+    },
+    {
+      scheduled: opportunityCronSetting.CronStatus,
+      runOnInit: opportunityCronSetting.CronStatus && applicationConfig.RUN_CRONS_ON_INIT,
+    }
+  );
+  if (opportunityCronSetting.CronStatus) {
+    console.info("Started opportunity cron.");
+  }
+}
+
 async function IsCacheValid(cacheKey: any, sysTime: any) {
   try {
     const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
@@ -67,9 +99,12 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
       const differenceInTime = sysTime.getTime() - new Date(result.initTime).getTime();
       const differenceInMinutes = Math.round(differenceInTime / 60000);
       const envVariables = await sqlV2Service.GetGlobalConfig();
+
       const thresholdValue = envVariables != null && envVariables.expressCronOverlapThreshold != null ? envVariables.expressCronOverlapThreshold : applicationConfig._422_CACHE_VALID_PERIOD;
-      console.log(`Checking 422 Cron Validity for Threshold : ${thresholdValue} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`);
+
+      console.log(`Checking Cron Validity for Threshold : ${thresholdValue} || Cache Key: ${cacheKey} || Duration : ${differenceInMinutes} at ${new Date().toISOString()}`);
       await cacheClient.disconnect();
+      return !(typeof thresholdValue === "string" ? parseFloat(thresholdValue!) : thresholdValue < differenceInMinutes);
       return !(typeof thresholdValue === "string" ? parseFloat(thresholdValue!) : thresholdValue < differenceInMinutes);
     }
   } catch (error) {
@@ -81,6 +116,7 @@ async function IsCacheValid(cacheKey: any, sysTime: any) {
 export async function runCoreCronLogicFor422() {
   const cacheKey = CacheKey._422_RUNNING_CACHE;
   const isCacheValid = await IsCacheValid(cacheKey, new Date());
+
   if (!isCacheValid) {
     console.info(`Getting List of Eligible Products for Cron-422`);
     const runningCacheObj = { cronRunning: true, initTime: new Date() };
@@ -109,6 +145,48 @@ export async function runCoreCronLogicFor422() {
     const runningCronDetails = await cacheClient.get<any>(cacheKey);
     console.warn(`Skipped Cron-422 as another 422 cron is already running. CURR_TIME : ${new Date().toISOString()} || RUNNING_CRON_TIME : ${runningCronDetails.initTime}`);
     await cacheClient.disconnect();
+  }
+}
+
+export async function runCoreCronLogicForOpportunity() {
+  const cacheKey = CacheKey.OPPORTUNITY_RUNNING_CACHE;
+  const isCacheValid = await IsCacheValid(cacheKey, new Date());
+  if (!isCacheValid) {
+    console.info(`Getting List of Eligible Products for Opportunity Cron`);
+    const runningCacheObj = { cronRunning: true, initTime: new Date() };
+    let cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+    await cacheClient.set(cacheKey, runningCacheObj);
+    const eligibleProductList = await getOpportunityEligibleProducts();
+    const keyGen = keyGenHelper.Generate();
+    console.info(`Opportunity Cron running on ${new Date().toISOString()} with Eligible Products Count : ${eligibleProductList.length} with KeyGen : ${keyGen}`);
+    if (eligibleProductList.length > 0) {
+      const envVariables = await sqlV2Service.GetGlobalConfig();
+      let chunkedList = _.chunk(eligibleProductList, parseInt(envVariables.expressCronBatchSize!));
+      let chunkedBatch = _.chunk(chunkedList, parseInt(envVariables.expressCronInstanceLimit!));
+      let batchCount = 1;
+      for (let itemList of chunkedBatch) {
+        if (itemList.length > 0) {
+          await ParallelExecuteOpportunity(itemList, new Date(), `${keyGen}-${batchCount}`);
+          batchCount++;
+        }
+      }
+    }
+    cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+    await cacheClient.delete(cacheKey);
+    await cacheClient.disconnect();
+  } else {
+    const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+    const runningCronDetails = await cacheClient.get<any>(cacheKey);
+    console.warn(`Skipped Opportunity Cron as another opportunity cron is already running. CURR_TIME : ${new Date().toISOString()} || RUNNING_CRON_TIME : ${runningCronDetails.initTime}`);
+    await cacheClient.disconnect();
+  }
+}
+
+export async function ParallelExecuteOpportunity(itemList: any, initTime: any, keyGen: any) {
+  if (itemList && itemList.length > 0) {
+    const tasks = itemList.map((item: any, index: any) => repriceBaseOpportunity.RepriceOpportunityItemV2(item, initTime, `${keyGen}-${index}`));
+    await Promise.all(tasks);
+    console.info(`PARALLEL EXECUTION OPPORTUNITY : ${keyGen} All tasks completed at ${new Date().toISOString()}`);
   }
 }
 
@@ -145,6 +223,36 @@ async function get422EligibleProducts() {
       }
     }
   }
+  resultantOutput = feedHelper.SetSkipReprice(resultantOutput, false);
+  return resultantOutput;
+}
+
+async function getOpportunityEligibleProducts() {
+  const globalConfig = await sqlV2Service.GetGlobalConfig();
+  if (globalConfig && globalConfig.source == "FEED") {
+    return [];
+  }
+  let cronSettingDetailsResponse = await sqlV2Service.GetCronSettingsList();
+  let slowCronDetails = await sqlV2Service.GetSlowCronDetails();
+  cronSettingDetailsResponse = _.concat(cronSettingDetailsResponse, slowCronDetails);
+  const mongoResponse = await dbHelper.GetContextOpportunityItems(true);
+  let resultantOutput = [];
+  if (mongoResponse && mongoResponse.length > 0) {
+    for (const oppItem of mongoResponse) {
+      let productDetails = await mySqlHelper.GetItemListById(oppItem.mpId);
+      if (productDetails) {
+        const contextCronId = await getContextCronId(productDetails, oppItem.vendorName);
+
+        if (contextCronId) {
+          (productDetails as any).cronSettingsResponse = cronSettingDetailsResponse.find((x: any) => x.CronId == contextCronId);
+          (productDetails as any).insertReason = oppItem.insertReason;
+          (productDetails as any).contextVendor = oppItem.vendorName;
+          resultantOutput.push(productDetails);
+        }
+      }
+    }
+  }
+
   resultantOutput = feedHelper.SetSkipReprice(resultantOutput, false);
   return resultantOutput;
 }
@@ -302,6 +410,24 @@ export function stop422Cron() {
     error422Cron.stop();
   } else {
     throw new Error("Error422Cron not found");
+  }
+}
+
+export function startOpportunityCron() {
+  if (opportunityCron) {
+    opportunityCron.start();
+    console.info("Started opportunity cron.");
+  } else {
+    console.warn("OpportunityCron not initialized, cannot start. Use setOpportunityCronAndStart() to initialize first.");
+  }
+}
+
+export function stopOpportunityCron() {
+  if (opportunityCron) {
+    opportunityCron.stop();
+    console.info("Stopped opportunity cron.");
+  } else {
+    console.warn("OpportunityCron not initialized, nothing to stop.");
   }
 }
 

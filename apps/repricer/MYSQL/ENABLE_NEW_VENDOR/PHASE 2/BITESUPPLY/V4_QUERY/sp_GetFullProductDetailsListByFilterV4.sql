@@ -2,7 +2,7 @@ use repricerDb;
 
 DROP PROCEDURE IF EXISTS sp_GetFullProductDetailsListByFilterV4;
 
- delimiter / /
+delimiter / /
 CREATE PROCEDURE sp_GetFullProductDetailsListByFilterV4 (IN pageNumber int, IN pageSize int) BEGIN DECLARE _skipNo Int;
 
 DECLARE _pgSz Int;
@@ -236,4 +236,4 @@ DELETE from filtered_table_view;
 
 END;
 
- / /
+/ /

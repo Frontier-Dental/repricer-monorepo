@@ -2,7 +2,7 @@ use repricerDb;
 
 DROP PROCEDURE IF EXISTS sp_GetFullProductDetailsListByTagV4;
 
- delimiter / /
+delimiter / /
 CREATE PROCEDURE sp_GetFullProductDetailsListByTagV4 (IN tagValue varchar(50)) BEGIN DECLARE _searchKey varchar(50);
 
 SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
@@ -246,4 +246,4 @@ COMMIT;
 
 END;
 
- / /
+/ /

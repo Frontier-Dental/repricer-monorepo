@@ -9,8 +9,13 @@ export async function up(knex: Knex): Promise<void> {
       table.integer("CurrentInventory").nullable().defaultTo(null);
       table.decimal("OurLastPrice", 10, 2).nullable().defaultTo(null);
       table.timestamp("MarketStateUpdatedAt").nullable().defaultTo(null);
+      table.boolean("CurrentInStock").nullable().defaultTo(null);
+      table.integer("CurrentInventory").nullable().defaultTo(null);
+      table.decimal("OurLastPrice", 10, 2).nullable().defaultTo(null);
+      table.timestamp("MarketStateUpdatedAt").nullable().defaultTo(null);
 
       // Add index for quick filtering by stock status
+      table.index("CurrentInStock", `idx_${tableName}_in_stock`);
       table.index("CurrentInStock", `idx_${tableName}_in_stock`);
     });
   }

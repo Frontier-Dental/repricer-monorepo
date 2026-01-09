@@ -59,7 +59,10 @@ export const GetCronLogsV2 = async (
         query["type"] = "FEED_RUN";
         break;
       case "ALL_EXCEPT_422":
-        query["type"] = { $nin: ["422Error"] };
+        query["type"] = { $nin: ["422Error", "OpportunityItem"] };
+        break;
+      case "Opportunity":
+        query["type"] = "OpportunityItem";
         break;
       default:
         query["type"] = type;
@@ -334,6 +337,8 @@ export const GetCronSettingsList = async () => {
   if (dbResponse != null) {
     await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, dbResponse);
   }
+
+  console.log("dbResponse", dbResponse);
   await cacheClient.disconnect();
   return dbResponse;
 };
@@ -431,6 +436,113 @@ export const GetContextErrorItemsCount = async (_activeStatus: any) => {
   }
 };
 
+export const GetOpportunityProductCount = async () => {
+  try {
+    const dbo = await getMongoDb();
+    let query: any = {
+      $and: [
+        {
+          active: true,
+        },
+        {
+          insertReason: "OPPORTUNITY_ERROR",
+        },
+      ],
+    };
+    return dbo
+      .collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION)
+      .countDocuments(query);
+  } catch (err) {
+    return 0;
+  }
+};
+
+export const GetOpportunityPriceUpdateCount = async () => {
+  try {
+    const dbo = await getMongoDb();
+    let query: any = {
+      $and: [
+        {
+          active: true,
+        },
+        {
+          insertReason: "PRICE_UPDATE",
+        },
+      ],
+    };
+    return dbo
+      .collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION)
+      .countDocuments(query);
+  } catch (err) {
+    return 0;
+  }
+};
+
+export const GetOpportunityEligibleCount = async () => {
+  try {
+    const dbo = await getMongoDb();
+    const query: any = {
+      nextCronTime: {
+        $lte: new Date(),
+      },
+      active: true,
+    };
+    return dbo
+      .collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION)
+      .countDocuments(query);
+  } catch (err) {
+    return 0;
+  }
+};
+
+export const GetConfigurations = async (activeOnly = true) => {
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  const configurationResult = await cacheClient.get<any>(CacheKey.IP_CONFIG);
+  if (configurationResult != null) {
+    await cacheClient.disconnect();
+    return configurationResult;
+  }
+  const dbo = await getMongoDb();
+  const query = activeOnly ? { active: true } : {};
+  const dbResult = await dbo
+    .collection(applicationConfig.IP_CONFIG)
+    .find(query)
+    .toArray();
+  if (dbResult != null) await cacheClient.set(CacheKey.IP_CONFIG, dbResult);
+  await cacheClient.disconnect();
+  return dbResult;
+};
+
+export const UpdateConfiguration = async (payload: any, req: any) => {
+  let mongoResult: any = null;
+  const dbo = await getMongoDb();
+  const cacheClient = CacheClient.getInstance(
+    GetCacheClientOptions(applicationConfig),
+  );
+  await cacheClient.delete(CacheKey.IP_CONFIG);
+  await cacheClient.disconnect();
+  for (const element of payload) {
+    mongoResult = await dbo
+      .collection(applicationConfig.IP_CONFIG)
+      .findOneAndUpdate(
+        { proxyProvider: element.proxyProvider, ipType: element.ipType },
+        {
+          $set: {
+            userName: element.userName,
+            password: element.password,
+            hostUrl: element.hostUrl,
+            port: parseInt(element.port),
+            active: element.active,
+            AuditInfo: await SessionHelper.GetAuditInfo(req),
+          },
+        },
+      );
+  }
+  return mongoResult;
+};
+
 export const GetHistoryDetailsForId = async (_mpId: any) => {
   const dbo = await getMongoDb();
   return dbo
@@ -516,6 +628,24 @@ export const Get422ProductDetailsByType = async (_type: any) => {
   };
   return dbo
     .collection(applicationConfig.ERROR_ITEM_COLLECTION!)
+    .find(query)
+    .toArray();
+};
+
+export const GetOpportunityProductDetailsByType = async (_type: any) => {
+  const dbo = await getMongoDb();
+  let query = {
+    $and: [
+      {
+        active: true,
+      },
+      {
+        insertReason: _type,
+      },
+    ],
+  };
+  return dbo
+    .collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION!)
     .find(query)
     .toArray();
 };
