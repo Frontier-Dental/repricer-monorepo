@@ -15,11 +15,7 @@ import { repriceProductV2Wrapper } from "./v2/wrapper";
 import * as filterMapper from "../filter-mapper";
 import { ProductDetailsListItem } from "../mysql/mySql-mapper";
 
-export async function RepriceOpportunityItemV2(
-  productList: any[],
-  cronInitTime: any,
-  keyGen: string,
-) {
+export async function RepriceOpportunityItemV2(productList: any[], cronInitTime: any, keyGen: string) {
   let cronLogs: any = {
     time: cronInitTime,
     keyGen: keyGen,
@@ -29,14 +25,7 @@ export async function RepriceOpportunityItemV2(
     EligibleCount: productList.length,
   };
 
-  let _contextCronStatus = new CronStatusModel(
-    cronInitTime,
-    0,
-    productList.length,
-    "In-Progress",
-    "Cron-Opportunity",
-    keyGen,
-  );
+  let _contextCronStatus = new CronStatusModel(cronInitTime, 0, productList.length, "In-Progress", "Cron-Opportunity", keyGen);
 
   await initCronStatus(_contextCronStatus);
   var deltaList = await filterDeltaProducts(productList, keyGen);
@@ -44,22 +33,11 @@ export async function RepriceOpportunityItemV2(
   let cronProdCounter = 1;
 
   for (let prod of productList) {
-    console.log(
-      `OPPORTUNITY: Processing ${prod.mpId} for opportunity at ${new Date()}`,
-    );
+    console.log(`OPPORTUNITY: Processing ${prod.mpId} for opportunity at ${new Date()}`);
 
-    const repriceOpportunityItemResponse = await RepriceOpportunityItem(
-      prod,
-      cronInitTime,
-      prod.cronSettingsResponse,
-      prod.contextVendor,
-    );
+    const repriceOpportunityItemResponse = await RepriceOpportunityItem(prod, cronInitTime, prod.cronSettingsResponse, prod.contextVendor);
 
-    if (
-      repriceOpportunityItemResponse &&
-      repriceOpportunityItemResponse.logs &&
-      repriceOpportunityItemResponse.logs.length > 0
-    ) {
+    if (repriceOpportunityItemResponse && repriceOpportunityItemResponse.logs && repriceOpportunityItemResponse.logs.length > 0) {
       if (repriceOpportunityItemResponse.logs.length == 1) {
         cronLogs.logs.push(_.first(repriceOpportunityItemResponse.logs));
       } else if (repriceOpportunityItemResponse.logs.length > 1) {
@@ -98,23 +76,17 @@ function updateLowestVendor(
     priceUpdateResponse: any;
     historyIdentifier: any;
   },
-  prod: ProductDetailsListItem,
+  prod: ProductDetailsListItem
 ) {
   const newProduct: any = { ...prod };
   if (repriceResult.cronResponse && repriceResult.cronResponse.repriceData) {
     if (repriceResult.cronResponse.repriceData.repriceDetails) {
-      newProduct.lowest_vendor =
-        repriceResult.cronResponse.repriceData.repriceDetails.lowestVendor;
-      newProduct.lowest_vendor_price =
-        repriceResult.cronResponse.repriceData.repriceDetails.lowestVendorPrice;
-    } else if (
-      repriceResult.cronResponse.repriceData.listOfRepriceDetails &&
-      repriceResult.cronResponse.repriceData.listOfRepriceDetails.length > 0
-    ) {
+      newProduct.lowest_vendor = repriceResult.cronResponse.repriceData.repriceDetails.lowestVendor;
+      newProduct.lowest_vendor_price = repriceResult.cronResponse.repriceData.repriceDetails.lowestVendorPrice;
+    } else if (repriceResult.cronResponse.repriceData.listOfRepriceDetails && repriceResult.cronResponse.repriceData.listOfRepriceDetails.length > 0) {
       newProduct.lowest_vendor = "";
       newProduct.lowest_vendor_price = "";
-      for (const rep of repriceResult.cronResponse.repriceData
-        .listOfRepriceDetails) {
+      for (const rep of repriceResult.cronResponse.repriceData.listOfRepriceDetails) {
         newProduct.lowest_vendor += `${rep.minQty}@${rep.lowestVendor} / `;
         newProduct.lowest_vendor_price += `${rep.minQty}@${rep.lowestVendorPrice} / `;
       }
@@ -133,12 +105,7 @@ function updateLowestVendor(
  * @param cronSetting - Cron configuration settings
  * @param _contextVendor - The vendor to reprice for (e.g., "FRONTIER", "TRADENT")
  */
-export async function RepriceOpportunityItem(
-  details: any,
-  cronInitTime: any,
-  cronSetting: any,
-  _contextVendor: string,
-) {
+export async function RepriceOpportunityItem(details: any, cronInitTime: any, cronSetting: any, _contextVendor: string) {
   // ============================================================================
   // STEP 1: Initialize cron logs for tracking this product's processing
   // ============================================================================
@@ -152,24 +119,16 @@ export async function RepriceOpportunityItem(
   // ============================================================================
   // STEP 2: Get existing opportunity items for this product/vendor from MongoDB
   // ============================================================================
-  const contextOpportunityDetails =
-    await dbHelper.GetEligibleContextOpportunityItems(
-      true,
-      details.mpId,
-      _contextVendor,
-    );
+  console.log(`[OPPORTUNITY-CRON] Fetching opportunity items for mpId: ${details.mpId}, vendor: ${_contextVendor}`);
+  const contextOpportunityDetails = await dbHelper.GetEligibleContextOpportunityItems(true, details.mpId, _contextVendor);
 
-  console.log("contextOpportunityDetails", contextOpportunityDetails);
+  console.log(`[OPPORTUNITY-CRON] contextOpportunityDetails for ${details.mpId}:`, contextOpportunityDetails);
 
   // ============================================================================
   // STEP 3: Determine vendor priority sequence for repricing
   // This decides which vendors to try repricing with and in what order
   // ============================================================================
-  const prioritySequence = await requestGenerator.GetPrioritySequence(
-    details,
-    contextOpportunityDetails,
-    true,
-  );
+  const prioritySequence = await requestGenerator.GetPrioritySequence(details, contextOpportunityDetails, true);
 
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
 
@@ -177,16 +136,9 @@ export async function RepriceOpportunityItem(
     // ==========================================================================
     // STEP 4: Fetch current market prices from Net32 API
     // ==========================================================================
-    const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace(
-      "{mpId}",
-      details.mpId,
-    );
+    const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", details.mpId);
 
-    var net32result = await axiosHelper.getAsync(
-      searchRequest,
-      "Cron-Opportunity",
-      seqString,
-    );
+    var net32result = await axiosHelper.getAsync(searchRequest, "Cron-Opportunity", seqString);
 
     let isPriceUpdatedForVendor = false;
 
@@ -194,28 +146,15 @@ export async function RepriceOpportunityItem(
     // STEP 5: Run V2 Algorithm (if configured)
     // V2 is the newer repricing algorithm
     // ==========================================================================
-    if (
-      details.algo_execution_mode === AlgoExecutionMode.V2_ONLY ||
-      details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY ||
-      details.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY
-    ) {
-      await repriceProductV2Wrapper(
-        net32result.data,
-        details,
-        cronSetting ? cronSetting.CronName : "Cron-Opportunity",
-        false,
-      );
+    if (details.algo_execution_mode === AlgoExecutionMode.V2_ONLY || details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY || details.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY) {
+      await repriceProductV2Wrapper(net32result.data, details, cronSetting ? cronSetting.CronName : "Cron-Opportunity", false);
     }
 
     // ==========================================================================
     // STEP 6: Run V1 Algorithm (if configured)
     // V1 is the original repricing algorithm - iterates through vendors
     // ==========================================================================
-    if (
-      details.algo_execution_mode === AlgoExecutionMode.V1_ONLY ||
-      details.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY ||
-      details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY
-    ) {
+    if (details.algo_execution_mode === AlgoExecutionMode.V1_ONLY || details.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY || details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY) {
       // Loop through each vendor in priority order
       for (const seq of prioritySequence) {
         // Stop if we already updated price for one vendor (only update once per product)
@@ -223,10 +162,7 @@ export async function RepriceOpportunityItem(
           const contextVendor = seq.name;
 
           // Get vendor-specific product details
-          let prod = await filterMapper.GetProductDetailsByVendor(
-            details,
-            contextVendor,
-          );
+          let prod = await filterMapper.GetProductDetailsByVendor(details, contextVendor);
 
           let tempProd = _.cloneDeep(prod);
           prod.last_cron_time = new Date();
@@ -237,15 +173,12 @@ export async function RepriceOpportunityItem(
           // Must have scrapeOn=true AND activated=true
           // ====================================================================
           if (prod.scrapeOn == true && prod.activated == true) {
-            console.log(
-              `REPRICE : Opportunity : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid} at Time :  ${new Date().toISOString()}`,
-            );
+            console.log(`REPRICE : Opportunity : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid} at Time :  ${new Date().toISOString()}`);
 
             // Set up product metadata for repricing
             prod.last_attempted_time = new Date();
             prod.lastCronRun = `Cron-Opportunity`;
-            tempProd.cronName =
-              applicationConfig.CRON_NAME_OPPORTUNITY || "Cron-Opportunity";
+            tempProd.cronName = applicationConfig.CRON_NAME_OPPORTUNITY || "Cron-Opportunity";
             tempProd.contextVendor = contextVendor;
             tempProd.contextCronName = `Cron-Opportunity`;
             let data: any = {};
@@ -261,37 +194,18 @@ export async function RepriceOpportunityItem(
               prod.mpid!,
               net32result.data.filter((p: any) => p.priceBreaks !== undefined),
               tempProd as unknown as FrontierProduct,
-              contextVendor,
+              contextVendor
             );
 
-            console.log(
-              "repriceResult.priceUpdateResponse",
-              repriceResult.priceUpdateResponse,
-            );
+            console.log("repriceResult.priceUpdateResponse", repriceResult.priceUpdateResponse);
 
             if (repriceResult) {
               // ================================================================
               // STEP 6c: Handle repricing result - price update was ATTEMPTED
               // ================================================================
-              if (
-                repriceResult.priceUpdateResponse &&
-                repriceResult.priceUpdateResponse != null
-              ) {
+              if (repriceResult.priceUpdateResponse && repriceResult.priceUpdateResponse != null) {
                 // Check if update was successful (no errors)
-                if (
-                  JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
-                    "ERROR:422",
-                  ) == -1 &&
-                  JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
-                    "ERROR:429",
-                  ) == -1 &&
-                  JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
-                    "ERROR:404",
-                  ) == -1 &&
-                  JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
-                    "ERROR:",
-                  ) == -1
-                ) {
+                if (JSON.stringify(repriceResult.priceUpdateResponse).indexOf("ERROR:422") == -1 && JSON.stringify(repriceResult.priceUpdateResponse).indexOf("ERROR:429") == -1 && JSON.stringify(repriceResult.priceUpdateResponse).indexOf("ERROR:404") == -1 && JSON.stringify(repriceResult.priceUpdateResponse).indexOf("ERROR:") == -1) {
                   // ==============================================================
                   // SUCCESS: Price was updated successfully
                   // - Log the successful update
@@ -316,14 +230,7 @@ export async function RepriceOpportunityItem(
                   prod.next_cron_time = calculateNextCronTime(new Date(), 12);
 
                   // Add to Express/422 Cron for monitoring (runs again in 12 hours)
-                  const expressItem = new ErrorItemModel(
-                    prod.mpid,
-                    prod.next_cron_time,
-                    true,
-                    prod.cronId,
-                    "PRICE_UPDATE",
-                    contextVendor,
-                  );
+                  const expressItem = new ErrorItemModel(prod.mpid, prod.next_cron_time, true, prod.cronId, "PRICE_UPDATE", contextVendor);
 
                   await dbHelper.UpsertErrorItemLog(expressItem);
                   console.log({
@@ -332,42 +239,20 @@ export async function RepriceOpportunityItem(
                   });
 
                   // Remove from Opportunity cron (mark as processed)
-                  const opportunityItem = new ErrorItemModel(
-                    prod.mpid,
-                    null,
-                    false,
-                    prod.cronId,
-                    "PROCESSED",
-                    contextVendor,
-                  );
+                  const opportunityItem = new ErrorItemModel(prod.mpid, null, false, prod.cronId, "PROCESSED", contextVendor);
 
                   await dbHelper.UpsertOpportunityItemLog(opportunityItem);
-                  console.log(
-                    `[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): REPRICED SUCCESSFULLY - moved to Express Cron`,
-                  );
-                } else if (
-                  JSON.stringify(repriceResult.priceUpdateResponse).indexOf(
-                    "ERROR:422",
-                  ) > -1
-                ) {
+                  console.log(`[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): REPRICED SUCCESSFULLY - moved to Express Cron`);
+                } else if (JSON.stringify(repriceResult.priceUpdateResponse).indexOf("ERROR:422") > -1) {
                   // ==============================================================
                   // 422 ERROR: Rate limited by Net32
                   // - Remove from Opportunity Cron
                   // - Product will be picked up by 422 Cron automatically
                   // ==============================================================
-                  const opportunityItem = new ErrorItemModel(
-                    prod.mpid,
-                    null,
-                    false,
-                    prod.cronId,
-                    "422_ERROR",
-                    contextVendor,
-                  );
+                  const opportunityItem = new ErrorItemModel(prod.mpid, null, false, prod.cronId, "422_ERROR", contextVendor);
 
                   await dbHelper.UpsertOpportunityItemLog(opportunityItem);
-                  console.log(
-                    `[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): 422 ERROR - moved to 422 Cron`,
-                  );
+                  console.log(`[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): 422 ERROR - moved to 422 Cron`);
 
                   cronLogs.logs.push([
                     {
@@ -385,19 +270,10 @@ export async function RepriceOpportunityItem(
                   // - Don't retry automatically
                   // ==============================================================
                   prod.next_cron_time = null;
-                  const priceUpdatedItem = new ErrorItemModel(
-                    prod.mpid,
-                    prod.next_cron_time,
-                    false,
-                    prod.cronId,
-                    "IGNORE",
-                    contextVendor,
-                  );
+                  const priceUpdatedItem = new ErrorItemModel(prod.mpid, prod.next_cron_time, false, prod.cronId, "IGNORE", contextVendor);
 
                   await dbHelper.UpsertOpportunityItemLog(priceUpdatedItem);
-                  console.log(
-                    `[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): OTHER ERROR - removed from Opportunity Cron`,
-                  );
+                  console.log(`[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): OTHER ERROR - removed from Opportunity Cron`);
                 }
               }
 
@@ -407,19 +283,10 @@ export async function RepriceOpportunityItem(
               // ================================================================
               else {
                 prod.next_cron_time = null;
-                const errorItem = new ErrorItemModel(
-                  prod.mpid,
-                  null,
-                  false,
-                  prod.cronId,
-                  `IGNORE`,
-                  contextVendor,
-                );
+                const errorItem = new ErrorItemModel(prod.mpid, null, false, prod.cronId, `IGNORE`, contextVendor);
 
                 await dbHelper.UpsertOpportunityItemLog(errorItem);
-                console.log(
-                  `[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): NO REPRICE NEEDED - removed from Opportunity Cron`,
-                );
+                console.log(`[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): NO REPRICE NEEDED - removed from Opportunity Cron`);
 
                 cronLogs.logs.push([
                   {
@@ -436,30 +303,16 @@ export async function RepriceOpportunityItem(
             // ==================================================================
 
             // Set the last cron message (human-readable result)
-            prod.last_cron_message = filterMapper.GetLastCronMessageSimple(
-              repriceResult as any,
-            );
+            prod.last_cron_message = filterMapper.GetLastCronMessageSimple(repriceResult as any);
 
             // Update price history records with the result message
-            if (
-              repriceResult &&
-              repriceResult.historyIdentifier &&
-              repriceResult.historyIdentifier.length > 0
-            ) {
+            if (repriceResult && repriceResult.historyIdentifier && repriceResult.historyIdentifier.length > 0) {
               for (const histItem of repriceResult.historyIdentifier) {
-                const errorMessage = await getErrorMessage(
-                  repriceResult,
-                  histItem.minQty,
-                );
+                const errorMessage = await getErrorMessage(repriceResult, histItem.minQty);
 
-                await sqlHelper.UpdateHistoryWithMessage(
-                  histItem.historyIdentifier,
-                  prod.last_cron_message,
-                );
+                await sqlHelper.UpdateHistoryWithMessage(histItem.historyIdentifier, prod.last_cron_message);
 
-                console.log(
-                  `History Updated for ${prod.mpid} with Identifier : ${histItem.historyIdentifier} and Message : ${prod.last_cron_message}`,
-                );
+                console.log(`History Updated for ${prod.mpid} with Identifier : ${histItem.historyIdentifier} and Message : ${prod.last_cron_message}`);
               }
             }
 
@@ -468,35 +321,18 @@ export async function RepriceOpportunityItem(
             prod = updateCronBasedDetails(repriceResult, prod, false);
 
             // Save updated product to MySQL
-            await sqlHelper.UpdateProductAsync(
-              prod,
-              isPriceUpdated,
-              contextVendor,
-            );
+            await sqlHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
           } else {
             // ==================================================================
             // STEP 6f: Product is NOT eligible for repricing
             // Either scrapeOn=false or activated=false
             // ==================================================================
             prod.next_cron_time = null;
-            const errorItem = new ErrorItemModel(
-              prod.mpid,
-              null,
-              false,
-              prod.cronId,
-              "IGNORE",
-              contextVendor,
-            );
+            const errorItem = new ErrorItemModel(prod.mpid, null, false, prod.cronId, "IGNORE", contextVendor);
 
             await dbHelper.UpsertOpportunityItemLog(errorItem);
-            console.log(
-              `[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): SKIPPED - scrapeOn=${prod.scrapeOn}, activated=${prod.activated}`,
-            );
-            await sqlHelper.UpdateProductAsync(
-              prod,
-              isPriceUpdated,
-              contextVendor,
-            );
+            console.log(`[OPPORTUNITY-CRON] Product ${prod.mpid} (${contextVendor}): SKIPPED - scrapeOn=${prod.scrapeOn}, activated=${prod.activated}`);
+            await sqlHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor);
           }
         }
       }
@@ -546,6 +382,12 @@ export async function RepriceOpportunityItem(
       productUpdateNeeded = true;
     }
 
+    if (details.biteSupplyDetails) {
+      details.biteSupplyDetails.slowCronId = null;
+      details.biteSupplyDetails.slowCronName = null;
+      productUpdateNeeded = true;
+    }
+
     if (productUpdateNeeded) {
       details.isSlowActivated = false;
       await sqlHelper.UpdateCronForProductAsync(details);
@@ -557,19 +399,10 @@ export async function RepriceOpportunityItem(
   // STEP 8: Final cleanup - ensure product is removed from Opportunity Cron
   // This is a "one-shot" cron, so always mark as inactive when done
   // ============================================================================
-  const finalOpportunityItem = new ErrorItemModel(
-    details.mpId,
-    null,
-    false,
-    details.cronId || null,
-    "PROCESSED",
-    _contextVendor,
-  );
+  const finalOpportunityItem = new ErrorItemModel(details.mpId, null, false, details.cronId || null, "PROCESSED", _contextVendor);
 
   await dbHelper.UpsertOpportunityItemLog(finalOpportunityItem);
-  console.log(
-    `${details.mpId} - ${_contextVendor} removed from Opportunity Cron (one-shot complete)`,
-  );
+  console.log(`${details.mpId} - ${_contextVendor} removed from Opportunity Cron (one-shot complete)`);
   return cronLogs;
 }
 
@@ -577,43 +410,21 @@ function getNextCronTime(priceUpdateResponse: any) {
   const messageText = priceUpdateResponse.message;
   if (messageText && typeof messageText == "string") {
     const timeStr = messageText.split("this time:")[1];
-    return timeStr
-      ? new Date(timeStr.trim())
-      : calculateNextCronTime(new Date(), 12);
+    return timeStr ? new Date(timeStr.trim()) : calculateNextCronTime(new Date(), 12);
   } else return calculateNextCronTime(new Date(), 12);
 }
 
-function updateCronBasedDetails(
-  repriceResult: any,
-  prod: any,
-  isPriceUpdated: boolean,
-) {
-  if (
-    repriceResult &&
-    repriceResult.data &&
-    repriceResult.data.cronResponse &&
-    repriceResult.data.cronResponse.repriceData
-  ) {
+function updateCronBasedDetails(repriceResult: any, prod: any, isPriceUpdated: boolean) {
+  if (repriceResult && repriceResult.data && repriceResult.data.cronResponse && repriceResult.data.cronResponse.repriceData) {
     if (repriceResult.data.cronResponse.repriceData.repriceDetails) {
-      prod.lastExistingPrice =
-        repriceResult.data.cronResponse.repriceData.repriceDetails.oldPrice.toString();
-      prod.lastSuggestedPrice = repriceResult.data.cronResponse.repriceData
-        .repriceDetails.goToPrice
-        ? repriceResult.data.cronResponse.repriceData.repriceDetails.goToPrice
-        : repriceResult.data.cronResponse.repriceData.repriceDetails.newPrice;
-    } else if (
-      repriceResult.data.cronResponse.repriceData.listOfRepriceDetails &&
-      repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.length >
-        0
-    ) {
+      prod.lastExistingPrice = repriceResult.data.cronResponse.repriceData.repriceDetails.oldPrice.toString();
+      prod.lastSuggestedPrice = repriceResult.data.cronResponse.repriceData.repriceDetails.goToPrice ? repriceResult.data.cronResponse.repriceData.repriceDetails.goToPrice : repriceResult.data.cronResponse.repriceData.repriceDetails.newPrice;
+    } else if (repriceResult.data.cronResponse.repriceData.listOfRepriceDetails && repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.length > 0) {
       prod.lastExistingPrice = "";
       prod.lastSuggestedPrice = "";
-      for (const rep of repriceResult.data.cronResponse.repriceData
-        .listOfRepriceDetails) {
+      for (const rep of repriceResult.data.cronResponse.repriceData.listOfRepriceDetails) {
         prod.lastExistingPrice += `${rep.minQty}@${rep.oldPrice} / `;
-        prod.lastSuggestedPrice += rep.goToPrice
-          ? `${rep.minQty}@${rep.goToPrice} / `
-          : `${rep.minQty}@${rep.newPrice} / `;
+        prod.lastSuggestedPrice += rep.goToPrice ? `${rep.minQty}@${rep.goToPrice} / ` : `${rep.minQty}@${rep.newPrice} / `;
       }
     }
   }
@@ -648,31 +459,22 @@ function getProductDetailsByVendor(details: any, contextVendor: string) {
   if (contextVendor == VendorName.TRIAD) {
     return details.triadDetails;
   }
+  if (contextVendor == VendorName.BITESUPPLY) {
+    return details.biteSupplyDetails;
+  }
 }
 
 async function alignErrorItems(details: any, _contextVendor: string) {
   const productDetails = getProductDetailsByVendor(details, _contextVendor);
-  if (
-    (productDetails && productDetails.activated == false) ||
-    !productDetails ||
-    productDetails == null
-  ) {
-    const errorItem = new ErrorItemModel(
-      details.mpId,
-      null,
-      false,
-      null,
-      "IGNORE",
-      _contextVendor,
-    );
+  if ((productDetails && productDetails.activated == false) || !productDetails || productDetails == null) {
+    const errorItem = new ErrorItemModel(details.mpId, null, false, null, "IGNORE", _contextVendor);
     await dbHelper.UpsertOpportunityItemLog(errorItem);
   }
 }
 
 function filterDeltaProducts(productList: any[], keygen: string) {
   let finalList = productList;
-  if (!productList || productList == null || productList.length == 0)
-    return productList;
+  if (!productList || productList == null || productList.length == 0) return productList;
   const freshProducts = _.map(productList, (i) => ({
     mpId: i.mpId,
     contextVendor: i.contextVendor,
@@ -692,15 +494,11 @@ function filterDeltaProducts(productList: any[], keygen: string) {
 
     const fieldsToCompare = ["mpId", "contextVendor"];
     const pickFields = (obj: any) => _.pick(obj, fieldsToCompare);
-    finalList = _.differenceWith(freshProducts, activeProducts, (a, b) =>
-      _.isEqual(pickFields(a), pickFields(b)),
-    );
+    finalList = _.differenceWith(freshProducts, activeProducts, (a, b) => _.isEqual(pickFields(a), pickFields(b)));
     if (finalList && finalList.length > 0) {
       fileContent.push({ key: keygen, products: finalList });
       contentsToWrite = fileContent;
-      console.log(
-        `Delta Found for KeyGen : ${keygen} : Fresh Products : ${freshProducts.length} || Active Products : ${activeProducts.length} || Delta Products : ${finalList.length}`,
-      );
+      console.log(`Delta Found for KeyGen : ${keygen} : Fresh Products : ${freshProducts.length} || Active Products : ${activeProducts.length} || Delta Products : ${finalList.length}`);
       fs.writeFileSync(filePath, JSON.stringify(contentsToWrite));
     }
   }
@@ -725,9 +523,7 @@ function scanDeltaListOfProducts(productList: any[], deltaList: any[]) {
   var filterDeltaProducts: any[] = [];
   if (deltaList == null || deltaList.length == 0) return productList;
   _.forEach(productList, (p) => {
-    const linkedDelta = deltaList.filter(
-      (x) => x.mpId == p.mpId && x.contextVendor == p.contextVendor,
-    );
+    const linkedDelta = deltaList.filter((x) => x.mpId == p.mpId && x.contextVendor == p.contextVendor);
     if (linkedDelta && linkedDelta.length > 0) {
       filterDeltaProducts.push(p);
     }
@@ -737,24 +533,11 @@ function scanDeltaListOfProducts(productList: any[], deltaList: any[]) {
 
 async function getErrorMessage(repriceResult: any, minQty: any) {
   let resultStr = "";
-  if (
-    repriceResult &&
-    repriceResult.data &&
-    repriceResult.data.cronResponse &&
-    repriceResult.data.cronResponse.repriceData
-  ) {
+  if (repriceResult && repriceResult.data && repriceResult.data.cronResponse && repriceResult.data.cronResponse.repriceData) {
     if (repriceResult.data.cronResponse.repriceData.repriceDetails) {
-      resultStr =
-        repriceResult.data.cronResponse.repriceData.repriceDetails.explained;
-    } else if (
-      repriceResult.data.cronResponse.repriceData.listOfRepriceDetails &&
-      repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.length >
-        0
-    ) {
-      const contextData =
-        repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.find(
-          (x: { minQty: any }) => x.minQty === minQty,
-        );
+      resultStr = repriceResult.data.cronResponse.repriceData.repriceDetails.explained;
+    } else if (repriceResult.data.cronResponse.repriceData.listOfRepriceDetails && repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.length > 0) {
+      const contextData = repriceResult.data.cronResponse.repriceData.listOfRepriceDetails.find((x: { minQty: any }) => x.minQty === minQty);
       resultStr = contextData.explained;
     }
   }

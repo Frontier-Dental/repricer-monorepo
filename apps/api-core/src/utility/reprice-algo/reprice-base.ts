@@ -249,7 +249,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
                 await dbHelper.UpsertErrorItemLog(errorItem);
 
                 // Add to opportunity cron for future monitoring (OPPORTUNITY_DELAY_MINUTES from now)
-                const opportunityNextCronTime = new Date(Date.now() + 30 * 60 * 1000);
+                const opportunityNextCronTime = new Date(Date.now() + 5 * 60 * 1000);
                 const opportunityItem = new ErrorItemModel(prod.mpid, opportunityNextCronTime, true, prod.cronId, "NO_REPRICE_NEEDED", contextVendor);
                 await dbHelper.UpsertOpportunityItemLog(opportunityItem);
                 console.log(`${prod.mpid} - ${contextVendor} added to Opportunity Cron (no reprice needed in 422 cron) - next run: ${opportunityNextCronTime.toISOString()}`);

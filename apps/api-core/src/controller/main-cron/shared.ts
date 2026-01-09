@@ -31,12 +31,9 @@ export function stopAllMainCrons() {
 
 export function setError422CronAndStart(cronSettings: CronSettingsDetail[]) {
   const _422CronSetting = cronSettings.find((x) => x.CronName == applicationConfig.CRON_NAME_422);
-  const _422CronSetting = cronSettings.find((x) => x.CronName == applicationConfig.CRON_NAME_422);
   if (!_422CronSetting) {
     throw new Error("422 Cron setting not found");
   }
-  const cronString = responseUtility.GetCronGeneric(_422CronSetting.CronTimeUnit, _422CronSetting.CronTime, parseInt(_422CronSetting.Offset));
-  console.info(`Setting up 422 cron with schedule: ${cronString} at ${new Date().toISOString()}`);
   const cronString = responseUtility.GetCronGeneric(_422CronSetting.CronTimeUnit, _422CronSetting.CronTime, parseInt(_422CronSetting.Offset));
   console.info(`Setting up 422 cron with schedule: ${cronString} at ${new Date().toISOString()}`);
   if (error422Cron) {
@@ -123,7 +120,6 @@ export async function runCoreCronLogicFor422() {
   if (!isCacheValid) {
     console.info(`Getting List of Eligible Products for Cron-422`);
     const runningCacheObj = { cronRunning: true, initTime: new Date() };
-    let cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
     let cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
     await cacheClient.set(cacheKey, runningCacheObj);
     const eligibleProductList = await get422EligibleProducts();
