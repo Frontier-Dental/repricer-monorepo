@@ -427,7 +427,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
     });
 
     // If only Own Vendor or Sister Vendor is available, Shut down the Price Break
-    if (priceBreak.minQty != 1) {
+    if (priceBreak.minQty != 1 && priceBreak.unitPrice != 0) {
       const nonSisterVendorDetails = sortedPayload.filter((x) => x.vendorId != $.VENDOR_ID && !_.includes(excludedVendors, x.vendorId.toString()));
       if (nonSisterVendorDetails.length === 0) {
         repriceModel.repriceDetails!.newPrice = existingPrice;
@@ -498,9 +498,13 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
                 repriceModel.repriceDetails!.newPrice = contextPrice.toFixed(2);
                 repriceModel.repriceDetails!.isRepriced = true;
                 repriceModel.repriceDetails!.explained = await filterMapper.AppendPriceFactorTag(RepriceRenewedMessageEnum.PRICE_UP_SECOND, contextPriceResult.Type);
+              } else {
+                repriceModel.repriceDetails!.newPrice = maxPrice;
+                repriceModel.repriceDetails!.isRepriced = true;
+                repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL;
               }
             } else {
-              repriceModel.repriceDetails!.newPrice = productItem.maxPrice.toFixed(2);
+              repriceModel.repriceDetails!.newPrice = maxPrice;
               repriceModel.repriceDetails!.isRepriced = true;
               repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL;
             }
@@ -523,13 +527,13 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
         //2. Max Price is Not Equal to Existing Price
         //SET: Max Price
         else if (nextLowestPrice > productItem.maxPrice && productItem.maxPrice != existingPrice) {
-          repriceModel.repriceDetails!.newPrice = productItem.maxPrice.toFixed(2);
+          repriceModel.repriceDetails!.newPrice = maxPrice;
           repriceModel.repriceDetails!.isRepriced = true;
           repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX;
         }
         repriceModel.updateTriggeredBy(sortedPayload[nextIndex].vendorName, sortedPayload[nextIndex].vendorId, priceBreak.minQty);
       } else {
-        repriceModel.repriceDetails!.newPrice = productItem.maxPrice ? productItem.maxPrice : "N/A";
+        repriceModel.repriceDetails!.newPrice = maxPrice;
         repriceModel.repriceDetails!.isRepriced = true;
         repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX;
         repriceModel.updateTriggeredBy(_.first(sortedPayload)!.vendorName, _.first(sortedPayload)!.vendorId, priceBreak.minQty);
@@ -617,7 +621,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
               repriceModel.repriceDetails!.active = 0 as unknown as boolean;
               repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.SHUT_DOWN_FLOOR_REACHED;
             } else {
-              repriceModel.repriceDetails!.newPrice = productItem.maxPrice ? productItem.maxPrice : "N/A";
+              repriceModel.repriceDetails!.newPrice = maxPrice;
               repriceModel.repriceDetails!.isRepriced = true;
               repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX;
             }

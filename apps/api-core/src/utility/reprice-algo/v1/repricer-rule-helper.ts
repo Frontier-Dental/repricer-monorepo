@@ -524,6 +524,19 @@ export async function AlignIsRepriced(repriceResult: any) {
   return $eval;
 }
 
+export async function ApplyMaxPriceCheck(repriceResult: any, productItem: FrontierProduct): Promise<RepriceModel> {
+  let $eval = _.cloneDeep(repriceResult);
+  if ($eval.repriceDetails && $eval.repriceDetails.newPrice == "N/A") {
+    const existingPrice = calculatePriceWithNcContext($eval.repriceDetails.oldPrice, productItem, "ADD");
+    const maxAllowedPrice = parseFloat(productItem.maxPrice);
+    if (existingPrice > maxAllowedPrice) {
+      $eval.repriceDetails.newPrice = calculatePriceWithNcContext(maxAllowedPrice, productItem, "DEL").toFixed(2);
+      $eval.repriceDetails.explained = $eval.repriceDetails.explained + "_#MAXPRICEAPPLIED";
+    }
+  }
+  return $eval;
+}
+
 // Helper functions (not exported)
 function validateQtyReprice(listOfRepriceDetails: any[], minQty: number, isOverrideEnabled: boolean): boolean {
   if (isOverrideEnabled) return true;
@@ -591,4 +604,10 @@ function GetShippingPrice(item: any): number {
   return 0;
 }
 
+function calculatePriceWithNcContext(contextPrice: any, productItem: FrontierProduct, type: string): number {
+  const existingPrice = parseFloat(contextPrice);
+  const shippingPrice = GetShippingPrice(productItem);
+  const ncPrice = type == "ADD" ? existingPrice + shippingPrice : existingPrice - shippingPrice;
+  return productItem.is_nc_needed ? ncPrice : existingPrice;
+}
 const subtractPercentage = (originalNumber: number, percentage: number): number => parseFloat((Math.floor((originalNumber - originalNumber * percentage) * 100) / 100).toFixed(2));
