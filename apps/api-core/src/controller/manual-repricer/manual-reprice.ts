@@ -45,7 +45,7 @@ export async function manualRepriceHandler(req: Request<{ id: string }, any, any
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
   if (prioritySequence && prioritySequence.length > 0) {
     const cronIdForScraping = isSlowCronRun == true ? (prod as any)[prioritySequence[0].value].slowCronId : (prod as any)[prioritySequence[0].value].cronId;
-    const net32resp: AxiosResponse<Net32Product[]> = await axiosHelper.getAsync(searchRequest, cronIdForScraping, seqString);
+    const net32resp: AxiosResponse<Net32Product[]> = await axiosHelper.getAsync(searchRequest, cronIdForScraping, mpid, seqString);
     if (prod.algo_execution_mode === AlgoExecutionMode.V2_ONLY || prod.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY || prod.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY) {
       await repriceProductV2Wrapper(net32resp.data, prod, "MANUAL", isSlowCronRun, contextCronId);
     }

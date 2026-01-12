@@ -39,7 +39,7 @@ export async function updateToMax(req: Request<{ id: string }, any, any>, res: R
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
   if (prioritySequence && prioritySequence.length > 0) {
     const cronIdForScraping = isSlowCronRun == true ? (prod as any)[prioritySequence[0].value].slowCronId : (prod as any)[prioritySequence[0].value].cronId;
-    net32resp = await axiosHelper.getAsync(searchRequest, cronIdForScraping, seqString);
+    net32resp = await axiosHelper.getAsync(searchRequest, cronIdForScraping, mpid, seqString);
     for (let idx = 0; idx < prioritySequence.length; idx++) {
       const proceedNextVendor = proceedNext(prod!, prioritySequence[idx].value);
       const isVendorActivated = (prod as any)[prioritySequence[idx].value].activated;
