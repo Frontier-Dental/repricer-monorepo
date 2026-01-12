@@ -199,5 +199,6 @@ async function get422ProductDetails() {
   productsCount.priceUpdateProducts = await mongoHelper.Get422ProductCountByType("PRICE_UPDATE");
   productsCount.eligibleProducts = await mongoHelper.GetContextErrorItemsCount(true);
   productsCount.time = moment(new Date()).format("DD-MM-YYYY HH:mm:ss");
+  console.log(`422 ERROR Products Count : ${productsCount.products422Error}, Price Update Products Count : ${productsCount.priceUpdateProducts}, Eligible Products Count : ${productsCount.eligibleProducts} as of ${productsCount.time}`);
   return productsCount;
 }
