@@ -187,6 +187,8 @@
                                                     <th class="t-head">Current In Stock</th>
                                                     <th class="t-head">Current Inventory</th>
                                                     <th class="t-head">Market State Updated At</th>
+                                                    <th class="t-head">Qbreak Count</th>
+                                                    <th class="t-head">Qbreak Details</th>
                                                     <th class="t-head">NC</th>
                                                     <!-- <th class="t-head long-txt">Suppress Price Break if Qty 1 not updated</th> -->
                                                     <!-- <th class="t-head long-txt">Apply Buy Box</th> -->
@@ -1356,6 +1358,129 @@
                                                                                                         </span>
                                                         </td>
 
+                                                        <td>
+                                                            <span class="tr-row">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.qBreakCount ? item.tradent.qBreakCount : 'N/A' %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br>
+                                                                                    <%= item.frontier.qBreakCount ? item.frontier.qBreakCount : 'N/A' %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                            <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.qBreakCount ? item.mvp.qBreakCount : 'N/A' %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="fir-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.qBreakCount ? item.firstDent.qBreakCount : 'N/A' %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="top-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.qBreakCount ? item.topDent.qBreakCount : 'N/A' %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.qBreakCount ? item.triad.qBreakCount : 'N/A' %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="bite-supply-row tr-cwid">
+                                                                                                            <% if(item.biteSupply==null){ %>
+                                                                                                                <b>BIT:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>BIT:</b><br>
+                                                                                                                    <%= item.biteSupply.qBreakCount ? item.biteSupply.qBreakCount : 'N/A' %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
+
+                                                        <td>
+                                                            <span class="tr-row">
+                                                            <% if(item.tradent==null){ %>
+                                                                <b>TRA:</b> <br>N/A
+                                                                <% } else { %>
+                                                                    <b>TRA:</b><br>
+                                                                    <%= item.tradent.qBreakDetails ? item.tradent.qBreakDetails : 'N/A' %>
+                                                                        <% } %></span>
+                                                                             <hr>
+                                                                            <span class="fr-row">
+                                                                            <% if(item.frontier==null){ %>
+                                                                                <b>FRO:</b> <br>N/A
+                                                                                <% } else { %>
+                                                                                    <b>FRO:</b><br>
+                                                                                    <%= item.frontier.qBreakDetails ? item.frontier.qBreakDetails : 'N/A' %>
+                                                                                        <% } %></span>
+                                                                                            <hr>
+                                                                                            <span class="mvp-row">
+                                                                                            <% if(item.mvp==null){ %>
+                                                                                                <b>MVP:</b> <br>N/A
+                                                                                                <% } else { %>
+                                                                                                    <b>MVP:</b><br>
+                                                                                                    <%= item.mvp.qBreakDetails ? item.mvp.qBreakDetails : 'N/A' %>
+                                                                                                        <% } %></span>
+                                                                                                        <hr>
+                                                                                                        <span class="fir-row">
+                                                                                                            <% if(item.firstDent==null){ %>
+                                                                                                                <b>FIR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>FIR:</b><br>
+                                                                                                                    <%= item.firstDent.qBreakDetails ? item.firstDent.qBreakDetails : 'N/A' %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="top-row">
+                                                                                                            <% if(item.topDent==null){ %>
+                                                                                                                <b>TOP:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>TOP:</b><br>
+                                                                                                                    <%= item.topDent.qBreakDetails ? item.topDent.qBreakDetails : 'N/A' %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="car-row">
+                                                                                                            <% if(item.triad==null){ %>
+                                                                                                                <b>CAR:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>CAR:</b><br>
+                                                                                                                    <%= item.triad.qBreakDetails ? item.triad.qBreakDetails : 'N/A' %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                                                                        <hr>
+                                                                                                        <span class="bite-supply-row tr-cwid">
+                                                                                                            <% if(item.biteSupply==null){ %>
+                                                                                                                <b>BIT:</b> <br>N/A
+                                                                                                                <% } else { %>
+                                                                                                                    <b>BIT:</b><br>
+                                                                                                                    <%= item.biteSupply.qBreakDetails ? item.biteSupply.qBreakDetails : 'N/A' %>
+                                                                                                                        <% } %>
+                                                                                                        </span>
+                                                        </td>
 
                                                         <td>
                                                             <span class="tr-row">
