@@ -64,7 +64,9 @@ CREATE PROCEDURE sp_UpsertBiteSupplyDetails (
   IN getBBBadge boolean,
   IN getBBShipping boolean,
   IN getBBBadgeValue decimal(10, 2),
-  IN getBBShippingValue decimal(10, 2)
+  IN getBBShippingValue decimal(10, 2),
+  IN qBreakCount int,
+  IN qBreakDetails varchar(1024)
 ) BEGIN DECLARE EXIT
 HANDLER FOR SQLEXCEPTION BEGIN
 -- Rollback the transaction if an error occurs
@@ -136,7 +138,9 @@ INSERT INTO
     GetBBBadge,
     GetBBShipping,
     GetBBBadgeValue,
-    GetBBShippingValue
+    GetBBShippingValue,
+    QBreakDetailsBreakCount,
+    QBreakDetails
   )
 values
   (
@@ -200,7 +204,9 @@ values
     getBBBadge,
     getBBShipping,
     getBBBadgeValue,
-    getBBShippingValue
+    getBBShippingValue,
+    qBreakCount,
+    qBreakDetails
   );
 
 SELECT
