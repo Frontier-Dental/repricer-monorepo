@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import { BadRequest } from "http-errors";
 import * as _codes from "http-status-codes";
-import { getMainCronNameFromJobName, setCronAndStart, setError422CronAndStart, stopCron } from "./shared";
+import * as dbHelper from "../../utility/mongo/db-helper";
+import { getMainCronNameFromJobName, setCronAndStart, setError422CronAndStart, setOpportunityCronAndStart, stopCron } from "./shared";
 import { GetCronSettingsList } from "../../utility/mysql/mysql-v2";
 export async function recreateCronHandler(req: Request, res: Response): Promise<any> {
   const jobNames = req.body;
@@ -9,6 +10,10 @@ export async function recreateCronHandler(req: Request, res: Response): Promise<
   for (const jobName of jobNames) {
     if (jobName === "_Error422Cron") {
       setError422CronAndStart(cronDetails);
+      continue;
+    }
+    if (jobName === "Cron-Opportunity") {
+      setOpportunityCronAndStart(cronDetails);
       continue;
     }
     const cronName = getMainCronNameFromJobName(jobName);

@@ -176,6 +176,14 @@ function editAll() {
   $('[name^="proxy_provider_"]').removeAttr("disabled");
   $('[name^="proxy_provider_422_alternate_"]').removeAttr("disabled");
 
+  // Enable opportunity cron fields
+  $('[name="cron_name_opportunity"]').removeAttr("readonly");
+  $('[name="proxy_provider_opportunity"]').removeAttr("disabled");
+  $('[name="offset_opportunity"]').removeAttr("readonly");
+  $('[name="cron_time_opportunity"]').removeAttr("readonly");
+  $('[name="cron_time_unit_opportunity"]').removeAttr("disabled");
+  $('[name^="proxy_provider_opportunity_alternate_"]').removeAttr("disabled");
+
   var fixedIpControls = $("input[name*='fixed_ip_']");
   for (var i = 0; i < fixedIpControls.length; i++) {
     fixedIpControls[i].removeAttribute("readonly");
@@ -463,6 +471,58 @@ function start422Cron(cronName) {
   }
 }
 
+function stopOpportunityCron(cronName) {
+  if (confirm(`Are you sure you want to stop the opportunity cron?`)) {
+    $.ajax({
+      type: "POST",
+      url: "/cronSettings/toggle_cron_status",
+      data: { CronName: cronName, Action: false },
+      dataType: "json",
+      cache: false,
+      beforeSend: function () {
+        showLoadingToast("Please Wait");
+      },
+      success: function (data) {
+        showSuccessToast(data.message);
+        location.reload();
+      },
+      error: function () {
+        showErrorToast("Something went wrong. Please try again");
+      },
+    });
+  } else {
+    location.reload();
+  }
+}
+
+function startOpportunityCron(cronName) {
+  if (confirm(`Are you sure you want to start the opportunity cron?`)) {
+    $.ajax({
+      type: "POST",
+      url: "/cronSettings/toggle_cron_status",
+      data: { CronName: cronName, Action: true },
+      dataType: "json",
+      cache: false,
+      beforeSend: function () {
+        showLoadingToast("Please Wait");
+      },
+      success: function (data) {
+        showSuccessToast(data.message);
+        location.reload();
+      },
+      error: function () {
+        showErrorToast("Something went wrong. Please try again");
+      },
+    });
+  } else {
+    location.reload();
+  }
+}
+
+function showOpportunityDetails(type) {
+  window.location.href = "/cronSettings/show_details/" + type;
+}
+
 function updateIpView(control, cronId) {
   const controlName = "[name=ip_type_" + cronId + "]";
   var proxyProviderValue = parseInt(control.value);
@@ -741,6 +801,14 @@ function showCacheValue() {
 
 function show422Error(param) {
   window.open(`/cronSettings/show_details/${param}`, "_blank");
+}
+
+function showOpportunityError(param) {
+  window.open(`/cronSettings/show_opportunity_details/${param}`, "_blank");
+}
+
+function exportOpportunityDetails(param) {
+  window.open(`/cronSettings/export_opportunity_view/${param}`, "_blank");
 }
 
 function searchDetails() {

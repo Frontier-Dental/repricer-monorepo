@@ -84,6 +84,7 @@ export enum CacheKey {
   PROXY_SWITCH_CURRENT_CRON_ID = "",
   PROXY_SWITCH_CURRENT_PROXY_PRIORITY = "",
   _422_RUNNING_CACHE = "422_RUNNING_CACHE",
+  OPPORTUNITY_RUNNING_CACHE = "OPPORTUNITY_RUNNING_CACHE",
   SMART_PROXY_WEB_COUNTER_CACHE = "SMART_PROXY_WEB_COUNTER_CACHE",
   SCRAPING_BEE_NON_JS_COUNTER_CACHE = "SCRAPING_BEE_NON_JS_COUNTER_CACHE",
   SCRAPING_BEE_JS_COUNTER_CACHE = "SCRAPING_BEE_JS_COUNTER_CACHE",
@@ -111,23 +112,7 @@ export class CronSettingsDto {
   CreatedTime?: Date;
   UpdatedTime?: Date;
 
-  constructor(
-    CronId: string,
-    CronName: string,
-    CronTimeUnit: "sec" | "min" | "hour" | "day",
-    CronTime: number,
-    ProxyProvider: number,
-    IpType?: number | null,
-    Offset?: number,
-    FixedIp?: string | null,
-    SwitchSequence?: number | null,
-    IsHidden: boolean = false,
-    CronType: string = "DEFAULT",
-    CronStatus: boolean = true,
-    UpdatedBy?: string | null,
-    CreatedTime?: Date,
-    UpdatedTime?: Date,
-  ) {
+  constructor(CronId: string, CronName: string, CronTimeUnit: "sec" | "min" | "hour" | "day", CronTime: number, ProxyProvider: number, IpType?: number | null, Offset?: number, FixedIp?: string | null, SwitchSequence?: number | null, IsHidden: boolean = false, CronType: string = "DEFAULT", CronStatus: boolean = true, UpdatedBy?: string | null, CreatedTime?: Date, UpdatedTime?: Date) {
     this.CronId = CronId;
     this.CronName = CronName;
     this.CronTimeUnit = CronTimeUnit;
@@ -152,12 +137,7 @@ export class SecretKeyDto {
   VendorName: string;
   SecretKey: string;
 
-  constructor(
-    CronId: string,
-    VendorName: string,
-    SecretKey: string,
-    Id?: number,
-  ) {
+  constructor(CronId: string, VendorName: string, SecretKey: string, Id?: number) {
     this.Id = Id;
     this.CronId = CronId;
     this.VendorName = VendorName;
@@ -171,12 +151,7 @@ export class AlternateProxyProviderDto {
   Sequence: number;
   ProxyProvider: number;
 
-  constructor(
-    CronId: string,
-    Sequence: number,
-    ProxyProvider: number,
-    Id?: number,
-  ) {
+  constructor(CronId: string, Sequence: number, ProxyProvider: number, Id?: number) {
     this.Id = Id;
     this.CronId = CronId;
     this.Sequence = Sequence;

@@ -136,6 +136,10 @@
     "cronVariable": "_Error422Cron"
   },
   {
+    "cronId": "Cron-Opportunity",
+    "cronVariable": "Cron-Opportunity"
+  },
+  {
     "cronId": "b597ffd1ce4d463088ce12a6f05b55d6",
     "cronVariable": "_SCG1Cron"
   },

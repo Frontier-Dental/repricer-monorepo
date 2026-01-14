@@ -170,6 +170,30 @@ export async function UpsertErrorItemLog(payload: any) {
   }
 }
 
+export async function UpsertOpportunityItemLog(payload: any) {
+  const dbo = await getMongoDb();
+  const existingItem = await dbo.collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION).findOne({
+    $and: [{ mpId: payload.mpId }, { vendorName: payload.vendorName }],
+  });
+  if (existingItem) {
+    return dbo.collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION).findOneAndUpdate(
+      {
+        $and: [{ mpId: payload.mpId }, { vendorName: payload.vendorName }],
+      },
+      {
+        $set: {
+          nextCronTime: payload.nextCronTime,
+          active: payload.active,
+          updatedOn: new Date(),
+          insertReason: payload.insertReason,
+        },
+      }
+    );
+  } else {
+    return dbo.collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION).insertOne(payload);
+  }
+}
+
 export async function FindErrorItemByIdAndStatus(_mpId: any, _status: any, _vendor: any) {
   const dbo = await getMongoDb();
   const query = {
@@ -329,4 +353,47 @@ export const GetContextErrorItems = async (_activeStatus: any): Promise<any> => 
   const dbo = await getMongoDb();
   console.log(`DB_HELPER: Fetching GetContextErrorItems with active status: ${_activeStatus} || Query: ${JSON.stringify(query)}`);
   return dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).find(query).toArray();
+};
+
+export const GetContextOpportunityItems = async (_activeStatus: any): Promise<any> => {
+  const query = {
+    nextCronTime: {
+      $lte: new Date(),
+    },
+    active: _activeStatus,
+  };
+  const dbo = await getMongoDb();
+  return dbo.collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION).find(query).toArray();
+};
+
+export async function GetEligibleContextOpportunityItems(_activeStatus: any, _mpId: any, _contextVendor: any): Promise<any[]> {
+  const query = {
+    $and: [
+      {
+        active: _activeStatus,
+      },
+      {
+        mpId: parseInt(_mpId),
+      },
+      {
+        vendorName: {
+          $ne: _contextVendor,
+        },
+      },
+    ],
+  };
+  const dbo = await getMongoDb();
+  return dbo.collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION).find(query).toArray();
+}
+
+export const UpdateCronSettings = async (cronId: string): Promise<any> => {
+  const dbo = await getMongoDb();
+  return dbo.collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME).findOneAndUpdate(
+    { CronId: cronId },
+    {
+      $set: {
+        UpdatedTime: new Date(),
+      },
+    }
+  );
 };

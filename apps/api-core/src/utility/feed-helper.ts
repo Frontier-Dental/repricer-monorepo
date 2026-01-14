@@ -18,35 +18,31 @@ export async function FilterEligibleProducts(productItemList: any[], cronId: num
   if (productItemList.length === 0) {
     throw new Error("No products found");
   }
-  const active422CronItems = await getActive422CronItems();
+  const [active422CronItems, activeOpportunityCronItems] = await Promise.all([getActive422CronItems(), getActiveOpportunityCronItems()]);
   for (let prod of productItemList) {
     //Tradent
     if (prod.tradentDetails) {
-      prod.tradentDetails.skipReprice = getSkipReprice(prod.tradentDetails, VendorName.TRADENT, cronId, isSlowCron, active422CronItems);
+      prod.tradentDetails.skipReprice = getSkipReprice(prod.tradentDetails, VendorName.TRADENT, cronId, isSlowCron, active422CronItems, activeOpportunityCronItems);
     }
     //Frontier
     if (prod.frontierDetails) {
-      prod.frontierDetails.skipReprice = getSkipReprice(prod.frontierDetails, VendorName.FRONTIER, cronId, isSlowCron, active422CronItems);
+      prod.frontierDetails.skipReprice = getSkipReprice(prod.frontierDetails, VendorName.FRONTIER, cronId, isSlowCron, active422CronItems, activeOpportunityCronItems);
     }
     //MVP
     if (prod.mvpDetails) {
-      prod.mvpDetails.skipReprice = getSkipReprice(prod.mvpDetails, VendorName.MVP, cronId, isSlowCron, active422CronItems);
+      prod.mvpDetails.skipReprice = getSkipReprice(prod.mvpDetails, VendorName.MVP, cronId, isSlowCron, active422CronItems, activeOpportunityCronItems);
     }
     //TOPDENT
     if (prod.topDentDetails) {
-      prod.topDentDetails.skipReprice = getSkipReprice(prod.topDentDetails, VendorName.TOPDENT, cronId, isSlowCron, active422CronItems);
+      prod.topDentDetails.skipReprice = getSkipReprice(prod.topDentDetails, VendorName.TOPDENT, cronId, isSlowCron, active422CronItems, activeOpportunityCronItems);
     }
     //FIRSTDENT
     if (prod.firstDentDetails) {
-      prod.firstDentDetails.skipReprice = getSkipReprice(prod.firstDentDetails, VendorName.FIRSTDENT, cronId, isSlowCron, active422CronItems);
+      prod.firstDentDetails.skipReprice = getSkipReprice(prod.firstDentDetails, VendorName.FIRSTDENT, cronId, isSlowCron, active422CronItems, activeOpportunityCronItems);
     }
     //TRIAD
     if (prod.triadDetails) {
-      prod.triadDetails.skipReprice = getSkipReprice(prod.triadDetails, VendorName.TRIAD, cronId, isSlowCron, active422CronItems);
-    }
-    //BITESUPPLY
-    if (prod.biteSupplyDetails) {
-      prod.biteSupplyDetails.skipReprice = getSkipReprice(prod.biteSupplyDetails, VendorName.BITESUPPLY, cronId, isSlowCron, active422CronItems);
+      prod.triadDetails.skipReprice = getSkipReprice(prod.triadDetails, VendorName.TRIAD, cronId, isSlowCron, active422CronItems, activeOpportunityCronItems);
     }
   }
   return productItemList;
@@ -91,10 +87,25 @@ async function getActive422CronItems(): Promise<ErrorItem[]> {
   return result as ErrorItem[];
 }
 
-function getSkipReprice(prod: any, vendor: string, cronId: number, isSlowCron: boolean = false, active422CronItems: ErrorItem[]) {
+async function getActiveOpportunityCronItems(): Promise<ErrorItem[]> {
+  const dbo = await getMongoDb();
+  const result = await dbo
+    .collection(applicationConfig.OPPORTUNITY_ITEM_COLLECTION)
+    .find({
+      active: true,
+    })
+    .toArray();
+  return result as ErrorItem[];
+}
+
+function getSkipReprice(prod: any, vendor: string, cronId: number, isSlowCron: boolean = false, active422CronItems: ErrorItem[], activeOpportunityCronItems: ErrorItem[]) {
   if ((isSlowCron == false && prod.cronId == cronId) || (isSlowCron == true && prod.slowCronId == cronId)) {
     const isErrorItem = active422CronItems.find((item) => item.mpId === prod.mpid && item.vendorName === vendor);
     if (isErrorItem) {
+      return true;
+    }
+    const isOpportunityItem = activeOpportunityCronItems.find((item) => item.mpId === prod.mpid && item.vendorName === vendor);
+    if (isOpportunityItem) {
       return true;
     }
     if (!prod.last_cron_time || prod.last_cron_time == null || applicationConfig.IS_DEBUG) {

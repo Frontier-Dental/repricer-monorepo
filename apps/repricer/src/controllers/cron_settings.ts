@@ -10,6 +10,53 @@ import moment from "moment";
 import excelJs from "exceljs";
 import { GetConfigurations, GetCronSettingsList, UpdateCronSettingsList, ToggleCronStatus } from "../services/mysql-v2";
 
+const ALTERNATE_PROXY_PROVIDER_422_INDEX = 999;
+const ALTERNATE_PROXY_PROVIDER_OPPORTUNITY_INDEX = 998;
+
+async function buildCustomCronSettings(cronDetails: any, configItems: any[], productCountFn: () => Promise<number>, priceUpdateCountFn: () => Promise<number>, eligibleCountFn: () => Promise<number>) {
+  if (!cronDetails) {
+    return null;
+  }
+
+  const customSettings: any = {};
+  customSettings.CronId = cronDetails.CronId;
+  customSettings.CronName = cronDetails.CronName;
+  customSettings.IsActive = cronDetails.CronStatus;
+  customSettings.ProxyProvider = cronDetails.ProxyProvider ? cronDetails.ProxyProvider : 0;
+  customSettings.IpType = cronDetails.IpType ? cronDetails.IpType : 0;
+  customSettings.FixedIp = cronDetails.FixedIp;
+  customSettings.Offset = cronDetails.Offset;
+  customSettings.CronTime = cronDetails.CronTime;
+  customSettings.CronTimeUnit = cronDetails.CronTimeUnit;
+
+  customSettings.NoOfOpportunityProducts = await productCountFn();
+  customSettings.NoOfPriceUpdateProducts = await priceUpdateCountFn();
+  customSettings.EligibleProductsCount = await eligibleCountFn();
+
+  customSettings.lastUpdatedBy = await SessionHelper.GetAuditValue(cronDetails, "U_NAME");
+  customSettings.lastUpdatedOn = await SessionHelper.GetAuditValue(cronDetails, "U_TIME");
+
+  customSettings.ProxyProvider_1 = await MapperHelper.GetAlternateProxyProviderId(cronDetails, 1);
+  customSettings.ProxyProvider_2 = await MapperHelper.GetAlternateProxyProviderId(cronDetails, 2);
+  customSettings.ProxyProvider_3 = await MapperHelper.GetAlternateProxyProviderId(cronDetails, 3);
+  customSettings.ProxyProvider_4 = await MapperHelper.GetAlternateProxyProviderId(cronDetails, 4);
+  customSettings.ProxyProvider_5 = await MapperHelper.GetAlternateProxyProviderId(cronDetails, 5);
+  customSettings.ProxyProvider_6 = await MapperHelper.GetAlternateProxyProviderId(cronDetails, 6);
+
+  customSettings.ProxyProvider_1_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, customSettings.ProxyProvider_1);
+  customSettings.ProxyProvider_2_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, customSettings.ProxyProvider_2);
+  customSettings.ProxyProvider_3_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, customSettings.ProxyProvider_3);
+  customSettings.ProxyProvider_4_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, customSettings.ProxyProvider_4);
+  customSettings.ProxyProvider_5_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, customSettings.ProxyProvider_5);
+  customSettings.ProxyProvider_6_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, customSettings.ProxyProvider_6);
+  customSettings.ProxyProvider_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, cronDetails.ProxyProvider);
+
+  customSettings.ThresholdReached = false;
+  customSettings.CloseToThresholdReached = false;
+
+  return customSettings;
+}
+
 export async function getCronSettings(req: Request, res: Response) {
   const cronSettingsResult = await GetCronSettingsList();
   let configItems = await GetConfigurations(true);
@@ -36,7 +83,11 @@ export async function getCronSettings(req: Request, res: Response) {
     setting.ThresholdReached = false; //await MapperHelper.GetIsStepReached(setting, setting.AlternateProxyProvider.length-1);
     setting.CloseToThresholdReached = false; //await MapperHelper.GetIsStepReached(setting, setting.AlternateProxyProvider.length - 2);
   }
-  const hiddenCronDetails = cronSettingsResult.find((x: any) => x.IsHidden == true);
+  const hiddenCronDetails = cronSettingsResult.find((x: any) => x.IsHidden == true && x.CronId === "DUMMY-422-Error");
+  const opportunityCronDetails = cronSettingsResult.find((x: any) => x.IsHidden == true && x.CronId === "Cron-Opportunity");
+
+  console.log("cronSettingsResult", cronSettingsResult);
+
   cronSettingsResponse.custom = {};
   cronSettingsResponse.custom.CronId = hiddenCronDetails?.CronId;
   cronSettingsResponse.custom.CronName = hiddenCronDetails?.CronName;
@@ -68,12 +119,44 @@ export async function getCronSettings(req: Request, res: Response) {
   cronSettingsResponse.custom.ThresholdReached = false; //await MapperHelper.GetIsStepReached(hiddenCronDetails, hiddenCronDetails.AlternateProxyProvider.length-1);
   cronSettingsResponse.custom.CloseToThresholdReached = false; // await MapperHelper.GetIsStepReached(hiddenCronDetails, hiddenCronDetails.AlternateProxyProvider.length - 2);
 
+  cronSettingsResponse.customOpportunity = await buildCustomCronSettings(
+    opportunityCronDetails,
+    configItems,
+    async () => await mongoMiddleware.GetOpportunityProductCount(),
+    async () => await mongoMiddleware.GetOpportunityPriceUpdateCount(),
+    async () => await mongoMiddleware.GetOpportunityEligibleCount()
+  );
+
+  // console.log("cronSettingsResponse", cronSettingsResponse);
+
   res.render("pages/settings/settingsList", {
     configItems: configItems,
     settings: cronSettingsResponse,
     groupName: "settings",
     userRole: (req as any).session?.users_id?.userRole,
   });
+}
+
+async function handleOpportunityCronUpdate(cronSettingsResponseFull: any[], payload: any, listOfUpdates: any[], listOfUpdatedCronKey: any[]) {
+  const cronOpportunity = cronSettingsResponseFull.find((x: any) => x.IsHidden == true && x.CronId === "Cron-Opportunity");
+
+  if (!cronOpportunity) {
+    return;
+  }
+
+  const alternateProxyProviderDetailsForOpportunity = await MapperHelper.MapAlternateProxyProviderDetails(ALTERNATE_PROXY_PROVIDER_OPPORTUNITY_INDEX, payload);
+
+  if (cronOpportunity?.ProxyProvider != payload.proxy_provider_opportunity || cronOpportunity?.FixedIp != payload[`fixed_ip_${cronOpportunity?.CronId}`] || cronOpportunity?.IpType != payload[`ip_type_${cronOpportunity?.CronId}`] || cronOpportunity?.CronTime != payload.cron_time_opportunity || cronOpportunity?.CronTimeUnit != payload.cron_time_unit_opportunity || cronOpportunity?.Offset != payload.offset_opportunity || !_.isEqual(alternateProxyProviderDetailsForOpportunity, cronOpportunity?.AlternateProxyProvider)) {
+    const cronSettingOpportunityPayload = new cronSettings(cronOpportunity?.CronId, cronOpportunity?.CronName, payload.cron_time_unit_opportunity, payload.cron_time_opportunity, null as any, cronOpportunity?.CronStatus, payload.offset_opportunity, payload.proxy_provider_opportunity, payload[`ip_type_${cronOpportunity?.CronId}`], payload[`fixed_ip_${cronOpportunity?.CronId}`], alternateProxyProviderDetailsForOpportunity);
+    listOfUpdates.push(cronSettingOpportunityPayload);
+
+    if (cronOpportunity?.CronTime != payload.cron_time_opportunity || cronOpportunity?.Offset != payload.offset_opportunity || cronOpportunity?.CronTimeUnit != payload.cron_time_unit_opportunity) {
+      const cronMappingEntry = cronMapping.find((c) => c.cronId == cronSettingOpportunityPayload.CronId);
+      if (cronMappingEntry) {
+        listOfUpdatedCronKey.push(cronMappingEntry.cronVariable);
+      }
+    }
+  }
 }
 
 export async function updateCronSettings(req: Request, res: Response) {
@@ -101,7 +184,7 @@ export async function updateCronSettings(req: Request, res: Response) {
 
   // Get 422 Cron Updates
   const cron422 = cronSettingsResponseFull.find((x: any) => x.IsHidden == true);
-  const alternateProxyProviderDetailsFor422 = await MapperHelper.MapAlternateProxyProviderDetails(999, payload); //999 in 1st param means it is for 422
+  const alternateProxyProviderDetailsFor422 = await MapperHelper.MapAlternateProxyProviderDetails(ALTERNATE_PROXY_PROVIDER_422_INDEX, payload);
   if (cron422?.ProxyProvider != payload.proxy_provider_422 || cron422?.FixedIp != payload[`fixed_ip_${cron422?.CronId}`] || cron422?.IpType != payload[`ip_type_${cron422?.CronId}`] || cron422?.CronTime != payload.cron_time_422 || cron422?.CronTimeUnit != payload.cron_time_unit_422 || cron422?.Offset.toString() != payload.offset_422.toString() || !_.isEqual(JSON.stringify(alternateProxyProviderDetailsFor422), JSON.stringify(cron422?.AlternateProxyProvider))) {
     const cronSetting422Payload = new cronSettings(cron422?.CronId, cron422?.CronName, payload.cron_time_unit_422, payload.cron_time_422, null as any, cron422?.CronStatus, payload.offset_422, payload.proxy_provider_422, payload[`ip_type_${cron422?.CronId}`], payload[`fixed_ip_${cron422?.CronId}`], alternateProxyProviderDetailsFor422);
     listOfUpdates.push(cronSetting422Payload);
@@ -109,6 +192,10 @@ export async function updateCronSettings(req: Request, res: Response) {
       listOfUpdatedCronKey.push(cronMapping.find((c) => c.cronId == cronSetting422Payload.CronId)!.cronVariable);
     }
   }
+
+  // Handle Opportunity Cron Updates
+  await handleOpportunityCronUpdate(cronSettingsResponseFull, payload, listOfUpdates, listOfUpdatedCronKey);
+
   if (listOfUpdates.length > 0) {
     await UpdateCronSettingsList(listOfUpdates, req);
     if (listOfUpdatedCronKey.length > 0) {
@@ -202,6 +289,40 @@ export async function show_details(req: Request, res: Response) {
     }
   }
   res.render("pages/settings/detail_view", {
+    items: productList,
+    groupName: "settings",
+    userRole: (req as any).session.users_id.userRole,
+  });
+}
+
+export async function show_opportunity_details(req: Request, res: Response) {
+  const param = req.params.param.trim();
+  let productList = await mongoMiddleware.GetOpportunityProductDetailsByType(param);
+  (productList as any).paramData = param;
+  if (productList.length > 0) {
+    for (let prod of productList) {
+      prod.nextCronTime = prod.nextCronTime ? moment(prod.nextCronTime).format("DD-MM-YYYY HH:mm:ss") : null;
+      prod.updatedOn = prod.updatedOn ? moment(prod.updatedOn).format("DD-MM-YYYY HH:mm:ss") : null;
+    }
+  }
+  res.render("pages/settings/opportunity_detail_view", {
+    items: productList,
+    groupName: "settings",
+    userRole: (req as any).session.users_id.userRole,
+  });
+}
+
+export async function show_opportunity_details(req: Request, res: Response) {
+  const param = req.params.param.trim();
+  let productList = await mongoMiddleware.GetOpportunityProductDetailsByType(param);
+  (productList as any).paramData = param;
+  if (productList.length > 0) {
+    for (let prod of productList) {
+      prod.nextCronTime = prod.nextCronTime ? moment(prod.nextCronTime).format("DD-MM-YYYY HH:mm:ss") : null;
+      prod.updatedOn = prod.updatedOn ? moment(prod.updatedOn).format("DD-MM-YYYY HH:mm:ss") : null;
+    }
+  }
+  res.render("pages/settings/opportunity_detail_view", {
     items: productList,
     groupName: "settings",
     userRole: (req as any).session.users_id.userRole,

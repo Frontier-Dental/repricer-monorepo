@@ -147,12 +147,15 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
     type: "422Error",
   };
   const contextErrorDetails = await dbHelper.GetEligibleContextErrorItems(true, details.mpId, _contextVendor);
+
   const prioritySequence = await requestGenerator.GetPrioritySequence(details, contextErrorDetails, true);
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
   console.log(`EXPRESS_CRON : Repricing ${details.mpId} for ${_contextVendor} with sequence ${seqString} at ${new Date()}`);
   if (prioritySequence && prioritySequence.length > 0) {
     const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", details.mpId);
+
     var net32result = await axiosHelper.getAsync(searchRequest, "DUMMY-422-Error", seqString);
+
     let isPriceUpdatedForVendor = false;
     if (details.algo_execution_mode === AlgoExecutionMode.V2_ONLY || details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY || details.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY) {
       await repriceProductV2Wrapper(net32result.data, details, cronSetting ? cronSetting.CronName : "ExpressCron", false);
@@ -240,9 +243,17 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
                   console.log(`ERROR WHILE PRICE UPDATE : ${prod.mpid} - ${contextVendor}`);
                 }
               } else {
+                // No price update needed - remove from 422 cron and add to opportunity cron
                 prod.next_cron_time = null;
                 const errorItem = new ErrorItemModel(prod.mpid, null, false, prod.cronId, `IGNORE`, contextVendor);
                 await dbHelper.UpsertErrorItemLog(errorItem);
+
+                // Add to opportunity cron for future monitoring (OPPORTUNITY_DELAY_MINUTES from now)
+                const opportunityNextCronTime = new Date(Date.now() + 5 * 60 * 1000);
+                const opportunityItem = new ErrorItemModel(prod.mpid, opportunityNextCronTime, true, prod.cronId, "NO_REPRICE_NEEDED", contextVendor);
+                await dbHelper.UpsertOpportunityItemLog(opportunityItem);
+                console.log(`${prod.mpid} - ${contextVendor} added to Opportunity Cron (no reprice needed in 422 cron) - next run: ${opportunityNextCronTime.toISOString()}`);
+
                 cronLogs.logs.push([
                   {
                     productId: prod.mpid,
