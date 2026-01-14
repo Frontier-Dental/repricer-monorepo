@@ -139,7 +139,7 @@ INSERT INTO
     GetBBShipping,
     GetBBBadgeValue,
     GetBBShippingValue,
-    QBreakDetailsBreakCount,
+    QBreakCount,
     QBreakDetails
   )
 values
