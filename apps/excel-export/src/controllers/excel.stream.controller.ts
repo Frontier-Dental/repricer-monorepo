@@ -105,8 +105,6 @@ export async function streamProductDetails(req: Request, res: Response) {
     { header: "Last Updated By", key: "lastUpdatedByUser", width: 20 },
     { header: "Last Updated On", key: "lastUpdatedOn", width: 20 },
     { header: "Apply Buy Box", key: "applyBuyBoxLogic", width: 20 },
-    { header: "Qbreak Count", key: "qBreakCount", width: 20 },
-    { header: "Qbreak Details", key: "qBreakDetails", width: 50 },
     { header: "Apply NC For Buy Box", key: "applyNcForBuyBox", width: 20 },
     { header: "IsBadgeItem", key: "isBadgeItem", width: 20 },
     { header: "Handling Time Group", key: "handling_time_filter", width: 20 },
@@ -128,6 +126,8 @@ export async function streamProductDetails(req: Request, res: Response) {
     { header: "Get BB - Shipping Value", key: "getBBShippingValue", width: 20 },
     { header: "Get BB - Badge", key: "getBBBadge", width: 20 },
     { header: "Get BB - Badge Value", key: "getBBBadgeValue", width: 20 },
+    { header: "Qbreak Count", key: "qBreakCount", width: 20 },
+    { header: "Qbreak Details", key: "qBreakDetails", width: 50 },
   ];
 
   worksheet.autoFilter = "A1:BK1";
