@@ -72,6 +72,8 @@ interface SqlEntity {
   CurrentInventory?: number | null;
   OurLastPrice?: number | null;
   MarketStateUpdatedAt?: Date | string | null;
+  QBreakCount?: number;
+  QBreakDetails?: string;
 }
 
 export class OwnVendorProductDetails {
@@ -153,6 +155,8 @@ export class OwnVendorProductDetails {
   currentInventory: number | null;
   ourLastPrice: number | null;
   marketStateUpdatedAt: Date | string | null;
+  qBreakCount: number;
+  qBreakDetails: string;
 
   constructor(sqlEntity: SqlEntity, _algo_execution_mode: string) {
     this.channelName = sqlEntity["ChannelName"] || "";
@@ -232,6 +236,8 @@ export class OwnVendorProductDetails {
     this.currentInventory = sqlEntity["CurrentInventory"] ?? null;
     this.ourLastPrice = sqlEntity["OurLastPrice"] ?? null;
     this.marketStateUpdatedAt = sqlEntity["MarketStateUpdatedAt"] ?? null;
+    this.qBreakCount = sqlEntity["QBreakCount"] || 0;
+    this.qBreakDetails = sqlEntity["QBreakDetails"] || "";
   }
 }
 
