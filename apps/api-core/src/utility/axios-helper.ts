@@ -26,7 +26,7 @@ export async function postAsync(payload: any, _url: string) {
   return axios(config);
 }
 
-export async function getAsync(_url: string, cronId: any, seqString?: string | null) {
+export async function getAsync(_url: string, cronId: any, mpid: string, seqString?: string | null) {
   let responseData = null;
   let cronDetails = await sqlV2Service.GetCronSettingsList();
   const slowCronDetails = await sqlV2Service.GetSlowCronDetails();
@@ -72,6 +72,9 @@ export async function getAsync(_url: string, cronId: any, seqString?: string | n
       }
       break;
   }
+
+  //update qbreak details
+  await sqlV2Service.UpdateQBreakDetails(mpid, responseData.data);
   return responseData;
 }
 

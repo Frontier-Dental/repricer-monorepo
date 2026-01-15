@@ -69,7 +69,7 @@ debugController.get("/debug/fetch-data/:key/:cronId", async (req: Request, res: 
   const cronId = req.params.cronId;
   const url = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", mpid);
   console.log(`Calling debug/fetch-data for MPID : ${mpid} || URL : ${url}`);
-  var axiosResponse = await axiosHelper.getAsync(url, cronId, null);
+  var axiosResponse = await axiosHelper.getAsync(url, cronId, mpid, null);
   res.status(_codes.StatusCodes.OK).send(axiosResponse.data);
 });
 
@@ -141,7 +141,7 @@ debugController.get("/debug/filterProductsWithFloor/:cronId", async (req: Reques
   if (listOfActiveProducts && listOfActiveProducts.length > 0) {
     for (const prod of listOfActiveProducts) {
       const url = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", prod.mpId);
-      const net32Resp = await axiosHelper.getAsync(url, cronId, counter as unknown as string);
+      const net32Resp = await axiosHelper.getAsync(url, cronId, prod.mpId, counter as unknown as string);
       if (net32Resp && net32Resp.data && net32Resp.data.length > 0) {
         const tradentOption = net32Resp.data.find((x: any) => x.vendorId == 17357);
         const frontierOption = net32Resp.data.find((x: any) => x.vendorId == 20722);
