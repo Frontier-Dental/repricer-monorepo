@@ -78,7 +78,7 @@ function getVendorConfigs(): VendorConfig[] {
     },
     {
       tableName: "table_biteSupplyDetails",
-      vendorId: 10,
+      vendorId: 99995,
       vendorName: "BiteSupply",
     },
   ];

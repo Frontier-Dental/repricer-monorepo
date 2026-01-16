@@ -69,7 +69,7 @@
     "subscription_key": "SUBSCRIPTION_KEY_NET32",
     "ip": "159.89.43.166",
     "port": 8888,
-    "vendor_id": 10
+    "vendor_id": 99995
   }
 ]
 ```

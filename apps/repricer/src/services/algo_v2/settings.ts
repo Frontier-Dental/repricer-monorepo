@@ -154,7 +154,7 @@ export async function syncVendorSettingsForMpId(mpId: number): Promise<SyncResul
     },
     {
       tableName: "table_biteSupplyDetails",
-      vendorId: 10,
+      vendorId: 99995,
       vendorName: "BiteSupply",
     },
   ];
@@ -532,7 +532,7 @@ const VENDOR_CONFIGS = [
   },
   {
     tableName: "table_biteSupplyDetails",
-    vendorId: 10,
+    vendorId: 99995,
     vendorName: "BiteSupply",
   },
 ];

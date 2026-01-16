@@ -39,41 +39,41 @@ export function SetGlobalDetails(productItem: FrontierProduct, contextVendor: st
     case VendorName.TRADENT:
       updatedProductItem.ownVendorId = "17357";
       if (!updatedProductItem.sisterVendorId) {
-        updatedProductItem.sisterVendorId = "20722;20755;20533;20727;5;10";
+        updatedProductItem.sisterVendorId = "20722;20755;20533;20727;5;99995";
       }
       break;
     case VendorName.FRONTIER:
       updatedProductItem.ownVendorId = "20722";
       if (!updatedProductItem.sisterVendorId) {
-        updatedProductItem.sisterVendorId = "17357;20755;20533;20727;5;10";
+        updatedProductItem.sisterVendorId = "17357;20755;20533;20727;5;99995";
       }
       break;
     case VendorName.MVP:
       updatedProductItem.ownVendorId = "20755";
       if (!updatedProductItem.sisterVendorId) {
-        updatedProductItem.sisterVendorId = "17357;20722;20533;20727;5;10";
+        updatedProductItem.sisterVendorId = "17357;20722;20533;20727;5;99995";
       }
       break;
     case VendorName.TOPDENT:
       updatedProductItem.ownVendorId = "20727";
       if (!updatedProductItem.sisterVendorId) {
-        updatedProductItem.sisterVendorId = "17357;20722;20533;20755;5;10";
+        updatedProductItem.sisterVendorId = "17357;20722;20533;20755;5;99995";
       }
       break;
     case VendorName.FIRSTDENT:
       updatedProductItem.ownVendorId = "20533";
       if (!updatedProductItem.sisterVendorId) {
-        updatedProductItem.sisterVendorId = "17357;20722;20755;20727;5;10";
+        updatedProductItem.sisterVendorId = "17357;20722;20755;20727;5;99995";
       }
       break;
     case VendorName.TRIAD:
       updatedProductItem.ownVendorId = "5";
       if (!updatedProductItem.sisterVendorId) {
-        updatedProductItem.sisterVendorId = "17357;20722;20755;20727;20533;10";
+        updatedProductItem.sisterVendorId = "17357;20722;20755;20727;20533;99995";
       }
       break;
     case VendorName.BITESUPPLY:
-      updatedProductItem.ownVendorId = "10";
+      updatedProductItem.ownVendorId = "99995";
       if (!updatedProductItem.sisterVendorId) {
         updatedProductItem.sisterVendorId = "17357;20722;20755;20727;20533;5";
       }

@@ -126,7 +126,7 @@ function filterEligibleList(eligibleList: Net32Product[], _minQty: number) {
 
 function getOwnVendorId(vendorName: string) {
   switch (
-    vendorName.toUpperCase() //17357;20722;20755;20533;20727
+    vendorName.toUpperCase() //17357;20722;20755;20533;20727;5;99995
   ) {
     case VendorName.TRADENT:
       return "17357";
@@ -141,7 +141,7 @@ function getOwnVendorId(vendorName: string) {
     case VendorName.TRIAD:
       return "5";
     case VendorName.BITESUPPLY:
-      return "10";
+      return "99995";
     default:
       throw new Error(`Unknown vendor name: ${vendorName}`);
   }

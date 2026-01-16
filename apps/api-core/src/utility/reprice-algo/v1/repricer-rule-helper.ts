@@ -208,7 +208,7 @@ export function ApplyDeactivateQPriceBreakRule(repriceResult: RepriceModel, abor
 
 export function ApplyBuyBoxRule(repriceResult: RepriceModel, net32Result: Net32Product[]) {
   let $eval = _.cloneDeep(repriceResult);
-  const contextVendorIds = ["17357", "20722", "20755", "20533", "20727", "5"];
+  const contextVendorIds = ["17357", "20722", "20755", "20533", "20727", "5", "99995"];
   if ($eval.listOfRepriceDetails && $eval.listOfRepriceDetails.length > 0) {
     $eval.listOfRepriceDetails.forEach(($) => {
       if ($.oldPrice != 0 && $.newPrice != "N/A" && parseFloat($.newPrice as unknown as string) < parseFloat($.oldPrice as unknown as string)) {

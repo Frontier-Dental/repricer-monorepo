@@ -122,7 +122,7 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
                   case "5":
                     vendorName = "TRIAD";
                     break;
-                  case "10":
+                  case "99995":
                     vendorName = "BITESUPPLY";
                     break;
                 }
@@ -241,7 +241,7 @@ async function GetHistoryModel(vendorDetails: any, apiResponse: any, apiResponse
 function getOwnVendorId(vendorName: string): string | null {
   let vendorId = null;
   switch (
-    vendorName.toUpperCase() //17357;20722;20755;20533;20727
+    vendorName.toUpperCase() //17357;20722;20755;20533;20727;5;99995
   ) {
     case "TRADENT":
       vendorId = "17357";
@@ -262,7 +262,7 @@ function getOwnVendorId(vendorName: string): string | null {
       vendorId = "5";
       break;
     case "BITESUPPLY":
-      vendorId = "10";
+      vendorId = "99995";
       break;
     default:
       break;

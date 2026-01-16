@@ -42,7 +42,7 @@ export const apiMapping = [
     vendor: "TRIAD",
   },
   {
-    vendorId: "10",
+    vendorId: "99995",
     apiUrl: "http://157.230.58.34:3000/help/ProductDetails/{mpid}",
     activeListUrl: "http://157.230.58.34:3000/masteritem/get_all_active_products",
     priceUpdateUrl: "http://134.199.204.223:3000/dashboard/updatePriceAsync",
