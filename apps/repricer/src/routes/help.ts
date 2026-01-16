@@ -3,11 +3,12 @@ import rateLimit from "express-rate-limit";
 import * as helpController from "../controllers/help";
 import { authMiddleware } from "../middleware/auth-middleware";
 import AuthToken from "../middleware/auth-token";
+import { applicationConfig } from "../utility/config";
 
 export const helpRouter = express.Router();
 
 const myRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: Number(applicationConfig.RATE_LIMIT_WINDOW_MS) * 60 * 1000,
   max: 5, // limit each IP to 5 requests per windowMs
   message: {
     status: "ERROR",
