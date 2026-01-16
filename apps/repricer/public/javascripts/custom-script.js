@@ -609,6 +609,7 @@ function saveEnvConfigurations() {
   const topDentPriority = $("#ddl_exec_priority_top").val();
   const firstDentPriority = $("#ddl_exec_priority_fir").val();
   const triadPriority = $("#ddl_exec_priority_tri").val();
+  const biteSupplyPriority = $("#ddl_exec_priority_biteSupply").val();
   const expressCronOverlapThreshold = $("#txtOverlapThreshold").val();
   const expressCronBatchSize = $("#txtCronBatchSize").val();
   const expressCronInstanceLimit = $("#txtExpressInstanceCount").val();
@@ -623,6 +624,7 @@ function saveEnvConfigurations() {
       firstDent_priority: firstDentPriority,
       topDent_priority: topDentPriority,
       triad_priority: triadPriority,
+      biteSupply_priority: biteSupplyPriority,
     },
   };
   if (
@@ -951,8 +953,8 @@ function saveBranches(mpid) {
   const topDentDetails = collectDetails("topDent");
   const firstDentDetails = collectDetails("firstDent");
   const triadDetails = collectDetails("triad");
-
-  // console.log('Tradent Details:', tradentDetails);
+  const biteSupplyDetails = collectDetails("biteSupply");
+  // console.log('biteSupply Details:', biteSupplyDetails);
   // console.log('Frontier Details:', frontierDetails);
   // console.log('MVP Details:', mvpDetails);
 
@@ -965,6 +967,7 @@ function saveBranches(mpid) {
     ...{ topDentDetails },
     ...{ firstDentDetails },
     ...{ triadDetails },
+    ...{ biteSupplyDetails },
   };
 
   $.ajax({

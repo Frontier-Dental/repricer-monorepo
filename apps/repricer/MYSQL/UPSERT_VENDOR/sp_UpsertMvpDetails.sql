@@ -64,7 +64,9 @@ CREATE PROCEDURE sp_UpsertMvpDetails (
   IN bbBadge boolean,
   IN bbShipping boolean,
   IN getBBBadgeValue decimal(5, 3),
-  IN getBBShippingValue decimal(5, 3)
+  IN getBBShippingValue decimal(5, 3),
+  IN qBreakCount int,
+  IN qBreakDetails varchar(1024)
 ) BEGIN DECLARE EXIT
 HANDLER FOR SQLEXCEPTION BEGIN
 -- Rollback the transaction if an error occurs
@@ -136,7 +138,9 @@ INSERT INTO
     GetBBBadge,
     GetBBShipping,
     GetBBBadgeValue,
-    GetBBShippingValue
+    GetBBShippingValue,
+    QBreakCount,
+    QBreakDetails
   )
 values
   (
@@ -200,7 +204,9 @@ values
     bbBadge,
     bbShipping,
     getBBBadgeValue,
-    getBBShippingValue
+    getBBShippingValue,
+    qBreakCount,
+    qBreakDetails
   );
 
 SELECT

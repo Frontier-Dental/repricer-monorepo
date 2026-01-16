@@ -72,6 +72,8 @@ interface SqlEntity {
   CurrentInventory?: number | null;
   OurLastPrice?: number | null;
   MarketStateUpdatedAt?: Date | string | null;
+  QBreakCount?: number;
+  QBreakDetails?: string;
 }
 
 export class OwnVendorProductDetails {
@@ -153,6 +155,8 @@ export class OwnVendorProductDetails {
   currentInventory: number | null;
   ourLastPrice: number | null;
   marketStateUpdatedAt: Date | string | null;
+  qBreakCount: number;
+  qBreakDetails: string;
 
   constructor(sqlEntity: SqlEntity, _algo_execution_mode: string) {
     this.channelName = sqlEntity["ChannelName"] || "";
@@ -163,11 +167,9 @@ export class OwnVendorProductDetails {
     this.floorPrice = sqlEntity["FloorPrice"] || 0;
     this.maxPrice = sqlEntity["MaxPrice"] || 0;
     this.is_nc_needed = sqlEntity["IsNCNeeded"] == 1 ? true : false;
-    this.suppressPriceBreakForOne =
-      sqlEntity["SuppressPriceBreakForOne"] == 1 ? true : false;
+    this.suppressPriceBreakForOne = sqlEntity["SuppressPriceBreakForOne"] == 1 ? true : false;
     this.repricingRule = sqlEntity["RepricingRule"] || "";
-    this.suppressPriceBreak =
-      sqlEntity["SuppressPriceBreak"] == 1 ? true : false;
+    this.suppressPriceBreak = sqlEntity["SuppressPriceBreak"] == 1 ? true : false;
     this.beatQPrice = sqlEntity["BeatQPrice"] == 1 ? true : false;
     this.percentageIncrease = sqlEntity["PercentageIncrease"] || 0;
     this.compareWithQ1 = sqlEntity["CompareWithQ1"] == 1 ? true : false;
@@ -185,16 +187,13 @@ export class OwnVendorProductDetails {
     this.priority = sqlEntity["Priority"] || 0;
     this.wait_update_period = sqlEntity["WaitUpdatePeriod"] == 1 ? true : false;
     this.net32url = sqlEntity["Net32Url"] || "";
-    this.abortDeactivatingQPriceBreak =
-      sqlEntity["AbortDeactivatingQPriceBreak"] == 1 ? true : false;
+    this.abortDeactivatingQPriceBreak = sqlEntity["AbortDeactivatingQPriceBreak"] == 1 ? true : false;
     this.ownVendorId = null;
     this.sisterVendorId = sqlEntity["SisterVendorId"] || "";
     this.tags = [];
-    this.includeInactiveVendors =
-      sqlEntity["IncludeInactiveVendors"] == 1 ? true : false;
+    this.includeInactiveVendors = sqlEntity["IncludeInactiveVendors"] == 1 ? true : false;
     this.inactiveVendorId = sqlEntity["InactiveVendorId"] || "";
-    this.override_bulk_update =
-      sqlEntity["OverrideBulkUpdate"] == 1 ? true : false;
+    this.override_bulk_update = sqlEntity["OverrideBulkUpdate"] == 1 ? true : false;
     this.override_bulk_rule = sqlEntity["OverrideBulkRule"] || "";
     this.latest_price = sqlEntity["LatestPrice"] || 0;
     this.executionPriority = sqlEntity["ExecutionPriority"] || 0;
@@ -224,8 +223,7 @@ export class OwnVendorProductDetails {
     this.badgePercentageDown = sqlEntity["BadgePercentageDown"] || 0;
     this.competeWithNext = sqlEntity["CompeteWithNext"] == 1 ? true : false;
     this.triggeredByVendor = sqlEntity["TriggeredByVendor"] || "";
-    this.ignorePhantomQBreak =
-      sqlEntity["IgnorePhantomBreak"] == 1 ? true : false;
+    this.ignorePhantomQBreak = sqlEntity["IgnorePhantomBreak"] == 1 ? true : false;
     this.ownVendorThreshold = sqlEntity["OwnVendorThreshold"] || 0;
     this.getBBBadgeValue = sqlEntity["GetBBBadgeValue"] || 0;
     this.getBBShippingValue = sqlEntity["GetBBShippingValue"] || 0;
@@ -238,6 +236,8 @@ export class OwnVendorProductDetails {
     this.currentInventory = sqlEntity["CurrentInventory"] ?? null;
     this.ourLastPrice = sqlEntity["OurLastPrice"] ?? null;
     this.marketStateUpdatedAt = sqlEntity["MarketStateUpdatedAt"] ?? null;
+    this.qBreakCount = sqlEntity["QBreakCount"] || 0;
+    this.qBreakDetails = sqlEntity["QBreakDetails"] || "";
   }
 }
 

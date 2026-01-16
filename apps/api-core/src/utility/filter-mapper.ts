@@ -8,7 +8,7 @@ import { RepriceRenewedMessageEnum } from "../model/reprice-renewed-message";
 import { GetInfo } from "../model/global-param";
 import { RepriceModel } from "../model/reprice-model";
 import { FrontierProduct } from "../types/frontier";
-import { Net32PriceBreak, Net32Product } from "../types/net32";
+import { Net32Product } from "../types/net32";
 import { applicationConfig } from "./config";
 import Decimal from "decimal.js";
 
@@ -182,13 +182,13 @@ export async function FilterBasedOnParams(inputResult: Net32Product[], productIt
   return outputResult;
 }
 
-export async function GetContextPrice(nextLowestPrice: any, processOffset: any, floorPrice: any, percentageDown: any, minQty: any): Promise<any> {
+export async function GetContextPrice(nextLowestPrice: any, processOffset: any, floorPrice: any, percentageDown: any, minQty: any, heavyShippingPrice: number = 0): Promise<any> {
   let returnObj: any = {};
-  returnObj.Price = new Decimal(nextLowestPrice).minus(processOffset).toNumber(); // Math.trunc((nextLowestPrice - processOffset) * 100) / 100 ;
+  returnObj.Price = new Decimal(nextLowestPrice).minus(processOffset).toNumber();
   returnObj.Type = "OFFSET";
   try {
     if (percentageDown != 0 && minQty == 1) {
-      const percentageDownPrice = subtractPercentage(nextLowestPrice, percentageDown);
+      const percentageDownPrice = subtractPercentage(nextLowestPrice + heavyShippingPrice, percentageDown) - heavyShippingPrice;
       if (percentageDownPrice > floorPrice) {
         returnObj.Price = percentageDownPrice;
         returnObj.Type = "PERCENTAGE";
@@ -231,7 +231,7 @@ export async function VerifyFloorWithSister(productItem: any, refProduct: any, s
           return true;
         }
       }).unitPrice;
-      const updatePrice = await GetContextPrice(parseFloat(pbPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1);
+      const updatePrice = await GetContextPrice(parseFloat(pbPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1, sortedPayload[k].heavyShipping ? parseFloat(sortedPayload[k].heavyShipping) : 0);
       if (updatePrice.Price > floorPrice) {
         aboveFloorVendors.push(sortedPayload[k]);
       }
@@ -241,7 +241,7 @@ export async function VerifyFloorWithSister(productItem: any, refProduct: any, s
     let model = new RepriceModel(sourceId, refProduct, productItem.productName, existingPrice, false, false, [], `${RepriceRenewedMessageEnum.NO_COMPETITOR_SISTER_VENDOR} #HitFloor`);
     const effectiveLowest = _.first(aboveFloorVendors).priceBreaks.find((x: any) => x.minQty == 1 && x.active == true).unitPrice;
     model.updateLowest(_.first(aboveFloorVendors).vendorName, effectiveLowest);
-    const contextPriceResult = await GetContextPrice(parseFloat(effectiveLowest), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1);
+    const contextPriceResult = await GetContextPrice(parseFloat(effectiveLowest), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1, _.first(aboveFloorVendors).heavyShipping ? parseFloat(_.first(aboveFloorVendors).heavyShipping) : 0);
     var contextPrice = contextPriceResult.Price;
     model.repriceDetails!.goToPrice = contextPrice.toFixed(2);
     model.updateTriggeredBy(_.first(aboveFloorVendors).vendorName, _.first(aboveFloorVendors).vendorId, 1);
@@ -364,6 +364,9 @@ export async function GetProductDetailsByVendor(details: any, contextVendor: str
   }
   if (contextVendor == "TRIAD") {
     return details.triadDetails;
+  }
+  if (contextVendor == "BITESUPPLY") {
+    return details.biteSupplyDetails;
   }
 }
 

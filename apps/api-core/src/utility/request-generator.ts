@@ -23,6 +23,7 @@ export async function GetPrioritySequence(productInfo: ProductDetailsListItem, c
   const _topDent = { name: VendorName.TOPDENT, value: "topDentDetails" };
   const _firstDent = { name: VendorName.FIRSTDENT, value: "firstDentDetails" };
   const _triad = { name: VendorName.TRIAD, value: "triadDetails" };
+  const _biteSupply = { name: VendorName.BITESUPPLY, value: "biteSupplyDetails" };
   let prioritySequence = [];
   const globalConfig = await sqlV2Service.GetGlobalConfig();
   const isOverrideEnabled = IsOverrideExecutionPriorityEnabled(globalConfig!);
@@ -40,6 +41,7 @@ export async function GetPrioritySequence(productInfo: ProductDetailsListItem, c
       { details: productDetails.topDentDetails, obj: _topDent },
       { details: productDetails.firstDentDetails, obj: _firstDent },
       { details: productDetails.triadDetails, obj: _triad },
+      { details: productDetails.biteSupplyDetails, obj: _biteSupply },
     ];
     for (const vendor of vendors) {
       if (vendor.details && vendor.details.activated && vendor.details.executionPriority === pty && proceedNext(productDetails, vendor.obj.value)) {

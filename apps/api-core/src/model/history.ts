@@ -44,48 +44,16 @@ export class HistoricalPrice {
   triggeredByVendor: any;
   repriceResult: any;
 
-  constructor(
-    existingPrice: number,
-    minQty: number,
-    rank: number | null,
-    lowestVendor: string | null,
-    lowestPrice: string | number | null,
-    suggestedPrice: number | string | null,
-    comment: string | null,
-    listOfVendors: Net32Product[],
-    eligibleList: Net32Product[],
-    contextVendor: string,
-    cronName: string,
-    triggeredByVendor: any,
-    repriceResult: any,
-  ) {
+  constructor(existingPrice: number, minQty: number, rank: number | null, lowestVendor: string | null, lowestPrice: string | number | null, suggestedPrice: number | string | null, comment: string | null, listOfVendors: Net32Product[], eligibleList: Net32Product[], contextVendor: string, cronName: string, triggeredByVendor: any, repriceResult: any) {
     this.existingPrice = existingPrice;
     this.minQty = minQty;
     this.rank = rank;
-    this.lowestVendor = lowestVendor
-      ? lowestVendor
-      : listOfVendors && listOfVendors.length > 0
-        ? listOfVendors[0].vendorName
-        : "N/A";
-    this.lowestPrice = lowestPrice
-      ? lowestPrice
-      : listOfVendors && listOfVendors.length > 0
-        ? listOfVendors[0].priceBreaks.find(
-            (price) => price.minQty === minQty && price.active,
-          )!.unitPrice!
-        : "N/A";
+    this.lowestVendor = lowestVendor ? lowestVendor : listOfVendors && listOfVendors.length > 0 ? listOfVendors[0].vendorName : "N/A";
+    this.lowestPrice = lowestPrice ? lowestPrice : listOfVendors && listOfVendors.length > 0 ? listOfVendors[0].priceBreaks.find((price) => price.minQty === minQty && price.active)!.unitPrice! : "N/A";
     this.suggestedPrice = suggestedPrice;
     this.repriceComment = comment;
-    this.maxVendor =
-      listOfVendors && listOfVendors.length > 0
-        ? listOfVendors[listOfVendors.length - 1].vendorName
-        : "N/A";
-    this.maxVendorPrice =
-      listOfVendors && listOfVendors.length > 0
-        ? listOfVendors[listOfVendors.length - 1].priceBreaks.find(
-            (price) => price.minQty === minQty && price.active,
-          )!.unitPrice!
-        : "N/A";
+    this.maxVendor = listOfVendors && listOfVendors.length > 0 ? listOfVendors[listOfVendors.length - 1].vendorName : "N/A";
+    this.maxVendorPrice = listOfVendors && listOfVendors.length > 0 ? listOfVendors[listOfVendors.length - 1].priceBreaks.find((price) => price.minQty === minQty && price.active)!.unitPrice! : "N/A";
     this.otherVendorList = this.getOtherVendorList(listOfVendors);
     this.apiResponse = eligibleList;
     this.vendorName = contextVendor;
@@ -94,17 +62,10 @@ export class HistoricalPrice {
     this.repriceResult = repriceResult;
   }
   getOtherVendorList(listOfVendors: Net32Product[]): string {
-    if (
-      !listOfVendors ||
-      listOfVendors.length === 0 ||
-      (listOfVendors as unknown as number) === 1
-    )
-      return "";
+    if (!listOfVendors || listOfVendors.length === 0 || (listOfVendors as unknown as number) === 1) return "";
     let otherVendorList = "";
     for (let idx = 1; idx < listOfVendors.length - 1; idx++) {
-      const unitPrice = listOfVendors[idx].priceBreaks.find(
-        (price) => price.minQty === this.minQty && price.active,
-      )!.unitPrice!;
+      const unitPrice = listOfVendors[idx].priceBreaks.find((price) => price.minQty === this.minQty && price.active)!.unitPrice!;
       const $vendorName = listOfVendors[idx].vendorName;
       otherVendorList += `${$vendorName} @ ${unitPrice} | `;
     }

@@ -1,18 +1,9 @@
 import { Request, Response } from "express";
 import { BadRequest } from "http-errors";
 import * as _codes from "http-status-codes";
-import * as dbHelper from "../../utility/mongo/db-helper";
-import {
-  getMainCronNameFromJobName,
-  setCronAndStart,
-  setError422CronAndStart,
-  stopCron,
-} from "./shared";
+import { getMainCronNameFromJobName, setCronAndStart, setError422CronAndStart, stopCron } from "./shared";
 import { GetCronSettingsList } from "../../utility/mysql/mysql-v2";
-export async function recreateCronHandler(
-  req: Request,
-  res: Response,
-): Promise<any> {
+export async function recreateCronHandler(req: Request, res: Response): Promise<any> {
   const jobNames = req.body;
   const cronDetails = await GetCronSettingsList();
   for (const jobName of jobNames) {
@@ -31,9 +22,5 @@ export async function recreateCronHandler(
     stopCron(cronName);
     setCronAndStart(cronName, settings);
   }
-  return res
-    .status(_codes.StatusCodes.OK)
-    .send(
-      `Cron job updated successfully for jobName : ${JSON.stringify(jobNames)}`,
-    );
+  return res.status(_codes.StatusCodes.OK).send(`Cron job updated successfully for jobName : ${JSON.stringify(jobNames)}`);
 }

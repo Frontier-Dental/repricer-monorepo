@@ -32,15 +32,8 @@ function isScrappedProductFound(productList: Product[]): boolean {
 
 function GetJobModel(groupedProducts: any, modelType: string): JobModelClass {
   let returnProducts: Product[] | null = null;
-  returnProducts =
-    modelType == "GENERIC"
-      ? groupedProducts
-      : _.get(groupedProducts, modelType);
-  if (
-    returnProducts &&
-    returnProducts.length > 0 &&
-    isScrappedProductFound(returnProducts)
-  ) {
+  returnProducts = modelType == "GENERIC" ? groupedProducts : _.get(groupedProducts, modelType);
+  if (returnProducts && returnProducts.length > 0 && isScrappedProductFound(returnProducts)) {
     return new JobModelClass(true, returnProducts);
   }
   return new JobModelClass(false, null);
@@ -60,47 +53,15 @@ class CronModel {
 
   constructor(groupedProducts: any) {
     this.discard = new ScheduleConstants();
-    this.E30MINModel = GetJobModel(
-      groupedProducts,
-      this.discard.jobScheduleConstants.E30MIN,
-    );
-    this.EHModel = GetJobModel(
-      groupedProducts,
-      this.discard.jobScheduleConstants.EH,
-    );
-    this.E2HModel = GetJobModel(
-      groupedProducts,
-      this.discard.jobScheduleConstants.E2H,
-    );
-    this.E6HModel = GetJobModel(
-      groupedProducts,
-      this.discard.jobScheduleConstants.E6H,
-    );
-    this.E12HModel = GetJobModel(
-      groupedProducts,
-      this.discard.jobScheduleConstants.E12H,
-    );
-    this.E1DModel = GetJobModel(
-      groupedProducts,
-      this.discard.jobScheduleConstants.E1D,
-    );
-    this.E7DModel = GetJobModel(
-      groupedProducts,
-      this.discard.jobScheduleConstants.E7D,
-    );
-    this.GenericModel = GetJobModel(
-      groupedProducts,
-      this.discard.jobScheduleConstants.GENERIC,
-    );
-    this.isAnyCronNeeded =
-      this.E30MINModel.isAvailable ||
-      this.EHModel.isAvailable ||
-      this.E2HModel.isAvailable ||
-      this.E6HModel.isAvailable ||
-      this.E12HModel.isAvailable ||
-      this.E1DModel.isAvailable ||
-      this.E7DModel.isAvailable ||
-      this.GenericModel.isAvailable;
+    this.E30MINModel = GetJobModel(groupedProducts, this.discard.jobScheduleConstants.E30MIN);
+    this.EHModel = GetJobModel(groupedProducts, this.discard.jobScheduleConstants.EH);
+    this.E2HModel = GetJobModel(groupedProducts, this.discard.jobScheduleConstants.E2H);
+    this.E6HModel = GetJobModel(groupedProducts, this.discard.jobScheduleConstants.E6H);
+    this.E12HModel = GetJobModel(groupedProducts, this.discard.jobScheduleConstants.E12H);
+    this.E1DModel = GetJobModel(groupedProducts, this.discard.jobScheduleConstants.E1D);
+    this.E7DModel = GetJobModel(groupedProducts, this.discard.jobScheduleConstants.E7D);
+    this.GenericModel = GetJobModel(groupedProducts, this.discard.jobScheduleConstants.GENERIC);
+    this.isAnyCronNeeded = this.E30MINModel.isAvailable || this.EHModel.isAvailable || this.E2HModel.isAvailable || this.E6HModel.isAvailable || this.E12HModel.isAvailable || this.E1DModel.isAvailable || this.E7DModel.isAvailable || this.GenericModel.isAvailable;
   }
 }
 

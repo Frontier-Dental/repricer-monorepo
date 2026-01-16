@@ -1,14 +1,9 @@
 import { Request, Response } from "express";
 import { getMainCronNameFromJobName, stop422Cron, stopCron } from "./shared";
 import * as _codes from "http-status-codes";
-import { CacheKeyName } from "../../resources/cache-key-name";
-import * as cacheHelper from "../../utility/cache-helper";
 import { BadRequest } from "http-errors";
 
-export async function stopCronHandler(
-  req: Request,
-  res: Response,
-): Promise<any> {
+export async function stopCronHandler(req: Request, res: Response): Promise<any> {
   const { jobName } = req.body;
   if (jobName === "Cron-422") {
     stop422Cron();
@@ -19,7 +14,5 @@ export async function stopCronHandler(
     }
     stopCron(cronName);
   }
-  return res
-    .status(_codes.StatusCodes.OK)
-    .send(`Cron job stopped successfully for jobName : ${jobName}`);
+  return res.status(_codes.StatusCodes.OK).send(`Cron job stopped successfully for jobName : ${jobName}`);
 }

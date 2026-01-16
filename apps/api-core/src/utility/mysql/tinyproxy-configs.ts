@@ -1,4 +1,4 @@
-import { getKnexInstance, destroyKnexInstance } from "../../model/sql-models/knex-wrapper";
+import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
 
 export interface TinyProxyConfigData {
   id?: number;

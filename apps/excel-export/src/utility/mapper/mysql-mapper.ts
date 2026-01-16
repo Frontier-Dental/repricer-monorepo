@@ -64,6 +64,10 @@ export function MapProductDetailsList(payload: any) {
           groupedList[parseInt(prodId)],
           VendorName.TRIAD,
         ),
+        biteSupplyLinkInfo: getLinkedInfoForVendor(
+          groupedList[parseInt(prodId)],
+          VendorName.BITESUPPLY,
+        ),
         tradentDetails: getMappedVendorDetails(
           groupedList[parseInt(prodId)],
           VendorName.TRADENT,
@@ -87,6 +91,10 @@ export function MapProductDetailsList(payload: any) {
         triadDetails: getMappedVendorDetails(
           groupedList[parseInt(prodId)],
           VendorName.TRIAD,
+        ),
+        biteSupplyDetails: getMappedVendorDetails(
+          groupedList[parseInt(prodId)],
+          VendorName.BITESUPPLY,
         ),
       };
       mappedList.push(mappedProduct as any);

@@ -14,17 +14,7 @@ export class RunInfo {
   ScrapedSuccessCount: any;
   ScrapedFailureCount: any;
 
-  constructor(
-    _cronName: any,
-    _cronId: any,
-    _runId: any,
-    _keyGenId: any,
-    _runType: any,
-    _productCount: any,
-    _eligibleCount: any,
-    _successCount: any,
-    _failureCount: any,
-  ) {
+  constructor(_cronName: any, _cronId: any, _runId: any, _keyGenId: any, _runType: any, _productCount: any, _eligibleCount: any, _successCount: any, _failureCount: any) {
     this.CronName = _cronName;
     this.CronId = _cronId;
     this.RunStartTime = new Date();

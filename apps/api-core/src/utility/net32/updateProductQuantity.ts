@@ -34,21 +34,17 @@ interface VendorUpdateData {
   proxy: ProxyNet32;
 }
 
-export const processUpdateProductQuantities = async (
-  request: UpdateProductQuantityRequest,
-): Promise<UpdateResult[]> => {
+export const processUpdateProductQuantities = async (request: UpdateProductQuantityRequest): Promise<UpdateResult[]> => {
   const { mpid, vendorData } = request;
   const vendors = vendorData.map((vendorObject) => vendorObject.vendor);
   const { vendorKeys, proxies } = await validateVendorResources(vendors);
   const vendorUpdates = prepareVendorUpdates(vendorData, vendorKeys, proxies);
-  const updatePromises = vendorUpdates.map((updateData) =>
-    executeVendorUpdate(mpid, updateData),
-  );
+  const updatePromises = vendorUpdates.map((updateData) => executeVendorUpdate(mpid, updateData));
   return await Promise.all(updatePromises);
 };
 
 const validateVendorResources = async (
-  vendors: string[],
+  vendors: string[]
 ): Promise<{
   vendorKeys: Map<string, string | null>;
   proxies: ProxyNet32[];
@@ -72,16 +68,10 @@ const validateVendorResources = async (
   return { vendorKeys, proxies };
 };
 
-const prepareVendorUpdates = (
-  vendorData: VendorData[],
-  vendorKeys: Map<string, string | null>,
-  proxies: ProxyNet32[],
-): VendorUpdateData[] => {
+const prepareVendorUpdates = (vendorData: VendorData[], vendorKeys: Map<string, string | null>, proxies: ProxyNet32[]): VendorUpdateData[] => {
   return vendorData.map((vendorObject) => {
     const vendorKey = vendorKeys.get(vendorObject.vendor);
-    const proxy = proxies.find(
-      (proxy: ProxyNet32) => proxy.proxy_username === vendorObject.vendor,
-    );
+    const proxy = proxies.find((proxy: ProxyNet32) => proxy.proxy_username === vendorObject.vendor);
 
     if (!vendorKey || !proxy) {
       throw new Error(`Missing resources for vendor: ${vendorObject.vendor}`);
@@ -95,31 +85,20 @@ const prepareVendorUpdates = (
   });
 };
 
-const executeVendorUpdate = async (
-  mpid: number,
-  updateData: VendorUpdateData,
-): Promise<UpdateResult> => {
+const executeVendorUpdate = async (mpid: number, updateData: VendorUpdateData): Promise<UpdateResult> => {
   try {
-    const response = await updateProductQuantity(
-      mpid,
-      updateData.vendor.quantity,
-      updateData.vendorKey,
-      updateData.proxy,
-    );
+    const response = await updateProductQuantity(mpid, updateData.vendor.quantity, updateData.vendorKey, updateData.proxy);
 
     const result = {
       vendor: updateData.vendor.vendor,
-      success:
-        response.data.statusCode >= HTTP_STATUS.OK &&
-        response.data.statusCode < HTTP_STATUS.REDIRECT_START,
+      success: response.data.statusCode >= HTTP_STATUS.OK && response.data.statusCode < HTTP_STATUS.REDIRECT_START,
       status: response.data.statusCode,
       data: response.data.data,
     };
 
     if (response.data.statusCode === HTTP_STATUS.NOT_FOUND) {
       result.success = true;
-      result.data.message =
-        "A valid development key is in use, no update made.";
+      result.data.message = "A valid development key is in use, no update made.";
     }
 
     return result;
@@ -132,9 +111,7 @@ const executeVendorUpdate = async (
   }
 };
 
-const validateVendorKeyMap = (
-  vendorKeyMap: Map<string, string | null> | null,
-) => {
+const validateVendorKeyMap = (vendorKeyMap: Map<string, string | null> | null) => {
   if (!vendorKeyMap) {
     return false;
   }
@@ -148,12 +125,7 @@ const validateVendorKeyMap = (
   return true;
 };
 
-const updateProductQuantity = async (
-  mpid: number,
-  quantity: number,
-  vendorKey: string,
-  proxy: ProxyNet32,
-) => {
+const updateProductQuantity = async (mpid: number, quantity: number, vendorKey: string, proxy: ProxyNet32) => {
   const url = `http://${proxy.ip}:${proxy.port}/proxy`;
 
   const net32Options = {

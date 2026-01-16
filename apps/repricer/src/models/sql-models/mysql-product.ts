@@ -18,6 +18,7 @@ export default class MySqlProduct {
   LinkedFirstDentDetailsInfo: string;
   LinkedTopDentDetailsInfo: string;
   LinkedTriadDetailsInfo: string;
+  LinkedBiteSupplyDetailsInfo: string;
   IsBadgeItem: boolean;
   constructor(
     payload: any,
@@ -62,6 +63,10 @@ export default class MySqlProduct {
       sqlProductDetails.triadLinkInfo != null
         ? sqlProductDetails.triadLinkInfo
         : null;
+    this.LinkedBiteSupplyDetailsInfo =
+      sqlProductDetails.biteSupplyLinkInfo != null
+        ? sqlProductDetails.biteSupplyLinkInfo
+        : null;
     this.IsBadgeItem = this.getItemValue(payload, "isBadgeItem");
   }
   getItemValue(payload: any, identifier: any) {
@@ -82,6 +87,9 @@ export default class MySqlProduct {
     }
     if (payload.triadDetails) {
       return payload.triadDetails[identifier];
+    }
+    if (payload.biteSupplyDetails) {
+      return payload.biteSupplyDetails[identifier];
     }
   }
 }

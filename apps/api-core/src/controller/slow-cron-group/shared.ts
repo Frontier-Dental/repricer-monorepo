@@ -15,11 +15,7 @@ export function getCronNameByJobName(jobName: string) {
   }
 }
 
-export async function toggleCronStatus(
-  cronObject: ScheduledTask,
-  status: any,
-  cronName: string,
-) {
+export async function toggleCronStatus(cronObject: ScheduledTask, status: any, cronName: string) {
   switch (parseInt(status)) {
     case 0:
       if (cronObject) {

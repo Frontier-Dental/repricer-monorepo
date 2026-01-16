@@ -5,6 +5,7 @@ export interface PrioritySettings {
   firstDent_priority: string;
   topDent_priority: string;
   triad_priority: string;
+  biteSupply_priority: string;
 }
 
 export interface OverrideExecutionPriorityDetails {

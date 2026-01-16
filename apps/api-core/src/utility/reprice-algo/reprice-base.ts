@@ -81,7 +81,7 @@ export async function Execute(jobId: string, productList: any[], cronInitTime: a
       const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", prod.mpId);
       if (prioritySequence && prioritySequence.length > 0) {
         const cronIdForScraping = isSlowCronRun ? prod[prioritySequence[0].value].slowCronId : prod[prioritySequence[0].value].cronId;
-        net32resp = await axiosHelper.getAsync(searchRequest, cronIdForScraping, seqString);
+        net32resp = await axiosHelper.getAsync(searchRequest, cronIdForScraping, prod.mpId, seqString);
         if (prod.algo_execution_mode === AlgoExecutionMode.V2_ONLY || prod.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY || prod.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY) {
           await repriceProductV2Wrapper(net32resp.data, prod, cronSetting ? cronSetting.CronName : "MANUAL", isSlowCronRun);
         }
@@ -152,7 +152,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
   console.log(`EXPRESS_CRON : Repricing ${details.mpId} for ${_contextVendor} with sequence ${seqString} at ${new Date()}`);
   if (prioritySequence && prioritySequence.length > 0) {
     const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", details.mpId);
-    var net32result = await axiosHelper.getAsync(searchRequest, "DUMMY-422-Error", seqString);
+    var net32result = await axiosHelper.getAsync(searchRequest, "DUMMY-422-Error", details.mpId, seqString);
     let isPriceUpdatedForVendor = false;
     if (details.algo_execution_mode === AlgoExecutionMode.V2_ONLY || details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY || details.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY) {
       await repriceProductV2Wrapper(net32result.data, details, cronSetting ? cronSetting.CronName : "ExpressCron", false);
@@ -369,6 +369,11 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
     if (details.triadDetails) {
       details.triadDetails.slowCronId = null;
       details.triadDetails.slowCronName = null;
+      productUpdateNeeded = true;
+    }
+    if (details.biteSupplyDetails) {
+      details.biteSupplyDetails.slowCronId = null;
+      details.biteSupplyDetails.slowCronName = null;
       productUpdateNeeded = true;
     }
     if (productUpdateNeeded) {
@@ -765,6 +770,9 @@ function getProductDetailsByVendor(details: any, contextVendor: string) {
   }
   if (contextVendor == VendorName.TRIAD) {
     return details.triadDetails;
+  }
+  if (contextVendor == VendorName.BITESUPPLY) {
+    return details.biteSupplyDetails;
   }
 }
 

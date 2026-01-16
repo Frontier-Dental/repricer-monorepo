@@ -24,20 +24,9 @@ export class RepriceData {
   goToPrice?: string | null | number;
   minQty?: number | null;
 
-  constructor(
-    oldPrice: number,
-    newPrice: string | number | null,
-    isRepriced: boolean,
-    message: string | null,
-    minQty?: number,
-  ) {
+  constructor(oldPrice: number, newPrice: string | number | null, isRepriced: boolean, message: string | null, minQty?: number) {
     this.oldPrice = oldPrice;
-    this.newPrice =
-      isRepriced == true
-        ? typeof newPrice == "number"
-          ? (newPrice as number).toFixed(2)
-          : newPrice
-        : "N/A";
+    this.newPrice = isRepriced == true ? (typeof newPrice == "number" ? (newPrice as number).toFixed(2) : newPrice) : "N/A";
     this.isRepriced = isRepriced;
     this.updatedOn = new Date();
     this.explained = message;
@@ -47,28 +36,8 @@ export class RepriceData {
     this.minQty = minQty;
   }
 
-  static fromObject({
-    oldPrice,
-    newPrice,
-    isRepriced,
-    message,
-    minQty,
-    active = true,
-  }: {
-    oldPrice: number;
-    newPrice: string | number | null;
-    isRepriced: boolean;
-    message: string | null;
-    minQty?: number;
-    active?: boolean;
-  }): RepriceData {
-    const repriceData = new RepriceData(
-      oldPrice,
-      newPrice,
-      isRepriced,
-      message,
-      minQty,
-    );
+  static fromObject({ oldPrice, newPrice, isRepriced, message, minQty, active = true }: { oldPrice: number; newPrice: string | number | null; isRepriced: boolean; message: string | null; minQty?: number; active?: boolean }): RepriceData {
+    const repriceData = new RepriceData(oldPrice, newPrice, isRepriced, message, minQty);
     repriceData.active = active;
     return repriceData;
   }
@@ -87,28 +56,13 @@ export class RepriceModel {
   listOfRepriceDetails: RepriceData[];
   triggeredByVendor: any;
 
-  constructor(
-    sourceId: string,
-    productDetails: Net32Product | null,
-    name: string,
-    newPrice: string | number | null,
-    isRepriced: boolean,
-    multiplePriceBreak: boolean = false,
-    listOfRepriceData: RepriceData[] = [],
-    message: string | null = null,
-  ) {
+  constructor(sourceId: string, productDetails: Net32Product | null, name: string, newPrice: string | number | null, isRepriced: boolean, multiplePriceBreak: boolean = false, listOfRepriceData: RepriceData[] = [], message: string | null = null) {
     this.net32id = sourceId;
     this.productName = name;
     this.vendorName = productDetails ? productDetails.vendorName : "N/A";
-    this.vendorProductId = productDetails
-      ? (productDetails.vendorProductId as unknown as string)
-      : "N/A";
-    this.vendorProductCode = productDetails
-      ? productDetails.vendorProductCode
-      : "N/A";
-    this.vendorId = (productDetails
-      ? productDetails.vendorId
-      : "N/A") as unknown as string;
+    this.vendorProductId = productDetails ? (productDetails.vendorProductId as unknown as string) : "N/A";
+    this.vendorProductCode = productDetails ? productDetails.vendorProductCode : "N/A";
+    this.vendorId = (productDetails ? productDetails.vendorId : "N/A") as unknown as string;
     this.inStock = productDetails ? productDetails.inStock : false;
     this.isMultiplePriceBreakAvailable = multiplePriceBreak;
     // Initialize repriceDetails based on conditions
@@ -116,12 +70,7 @@ export class RepriceModel {
       // If it's multiple price updates, repriceData is not used
       this.repriceDetails = null;
     } else {
-      this.repriceDetails = new RepriceData(
-        getOldPrice(productDetails.priceBreaks),
-        newPrice,
-        isRepriced,
-        message,
-      );
+      this.repriceDetails = new RepriceData(getOldPrice(productDetails.priceBreaks), newPrice, isRepriced, message);
     }
     this.listOfRepriceDetails = listOfRepriceData;
   }
@@ -134,8 +83,7 @@ export class RepriceModel {
   togglePriceUpdation(value: boolean) {
     this.repriceDetails!.isRepriced = value;
     this.repriceDetails!.updatedOn = new Date();
-    this.repriceDetails!.explained =
-      RepriceRenewedMessageEnum.SHUT_DOWN_NO_COMPETITOR;
+    this.repriceDetails!.explained = RepriceRenewedMessageEnum.SHUT_DOWN_NO_COMPETITOR;
   }
 
   updateLowest(vendorName: string, vendorPrice: number) {
@@ -143,18 +91,8 @@ export class RepriceModel {
     this.repriceDetails!.lowestVendorPrice = vendorPrice;
   }
 
-  generateRepriceData(
-    oldPrice: number,
-    newPrice: string | number,
-    isRepriced: boolean,
-    message: string,
-  ) {
-    this.repriceDetails = new RepriceData(
-      oldPrice,
-      newPrice,
-      isRepriced,
-      message,
-    );
+  generateRepriceData(oldPrice: number, newPrice: string | number, isRepriced: boolean, message: string) {
+    this.repriceDetails = new RepriceData(oldPrice, newPrice, isRepriced, message);
   }
 
   updateTriggeredBy(vendorName: any, vendorId: any, minQty: any) {

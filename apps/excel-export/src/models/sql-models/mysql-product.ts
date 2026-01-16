@@ -18,13 +18,11 @@ export default class MySqlProduct {
   LinkedFirstDentDetailsInfo: string;
   LinkedTopDentDetailsInfo: string;
   LinkedTriadDetailsInfo: string;
+  LinkedBiteSupplyDetailsInfo: string;
   IsBadgeItem: boolean;
-  constructor(
-    payload: any,
-    sqlProductDetails: any,
-    mpid: string,
-    auditInfo: any,
-  ) {
+  QBreakCount: number;
+  QBreakDetails: string;
+  constructor(payload: any, sqlProductDetails: any, mpid: string, auditInfo: any) {
     this.MpId = parseInt(mpid);
     this.Net32Url = this.getItemValue(payload, "net32url");
     this.IsActive = this.getItemValue(payload, "isScrapeOnlyActivated");
@@ -38,31 +36,16 @@ export default class MySqlProduct {
     this.SlowCronName = this.getItemValue(sqlProductDetails, "slowCronName");
     this.SlowCronId = this.getItemValue(sqlProductDetails, "slowCronId");
     this.IsSlowActivated = this.getItemValue(payload, "isSlowActivated");
-    this.LinkedTradentDetailsInfo =
-      sqlProductDetails.tradentLinkInfo != null
-        ? sqlProductDetails.tradentLinkInfo
-        : null;
-    this.LinkedFrontiersDetailsInfo =
-      sqlProductDetails.frontierLinkInfo != null
-        ? sqlProductDetails.frontierLinkInfo
-        : null;
-    this.LinkedMvpDetailsInfo =
-      sqlProductDetails.mvpLinkInfo != null
-        ? sqlProductDetails.mvpLinkInfo
-        : null;
-    this.LinkedFirstDentDetailsInfo =
-      sqlProductDetails.firstDentLinkInfo != null
-        ? sqlProductDetails.firstDentLinkInfo
-        : null;
-    this.LinkedTopDentDetailsInfo =
-      sqlProductDetails.topDentLinkInfo != null
-        ? sqlProductDetails.topDentLinkInfo
-        : null;
-    this.LinkedTriadDetailsInfo =
-      sqlProductDetails.triadLinkInfo != null
-        ? sqlProductDetails.triadLinkInfo
-        : null;
+    this.LinkedTradentDetailsInfo = sqlProductDetails.tradentLinkInfo != null ? sqlProductDetails.tradentLinkInfo : null;
+    this.LinkedFrontiersDetailsInfo = sqlProductDetails.frontierLinkInfo != null ? sqlProductDetails.frontierLinkInfo : null;
+    this.LinkedMvpDetailsInfo = sqlProductDetails.mvpLinkInfo != null ? sqlProductDetails.mvpLinkInfo : null;
+    this.LinkedFirstDentDetailsInfo = sqlProductDetails.firstDentLinkInfo != null ? sqlProductDetails.firstDentLinkInfo : null;
+    this.LinkedTopDentDetailsInfo = sqlProductDetails.topDentLinkInfo != null ? sqlProductDetails.topDentLinkInfo : null;
+    this.LinkedTriadDetailsInfo = sqlProductDetails.triadLinkInfo != null ? sqlProductDetails.triadLinkInfo : null;
+    this.LinkedBiteSupplyDetailsInfo = sqlProductDetails.biteSupplyLinkInfo != null ? sqlProductDetails.biteSupplyLinkInfo : null;
     this.IsBadgeItem = this.getItemValue(payload, "isBadgeItem");
+    this.QBreakCount = this.getItemValue(sqlProductDetails, "qBreakCount");
+    this.QBreakDetails = this.getItemValue(sqlProductDetails, "qBreakDetails");
   }
   getItemValue(payload: any, identifier: any) {
     if (payload.tradentDetails) {
@@ -82,6 +65,9 @@ export default class MySqlProduct {
     }
     if (payload.triadDetails) {
       return payload.triadDetails[identifier];
+    }
+    if (payload.biteSupplyDetails) {
+      return payload.biteSupplyDetails[identifier];
     }
   }
 }

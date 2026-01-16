@@ -16,6 +16,7 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
   repriceModel.repriceDetails!.oldPrice = existingPrice;
   const maxPrice = productItem.maxPrice ? parseFloat(productItem.maxPrice) : 99999;
   const floorPrice = productItem.floorPrice ? parseFloat(productItem.floorPrice) : 0;
+  const heavyShippingPrice = refProduct.heavyShipping ? parseFloat(refProduct.heavyShipping) : 0;
   let lowestPrice = 0;
   const processOffset = applicationConfig.OFFSET;
   let excludedVendors = productItem.competeAll == true ? [] : $.EXCLUDED_VENDOR_ID.split(";");
@@ -137,7 +138,7 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
           })! as any
         ).unitPrice;
         if (nextLowestPrice > floorPrice && nextLowestPrice >= existingPrice) {
-          const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(nextLowestPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1);
+          const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(nextLowestPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1, heavyShippingPrice);
           const contextPrice = contextPriceResult.Price;
           if (nextLowestPrice > contextPrice) {
             if (contextPrice <= maxPrice) {
@@ -177,7 +178,7 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
     else if (_.includes(excludedVendors, _.first(sortedPayload)!.vendorId.toString())) {
       let model = new RepriceModel(sourceId, refProduct, productItem.productName, existingPrice, false, false, [], RepriceRenewedMessageEnum.NO_COMPETITOR_SISTER_VENDOR);
       model.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
-      const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(lowestPrice as any), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1);
+      const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(lowestPrice as any), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1, heavyShippingPrice);
       const contextPrice = contextPriceResult.Price;
       model.repriceDetails!.goToPrice = contextPrice.toFixed(2);
       model.updateTriggeredBy(_.first(sortedPayload)!.vendorName, _.first(sortedPayload)!.vendorId, 1);
@@ -195,7 +196,7 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
       const prodPriceWithMinQty = _.first(sortedPayload)!.priceBreaks.find((x: any) => x.minQty == 1 && x.active == true);
       if (prodPriceWithMinQty) {
         const lowestPrice = prodPriceWithMinQty.unitPrice;
-        const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(lowestPrice as any), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1);
+        const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(lowestPrice as any), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1, heavyShippingPrice);
         const offsetPrice = contextPriceResult.Price;
         //1. If the Offset Price is less than Floor Price
         //SET: Do Nothing
@@ -232,7 +233,7 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
             ).unitPrice;
             if (nextLowestPrice > floorPrice && (nextLowestPrice >= existingPrice || allowCompeteWithNextForFloor === true)) {
               //&& nextLowestPrice >= existingPrice
-              const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(nextLowestPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1);
+              const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(nextLowestPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1, heavyShippingPrice);
               const contextPrice = contextPriceResult.Price;
               if (contextPrice < existingPrice && floorSisterResult !== false) {
                 //Check for Sister Being lowest only while going Down
@@ -271,7 +272,7 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
             if (sortedPayload[nextIndex] != null) {
               const secondLowestPrice = sortedPayload[nextIndex]!.priceBreaks!.find((x: any) => x.minQty == 1 && x.active == true);
               if (secondLowestPrice && secondLowestPrice.unitPrice > floorPrice && (secondLowestPrice.unitPrice >= existingPrice || allowCompeteWithNextForFloor === true)) {
-                const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(secondLowestPrice.unitPrice as any), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1);
+                const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(secondLowestPrice.unitPrice as any), processOffset, floorPrice, parseFloat(productItem.percentageDown), 1, heavyShippingPrice);
                 repriceModel = new RepriceModel(sourceId, refProduct, productItem.productName, contextPriceResult.Price, true, false, [], await filterMapper.AppendPriceFactorTag(RepriceRenewedMessageEnum.PRICE_UP_SECOND_FLOOR_HIT, contextPriceResult.Type));
               }
               repriceModel.updateTriggeredBy(sortedPayload[nextIndex].vendorName, sortedPayload[nextIndex].vendorId, 1);
@@ -335,6 +336,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
   repriceModel.repriceDetails!.minQty = priceBreak.minQty;
   const maxPrice = productItem.maxPrice ? productItem.maxPrice : 99999;
   const floorPrice = productItem.floorPrice ? parseFloat(productItem.floorPrice) : 0;
+  const heavyShippingPrice = refProduct.heavyShipping ? parseFloat(refProduct.heavyShipping) : 0;
   let lowestPrice = 0;
   let excludedVendors = productItem.competeAll === true ? [] : $.EXCLUDED_VENDOR_ID.split(";");
   const allowCompeteWithNextForFloor = productItem.competeWithNext;
@@ -488,7 +490,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
         ).unitPrice;
         if (nextLowestPrice > floorPrice && (nextLowestPrice >= existingPrice || allowCompeteWithNextForFloor === true)) {
           //&& nextLowestPrice >= existingPrice
-          const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(nextLowestPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), priceBreak.minQty);
+          const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(nextLowestPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), priceBreak.minQty, heavyShippingPrice);
           const contextPrice = contextPriceResult.Price;
           if (nextLowestPrice > contextPrice) {
             if (contextPrice <= maxPrice) {
@@ -542,7 +544,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
     else if (_.includes(excludedVendors, _.first(sortedPayload)!.vendorId.toString())) {
       repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.NO_COMPETITOR_SISTER_VENDOR;
       repriceModel.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
-      const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(lowestPrice as any), processOffset, floorPrice, parseFloat(productItem.percentageDown), priceBreak.minQty);
+      const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(lowestPrice as any), processOffset, floorPrice, parseFloat(productItem.percentageDown), priceBreak.minQty, heavyShippingPrice);
       repriceModel.repriceDetails!.goToPrice = contextPriceResult.Price.toFixed(2);
       repriceModel.updateTriggeredBy(_.first(sortedPayload)!.vendorName, _.first(sortedPayload)!.vendorId, priceBreak.minQty);
       return repriceModel;
@@ -559,7 +561,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
       const prodPriceWithMinQty = _.first(sortedPayload)!.priceBreaks.find((x: any) => x.minQty == priceBreak.minQty && x.active == true);
       if (prodPriceWithMinQty) {
         const lowestPrice = prodPriceWithMinQty.unitPrice;
-        const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(lowestPrice as any), processOffset, floorPrice, parseFloat(productItem.percentageDown), priceBreak.minQty);
+        const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(lowestPrice as any), processOffset, floorPrice, parseFloat(productItem.percentageDown), priceBreak.minQty, heavyShippingPrice);
         let offsetPrice = contextPriceResult.Price;
         //1. If the Offset Price is less than Floor Price
         //SET: Do Nothing
@@ -590,7 +592,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
               const nextLowestPrice = (nextLowestPriceBreak as any).unitPrice;
               if (nextLowestPrice > floorPrice && (nextLowestPrice >= existingPrice || allowCompeteWithNextForFloor === true)) {
                 //&& nextLowestPrice >= existingPrice
-                const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(nextLowestPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), priceBreak.minQty);
+                const contextPriceResult = await filterMapper.GetContextPrice(parseFloat(nextLowestPrice), processOffset, floorPrice, parseFloat(productItem.percentageDown), priceBreak.minQty, heavyShippingPrice);
                 const contextPrice = contextPriceResult.Price;
                 if (contextPrice < existingPrice && floorSisterResult !== false) {
                   //Check for Sister Being lowest only while going Down
@@ -654,7 +656,6 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
         repriceModel.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
       }
     }
-
     if (isTieScenario) {
       repriceModel.repriceDetails!.explained = repriceModel.repriceDetails!.explained + " #TIE";
     }

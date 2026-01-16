@@ -5,6 +5,7 @@ export enum VendorId {
   TOPDENT = 20727,
   FIRSTDENT = 20533,
   TRIAD = 5,
+  BITESUPPLY = 10, //TODO: Add the actual ID for BiteSupply
 }
 
 export enum VendorName {
@@ -14,6 +15,7 @@ export enum VendorName {
   FIRSTDENT = "FIRSTDENT",
   TOPDENT = "TOPDENT",
   TRIAD = "TRIAD",
+  BITESUPPLY = "BITESUPPLY",
 }
 
 export const VendorNameLookup: Record<number, VendorName> = {
@@ -23,6 +25,7 @@ export const VendorNameLookup: Record<number, VendorName> = {
   [VendorId.TOPDENT]: VendorName.TOPDENT,
   [VendorId.FIRSTDENT]: VendorName.FIRSTDENT,
   [VendorId.TRIAD]: VendorName.TRIAD,
+  [VendorId.BITESUPPLY]: VendorName.BITESUPPLY,
 };
 
 export const VendorIdLookup: Record<VendorName, VendorId> = {
@@ -32,6 +35,7 @@ export const VendorIdLookup: Record<VendorName, VendorId> = {
   [VendorName.TOPDENT]: VendorId.TOPDENT,
   [VendorName.FIRSTDENT]: VendorId.FIRSTDENT,
   [VendorName.TRIAD]: VendorId.TRIAD,
+  [VendorName.BITESUPPLY]: VendorId.BITESUPPLY,
 };
 
 export enum AlgoExecutionMode {

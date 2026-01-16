@@ -70,6 +70,8 @@ export default class CustomProduct {
   getBBShippingValue: any;
   getBBBadge: boolean;
   getBBShipping: boolean;
+  qBreakCount: number;
+  qBreakDetails: string;
 
   constructor(sqlEntity: any) {
     this.channelName = sqlEntity["ChannelName"];
@@ -80,11 +82,9 @@ export default class CustomProduct {
     this.floorPrice = sqlEntity["FloorPrice"];
     this.maxPrice = sqlEntity["MaxPrice"];
     this.is_nc_needed = sqlEntity["IsNCNeeded"] == 1 ? true : false;
-    this.suppressPriceBreakForOne =
-      sqlEntity["SuppressPriceBreakForOne"] == 1 ? true : false;
+    this.suppressPriceBreakForOne = sqlEntity["SuppressPriceBreakForOne"] == 1 ? true : false;
     this.repricingRule = sqlEntity["RepricingRule"];
-    this.suppressPriceBreak =
-      sqlEntity["SuppressPriceBreak"] == 1 ? true : false;
+    this.suppressPriceBreak = sqlEntity["SuppressPriceBreak"] == 1 ? true : false;
     this.beatQPrice = sqlEntity["BeatQPrice"] == 1 ? true : false;
     this.percentageIncrease = sqlEntity["PercentageIncrease"];
     this.compareWithQ1 = sqlEntity["CompareWithQ1"] == 1 ? true : false;
@@ -102,16 +102,13 @@ export default class CustomProduct {
     this.priority = sqlEntity["PriorityValue"];
     this.wait_update_period = sqlEntity["WaitUpdatePeriod"] == 1 ? true : false;
     this.net32url = sqlEntity["Net32Url"];
-    this.abortDeactivatingQPriceBreak =
-      sqlEntity["AbortDeactivatingQPriceBreak"] == 1 ? true : false;
+    this.abortDeactivatingQPriceBreak = sqlEntity["AbortDeactivatingQPriceBreak"] == 1 ? true : false;
     this.ownVendorId = null;
     this.sisterVendorId = sqlEntity["SisterVendorId"];
     this.tags = [];
-    this.includeInactiveVendors =
-      sqlEntity["IncludeInactiveVendors"] == 1 ? true : false;
+    this.includeInactiveVendors = sqlEntity["IncludeInactiveVendors"] == 1 ? true : false;
     this.inactiveVendorId = sqlEntity["InactiveVendorId"];
-    this.override_bulk_update =
-      sqlEntity["OverrideBulkUpdate"] == 1 ? true : false;
+    this.override_bulk_update = sqlEntity["OverrideBulkUpdate"] == 1 ? true : false;
     this.override_bulk_rule = sqlEntity["OverrideBulkRule"];
     this.latest_price = sqlEntity["LatestPrice"];
     this.executionPriority = sqlEntity["ExecutionPriority"];
@@ -141,13 +138,14 @@ export default class CustomProduct {
     this.badgePercentageDown = sqlEntity["BadgePercentageDown"];
     this.competeWithNext = sqlEntity["CompeteWithNext"] == 1 ? true : false;
     this.triggeredByVendor = sqlEntity["TriggeredByVendor"];
-    this.ignorePhantomQBreak =
-      sqlEntity["IgnorePhantomBreak"] == 1 ? true : false;
+    this.ignorePhantomQBreak = sqlEntity["IgnorePhantomBreak"] == 1 ? true : false;
     this.ownVendorThreshold = sqlEntity["OwnVendorThreshold"];
     this.repriceResult = sqlEntity["RepriceResult"];
     this.getBBBadgeValue = sqlEntity["GetBBBadgeValue"];
     this.getBBShippingValue = sqlEntity["GetBBShippingValue"];
     this.getBBBadge = sqlEntity["GetBBBadge"] == 1 ? true : false;
     this.getBBShipping = sqlEntity["GetBBShipping"] == 1 ? true : false;
+    this.qBreakCount = sqlEntity["QBreakCount"];
+    this.qBreakDetails = sqlEntity["QBreakDetails"];
   }
 }

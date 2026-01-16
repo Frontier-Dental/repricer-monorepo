@@ -4,23 +4,10 @@ import { applicationConfig } from "../../config";
 import { V2AlgoSettingsData } from "../../mysql/v2-algo-settings";
 import { Net32AlgoProduct, Net32AlgoProductWrapper } from "./types";
 import { VendorId, VendorNameLookup } from "@repricer-monorepo/shared";
-import {
-  getHighestPriceBreakLessThanOrEqualTo,
-  getTotalCostForQuantity,
-  getTotalCostForQuantityWithUnitPriceOverride,
-  hasBadge,
-  Net32AlgoSolution,
-  Net32AlgoSolutionWithQBreakValid,
-} from "./algorithm";
+import { getHighestPriceBreakLessThanOrEqualTo, getTotalCostForQuantity, getTotalCostForQuantityWithUnitPriceOverride, hasBadge, Net32AlgoSolution, Net32AlgoSolutionWithQBreakValid } from "./algorithm";
 import { Decimal } from "decimal.js";
 
-export function createHtmlFileContent(
-  mpId: number,
-  net32Products: Net32AlgoProduct[],
-  solutions: Net32AlgoSolutionWithQBreakValid[],
-  net32url: string,
-  jobId: string,
-) {
+export function createHtmlFileContent(mpId: number, net32Products: Net32AlgoProduct[], solutions: Net32AlgoSolutionWithQBreakValid[], net32url: string, jobId: string) {
   // Check if solutions is empty
   if (solutions.length === 0) {
     // Return minimal HTML with just basic info when no solutions
@@ -60,10 +47,7 @@ export function createHtmlFileContent(
   let newAlgoSections = "";
 
   // Group solutions by quantity
-  const solutionsByQuantity = new Map<
-    number,
-    Net32AlgoSolutionWithQBreakValid[]
-  >();
+  const solutionsByQuantity = new Map<number, Net32AlgoSolutionWithQBreakValid[]>();
   for (const solution of solutions) {
     const quantity = solution.quantity;
     if (!solutionsByQuantity.has(quantity)) {
@@ -73,9 +57,7 @@ export function createHtmlFileContent(
   }
 
   // Sort quantities in ascending order
-  const sortedQuantities = Array.from(solutionsByQuantity.keys()).sort(
-    (a, b) => a - b,
-  );
+  const sortedQuantities = Array.from(solutionsByQuantity.keys()).sort((a, b) => a - b);
 
   for (const quantity of sortedQuantities) {
     if (quantity === 0) continue; // Skip quantity 0
@@ -95,9 +77,7 @@ export function createHtmlFileContent(
         });
     }
 
-    newAlgoSections +=
-      `<br/><br/><b>Price Solutions</b>` +
-      buildSolutionsTable(solutionsForQuantity);
+    newAlgoSections += `<br/><br/><b>Price Solutions</b>` + buildSolutionsTable(solutionsForQuantity);
 
     // Add divider between quantities
     if (quantity < sortedQuantities[sortedQuantities.length - 1]) {
@@ -150,19 +130,13 @@ export function createHtmlFileContent(
   }
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
   if (applicationConfig.WRITE_HTML_CHAIN_OF_THOUGHT_TO_FILE) {
-    const htmlFile = path.join(
-      htmlDir,
-      `repriceProductV3_${mpId}_${vendorId}_${timestamp}.html`,
-    );
+    const htmlFile = path.join(htmlDir, `repriceProductV3_${mpId}_${vendorId}_${timestamp}.html`);
     fs.writeFileSync(htmlFile, htmlContent, "utf8");
   }
   return htmlContent;
 }
 
-function buildBeforeLadderTable(beforeLadder: {
-  quantity: number;
-  ladder: Net32AlgoProduct[];
-}) {
+function buildBeforeLadderTable(beforeLadder: { quantity: number; ladder: Net32AlgoProduct[] }) {
   const ladder = beforeLadder.ladder;
   if (!ladder || ladder.length === 0) {
     return "<p>No existing products</p>";
@@ -170,29 +144,17 @@ function buildBeforeLadderTable(beforeLadder: {
 
   const rows = ladder
     .map((product) => {
-      const priceBreak = getHighestPriceBreakLessThanOrEqualTo(
-        product,
-        beforeLadder.quantity,
-      );
+      const priceBreak = getHighestPriceBreakLessThanOrEqualTo(product, beforeLadder.quantity);
       const unitPrice = priceBreak.unitPrice;
-      const totalPrice = getTotalCostForQuantity(
-        product,
-        beforeLadder.quantity,
-      );
+      const totalPrice = getTotalCostForQuantity(product, beforeLadder.quantity);
       const badge = hasBadge(product);
-      const vendorName =
-        product.vendorName + (badge ? ' <span title="Badge">🏅</span>' : "");
+      const vendorName = product.vendorName + (badge ? ' <span title="Badge">🏅</span>' : "");
 
-      // Check if this is one of our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT, TRIAD)
+      // Check if this is one of our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT, TRIAD, BITESUPPLY)
       const isOurVendor = Object.values(VendorId).includes(product.vendorId);
       const rowStyle = isOurVendor ? ' style="background: #ffff99;"' : "";
 
-      const priceBreaksDisplay =
-        product.priceBreaks.length > 1
-          ? product.priceBreaks
-              .map((pb) => `${pb.minQty}@${pb.unitPrice}`)
-              .join(", ")
-          : "";
+      const priceBreaksDisplay = product.priceBreaks.length > 1 ? product.priceBreaks.map((pb) => `${pb.minQty}@${pb.unitPrice}`).join(", ") : "";
       return `<tr${rowStyle}><td>${vendorName}</td><td>${unitPrice}</td><td>${product.standardShipping}</td><td>${totalPrice}</td><td>${product.freeShippingThreshold}</td><td>${product.shippingTime}</td><td>${product.inventory}</td><td>${priceBreaksDisplay}</td></tr>`;
     })
     .join("");
@@ -230,9 +192,7 @@ function buildSolutionsTable(solutions: Net32AlgoSolutionWithQBreakValid[]) {
         .map((vendorId) => {
           if (solution.vendor.vendorId === vendorId) {
             const bestPrice = solution.vendor.bestPrice;
-            const priceDisplay = bestPrice
-              ? bestPrice.toNumber().toString()
-              : "N/A";
+            const priceDisplay = bestPrice ? bestPrice.toNumber().toString() : "N/A";
             return `<td>${priceDisplay}</td>`;
           }
           return "<td></td>"; // Empty cell if vendor not in this solution
@@ -275,41 +235,23 @@ function buildSolutionsTable(solutions: Net32AlgoSolutionWithQBreakValid[]) {
 }
 
 function buildSourceCombinationsTable(solution: Net32AlgoSolution) {
-  if (
-    !solution.postSolutionInsertBoard ||
-    solution.postSolutionInsertBoard.length === 0
-  ) {
+  if (!solution.postSolutionInsertBoard || solution.postSolutionInsertBoard.length === 0) {
     return "<p>No source combination available for this solution. </p>";
   }
 
   const rows = solution.postSolutionInsertBoard
     .map((product) => {
-      const priceBreak = getHighestPriceBreakLessThanOrEqualTo(
-        product,
-        solution.quantity,
-      );
-      const unitPrice = product.bestPrice
-        ? product.bestPrice
-        : new Decimal(priceBreak.unitPrice);
-      const totalCost = getTotalCostForQuantityWithUnitPriceOverride(
-        product,
-        solution.quantity,
-        unitPrice,
-      );
+      const priceBreak = getHighestPriceBreakLessThanOrEqualTo(product, solution.quantity);
+      const unitPrice = product.bestPrice ? product.bestPrice : new Decimal(priceBreak.unitPrice);
+      const totalCost = getTotalCostForQuantityWithUnitPriceOverride(product, solution.quantity, unitPrice);
       const badge = hasBadge(product);
-      const vendorName =
-        product.vendorName + (badge ? ' <span title="Badge">🏅</span>' : "");
+      const vendorName = product.vendorName + (badge ? ' <span title="Badge">🏅</span>' : "");
 
       // Check if this is one of our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT)
       const isOurVendor = Object.values(VendorId).includes(product.vendorId);
       const rowStyle = isOurVendor ? ' style="background: #ffff99;"' : "";
 
-      const priceBreaksDisplay =
-        product.priceBreaks.length > 1
-          ? product.priceBreaks
-              .map((pb) => `${pb.minQty}@${pb.unitPrice}`)
-              .join(", ")
-          : "";
+      const priceBreaksDisplay = product.priceBreaks.length > 1 ? product.priceBreaks.map((pb) => `${pb.minQty}@${pb.unitPrice}`).join(", ") : "";
 
       return `<tr${rowStyle}><td>${vendorName}</td><td>${unitPrice}</td><td>${product.standardShipping}</td><td>${totalCost}</td><td>${product.freeShippingThreshold}</td><td>${product.shippingTime}</td><td>${product.inventory}</td><td>${priceBreaksDisplay}</td></tr>`;
     })
@@ -320,14 +262,11 @@ function buildSourceCombinationsTable(solution: Net32AlgoSolution) {
       <tr><th>Vendor Name</th><th>Unit Price</th><th>Shipping Cost</th><th>Total</th><th>Free Shipping Threshold</th><th>Shipping Time</th><th>Inventory</th><th>Existing Price Breaks</th></tr>
     </thead>
     <tbody>${rows}</tbody>
-  </table><div><i>Shows the source combination used for this solution. Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT, TRIAD).</i></div>`;
+  </table><div><i>Shows the source combination used for this solution. Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT, TRIAD, BITESUPPLY).</i></div>`;
 }
 
 function buildVendorViewOfBoardTable(solution: Net32AlgoSolution) {
-  if (
-    !solution.everyoneFromViewOfOwnVendorRanked ||
-    solution.everyoneFromViewOfOwnVendorRanked.length === 0
-  ) {
+  if (!solution.everyoneFromViewOfOwnVendorRanked || solution.everyoneFromViewOfOwnVendorRanked.length === 0) {
     return "<p>No competitors or sisters available for this solution.</p>";
   }
 
@@ -337,19 +276,13 @@ function buildVendorViewOfBoardTable(solution: Net32AlgoSolution) {
       const unitPrice = productWrapper.effectiveUnitPrice;
       const totalCost = productWrapper.totalCost;
       const badge = hasBadge(product);
-      const vendorName =
-        product.vendorName + (badge ? ' <span title="Badge">🏅</span>' : "");
+      const vendorName = product.vendorName + (badge ? ' <span title="Badge">🏅</span>' : "");
 
-      // Check if this is one of our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT, TRIAD)
+      // Check if this is one of our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT, TRIAD, BITESUPPLY)
       const isOurVendor = Object.values(VendorId).includes(product.vendorId);
       const rowStyle = isOurVendor ? ' style="background: #ffff99;"' : "";
 
-      const priceBreaksDisplay =
-        product.priceBreaks.length > 1
-          ? product.priceBreaks
-              .map((pb) => `${pb.minQty}@${pb.unitPrice}`)
-              .join(", ")
-          : "";
+      const priceBreaksDisplay = product.priceBreaks.length > 1 ? product.priceBreaks.map((pb) => `${pb.minQty}@${pb.unitPrice}`).join(", ") : "";
 
       return `<tr${rowStyle}><td>${vendorName}</td><td>${unitPrice}</td><td>${product.standardShipping}</td><td>${totalCost}</td><td>${product.freeShippingThreshold}</td><td>${product.shippingTime}</td><td>${product.inventory}</td><td>${priceBreaksDisplay}</td><td>${productWrapper.buyBoxRank}</td></tr>`;
     })
@@ -360,17 +293,14 @@ function buildVendorViewOfBoardTable(solution: Net32AlgoSolution) {
       <tr><th>Vendor Name</th><th>Unit Price</th><th>Shipping Cost</th><th>Total</th><th>Free Shipping Threshold</th><th>Shipping Time</th><th>Inventory</th><th>Existing Price Breaks</th><th>Buy Box Rank</th></tr>
     </thead>
     <tbody>${rows}</tbody>
-  </table><div><i>Shows the competitors and sisters ranked by their position in the board for this solution. Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT, TRIAD).</i></div>`;
+  </table><div><i>Shows the competitors and sisters ranked by their position in the board for this solution. Rows highlighted in yellow are our vendors (FRONTIER, MVP, TRADENT, FIRSTDENT, TOPDENT, TRIAD, BITESUPPLY).</i></div>`;
 }
 
 function buildResultsTable(solution: Net32AlgoSolutionWithQBreakValid) {
   const result = solution.algoResult || "N/A";
   const qBreakValid = solution.qBreakValid ? "Yes" : "No";
   const comment = solution.comment || "N/A";
-  const suggestedPrice =
-    solution.suggestedPrice !== null
-      ? solution.suggestedPrice.toString()
-      : "N/A";
+  const suggestedPrice = solution.suggestedPrice !== null ? solution.suggestedPrice.toString() : "N/A";
   const triggeredByVendor = solution.triggeredByVendor || "N/A";
   const rawTriggeredByVendor = solution.rawTriggeredByVendor || "N/A";
 
@@ -390,9 +320,7 @@ function buildResultsTable(solution: Net32AlgoSolutionWithQBreakValid) {
   </table>`;
 }
 
-function buildVendorSettingsTableSingleVendor(
-  vendorSetting: V2AlgoSettingsData,
-) {
+function buildVendorSettingsTableSingleVendor(vendorSetting: V2AlgoSettingsData) {
   if (!vendorSetting) {
     return "<p>No vendor settings available</p>";
   }

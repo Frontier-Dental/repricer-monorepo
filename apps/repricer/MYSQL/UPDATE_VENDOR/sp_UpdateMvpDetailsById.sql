@@ -63,7 +63,9 @@ CREATE PROCEDURE sp_UpdateMvpDetailsById (
   IN _getBBBadge boolean,
   IN _getBBShipping boolean,
   IN _getBBBadgeValue decimal(5, 3),
-  IN _getBBShippingValue decimal(5, 3)
+  IN _getBBShippingValue decimal(5, 3),
+  IN _qBreakCount int,
+  IN _qBreakDetails varchar(1024)
 ) BEGIN
 select
   *
@@ -132,7 +134,9 @@ set
   GetBBBadge = _getBBBadge,
   GetBBShipping = _getBBShipping,
   GetBBBadgeValue = _getBBBadgeValue,
-  GetBBShippingValue = _getBBShippingValue
+  GetBBShippingValue = _getBBShippingValue,
+  QBreakCount = _qBreakCount,
+  QBreakDetails = _qBreakDetails
 where
   MpId = _mpid;
 

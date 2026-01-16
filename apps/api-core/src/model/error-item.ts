@@ -8,14 +8,7 @@ export class ErrorItemModel {
   insertReason: any;
   vendorName: any;
 
-  constructor(
-    _mpId: string | number,
-    _nextCronTime: any,
-    _active: any,
-    _contextCronId: any,
-    _insertReason: any,
-    _vendor: any,
-  ) {
+  constructor(_mpId: string | number, _nextCronTime: any, _active: any, _contextCronId: any, _insertReason: any, _vendor: any) {
     this.mpId = parseInt(_mpId as string);
     this.nextCronTime = _nextCronTime;
     this.active = _active;

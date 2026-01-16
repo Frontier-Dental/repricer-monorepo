@@ -10,18 +10,7 @@ export class WaitlistModel {
   updated_at?: Date;
   id?: number;
 
-  constructor(
-    mp_id: number,
-    vendor_name: string,
-    old_inventory: number,
-    new_inventory: number,
-    net32_inventory: number,
-    api_status?: string,
-    message?: string,
-    created_at?: Date,
-    updated_at?: Date,
-    id?: number,
-  ) {
+  constructor(mp_id: number, vendor_name: string, old_inventory: number, new_inventory: number, net32_inventory: number, api_status?: string, message?: string, created_at?: Date, updated_at?: Date, id?: number) {
     this.mp_id = mp_id;
     this.vendor_name = vendor_name;
     this.old_inventory = old_inventory;

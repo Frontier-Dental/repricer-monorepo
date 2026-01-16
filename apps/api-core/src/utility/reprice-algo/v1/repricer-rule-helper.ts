@@ -326,14 +326,15 @@ export function AppendNewPriceBreakActivation(repriceResult: RepriceModel): Repr
   return repriceResult;
 }
 
-export async function ApplyRepriceDownBadgeCheckRule(repriceResult: RepriceModel, net32Result: Net32Product[], productItem: FrontierProduct, badgePercentageDown: number): Promise<RepriceModel> {
+export async function ApplyRepriceDownBadgeCheckRule(repriceResult: RepriceModel, net32Result: any[], productItem: FrontierProduct, badgePercentageDown: number): Promise<RepriceModel> {
   if (badgePercentageDown == 0) return repriceResult;
   let $eval = repriceResult;
   let tempProductItem = _.cloneDeep(productItem);
   const $ = await globalParam.GetInfo(productItem.mpid, productItem);
   const excludedVendors = productItem.competeAll ? [] : $.EXCLUDED_VENDOR_ID.split(";");
   const ownVendorItem = net32Result.find((x: any) => x.vendorId.toString() == productItem.ownVendorId!.toString());
-  const existingPrice = ownVendorItem ? ownVendorItem.priceBreaks!.find((x) => x.minQty == 1)!.unitPrice : 0;
+  const existingPrice = ownVendorItem ? ownVendorItem.priceBreaks!.find((x: any) => x.minQty == 1)!.unitPrice : 0;
+  const heavyShippingPrice = ownVendorItem.heavyShipping ? parseFloat(ownVendorItem.heavyShipping) : 0;
   const calculatedSuggestedPrice = getSuggestedPriceForMinQty(repriceResult, 1);
   tempProductItem.badgeIndicator = "BADGE_ONLY";
   const listOfAuthorizedVendors = await filterMapper.FilterBasedOnParams(net32Result, tempProductItem, "BADGE_INDICATOR");
@@ -360,7 +361,7 @@ export async function ApplyRepriceDownBadgeCheckRule(repriceResult: RepriceModel
         }
       });
       const lowestAuthVendorPrice = lowestUnitPrice;
-      let effectivePrice = subtractPercentage(lowestAuthVendorPrice as unknown as number, parseFloat(productItem.badgePercentageDown));
+      let effectivePrice = subtractPercentage((lowestAuthVendorPrice as unknown as number) + heavyShippingPrice, parseFloat(productItem.badgePercentageDown)) - heavyShippingPrice;
       const floorPriceOfProduct = parseFloat(productItem.floorPrice);
 
       if (calculatedSuggestedPrice <= effectivePrice) {

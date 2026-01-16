@@ -1,10 +1,4 @@
-import {
-  AlgoBadgeIndicator,
-  AlgoHandlingTimeGroup,
-  AlgoPriceDirection,
-  AlgoPriceStrategy,
-  VendorNameLookup,
-} from "@repricer-monorepo/shared";
+import { AlgoBadgeIndicator, AlgoHandlingTimeGroup, AlgoPriceDirection, AlgoPriceStrategy, VendorNameLookup } from "@repricer-monorepo/shared";
 import { getKnexInstance, destroyKnexInstance } from "../knex-wrapper";
 
 export interface V2AlgoSettings {
@@ -66,22 +60,15 @@ export interface V2AlgoSettingsDb {
   price_strategy: AlgoPriceStrategy;
 }
 
-export async function getV2AlgoSettingsByMpId(
-  mpId: number,
-): Promise<V2AlgoSettingsDb[]> {
+export async function getV2AlgoSettingsByMpId(mpId: number): Promise<V2AlgoSettingsDb[]> {
   const knex = getKnexInstance();
 
-  const settings = await knex("v2_algo_settings")
-    .where("mp_id", mpId)
-    .select("*")
-    .orderBy("vendor_id");
+  const settings = await knex("v2_algo_settings").where("mp_id", mpId).select("*").orderBy("vendor_id");
   //destroyKnexInstance();
   return settings;
 }
 
-export async function updateV2AlgoSettings(
-  settings: V2AlgoSettings,
-): Promise<number> {
+export async function updateV2AlgoSettings(settings: V2AlgoSettings): Promise<number> {
   const knex = getKnexInstance();
   try {
     // Check if settings exist based on mp_id and vendor_id
@@ -131,9 +118,7 @@ interface SyncResult {
   }>;
 }
 
-export async function syncVendorSettingsForMpId(
-  mpId: number,
-): Promise<SyncResult> {
+export async function syncVendorSettingsForMpId(mpId: number): Promise<SyncResult> {
   const knex = getKnexInstance();
 
   const vendorConfigs: VendorConfig[] = [
@@ -167,6 +152,11 @@ export async function syncVendorSettingsForMpId(
       vendorId: 5,
       vendorName: "Triad",
     },
+    {
+      tableName: "table_biteSupplyDetails",
+      vendorId: 10,
+      vendorName: "BiteSupply",
+    },
   ];
 
   let totalInserted = 0;
@@ -182,9 +172,7 @@ export async function syncVendorSettingsForMpId(
   const syncPromises = vendorConfigs.map(async (vendorConfig) => {
     try {
       // Check if vendor table exists
-      const vendorTableExists = await knex.schema.hasTable(
-        vendorConfig.tableName,
-      );
+      const vendorTableExists = await knex.schema.hasTable(vendorConfig.tableName);
       if (!vendorTableExists) {
         return {
           vendorName: vendorConfig.vendorName,
@@ -195,9 +183,7 @@ export async function syncVendorSettingsForMpId(
       }
 
       // Get vendor settings for specific MP ID
-      const vendorSettings = await knex(vendorConfig.tableName)
-        .where("MpId", mpId)
-        .select("*");
+      const vendorSettings = await knex(vendorConfig.tableName).where("MpId", mpId).select("*");
 
       if (vendorSettings.length === 0) {
         return {
@@ -212,51 +198,29 @@ export async function syncVendorSettingsForMpId(
         mp_id: setting.MpId,
         vendor_id: vendorConfig.vendorId,
         enabled: setting.Activated === 1,
-        suppress_price_break_if_Q1_not_updated:
-          setting.SuppressPriceBreakForOne === 1,
+        suppress_price_break_if_Q1_not_updated: setting.SuppressPriceBreakForOne === 1,
         suppress_price_break: setting.SuppressPriceBreak === 1,
         compete_on_price_break_only: setting.BeatQPrice === 1,
-        up_down:
-          setting.RepricingRule === 2
-            ? AlgoPriceDirection.UP_DOWN
-            : AlgoPriceDirection.DOWN,
-        badge_indicator:
-          setting.BadgeIndicator === "BADGE_ONLY"
-            ? AlgoBadgeIndicator.BADGE
-            : AlgoBadgeIndicator.ALL,
+        up_down: setting.RepricingRule === 2 ? AlgoPriceDirection.UP_DOWN : AlgoPriceDirection.DOWN,
+        badge_indicator: setting.BadgeIndicator === "BADGE_ONLY" ? AlgoBadgeIndicator.BADGE : AlgoBadgeIndicator.ALL,
         execution_priority: setting.ExecutionPriority || 0,
         reprice_up_percentage: setting.PercentageIncrease || -1,
         compare_q2_with_q1: setting.CompareWithQ1 === 1,
         compete_with_all_vendors: setting.CompeteAll === 1,
         reprice_up_badge_percentage: setting.BadgePercentage || -1,
-        sister_vendor_ids: setting.SisterVendorId
-          ? setting.SisterVendorId.split(";").join(",")
-          : "",
-        exclude_vendors: setting.ExcludedVendors
-          ? setting.ExcludedVendors.split(";").join(",")
-          : "",
-        inactive_vendor_id: setting.InactiveVendorId
-          ? setting.InactiveVendorId.split(";").join(",")
-          : "",
+        sister_vendor_ids: setting.SisterVendorId ? setting.SisterVendorId.split(";").join(",") : "",
+        exclude_vendors: setting.ExcludedVendors ? setting.ExcludedVendors.split(";").join(",") : "",
+        inactive_vendor_id: setting.InactiveVendorId ? setting.InactiveVendorId.split(";").join(",") : "",
         handling_time_group: setting.HandlingTimeFilter || "ALL",
         keep_position: setting.KeepPosition === 1,
         inventory_competition_threshold: setting.InventoryThreshold || 1,
-        reprice_down_percentage:
-          Number(setting.PercentageDown) !== 0
-            ? Number(setting.PercentageDown) * 100
-            : -1,
+        reprice_down_percentage: Number(setting.PercentageDown) !== 0 ? Number(setting.PercentageDown) * 100 : -1,
         floor_price: setting.FloorPrice || 0,
         max_price: setting.MaxPrice || 99999999.99,
-        reprice_down_badge_percentage:
-          Number(setting.BadgePercentageDown) !== 0
-            ? Number(setting.BadgePercentageDown) * 100
-            : -1,
+        reprice_down_badge_percentage: Number(setting.BadgePercentageDown) !== 0 ? Number(setting.BadgePercentageDown) * 100 : -1,
         floor_compete_with_next: setting.CompeteWithNext === 1,
         own_vendor_threshold: setting.OwnVendorThreshold || 1,
-        price_strategy:
-          setting.IsNCNeeded === 1
-            ? AlgoPriceStrategy.TOTAL
-            : AlgoPriceStrategy.UNIT,
+        price_strategy: setting.IsNCNeeded === 1 ? AlgoPriceStrategy.TOTAL : AlgoPriceStrategy.UNIT,
       }));
 
       let insertedCount = 0;
@@ -358,51 +322,29 @@ export interface ProductWithAlgoData {
   channel_name: string;
 }
 
-export async function getAllProductsWithAlgoData(): Promise<
-  ProductWithAlgoData[]
-> {
+export async function getAllProductsWithAlgoData(): Promise<ProductWithAlgoData[]> {
   const knex = getKnexInstance();
 
   const query = knex("v2_algo_settings as vas")
     .leftJoin("channel_ids as ci", function () {
-      this.on("vas.mp_id", "=", "ci.mp_id").andOn(
-        "vas.vendor_id",
-        "=",
-        "ci.vendor_id",
-      );
+      this.on("vas.mp_id", "=", "ci.mp_id").andOn("vas.vendor_id", "=", "ci.vendor_id");
     })
     .leftJoin("table_scrapeProductList as spl", function () {
       this.on("vas.mp_id", "=", "spl.MpId");
     })
     .leftJoin(
       function () {
-        this.select(
-          "mp_id",
-          "vendor_id",
-          knex.raw("MAX(cron_name) as cron_name"),
-          knex.raw("MAX(created_at) as created_at"),
-        )
+        this.select("mp_id", "vendor_id", knex.raw("MAX(cron_name) as cron_name"), knex.raw("MAX(created_at) as created_at"))
           .from("v2_algo_results as var1")
           .whereIn(["mp_id", "vendor_id", "created_at"], function () {
-            this.select(
-              "mp_id",
-              "vendor_id",
-              knex.raw("MAX(created_at) as created_at"),
-            )
-              .from("v2_algo_results")
-              .where("price_update_result", "=", "OK")
-              .groupBy("mp_id", "vendor_id");
+            this.select("mp_id", "vendor_id", knex.raw("MAX(created_at) as created_at")).from("v2_algo_results").where("price_update_result", "=", "OK").groupBy("mp_id", "vendor_id");
           })
           .groupBy("mp_id", "vendor_id")
           .as("latest_updated_result");
       },
       function () {
-        this.on("vas.mp_id", "=", "latest_updated_result.mp_id").andOn(
-          "vas.vendor_id",
-          "=",
-          "latest_updated_result.vendor_id",
-        );
-      },
+        this.on("vas.mp_id", "=", "latest_updated_result.mp_id").andOn("vas.vendor_id", "=", "latest_updated_result.vendor_id");
+      }
     )
     .leftJoin(
       function () {
@@ -441,28 +383,18 @@ export async function getAllProductsWithAlgoData(): Promise<
               ORDER BY quantity ASC 
               SEPARATOR ','
             ) as comment
-          `),
+          `)
         )
           .from("v2_algo_results as var2")
           .whereIn(["mp_id", "vendor_id", "created_at"], function () {
-            this.select(
-              "mp_id",
-              "vendor_id",
-              knex.raw("MAX(created_at) as created_at"),
-            )
-              .from("v2_algo_results")
-              .groupBy("mp_id", "vendor_id");
+            this.select("mp_id", "vendor_id", knex.raw("MAX(created_at) as created_at")).from("v2_algo_results").groupBy("mp_id", "vendor_id");
           })
           .groupBy("mp_id", "vendor_id")
           .as("latest_cron_run");
       },
       function () {
-        this.on("vas.mp_id", "=", "latest_cron_run.mp_id").andOn(
-          "vas.vendor_id",
-          "=",
-          "latest_cron_run.vendor_id",
-        );
-      },
+        this.on("vas.mp_id", "=", "latest_cron_run.mp_id").andOn("vas.vendor_id", "=", "latest_cron_run.vendor_id");
+      }
     )
     .leftJoin(
       function () {
@@ -479,18 +411,11 @@ export async function getAllProductsWithAlgoData(): Promise<
             SEPARATOR ','
           ) as triggered_by_vendor
         `),
-          knex.raw("MAX(created_at) as created_at"),
+          knex.raw("MAX(created_at) as created_at")
         )
           .from("v2_algo_results as var3")
           .whereIn(["mp_id", "vendor_id", "created_at"], function () {
-            this.select(
-              "mp_id",
-              "vendor_id",
-              knex.raw("MAX(created_at) as created_at"),
-            )
-              .from("v2_algo_results")
-              .where("result", "LIKE", "%CHANGE%")
-              .groupBy("mp_id", "vendor_id");
+            this.select("mp_id", "vendor_id", knex.raw("MAX(created_at) as created_at")).from("v2_algo_results").where("result", "LIKE", "%CHANGE%").groupBy("mp_id", "vendor_id");
           })
           .whereNotNull("triggered_by_vendor")
           .where("result", "LIKE", "%CHANGE%")
@@ -498,12 +423,8 @@ export async function getAllProductsWithAlgoData(): Promise<
           .as("latest_change_result");
       },
       function () {
-        this.on("vas.mp_id", "=", "latest_change_result.mp_id").andOn(
-          "vas.vendor_id",
-          "=",
-          "latest_change_result.vendor_id",
-        );
-      },
+        this.on("vas.mp_id", "=", "latest_change_result.mp_id").andOn("vas.vendor_id", "=", "latest_change_result.vendor_id");
+      }
     );
 
   const results = query
@@ -532,7 +453,7 @@ export async function getAllProductsWithAlgoData(): Promise<
       "latest_cron_run.result",
       "latest_cron_run.lowest_price",
       "latest_change_result.triggered_by_vendor as triggered_by_vendor",
-      "latest_change_result.created_at as triggered_by_date",
+      "latest_change_result.created_at as triggered_by_date"
     )
     .orderBy(["vas.mp_id", "vas.vendor_id"]);
 
@@ -541,22 +462,16 @@ export async function getAllProductsWithAlgoData(): Promise<
   return executed.map(
     (result): ProductWithAlgoData => ({
       ...result,
-      channel_name:
-        VendorNameLookup[result.vendor_id] || `Vendor ${result.vendor_id}`,
-    }),
+      channel_name: VendorNameLookup[result.vendor_id] || `Vendor ${result.vendor_id}`,
+    })
   );
 }
 
-export async function toggleV2AlgoEnabled(
-  mpId: number,
-  vendorId: number,
-): Promise<{ enabled: boolean }> {
+export async function toggleV2AlgoEnabled(mpId: number, vendorId: number): Promise<{ enabled: boolean }> {
   const knex = getKnexInstance();
 
   // First, check if settings exist
-  const currentSetting = await knex("v2_algo_settings")
-    .where({ mp_id: mpId, vendor_id: vendorId })
-    .first();
+  const currentSetting = await knex("v2_algo_settings").where({ mp_id: mpId, vendor_id: vendorId }).first();
 
   if (!currentSetting) {
     // Settings don't exist, create them with enabled = true
@@ -574,9 +489,7 @@ export async function toggleV2AlgoEnabled(
   const newEnabledStatus = !currentSetting.enabled;
 
   // Update the database
-  await knex("v2_algo_settings")
-    .where({ mp_id: mpId, vendor_id: vendorId })
-    .update({ enabled: newEnabledStatus });
+  await knex("v2_algo_settings").where({ mp_id: mpId, vendor_id: vendorId }).update({ enabled: newEnabledStatus });
 
   return { enabled: newEnabledStatus };
 }
@@ -584,10 +497,7 @@ export async function toggleV2AlgoEnabled(
 export async function getNet32Url(mpId: number): Promise<string | null> {
   const knex = getKnexInstance();
 
-  const result = await knex("table_scrapeProductList")
-    .where("MpId", mpId)
-    .select("Net32Url")
-    .first();
+  const result = await knex("table_scrapeProductList").where("MpId", mpId).select("Net32Url").first();
 
   return result?.Net32Url || null;
 }
@@ -620,6 +530,11 @@ const VENDOR_CONFIGS = [
     vendorId: 5,
     vendorName: "Triad",
   },
+  {
+    tableName: "table_biteSupplyDetails",
+    vendorId: 10,
+    vendorName: "BiteSupply",
+  },
 ];
 
 // Transform vendor settings to v2_algo_settings format
@@ -628,95 +543,56 @@ function transformVendorSettings(vendorSettings: any[], vendorConfig: any) {
     mp_id: setting.MpId,
     vendor_id: vendorConfig.vendorId,
     enabled: setting.Activated === 1,
-    suppress_price_break_if_Q1_not_updated:
-      setting.SuppressPriceBreakForOne === 1,
+    suppress_price_break_if_Q1_not_updated: setting.SuppressPriceBreakForOne === 1,
     suppress_price_break: setting.SuppressPriceBreak === 1,
     compete_on_price_break_only: setting.BeatQPrice === 1,
-    up_down:
-      setting.RepricingRule === 2
-        ? AlgoPriceDirection.UP_DOWN
-        : AlgoPriceDirection.DOWN,
-    badge_indicator:
-      setting.BadgeIndicator === "BADGE_ONLY"
-        ? AlgoBadgeIndicator.BADGE
-        : AlgoBadgeIndicator.ALL,
+    up_down: setting.RepricingRule === 2 ? AlgoPriceDirection.UP_DOWN : AlgoPriceDirection.DOWN,
+    badge_indicator: setting.BadgeIndicator === "BADGE_ONLY" ? AlgoBadgeIndicator.BADGE : AlgoBadgeIndicator.ALL,
     execution_priority: setting.ExecutionPriority || 0,
     reprice_up_percentage: setting.PercentageIncrease || -1,
     compare_q2_with_q1: setting.CompareWithQ1 === 1,
     compete_with_all_vendors: setting.CompeteAll === 1,
     reprice_up_badge_percentage: setting.BadgePercentage || -1,
-    sister_vendor_ids: setting.SisterVendorId
-      ? setting.SisterVendorId.split(";").join(",")
-      : "",
-    exclude_vendors: setting.ExcludedVendors
-      ? setting.ExcludedVendors.split(";").join(",")
-      : "",
-    inactive_vendor_id: setting.InactiveVendorId
-      ? setting.InactiveVendorId.split(";").join(",")
-      : "",
-    handling_time_group:
-      setting.HandlingTimeFilter || AlgoHandlingTimeGroup.ALL,
+    sister_vendor_ids: setting.SisterVendorId ? setting.SisterVendorId.split(";").join(",") : "",
+    exclude_vendors: setting.ExcludedVendors ? setting.ExcludedVendors.split(";").join(",") : "",
+    inactive_vendor_id: setting.InactiveVendorId ? setting.InactiveVendorId.split(";").join(",") : "",
+    handling_time_group: setting.HandlingTimeFilter || AlgoHandlingTimeGroup.ALL,
     keep_position: setting.KeepPosition === 1,
     inventory_competition_threshold: setting.InventoryThreshold || 1,
-    reprice_down_percentage:
-      Number(setting.PercentageDown) !== 0
-        ? Number(setting.PercentageDown) * 100
-        : -1,
+    reprice_down_percentage: Number(setting.PercentageDown) !== 0 ? Number(setting.PercentageDown) * 100 : -1,
     floor_price: setting.FloorPrice || 0,
     max_price: setting.MaxPrice || 99999999.99,
-    reprice_down_badge_percentage:
-      Number(setting.BadgePercentageDown) !== 0
-        ? Number(setting.BadgePercentageDown) * 100
-        : -1,
+    reprice_down_badge_percentage: Number(setting.BadgePercentageDown) !== 0 ? Number(setting.BadgePercentageDown) * 100 : -1,
     floor_compete_with_next: setting.CompeteWithNext === 1,
     own_vendor_threshold: setting.OwnVendorThreshold || 1,
-    price_strategy:
-      setting.IsNCNeeded === 1
-        ? AlgoPriceStrategy.TOTAL
-        : AlgoPriceStrategy.UNIT,
+    price_strategy: setting.IsNCNeeded === 1 ? AlgoPriceStrategy.TOTAL : AlgoPriceStrategy.UNIT,
     target_price: setting.UnitPrice || null,
   }));
 }
 
 // Perform batch delete-then-insert operations
-async function performBatchDeleteThenInsert(
-  knex: any,
-  transformedSettings: any[],
-  vendorConfig: any,
-): Promise<{ insertedCount: number }> {
+async function performBatchDeleteThenInsert(knex: any, transformedSettings: any[], vendorConfig: any): Promise<{ insertedCount: number }> {
   let insertedCount = 0;
 
   try {
-    console.log(
-      `🔍 Starting batch delete-then-insert for ${vendorConfig.vendorName} with ${transformedSettings.length} settings`,
-    );
+    console.log(`🔍 Starting batch delete-then-insert for ${vendorConfig.vendorName} with ${transformedSettings.length} settings`);
 
     // Use a transaction for the entire operation
     await knex.transaction(async (trx: any) => {
       console.log(`🔄 Transaction started for ${vendorConfig.vendorName}...`);
 
       // Delete all existing records for this vendor
-      console.log(
-        `🗑️  Deleting all existing records for ${vendorConfig.vendorName}...`,
-      );
-      const deletedCount = await trx("v2_algo_settings")
-        .where("vendor_id", vendorConfig.vendorId)
-        .del();
+      console.log(`🗑️  Deleting all existing records for ${vendorConfig.vendorName}...`);
+      const deletedCount = await trx("v2_algo_settings").where("vendor_id", vendorConfig.vendorId).del();
 
-      console.log(
-        `🗑️  Deleted ${deletedCount} existing records for ${vendorConfig.vendorName}`,
-      );
+      console.log(`🗑️  Deleted ${deletedCount} existing records for ${vendorConfig.vendorName}`);
 
       // Insert all new records
       if (transformedSettings.length > 0) {
-        console.log(
-          `💾 Inserting ${transformedSettings.length} new records for ${vendorConfig.vendorName}...`,
-        );
+        console.log(`💾 Inserting ${transformedSettings.length} new records for ${vendorConfig.vendorName}...`);
         await trx("v2_algo_settings").insert(transformedSettings);
         insertedCount = transformedSettings.length;
-        console.log(
-          `✅ Inserted ${transformedSettings.length} new records for ${vendorConfig.vendorName}`,
-        );
+        console.log(`✅ Inserted ${transformedSettings.length} new records for ${vendorConfig.vendorName}`);
       } else {
         console.log(`⏭️  No records to insert for ${vendorConfig.vendorName}`);
       }
@@ -724,14 +600,9 @@ async function performBatchDeleteThenInsert(
       console.log(`🔄 Transaction completed for ${vendorConfig.vendorName}`);
     });
 
-    console.log(
-      `✅ Batch delete-then-insert completed for ${vendorConfig.vendorName}: ${insertedCount} inserted`,
-    );
+    console.log(`✅ Batch delete-then-insert completed for ${vendorConfig.vendorName}: ${insertedCount} inserted`);
   } catch (error) {
-    console.error(
-      `❌ Error during batch operations for ${vendorConfig.vendorName}:`,
-      error,
-    );
+    console.error(`❌ Error during batch operations for ${vendorConfig.vendorName}:`, error);
     throw error;
   }
 
@@ -748,65 +619,38 @@ function transformChannelIdSettings(vendorSettings: any[], vendorConfig: any) {
 }
 
 // Perform batch delete-then-insert operations for channel IDs
-async function performChannelIdBatchDeleteThenInsert(
-  knex: any,
-  transformedSettings: any[],
-  vendorConfig: any,
-): Promise<{ insertedCount: number }> {
+async function performChannelIdBatchDeleteThenInsert(knex: any, transformedSettings: any[], vendorConfig: any): Promise<{ insertedCount: number }> {
   let insertedCount = 0;
 
   try {
-    console.log(
-      `🔍 Starting channel ID batch delete-then-insert for ${vendorConfig.vendorName} with ${transformedSettings.length} settings`,
-    );
+    console.log(`🔍 Starting channel ID batch delete-then-insert for ${vendorConfig.vendorName} with ${transformedSettings.length} settings`);
 
     // Use a transaction for the entire operation
     await knex.transaction(async (trx: any) => {
-      console.log(
-        `🔄 Channel ID transaction started for ${vendorConfig.vendorName}...`,
-      );
+      console.log(`🔄 Channel ID transaction started for ${vendorConfig.vendorName}...`);
 
       // Delete all existing records for this vendor
-      console.log(
-        `🗑️  Deleting all existing channel ID records for ${vendorConfig.vendorName}...`,
-      );
-      const deletedCount = await trx("channel_ids")
-        .where("vendor_id", vendorConfig.vendorId)
-        .del();
+      console.log(`🗑️  Deleting all existing channel ID records for ${vendorConfig.vendorName}...`);
+      const deletedCount = await trx("channel_ids").where("vendor_id", vendorConfig.vendorId).del();
 
-      console.log(
-        `🗑️  Deleted ${deletedCount} existing channel ID records for ${vendorConfig.vendorName}`,
-      );
+      console.log(`🗑️  Deleted ${deletedCount} existing channel ID records for ${vendorConfig.vendorName}`);
 
       // Insert all new records
       if (transformedSettings.length > 0) {
-        console.log(
-          `💾 Inserting ${transformedSettings.length} new channel ID records for ${vendorConfig.vendorName}...`,
-        );
+        console.log(`💾 Inserting ${transformedSettings.length} new channel ID records for ${vendorConfig.vendorName}...`);
         await trx("channel_ids").insert(transformedSettings);
         insertedCount = transformedSettings.length;
-        console.log(
-          `✅ Inserted ${transformedSettings.length} new channel ID records for ${vendorConfig.vendorName}`,
-        );
+        console.log(`✅ Inserted ${transformedSettings.length} new channel ID records for ${vendorConfig.vendorName}`);
       } else {
-        console.log(
-          `⏭️  No channel ID records to insert for ${vendorConfig.vendorName}`,
-        );
+        console.log(`⏭️  No channel ID records to insert for ${vendorConfig.vendorName}`);
       }
 
-      console.log(
-        `🔄 Channel ID transaction completed for ${vendorConfig.vendorName}`,
-      );
+      console.log(`🔄 Channel ID transaction completed for ${vendorConfig.vendorName}`);
     });
 
-    console.log(
-      `✅ Channel ID batch delete-then-insert completed for ${vendorConfig.vendorName}: ${insertedCount} inserted`,
-    );
+    console.log(`✅ Channel ID batch delete-then-insert completed for ${vendorConfig.vendorName}: ${insertedCount} inserted`);
   } catch (error) {
-    console.error(
-      `❌ Error during channel ID batch operations for ${vendorConfig.vendorName}:`,
-      error,
-    );
+    console.error(`❌ Error during channel ID batch operations for ${vendorConfig.vendorName}:`, error);
     throw error;
   }
 
@@ -819,66 +663,42 @@ async function syncVendorChannelIds(knex: any, vendorConfig: any) {
     console.log(`🔄 Starting ${vendorConfig.vendorName} channel ID sync...`);
 
     // Check if vendor table exists
-    const vendorTableExists = await knex.schema.hasTable(
-      vendorConfig.tableName,
-    );
+    const vendorTableExists = await knex.schema.hasTable(vendorConfig.tableName);
     if (!vendorTableExists) {
       console.log(`❌ ${vendorConfig.tableName} table does not exist`);
       return { insertedCount: 0, updatedCount: 0, skippedCount: 0 };
     }
 
     // Check if ChannelId column exists
-    const hasChannelIdColumn = await knex.schema.hasColumn(
-      vendorConfig.tableName,
-      "ChannelId",
-    );
+    const hasChannelIdColumn = await knex.schema.hasColumn(vendorConfig.tableName, "ChannelId");
 
     if (!hasChannelIdColumn) {
-      console.log(
-        `⚠️  ${vendorConfig.tableName} table does not have ChannelId column`,
-      );
+      console.log(`⚠️  ${vendorConfig.tableName} table does not have ChannelId column`);
       return { insertedCount: 0, updatedCount: 0, skippedCount: 0 };
     }
 
     // Get all vendor settings with ChannelId
-    const vendorSettings = await knex(vendorConfig.tableName)
-      .select("MpId", "ChannelId")
-      .whereNotNull("ChannelId")
-      .where("ChannelId", "!=", "");
+    const vendorSettings = await knex(vendorConfig.tableName).select("MpId", "ChannelId").whereNotNull("ChannelId").where("ChannelId", "!=", "");
 
-    console.log(
-      `📊 Found ${vendorSettings.length} ${vendorConfig.vendorName} settings with channel IDs to sync`,
-    );
+    console.log(`📊 Found ${vendorSettings.length} ${vendorConfig.vendorName} settings with channel IDs to sync`);
 
     if (vendorSettings.length === 0) {
-      console.log(
-        `ℹ️  No ${vendorConfig.vendorName} settings with channel IDs found to sync`,
-      );
+      console.log(`ℹ️  No ${vendorConfig.vendorName} settings with channel IDs found to sync`);
       return { insertedCount: 0, updatedCount: 0, skippedCount: 0 };
     }
 
     // Transform settings for insertion
-    const transformedSettings = transformChannelIdSettings(
-      vendorSettings,
-      vendorConfig,
-    );
+    const transformedSettings = transformChannelIdSettings(vendorSettings, vendorConfig);
 
     // Perform batch operations
-    const { insertedCount } = await performChannelIdBatchDeleteThenInsert(
-      knex,
-      transformedSettings,
-      vendorConfig,
-    );
+    const { insertedCount } = await performChannelIdBatchDeleteThenInsert(knex, transformedSettings, vendorConfig);
 
     console.log(`✅ Completed ${vendorConfig.vendorName} channel ID sync`);
     console.log(`✅ ${vendorConfig.vendorName}: ${insertedCount} inserted`);
 
     return { insertedCount };
   } catch (error) {
-    console.error(
-      `❌ Error during ${vendorConfig.vendorName} channel ID sync:`,
-      error,
-    );
+    console.error(`❌ Error during ${vendorConfig.vendorName} channel ID sync:`, error);
     throw error;
   }
 }
@@ -908,9 +728,7 @@ export async function syncAllVendorSettings(): Promise<{
   const knex = getKnexInstance();
 
   console.log("🚀 Starting sync of all vendor settings...");
-  console.log(
-    `📋 Vendors to sync: ${VENDOR_CONFIGS.map((v) => v.vendorName).join(", ")}`,
-  );
+  console.log(`📋 Vendors to sync: ${VENDOR_CONFIGS.map((v) => v.vendorName).join(", ")}`);
 
   // Process vendors one at a time
   let totalInserted = 0;
@@ -927,9 +745,7 @@ export async function syncAllVendorSettings(): Promise<{
     console.log(`🔄 Starting ${vendorConfig.vendorName} sync...`);
 
     // Check if vendor table exists
-    const vendorTableExists = await knex.schema.hasTable(
-      vendorConfig.tableName,
-    );
+    const vendorTableExists = await knex.schema.hasTable(vendorConfig.tableName);
     if (!vendorTableExists) {
       console.log(`❌ ${vendorConfig.tableName} table does not exist`);
       vendorResults.push({
@@ -944,9 +760,7 @@ export async function syncAllVendorSettings(): Promise<{
     // Get all vendor settings
     const vendorSettings = await knex(vendorConfig.tableName).select("*");
 
-    console.log(
-      `📊 Found ${vendorSettings.length} ${vendorConfig.vendorName} settings to sync`,
-    );
+    console.log(`📊 Found ${vendorSettings.length} ${vendorConfig.vendorName} settings to sync`);
 
     if (vendorSettings.length === 0) {
       console.log(`ℹ️  No ${vendorConfig.vendorName} settings found to sync`);
@@ -960,22 +774,13 @@ export async function syncAllVendorSettings(): Promise<{
     }
 
     // Transform settings for upsert
-    const transformedSettings = transformVendorSettings(
-      vendorSettings,
-      vendorConfig,
-    );
+    const transformedSettings = transformVendorSettings(vendorSettings, vendorConfig);
 
     // Perform batch operations
-    const { insertedCount } = await performBatchDeleteThenInsert(
-      knex,
-      transformedSettings,
-      vendorConfig,
-    );
+    const { insertedCount } = await performBatchDeleteThenInsert(knex, transformedSettings, vendorConfig);
 
     console.log(`✅ Completed ${vendorConfig.vendorName} sync`);
-    console.log(
-      `✅ ${vendorConfig.vendorName}: ${insertedCount} records inserted`,
-    );
+    console.log(`✅ ${vendorConfig.vendorName}: ${insertedCount} records inserted`);
 
     totalInserted += insertedCount;
 
@@ -990,17 +795,13 @@ export async function syncAllVendorSettings(): Promise<{
   console.log(`\n${"=".repeat(60)}`);
   console.log("🎉 Sync Summary:");
   console.log(`📊 Overall Summary:`);
-  console.log(
-    `✅ Total Affected Rows: ${totalInserted + totalUpdated} (inserts + updates)`,
-  );
+  console.log(`✅ Total Affected Rows: ${totalInserted + totalUpdated} (inserts + updates)`);
   console.log(`📊 Total Processed: ${totalInserted + totalUpdated}`);
 
   // Now sync channel IDs
   console.log(`\n${"=".repeat(60)}`);
   console.log("🔄 Starting channel ID synchronization...");
-  console.log(
-    `📋 Vendors to sync channel IDs: ${VENDOR_CONFIGS.map((v) => v.vendorName).join(", ")}`,
-  );
+  console.log(`📋 Vendors to sync channel IDs: ${VENDOR_CONFIGS.map((v) => v.vendorName).join(", ")}`);
 
   let channelIdTotalInserted = 0;
   let channelIdTotalUpdated = 0;
@@ -1039,12 +840,8 @@ export async function syncAllVendorSettings(): Promise<{
   console.log(`\n${"=".repeat(60)}`);
   console.log("🎉 Channel ID Sync Summary:");
   console.log(`📊 Overall Summary:`);
-  console.log(
-    `✅ Total Affected Rows: ${channelIdTotalInserted + channelIdTotalUpdated} (inserts + updates)`,
-  );
-  console.log(
-    `📊 Total Processed: ${channelIdTotalInserted + channelIdTotalUpdated + channelIdTotalSkipped}`,
-  );
+  console.log(`✅ Total Affected Rows: ${channelIdTotalInserted + channelIdTotalUpdated} (inserts + updates)`);
+  console.log(`📊 Total Processed: ${channelIdTotalInserted + channelIdTotalUpdated + channelIdTotalSkipped}`);
 
   return {
     totalInserted,

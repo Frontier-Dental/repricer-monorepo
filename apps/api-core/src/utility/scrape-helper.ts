@@ -11,15 +11,10 @@ import { RunCompletionStatus } from "../model/sql-models/run-completion-status";
 import { applicationConfig } from "./config";
 import { HistoryModel } from "../model/sql-models/history";
 
-export async function Execute(
-  productList: any[],
-  cronSetting: any,
-): Promise<void> {
+export async function Execute(productList: any[], cronSetting: any): Promise<void> {
   if (productList && productList.length > 0) {
     const keyGen = Generate();
-    await mySqlHelper.InsertRunCompletionStatus(
-      new RunCompletionStatus(keyGen, "SCRAPE_ONLY", false),
-    );
+    await mySqlHelper.InsertRunCompletionStatus(new RunCompletionStatus(keyGen, "SCRAPE_ONLY", false));
     const isChunkNeeded = await IsChunkNeeded(productList);
     if (isChunkNeeded) {
       let chunkedList = _.chunk(productList, 2000);
@@ -27,129 +22,54 @@ export async function Execute(
         await executeScrapeLogic(keyGen, chunk, cronSetting);
       }
     } else await executeScrapeLogic(keyGen, productList, cronSetting);
-    await mySqlHelper.UpdateRunCompletionStatus(
-      new RunCompletionStatus(keyGen, "SCRAPE_ONLY", true),
-    );
+    await mySqlHelper.UpdateRunCompletionStatus(new RunCompletionStatus(keyGen, "SCRAPE_ONLY", true));
   }
 }
 
-async function executeScrapeLogic(
-  keyGen: string,
-  productList: any[],
-  cronSetting: any,
-): Promise<void> {
+async function executeScrapeLogic(keyGen: string, productList: any[], cronSetting: any): Promise<void> {
   const runId: string = uuid();
 
-  let runInfo = new RunInfo(
-    cronSetting.CronName,
-    cronSetting.CronId,
-    runId.replaceAll("-", ""),
-    keyGen,
-    "SCRAPE_ONLY",
-    productList.length,
-    productList.length,
-    0,
-    0,
-  );
+  let runInfo = new RunInfo(cronSetting.CronName, cronSetting.CronId, runId.replaceAll("-", ""), keyGen, "SCRAPE_ONLY", productList.length, productList.length, 0, 0);
   const ownVendorListEnv = applicationConfig.OWN_VENDOR_LIST || "";
   const ownVendorList = ownVendorListEnv.split(";");
   const runInfoResult = await mySqlHelper.InsertRunInfo(runInfo);
   let productCounter = 0;
-  const insertId = Array.isArray(runInfoResult)
-    ? runInfoResult[0]
-    : (runInfoResult as any)?.insertId;
+  const insertId = Array.isArray(runInfoResult) ? runInfoResult[0] : (runInfoResult as any)?.insertId;
   if (runInfoResult) {
     for (let prod of productList) {
       console.log(`SCRAPE-ONLY : Scraping started for ${prod.MpId}`);
       const scrapeStartTime = new Date();
       const getSearchResultsEnv = applicationConfig.GET_SEARCH_RESULTS || "";
       const searchRequest = getSearchResultsEnv.replace("{mpId}", prod.MpId);
-      const net32resp = await axiosHelper.getAsyncProxy(
-        searchRequest,
-        cronSetting,
-      );
+      const net32resp = await axiosHelper.getAsyncProxy(searchRequest, cronSetting);
       if (net32resp && net32resp.data) {
-        await mySqlHelper.UpdateLastScrapeInfo(
-          prod.MpId,
-          moment(scrapeStartTime).format("YYYY-MM-DD HH:mm:ss"),
-        );
+        await mySqlHelper.UpdateLastScrapeInfo(prod.MpId, moment(scrapeStartTime).format("YYYY-MM-DD HH:mm:ss"));
         const allowHistoryLoggingEnv = applicationConfig.SCRAPE_ONLY_LOGGING;
         const allowRunInfoLoggingEnv = applicationConfig.SCRAPE_RUN_LOGGING;
         if (allowHistoryLoggingEnv) {
-          console.log(
-            `SCRAPE-ONLY : Logging in history for ${prod.MpId} started at ${scrapeStartTime}`,
-          );
-          const apiResponseLinkedId =
-            await mySqlHelper.InsertHistoricalApiResponse(
-              net32resp.data,
-              scrapeStartTime,
-            );
+          console.log(`SCRAPE-ONLY : Logging in history for ${prod.MpId} started at ${scrapeStartTime}`);
+          const apiResponseLinkedId = await mySqlHelper.InsertHistoricalApiResponse(net32resp.data, scrapeStartTime);
           let historyList: any[] = [];
           if (prod.LinkedTradentDetailsInfo > 0) {
-            historyList = historyList.concat(
-              await GetHistoryModel(
-                prod,
-                net32resp.data,
-                apiResponseLinkedId,
-                scrapeStartTime,
-                "TRADENT",
-              ),
-            );
+            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "TRADENT"));
           }
           if (prod.LinkedFrontiersDetailsInfo > 0) {
-            historyList = historyList.concat(
-              await GetHistoryModel(
-                prod,
-                net32resp.data,
-                apiResponseLinkedId,
-                scrapeStartTime,
-                "FRONTIER",
-              ),
-            );
+            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "FRONTIER"));
           }
           if (prod.LinkedMvpDetailsInfo > 0) {
-            historyList = historyList.concat(
-              await GetHistoryModel(
-                prod,
-                net32resp.data,
-                apiResponseLinkedId,
-                scrapeStartTime,
-                "MVP",
-              ),
-            );
+            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "MVP"));
           }
           if (prod.LinkedTopDentDetailsInfo > 0) {
-            historyList = historyList.concat(
-              await GetHistoryModel(
-                prod,
-                net32resp.data,
-                apiResponseLinkedId,
-                scrapeStartTime,
-                "TOPDENT",
-              ),
-            );
+            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "TOPDENT"));
           }
           if (prod.LinkedFirstDentDetailsInfo > 0) {
-            historyList = historyList.concat(
-              await GetHistoryModel(
-                prod,
-                net32resp.data,
-                apiResponseLinkedId,
-                scrapeStartTime,
-                "FIRSTDENT",
-              ),
-            );
+            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "FIRSTDENT"));
           }
           if (prod.LinkedTriadDetailsInfo > 0) {
-            historyList = historyList.concat(
-              await GetHistoryModel(
-                prod,
-                net32resp.data,
-                apiResponseLinkedId,
-                scrapeStartTime,
-                "TRIAD",
-              ),
-            );
+            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "TRIAD"));
+          }
+          if (prod.LinkedBiteSupplyDetailsInfo > 0) {
+            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "BITESUPPLY"));
           }
           if (historyList && historyList.length > 0) {
             for (const historyItem of historyList) {
@@ -158,42 +78,22 @@ async function executeScrapeLogic(
           }
         }
         if (allowRunInfoLoggingEnv) {
-          console.log(
-            `SCRAPE-ONLY : Logging in run info for ${prod.MpId} started at ${scrapeStartTime}`,
-          );
+          console.log(`SCRAPE-ONLY : Logging in run info for ${prod.MpId} started at ${scrapeStartTime}`);
           for (const [index, resp] of net32resp.data.entries()) {
-            const isOwnVendor = _.includes(
-              ownVendorList,
-              resp.vendorId.toString(),
-            );
+            const isOwnVendor = _.includes(ownVendorList, resp.vendorId.toString());
 
             // Conversion needs to be done from boolean to number for the InsertProductInfo function
-            if (
-              resp.isFulfillmentPolicyStock === "true" ||
-              resp.isFulfillmentPolicyStock === true
-            ) {
+            if (resp.isFulfillmentPolicyStock === "true" || resp.isFulfillmentPolicyStock === true) {
               resp.isFulfillmentPolicyStock = 1;
-            } else if (
-              resp.isFulfillmentPolicyStock === "false" ||
-              resp.isFulfillmentPolicyStock === false
-            ) {
+            } else if (resp.isFulfillmentPolicyStock === "false" || resp.isFulfillmentPolicyStock === false) {
               resp.isFulfillmentPolicyStock = 0;
             }
 
-            const productInfo = new ProductInfo(
-              prod.MpId,
-              resp,
-              insertId,
-              index + 1,
-              isOwnVendor,
-            );
+            const productInfo = new ProductInfo(prod.MpId, resp, insertId, index + 1, isOwnVendor);
             productInfo.addStartTime(scrapeStartTime);
             productInfo.addEndTime(new Date());
-            const productInfoResult =
-              await mySqlHelper.InsertProductInfo(productInfo);
-            console.log(
-              `SCRAPE-ONLY : ${cronSetting.CronName} : ${keyGen} : Inserted Product Info for MPID : ${prod.MpId} | VENDOR : ${productInfo.VendorId}`,
-            );
+            const productInfoResult = await mySqlHelper.InsertProductInfo(productInfo);
+            console.log(`SCRAPE-ONLY : ${cronSetting.CronName} : ${keyGen} : Inserted Product Info for MPID : ${prod.MpId} | VENDOR : ${productInfo.VendorId}`);
 
             // Update vendor detail tables with market state for our own vendor
             if (isOwnVendor) {
@@ -222,15 +122,16 @@ async function executeScrapeLogic(
                   case "5":
                     vendorName = "TRIAD";
                     break;
+                  case "10":
+                    vendorName = "BITESUPPLY";
+                    break;
                 }
 
                 if (vendorName) {
                   // Use the new function that ONLY updates market state columns
 
                   // Get price from priceBreaks for minQty=1
-                  const basePrice = resp.priceBreaks?.find(
-                    (pb: { minQty: number }) => pb.minQty === 1,
-                  )?.unitPrice;
+                  const basePrice = resp.priceBreaks?.find((pb: { minQty: number }) => pb.minQty === 1)?.unitPrice;
 
                   const marketData = {
                     inStock: resp.inStock === "true" || resp.inStock === true,
@@ -238,31 +139,19 @@ async function executeScrapeLogic(
                     ourPrice: basePrice ? parseFloat(basePrice) : undefined,
                   };
 
-                  await mySqlHelper.UpdateMarketStateOnly(
-                    prod.MpId,
-                    vendorName,
-                    marketData,
-                  );
+                  await mySqlHelper.UpdateMarketStateOnly(prod.MpId, vendorName, marketData);
 
-                  console.log(
-                    `SCRAPE-ONLY : Updated market state for ${vendorName} - MPID: ${prod.MpId}, InStock: ${resp.inStock}, Inventory: ${resp.inventory}, Price: ${resp.price}`,
-                  );
+                  console.log(`SCRAPE-ONLY : Updated market state for ${vendorName} - MPID: ${prod.MpId}, InStock: ${resp.inStock}, Inventory: ${resp.inventory}, Price: ${resp.price}`);
                 }
               } catch (error) {
                 // Log error but don't stop scraping process
-                console.error(
-                  `SCRAPE-ONLY : Failed to update market state for MPID: ${prod.MpId}`,
-                  error,
-                );
+                console.error(`SCRAPE-ONLY : Failed to update market state for MPID: ${prod.MpId}`, error);
               }
             }
 
             if (productInfoResult && productInfoResult[0] && resp.priceBreaks) {
               for (const pb of resp.priceBreaks) {
-                const priceBreakInfo = new PriceBreakInfo(
-                  productInfoResult[0],
-                  pb,
-                );
+                const priceBreakInfo = new PriceBreakInfo(productInfoResult[0], pb);
                 await mySqlHelper.InsertPriceBreakInfo(priceBreakInfo);
               }
             }
@@ -270,35 +159,23 @@ async function executeScrapeLogic(
         }
         runInfo.UpdateSuccessCount();
       }
-      await mySqlHelper.UpdateRunInfo(
-        runInfo.GetCompletedProductCountQuery(productCounter, insertId),
-      );
+      await mySqlHelper.UpdateRunInfo(runInfo.GetCompletedProductCountQuery(productCounter, insertId));
       productCounter++;
     }
-    runInfo.UpdateFailureCount(
-      runInfo.EligibleCount - runInfo.ScrapedSuccessCount,
-    );
+    runInfo.UpdateFailureCount(runInfo.EligibleCount - runInfo.ScrapedSuccessCount);
     runInfo.UpdateEndTime();
     await mySqlHelper.UpdateRunInfo(runInfo.GetSuccessCountQuery(insertId));
     await mySqlHelper.UpdateRunInfo(runInfo.GetFailureCountQuery(insertId));
     await mySqlHelper.UpdateRunInfo(runInfo.GetRunEndTimeQuery(insertId));
   }
-  console.log(
-    `SCRAPE-ONLY : Successfully scraped  ${runInfo.ScrapedSuccessCount} products || total Count : ${productList.length} || Cron Name : ${cronSetting.CronName} || KeyGen : ${keyGen}`,
-  );
+  console.log(`SCRAPE-ONLY : Successfully scraped  ${runInfo.ScrapedSuccessCount} products || total Count : ${productList.length} || Cron Name : ${cronSetting.CronName} || KeyGen : ${keyGen}`);
 }
 
 const IsChunkNeeded = async (list: any[]): Promise<boolean> => {
   return list.length > 2000;
 };
 
-async function GetHistoryModel(
-  vendorDetails: any,
-  apiResponse: any,
-  apiResponseLinkedId: any,
-  refTime: any,
-  vendorName: string,
-): Promise<any[]> {
+async function GetHistoryModel(vendorDetails: any, apiResponse: any, apiResponseLinkedId: any, refTime: any, vendorName: string): Promise<any[]> {
   let listOfHistory: any[] = [];
   const ownVendorProductId = getOwnVendorId(vendorName);
   if (!ownVendorProductId) {
@@ -313,45 +190,30 @@ async function GetHistoryModel(
     return listOfHistory;
   }
   if (ownVendorDetails.priceBreaks && ownVendorDetails.priceBreaks.length > 0) {
-    ownVendorDetails.priceBreaks = _.sortBy(ownVendorDetails.priceBreaks, [
-      "minQty",
-    ]);
+    ownVendorDetails.priceBreaks = _.sortBy(ownVendorDetails.priceBreaks, ["minQty"]);
     _.forEach(ownVendorDetails.priceBreaks, (priceBreak) => {
       const contextMinQty = parseInt(priceBreak.minQty);
       const existingPrice = parseFloat(priceBreak.unitPrice);
 
       let eligibleVendors: any[] = [];
-      apiResponse.forEach(
-        (element: { priceBreaks: any[]; inStock: boolean }) => {
-          if (element.priceBreaks) {
-            element.priceBreaks.forEach((p: { minQty: number }) => {
-              if (p.minQty == contextMinQty) {
-                eligibleVendors.push(element);
-              }
-            });
-          }
-        },
-      );
-      const rank: number = eligibleVendors.findIndex(
-        (vendor) => vendor.vendorId.toString() == ownVendorProductId,
-      );
+      apiResponse.forEach((element: { priceBreaks: any[]; inStock: boolean }) => {
+        if (element.priceBreaks) {
+          element.priceBreaks.forEach((p: { minQty: number }) => {
+            if (p.minQty == contextMinQty) {
+              eligibleVendors.push(element);
+            }
+          });
+        }
+      });
+      const rank: number = eligibleVendors.findIndex((vendor) => vendor.vendorId.toString() == ownVendorProductId);
       eligibleVendors = _.sortBy(eligibleVendors, [
         (prod) => {
-          const match = _.find(
-            prod.priceBreaks,
-            (x) => x?.minQty === contextMinQty,
-          );
+          const match = _.find(prod.priceBreaks, (x) => x?.minQty === contextMinQty);
           return match ? match.unitPrice : Infinity;
         },
       ]);
-      const lowestPrice =
-        _.first(eligibleVendors)?.priceBreaks?.find(
-          (x: { minQty: number }) => x.minQty === contextMinQty,
-        )?.unitPrice ?? null;
-      const maxVendorPrice =
-        _.last(eligibleVendors)?.priceBreaks?.find(
-          (x: { minQty: number }) => x.minQty === contextMinQty,
-        )?.unitPrice ?? null;
+      const lowestPrice = _.first(eligibleVendors)?.priceBreaks?.find((x: { minQty: number }) => x.minQty === contextMinQty)?.unitPrice ?? null;
+      const maxVendorPrice = _.last(eligibleVendors)?.priceBreaks?.find((x: { minQty: number }) => x.minQty === contextMinQty)?.unitPrice ?? null;
       const history = {
         vendorName: vendorName,
         existingPrice: existingPrice,
@@ -370,14 +232,7 @@ async function GetHistoryModel(
         repriceResult: null, // Merging with repricer-api-core - is this correct?
         getOtherVendorList: () => "N/A", // Merging with repricer-api-core - is this correct?
       };
-      listOfHistory.push(
-        new HistoryModel(
-          history,
-          vendorDetails.MpId,
-          refTime,
-          apiResponseLinkedId,
-        ),
-      );
+      listOfHistory.push(new HistoryModel(history, vendorDetails.MpId, refTime, apiResponseLinkedId));
     });
   }
   return listOfHistory;
@@ -405,6 +260,9 @@ function getOwnVendorId(vendorName: string): string | null {
       break;
     case "TRIAD":
       vendorId = "5";
+      break;
+    case "BITESUPPLY":
+      vendorId = "10";
       break;
     default:
       break;
