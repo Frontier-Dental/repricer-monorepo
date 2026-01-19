@@ -18,21 +18,11 @@ axiosRetry(axios, {
   },
   retryCondition: (error: any) => {
     console.log(`ERROR (WITH RETRY) : ${error} `);
-    return (
-      error.response.status == 503 ||
-      error.response.status == 500 ||
-      error.response.status == 429 ||
-      error.response.status == 408
-    );
+    return error.response.status == 503 || error.response.status == 500 || error.response.status == 429 || error.response.status == 408;
   },
 });
 
-export async function getScrappingResponse(
-  _url: string,
-  proxyDetailsResponse: any,
-  seqString: any,
-  retryCount = 0,
-): Promise<any> {
+export async function getScrappingResponse(_url: string, proxyDetailsResponse: any, seqString: any, retryCount = 0): Promise<any> {
   try {
     const formatResponse = applicationConfig.FORMAT_RESPONSE_CUSTOM;
     console.log(`SCRAPE STARTED : SmartProxy - Web : ${_url} || ${seqString}`);
@@ -53,59 +43,28 @@ export async function getScrappingResponse(
         Authorization: `Basic ${proxyDetailsResponse.userName}`,
       },
     });
-    if (
-      response &&
-      response.status == 200 &&
-      response.data &&
-      response.data.results &&
-      response.data.results.length > 0
-    ) {
+    if (response && response.status == 200 && response.data && response.data.results && response.data.results.length > 0) {
       const taskId = _.first(response.data.results as any[])?.task_id;
       let responseData: any = {};
-      const responseContentType = _.first(response.data.results as any[])
-        ?.headers["content-type"];
-      console.log(
-        `SCRAPE STARTED : SmartProxy - Web : ContentType : ${responseContentType}`,
-      );
-      if (
-        formatResponse &&
-        formatResponse == true &&
-        responseContentType != "application/json"
-      ) {
+      const responseContentType = _.first(response.data.results as any[])?.headers["content-type"];
+      console.log(`SCRAPE STARTED : SmartProxy - Web : ContentType : ${responseContentType}`);
+      if (formatResponse && formatResponse == true && responseContentType != "application/json") {
         const options = { mergeAttrs: true, explicitArray: false };
         try {
-          const scrapeResponseData = await xml2js.parseStringPromise(
-            _.first(response.data.results as any[])?.content,
-            options,
-          );
-          if (
-            scrapeResponseData &&
-            scrapeResponseData["List"] &&
-            scrapeResponseData["List"]["item"] &&
-            scrapeResponseData["List"]["item"].length > 0
-          ) {
-            responseData.data = await formatWrapper.FormatScrapeResponse(
-              scrapeResponseData["List"]["item"],
-            );
+          const scrapeResponseData = await xml2js.parseStringPromise(_.first(response.data.results as any[])?.content, options);
+          if (scrapeResponseData && scrapeResponseData["List"] && scrapeResponseData["List"]["item"] && scrapeResponseData["List"]["item"].length > 0) {
+            responseData.data = await formatWrapper.FormatScrapeResponse(scrapeResponseData["List"]["item"]);
           } else {
             responseData.data = [];
           }
         } catch (ex) {
-          console.debug(
-            `IGNORE : SmartProxy - Web Exception : Error while parsing content : ${ex}`,
-          );
-          responseData.data = JSON.parse(
-            _.first(response.data.results as any[])?.content,
-          );
+          console.debug(`IGNORE : SmartProxy - Web Exception : Error while parsing content : ${ex}`);
+          responseData.data = JSON.parse(_.first(response.data.results as any[])?.content);
         }
       } else {
-        responseData.data = JSON.parse(
-          _.first(response.data.results as any[])?.content as any,
-        );
+        responseData.data = JSON.parse(_.first(response.data.results as any[])?.content as any);
       }
-      console.log(
-        `SCRAPE COMPLETED : SmartProxy - Web : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || TaskId : ${taskId} || ${seqString}`,
-      );
+      console.log(`SCRAPE COMPLETED : SmartProxy - Web : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || TaskId : ${taskId} || ${seqString}`);
 
       return responseData;
     }
@@ -114,12 +73,8 @@ export async function getScrappingResponse(
     console.error("Error Stack: ", error.stack);
     const errorMessage = getFormattedErrorMesage(error);
 
-    console.log(
-      `SmartProxy - Web Exception : ${errorMessage} || URL : ${_url}`,
-    );
-    await proxySwitchHelper.ExecuteCounter(
-      parseInt(proxyDetailsResponse.proxyProvider),
-    );
+    console.log(`SmartProxy - Web Exception : ${errorMessage} || URL : ${_url}`);
+    await proxySwitchHelper.ExecuteCounter(parseInt(proxyDetailsResponse.proxyProvider));
     const retryEligible = await retryConditionForAxios(error);
     if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible == true) {
       console.log(`ERROR (WITH RETRY) : ${error} `);
@@ -130,12 +85,7 @@ export async function getScrappingResponse(
       }
 
       await delay(applicationConfig.RETRY_INTERVAL);
-      return await getScrappingResponse(
-        _url,
-        proxyDetailsResponse,
-        seqString,
-        retryCount + 1,
-      );
+      return await getScrappingResponse(_url, proxyDetailsResponse, seqString, retryCount + 1);
     } else return null;
   }
 }
@@ -145,17 +95,10 @@ function parseHrtimeToSeconds(hrtime: [number, number]): string {
   return seconds;
 }
 
-export async function getScrapingBeeResponse(
-  _url: string,
-  proxyDetailsResponse: any,
-  seqString: string | null | undefined,
-  renderJs: boolean,
-  retryCount = 0,
-): Promise<any> {
+export async function getScrapingBeeResponse(_url: string, proxyDetailsResponse: any, seqString: string | null | undefined, renderJs: boolean, retryCount = 0): Promise<any> {
   try {
     const formatResponse = applicationConfig.FORMAT_RESPONSE_CUSTOM;
-    const scrappingLog =
-      renderJs == false ? "ScrapingBee - NonJs" : "ScrapingBee - Js";
+    const scrappingLog = renderJs == false ? "ScrapingBee - NonJs" : "ScrapingBee - Js";
     console.log(`SCRAPE STARTED : ${scrappingLog} : ${_url} || ${seqString}`);
     var startTime = process.hrtime();
     const options: any = {
@@ -175,9 +118,7 @@ export async function getScrapingBeeResponse(
     }
     const response = await requestPromise(options);
     if (response) {
-      console.log(
-        `SCRAPE COMPLETED : ${scrappingLog} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || ${seqString}`,
-      );
+      console.log(`SCRAPE COMPLETED : ${scrappingLog} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || ${seqString}`);
       if (formatResponse && formatResponse == true) {
         let responseStartIndex = response.indexOf('<List xmlns="">');
         if (responseStartIndex < 0) {
@@ -186,26 +127,15 @@ export async function getScrapingBeeResponse(
         const responseEndIndex = response.indexOf("</List>");
         const responseString = `${response.substring(responseStartIndex, responseEndIndex)}</List>`;
         const formatOption = { mergeAttrs: true, explicitArray: false };
-        const scrapeResponseData = await xml2js.parseStringPromise(
-          responseString,
-          formatOption,
-        );
-        if (
-          scrapeResponseData &&
-          scrapeResponseData["List"] &&
-          scrapeResponseData["List"]["item"]
-        ) {
+        const scrapeResponseData = await xml2js.parseStringPromise(responseString, formatOption);
+        if (scrapeResponseData && scrapeResponseData["List"] && scrapeResponseData["List"]["item"]) {
           if (scrapeResponseData["List"]["item"].length > 0) {
             return {
-              data: formatWrapper.FormatScrapeResponse(
-                scrapeResponseData["List"]["item"],
-              ),
+              data: formatWrapper.FormatScrapeResponse(scrapeResponseData["List"]["item"]),
             };
           } else {
             return {
-              data: formatWrapper.FormatSingleScrapeResponse(
-                scrapeResponseData["List"]["item"],
-              ),
+              data: formatWrapper.FormatSingleScrapeResponse(scrapeResponseData["List"]["item"]),
             };
           }
         }
@@ -215,9 +145,7 @@ export async function getScrapingBeeResponse(
   } catch (error: any) {
     const errorMessage = getFormattedErrorMesage(error);
     console.log(`Scraping Bee Exception : ${errorMessage} || URL : ${_url}`);
-    await proxySwitchHelper.ExecuteCounter(
-      parseInt(proxyDetailsResponse.proxyProvider),
-    );
+    await proxySwitchHelper.ExecuteCounter(parseInt(proxyDetailsResponse.proxyProvider));
     const retryEligible = await retryCondition(error);
     if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible == true) {
       console.log(`ERROR (WITH RETRY) : ${error} `);
@@ -228,39 +156,17 @@ export async function getScrapingBeeResponse(
       }
 
       await delay(applicationConfig.RETRY_INTERVAL);
-      return await getScrapingBeeResponse(
-        _url,
-        proxyDetailsResponse,
-        seqString,
-        renderJs,
-        retryCount + 1,
-      );
+      return await getScrapingBeeResponse(_url, proxyDetailsResponse, seqString, renderJs, retryCount + 1);
     } else return null;
   }
 }
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 async function retryCondition(error: any): Promise<boolean> {
-  return (
-    (error.response &&
-      (error.response.statusCode == 503 ||
-        error.response.statusCode == 500 ||
-        error.response.statusCode == 429 ||
-        error.response.statusCode == 408 ||
-        error.response.statusCode == 400 ||
-        error.response.statusCode == 401)) ||
-    error.message == "Error: ESOCKETTIMEDOUT"
-  );
+  return (error.response && (error.response.statusCode == 503 || error.response.statusCode == 500 || error.response.statusCode == 429 || error.response.statusCode == 408 || error.response.statusCode == 400 || error.response.statusCode == 401)) || error.message == "Error: ESOCKETTIMEDOUT";
 }
 async function retryConditionForAxios(error: any): Promise<boolean> {
-  return (
-    error.response.status == 503 ||
-    error.response.status == 500 ||
-    error.response.status == 429 ||
-    error.response.status == 408 ||
-    error.response.status == 400 ||
-    error.response.status == 401
-  );
+  return error.response.status == 503 || error.response.status == 500 || error.response.status == 429 || error.response.status == 408 || error.response.status == 400 || error.response.status == 401;
 }
 
 function getFormattedErrorMesage(error: any): string {
@@ -268,8 +174,7 @@ function getFormattedErrorMesage(error: any): string {
   if (!error.response) return message;
 
   let responseDetails = "";
-  if (error.response.data)
-    responseDetails = JSON.stringify(error.response.data);
+  if (error.response.data) responseDetails = JSON.stringify(error.response.data);
   else if (error.response.status) {
     responseDetails = String(error.response.status);
   }

@@ -191,6 +191,14 @@ export async function UpsertEnvSettings(payload: any) {
           .triad_priority,
       ),
     });
+  await db("env_execution_priorities")
+    .where({ ConfigID: 1, EntityName: "BITESUPPLY" })
+    .update({
+      Priority: JSON.parse(
+        payload.override_execution_priority_details.priority_settings
+          .biteSupply_priority,
+      ),
+    });
   await cacheClient.delete(CacheKey.ENV_SETTINGS);
   await cacheClient.disconnect();
   return mongoResult;

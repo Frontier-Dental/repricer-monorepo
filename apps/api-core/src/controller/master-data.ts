@@ -6,60 +6,39 @@
 import _ from "lodash";
 import express, { Request, Response } from "express";
 import * as _codes from "http-status-codes";
-// import * as perf from "execution-time";
 import * as uuid from "uuid";
 import { apiMapping } from "../resources/api-mapping";
 import * as axiosHelper from "../utility/axios-helper";
-// import * as mongoHelper from "../utility/mongo/mongo-helper";
 import { applicationConfig } from "../utility/config";
 
 export const masterDataController = express.Router();
 
-masterDataController.get(
-  "/data/collate_feed",
-  async (req: Request, res: Response): Promise<any> => {
-    // perf.start("collate_feed");
-    const runMarker = uuid.v4();
-    let listOfActiveProducts: any[] = [];
-    for (const vendor of apiMapping) {
-      const vendorActiveProductList = await axiosHelper.native_get(
-        vendor.activeListUrl,
-      );
-      if (
-        vendorActiveProductList &&
-        vendorActiveProductList.data &&
-        vendorActiveProductList.data.productList
-      ) {
-        _.forEach(vendorActiveProductList.data.productList, (prod) => {
-          if (!listOfActiveProducts.includes(prod)) {
-            listOfActiveProducts.push(prod);
-          }
-        });
-      }
+masterDataController.get("/data/collate_feed", async (req: Request, res: Response): Promise<any> => {
+  // perf.start("collate_feed");
+  const runMarker = uuid.v4();
+  let listOfActiveProducts: any[] = [];
+  for (const vendor of apiMapping) {
+    const vendorActiveProductList = await axiosHelper.native_get(vendor.activeListUrl);
+    if (vendorActiveProductList && vendorActiveProductList.data && vendorActiveProductList.data.productList) {
+      _.forEach(vendorActiveProductList.data.productList, (prod) => {
+        if (!listOfActiveProducts.includes(prod)) {
+          listOfActiveProducts.push(prod);
+        }
+      });
     }
+  }
 
-    if (listOfActiveProducts.length > 0) {
-      for (const prod of listOfActiveProducts) {
-        await fetchAndLoad(prod);
-      }
+  if (listOfActiveProducts.length > 0) {
+    for (const prod of listOfActiveProducts) {
+      await fetchAndLoad(prod);
     }
-    return res
-      .status(_codes.StatusCodes.OK)
-      .json(
-        `Products Loaded Successfully. Count : ${listOfActiveProducts.length}`,
-      );
-  },
-);
+  }
+  return res.status(_codes.StatusCodes.OK).json(`Products Loaded Successfully. Count : ${listOfActiveProducts.length}`);
+});
 
 async function fetchAndLoad(mpid: string) {
-  const aggregatorResponse = await axiosHelper.fetch_product_data(
-    applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", mpid),
-  );
-  if (
-    aggregatorResponse &&
-    aggregatorResponse.data &&
-    aggregatorResponse.data.length > 0
-  ) {
+  const aggregatorResponse = await axiosHelper.fetch_product_data(applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", mpid));
+  if (aggregatorResponse && aggregatorResponse.data && aggregatorResponse.data.length > 0) {
     const existingDetails: any[] = []; //await mongoHelper.GetVendorDetails_ManagedService({
     //   mpId: mpid,
     // });

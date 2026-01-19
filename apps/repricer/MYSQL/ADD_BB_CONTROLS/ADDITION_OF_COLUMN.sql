@@ -36,6 +36,12 @@ add column GetBBShippingValue decimal(5, 3),
 add column GetBBBadge boolean,
 add column GetBBShipping boolean;
 
+alter table table_biteSupplyDetails
+add column GetBBBadgeValue decimal(5, 3),
+add column GetBBShippingValue decimal(5, 3),
+add column GetBBBadge boolean,
+add column GetBBShipping boolean;
+
 update table_tradentDetails
 set
   GetBBShipping = true,
@@ -72,6 +78,13 @@ set
   GetBBBadgeValue = 0.1;
 
 update table_triadDetails
+set
+  GetBBShipping = true,
+  GetBBBadge = true,
+  GetBBShippingValue = 0.005,
+  GetBBBadgeValue = 0.1;
+
+update table_biteSupplyDetails
 set
   GetBBShipping = true,
   GetBBBadge = true,
