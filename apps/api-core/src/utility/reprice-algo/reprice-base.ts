@@ -589,6 +589,7 @@ async function repriceSingleVendor(net32resp: Net32Response, prod: any, cronSett
     });
   } else if (repriceResult.priceUpdateResponse && repriceResult.priceUpdateResponse != null) {
     skipNextVendor = true;
+    prod.lastUpdatedBy = isManualRun ? "Manual" : `${cronSetting.CronName}`;
     if (JSON.stringify(repriceResult.priceUpdateResponse).indexOf("ERROR:422") == -1) {
       cronLogs.push({
         productId: prod.mpid,
@@ -599,20 +600,30 @@ async function repriceSingleVendor(net32resp: Net32Response, prod: any, cronSett
         priceUpdateResponse: repriceResult.priceUpdateResponse,
       });
       prod.last_update_time = new Date();
-      isPriceUpdated = true;
-      prod.lastUpdatedBy = isManualRun ? "Manual" : `${cronSetting.CronName}`;
-      if (prod.wait_update_period == true) {
-        // Add the product to Error Item Table and update nextCronTime as +12 Hrs
-        prod.next_cron_time = calculateNextCronTime(new Date(), 12);
-        const priceUpdatedItem = new ErrorItemModel(prod.mpid!, prod.next_cron_time, true, prod.cronId!, "PRICE_UPDATE", contextVendor);
+      if (JSON.stringify(repriceResult.priceUpdateResponse).indexOf("ERROR:500") >= 0 || JSON.stringify(repriceResult.priceUpdateResponse).indexOf("ERROR:429") >= 0) {
+        isPriceUpdated = false;
+        prod.next_cron_time = null;
+        const priceUpdatedItem = new ErrorItemModel(prod.mpid!, prod.next_cron_time, false, prod.cronId!, "IGNORE", contextVendor);
         await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
         console.log({
-          message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
+          message: `${prod.mpid} moved to REGULAR CRON`,
           obj: JSON.stringify(priceUpdatedItem),
         });
       } else {
-        prod.next_cron_time = null;
-        console.log(`GHOST : ${prod.mpid} - ${contextVendor} - ${keyGen}`);
+        isPriceUpdated = true;
+        if (prod.wait_update_period == true) {
+          // Add the product to Error Item Table and update nextCronTime as +12 Hrs
+          prod.next_cron_time = calculateNextCronTime(new Date(), 12);
+          const priceUpdatedItem = new ErrorItemModel(prod.mpid!, prod.next_cron_time, true, prod.cronId!, "PRICE_UPDATE", contextVendor);
+          await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
+          console.log({
+            message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
+            obj: JSON.stringify(priceUpdatedItem),
+          });
+        } else {
+          prod.next_cron_time = null;
+          console.log(`GHOST : ${prod.mpid} - ${contextVendor} - ${keyGen}`);
+        }
       }
     } else {
       prod.next_cron_time = getNextCronTime(repriceResult.priceUpdateResponse);
