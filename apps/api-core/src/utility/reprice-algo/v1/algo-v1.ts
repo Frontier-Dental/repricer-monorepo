@@ -5,7 +5,7 @@ import { RepriceModel } from "../../../model/reprice-model";
 import { PriceList, UpdateRequest } from "../../../model/update-request";
 import { apiMapping } from "../../../resources/api-mapping";
 import { FrontierProduct } from "../../../types/frontier";
-import { Net32PriceBreak, Net32Product } from "../../../types/net32";
+import { Net32Product } from "../../../types/net32";
 import * as axiosHelper from "../../axios-helper";
 import { applicationConfig } from "../../config";
 import * as formatter from "../../format-wrapper";

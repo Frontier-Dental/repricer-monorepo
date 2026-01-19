@@ -1,7 +1,6 @@
 import _ from "lodash";
 import path from "path";
 import fsExtra from "fs-extra";
-import uuid from "uuid";
 import { HistoricalLogs, HistoricalPrice } from "../model/history";
 // import * as globalParam from "../model/global-param";
 import { HistoryModel } from "../model/sql-models/history";
@@ -141,6 +140,8 @@ function getOwnVendorId(vendorName: string) {
       return "20727";
     case VendorName.TRIAD:
       return "5";
+    case VendorName.BITESUPPLY:
+      return "10";
     default:
       throw new Error(`Unknown vendor name: ${vendorName}`);
   }

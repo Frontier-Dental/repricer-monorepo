@@ -81,7 +81,7 @@ export async function Execute(jobId: string, productList: any[], cronInitTime: a
       const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", prod.mpId);
       if (prioritySequence && prioritySequence.length > 0) {
         const cronIdForScraping = isSlowCronRun ? prod[prioritySequence[0].value].slowCronId : prod[prioritySequence[0].value].cronId;
-        net32resp = await axiosHelper.getAsync(searchRequest, cronIdForScraping, seqString);
+        net32resp = await axiosHelper.getAsync(searchRequest, cronIdForScraping, prod.mpId, seqString);
         if (prod.algo_execution_mode === AlgoExecutionMode.V2_ONLY || prod.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY || prod.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY) {
           await repriceProductV2Wrapper(net32resp.data, prod, cronSetting ? cronSetting.CronName : "MANUAL", isSlowCronRun);
         }
@@ -152,7 +152,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
   console.log(`EXPRESS_CRON : Repricing ${details.mpId} for ${_contextVendor} with sequence ${seqString} at ${new Date()}`);
   if (prioritySequence && prioritySequence.length > 0) {
     const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", details.mpId);
-    var net32result = await axiosHelper.getAsync(searchRequest, "DUMMY-422-Error", seqString);
+    var net32result = await axiosHelper.getAsync(searchRequest, "DUMMY-422-Error", details.mpId, seqString);
     let isPriceUpdatedForVendor = false;
     if (details.algo_execution_mode === AlgoExecutionMode.V2_ONLY || details.algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY || details.algo_execution_mode === AlgoExecutionMode.V1_EXECUTE_V2_DRY) {
       await repriceProductV2Wrapper(net32result.data, details, cronSetting ? cronSetting.CronName : "ExpressCron", false);
@@ -371,6 +371,11 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
       details.triadDetails.slowCronName = null;
       productUpdateNeeded = true;
     }
+    if (details.biteSupplyDetails) {
+      details.biteSupplyDetails.slowCronId = null;
+      details.biteSupplyDetails.slowCronName = null;
+      productUpdateNeeded = true;
+    }
     if (productUpdateNeeded) {
       details.isSlowActivated = false;
       await sqlHelper.UpdateCronForProductAsync(details); //await dbHelper.UpdateCronForProductAsync(details);
@@ -584,6 +589,7 @@ async function repriceSingleVendor(net32resp: Net32Response, prod: any, cronSett
     });
   } else if (repriceResult.priceUpdateResponse && repriceResult.priceUpdateResponse != null) {
     skipNextVendor = true;
+    prod.lastUpdatedBy = isManualRun ? "Manual" : `${cronSetting.CronName}`;
     if (JSON.stringify(repriceResult.priceUpdateResponse).indexOf("ERROR:422") == -1) {
       cronLogs.push({
         productId: prod.mpid,
@@ -594,20 +600,30 @@ async function repriceSingleVendor(net32resp: Net32Response, prod: any, cronSett
         priceUpdateResponse: repriceResult.priceUpdateResponse,
       });
       prod.last_update_time = new Date();
-      isPriceUpdated = true;
-      prod.lastUpdatedBy = isManualRun ? "Manual" : `${cronSetting.CronName}`;
-      if (prod.wait_update_period == true) {
-        // Add the product to Error Item Table and update nextCronTime as +12 Hrs
-        prod.next_cron_time = calculateNextCronTime(new Date(), 12);
-        const priceUpdatedItem = new ErrorItemModel(prod.mpid!, prod.next_cron_time, true, prod.cronId!, "PRICE_UPDATE", contextVendor);
+      if (JSON.stringify(repriceResult.priceUpdateResponse).indexOf("ERROR:500") >= 0 || JSON.stringify(repriceResult.priceUpdateResponse).indexOf("ERROR:429") >= 0) {
+        isPriceUpdated = false;
+        prod.next_cron_time = null;
+        const priceUpdatedItem = new ErrorItemModel(prod.mpid!, prod.next_cron_time, false, prod.cronId!, "IGNORE", contextVendor);
         await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
         console.log({
-          message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
+          message: `${prod.mpid} moved to REGULAR CRON`,
           obj: JSON.stringify(priceUpdatedItem),
         });
       } else {
-        prod.next_cron_time = null;
-        console.log(`GHOST : ${prod.mpid} - ${contextVendor} - ${keyGen}`);
+        isPriceUpdated = true;
+        if (prod.wait_update_period == true) {
+          // Add the product to Error Item Table and update nextCronTime as +12 Hrs
+          prod.next_cron_time = calculateNextCronTime(new Date(), 12);
+          const priceUpdatedItem = new ErrorItemModel(prod.mpid!, prod.next_cron_time, true, prod.cronId!, "PRICE_UPDATE", contextVendor);
+          await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
+          console.log({
+            message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
+            obj: JSON.stringify(priceUpdatedItem),
+          });
+        } else {
+          prod.next_cron_time = null;
+          console.log(`GHOST : ${prod.mpid} - ${contextVendor} - ${keyGen}`);
+        }
       }
     } else {
       prod.next_cron_time = getNextCronTime(repriceResult.priceUpdateResponse);
@@ -765,6 +781,9 @@ function getProductDetailsByVendor(details: any, contextVendor: string) {
   }
   if (contextVendor == VendorName.TRIAD) {
     return details.triadDetails;
+  }
+  if (contextVendor == VendorName.BITESUPPLY) {
+    return details.biteSupplyDetails;
   }
 }
 

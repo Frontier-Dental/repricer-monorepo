@@ -8,8 +8,4 @@ export const manualRepriceController = express.Router();
 
 manualRepriceController.get("/repricer/ManualUpdate/:id", manualRepriceHandler);
 manualRepriceController.get("/repricer/UpdateToMax/:id", updateToMax);
-manualRepriceController.post(
-  "/repricer/V2AlgoTest/:mpid",
-  param("mpid").isString().isLength({ min: 1 }),
-  v2AlgoTest,
-);
+manualRepriceController.post("/repricer/V2AlgoTest/:mpid", param("mpid").isString().isLength({ min: 1 }), v2AlgoTest);

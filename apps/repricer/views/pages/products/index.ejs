@@ -827,6 +827,105 @@
             <%- include('partials/triad.ejs') %>
           </div>
           <!-- Triad details end -->
+          <!-- BiteSupply details start -->
+          <div class="accordion">
+            <div class="row no-gutters">
+              <div class="col-auto mr-auto">
+                <span style="font-weight: bold;">BITESUPPLY DETAILS :</span>
+              </div>
+              <div class="col-auto">
+                <% if (model.biteSupplyDetails==null) { %>
+                  <label for="" class="no-data-check">No Data</label>
+                  <label class="switch">
+                    <input type="checkbox" name="insertNullData" id="checkData_biteSupply" checked disabled />
+                    <span class="slider"></span>
+                  </label>
+                  <% } else { %>
+                    <a onClick="saveBranches('<%= model.mpId%> ')" class="btn btn-primary mb-2 mr-2"
+                      style="float: right;color: antiquewhite;"><i class="fa-solid fa-floppy-disk"></i>
+                      Save</a>
+                    <% } %>
+              </div>
+            </div>
+            <% if (model.biteSupplyDetails) { %>
+              <div class="row no-gutters" id="biteSupply_data">
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="biteSupply_activated" <%=model.biteSupplyDetails.activated=='true' ||
+                      model.biteSupplyDetails.activated===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="" class="font-weight-bold">Active - Repricer</label>
+                </div>
+                <div class="col-md-3">
+                  <label class="switch">
+                    <input type="checkbox" name="biteSupply_is_nc_needed" <%=model.biteSupplyDetails.is_nc_needed=='true' ||
+                      model.biteSupplyDetails.is_nc_needed===true ? 'checked' : '' %> />
+                    <span class="slider"></span>
+                  </label>
+                  <label for="" class="font-weight-bold">
+                    NC (On/Off) <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                </div>
+                <div class="col-md-6"></div>
+                <div class="col">
+                  <label for="biteSupply_channel_Id" class="font-weight-bold">
+                    Channel ID <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="text" class="form-control" value="<%= model.biteSupplyDetails.channelId %>"
+                    name="biteSupply_channel_Id" placeholder="Channel ID" />
+                </div>
+                <div class="col-3">
+                  <label for="biteSupply_badgeIndicator" class="font-weight-bold">Badge Indicator</label>
+                  <select class="form-select form-control" name="biteSupply_badgeIndicator"
+                    aria-label="Default select example" onchange="enablePercentageData(this)">
+                    <option <%=model.biteSupplyDetails.badgeIndicator=='ALL_ZERO' ? "selected" : "" %>
+                      value='ALL_ZERO'>Compete all - Regular</option>
+                    <option <%=model.biteSupplyDetails.badgeIndicator=='ALL_PERCENTAGE' ? "selected" : "" %>
+                      value='ALL_PERCENTAGE'>Compete with all - Percentage</option>
+                    <option <%=model.biteSupplyDetails.badgeIndicator=='BADGE_ONLY' ? "selected" : "" %>
+                      value='BADGE_ONLY'>Compete with Authorized Distributors only</option>
+                    <option <%=model.biteSupplyDetails.badgeIndicator=='NON_BADGE_ONLY' ? "selected" : "" %>
+                      value='NON_BADGE_ONLY'>Compete with Non-Authorized Distributors only</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="biteSupply_repricingRule" class="font-weight-bold">Up/Down</label>
+                  <select class="form-select form-control" name="biteSupply_reprice_rule_select"
+                    aria-label="Default select example">
+                    <option <%=model.biteSupplyDetails.repricingRule==-1 ? "selected" : "" %> value=-1>-- Please Select --
+                    </option>
+                    <option <%=model.biteSupplyDetails.repricingRule==0 ? "selected" : "" %> value=0>Only Up</option>
+                    <option <%=model.biteSupplyDetails.repricingRule==1 ? "selected" : "" %> value=1>Only Down</option>
+                    <option <%=model.biteSupplyDetails.repricingRule==2 ? "selected" : "" %> value=2>Both</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label for="biteSupply_floor_price" class="font-weight-bold">
+                    Floor Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" value="<%= model.biteSupplyDetails.floorPrice %>"
+                    name="biteSupply_floor_price" placeholder="Floor Price" />
+                </div>
+                <div class="col">
+                  <label for="biteSupply_max_price" class="font-weight-bold">Max Price</label>
+                  <input type="number" class="form-control" value="<%= model.biteSupplyDetails.maxPrice %>"
+                    name="biteSupply_max_price" placeholder="Max Price" />
+                </div>
+                <div class="col">
+                  <label for="biteSupply_unit_price" class="font-weight-bold">
+                    Unit Price <span style="color: red;font-weight: bold;">*</span>
+                  </label>
+                  <input type="number" class="form-control" name="biteSupply_unit_price" placeholder="Unit Price"
+                    value="<%= model.biteSupplyDetails.unitPrice %>" />
+                </div>
+              </div>
+              <% } %>
+          </div>
+          <div class="panel">
+            <%- include('partials/bitesupply.ejs') %>
+          </div>
+          <!-- BiteSupply details end -->
         </div>
       </div>
     </body>

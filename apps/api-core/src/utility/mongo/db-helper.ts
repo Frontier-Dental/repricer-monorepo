@@ -1,12 +1,6 @@
-import { CronSettings } from "../../types/cron-settings";
 import { ErrorItem } from "../../types/error-item";
-import { GlobalConfig } from "../../types/global-config";
 import { applicationConfig } from "../config";
 import { getMongoDb } from "./index";
-import { CronSettingsDetail, ScrapeCronDetail } from "./types";
-import { GetCacheClientOptions } from "../../client/cacheClient";
-import CacheClient from "../../client/cacheClient";
-import { CacheKey } from "@repricer-monorepo/shared";
 
 export async function InitCronStatusAsync(payload: any) {
   const dbo = await getMongoDb();

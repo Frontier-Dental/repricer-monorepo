@@ -1,25 +1,14 @@
 import { Request, Response } from "express";
-import * as dbHelper from "../../utility/mongo/db-helper";
-import {
-  getScrapeCronNameFromJobName,
-  scrapeCrons,
-  scrapeProductList,
-  toggleCronStatus,
-} from "./shared";
+import { getScrapeCronNameFromJobName, scrapeCrons, scrapeProductList, toggleCronStatus } from "./shared";
 import { schedule } from "node-cron";
 import * as responseUtility from "../../utility/response-utility";
 import { GetScrapeCronDetails } from "../../utility/mysql/mysql-v2";
 
-export async function recreateScrapeCron(
-  req: Request,
-  res: Response,
-): Promise<any> {
+export async function recreateScrapeCron(req: Request, res: Response): Promise<any> {
   try {
     const { jobName } = req.body;
     const scrapeCronDetails = await GetScrapeCronDetails(true);
-    const details = scrapeCronDetails.find(
-      (x: any) => x.CronName === getScrapeCronNameFromJobName(jobName),
-    );
+    const details = scrapeCronDetails.find((x: any) => x.CronName === getScrapeCronNameFromJobName(jobName));
     if (!details) {
       return res.status(404).json({
         status: false,
@@ -27,11 +16,7 @@ export async function recreateScrapeCron(
       });
     }
     toggleCronStatus(scrapeCrons[details.CronName], 0, jobName);
-    let cronExpression = responseUtility.GetCronGeneric(
-      details.CronTimeUnit,
-      details.CronTime,
-      parseInt(details.Offset),
-    );
+    let cronExpression = responseUtility.GetCronGeneric(details.CronTimeUnit, details.CronTime, parseInt(details.Offset));
     scrapeCrons[details.CronName] = schedule(
       cronExpression,
       async () => {
@@ -41,7 +26,7 @@ export async function recreateScrapeCron(
           console.error(`Error running ${details.CronName}:`, error);
         }
       },
-      { scheduled: JSON.parse(details.CronStatus) },
+      { scheduled: JSON.parse(details.CronStatus) }
     );
     console.info(`Re-created ${jobName} with new details at ${new Date()}`);
 
