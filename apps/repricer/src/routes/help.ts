@@ -9,7 +9,7 @@ export const helpRouter = express.Router();
 
 const myRateLimiter = rateLimit({
   windowMs: Number(applicationConfig.RATE_LIMIT_WINDOW_MS) * 60 * 1000,
-  max: 5, // limit each IP to 5 requests per windowMs
+  max: 60, // limit each IP to 60 requests per windowMs
   message: {
     status: "ERROR",
     message: "Too many IP check requests, please try again later",
