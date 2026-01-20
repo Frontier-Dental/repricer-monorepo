@@ -1,5 +1,5 @@
 import axios from "axios";
-import child_process from "child_process";
+import { execFile } from "child_process";
 import { Request, Response } from "express";
 import fs from "fs";
 import _ from "lodash";
@@ -17,6 +17,9 @@ import * as sqlMapper from "../utility/mapper/mysql-mapper";
 import * as sessionHelper from "../utility/session-helper";
 import { GetConfigurations, GetCronSettingsList, InsertOrUpdateCronSettings, UpdateCronSettingsList, UpsertFilterCronSettings, GetFilteredCrons } from "../services/mysql-v2";
 import { validateIPAddress } from "../utility/ip-validator";
+import { applicationConfig } from "../utility/config";
+
+const execFileAsync = (util as any).promisify(execFile);
 
 export async function getLogsById(req: Request, res: Response) {
   const idx = req.params.id;
@@ -146,6 +149,24 @@ export async function troubleshoot(req: Request, res: Response) {
 export async function debugIp(req: Request, res: Response) {
   let healthResp: any = [];
   const { listOfIps } = req.body;
+
+  // Validate request body
+  if (!listOfIps || !Array.isArray(listOfIps)) {
+    return res.status(400).json({
+      status: "ERROR",
+      message: "listOfIps must be a non-empty array",
+    });
+  }
+
+  // Limit number of IPs to prevent abuse
+  const MAX_IPS = Number(applicationConfig.MAX_IPS_PER_REQUEST);
+  if (listOfIps.length > MAX_IPS) {
+    return res.status(400).json({
+      status: "ERROR",
+      message: `Maximum ${MAX_IPS} IP addresses allowed per request`,
+    });
+  }
+
   if (listOfIps && listOfIps.length > 0) {
     for (const ip of listOfIps) {
       if (ip && ip != "") {
@@ -173,6 +194,22 @@ export async function debugIp(req: Request, res: Response) {
 export async function debugIpV2(req: Request, res: Response) {
   let healthResp: any = [];
   const { listOfIps } = req.body;
+
+  if (!listOfIps || !Array.isArray(listOfIps)) {
+    return res.status(400).json({
+      status: "ERROR",
+      message: "listOfIps must be a non-empty array",
+    });
+  }
+
+  const MAX_IPS = Number(applicationConfig.MAX_IPS_PER_REQUEST);
+  if (listOfIps.length > MAX_IPS) {
+    return res.status(400).json({
+      status: "ERROR",
+      message: `Maximum ${MAX_IPS} IP addresses allowed per request`,
+    });
+  }
+
   if (listOfIps && listOfIps.length > 0) {
     for (const ip of listOfIps) {
       if (ip && ip != "") {
@@ -317,8 +354,20 @@ function getCronName(ip: any, list: any) {
 async function execPing(hostname: any) {
   const controller = new AbortController();
   const { signal } = controller;
-  const exec = (util as any).promisify(child_process.exec, { signal });
-  return await exec(`ping -c 3 ${hostname}`);
+
+  // Set timeout to prevent hanging
+  const timeout = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    const result = await execFileAsync("ping", ["-c", "3", hostname], {
+      signal,
+      timeout: 30000,
+      maxBuffer: 1024 * 1024, // 1MB max output
+    });
+    return result;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function getCheck(pingResponse: any, hostname: any, port: any) {
