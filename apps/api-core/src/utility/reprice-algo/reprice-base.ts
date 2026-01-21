@@ -410,21 +410,25 @@ export async function RepriceErrorItemV2(productList: any[], cronInitTime: any, 
   productList = await scanDeltaListOfProducts(productList, deltaList!);
   let cronProdCounter = 1;
   for (let prod of productList) {
-    console.log(`422_ERROR: Repricing ${prod.mpId} for 422 at ${new Date()}`);
-    const repriceErrorItemResponse = await RepriceErrorItem(prod, cronInitTime, prod.cronSettingsResponse, prod.contextVendor);
-    if (repriceErrorItemResponse && repriceErrorItemResponse.logs && repriceErrorItemResponse.logs.length > 0) {
-      if (repriceErrorItemResponse.logs.length == 1) {
-        cronLogs.logs.push(_.first(repriceErrorItemResponse.logs));
-      } else if (repriceErrorItemResponse.logs.length > 1) {
-        const tempLog = [];
-        for (const $ of repriceErrorItemResponse.logs) {
-          tempLog.push(_.first($));
+    try {
+      console.log(`422_ERROR: Repricing ${prod.mpId} for 422 at ${new Date()}`);
+      const repriceErrorItemResponse = await RepriceErrorItem(prod, cronInitTime, prod.cronSettingsResponse, prod.contextVendor);
+      if (repriceErrorItemResponse && repriceErrorItemResponse.logs && repriceErrorItemResponse.logs.length > 0) {
+        if (repriceErrorItemResponse.logs.length == 1) {
+          cronLogs.logs.push(_.first(repriceErrorItemResponse.logs));
+        } else if (repriceErrorItemResponse.logs.length > 1) {
+          const tempLog = [];
+          for (const $ of repriceErrorItemResponse.logs) {
+            tempLog.push(_.first($));
+          }
+          cronLogs.logs.push(tempLog);
         }
-        cronLogs.logs.push(tempLog);
       }
+      _contextCronStatus.SetProductCount(cronProdCounter);
+      await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
+    } catch (error) {
+      console.log(`Exception while repricing 422 error item: ${prod.mpId}. Error: ${error}`);
     }
-    _contextCronStatus.SetProductCount(cronProdCounter);
-    await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
     cronProdCounter++;
   }
   if (cronLogs.logs && cronLogs.logs.length > 0) {
