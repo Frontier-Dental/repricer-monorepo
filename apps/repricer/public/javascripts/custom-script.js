@@ -807,8 +807,9 @@ function pingIpAndTestAll() {
       showSuccessToast("Ping is successful");
       togglePingResponse(data);
     },
-    error: function () {
-      showErrorToast("Something went wrong. Please try again");
+    error: function (error) {
+     const errorMessage = error.responseJSON.message || "Something went wrong. Please try again";
+      showErrorToast(errorMessage);
     },
   });
 }

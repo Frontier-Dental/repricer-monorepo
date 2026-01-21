@@ -193,6 +193,7 @@ export const envSchema = z.object({
   MINI_ERP_CRON_TOGGLE_STATUS_ENDPOINT: z.string().default("/mini_erp/toggleCronStatus"),
   MINI_ERP_CRON_RECREATE_ENDPOINT: z.string().default("/mini_erp/recreate"),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(1), // 1 minutes
+  MAX_IPS_PER_REQUEST: z.coerce.number().default(50),
 });
 
 export function validateConfig() {
