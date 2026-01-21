@@ -35,7 +35,7 @@ export async function updateToMax(req: Request<{ id: string }, any, any>, res: R
   const isSlowCronRun = prod.isSlowActivated;
   prod = _.first(feedHelper.SetSkipReprice([prod], false));
   const contextErrorDetails = await dbHelper.GetEligibleContextErrorItems(true, mpid, null);
-  const prioritySequence = await requestGenerator.GetPrioritySequence(prod!, contextErrorDetails, true);
+  const prioritySequence = await requestGenerator.GetPrioritySequence(prod!, contextErrorDetails, true, false, null);
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
   if (prioritySequence && prioritySequence.length > 0) {
     const cronIdForScraping = isSlowCronRun == true ? (prod as any)[prioritySequence[0].value].slowCronId : (prod as any)[prioritySequence[0].value].cronId;

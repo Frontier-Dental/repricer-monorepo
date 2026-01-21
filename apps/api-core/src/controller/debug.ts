@@ -257,11 +257,32 @@ debugController.get("/debug/resetSlowCronSettings/", async (req: Request, res: R
 debugController.get("/debug/execute_422/:key/:vendor", async (req: Request, res: Response) => {
   const productId = req.params.key;
   const vendorName = req.params.vendor;
-  const productDetails = await dbHelper.FindProductById(productId);
+  const productDetails = await mySqlHelper.GetItemListById(productId);
   let cronSettingDetailsResponse = await sqlV2Service.GetCronSettingsList();
   let slowCronDetails = await sqlV2Service.GetSlowCronDetails();
   cronSettingDetailsResponse = _.concat(cronSettingDetailsResponse, slowCronDetails);
   const contextCronId = getContextCronId(productDetails, vendorName);
+  if (productDetails!.tradentDetails) {
+    (productDetails as any).tradentDetails.skipReprice = false;
+  }
+  if (productDetails!.frontierDetails) {
+    (productDetails as any).frontierDetails.skipReprice = false;
+  }
+  if (productDetails!.mvpDetails) {
+    (productDetails as any).mvpDetails.skipReprice = false;
+  }
+  if (productDetails!.topDentDetails) {
+    (productDetails as any).topDentDetails.skipReprice = false;
+  }
+  if (productDetails!.firstDentDetails) {
+    (productDetails as any).firstDentDetails.skipReprice = false;
+  }
+  if (productDetails!.triadDetails) {
+    (productDetails as any).triadDetails.skipReprice = false;
+  }
+  if (productDetails!.biteSupplyDetails) {
+    (productDetails as any).biteSupplyDetails.skipReprice = false;
+  }
   await repriceBase.RepriceErrorItem(
     productDetails,
     new Date(),
