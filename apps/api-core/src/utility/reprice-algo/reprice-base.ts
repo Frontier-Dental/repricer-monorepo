@@ -74,7 +74,7 @@ export async function Execute(jobId: string, productList: any[], cronInitTime: a
 
       _contextCronStatus.SetProductCount(cronProdCounter);
       await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
-      const prioritySequence = await requestGenerator.GetPrioritySequence(prod, null, false);
+      const prioritySequence = await requestGenerator.GetPrioritySequence(prod, null, false, false, null);
       const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
       let productLogs = [];
       let net32resp: AxiosResponse<Net32Product[]>;
@@ -147,7 +147,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
     type: "422Error",
   };
   const contextErrorDetails = await dbHelper.GetEligibleContextErrorItems(true, details.mpId, _contextVendor);
-  const prioritySequence = await requestGenerator.GetPrioritySequence(details, contextErrorDetails, true);
+  const prioritySequence = await requestGenerator.GetPrioritySequence(details, contextErrorDetails, true, true, _contextVendor);
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
   console.log(`EXPRESS_CRON : Repricing ${details.mpId} for ${_contextVendor} with sequence ${seqString} at ${new Date()}`);
   if (prioritySequence && prioritySequence.length > 0) {
