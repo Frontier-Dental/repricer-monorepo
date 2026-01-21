@@ -8,9 +8,7 @@ export const envSchema = z.object({
   ITEMS_COLLECTION_NAME: z.string().default("items"),
   CRON_PAGESIZE: z.coerce.number().default(10),
   CRON_RUN_ALL_ENDPOINT: z.string().default("/schedule/StartCronV3"),
-  NET32_UPDATE_PRICE_URL: z
-    .string()
-    .default("https://api.net32.com/products/offers/update"),
+  NET32_UPDATE_PRICE_URL: z.string().default("https://api.net32.com/products/offers/update"),
   CRON_STATUS_COLLECTION_NAME: z.string().default("cronStatusLogs"),
   FILTER_CRON_COLLECTION_NAME: z.string().default("filterCronSettings"),
   IP_CONFIG: z.string().default("ipConfig"),
@@ -36,50 +34,28 @@ export const envSchema = z.object({
   DEFAULT_PRODUCT_STATUS: z.string().default("true"),
   SIMULATE_REPRICER_ENDPOINT: z.string().default("/repricer/V2AlgoTest"),
   MANUAL_REPRICER_ENDPOINT: z.string().default("/repricer/ManualUpdate"),
-  RUN_SPECIFIC_CRON_ENDPOINT: z
-    .string()
-    .default("/schedule/start_specific_cron"),
+  RUN_SPECIFIC_CRON_ENDPOINT: z.string().default("/schedule/start_specific_cron"),
   ERROR_ONE: z.string().default("Error: Invalid response found in Net32 Api"),
   ERROR_TWO: z.string().default("Error: Could not find own vendor Id"),
   SLOW_CRON_GROUP_COLLECTION_NAME: z.string().default("slowCronSettings"),
   FILTER_CRON_LOGS: z.string().default("filterCronLogs"),
   FILTER_CRON_LOGS_LIMIT: z.coerce.number().default(10),
-  FILTER_CRON_TOGGLE_STATUS_ENDPOINT: z
-    .string()
-    .default("/filter/toggleCronStatus"),
-  FILTER_CRON_RECREATE_ENDPOINT: z
-    .string()
-    .default("/filter/RecreateFilterCron"),
-  GET_422_BELOW_PRODUCTS_ENDPOINT: z
-    .string()
-    .default("/debug/filterProductsWithFloor/6e2fe8965f5040748912bb90080a2de5"),
-  SLOW_CRON_TOGGLE_STATUS_ENDPOINT: z
-    .string()
-    .default("/slow_cron/toggleCronStatus"),
-  SLOW_CRON_RECREATE_ENDPOINT: z
-    .string()
-    .default("/slow_cron/RecreateSlowCron"),
+  FILTER_CRON_TOGGLE_STATUS_ENDPOINT: z.string().default("/filter/toggleCronStatus"),
+  FILTER_CRON_RECREATE_ENDPOINT: z.string().default("/filter/RecreateFilterCron"),
+  GET_422_BELOW_PRODUCTS_ENDPOINT: z.string().default("/debug/filterProductsWithFloor/6e2fe8965f5040748912bb90080a2de5"),
+  SLOW_CRON_TOGGLE_STATUS_ENDPOINT: z.string().default("/slow_cron/toggleCronStatus"),
+  SLOW_CRON_RECREATE_ENDPOINT: z.string().default("/slow_cron/RecreateSlowCron"),
   GET_DATA_URL_ENDPOINT: z.string().default("/debug/get-data"),
-  USER_CREATION_EMAIL_TRIGGER_URL: z
-    .string()
-    .default("http://localhost:5421/notify/user_creation_email"),
-  PROXY_PROVIDER_RESET_URL_ENDPOINT: z
-    .string()
-    .default("/proxy_provider/reset_counter"),
+  USER_CREATION_EMAIL_TRIGGER_URL: z.string().default("http://localhost:5421/notify/user_creation_email"),
+  PROXY_PROVIDER_RESET_URL_ENDPOINT: z.string().default("/proxy_provider/reset_counter"),
   APP_LOG_PATH_ENDPOINT: z.string().default("/app/logs"),
   CLEAR_LOG_PATH_ENDPOINT: z.string().default("/app/clear-logs"),
   SCRAPE_ITEMS_COLLECTION: z.string().default("scrapeItems"),
   ERROR_422_CRON_LOGS: z.string().default("422cronLogs"),
-  SCRAPE_CRON_SETTINGS_COLLECTION_NAME: z
-    .string()
-    .default("scrapeCronSettings"),
+  SCRAPE_CRON_SETTINGS_COLLECTION_NAME: z.string().default("scrapeCronSettings"),
   SCRAPE_LOGS_COLLECTION: z.string().default("scrapeCronLogs"),
-  SCRAPE_CRON_TOGGLE_STATUS_ENDPOINT: z
-    .string()
-    .default("/scrape/toggleCronStatus"),
-  SCRAPE_CRON_RECREATE_ENDPOINT: z
-    .string()
-    .default("/scrape/RecreateScrapeCron"),
+  SCRAPE_CRON_TOGGLE_STATUS_ENDPOINT: z.string().default("/scrape/toggleCronStatus"),
+  SCRAPE_CRON_RECREATE_ENDPOINT: z.string().default("/scrape/RecreateScrapeCron"),
   SQL_HOSTNAME: z.string(),
   SQL_USERNAME: z.string(),
   SQL_PASSWORD: z.string(),
@@ -87,87 +63,49 @@ export const envSchema = z.object({
   SQL_SCRAPEPRODUCTLIST: z.string().default("table_scrapeProductList"),
   SQL_DATABASE: z.string().default("repricerDb"),
   SQL_SP_GETRUN_INFO: z.string().default("sp_GetLatestRunInfoByLimit"),
-  SQL_SP_GETRUN_INFO_BY_CRON: z
-    .string()
-    .default("sp_GetLatestRunInfoForCronByLimit"),
-  SQL_SP_GET_RECENT_INPROGRESS_SCRAPE_RUNS: z
-    .string()
-    .default("sp_GetRecentInProgressScrapeOnlyRuns"),
-  SQL_SP_GET_SCRAPEPRODUCT_DETAILS: z
-    .string()
-    .default("sp_GetScrapeProductDetails"),
-  SQL_SP_GET_SCRAPEPRODUCT_DETAILS_FILTER: z
-    .string()
-    .default("sp_GetScrapeProductDetailsByFilter"),
-  SQL_SP_GET_ALL_SCRAPEPRODUCT_DETAILS: z
-    .string()
-    .default("sp_GetAllScrapeProducts"),
-  SQL_SP_UPSERT_PRODUCT_DETAILS: z.string().default("sp_UpsertProductDetails"),
-  SQL_SP_GETLASTSCRAPEDETAILSBYID: z
-    .string()
-    .default("sp_GetLastScrapeDetailsByID"),
-  SQL_SP_UPSERT_TRADENT: z.string().default("sp_UpsertTradentDetails"),
-  SQL_SP_UPSERT_FRONTIER: z.string().default("sp_UpsertFrontierDetails"),
-  SQL_SP_UPSERT_MVP: z.string().default("sp_UpsertMvpDetails"),
+  SQL_SP_GETRUN_INFO_BY_CRON: z.string().default("sp_GetLatestRunInfoForCronByLimit"),
+  SQL_SP_GET_RECENT_INPROGRESS_SCRAPE_RUNS: z.string().default("sp_GetRecentInProgressScrapeOnlyRuns"),
+  SQL_SP_GET_SCRAPEPRODUCT_DETAILS: z.string().default("sp_GetScrapeProductDetails"),
+  SQL_SP_GET_SCRAPEPRODUCT_DETAILS_FILTER: z.string().default("sp_GetScrapeProductDetailsByFilter"),
+  SQL_SP_GET_ALL_SCRAPEPRODUCT_DETAILS: z.string().default("sp_GetAllScrapeProducts"),
+  SQL_SP_UPSERT_PRODUCT_DETAILS: z.string().default("sp_UpsertProductDetailsV2"),
+  SQL_SP_GETLASTSCRAPEDETAILSBYID: z.string().default("sp_GetLastScrapeDetailsByID"),
+  SQL_SP_UPSERT_TRADENT: z.string().default("sp_UpsertTradentDetailsV2"),
+  SQL_SP_UPSERT_FRONTIER: z.string().default("sp_UpsertFrontierDetailsV2"),
+  SQL_SP_UPSERT_MVP: z.string().default("sp_UpsertMvpDetailsV2"),
   USE_MYSQL: z
     .string()
     .toLowerCase()
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
-  SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID: z
-    .string()
-    .default("sp_GetFullProductDetailsByIdV4"),
-  SQL_SP_UPDATE_TRADENT: z.string().default("sp_UpdateTradentDetailsById"),
-  SQL_SP_UPDATE_FRONTIER: z.string().default("sp_UpdateFrontierDetailsById"),
-  SQL_SP_UPDATE_MVP: z.string().default("sp_UpdateMvpDetailsById"),
+  SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID: z.string().default("sp_GetFullProductDetailsByIdV4"),
+  SQL_SP_UPDATE_TRADENT: z.string().default("sp_UpdateTradentDetailsByIdV2"),
+  SQL_SP_UPDATE_FRONTIER: z.string().default("sp_UpdateFrontierDetailsByIdV2"),
+  SQL_SP_UPDATE_MVP: z.string().default("sp_UpdateMvpDetailsByIdV2"),
   DOWNTIME_ON: z
     .string()
     .toLowerCase()
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(false),
-  SQL_SP_UPDATE_FIRSTDENT: z.string().default("sp_UpdateFirstDentDetailsById"),
-  SQL_SP_UPDATE_TOPDENT: z.string().default("sp_UpdateTopDentDetailsById"),
-  SQL_SP_UPDATE_TRIAD: z.string().default("sp_UpdateTriadDetailsById"),
-  SQL_SP_UPDATE_BITESUPPLY: z
-    .string()
-    .default("sp_UpdateBiteSupplyDetailsById"),
-  SQL_SP_UPSERT_TOPDENT: z.string().default("sp_UpsertTopDentDetails"),
-  SQL_SP_UPSERT_FIRSTDENT: z.string().default("sp_UpsertFirstDentDetails"),
-  SQL_SP_UPSERT_TRIAD: z.string().default("sp_UpsertTriadDetails"),
-  SQL_SP_UPSERT_BITESUPPLY: z.string().default("sp_UpsertBiteSupplyDetails"),
-  SQL_SP_UPSERT_PRODUCT_DETAILSV3: z
-    .string()
-    .default("sp_UpsertProductDetailsV3"),
-  SQL_SP_UPSERT_PRODUCT_DETAILSV4: z
-    .string()
-    .default("sp_UpsertProductDetailsV4"),
-  SQL_SP_GET_PRODUCT_LIST_BY_TAGV2: z
-    .string()
-    .default("sp_GetFullProductDetailsListByTagV2"),
-  SQL_SP_GET_PRODUCT_LIST_BY_FILTERV2: z
-    .string()
-    .default("sp_GetFullProductDetailsListByFilterV2"),
-  SQL_SP_GET_ALL_PRODUCT_DETAILS: z
-    .string()
-    .default("sp_GetFullProductDetailsListV4"),
-  HISTORY_EXPORT_URL_BY_ID: z
-    .string()
-    .default(
-      "http://localhost:5421/debug/history-export/exportAndSave/{productId}",
-    ),
-  HISTORY_EXPORT_URL_FOR_ALL: z
-    .string()
-    .default("http://localhost:5421/debug/history-export/exportAndSaveAll"),
-  PROD_SYNC_URL: z
-    .string()
-    .default(
-      "https://repricer-prod-jckio.ondigitalocean.app/help/getProductDetailsById/{productId}",
-    ),
-  MANUAL_PRODUCT_SYNC_PROCESS: z
-    .string()
-    .default("http://localhost:5421/schedule/on-demand/mysql-sync"),
+  SQL_SP_UPDATE_FIRSTDENT: z.string().default("sp_UpdateFirstDentDetailsByIdV2"),
+  SQL_SP_UPDATE_TOPDENT: z.string().default("sp_UpdateTopDentDetailsByIdV2"),
+  SQL_SP_UPDATE_TRIAD: z.string().default("sp_UpdateTriadDetailsByIdV2"),
+  SQL_SP_UPDATE_BITESUPPLY: z.string().default("sp_UpdateBiteSupplyDetailsByIdV2"),
+  SQL_SP_UPSERT_TOPDENT: z.string().default("sp_UpsertTopDentDetailsV2"),
+  SQL_SP_UPSERT_FIRSTDENT: z.string().default("sp_UpsertFirstDentDetailsV2"),
+  SQL_SP_UPSERT_TRIAD: z.string().default("sp_UpsertTriadDetailsV2"),
+  SQL_SP_UPSERT_BITESUPPLY: z.string().default("sp_UpsertBiteSupplyDetailsV2"),
+  SQL_SP_UPSERT_PRODUCT_DETAILSV3: z.string().default("sp_UpsertProductDetailsV3"),
+  SQL_SP_UPSERT_PRODUCT_DETAILSV4: z.string().default("sp_UpsertProductDetailsV4"),
+  SQL_SP_GET_PRODUCT_LIST_BY_TAGV2: z.string().default("sp_GetFullProductDetailsListByTagV2"),
+  SQL_SP_GET_PRODUCT_LIST_BY_FILTERV2: z.string().default("sp_GetFullProductDetailsListByFilterV2"),
+  SQL_SP_GET_ALL_PRODUCT_DETAILS: z.string().default("sp_GetFullProductDetailsListV4"),
+  HISTORY_EXPORT_URL_BY_ID: z.string().default("http://localhost:5421/debug/history-export/exportAndSave/{productId}"),
+  HISTORY_EXPORT_URL_FOR_ALL: z.string().default("http://localhost:5421/debug/history-export/exportAndSaveAll"),
+  PROD_SYNC_URL: z.string().default("https://repricer-prod-jckio.ondigitalocean.app/help/getProductDetailsById/{productId}"),
+  MANUAL_PRODUCT_SYNC_PROCESS: z.string().default("http://localhost:5421/schedule/on-demand/mysql-sync"),
   MAX_UPDATE_REPRICER_ENDPOINT: z.string().default("/repricer/UpdateToMax"),
   SESSION_SECRET: z.string(),
   REPRICER_API_BASE_URL: z.string(),
@@ -188,11 +126,7 @@ export const envSchema = z.object({
   SMTP_PORT: z.coerce.number().default(25),
   SMTP_PWD: z.string(),
   EMAIL_ID: z.string().default("storage-sense@frontierdental.com"),
-  TO_EMAIL: z
-    .string()
-    .default(
-      "eliyahu@focusglobalsupply.com,Akshoy@voyantcs.com,repricer.support@voyantcs.com,tj@focusglobalsupply.com",
-    ),
+  TO_EMAIL: z.string().default("eliyahu@focusglobalsupply.com,Akshoy@voyantcs.com,repricer.support@voyantcs.com,tj@focusglobalsupply.com"),
   ENV_NAME: z.string().default("Scraper"),
   EMAIL_SUBJECT: z.string().default("Storage is freed"),
   ENV_IP: z.string().default("159.89.121.57"),
@@ -203,12 +137,8 @@ export const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
-  STORAGE_SENSE_CRON_URL: z
-    .string()
-    .default("http://localhost:5421/schedule/storage-sense"),
-  HISTORY_PURGE_CRON_URL: z
-    .string()
-    .default("http://localhost:5421/schedule/history-purger"),
+  STORAGE_SENSE_CRON_URL: z.string().default("http://localhost:5421/schedule/storage-sense"),
+  HISTORY_PURGE_CRON_URL: z.string().default("http://localhost:5421/schedule/history-purger"),
 
   STORAGE_SENSE_CRON_SCHEDULE: z.string().default("0 1 * * *"),
   FREE_THRESHOLD: z.coerce.number().default(25),
@@ -233,9 +163,7 @@ export const envSchema = z.object({
     .default(true),
   CRON_PROGRESS_SCHEDULE: z.string().default("*/30 * * * *"),
   IP_HEALTH_EMAIL_ID: z.string().default("ip-health@frontierdental.com"),
-  HISTORY_PURGER_EMAIL_ID: z
-    .string()
-    .default("history-purger@frontierdental.com"),
+  HISTORY_PURGER_EMAIL_ID: z.string().default("history-purger@frontierdental.com"),
   START_422_ERROR_CRON_SCHEDULE: z
     .string()
     .toLowerCase()
@@ -243,47 +171,35 @@ export const envSchema = z.object({
     .pipe(z.boolean())
     .default(true),
   SQL_SP_GET_PRODUCT_BY_MPID: z.string().default("sp_GetProductByMpid"),
-  SQL_SP_GET_PRODUCT_BY_CHANNEL_ID: z
-    .string()
-    .default("sp_GetProductsByChannelId"),
+  SQL_SP_GET_PRODUCT_BY_CHANNEL_ID: z.string().default("sp_GetProductsByChannelId"),
   _422_ERROR_CRON_SCHEDULE: z.string().default("*/30 * * * *"),
   EXPORT_SAVE_CRON_SCHEDULE: z.string().default("0 1 * * *"),
   CRON_PROGRESS_MAX_COUNT: z.coerce.number().default(25),
-  CRON_PROGRESS_EXTERNAL_ENDPOINT: z
-    .string()
-    .default("http://159.89.121.57:3000/monitor/get_cron_details"),
-  _422_ERROR_CRON_EXTERNAL_ENDPOINT: z
-    .string()
-    .default("http://159.89.121.57:3000/monitor/get_422_product"),
+  CRON_PROGRESS_EXTERNAL_ENDPOINT: z.string().default("http://159.89.121.57:3000/monitor/get_cron_details"),
+  _422_ERROR_CRON_EXTERNAL_ENDPOINT: z.string().default("http://159.89.121.57:3000/monitor/get_422_product"),
   _422_ERROR_MAX_COUNT: z.coerce.number().default(100),
   _422_ERROR_ELIGIBLE_MAX_COUNT: z.coerce.number().default(500),
   CACHE_HOST_URL: z.string(),
   CACHE_USERNAME: z.string(),
   CACHE_PASSWORD: z.string(),
   CACHE_PORT: z.coerce.number(),
-  REPRICER_ENCRYPTION_KEY: z
-    .string()
-    .default("3v9sKkLZ2z1Yq9eU8 + XgJk1YbZ9n3vLQ0mF9ZkQhJxgE="),
+  REPRICER_ENCRYPTION_KEY: z.string().default("3v9sKkLZ2z1Yq9eU8 + XgJk1YbZ9n3vLQ0mF9ZkQhJxgE="),
   IS_DEV: z
     .string()
     .toLowerCase()
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
-  MINI_ERP_CRON_TOGGLE_STATUS_ENDPOINT: z
-    .string()
-    .default("/mini_erp/toggleCronStatus"),
+  MINI_ERP_CRON_TOGGLE_STATUS_ENDPOINT: z.string().default("/mini_erp/toggleCronStatus"),
   MINI_ERP_CRON_RECREATE_ENDPOINT: z.string().default("/mini_erp/recreate"),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(1), // 1 minutes
 });
 
 export function validateConfig() {
   const parsed = envSchema.safeParse(process.env);
 
   if (!parsed.success) {
-    throw new Error(
-      "Invalid or missing environment variables:\n" +
-        JSON.stringify(parsed.error.format(), null, 2),
-    );
+    throw new Error("Invalid or missing environment variables:\n" + JSON.stringify(parsed.error.format(), null, 2));
   }
 
   return parsed.data;

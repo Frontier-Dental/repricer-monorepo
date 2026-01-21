@@ -36,7 +36,7 @@ export async function v2AlgoTest(req: Request<{ mpid: string }, { products: Net3
 async function getNet32Products(mpId: string, prod: ProductDetailsListItem) {
   const cronId = getCronId(prod);
   const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", mpId);
-  const net32resp: AxiosResponse<Net32Product[]> = await axiosHelper.getAsync(searchRequest, cronId);
+  const net32resp: AxiosResponse<Net32Product[]> = await axiosHelper.getAsync(searchRequest, cronId, mpId);
   return net32resp.data.map((x) => ({
     ...x,
     vendorId: typeof x.vendorId === "number" ? x.vendorId : parseInt(x.vendorId),

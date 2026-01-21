@@ -2,7 +2,7 @@ import _ from "lodash";
 import { applicationConfig } from "../config";
 import { GetCacheClientOptions } from "../../client/cacheClient";
 import CacheClient from "../../client/cacheClient";
-import { CacheKey } from "@repricer-monorepo/shared";
+import { CacheKey, VendorName, VendorNameLookup } from "@repricer-monorepo/shared";
 import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
 import * as SqlMapper from "./mySql-mapper";
 
@@ -302,4 +302,47 @@ export async function ResetProxyFailureDetails(proxyProvId: any, userId: any) {
       UpdatedBy: userId,
       UpdatedTime: new Date(),
     });
+}
+
+export async function UpdateQBreakDetails(mpid: string, vendorProducts: any) {
+  const db = getKnexInstance();
+  for (const vendorProduct of vendorProducts) {
+    if (vendorProduct.priceBreaks.length > 0) {
+      const qbreakDetails = vendorProduct.priceBreaks.map((priceBreak: any) => `Q${priceBreak.minQty} @ $${priceBreak.unitPrice}`).join(", ");
+      const qbreakCount = vendorProduct.priceBreaks.length;
+      const contextTableName = getContextTableNameByVendorId(vendorProduct.vendorId);
+      if (contextTableName) {
+        await db(contextTableName!)
+          .where({ MpId: parseInt(mpid) })
+          .update({
+            QBreakDetails: qbreakDetails,
+            QBreakCount: qbreakCount,
+          });
+        console.log(`Updated QBreakDetails for ${mpid} in ${contextTableName} with qbreakCount: ${qbreakCount} and qbreakDetails: ${qbreakDetails}`);
+      }
+    }
+  }
+}
+
+function getContextTableNameByVendorId(vendorId: string) {
+  let contextTableName: string | null = null;
+  const vendorIdNum = parseInt(vendorId, 10);
+  const vendorName = VendorNameLookup[vendorIdNum];
+
+  if (vendorName === VendorName.TRADENT) {
+    contextTableName = applicationConfig.SQL_TRADENT_DETAILS;
+  } else if (vendorName === VendorName.FRONTIER) {
+    contextTableName = applicationConfig.SQL_FRONTIER_DETAILS;
+  } else if (vendorName === VendorName.MVP) {
+    contextTableName = applicationConfig.SQL_MVP_DETAILS;
+  } else if (vendorName === VendorName.TOPDENT) {
+    contextTableName = applicationConfig.SQL_TOPDENT_DETAILS;
+  } else if (vendorName === VendorName.FIRSTDENT) {
+    contextTableName = applicationConfig.SQL_FIRSTDENT_DETAILS;
+  } else if (vendorName === VendorName.TRIAD) {
+    contextTableName = applicationConfig.SQL_TRIAD_DETAILS;
+  } else if (vendorName === VendorName.BITESUPPLY) {
+    contextTableName = applicationConfig.SQL_BITESUPPLY_DETAILS;
+  }
+  return contextTableName;
 }
