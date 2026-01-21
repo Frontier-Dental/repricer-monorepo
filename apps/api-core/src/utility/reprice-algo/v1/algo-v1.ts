@@ -169,9 +169,6 @@ export async function repriceProduct(mpid: string, net32Products: Net32Product[]
     repriceResult = await Rule.ApplySuppressPriceBreakRule(repriceResult, 1, isOverrideEnabled);
   }
 
-  //Apply Floor Check Rule
-  repriceResult = await Rule.ApplyFloorCheckRule(repriceResult, parseFloat(productItem.floorPrice));
-
   //Append #InvThreshold if InventoryThreshold Scenario is executed
   if (productItem.inventoryThreshold != null && productItem.inventoryThreshold > 0) {
     if (repriceResult.listOfRepriceDetails && repriceResult.listOfRepriceDetails.length > 0) {
@@ -210,6 +207,12 @@ export async function repriceProduct(mpid: string, net32Products: Net32Product[]
 
   // Align IsRepriced Field Based on Price Suggestion
   repriceResult = await Rule.AlignIsRepriced(repriceResult);
+
+  // Apply Floor Check Rule - should be applied after all other rules to ensure price is never below floor
+  // Repricing should be skipped if new price is below the floor
+  if (repriceResult) {
+    repriceResult = await Rule.ApplyFloorCheckRule(repriceResult, parseFloat(productItem.floorPrice));
+  }
 
   //Update TriggeredByVendor
   await mySqlHelper.UpdateTriggeredByVendor(repriceResult, contextVendor, mpid);
