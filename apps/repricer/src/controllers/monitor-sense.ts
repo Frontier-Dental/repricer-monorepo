@@ -12,6 +12,7 @@ import path from "path";
 import fs from "fs";
 import * as mongoHelper from "../services/mongo";
 import { GetCronSettingsList, GetSlowCronDetails } from "../services/mysql-v2";
+import * as mySqlMiddleware from "../services/mysql";
 
 export const monitorSenseController = express.Router();
 var monitorCrons: Record<string, ScheduledTask> = {};
@@ -21,6 +22,8 @@ export async function startAllMonitorCrons() {
   console.info(`Scheduling All Monitor CRONS on startup at ${new Date()}`);
   await startInProgressCronCheck();
   await startExpressCronValidationCheck();
+  await startHistoryDeletionCron();
+  await startCronLogsDeletionCron();
   console.info(`Successfully Started All Monitor CRONS Check at ${new Date()}`);
 }
 
@@ -201,4 +204,55 @@ async function get422ProductDetails() {
   productsCount.time = moment(new Date()).format("DD-MM-YYYY HH:mm:ss");
   console.log(`422 ERROR Products Count : ${productsCount.products422Error}, Price Update Products Count : ${productsCount.priceUpdateProducts}, Eligible Products Count : ${productsCount.eligibleProducts} as of ${productsCount.time}`);
   return productsCount;
+}
+
+async function startHistoryDeletionCron() {
+  console.info(`HISTORY_DELETION_CRON : Starting History Deletion Cron at ${new Date()} with expression : ${applicationConfig.HISTORY_DELETION_CRON_SCHEDULE}`);
+  monitorCrons["HistoryDeletionCron"] = schedule(
+    applicationConfig.HISTORY_DELETION_CRON_SCHEDULE,
+    async () => {
+      try {
+        await DeleteHistory();
+      } catch (error) {
+        console.error(`HISTORY_DELETION_CRON : Error running HistoryDeletionCron:`, error);
+      }
+    },
+    {
+      scheduled: true,
+    }
+  );
+}
+
+async function startCronLogsDeletionCron() {
+  console.log(`CRON_LOGS_DELETION_CRON : Starting Cron Logs Deletion Cron at ${new Date()} with expression : ${applicationConfig.CRON_LOGS_DELETION_CRON_SCHEDULE}`);
+  monitorCrons["CronLogsDeletionCron"] = schedule(
+    applicationConfig.CRON_LOGS_DELETION_CRON_SCHEDULE,
+    async () => {
+      try {
+        await DeleteCronLogs();
+      } catch (error) {
+        console.error(`CRON_LOGS_DELETION_CRON : Error running CronLogsDeletionCron:`, error);
+      }
+    },
+    {
+      scheduled: true,
+    }
+  );
+}
+async function DeleteHistory() {
+  // Get today's date
+  const today = new Date();
+  // Subtract 15 days
+  const pastDate = new Date();
+  pastDate.setDate(today.getDate() - 15);
+  const apiResponseQuery = `delete from table_history_apiResponse where RefTime < ?`;
+  const historyQuery = `delete from table_history where RefTime < ?`;
+  const apiResponseUpdated = await mySqlMiddleware.ExecuteQuery(apiResponseQuery, [pastDate]);
+  const historyUpdated = await mySqlMiddleware.ExecuteQuery(historyQuery, [pastDate]);
+  console.log(`HISTORY_DELETION_CRON : EFFECTIVE DATE : ${pastDate} || ${JSON.stringify(apiResponseUpdated)} || ${JSON.stringify(historyUpdated)}`);
+}
+
+async function DeleteCronLogs() {
+  const deletionResults = await mongoHelper.DeleteCronLogsPast15Days();
+  console.log(`CRON_LOGS_DELETION_CRON : Deleted Cron Logs Results : ${JSON.stringify(deletionResults)} `);
 }

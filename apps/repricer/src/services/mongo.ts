@@ -946,3 +946,11 @@ export const Update422StatusById = async (_mpId: any, isBulk: any) => {
 
   return mongoResult;
 };
+
+export const DeleteCronLogsPast15Days = async () => {
+  const dbo = await getMongoDb();
+  const cutoffDate = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+  console.log(`CRON_LOGS_DELETION_CRON : Deleting Cron Logs for Date : ${cutoffDate}`);
+  const [cronLogsResult, errorLogsResult] = await Promise.all([dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME!).deleteMany({ time: { $lte: cutoffDate } }), dbo.collection(applicationConfig.ERROR_422_CRON_LOGS!).deleteMany({ time: { $lte: cutoffDate } })]);
+  return [cronLogsResult, errorLogsResult];
+};
