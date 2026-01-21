@@ -1,8 +1,12 @@
 import { createClient, RedisClientType } from "redis";
 import Encrypto from "../utility/encrypto";
+
+const OPERATION_TIMEOUT_MS = 5000; // 5 second timeout for Redis operations
+
 class CacheClient {
   private static instance: CacheClient;
   private client: RedisClientType;
+  private connectionPromise: Promise<unknown> | null = null;
 
   private constructor(option: CacheClientOptions | null = null) {
     this.client = createClient({
@@ -28,53 +32,107 @@ class CacheClient {
       console.error("❌ Redis Client Error:", err);
     });
 
-    this.client.connect().then(() => {
-      //console.info("✅ Redis connected successfully");
+    // Store the connection promise so we can await it
+    this.connectionPromise = this.client
+      .connect()
+      .then(() => {
+        console.info("✅ Redis connected successfully");
+      })
+      .catch((err) => {
+        console.error("❌ Redis initial connection failed:", err);
+      });
+  }
+
+  /**
+   * Wraps a Redis operation with a timeout to prevent hanging forever
+   */
+  private async withTimeout<T>(operation: Promise<T>, operationName: string): Promise<T> {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error(`Redis ${operationName} timeout after ${OPERATION_TIMEOUT_MS}ms`)), OPERATION_TIMEOUT_MS);
     });
+
+    return Promise.race([operation, timeoutPromise]);
   }
 
   public static getInstance(option: CacheClientOptions | null = null): CacheClient {
-    if (!CacheClient.instance || CacheClient.instance.client.isOpen === false) {
+    if (!CacheClient.instance) {
       CacheClient.instance = new CacheClient(option);
     }
     return CacheClient.instance;
   }
 
+  /**
+   * Ensures the singleton connection is ready before operations.
+   * Call this if you need to await the initial connection.
+   */
+  public async waitForConnection(): Promise<void> {
+    if (this.connectionPromise) {
+      await this.connectionPromise;
+    }
+  }
+
   public async set<T>(key: string, value: T, ttlInSeconds?: number): Promise<void> {
     const serialized = JSON.stringify(value);
     await this.ensureConnected();
-    if (ttlInSeconds) {
-      await this.client.setEx(key, ttlInSeconds, serialized);
-    } else {
-      await this.client.set(key, serialized);
+    try {
+      if (ttlInSeconds) {
+        await this.withTimeout(this.client.setEx(key, ttlInSeconds, serialized), "set");
+      } else {
+        await this.withTimeout(this.client.set(key, serialized), "set");
+      }
+    } catch (error) {
+      console.error(`❌ Redis set error for key ${key}:`, error);
+      throw error;
     }
   }
 
   public async get<T>(key: string): Promise<T | null> {
     await this.ensureConnected();
-    const data = await this.client.get(key);
-    return data ? (JSON.parse(data) as T) : null;
+    try {
+      const data = await this.withTimeout(this.client.get(key), "get");
+      return data ? (JSON.parse(data) as T) : null;
+    } catch (error) {
+      console.error(`❌ Redis get error for key ${key}:`, error);
+      return null; // Graceful fallback - return null on timeout/error
+    }
   }
 
   public async delete(key: string): Promise<number> {
     await this.ensureConnected();
-    return this.client.del(key);
+    try {
+      return await this.withTimeout(this.client.del(key), "delete");
+    } catch (error) {
+      console.error(`❌ Redis delete error for key ${key}:`, error);
+      return 0;
+    }
   }
 
   public async exists(key: string): Promise<boolean> {
     await this.ensureConnected();
-    const result = await this.client.exists(key);
-    return result === 1;
+    try {
+      const result = await this.withTimeout(this.client.exists(key), "exists");
+      return result === 1;
+    } catch (error) {
+      console.error(`❌ Redis exists error for key ${key}:`, error);
+      return false;
+    }
   }
 
   public async flushAll(): Promise<void> {
     await this.ensureConnected();
-    await this.client.flushAll();
+    await this.withTimeout(this.client.flushAll(), "flushAll");
   }
 
-  private async ensureConnected() {
+  private async ensureConnected(): Promise<void> {
+    // Wait for initial connection if still pending
+    if (this.connectionPromise) {
+      await this.connectionPromise;
+    }
+    // Reconnect if disconnected
     if (!this.client.isOpen) {
-      await this.client.connect();
+      console.warn("⚡ Redis reconnecting in ensureConnected...");
+      this.connectionPromise = this.client.connect();
+      await this.connectionPromise;
     }
   }
 
@@ -104,13 +162,16 @@ class CacheClient {
     return values;
   }
 
+  /**
+   * No-op: Singleton connection stays open.
+   * This method is kept for backward compatibility with existing call sites.
+   * The singleton pattern means the connection should remain open and be reused.
+   */
   public async disconnect(): Promise<void> {
-    if (this.client.isOpen === true) {
-      //console.debug("Disconnected Redis client");
-      await this.client.quit();
-    } else {
-      //console.debug("Redis client already disconnected");
-    }
+    // No-op - singleton connection stays alive
+    // Previously this killed the shared connection, causing race conditions
+    // and silent hangs when other operations tried to use the disconnected client.
+    return;
   }
 }
 
