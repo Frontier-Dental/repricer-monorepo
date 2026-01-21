@@ -248,6 +248,7 @@ async function DeleteHistory() {
   // Subtract 15 days
   const pastDate = new Date();
   pastDate.setDate(today.getDate() - 15);
+  pastDate.setHours(0, 0, 0, 0);
   const apiResponseQuery = `delete from table_history_apiResponse where RefTime < ?`;
   const historyQuery = `delete from table_history where RefTime < ?`;
   const apiResponseUpdated = await mySqlMiddleware.ExecuteQuery(apiResponseQuery, [pastDate]);
