@@ -536,12 +536,14 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
       }
 
       for (let i = nextIndex; i <= sortedPayload.length; i++) {
-        if (sortedPayload[i] && _.includes(excludedVendors, sortedPayload[i].vendorId.toString())) {
-          nextIndex++;
-        } else if ((await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, priceBreak.minQty, floorPrice, GetShippingPrice(sortedPayload[i]), true)) == true) {
-          nextIndex++;
-        } else {
-          break;
+        if (sortedPayload[i]) {
+          if (_.includes(excludedVendors, sortedPayload[i].vendorId.toString())) {
+            nextIndex++;
+          } else if ((await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, priceBreak.minQty, floorPrice, GetShippingPriceForPriceBreak(sortedPayload[i], priceBreak), true)) == true) {
+            nextIndex++;
+          } else {
+            break;
+          }
         }
       }
 
@@ -629,12 +631,14 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
           } else if (sortedPayload[1] && sortedPayload[1].vendorId == $.VENDOR_ID) {
             let nextIndex = 2;
             for (let i = nextIndex; i <= sortedPayload.length; i++) {
-              if (sortedPayload[i] && (_.includes(excludedVendors, sortedPayload[i].vendorId.toString()) || sortedPayload[i].vendorId == $.VENDOR_ID)) {
-                nextIndex++;
-              } else if ((await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, priceBreak.minQty, floorPrice, GetShippingPrice(sortedPayload[i]), true)) == true) {
-                nextIndex++;
-              } else {
-                break;
+              if (sortedPayload[i]) {
+                if (_.includes(excludedVendors, sortedPayload[i].vendorId.toString()) || sortedPayload[i].vendorId == $.VENDOR_ID) {
+                  nextIndex++;
+                } else if ((await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, priceBreak.minQty, floorPrice, GetShippingPriceForPriceBreak(sortedPayload[i], priceBreak), true)) == true) {
+                  nextIndex++;
+                } else {
+                  break;
+                }
               }
             }
             const nextLowestPrice =
@@ -667,12 +671,14 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
           } else if (sortedPayload[1]) {
             let nextIndex = 1;
             for (let i = nextIndex; i <= sortedPayload.length; i++) {
-              if (sortedPayload[i] && (_.includes(excludedVendors, sortedPayload[i].vendorId.toString()) || sortedPayload[i].vendorId == $.VENDOR_ID)) {
-                nextIndex++;
-              } else if ((await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, priceBreak.minQty, floorPrice, GetShippingPrice(sortedPayload[i]), true)) == true) {
-                nextIndex++;
-              } else {
-                break;
+              if (sortedPayload[i]) {
+                if (_.includes(excludedVendors, sortedPayload[i].vendorId.toString()) || sortedPayload[i].vendorId == $.VENDOR_ID) {
+                  nextIndex++;
+                } else if ((await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, priceBreak.minQty, floorPrice, GetShippingPriceForPriceBreak(sortedPayload[i], priceBreak), true)) == true) {
+                  nextIndex++;
+                } else {
+                  break;
+                }
               }
             }
             const secondLowestPrice = sortedPayload[nextIndex].priceBreaks.find((x: any) => x.minQty == priceBreak.minQty && x.active == true);

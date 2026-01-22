@@ -120,12 +120,14 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
         nextIndex++;
       }
       for (let i = nextIndex; i < sortedPayload.length; i++) {
-        if (sortedPayload[i] && _.includes(excludedVendors, sortedPayload[i].vendorId.toString())) {
-          nextIndex++;
-        } else if (await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, 1, floorPrice, 0, false)) {
-          nextIndex++;
-        } else {
-          break;
+        if (sortedPayload[i]) {
+          if (_.includes(excludedVendors, sortedPayload[i].vendorId.toString())) {
+            nextIndex++;
+          } else if (await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, 1, floorPrice, 0, false)) {
+            nextIndex++;
+          } else {
+            break;
+          }
         }
       }
       if (sortedPayload[nextIndex]) {
@@ -210,12 +212,14 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
           if (sortedPayload[1] && (sortedPayload[1].vendorId == $.VENDOR_ID || _.includes(excludedVendors, sortedPayload[1].vendorId.toString()))) {
             let nextIndex = 2;
             for (let i = nextIndex; i < sortedPayload.length; i++) {
-              if (sortedPayload[i] && (_.includes(excludedVendors, sortedPayload[i].vendorId.toString()) || sortedPayload[i].vendorId == $.VENDOR_ID)) {
-                nextIndex++;
-              } else if (await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, 1, floorPrice, 0, false)) {
-                nextIndex++;
-              } else {
-                break;
+              if (sortedPayload[i]) {
+                if (_.includes(excludedVendors, sortedPayload[i].vendorId.toString()) || sortedPayload[i].vendorId == $.VENDOR_ID) {
+                  nextIndex++;
+                } else if (await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, 1, floorPrice, 0, false)) {
+                  nextIndex++;
+                } else {
+                  break;
+                }
               }
             }
             if (!sortedPayload[nextIndex]) {
@@ -573,11 +577,13 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
           //do nothing
           let nextIndex = 1;
           for (let i = nextIndex; i < sortedPayload.length; i++) {
-            if (sortedPayload[i] && (_.includes(excludedVendors, sortedPayload[i].vendorId.toString()) || sortedPayload[i].vendorId == $.VENDOR_ID)) {
-              nextIndex++;
-            } else if (await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, priceBreak.minQty, floorPrice, 0, false)) {
-              nextIndex++;
-            } else break;
+            if (sortedPayload[i]) {
+              if (_.includes(excludedVendors, sortedPayload[i].vendorId.toString()) || sortedPayload[i].vendorId == $.VENDOR_ID) {
+                nextIndex++;
+              } else if (await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, priceBreak.minQty, floorPrice, 0, false)) {
+                nextIndex++;
+              } else break;
+            }
           }
           if (sortedPayload[nextIndex] && (_.includes(excludedVendors, sortedPayload[nextIndex].vendorId.toString()) || sortedPayload[nextIndex].vendorId == $.VENDOR_ID)) {
             nextIndex++;
