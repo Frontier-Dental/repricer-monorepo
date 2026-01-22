@@ -16,7 +16,7 @@ class CacheClient {
         tls: option?.useTLS || true,
         connectTimeout: 20000, // increase timeout (20s)
         reconnectStrategy: (retries) => {
-          if (retries > 3) {
+          if (retries > 2) {
             console.error("❌ Too many Redis reconnect attempts");
             return new Error("Redis reconnect failed");
           }
