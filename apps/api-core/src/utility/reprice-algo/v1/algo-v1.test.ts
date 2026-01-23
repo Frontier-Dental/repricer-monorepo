@@ -166,6 +166,7 @@ describe("algo-v1", () => {
   };
 
   const mockRepriceResult = new RepriceModel(mockMpid, mockOwnProduct, "Test Product", 9.99, true, false, [], "Price updated");
+  mockRepriceResult.repriceDetails = new RepriceData(10, 9.99, true, "Price updated", 1);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -206,10 +207,11 @@ describe("algo-v1", () => {
     (Rule.ApplyRepriceDownBadgeCheckRule as jest.Mock).mockImplementation((result) => Promise.resolve(result));
     (Rule.AppendNewPriceBreakActivation as jest.Mock).mockImplementation((result) => Promise.resolve(result));
     (Rule.ApplySisterComparisonCheck as jest.Mock).mockImplementation((result) => Promise.resolve(result));
+    (Rule.ApplyMaxPriceCheck as jest.Mock).mockImplementation((result) => Promise.resolve(result));
     // AlignIsRepriced might modify isRepriced flag, so we need to preserve it
     (Rule.AlignIsRepriced as jest.Mock).mockImplementation((result) => {
       // Preserve the original isRepriced values
-      if (result.listOfRepriceDetails && result.listOfRepriceDetails.length > 0) {
+      if (result && result.listOfRepriceDetails && result.listOfRepriceDetails.length > 0) {
         result.listOfRepriceDetails.forEach((detail: any) => {
           // Keep original isRepriced value
         });
@@ -877,7 +879,7 @@ describe("algo-v1", () => {
       // Clear previous calls
       (axiosHelper.postAsync as jest.Mock).mockClear();
       (Rule.AlignIsRepriced as jest.Mock).mockImplementation((result) => {
-        if (result.listOfRepriceDetails && result.listOfRepriceDetails.length > 0) {
+        if (result && result.listOfRepriceDetails && result.listOfRepriceDetails.length > 0) {
           result.listOfRepriceDetails.forEach((detail: any) => {
             // Force isRepriced to stay false - AlignIsRepriced won't modify it if newPrice = "N/A"
             detail.isRepriced = false;

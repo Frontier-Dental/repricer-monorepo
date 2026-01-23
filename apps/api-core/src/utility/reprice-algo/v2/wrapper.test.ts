@@ -115,7 +115,7 @@ jest.mock("./utility", () => ({
 import axios from "axios";
 import { AxiosError } from "axios";
 import { Decimal } from "decimal.js";
-import { AlgoExecutionMode, VendorNameLookup } from "@repricer-monorepo/shared";
+import { AlgoExecutionMode } from "@repricer-monorepo/shared";
 import { updatePrice, repriceProductV2Wrapper } from "./wrapper";
 import * as mongoHelper from "../../mongo/db-helper";
 import { getNet32UrlById } from "../../mysql/mysql-helper";
@@ -127,10 +127,9 @@ import { findOrCreateV2AlgoSettingsForVendors } from "../../mysql/v2-algo-settin
 import { repriceProductV2 } from "./algorithm";
 import { getVendorThresholds } from "./shipping-threshold";
 import { AlgoResult, ChangeResult } from "./types";
-import { getAllOwnVendorIds, getPriceListFormatted } from "./utility";
+import { getPriceListFormatted } from "./utility";
 import { GetCronSettingsDetailsByName, GetCronSettingsDetailsById } from "../../mysql/mysql-v2";
 import { applicationConfig } from "../../config";
-import { ErrorItemModel } from "../../../model/error-item";
 
 // Suppress console methods during tests
 const originalConsoleLog = console.log;
@@ -261,8 +260,15 @@ describe("wrapper", () => {
       const axiosError = new AxiosError("Network error");
       (axios.post as jest.Mock).mockRejectedValue(axiosError);
 
-      // updatePrice doesn't have try-catch, so errors propagate
-      await expect(updatePrice(mockProxyConfig, subscriptionKey, payload)).rejects.toBeInstanceOf(AxiosError);
+      // updatePrice has try-catch that returns error as response
+      const result = await updatePrice(mockProxyConfig, subscriptionKey, payload);
+
+      expect(result).toEqual({
+        data: {
+          status: false,
+          message: `ERROR::Sorry some error occurred! Exception : ${axiosError}`,
+        },
+      });
     });
   });
 

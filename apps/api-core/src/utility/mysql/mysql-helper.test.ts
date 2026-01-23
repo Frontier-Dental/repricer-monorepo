@@ -309,6 +309,29 @@ describe("mysql-helper", () => {
       expect(console.log).toHaveBeenCalledWith("Error in InsertRunInfo", runInfo, expect.any(Error));
       expect(result).toBeUndefined();
     });
+
+    it("should return undefined on error but not throw", async () => {
+      const runInfo = {
+        CronName: "TestCron",
+        CronId: "cron-123",
+        RunStartTime: new Date(),
+        RunId: "run-123",
+        KeyGenId: "key-123",
+        RunType: "regular",
+        ProductCount: 100,
+        EligibleCount: 80,
+        ScrapedSuccessCount: 75,
+        ScrapedFailureCount: 5,
+      };
+
+      mockQueryBuilder.insert.mockImplementationOnce(() => {
+        return Promise.reject(createDbError());
+      });
+
+      // Should not throw, should return undefined
+      const result = await InsertRunInfo(runInfo);
+      expect(result).toBeUndefined();
+    });
   });
 
   describe("UpdateRunInfo", () => {
@@ -662,6 +685,60 @@ describe("mysql-helper", () => {
 
       expect(console.log).toHaveBeenCalledWith("Error in GetItemListById", mpId, expect.any(Error));
       expect(result).toBeUndefined();
+    });
+
+    it("should build all subqueries with whereExists callback", async () => {
+      const mpId = "123";
+      const mockResult = [{ ProductId: 123 }];
+
+      // Track whereExists calls
+      const whereExistsCallbacks: any[] = [];
+
+      // Create a mock subquery builder that captures the whereExists callback
+      const createSubqueryBuilder = () => {
+        const subBuilder: any = {
+          select: jest.fn().mockReturnThis(),
+          leftJoin: jest.fn().mockReturnThis(),
+          where: jest.fn().mockReturnThis(),
+          whereExists: jest.fn().mockImplementation(function (callback: any) {
+            // Store the callback to verify it's called
+            whereExistsCallbacks.push(callback);
+            // Call the callback to ensure line 220 is executed
+            const existsBuilder: any = {
+              select: jest.fn().mockReturnThis(),
+              from: jest.fn().mockReturnThis(),
+              whereNotNull: jest.fn().mockReturnThis(),
+              andWhere: jest.fn().mockReturnThis(),
+            };
+            callback.call(existsBuilder);
+            return subBuilder;
+          }),
+        };
+        return subBuilder;
+      };
+
+      // Mock knex to return subquery builders
+      const originalKnex = mockKnex;
+      let subqueryCallCount = 0;
+      mockKnex = jest.fn().mockImplementation((table: string) => {
+        if (table === "table_scrapeProductList as pl") {
+          subqueryCallCount++;
+          return createSubqueryBuilder();
+        }
+        return originalKnex(table);
+      });
+      mockKnex.union = jest.fn().mockResolvedValue(mockResult);
+      (getKnexInstance as jest.Mock).mockReturnValue(mockKnex);
+      (MapProductDetailsList as jest.Mock).mockReturnValueOnce([{ mpId: 123 }]);
+      jest.spyOn(_, "first").mockReturnValueOnce({ mpId: 123 });
+
+      const result = await GetItemListById(mpId);
+
+      // Verify all 7 subqueries were built (tradent, frontier, mvp, firstDent, topDent, triad, biteSupply)
+      expect(subqueryCallCount).toBe(7);
+      // Verify whereExists callback was executed for each subquery (line 220)
+      expect(whereExistsCallbacks.length).toBe(7);
+      expect(result).toEqual({ mpId: 123 });
     });
   });
 
@@ -1102,6 +1179,20 @@ describe("mysql-helper", () => {
       }
     });
 
+    it("should update triggered by vendor for BITESUPPLY", async () => {
+      const payload = { mpid: "123" };
+      const contextVendor = "BITESUPPLY";
+      const mpid = "123";
+      (GetTriggeredByValue as jest.Mock).mockReturnValueOnce("VENDOR1");
+      mockKnex.raw.mockResolvedValueOnce([{ affectedRows: 1 }]);
+
+      const result = await UpdateTriggeredByVendor(payload, contextVendor, mpid);
+
+      expect(GetTriggeredByValue).toHaveBeenCalledWith(payload);
+      expect(mockKnex.raw).toHaveBeenCalledWith(`UPDATE ${applicationConfig.SQL_BITESUPPLY_DETAILS} SET TriggeredByVendor=? WHERE MpId =?`, ["VENDOR1", 123]);
+      expect(result).toEqual("VENDOR1");
+    });
+
     it("should handle unknown vendor", async () => {
       const payload = { mpid: "123" };
       const contextVendor = "UNKNOWN";
@@ -1259,6 +1350,61 @@ describe("mysql-helper", () => {
       // Code does knex(table).where().update(), so where returns builder, update returns chain
       expect(mockQueryBuilder.where).toHaveBeenCalledWith("MpId", 123);
       expect(mockQueryBuilder.update).toHaveBeenCalledWith({ RepriceResult: repriceResultStatus });
+    });
+
+    it("should handle errors gracefully", async () => {
+      const repriceResultStatus = RepriceResultEnum.CHANGE_DOWN;
+      const mpid = "123";
+      const contextVendor = VendorName.TRADENT;
+      updateChain._setReject(new Error("DB Error"));
+
+      await UpdateRepriceResultStatus(repriceResultStatus, mpid, contextVendor);
+
+      expect(console.log).toHaveBeenCalledWith("Error in UpdateRepriceResultStatus", repriceResultStatus, mpid, contextVendor, expect.any(Error));
+    });
+
+    it("should update reprice result status for TOPDENT", async () => {
+      const repriceResultStatus = RepriceResultEnum.CHANGE_UP;
+      const mpid = "456";
+      const contextVendor = VendorName.TOPDENT;
+      updateChain._setResolveValue(1);
+
+      await UpdateRepriceResultStatus(repriceResultStatus, mpid, contextVendor);
+
+      expect(mockKnex).toHaveBeenCalledWith(applicationConfig.SQL_TOPDENT_DETAILS);
+    });
+
+    it("should update reprice result status for FIRSTDENT", async () => {
+      const repriceResultStatus = RepriceResultEnum.CHANGE_UP;
+      const mpid = "456";
+      const contextVendor = VendorName.FIRSTDENT;
+      updateChain._setResolveValue(1);
+
+      await UpdateRepriceResultStatus(repriceResultStatus, mpid, contextVendor);
+
+      expect(mockKnex).toHaveBeenCalledWith(applicationConfig.SQL_FIRSTDENT_DETAILS);
+    });
+
+    it("should update reprice result status for TRIAD", async () => {
+      const repriceResultStatus = RepriceResultEnum.CHANGE_UP;
+      const mpid = "456";
+      const contextVendor = VendorName.TRIAD;
+      updateChain._setResolveValue(1);
+
+      await UpdateRepriceResultStatus(repriceResultStatus, mpid, contextVendor);
+
+      expect(mockKnex).toHaveBeenCalledWith(applicationConfig.SQL_TRIAD_DETAILS);
+    });
+
+    it("should update reprice result status for BITESUPPLY", async () => {
+      const repriceResultStatus = RepriceResultEnum.CHANGE_UP;
+      const mpid = "456";
+      const contextVendor = VendorName.BITESUPPLY;
+      updateChain._setResolveValue(1);
+
+      await UpdateRepriceResultStatus(repriceResultStatus, mpid, contextVendor);
+
+      expect(mockKnex).toHaveBeenCalledWith(applicationConfig.SQL_BITESUPPLY_DETAILS);
     });
   });
 
@@ -1489,6 +1635,16 @@ describe("mysql-helper", () => {
         updated_at: expect.any(Date),
       });
     });
+
+    it("should throw error on failure", async () => {
+      const id = 1;
+      const status = "completed";
+      const message = "Error message";
+      updateChain._setReject(new Error("DB Error"));
+
+      await expect(UpdateWaitlistStatus(id, status, message)).rejects.toThrow("DB Error");
+      expect(console.log).toHaveBeenCalledWith("Error in UpdateWaitlistStatus", id, status, message, expect.any(Error));
+    });
   });
 
   describe("UpdateVendorStock", () => {
@@ -1514,6 +1670,16 @@ describe("mysql-helper", () => {
       await UpdateVendorStock(vendorName, mpid, inventory);
 
       expect(mockKnex).toHaveBeenCalledWith(applicationConfig.SQL_TRADENT_DETAILS);
+    });
+
+    it("should throw error on failure", async () => {
+      const vendorName = VendorName.TRADENT;
+      const mpid = 123;
+      const inventory = 150;
+      updateChain._setReject(new Error("DB Error"));
+
+      await expect(UpdateVendorStock(vendorName, mpid, inventory)).rejects.toThrow("DB Error");
+      expect(console.log).toHaveBeenCalledWith("Error in UpdateVendorStock", vendorName, mpid, inventory, expect.any(Error));
     });
   });
 });
