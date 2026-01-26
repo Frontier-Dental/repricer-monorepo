@@ -1,12 +1,11 @@
 import { createClient, RedisClientType } from "redis";
 import Encrypto from "../utility/encrypto";
 
-const OPERATION_TIMEOUT_MS = 5000; // 5 second timeout for Redis operations
+const OPERATION_TIMEOUT_MS = 5000;
 
 class CacheClient {
   private static instance: CacheClient;
   private client: RedisClientType;
-  private connectionPromise: Promise<unknown> | null = null;
 
   private constructor(option: CacheClientOptions | null = null) {
     this.client = createClient({
@@ -32,15 +31,10 @@ class CacheClient {
       console.error("❌ Redis Client Error:", err);
     });
 
-    // Store the connection promise so we can await it
-    this.connectionPromise = this.client
-      .connect()
-      .then(() => {
-        console.info("✅ Redis connected successfully");
-      })
-      .catch((err) => {
-        console.error("❌ Redis initial connection failed:", err);
-      });
+    // Fire and forget initial connection - ensureConnected() will handle it
+    this.client.connect().catch((err) => {
+      console.error("❌ Redis initial connection failed:", err);
+    });
   }
 
   /**
@@ -61,20 +55,14 @@ class CacheClient {
     return CacheClient.instance;
   }
 
-  /**
-   * Ensures the singleton connection is ready before operations.
-   * Call this if you need to await the initial connection.
-   */
-  public async waitForConnection(): Promise<void> {
-    if (this.connectionPromise) {
-      await this.connectionPromise;
-    }
-  }
-
   public async set<T>(key: string, value: T, ttlInSeconds?: number): Promise<void> {
-    const serialized = JSON.stringify(value);
-    await this.ensureConnected();
+    const connected = await this.ensureConnected();
+    if (!connected) {
+      console.error(`❌ Redis set skipped for key ${key}: not connected`);
+      return;
+    }
     try {
+      const serialized = JSON.stringify(value);
       if (ttlInSeconds) {
         await this.withTimeout(this.client.setEx(key, ttlInSeconds, serialized), "set");
       } else {
@@ -82,23 +70,28 @@ class CacheClient {
       }
     } catch (error) {
       console.error(`❌ Redis set error for key ${key}:`, error);
-      throw error;
     }
   }
 
   public async get<T>(key: string): Promise<T | null> {
-    await this.ensureConnected();
+    const connected = await this.ensureConnected();
+    if (!connected) {
+      return null;
+    }
     try {
       const data = await this.withTimeout(this.client.get(key), "get");
       return data ? (JSON.parse(data) as T) : null;
     } catch (error) {
       console.error(`❌ Redis get error for key ${key}:`, error);
-      return null; // Graceful fallback - return null on timeout/error
+      return null;
     }
   }
 
   public async delete(key: string): Promise<number> {
-    await this.ensureConnected();
+    const connected = await this.ensureConnected();
+    if (!connected) {
+      return 0;
+    }
     try {
       return await this.withTimeout(this.client.del(key), "delete");
     } catch (error) {
@@ -108,7 +101,10 @@ class CacheClient {
   }
 
   public async exists(key: string): Promise<boolean> {
-    await this.ensureConnected();
+    const connected = await this.ensureConnected();
+    if (!connected) {
+      return false;
+    }
     try {
       const result = await this.withTimeout(this.client.exists(key), "exists");
       return result === 1;
@@ -119,20 +115,27 @@ class CacheClient {
   }
 
   public async flushAll(): Promise<void> {
-    await this.ensureConnected();
+    const connected = await this.ensureConnected();
+    if (!connected) {
+      return;
+    }
     await this.withTimeout(this.client.flushAll(), "flushAll");
   }
 
-  private async ensureConnected(): Promise<void> {
-    // Wait for initial connection if still pending
-    if (this.connectionPromise) {
-      await this.connectionPromise;
+  /**
+   * Checks if connected, tries to connect if not. Returns success status.
+   */
+  private async ensureConnected(): Promise<boolean> {
+    if (this.client.isOpen) {
+      return true;
     }
-    // Reconnect if disconnected
-    if (!this.client.isOpen) {
+    try {
       console.warn("⚡ Redis reconnecting in ensureConnected...");
-      this.connectionPromise = this.client.connect();
-      await this.connectionPromise;
+      await this.client.connect();
+      return true;
+    } catch (error) {
+      console.error("❌ Redis connection failed:", error);
+      return false;
     }
   }
 
@@ -140,26 +143,36 @@ class CacheClient {
    * Get all keys (optionally with values).
    */
   public async getAllKeys(withValues = false): Promise<string[] | Record<string, unknown>> {
+    const connected = await this.ensureConnected();
+    if (!connected) {
+      return withValues ? {} : [];
+    }
+
     const keys: string[] = [];
-    let cursor = "0"; // must be string, not number
+    let cursor = "0";
 
-    do {
-      const result = await this.client.scan(cursor, { COUNT: 100 });
-      cursor = result.cursor; // remains a string
-      keys.push(...result.keys);
-    } while (cursor !== "0");
+    try {
+      do {
+        const result = await this.client.scan(cursor, { COUNT: 100 });
+        cursor = result.cursor;
+        keys.push(...result.keys);
+      } while (cursor !== "0");
 
-    if (!withValues) {
-      return keys;
+      if (!withValues) {
+        return keys;
+      }
+
+      const values: Record<string, unknown> = {};
+      for (const key of keys) {
+        const val = await this.client.get(key);
+        values[key] = val ? JSON.parse(val) : null;
+      }
+
+      return values;
+    } catch (error) {
+      console.error("❌ Redis getAllKeys error:", error);
+      return withValues ? {} : [];
     }
-
-    const values: Record<string, unknown> = {};
-    for (const key of keys) {
-      const val = await this.client.get(key);
-      values[key] = val ? JSON.parse(val) : null;
-    }
-
-    return values;
   }
 
   /**
@@ -168,9 +181,6 @@ class CacheClient {
    * The singleton pattern means the connection should remain open and be reused.
    */
   public async disconnect(): Promise<void> {
-    // No-op - singleton connection stays alive
-    // Previously this killed the shared connection, causing race conditions
-    // and silent hangs when other operations tried to use the disconnected client.
     return;
   }
 }
