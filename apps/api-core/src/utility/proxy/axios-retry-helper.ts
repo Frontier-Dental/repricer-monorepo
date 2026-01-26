@@ -163,10 +163,25 @@ export async function getScrapingBeeResponse(_url: string, proxyDetailsResponse:
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 async function retryCondition(error: any): Promise<boolean> {
-  return (error.response && (error.response.statusCode == 503 || error.response.statusCode == 500 || error.response.statusCode == 429 || error.response.statusCode == 408 || error.response.statusCode == 400 || error.response.statusCode == 401)) || error.message == "Error: ESOCKETTIMEDOUT";
+  if (!error.response) {
+    return error.message === "Error: ESOCKETTIMEDOUT" || error.code === "ETIMEDOUT" || error.code === "ECONNREFUSED";
+  }
+
+  const statusCode = error.response.statusCode;
+  const retryableStatuses = [500, 502, 503, 504, 408, 429, 400, 401];
+  return retryableStatuses.includes(statusCode);
 }
 async function retryConditionForAxios(error: any): Promise<boolean> {
-  return error.response.status == 503 || error.response.status == 500 || error.response.status == 429 || error.response.status == 408 || error.response.status == 400 || error.response.status == 401;
+  // Handle network errors (no response)
+  if (!error.response) {
+    const networkErrors = ["ETIMEDOUT", "ECONNREFUSED", "ECONNRESET", "ENOTFOUND", "EAI_AGAIN"];
+    return networkErrors.includes(error.code);
+  }
+
+  // Handle HTTP errors
+  const status = error.response.status;
+  const retryableStatuses = [500, 502, 503, 504, 408, 429];
+  return retryableStatuses.includes(status);
 }
 
 function getFormattedErrorMesage(error: any): string {

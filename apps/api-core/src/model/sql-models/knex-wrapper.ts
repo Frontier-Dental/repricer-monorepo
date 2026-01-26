@@ -18,10 +18,35 @@ export function getKnexInstance(): Knex {
         user: applicationConfig.SQL_USERNAME,
         password: sqlPassword,
         database: applicationConfig.SQL_DATABASE,
+        connectTimeout: 10000,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 10000,
       },
-      pool: { min: 0 },
+      pool: {
+        min: 2,
+        max: 30,
+        acquireTimeoutMillis: 30000,
+        createTimeoutMillis: 30000,
+        destroyTimeoutMillis: 5000,
+        idleTimeoutMillis: 30000,
+        reapIntervalMillis: 1000,
+        createRetryIntervalMillis: 200,
+        // Validate before use
+        validate: (connection: any) => {
+          return connection
+            .query("SELECT 1")
+            .then(() => true)
+            .catch(() => false);
+        },
+      } as any,
       acquireConnectionTimeout: 10000,
     });
+
+    // Log pool events for debugging
+    knexInstance.on("query-error", (error, obj) => {
+      console.error("Knex query error:", error, obj);
+    });
+
     return knexInstance;
   }
 }
