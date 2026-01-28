@@ -16,7 +16,7 @@ export async function runCron(req: Request, res: Response): Promise<any> {
 
 export async function runProduct(req: Request, res: Response): Promise<any> {
   const requestedCron = req.params.cronName;
-  const productId = req.params.product;
+  const productId = req.params.product as string;
   const scrapeCronDetails = await GetScrapeCronDetails();
   const contextCronDetails = scrapeCronDetails.find((x: any) => x.CronName == requestedCron);
   await scrapeProductListForProduct(contextCronDetails!, productId);
