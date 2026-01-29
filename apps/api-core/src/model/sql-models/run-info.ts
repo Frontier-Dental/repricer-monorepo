@@ -36,16 +36,16 @@ export class RunInfo {
   UpdateEndTime() {
     this.RunEndTime = new Date();
   }
-  GetSuccessCountQuery(runInfoId: any) {
-    return `UPDATE ${applicationConfig.SQL_RUNINFO} SET ScrapedSuccessCount=${this.ScrapedSuccessCount} WHERE Id=${runInfoId}`;
+  GetSuccessCountQuery() {
+    return `UPDATE ${applicationConfig.SQL_RUNINFO} SET ScrapedSuccessCount=? WHERE Id=?`;
   }
-  GetFailureCountQuery(runInfoId: any) {
-    return `UPDATE ${applicationConfig.SQL_RUNINFO} SET ScrapedFailureCount=${this.ScrapedFailureCount} WHERE Id=${runInfoId}`;
+  GetFailureCountQuery() {
+    return `UPDATE ${applicationConfig.SQL_RUNINFO} SET ScrapedFailureCount=? WHERE Id=?`;
   }
-  GetRunEndTimeQuery(runInfoId: any) {
-    return `UPDATE ${applicationConfig.SQL_RUNINFO} SET RunEndTime='${moment(this.RunEndTime).format("DD-MM-YYYY HH:mm:ss")}' WHERE Id=${runInfoId}`;
+  GetRunEndTimeQuery() {
+    return `UPDATE ${applicationConfig.SQL_RUNINFO} SET RunEndTime=? WHERE Id=?`;
   }
-  GetCompletedProductCountQuery(lastValue: number, runInfoId: any) {
-    return `UPDATE ${applicationConfig.SQL_RUNINFO} SET CompletedProductCount=${lastValue + 1} WHERE Id=${runInfoId}`;
+  GetCompletedProductCountQuery() {
+    return `UPDATE ${applicationConfig.SQL_RUNINFO} SET CompletedProductCount=? WHERE Id=?`;
   }
 }
