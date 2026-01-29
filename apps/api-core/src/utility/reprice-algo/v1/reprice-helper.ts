@@ -502,7 +502,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
                 repriceModel.repriceDetails!.newPrice = contextPrice.toFixed(2);
                 repriceModel.repriceDetails!.isRepriced = true;
                 repriceModel.repriceDetails!.explained = await filterMapper.AppendPriceFactorTag(RepriceRenewedMessageEnum.PRICE_UP_SECOND, contextPriceResult.Type);
-              } else {
+              } else if (nextIndex >= sortedPayload.length) {
                 repriceModel.repriceDetails!.newPrice = maxPrice;
                 repriceModel.repriceDetails!.isRepriced = true;
                 repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL;
