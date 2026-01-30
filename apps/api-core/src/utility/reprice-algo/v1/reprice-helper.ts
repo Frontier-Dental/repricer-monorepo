@@ -580,7 +580,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
             if (sortedPayload[i]) {
               if (_.includes(excludedVendors, sortedPayload[i].vendorId.toString()) || sortedPayload[i].vendorId == $.VENDOR_ID) {
                 nextIndex++;
-              } else if (await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, priceBreak.minQty, floorPrice, 0, false)) {
+              } else if (sortedPayload[i] && (await filterMapper.IsVendorFloorPrice(sortedPayload[i].priceBreaks, priceBreak.minQty, floorPrice, 0, false))) {
                 nextIndex++;
               } else break;
             }
