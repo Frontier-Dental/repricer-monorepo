@@ -164,9 +164,9 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
     }
     runInfo.UpdateFailureCount(runInfo.EligibleCount - runInfo.ScrapedSuccessCount);
     runInfo.UpdateEndTime();
-    await mySqlHelper.UpdateRunInfo(runInfo.GetSuccessCountQuery(), [runInfo.ScrapedSuccessCount + 1, insertId]);
+    await mySqlHelper.UpdateRunInfo(runInfo.GetSuccessCountQuery(), [runInfo.ScrapedSuccessCount, insertId]);
     await mySqlHelper.UpdateRunInfo(runInfo.GetFailureCountQuery(), [runInfo.ScrapedFailureCount, insertId]);
-    await mySqlHelper.UpdateRunInfo(runInfo.GetRunEndTimeQuery(), [moment(runInfo.RunEndTime).format("YYYY-MM-DD HH:mm:ss"), insertId]);
+    await mySqlHelper.UpdateRunInfo(runInfo.GetRunEndTimeQuery(), [moment(runInfo.RunEndTime).format("DD-MM-YYYY HH:mm:ss"), insertId]);
   }
   console.log(`SCRAPE-ONLY : Successfully scraped  ${runInfo.ScrapedSuccessCount} products || total Count : ${productList.length} || Cron Name : ${cronSetting.CronName} || KeyGen : ${keyGen}`);
 }
