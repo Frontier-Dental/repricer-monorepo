@@ -121,8 +121,8 @@ export const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(false),
-  SMTP_USER: z.string().default("40b12a64-d25d-4c48-8da5-4996f64a42a2"),
-  SMTP_HOST: z.string().default("smtp.postmarkapp.com"),
+  SMTP_USER: z.string(),
+  SMTP_HOST: z.string(),
   SMTP_PORT: z.coerce.number().default(25),
   SMTP_PWD: z.string(),
   EMAIL_ID: z.string().default("storage-sense@frontierdental.com"),

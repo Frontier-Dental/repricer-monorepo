@@ -204,7 +204,7 @@ const envSchema = z.object({
   CACHE_USERNAME: z.string(),
   CACHE_PASSWORD: z.string(),
   CACHE_PORT: z.coerce.number(),
-  REPRICER_ENCRYPTION_KEY: z.string().default("3v9sKkLZ2z1Yq9eU8 + XgJk1YbZ9n3vLQ0mF9ZkQhJxgE="),
+  REPRICER_ENCRYPTION_KEY: z.string(),
   MINI_ERP_BASE_URL: z.string(),
   MINI_ERP_USERNAME: z.string(),
   MINI_ERP_PASSWORD: z.string(),
