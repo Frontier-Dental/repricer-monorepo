@@ -372,7 +372,7 @@ export const Get422ProductCountByType = async (_type: any) => {
     };
     return dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).countDocuments(query);
   } catch (err) {
-    //console.error(`Error in Get422ProductCountByType: ${err}`);
+    console.error(`Error in Get422ProductCountByType: ${err}`);
     return 0;
   }
 };

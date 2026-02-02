@@ -175,7 +175,6 @@ async function startInProgressCronCheck() {
     },
     {
       scheduled: true,
-      runOnInit: true,
     }
   );
 }
@@ -193,7 +192,6 @@ async function startExpressCronValidationCheck() {
     },
     {
       scheduled: true,
-      runOnInit: true,
     }
   );
 }
@@ -204,6 +202,7 @@ async function get422ProductDetails() {
   productsCount.priceUpdateProducts = await mongoHelper.Get422ProductCountByType("PRICE_UPDATE");
   productsCount.eligibleProducts = await mongoHelper.GetContextErrorItemsCount(true);
   productsCount.time = moment(new Date()).format("DD-MM-YYYY HH:mm:ss");
+  console.log(`422 ERROR Products Count : ${productsCount.products422Error}, Price Update Products Count : ${productsCount.priceUpdateProducts}, Eligible Products Count : ${productsCount.eligibleProducts} as of ${productsCount.time}`);
   return productsCount;
 }
 
@@ -220,7 +219,6 @@ async function startHistoryDeletionCron() {
     },
     {
       scheduled: true,
-      runOnInit: true,
     }
   );
 }
@@ -238,7 +236,6 @@ async function startCronLogsDeletionCron() {
     },
     {
       scheduled: true,
-      runOnInit: true,
     }
   );
 }
@@ -248,7 +245,6 @@ async function DeleteHistory() {
   // Subtract 15 days
   const pastDate = new Date();
   pastDate.setDate(today.getDate() - 15);
-  pastDate.setHours(0, 0, 0, 0);
   const apiResponseQuery = `delete from table_history_apiResponse where RefTime < ?`;
   const historyQuery = `delete from table_history where RefTime < ?`;
   const apiResponseUpdated = await mySqlMiddleware.ExecuteQuery(apiResponseQuery, [pastDate]);
