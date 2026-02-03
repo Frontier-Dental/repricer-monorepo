@@ -1,30 +1,37 @@
-# Use Node.js 22 as base image
 FROM node:22-alpine
 
-# Set working directory
+# Create non-root user
+RUN addgroup -g 1001 appuser && \
+    adduser -D -u 1001 -G appuser appuser
+
 WORKDIR /app
 
-# Copy source code
+# Copy and install dependencies
+COPY package*.json ./
+COPY turbo.json ./
 COPY . ./
 
-# Install all at root
 RUN npm ci
-
-RUN npm run build
-
-# Remove dev dependencies to reduce image size
+RUN npx turbo run build --filter=api-core
 RUN npm prune --production
 
-# Expose port 5001
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
+
+# Expose port
 EXPOSE 5001
 
 # Set environment variables
 ENV NODE_ENV=production
-RUN npm install tzdata
+
+# Install timezone data and set timezone
+RUN apk add --no-cache tzdata
 ENV TZ=Canada/Eastern
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+# Switch to non-root user
+USER appuser
 
-# Start the application
+# Start application
 WORKDIR /app/apps/api-core
 CMD ["npm", "start"]

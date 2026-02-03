@@ -31,6 +31,7 @@ export async function manualRepriceHandler(req: Request<{ id: string }, any, any
   let productLogs = [];
   const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", mpid);
   const cronSetting = await GetCronSettingsDetailsById(contextCronId);
+
   let cronLogs = {
     time: new Date(),
     keyGen: jobId,

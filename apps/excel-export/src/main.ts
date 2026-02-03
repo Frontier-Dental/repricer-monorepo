@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
-import { connectToDatabase } from "./services/mongo.service";
 import { excelRouter } from "./routes/excel.routes";
 
 dotenv.config();
@@ -33,19 +32,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
-async function startServer() {
-  try {
-    await connectToDatabase();
-
-    app.listen(PORT, () => {
-      console.log(`Excel Export Service is running on port ${PORT}`);
-      console.log(`Health check available at http://localhost:${PORT}/health`);
-      console.log(`Excel download endpoint: POST http://localhost:${PORT}/api/excel/download`);
-    });
-  } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  }
-}
-
-startServer();
+app.listen(PORT, () => {
+  console.log(`Excel Export Service is running on port ${PORT}`);
+  console.log(`Health check available at http://localhost:${PORT}/health`);
+  console.log(`Excel download endpoint: POST http://localhost:${PORT}/api/excel/download`);
+});

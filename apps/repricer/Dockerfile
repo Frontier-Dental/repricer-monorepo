@@ -1,31 +1,40 @@
-# Use Node.js 22 as base image
 FROM node:22-alpine
 
-# Set working directory
+# Create non-root user BEFORE copying any files
+RUN addgroup -g 1001 appuser && \
+    adduser -D -u 1001 -G appuser appuser
+
 WORKDIR /app
 
-# Copy source code
+# Copy package files first for better caching
+COPY package*.json ./
+COPY turbo.json ./
+
+# Copy application code
 COPY . ./
 
-# Install all at root
+# Install dependencies and build as root (required for npm)
 RUN npm ci
-
-RUN npm run build
-
-# Remove dev dependencies to reduce image size
+RUN npx turbo run build --filter=repricer
 RUN npm prune --production
 
-# Expose port 3000
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
+
+# Expose port
 EXPOSE 3000
 
-# Set environment variables
+# Set environment
 ENV NODE_ENV=production
-RUN npm install tzdata
+
+# Install timezone data and set timezone
+RUN apk add --no-cache tzdata
 ENV TZ=Canada/Eastern
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Set working directory to repricer for the final command
-WORKDIR /app/apps/repricer
+# Switch to non-root user BEFORE CMD
+USER appuser
 
-# Start the application
+# Start application
+WORKDIR /app/apps/repricer
 CMD ["npm", "start"]

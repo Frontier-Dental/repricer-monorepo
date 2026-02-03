@@ -80,8 +80,8 @@ export async function UpsertProductDetails(payload: any) {
 export async function DeleteScrapeProductById(mpId: any) {
   const db = await SqlConnectionPool.getConnection();
   try {
-    const queryToCall = `delete from  ${applicationConfig.SQL_SCRAPEPRODUCTLIST} where MpId=${mpId}`;
-    const noOfRecords = await db.execute(queryToCall);
+    const queryToCall = `delete from  ${applicationConfig.SQL_SCRAPEPRODUCTLIST} where MpId=?`;
+    const noOfRecords = await db.execute(queryToCall, [mpId]);
     return noOfRecords;
   } finally {
     SqlConnectionPool.releaseConnection(db);
@@ -643,8 +643,8 @@ export async function GetLinkedVendorDetails(mpId: any, vendorName: any) {
     if (vendorName == "BITESUPPLY") {
       tableName = "table_biteSupplyDetails";
     }
-    const queryToCall = `select Id from ${tableName} where MpId=${mpId}`;
-    const noOfRecords = await db.execute(queryToCall);
+    const queryToCall = `select Id from ${tableName} where MpId=?`;
+    const noOfRecords = await db.execute(queryToCall, [mpId]);
     return (noOfRecords[0] as any)[0]["Id"];
   } finally {
     SqlConnectionPool.releaseConnection(db);

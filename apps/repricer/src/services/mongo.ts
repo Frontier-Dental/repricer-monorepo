@@ -10,23 +10,59 @@ import Encrypto from "../utility/encrypto";
 // --- MongoDB Singleton Helper ---
 let mongoClient: MongoClient | null = null;
 let mongoDb: Db | null = null;
+let connectionPromise: Promise<Db> | null = null;
 
-async function getMongoDb() {
-  if (!mongoClient) {
-    try {
-      console.log(`Setting up MongoDB connection...`);
-      const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
-      const mongoPassword = encrypto.decrypt(applicationConfig.MANAGED_MONGO_PASSWORD);
-      const mongoUrl = applicationConfig.MANAGED_MONGO_URL.replace("{{password}}", mongoPassword);
-      mongoClient = new MongoClient(mongoUrl);
-      await mongoClient.connect();
-      mongoDb = mongoClient.db(applicationConfig.GET_REPRICER_DBNAME);
-      console.log(`Done Setting up MongoDB connection...`);
-    } catch (error) {
-      console.error("Error connecting to MongoDB:", error);
-    }
+async function getMongoDb(): Promise<Db> {
+  if (mongoDb && mongoClient) {
+    return mongoDb;
   }
-  return mongoDb!;
+
+  if (connectionPromise) {
+    return connectionPromise;
+  }
+
+  connectionPromise = connectToMongo().catch((error) => {
+    console.error("repricer MongoDB: Connection error:", error);
+    resetConnection();
+    throw error;
+  });
+
+  return connectionPromise;
+}
+
+async function connectToMongo(): Promise<Db> {
+  const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
+  const mongoPassword = encrypto.decrypt(applicationConfig.MANAGED_MONGO_PASSWORD);
+  const mongoUrl = applicationConfig.MANAGED_MONGO_URL.replace("{{password}}", mongoPassword);
+
+  const client = new MongoClient(mongoUrl, {
+    retryReads: true,
+    retryWrites: true,
+    serverSelectionTimeoutMS: 5000,
+    connectTimeoutMS: 5000,
+  });
+
+  client.on("close", () => {
+    console.warn("repricer MongoDB: Connection closed, resetting for reconnection");
+    resetConnection();
+  });
+
+  client.on("error", (err) => {
+    console.error("repricer MongoDB: Connection error, resetting for reconnection", err);
+    resetConnection();
+  });
+
+  await client.connect();
+  mongoDb = client.db(applicationConfig.GET_REPRICER_DBNAME);
+  mongoClient = client;
+  console.log("repricer MongoDB: Connection established successfully");
+  return mongoDb;
+}
+
+function resetConnection(): void {
+  mongoClient = null;
+  mongoDb = null;
+  connectionPromise = null;
 }
 
 export const GetCronLogsV2 = async (pgNo: number, type: string, cronId: string, date: any, pgLimit: number) => {
