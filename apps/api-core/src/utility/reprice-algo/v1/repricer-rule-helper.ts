@@ -532,6 +532,9 @@ export async function ApplyMaxPriceCheck(repriceResult: any, productItem: Fronti
     const floorPrice = parseFloat(productItem.floorPrice);
     if (existingPrice > maxAllowedPrice && maxAllowedPrice > floorPrice) {
       $eval.repriceDetails.newPrice = calculatePriceWithNcContext(maxAllowedPrice, productItem, "DEL").toFixed(2);
+      if ($eval.repriceDetails.explained.includes("IGNORE")) {
+        $eval.repriceDetails.explained = $eval.repriceDetails.explained.replace("IGNORE", "CHANGE");
+      }
       $eval.repriceDetails.explained = $eval.repriceDetails.explained + "_#MAXPRICEAPPLIED";
     }
   }
