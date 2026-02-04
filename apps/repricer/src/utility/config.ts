@@ -170,8 +170,8 @@ export const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
-  SQL_SP_GET_PRODUCT_BY_MPID: z.string().default("sp_GetProductByMpid"),
-  SQL_SP_GET_PRODUCT_BY_CHANNEL_ID: z.string().default("sp_GetProductsByChannelId"),
+  SQL_SP_GET_PRODUCT_BY_MPID: z.string().default("sp_GetProductByMpidV2"),
+  SQL_SP_GET_PRODUCT_BY_CHANNEL_ID: z.string().default("sp_GetProductsByChannelIdV2"),
   _422_ERROR_CRON_SCHEDULE: z.string().default("*/30 * * * *"),
   EXPORT_SAVE_CRON_SCHEDULE: z.string().default("0 1 * * *"),
   CRON_PROGRESS_MAX_COUNT: z.coerce.number().default(25),
