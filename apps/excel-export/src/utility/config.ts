@@ -117,8 +117,8 @@ export const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(false),
-  SMTP_USER: z.string().default("40b12a64-d25d-4c48-8da5-4996f64a42a2"),
-  SMTP_HOST: z.string().default("smtp.postmarkapp.com"),
+  SMTP_USER: z.string(),
+  SMTP_HOST: z.string(),
   SMTP_PORT: z.coerce.number().default(25),
   SMTP_PWD: z.string(),
   EMAIL_ID: z.string().default("storage-sense@frontierdental.com"),
@@ -175,7 +175,7 @@ export const envSchema = z.object({
   _422_ERROR_CRON_EXTERNAL_ENDPOINT: z.string().default("http://159.89.121.57:3000/monitor/get_422_product"),
   _422_ERROR_MAX_COUNT: z.coerce.number().default(100),
   _422_ERROR_ELIGIBLE_MAX_COUNT: z.coerce.number().default(500),
-  REPRICER_ENCRYPTION_KEY: z.string().default("3v9sKkLZ2z1Yq9eU8 + XgJk1YbZ9n3vLQ0mF9ZkQhJxgE="),
+  REPRICER_ENCRYPTION_KEY: z.string(),
 });
 
 export function validateConfig() {

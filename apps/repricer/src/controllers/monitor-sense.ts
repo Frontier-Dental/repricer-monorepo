@@ -150,9 +150,9 @@ async function uploadToFTP(localFilePath: any, fileName: any) {
   const client = new Client();
   client.ftp.verbose = true;
   await client.access({
-    host: "165.22.229.139",
-    user: "voyantcs",
-    password: ">mL3.rEtJtsP@43",
+    host: applicationConfig.FTP_HOST,
+    user: applicationConfig.FTP_USER,
+    password: applicationConfig.FTP_PASSWORD,
     secure: false,
   });
   console.log("Connected to FTP server");

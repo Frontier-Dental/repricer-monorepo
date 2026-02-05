@@ -82,8 +82,8 @@ export async function doIpHealthCheck(req: Request, res: Response) {
           host: $.ip,
           port: $.port,
           auth: {
-            username: "Tradent",
-            password: "Lyo0P84L1",
+            username: applicationConfig.PROXY_USERNAME,
+            password: applicationConfig.PROXY_PASSWORD,
           },
         },
       };
