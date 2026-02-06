@@ -243,7 +243,7 @@ describe("manual-repricer/manual-reprice", () => {
       expect(mockGetContextCronId).toHaveBeenCalledWith(v2Product);
       expect(mockGetCronSettingsDetailsById).toHaveBeenCalledWith("cron-1");
       expect(mockGetEligibleContextErrorItems).toHaveBeenCalledWith(true, "123", null);
-      expect(mockGetPrioritySequence).toHaveBeenCalledWith(v2Product, [], true);
+      expect(mockGetPrioritySequence).toHaveBeenCalledWith(v2Product, [], true, false, null);
       expect(mockGetAsync).toHaveBeenCalled();
       expect(mockRepriceProductV2Wrapper).toHaveBeenCalledWith(mockNet32Response.data, v2Product, "MANUAL", false, "cron-1");
       expect(mockRepriceWrapper).not.toHaveBeenCalled();
@@ -611,7 +611,7 @@ describe("manual-repricer/manual-reprice", () => {
 
       await manualRepriceHandler(mockRequest as Request<{ id: string }>, mockResponse as Response);
 
-      expect(mockGetPrioritySequence).toHaveBeenCalledWith(expect.any(Object), contextErrorDetails, true);
+      expect(mockGetPrioritySequence).toHaveBeenCalledWith(expect.any(Object), contextErrorDetails, true, false, null);
     });
 
     it("should handle empty contextErrorDetails", async () => {
@@ -621,7 +621,7 @@ describe("manual-repricer/manual-reprice", () => {
 
       await manualRepriceHandler(mockRequest as Request<{ id: string }>, mockResponse as Response);
 
-      expect(mockGetPrioritySequence).toHaveBeenCalledWith(expect.any(Object), [], true);
+      expect(mockGetPrioritySequence).toHaveBeenCalledWith(expect.any(Object), [], true, false, null);
     });
   });
 });

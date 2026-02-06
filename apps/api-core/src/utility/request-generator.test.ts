@@ -143,7 +143,7 @@ describe("request-generator", () => {
         tradentDetails: createMockVendorDetails({ activated: false }),
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(result).toEqual([]);
     });
@@ -155,7 +155,7 @@ describe("request-generator", () => {
         mvpDetails: createMockVendorDetails({ executionPriority: 3 }),
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(result).toHaveLength(3);
       expect(result[0].name).toBe("TRADENT");
@@ -182,7 +182,7 @@ describe("request-generator", () => {
         }),
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("TRADENT");
@@ -202,7 +202,7 @@ describe("request-generator", () => {
         },
       ];
 
-      const result = await GetPrioritySequence(productInfo, contextErrorDetails, true);
+      const result = await GetPrioritySequence(productInfo, contextErrorDetails, true, false, null);
 
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("FRONTIER");
@@ -222,7 +222,7 @@ describe("request-generator", () => {
         },
       ];
 
-      const result = await GetPrioritySequence(productInfo, contextErrorDetails, false);
+      const result = await GetPrioritySequence(productInfo, contextErrorDetails, false, false, null);
 
       expect(result).toHaveLength(2);
     });
@@ -233,7 +233,7 @@ describe("request-generator", () => {
         frontierDetails: createMockVendorDetails({ executionPriority: 2 }),
       });
 
-      const result = await GetPrioritySequence(productInfo, null, true);
+      const result = await GetPrioritySequence(productInfo, null, true, false, null);
 
       expect(result).toHaveLength(2);
     });
@@ -267,7 +267,7 @@ describe("request-generator", () => {
         return product;
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(responseUtility.MapOverrideExecutionPriority).toHaveBeenCalled();
       expect(result).toHaveLength(2);
@@ -298,7 +298,7 @@ describe("request-generator", () => {
 
       (sqlV2Service.GetGlobalConfig as jest.Mock).mockResolvedValue(globalConfig);
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(responseUtility.MapOverrideExecutionPriority).not.toHaveBeenCalled();
       expect(result).toHaveLength(1);
@@ -311,7 +311,7 @@ describe("request-generator", () => {
 
       (sqlV2Service.GetGlobalConfig as jest.Mock).mockResolvedValue(null);
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(responseUtility.MapOverrideExecutionPriority).not.toHaveBeenCalled();
       expect(result).toHaveLength(1);
@@ -328,7 +328,7 @@ describe("request-generator", () => {
 
       (sqlV2Service.GetGlobalConfig as jest.Mock).mockResolvedValue(globalConfig);
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(responseUtility.MapOverrideExecutionPriority).not.toHaveBeenCalled();
       expect(result).toHaveLength(1);
@@ -345,7 +345,7 @@ describe("request-generator", () => {
         biteSupplyDetails: createMockVendorDetails({ executionPriority: 7 }),
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(result).toHaveLength(7);
       expect(result.map((v) => v.name)).toEqual(["TRADENT", "FRONTIER", "MVP", "TOPDENT", "FIRSTDENT", "TRIAD", "BITESUPPLY"]);
@@ -358,7 +358,7 @@ describe("request-generator", () => {
         mvpDetails: createMockVendorDetails({ executionPriority: 2 }),
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       // Both TRADENT and FRONTIER have priority 1, so both should be included
       expect(result.length).toBeGreaterThanOrEqual(2);
@@ -372,7 +372,7 @@ describe("request-generator", () => {
         frontierDetails: createMockVendorDetails({ executionPriority: 1 }),
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("FRONTIER");
@@ -390,7 +390,7 @@ describe("request-generator", () => {
         }),
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("FRONTIER");
@@ -408,7 +408,7 @@ describe("request-generator", () => {
         }),
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("FRONTIER");
@@ -424,7 +424,7 @@ describe("request-generator", () => {
         topDentDetails: createMockVendorDetails({ executionPriority: 4 }),
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       // Should only process up to VENDOR_COUNT (3)
       expect(result.length).toBeLessThanOrEqual(3);
@@ -454,7 +454,7 @@ describe("request-generator", () => {
       (sqlV2Service.GetGlobalConfig as jest.Mock).mockResolvedValue(globalConfig);
 
       // JSON.parse will throw, so the function will throw an error
-      await expect(GetPrioritySequence(productInfo, null, false)).rejects.toThrow();
+      await expect(GetPrioritySequence(productInfo, null, false, false, null)).rejects.toThrow();
     });
 
     it("should handle multiple error items", async () => {
@@ -477,7 +477,7 @@ describe("request-generator", () => {
         },
       ];
 
-      const result = await GetPrioritySequence(productInfo, contextErrorDetails, true);
+      const result = await GetPrioritySequence(productInfo, contextErrorDetails, true, false, null);
 
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("MVP");
@@ -497,11 +497,8 @@ describe("request-generator", () => {
         },
       ];
 
-      const result = await GetPrioritySequence(productInfo, contextErrorDetails, true);
+      const result = await GetPrioritySequence(productInfo, contextErrorDetails, true, false, null);
 
-      // The find() method only checks vendorName, not mpId, so TRADENT will still be excluded
-      // But since mpId doesn't match, it might be included depending on implementation
-      // Actually, looking at the code, it only checks vendorName, so TRADENT will be excluded
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("FRONTIER");
     });
@@ -533,7 +530,7 @@ describe("request-generator", () => {
         return product;
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(responseUtility.MapOverrideExecutionPriority).toHaveBeenCalled();
     });
@@ -546,7 +543,7 @@ describe("request-generator", () => {
         frontierDetails: createMockVendorDetails({ executionPriority: 5 }), // Higher than VENDOR_COUNT
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       // Should only include priority 1 (TRADENT)
       expect(result).toHaveLength(1);
@@ -560,7 +557,7 @@ describe("request-generator", () => {
         mvpDetails: null,
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(result).toEqual([]);
     });
@@ -570,7 +567,7 @@ describe("request-generator", () => {
         tradentDetails: createMockVendorDetails({ executionPriority: 1 }),
       });
 
-      const result = await GetPrioritySequence(productInfo, [], true);
+      const result = await GetPrioritySequence(productInfo, [], true, false, null);
 
       expect(result).toHaveLength(1);
     });
@@ -580,7 +577,7 @@ describe("request-generator", () => {
         tradentDetails: createMockVendorDetails({ executionPriority: 1 }),
       });
 
-      const result = await GetPrioritySequence(productInfo, null, false);
+      const result = await GetPrioritySequence(productInfo, null, false, false, null);
 
       expect(result[0]).toEqual({
         name: "TRADENT",

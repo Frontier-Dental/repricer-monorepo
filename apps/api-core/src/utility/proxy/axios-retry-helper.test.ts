@@ -58,6 +58,8 @@ describe("axios-retry-helper", () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
+    mockedAxios.mockReset();
+
     // Mock console methods
     console.log = jest.fn();
     console.error = jest.fn();
@@ -377,68 +379,38 @@ describe("axios-retry-helper", () => {
         expect(result).toEqual({ data: { product: "test" } });
       });
 
-      it("should retry on 400 error", async () => {
+      it("should return null on 400 error (not retryable)", async () => {
         const mockError = {
           response: { status: 400 },
           message: "Bad Request",
           stack: "Error stack",
         };
 
-        const mockSuccessResponse = {
-          status: 200,
-          data: {
-            results: [
-              {
-                task_id: "task-123",
-                headers: { "content-type": "application/json" },
-                content: '{"product": "test"}',
-              },
-            ],
-          },
-        };
-
-        mockedAxios.mockRejectedValueOnce(mockError).mockResolvedValueOnce(mockSuccessResponse as any);
+        mockedAxios.mockRejectedValueOnce(mockError);
         mockedProxySwitchHelper.ExecuteCounter.mockResolvedValue(undefined);
 
-        const resultPromise = getScrappingResponse(testUrl, mockProxyDetails, mockSeqString, 0);
+        const result = await getScrappingResponse(testUrl, mockProxyDetails, mockSeqString, 0);
 
-        await jest.runAllTimersAsync();
-
-        const result = await resultPromise;
-
-        expect(result).toEqual({ data: { product: "test" } });
+        expect(result).toBeNull();
+        expect(mockedProxySwitchHelper.ExecuteCounter).toHaveBeenCalledWith(1);
+        expect(mockedAxios).toHaveBeenCalledTimes(1);
       });
 
-      it("should retry on 401 error", async () => {
+      it("should return null on 401 error (not retryable)", async () => {
         const mockError = {
           response: { status: 401 },
           message: "Unauthorized",
           stack: "Error stack",
         };
 
-        const mockSuccessResponse = {
-          status: 200,
-          data: {
-            results: [
-              {
-                task_id: "task-123",
-                headers: { "content-type": "application/json" },
-                content: '{"product": "test"}',
-              },
-            ],
-          },
-        };
-
-        mockedAxios.mockRejectedValueOnce(mockError).mockResolvedValueOnce(mockSuccessResponse as any);
+        mockedAxios.mockRejectedValueOnce(mockError);
         mockedProxySwitchHelper.ExecuteCounter.mockResolvedValue(undefined);
 
-        const resultPromise = getScrappingResponse(testUrl, mockProxyDetails, mockSeqString, 0);
+        const result = await getScrappingResponse(testUrl, mockProxyDetails, mockSeqString, 0);
 
-        await jest.runAllTimersAsync();
-
-        const result = await resultPromise;
-
-        expect(result).toEqual({ data: { product: "test" } });
+        expect(result).toBeNull();
+        expect(mockedProxySwitchHelper.ExecuteCounter).toHaveBeenCalledWith(1);
+        expect(mockedAxios).toHaveBeenCalledTimes(1);
       });
 
       it("should switch proxy when retryCount > 1", async () => {
@@ -520,9 +492,10 @@ describe("axios-retry-helper", () => {
         mockedAxios.mockRejectedValueOnce(mockError);
         mockedProxySwitchHelper.ExecuteCounter.mockResolvedValue(undefined);
 
-        // retryConditionForAxios will throw when error.response is undefined
-        // So we expect the function to throw
-        await expect(getScrappingResponse(testUrl, mockProxyDetails, mockSeqString, 0)).rejects.toThrow();
+        const result = await getScrappingResponse(testUrl, mockProxyDetails, mockSeqString, 0);
+
+        expect(result).toBeNull();
+        expect(mockedProxySwitchHelper.ExecuteCounter).toHaveBeenCalled();
       });
     });
   });
@@ -535,8 +508,7 @@ describe("axios-retry-helper", () => {
         const mockResponse = '{"product": "test"}';
 
         mockedRequestPromise.mockResolvedValueOnce(mockResponse);
-        // When formatResponse is true but no List tag found, xml2js will parse invalid XML
-        // Mock it to return object without expected structure so it falls through to JSON parsing
+
         mockedXml2js.parseStringPromise.mockResolvedValueOnce({});
 
         const result = await getScrapingBeeResponse(testUrl, mockProxyDetails, mockSeqString, false, 0);
@@ -561,8 +533,7 @@ describe("axios-retry-helper", () => {
         const mockResponse = '{"product": "test"}';
 
         mockedRequestPromise.mockResolvedValueOnce(mockResponse);
-        // When formatResponse is true but no List tag found, xml2js will parse invalid XML
-        // Mock it to return object without expected structure so it falls through to JSON parsing
+
         mockedXml2js.parseStringPromise.mockResolvedValueOnce({});
 
         const result = await getScrapingBeeResponse(testUrl, mockProxyDetails, mockSeqString, true, 0);

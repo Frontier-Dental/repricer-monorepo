@@ -114,9 +114,6 @@ describe("mysql-helper", () => {
       updateChain._reset();
     }
 
-    // Create a comprehensive mock query builder with chainable methods
-    // Both update().where() and where().update() should work
-    // Make the builder thenable so it works with await
     const createChainablePromise = () => {
       // Create a promise that resolves by default
       let resolveValue = 1;
@@ -340,9 +337,9 @@ describe("mysql-helper", () => {
       const query = "UPDATE table_runInfo SET status = 'completed'";
       mockKnex.raw.mockResolvedValueOnce([{ affectedRows: 1 }]);
 
-      const result = await UpdateRunInfo(query);
+      const result = await UpdateRunInfo(query, []);
 
-      expect(mockKnex.raw).toHaveBeenCalledWith(query);
+      expect(mockKnex.raw).toHaveBeenCalledWith(query, []);
       expect(result).toEqual({ affectedRows: 1 });
     });
 
@@ -352,7 +349,7 @@ describe("mysql-helper", () => {
         return Promise.reject(createDbError());
       });
 
-      const result = await UpdateRunInfo(query);
+      const result = await UpdateRunInfo(query, []);
 
       expect(console.log).toHaveBeenCalledWith("Error in UpdateRunInfo", query, expect.any(Error));
       expect(result).toBeUndefined();
