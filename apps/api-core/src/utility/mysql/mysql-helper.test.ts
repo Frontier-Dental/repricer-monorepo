@@ -84,11 +84,12 @@ const createDbError = () => {
 // Set up unhandled rejection handler at module level to prevent test suite failures
 // This handler will catch unhandled rejections that occur during test execution
 const unhandledRejections: any[] = [];
-// Remove any existing handlers and set up our own that suppresses rejections
 process.removeAllListeners("unhandledRejection");
-// This prevents Node.js from treating unhandled rejections as fatal errors
-process.on("unhandledRejection", (reason) => {
+process.on("unhandledRejection", (reason, promise) => {
   unhandledRejections.push(reason);
+  if (promise && typeof (promise as any).catch === "function") {
+    (promise as Promise<unknown>).catch(() => {});
+  }
 });
 
 describe("mysql-helper", () => {
