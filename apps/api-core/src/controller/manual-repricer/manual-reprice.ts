@@ -31,6 +31,7 @@ export async function manualRepriceHandler(req: Request<{ id: string }, any, any
   let productLogs = [];
   const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", mpid);
   const cronSetting = await GetCronSettingsDetailsById(contextCronId);
+
   let cronLogs = {
     time: new Date(),
     keyGen: jobId,
@@ -41,7 +42,7 @@ export async function manualRepriceHandler(req: Request<{ id: string }, any, any
   const isSlowCronRun = prod.isSlowActivated;
   prod = feedHelper.SetSkipReprice([prod], false)[0];
   const contextErrorDetails = await mongoHelper.GetEligibleContextErrorItems(true, mpid, null);
-  const prioritySequence = await requestGenerator.GetPrioritySequence(prod, contextErrorDetails, true);
+  const prioritySequence = await requestGenerator.GetPrioritySequence(prod, contextErrorDetails, true, false, null);
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
   if (prioritySequence && prioritySequence.length > 0) {
     const cronIdForScraping = isSlowCronRun == true ? (prod as any)[prioritySequence[0].value].slowCronId : (prod as any)[prioritySequence[0].value].cronId;

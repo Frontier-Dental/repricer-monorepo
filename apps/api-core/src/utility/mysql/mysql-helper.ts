@@ -34,11 +34,11 @@ export async function InsertRunInfo(runInfo: RunInfo) {
   }
 }
 
-export async function UpdateRunInfo(query: string) {
+export async function UpdateRunInfo(query: string, params: any[]) {
   // This function expects a raw query string, so we must keep it as raw
   try {
     const knex = getKnexInstance();
-    const updatedResult = await knex.raw(query);
+    const updatedResult = await knex.raw(query, params);
     return updatedResult?.[0];
   } catch (error) {
     console.log("Error in UpdateRunInfo", query, error);

@@ -10,31 +10,62 @@ import Encrypto from "../utility/encrypto";
 // --- MongoDB Singleton Helper ---
 let mongoClient: MongoClient | null = null;
 let mongoDb: Db | null = null;
+let connectionPromise: Promise<Db> | null = null;
 
-async function getMongoDb() {
-  if (!mongoClient) {
-    const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
-    const mongoPassword = encrypto.decrypt(
-      applicationConfig.MANAGED_MONGO_PASSWORD,
-    );
-    const mongoUrl = applicationConfig.MANAGED_MONGO_URL.replace(
-      "{{password}}",
-      mongoPassword,
-    );
-    mongoClient = new MongoClient(mongoUrl);
-    await mongoClient.connect();
-    mongoDb = mongoClient.db(applicationConfig.GET_REPRICER_DBNAME);
+async function getMongoDb(): Promise<Db> {
+  if (mongoDb && mongoClient) {
+    return mongoDb;
   }
-  return mongoDb!;
+
+  if (connectionPromise) {
+    return connectionPromise;
+  }
+
+  connectionPromise = connectToMongo().catch((error) => {
+    console.error("repricer MongoDB: Connection error:", error);
+    resetConnection();
+    throw error;
+  });
+
+  return connectionPromise;
 }
 
-export const GetCronLogsV2 = async (
-  pgNo: number,
-  type: string,
-  cronId: string,
-  date: any,
-  pgLimit: number,
-) => {
+async function connectToMongo(): Promise<Db> {
+  const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
+  const mongoPassword = encrypto.decrypt(applicationConfig.MANAGED_MONGO_PASSWORD);
+  const mongoUrl = applicationConfig.MANAGED_MONGO_URL.replace("{{password}}", mongoPassword);
+
+  const client = new MongoClient(mongoUrl, {
+    retryReads: true,
+    retryWrites: true,
+    serverSelectionTimeoutMS: 5000,
+    connectTimeoutMS: 5000,
+  });
+
+  client.on("close", () => {
+    console.warn("repricer MongoDB: Connection closed, resetting for reconnection");
+    resetConnection();
+  });
+
+  client.on("error", (err) => {
+    console.error("repricer MongoDB: Connection error, resetting for reconnection", err);
+    resetConnection();
+  });
+
+  await client.connect();
+  mongoDb = client.db(applicationConfig.GET_REPRICER_DBNAME);
+  mongoClient = client;
+  console.log("repricer MongoDB: Connection established successfully");
+  return mongoDb;
+}
+
+function resetConnection(): void {
+  mongoClient = null;
+  mongoDb = null;
+  connectionPromise = null;
+}
+
+export const GetCronLogsV2 = async (pgNo: number, type: string, cronId: string, date: any, pgLimit: number) => {
   let query: any = {};
   if (type) {
     switch (type) {
@@ -86,36 +117,18 @@ export const GetCronLogsV2 = async (
   pageNumber = parseInt(pgNo as any) || 0;
 
   if (type && type == "422Error") {
-    totalDocs = await dbo
-      .collection(applicationConfig.ERROR_422_CRON_LOGS)
-      .countDocuments({ cronId: "DUMMY-422-Error" });
+    totalDocs = await dbo.collection(applicationConfig.ERROR_422_CRON_LOGS).countDocuments({ cronId: "DUMMY-422-Error" });
   } else if (type && type == "All") {
-    totalDocs = await dbo
-      .collection(applicationConfig.ERROR_422_CRON_LOGS)
-      .countDocuments({ cronId: "DUMMY-422-Error" });
-    totalDocs =
-      totalDocs +
-      (await dbo
-        .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
-        .estimatedDocumentCount());
+    totalDocs = await dbo.collection(applicationConfig.ERROR_422_CRON_LOGS).countDocuments({ cronId: "DUMMY-422-Error" });
+    totalDocs = totalDocs + (await dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME).estimatedDocumentCount());
   } else {
-    totalDocs = await dbo
-      .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
-      .estimatedDocumentCount();
+    totalDocs = await dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME).estimatedDocumentCount();
   }
   totalPages = Math.ceil(totalDocs / pageSize);
 
-  const pipeline = [
-    { $match: query },
-    { $sort: { time: -1 } },
-    { $skip: pageNumber * pageSize },
-    { $limit: pageSize },
-  ];
+  const pipeline = [{ $match: query }, { $sort: { time: -1 } }, { $skip: pageNumber * pageSize }, { $limit: pageSize }];
   if (type && type != "422Error" && type != "ALL_EXCEPT_422") {
-    mongoResult = await dbo
-      .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
-      .aggregate(pipeline)
-      .toArray();
+    mongoResult = await dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME).aggregate(pipeline).toArray();
   } else {
     mongoResult = [];
   }
@@ -127,11 +140,7 @@ export const GetCronLogsV2 = async (
     };
     if (query["time"]) {
       queryForFilter = {
-        $and: [
-          { cronId: "DUMMY-422-Error" },
-          { type: "422Error" },
-          { time: query["time"] as any },
-        ],
+        $and: [{ cronId: "DUMMY-422-Error" }, { type: "422Error" }, { time: query["time"] as any }],
       };
     }
     const _errorCronLogs = await dbo
@@ -166,12 +175,7 @@ export const GetCronLogsV2 = async (
   return { mongoResult, pageNumber, pageSize, totalDocs, totalPages };
 };
 
-export const GetCronLogs = async (
-  pgNo: number,
-  type: string,
-  cronId: string,
-  date: any,
-) => {
+export const GetCronLogs = async (pgNo: number, type: string, cronId: string, date: any) => {
   let query: any = {};
   if (type) {
     switch (type) {
@@ -219,9 +223,7 @@ export const GetCronLogs = async (
 
   pageSize = applicationConfig.CRON_PAGESIZE;
   pageNumber = pgNo || 0;
-  totalDocs = await dbo
-    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
-    .countDocuments(query);
+  totalDocs = await dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME).countDocuments(query);
   totalPages = Math.ceil(totalDocs / pageSize);
   // mongoResult = await dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME).find(query).sort({ $natural: -1 }).skip(pageNumber * pageSize).limit(pageSize).toArray();
   if (pgNo !== undefined) {
@@ -233,11 +235,7 @@ export const GetCronLogs = async (
       .limit(pageSize)
       .toArray();
   } else {
-    mongoResult = await dbo
-      .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
-      .find(query)
-      .sort({ $natural: -1 })
-      .toArray();
+    mongoResult = await dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME).find(query).sort({ $natural: -1 }).toArray();
   }
   return { mongoResult, pageNumber, pageSize, totalDocs, totalPages };
 };
@@ -250,38 +248,27 @@ export const GetUserLogin = async (query: any) => {
 export const GetItemList = async (mpId: string) => {
   const dbo = await getMongoDb();
   const query = { mpid: mpId };
-  return dbo
-    .collection(applicationConfig.ITEMS_COLLECTION_NAME)
-    .find(query)
-    .toArray();
+  return dbo.collection(applicationConfig.ITEMS_COLLECTION_NAME).find(query).toArray();
 };
 
 export const UpdateCronLogPostPriceUpdate = async (req: any) => {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
-    .findOneAndUpdate(
-      { _id: req._id },
-      {
-        $set: {
-          logs: req.logs,
-        },
+  return dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME).findOneAndUpdate(
+    { _id: req._id },
+    {
+      $set: {
+        logs: req.logs,
       },
-    );
+    }
+  );
 };
 
 export const GetLogsById = async (id: string) => {
   const dbo = await getMongoDb();
   const query = { _id: new ObjectId(id) };
-  const mongoResult = await dbo
-    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
-    .find(query)
-    .toArray();
+  const mongoResult = await dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME).find(query).toArray();
   if (mongoResult && mongoResult.length == 0) {
-    return dbo
-      .collection(applicationConfig.ERROR_422_CRON_LOGS)
-      .find(query)
-      .toArray();
+    return dbo.collection(applicationConfig.ERROR_422_CRON_LOGS).find(query).toArray();
   }
   return mongoResult;
 };
@@ -291,9 +278,7 @@ export const FindOneProductModel = async (query: any) => {
   const dbo = await getMongoDb();
 
   // Fetch the document that matches the provided query
-  product = await dbo
-    .collection(applicationConfig.PRODUCT_COLLECTION)
-    .findOne(query);
+  product = await dbo.collection(applicationConfig.PRODUCT_COLLECTION).findOne(query);
 
   return product;
 };
@@ -301,36 +286,23 @@ export const FindOneProductModel = async (query: any) => {
 export const GetLatestCronStatus = async () => {
   const dbo = await getMongoDb();
   const query: any = { status: "In-Progress" };
-  return dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME)
-    .find(query)
-    .sort({ _id: -1 })
-    .toArray();
+  return dbo.collection(applicationConfig.CRON_STATUS_COLLECTION_NAME).find(query).sort({ _id: -1 }).toArray();
 };
 
 export const PushManualCronLogAsync = async (payload: any) => {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
-    .insertOne(payload);
+  return dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME).insertOne(payload);
 };
 
 export const GetCronSettingsList = async () => {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const cronSettingsList = await cacheClient.get<any>(
-    CacheKey.CRON_SETTINGS_LIST,
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+  const cronSettingsList = await cacheClient.get<any>(CacheKey.CRON_SETTINGS_LIST);
   if (cronSettingsList != null) {
     await cacheClient.disconnect();
     return cronSettingsList;
   }
   const dbo = await getMongoDb();
-  let dbResponse = await dbo
-    .collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME)
-    .find()
-    .toArray();
+  let dbResponse = await dbo.collection(applicationConfig.CRON_SETTINGS_COLLECTION_NAME).find().toArray();
   if (dbResponse != null) {
     await cacheClient.set(CacheKey.CRON_SETTINGS_LIST, dbResponse);
   }
@@ -340,27 +312,21 @@ export const GetCronSettingsList = async () => {
 
 export const PurgeCronBasedOnId = async (cronId: string) => {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
-    .deleteMany({ cronId: cronId });
+  return dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME).deleteMany({ cronId: cronId });
 };
 
 export const PurgeCronBasedOnDate = async (dateString: string) => {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME)
-    .deleteMany({
-      time: {
-        $lte: new Date(dateString),
-      },
-    });
+  return dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME).deleteMany({
+    time: {
+      $lte: new Date(dateString),
+    },
+  });
 };
 
 export const deleteById = async (Id: string) => {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.PRODUCT_COLLECTION)
-    .deleteOne({ mpId: Id });
+  return dbo.collection(applicationConfig.PRODUCT_COLLECTION).deleteOne({ mpId: Id });
 };
 
 export const CheckInProgressExport = async () => {
@@ -381,7 +347,7 @@ export const UpdateExportStatus = async (id: any, status: any, info = {}) => {
     { _id: id },
     {
       $set: { ...info, status },
-    },
+    }
   );
 };
 
@@ -404,11 +370,9 @@ export const Get422ProductCountByType = async (_type: any) => {
         },
       ],
     };
-    return dbo
-      .collection(applicationConfig.ERROR_ITEM_COLLECTION)
-      .countDocuments(query);
+    return dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).countDocuments(query);
   } catch (err) {
-    //console.error(`Error in Get422ProductCountByType: ${err}`);
+    console.error(`Error in Get422ProductCountByType: ${err}`);
     return 0;
   }
 };
@@ -423,9 +387,7 @@ export const GetContextErrorItemsCount = async (_activeStatus: any) => {
       },
       active: _activeStatus,
     };
-    return dbo
-      .collection(applicationConfig.ERROR_ITEM_COLLECTION)
-      .countDocuments(query);
+    return dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION).countDocuments(query);
   } catch (err) {
     return 0;
   }
@@ -433,23 +395,13 @@ export const GetContextErrorItemsCount = async (_activeStatus: any) => {
 
 export const GetHistoryDetailsForId = async (_mpId: any) => {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.HISTORY_DB)
-    .findOne({ mpId: parseInt(_mpId) });
+  return dbo.collection(applicationConfig.HISTORY_DB).findOne({ mpId: parseInt(_mpId) });
 };
 
-export const GetHistoryDetailsForDateRange = async (
-  startDate: any,
-  endDate: any,
-  counter: any,
-) => {
+export const GetHistoryDetailsForDateRange = async (startDate: any, endDate: any, counter: any) => {
   const dbo = await getMongoDb();
   const query = {
-    $and: [
-      { mpId: { $gte: 1 } },
-      { "historicalLogs.refTime": { $gte: new Date(startDate) } },
-      { "historicalLogs.refTime": { $lte: new Date(endDate) } },
-    ],
+    $and: [{ mpId: { $gte: 1 } }, { "historicalLogs.refTime": { $gte: new Date(startDate) } }, { "historicalLogs.refTime": { $lte: new Date(endDate) } }],
   };
 
   const result = await dbo
@@ -461,38 +413,20 @@ export const GetHistoryDetailsForDateRange = async (
     .toArray();
   for (let doc of result) {
     if (doc.historicalLogs) {
-      doc.historicalLogs = await FilterHistoryData(
-        doc.historicalLogs,
-        startDate,
-        endDate,
-      );
+      doc.historicalLogs = await FilterHistoryData(doc.historicalLogs, startDate, endDate);
     }
   }
   return result;
 };
 
-export const GetHistoryDetailsForIdByDate = async (
-  _mpId: any,
-  startDate: any,
-  endDate: any,
-) => {
+export const GetHistoryDetailsForIdByDate = async (_mpId: any, startDate: any, endDate: any) => {
   const dbo = await getMongoDb();
   const query = {
-    $and: [
-      { mpId: parseInt(_mpId) },
-      { "historicalLogs.refTime": { $gte: new Date(startDate) } },
-      { "historicalLogs.refTime": { $lte: new Date(endDate) } },
-    ],
+    $and: [{ mpId: parseInt(_mpId) }, { "historicalLogs.refTime": { $gte: new Date(startDate) } }, { "historicalLogs.refTime": { $lte: new Date(endDate) } }],
   };
-  const mongoResult = await dbo
-    .collection(applicationConfig.HISTORY_DB)
-    .findOne(query);
+  const mongoResult = await dbo.collection(applicationConfig.HISTORY_DB).findOne(query);
   if (mongoResult && mongoResult.historicalLogs) {
-    mongoResult.historicalLogs = await FilterHistoryData(
-      mongoResult.historicalLogs,
-      startDate,
-      endDate,
-    );
+    mongoResult.historicalLogs = await FilterHistoryData(mongoResult.historicalLogs, startDate, endDate);
   }
   return mongoResult;
 };
@@ -514,81 +448,60 @@ export const Get422ProductDetailsByType = async (_type: any) => {
       },
     ],
   };
-  return dbo
-    .collection(applicationConfig.ERROR_ITEM_COLLECTION!)
-    .find(query)
-    .toArray();
+  return dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION!).find(query).toArray();
 };
 
 export const InsertOrUpdateProduct = async (payload: any, req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.PRODUCT_COLLECTION!)
-    .findOne({ mpId: payload.mpId });
+  mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOne({ mpId: payload.mpId });
   if (mongoResult) {
     if (payload.tradentDetails) {
       payload.tradentDetails.AuditInfo = await SessionHelper.GetAuditInfo(req);
-      mongoResult = await dbo
-        .collection(applicationConfig.PRODUCT_COLLECTION!)
-        .findOneAndUpdate(
-          { mpId: payload.mpId },
-          {
-            $set: {
-              tradentDetails: payload.tradentDetails,
-            },
+      mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+        { mpId: payload.mpId },
+        {
+          $set: {
+            tradentDetails: payload.tradentDetails,
           },
-        );
+        }
+      );
     }
     if (payload.frontierDetails) {
       payload.frontierDetails.AuditInfo = await SessionHelper.GetAuditInfo(req);
-      mongoResult = await dbo
-        .collection(applicationConfig.PRODUCT_COLLECTION!)
-        .findOneAndUpdate(
-          { mpId: payload.mpId },
-          {
-            $set: {
-              frontierDetails: payload.frontierDetails,
-            },
+      mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+        { mpId: payload.mpId },
+        {
+          $set: {
+            frontierDetails: payload.frontierDetails,
           },
-        );
+        }
+      );
     }
 
     if (payload.mvpDetails) {
       payload.mvpDetails.AuditInfo = await SessionHelper.GetAuditInfo(req);
-      mongoResult = await dbo
-        .collection(applicationConfig.PRODUCT_COLLECTION!)
-        .findOneAndUpdate(
-          { mpId: payload.mpId },
-          {
-            $set: {
-              mvpDetails: payload.mvpDetails,
-            },
+      mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+        { mpId: payload.mpId },
+        {
+          $set: {
+            mvpDetails: payload.mvpDetails,
           },
-        );
+        }
+      );
     }
   } else {
-    mongoResult = await dbo
-      .collection(applicationConfig.PRODUCT_COLLECTION!)
-      .insertOne(payload);
+    mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).insertOne(payload);
   }
   return mongoResult;
 };
 
 export const GetAllProductDetails = async () => {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.PRODUCT_COLLECTION!)
-    .find()
-    .sort({ _id: -1 })
-    .toArray();
+  return dbo.collection(applicationConfig.PRODUCT_COLLECTION!).find().sort({ _id: -1 }).toArray();
 };
 
-export const GetAllProductDetailsV2 = async (
-  query: any,
-  pageNumber: any,
-  pageSize: any,
-) => {
+export const GetAllProductDetailsV2 = async (query: any, pageNumber: any, pageSize: any) => {
   const dbo = await getMongoDb();
   return dbo
     .collection(applicationConfig.PRODUCT_COLLECTION!)
@@ -601,28 +514,18 @@ export const GetAllProductDetailsV2 = async (
 
 export const GetProductCount = async (query: any) => {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.PRODUCT_COLLECTION!)
-    .countDocuments(query);
+  return dbo.collection(applicationConfig.PRODUCT_COLLECTION!).countDocuments(query);
 };
 
 export const FindProductById = async (mpid: any) => {
   const dbo = await getMongoDb();
-  return dbo
-    .collection(applicationConfig.PRODUCT_COLLECTION!)
-    .find({ mpId: mpid })
-    .toArray();
+  return dbo.collection(applicationConfig.PRODUCT_COLLECTION!).find({ mpId: mpid }).toArray();
 };
 
-export const InsertOrUpdateProductWithCronName = async (
-  payload: any,
-  req: any,
-) => {
+export const InsertOrUpdateProductWithCronName = async (payload: any, req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  let productDetails = await dbo
-    .collection(applicationConfig.PRODUCT_COLLECTION!)
-    .findOne({ mpId: payload.mpId });
+  let productDetails = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOne({ mpId: payload.mpId });
   let _tradentUpdated = false;
   let _frontUpdated = false;
   let _mvpDetails = false;
@@ -630,56 +533,36 @@ export const InsertOrUpdateProductWithCronName = async (
     if (payload.tradentDetails) {
       _tradentUpdated = true;
       payload.tradentDetails.AuditInfo = await SessionHelper.GetAuditInfo(req);
-      mongoResult = await dbo
-        .collection(applicationConfig.PRODUCT_COLLECTION!)
-        .findOneAndUpdate(
-          { mpId: payload.mpId },
-          {
-            $set:
-              productDetails.tradentDetails != null
-                ? setSelectiveDetails(payload.tradentDetails, "tradentDetails")
-                : { tradentDetails: payload.tradentDetails },
-          },
-        );
+      mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+        { mpId: payload.mpId },
+        {
+          $set: productDetails.tradentDetails != null ? setSelectiveDetails(payload.tradentDetails, "tradentDetails") : { tradentDetails: payload.tradentDetails },
+        }
+      );
     }
 
     if (payload.frontierDetails) {
       _frontUpdated = true;
       payload.frontierDetails.AuditInfo = await SessionHelper.GetAuditInfo(req);
-      mongoResult = await dbo
-        .collection(applicationConfig.PRODUCT_COLLECTION!)
-        .findOneAndUpdate(
-          { mpId: payload.mpId },
-          {
-            $set:
-              productDetails.frontierDetails != null
-                ? setSelectiveDetails(
-                    payload.frontierDetails,
-                    "frontierDetails",
-                  )
-                : { frontierDetails: payload.frontierDetails },
-          },
-        );
+      mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+        { mpId: payload.mpId },
+        {
+          $set: productDetails.frontierDetails != null ? setSelectiveDetails(payload.frontierDetails, "frontierDetails") : { frontierDetails: payload.frontierDetails },
+        }
+      );
     }
     if (payload.mvpDetails) {
       _mvpDetails = true;
       payload.mvpDetails.AuditInfo = await SessionHelper.GetAuditInfo(req);
-      mongoResult = await dbo
-        .collection(applicationConfig.PRODUCT_COLLECTION!)
-        .findOneAndUpdate(
-          { mpId: payload.mpId },
-          {
-            $set:
-              productDetails.mvpDetails != null
-                ? setSelectiveDetails(payload.mvpDetails, "mvpDetails")
-                : { mvpDetails: payload.mvpDetails },
-          },
-        );
+      mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+        { mpId: payload.mpId },
+        {
+          $set: productDetails.mvpDetails != null ? setSelectiveDetails(payload.mvpDetails, "mvpDetails") : { mvpDetails: payload.mvpDetails },
+        }
+      );
     }
   } else {
-    mongoResult = await dbo
-      .collection(applicationConfig.PRODUCT_COLLECTION!)
-      .insertOne(payload);
+    mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).insertOne(payload);
   }
   return mongoResult;
 };
@@ -708,49 +591,40 @@ function FilterHistoryData(historyData: any, startDate: any, endDate: any) {
 export const ActivateProductModel = async (mpid: any, req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.PRODUCT_COLLECTION!)
-    .findOne({ mpId: mpid });
+  mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOne({ mpId: mpid });
   if (mongoResult) {
     if (mongoResult.tradentDetails) {
-      await dbo
-        .collection(applicationConfig.PRODUCT_COLLECTION!)
-        .findOneAndUpdate(
-          { mpId: mpid },
-          {
-            $set: {
-              "tradentDetails.activated": true,
-              "tradentDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
-            },
+      await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+        { mpId: mpid },
+        {
+          $set: {
+            "tradentDetails.activated": true,
+            "tradentDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
           },
-        );
+        }
+      );
     }
     if (mongoResult.frontierDetails) {
-      await dbo
-        .collection(applicationConfig.PRODUCT_COLLECTION!)
-        .findOneAndUpdate(
-          { mpId: mpid },
-          {
-            $set: {
-              "frontierDetails.activated": true,
-              "frontierDetails.AuditInfo":
-                await SessionHelper.GetAuditInfo(req),
-            },
+      await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+        { mpId: mpid },
+        {
+          $set: {
+            "frontierDetails.activated": true,
+            "frontierDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
           },
-        );
+        }
+      );
     }
     if (mongoResult.mvpDetails) {
-      await dbo
-        .collection(applicationConfig.PRODUCT_COLLECTION!)
-        .findOneAndUpdate(
-          { mpId: mpid },
-          {
-            $set: {
-              "mvpDetails.activated": true,
-              "mvpDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
-            },
+      await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+        { mpId: mpid },
+        {
+          $set: {
+            "mvpDetails.activated": true,
+            "mvpDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
           },
-        );
+        }
+      );
     }
   }
   return mongoResult;
@@ -759,49 +633,40 @@ export const ActivateProductModel = async (mpid: any, req: any) => {
 export const DeactivateProductModel = async (mpid: any, req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.PRODUCT_COLLECTION!)
-    .findOne({ mpId: mpid });
+  mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOne({ mpId: mpid });
   if (mongoResult) {
     if (mongoResult.tradentDetails) {
-      await dbo
-        .collection(applicationConfig.PRODUCT_COLLECTION!)
-        .findOneAndUpdate(
-          { mpId: mpid },
-          {
-            $set: {
-              "tradentDetails.activated": false,
-              "tradentDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
-            },
+      await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+        { mpId: mpid },
+        {
+          $set: {
+            "tradentDetails.activated": false,
+            "tradentDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
           },
-        );
+        }
+      );
     }
     if (mongoResult.frontierDetails) {
-      await dbo
-        .collection(applicationConfig.PRODUCT_COLLECTION!)
-        .findOneAndUpdate(
-          { mpId: mpid },
-          {
-            $set: {
-              "frontierDetails.activated": false,
-              "frontierDetails.AuditInfo":
-                await SessionHelper.GetAuditInfo(req),
-            },
+      await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+        { mpId: mpid },
+        {
+          $set: {
+            "frontierDetails.activated": false,
+            "frontierDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
           },
-        );
+        }
+      );
     }
     if (mongoResult.mvpDetails) {
-      await dbo
-        .collection(applicationConfig.PRODUCT_COLLECTION!)
-        .findOneAndUpdate(
-          { mpId: mpid },
-          {
-            $set: {
-              "mvpDetails.activated": false,
-              "mvpDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
-            },
+      await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+        { mpId: mpid },
+        {
+          $set: {
+            "mvpDetails.activated": false,
+            "mvpDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
           },
-        );
+        }
+      );
     }
   }
   return mongoResult;
@@ -809,58 +674,45 @@ export const DeactivateProductModel = async (mpid: any, req: any) => {
 export const GetDefaultUserLogin = async () => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.USERS_COLLECTION!)
-    .findOne({});
+  mongoResult = await dbo.collection(applicationConfig.USERS_COLLECTION!).findOne({});
   return mongoResult;
 };
 
-export const UpdateExecutionPriority = async (
-  mpid: any,
-  id: any,
-  value: any,
-  req: any,
-) => {
+export const UpdateExecutionPriority = async (mpid: any, id: any, value: any, req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   if (id == 0) {
-    await dbo
-      .collection(applicationConfig.PRODUCT_COLLECTION!)
-      .findOneAndUpdate(
-        { mpId: mpid },
-        {
-          $set: {
-            "tradentDetails.executionPriority": value,
-            "tradentDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
-          },
+    await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+      { mpId: mpid },
+      {
+        $set: {
+          "tradentDetails.executionPriority": value,
+          "tradentDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
         },
-      );
+      }
+    );
   }
   if (id == 1) {
-    await dbo
-      .collection(applicationConfig.PRODUCT_COLLECTION!)
-      .findOneAndUpdate(
-        { mpId: mpid },
-        {
-          $set: {
-            "frontierDetails.executionPriority": value,
-            "frontierDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
-          },
+    await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+      { mpId: mpid },
+      {
+        $set: {
+          "frontierDetails.executionPriority": value,
+          "frontierDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
         },
-      );
+      }
+    );
   }
   if (id == 2) {
-    await dbo
-      .collection(applicationConfig.PRODUCT_COLLECTION!)
-      .findOneAndUpdate(
-        { mpId: mpid },
-        {
-          $set: {
-            "mvpDetails.executionPriority": value,
-            "mvpDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
-          },
+    await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate(
+      { mpId: mpid },
+      {
+        $set: {
+          "mvpDetails.executionPriority": value,
+          "mvpDetails.AuditInfo": await SessionHelper.GetAuditInfo(req),
         },
-      );
+      }
+    );
   }
   return mongoResult;
 };
@@ -868,38 +720,27 @@ export const UpdateExecutionPriority = async (
 export const GetLogsBasedOnQuery = async (query: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME!)
-    .find(query)
-    .toArray();
+  mongoResult = await dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME!).find(query).toArray();
   return mongoResult;
 };
 
 export const GetFilteredCrons = async () => {
   let mongoResult: any = null;
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   const filterCronDetails = await cacheClient.get(CacheKey.FILTER_CRON_DETAILS);
   if (filterCronDetails != null) {
     await cacheClient.disconnect();
     return filterCronDetails;
   }
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.FILTER_CRON_COLLECTION_NAME!)
-    .find()
-    .toArray();
-  if (mongoResult != null)
-    await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, mongoResult);
+  mongoResult = await dbo.collection(applicationConfig.FILTER_CRON_COLLECTION_NAME!).find().toArray();
+  if (mongoResult != null) await cacheClient.set(CacheKey.FILTER_CRON_DETAILS, mongoResult);
   await cacheClient.disconnect();
   return mongoResult;
 };
 
 export const GetSlowCronDetails = async () => {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   const slowCronDetails = await cacheClient.get(CacheKey.SLOW_CRON_DETAILS);
   if (slowCronDetails != null) {
     await cacheClient.disconnect();
@@ -907,12 +748,8 @@ export const GetSlowCronDetails = async () => {
   }
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME!)
-    .find()
-    .toArray();
-  if (mongoResult != null)
-    await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, mongoResult);
+  mongoResult = await dbo.collection(applicationConfig.SLOW_CRON_GROUP_COLLECTION_NAME!).find().toArray();
+  if (mongoResult != null) await cacheClient.set(CacheKey.SLOW_CRON_DETAILS, mongoResult);
   await cacheClient.disconnect();
   return mongoResult;
 };
@@ -920,92 +757,63 @@ export const GetSlowCronDetails = async () => {
 export const GetFilterCronLogsByLimit = async (_limit: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.FILTER_CRON_LOGS!)
-    .find()
-    .limit(_limit)
-    .sort({ $natural: -1 })
-    .toArray();
+  mongoResult = await dbo.collection(applicationConfig.FILTER_CRON_LOGS!).find().limit(_limit).sort({ $natural: -1 }).toArray();
   return mongoResult;
 };
 
 export const GetFilterCronLogByKey = async (key: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.FILTER_CRON_LOGS!)
-    .findOne({ cronKey: key });
+  mongoResult = await dbo.collection(applicationConfig.FILTER_CRON_LOGS!).findOne({ cronKey: key });
   return mongoResult;
 };
 
 export const GetProductListByQuery = async (query: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.PRODUCT_COLLECTION!)
-    .find(query)
-    .toArray();
+  mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).find(query).toArray();
   return mongoResult;
 };
 
 export const InsertOrUpdateProductWithQuery = async (mpid: any, query: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.PRODUCT_COLLECTION!)
-    .findOneAndUpdate({ mpId: mpid }, query);
+  mongoResult = await dbo.collection(applicationConfig.PRODUCT_COLLECTION!).findOneAndUpdate({ mpId: mpid }, query);
   return mongoResult;
 };
 
 export const InsertUserLogin = async (userDetails: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.USERS_COLLECTION!)
-    .insertOne(userDetails);
+  mongoResult = await dbo.collection(applicationConfig.USERS_COLLECTION!).insertOne(userDetails);
   return mongoResult;
 };
 
 export const UpdateUserPassword = async (_userName: any, newPassword: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.USERS_COLLECTION!)
-    .findOneAndUpdate(
-      { userName: _userName },
-      { $set: { userPassword: newPassword } },
-    );
+  mongoResult = await dbo.collection(applicationConfig.USERS_COLLECTION!).findOneAndUpdate({ userName: _userName }, { $set: { userPassword: newPassword } });
   return mongoResult;
 };
 
 export const InsertOrUpdateScrapeOnlyProduct = async (payload: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
-    .insertOne(payload);
+  mongoResult = await dbo.collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!).insertOne(payload);
   return mongoResult;
 };
 
 export const GetScrapeCrons = async () => {
-  const cacheClient = CacheClient.getInstance(
-    GetCacheClientOptions(applicationConfig),
-  );
-  const scrapeOnlyCronDetails = await cacheClient.get(
-    CacheKey.SCRAPE_CRON_DETAILS,
-  );
+  const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+  const scrapeOnlyCronDetails = await cacheClient.get(CacheKey.SCRAPE_CRON_DETAILS);
   if (scrapeOnlyCronDetails != null) {
     await cacheClient.disconnect();
     return scrapeOnlyCronDetails;
   }
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!)
-    .find()
-    .toArray();
-  if (mongoResult != null)
-    await cacheClient.set(CacheKey.SCRAPE_CRON_DETAILS, mongoResult);
+  mongoResult = await dbo.collection(applicationConfig.SCRAPE_CRON_SETTINGS_COLLECTION_NAME!).find().toArray();
+  if (mongoResult != null) await cacheClient.set(CacheKey.SCRAPE_CRON_DETAILS, mongoResult);
   await cacheClient.disconnect();
   return mongoResult;
 };
@@ -1041,11 +849,7 @@ export const GetScrapeCrons = async () => {
 //   return mongoResult;
 // };
 
-export const GetScrapeProducts = async (
-  query: any,
-  pageNumber: any,
-  pageSize: any,
-) => {
+export const GetScrapeProducts = async (query: any, pageNumber: any, pageSize: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   mongoResult = await dbo
@@ -1061,58 +865,44 @@ export const GetScrapeProducts = async (
 export const GetScrapeProductCount = async (query: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
-    .countDocuments(query);
+  mongoResult = await dbo.collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!).countDocuments(query);
   return mongoResult;
 };
 
 export const deleteScrapeProductById = async (Id: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
-    .deleteOne({ mpId: Id });
+  mongoResult = await dbo.collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!).deleteOne({ mpId: Id });
   return mongoResult;
 };
 
 export const GetAllScrapeProductDetails = async () => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
-    .find()
-    .sort({ _id: -1 })
-    .toArray();
+  mongoResult = await dbo.collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!).find().sort({ _id: -1 }).toArray();
   return mongoResult;
 };
 
 export const InsertOrUpdateScrapeProduct = async (payload: any, req: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  let existResult = await dbo
-    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
-    .findOne({ mpId: payload.mpId });
+  let existResult = await dbo.collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!).findOne({ mpId: payload.mpId });
   if (existResult) {
-    mongoResult = await dbo
-      .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
-      .findOneAndUpdate(
-        { mpId: payload.mpId },
-        {
-          $set: {
-            isActive: payload.isActive,
-            net32Url: payload.net32Url,
-            linkedCron: payload.linkedCron,
-            linkedCronId: payload.linkedCronId,
-            AuditInfo: await SessionHelper.GetAuditInfo(req),
-          },
+    mongoResult = await dbo.collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!).findOneAndUpdate(
+      { mpId: payload.mpId },
+      {
+        $set: {
+          isActive: payload.isActive,
+          net32Url: payload.net32Url,
+          linkedCron: payload.linkedCron,
+          linkedCronId: payload.linkedCronId,
+          AuditInfo: await SessionHelper.GetAuditInfo(req),
         },
-      );
+      }
+    );
   } else {
     payload.AuditInfo = await SessionHelper.GetAuditInfo(req);
-    mongoResult = await dbo
-      .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
-      .insertOne(payload);
+    mongoResult = await dbo.collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!).insertOne(payload);
   }
 
   return mongoResult;
@@ -1134,19 +924,14 @@ export const GetScrapeLogs = async (pageNumber: any, pageSize: any) => {
 export const GetScrapeLogsCount = async () => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.SCRAPE_LOGS_COLLECTION!)
-    .countDocuments();
+  mongoResult = await dbo.collection(applicationConfig.SCRAPE_LOGS_COLLECTION!).countDocuments();
   return mongoResult;
 };
 
 export const FindScrapeProductById = async (mpid: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!)
-    .find({ mpId: mpid })
-    .toArray();
+  mongoResult = await dbo.collection(applicationConfig.SCRAPE_ITEMS_COLLECTION!).find({ mpId: mpid }).toArray();
   return mongoResult;
 };
 
@@ -1163,16 +948,14 @@ export const GetScrapeLogsList = async (id: any) => {
 export const IgnoreCronStatusLog = async (_cronId: any, _keygen: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
-  mongoResult = await dbo
-    .collection(applicationConfig.CRON_STATUS_COLLECTION_NAME!)
-    .findOneAndUpdate(
-      { $and: [{ keyGenId: _keygen }, { cronId: _cronId }] },
-      {
-        $set: {
-          status: "IGNORE",
-        },
+  mongoResult = await dbo.collection(applicationConfig.CRON_STATUS_COLLECTION_NAME!).findOneAndUpdate(
+    { $and: [{ keyGenId: _keygen }, { cronId: _cronId }] },
+    {
+      $set: {
+        status: "IGNORE",
       },
-    );
+    }
+  );
   return mongoResult;
 };
 
@@ -1192,14 +975,18 @@ export const Update422StatusById = async (_mpId: any, isBulk: any) => {
   let mongoResult: any = null;
   const dbo = await getMongoDb();
   if (isBulk == false) {
-    mongoResult = await dbo
-      .collection(applicationConfig.ERROR_ITEM_COLLECTION!)
-      .updateMany({ mpId: _mpId }, { $set: { active: false } });
+    mongoResult = await dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION!).updateMany({ mpId: _mpId }, { $set: { active: false } });
   } else {
-    mongoResult = await dbo
-      .collection(applicationConfig.ERROR_ITEM_COLLECTION!)
-      .updateMany({}, { $set: { active: false } });
+    mongoResult = await dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION!).updateMany({}, { $set: { active: false } });
   }
 
   return mongoResult;
+};
+
+export const DeleteCronLogsPast15Days = async () => {
+  const dbo = await getMongoDb();
+  const cutoffDate = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+  console.log(`CRON_LOGS_DELETION_CRON : Deleting Cron Logs for Date : ${cutoffDate}`);
+  const [cronLogsResult, errorLogsResult] = await Promise.all([dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME!).deleteMany({ time: { $lte: cutoffDate } }), dbo.collection(applicationConfig.ERROR_422_CRON_LOGS!).deleteMany({ time: { $lte: cutoffDate } })]);
+  return [cronLogsResult, errorLogsResult];
 };

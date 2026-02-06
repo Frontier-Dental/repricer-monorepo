@@ -23,6 +23,16 @@
       "envFile": "${workspaceFolder}/apps/repricer/.env"
     },
     {
+      "name": "Debug Excel Export",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx"],
+      "args": ["${workspaceFolder}/apps/excel-export/src/main.ts"],
+      "cwd": "${workspaceFolder}/apps/excel-export",
+      "envFile": "${workspaceFolder}/apps/excel-export/.env"
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "Jest: current file",

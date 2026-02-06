@@ -159,14 +159,14 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
         }
         runInfo.UpdateSuccessCount();
       }
-      await mySqlHelper.UpdateRunInfo(runInfo.GetCompletedProductCountQuery(productCounter, insertId));
+      await mySqlHelper.UpdateRunInfo(runInfo.GetCompletedProductCountQuery(), [productCounter + 1, insertId]);
       productCounter++;
     }
     runInfo.UpdateFailureCount(runInfo.EligibleCount - runInfo.ScrapedSuccessCount);
     runInfo.UpdateEndTime();
-    await mySqlHelper.UpdateRunInfo(runInfo.GetSuccessCountQuery(insertId));
-    await mySqlHelper.UpdateRunInfo(runInfo.GetFailureCountQuery(insertId));
-    await mySqlHelper.UpdateRunInfo(runInfo.GetRunEndTimeQuery(insertId));
+    await mySqlHelper.UpdateRunInfo(runInfo.GetSuccessCountQuery(), [runInfo.ScrapedSuccessCount, insertId]);
+    await mySqlHelper.UpdateRunInfo(runInfo.GetFailureCountQuery(), [runInfo.ScrapedFailureCount, insertId]);
+    await mySqlHelper.UpdateRunInfo(runInfo.GetRunEndTimeQuery(), [moment(runInfo.RunEndTime).format("DD-MM-YYYY HH:mm:ss"), insertId]);
   }
   console.log(`SCRAPE-ONLY : Successfully scraped  ${runInfo.ScrapedSuccessCount} products || total Count : ${productList.length} || Cron Name : ${cronSetting.CronName} || KeyGen : ${keyGen}`);
 }

@@ -74,7 +74,7 @@ export async function Execute(jobId: string, productList: any[], cronInitTime: a
 
       _contextCronStatus.SetProductCount(cronProdCounter);
       await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
-      const prioritySequence = await requestGenerator.GetPrioritySequence(prod, null, false);
+      const prioritySequence = await requestGenerator.GetPrioritySequence(prod, null, false, false, null);
       const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
       let productLogs = [];
       let net32resp: AxiosResponse<Net32Product[]>;
@@ -147,7 +147,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
     type: "422Error",
   };
   const contextErrorDetails = await dbHelper.GetEligibleContextErrorItems(true, details.mpId, _contextVendor);
-  const prioritySequence = await requestGenerator.GetPrioritySequence(details, contextErrorDetails, true);
+  const prioritySequence = await requestGenerator.GetPrioritySequence(details, contextErrorDetails, true, true, _contextVendor);
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
   console.log(`EXPRESS_CRON : Repricing ${details.mpId} for ${_contextVendor} with sequence ${seqString} at ${new Date()}`);
   if (prioritySequence && prioritySequence.length > 0) {
@@ -410,21 +410,25 @@ export async function RepriceErrorItemV2(productList: any[], cronInitTime: any, 
   productList = await scanDeltaListOfProducts(productList, deltaList!);
   let cronProdCounter = 1;
   for (let prod of productList) {
-    console.log(`422_ERROR: Repricing ${prod.mpId} for 422 at ${new Date()}`);
-    const repriceErrorItemResponse = await RepriceErrorItem(prod, cronInitTime, prod.cronSettingsResponse, prod.contextVendor);
-    if (repriceErrorItemResponse && repriceErrorItemResponse.logs && repriceErrorItemResponse.logs.length > 0) {
-      if (repriceErrorItemResponse.logs.length == 1) {
-        cronLogs.logs.push(_.first(repriceErrorItemResponse.logs));
-      } else if (repriceErrorItemResponse.logs.length > 1) {
-        const tempLog = [];
-        for (const $ of repriceErrorItemResponse.logs) {
-          tempLog.push(_.first($));
+    try {
+      console.log(`422_ERROR: Repricing ${prod.mpId} for 422 at ${new Date()}`);
+      const repriceErrorItemResponse = await RepriceErrorItem(prod, cronInitTime, prod.cronSettingsResponse, prod.contextVendor);
+      if (repriceErrorItemResponse && repriceErrorItemResponse.logs && repriceErrorItemResponse.logs.length > 0) {
+        if (repriceErrorItemResponse.logs.length == 1) {
+          cronLogs.logs.push(_.first(repriceErrorItemResponse.logs));
+        } else if (repriceErrorItemResponse.logs.length > 1) {
+          const tempLog = [];
+          for (const $ of repriceErrorItemResponse.logs) {
+            tempLog.push(_.first($));
+          }
+          cronLogs.logs.push(tempLog);
         }
-        cronLogs.logs.push(tempLog);
       }
+      _contextCronStatus.SetProductCount(cronProdCounter);
+      await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
+    } catch (error) {
+      console.log(`Exception while repricing 422 error item: ${prod.mpId}. Error: ${error}`);
     }
-    _contextCronStatus.SetProductCount(cronProdCounter);
-    await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
     cronProdCounter++;
   }
   if (cronLogs.logs && cronLogs.logs.length > 0) {

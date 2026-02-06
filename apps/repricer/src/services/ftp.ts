@@ -6,19 +6,14 @@ import { applicationConfig } from "../utility/config";
 export async function GetAllFileDetails() {
   let listOfFiles: any[] = [];
   await ftp.connect({
-    host: "165.22.229.139",
-    user: "voyantcs",
-    password: ">mL3.rEtJtsP@43",
+    host: applicationConfig.FTP_HOST,
+    user: applicationConfig.FTP_USER,
+    password: applicationConfig.FTP_PASSWORD,
     secure: false,
   });
-  const list = applicationConfig.IS_DEV
-    ? await ftp.list("REPRICER/DEV_HISTORY")
-    : await ftp.list("REPRICER/HISTORY");
+  const list = applicationConfig.IS_DEV ? await ftp.list("REPRICER/DEV_HISTORY") : await ftp.list("REPRICER/HISTORY");
   list
-    .filter(
-      (file: any) =>
-        file.name !== "." && file.name !== ".." && file.name.endsWith(".csv"),
-    )
+    .filter((file: any) => file.name !== "." && file.name !== ".." && file.name.endsWith(".csv"))
     .forEach((file: any) => {
       listOfFiles.push({ name: file.name, createdTime: file.date } as never);
     });
@@ -29,9 +24,9 @@ export async function GetAllFileDetails() {
 
 export async function DownloadFile(remotePath: any, localPath: any) {
   await ftp.connect({
-    host: "165.22.229.139",
-    user: "voyantcs",
-    password: ">mL3.rEtJtsP@43",
+    host: applicationConfig.FTP_HOST,
+    user: applicationConfig.FTP_USER,
+    password: applicationConfig.FTP_PASSWORD,
     secure: false,
   });
   const stream = await ftp.get(remotePath);

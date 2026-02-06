@@ -28,7 +28,7 @@ export async function repriceProduct(mpid: string, net32Products: Net32Product[]
 
   let result = net32Products;
   let repriceResult: RepriceModel | undefined;
-
+  let ownVendorAvailableInStock = true;
   if (!result || result.length === 0) {
     throw new Error("Invalid response found in Net32 Api");
   }
@@ -95,6 +95,7 @@ export async function repriceProduct(mpid: string, net32Products: Net32Product[]
       repriceResult = multipleRepriceData;
     }
   } else {
+    ownVendorAvailableInStock = false;
     repriceResult = new RepriceModel(mpid, ownProduct, productItem.productName, productItem.unitPrice, false, false, [], RepriceMessageEnum.IGNORE_PRODUCT_INACTIVE);
   }
 
@@ -206,7 +207,9 @@ export async function repriceProduct(mpid: string, net32Products: Net32Product[]
   repriceResult = await Rule.ApplySisterComparisonCheck(repriceResult, result, productItem);
 
   //Apply MAX Price Check
-  repriceResult = await Rule.ApplyMaxPriceCheck(repriceResult, productItem);
+  if (ownVendorAvailableInStock) {
+    repriceResult = await Rule.ApplyMaxPriceCheck(repriceResult, productItem);
+  }
 
   // Align IsRepriced Field Based on Price Suggestion
   repriceResult = await Rule.AlignIsRepriced(repriceResult);

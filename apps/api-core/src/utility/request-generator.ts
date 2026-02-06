@@ -16,7 +16,7 @@ export async function GetProductItemListQuery(): Promise<{
   };
 }
 
-export async function GetPrioritySequence(productInfo: ProductDetailsListItem, contextErrorDetails: ErrorItem[] | null, includeErrorItems: boolean) {
+export async function GetPrioritySequence(productInfo: ProductDetailsListItem, contextErrorDetails: ErrorItem[] | null, includeErrorItems: boolean, isExpressCron: boolean, contextVendor: any): Promise<{ name: VendorName; value: string }[]> {
   const _tradent = { name: VendorName.TRADENT, value: "tradentDetails" };
   const _frontier = { name: VendorName.FRONTIER, value: "frontierDetails" };
   const _mvp = { name: VendorName.MVP, value: "mvpDetails" };
@@ -24,6 +24,7 @@ export async function GetPrioritySequence(productInfo: ProductDetailsListItem, c
   const _firstDent = { name: VendorName.FIRSTDENT, value: "firstDentDetails" };
   const _triad = { name: VendorName.TRIAD, value: "triadDetails" };
   const _biteSupply = { name: VendorName.BITESUPPLY, value: "biteSupplyDetails" };
+  const vendorList = [_tradent, _frontier, _mvp, _topDent, _firstDent, _triad, _biteSupply];
   let prioritySequence = [];
   const globalConfig = await sqlV2Service.GetGlobalConfig();
   const isOverrideEnabled = IsOverrideExecutionPriorityEnabled(globalConfig!);
@@ -32,6 +33,13 @@ export async function GetPrioritySequence(productInfo: ProductDetailsListItem, c
   // Override Execution Priority List in case of Override Set to true
   if (isOverrideEnabled) {
     productDetails = responseUtility.MapOverrideExecutionPriority(productDetails, globalConfig!.override_execution_priority_details!.priority_settings);
+  }
+  // For Express Cron, Context Vendor will be given first priority
+  if (isExpressCron && contextVendor) {
+    const vendorMap = vendorList.find((v) => v.name === contextVendor);
+    if (vendorMap) {
+      prioritySequence.push(vendorMap);
+    }
   }
   for (let pty = 1; pty <= applicationConfig.VENDOR_COUNT; pty++) {
     const vendors = [
@@ -47,10 +55,10 @@ export async function GetPrioritySequence(productInfo: ProductDetailsListItem, c
       if (vendor.details && vendor.details.activated && vendor.details.executionPriority === pty && proceedNext(productDetails, vendor.obj.value)) {
         if (includeErrorItems && contextErrorDetails) {
           const vendorDetails = contextErrorDetails.find((x) => x.vendorName === vendor.obj.name);
-          if (!vendorDetails) {
+          if (!vendorDetails && !prioritySequence.find((p) => p.name === vendor.obj.name)) {
             prioritySequence.push(vendor.obj);
           }
-        } else {
+        } else if (!prioritySequence.find((p) => p.name === vendor.obj.name)) {
           prioritySequence.push(vendor.obj);
         }
       }
