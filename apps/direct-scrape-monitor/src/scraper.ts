@@ -28,33 +28,28 @@ function detectBlock(status: number, body: unknown): { blocked: boolean; blockTy
 }
 
 export async function scrapeViaProxy(mpId: number): Promise<ScrapeResult> {
-  const proxyUrl = `http://${config.PROXY_IP}:${config.PROXY_PORT}/proxy`;
+  const proxyUrl = `http://${config.PROXY_IP}:${config.PROXY_PORT}/tls-fetch`;
   const targetUrl = config.SCRAPE_URL.replace("{mpId}", String(mpId));
   const start = Date.now();
 
   try {
-    const response = await axios.post(
-      proxyUrl,
-      {
-        url: targetUrl,
-        method: "GET",
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
-          "Content-Type": "application/json",
-        },
+    const response = await axios.get(proxyUrl, {
+      params: { url: targetUrl },
+      auth: {
+        username: config.PROXY_USERNAME,
+        password: config.PROXY_PASSWORD,
       },
-      {
-        auth: { username: config.PROXY_USERNAME, password: config.PROXY_PASSWORD },
-        headers: { "Content-Type": "application/json" },
-        timeout: 30000,
-      }
-    );
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
     const elapsed = Date.now() - start;
     const body = response.data;
     const proxyStatus = body?.statusCode ?? response.status;
     const responseData = body?.data ?? body;
     const bodyStr = JSON.stringify(responseData);
+    console.log(mpId, bodyStr);
     const vendorCount = Array.isArray(responseData) ? responseData.length : 0;
     const { blocked, blockType } = detectBlock(proxyStatus, bodyStr);
 

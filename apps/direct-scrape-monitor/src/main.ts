@@ -7,6 +7,8 @@ import { log } from "./logger";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+let scrapingEnabled = false;
+
 function shuffle<T>(array: T[]): T[] {
   const arr = [...array];
   for (let i = arr.length - 1; i > 0; i--) {
@@ -80,8 +82,34 @@ async function runCycle(cycleNumber: number): Promise<void> {
 }
 
 function startHealthServer(): void {
-  const server = http.createServer((_req, res) => {
-    res.writeHead(200, { "Content-Type": "application/json" });
+  const server = http.createServer((req, res) => {
+    res.setHeader("Content-Type", "application/json");
+
+    if (req.url === "/status") {
+      res.writeHead(200);
+      res.end(JSON.stringify({ enabled: scrapingEnabled }));
+      return;
+    }
+
+    if (req.url === "/toggle" && req.method === "POST") {
+      let body = "";
+      req.on("data", (chunk) => (body += chunk));
+      req.on("end", () => {
+        try {
+          const { enabled } = JSON.parse(body);
+          scrapingEnabled = !!enabled;
+          log.info("scraping_toggled", { enabled: scrapingEnabled });
+          res.writeHead(200);
+          res.end(JSON.stringify({ enabled: scrapingEnabled }));
+        } catch {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: "invalid JSON" }));
+        }
+      });
+      return;
+    }
+
+    res.writeHead(200);
     res.end(JSON.stringify({ status: "ok" }));
   });
   server.listen(5002, () => {
@@ -104,6 +132,10 @@ async function main(): Promise<void> {
 
   let cycle = 1;
   while (true) {
+    if (!scrapingEnabled) {
+      await delay(5000);
+      continue;
+    }
     try {
       await runCycle(cycle);
     } catch (err: any) {
