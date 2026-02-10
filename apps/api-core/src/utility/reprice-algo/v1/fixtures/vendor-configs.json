@@ -1,0 +1,58 @@
+{
+  "TRADENT": {
+    "allowReprice": true,
+    "ownVendorId": "17357",
+    "sisterVendorId": "20722;20755;20533;20727;5;10",
+    "unitPrice": "15.00",
+    "floorPrice": "8.00",
+    "maxPrice": "25.00"
+  },
+  "FRONTIER": {
+    "allowReprice": true,
+    "ownVendorId": "20722",
+    "sisterVendorId": "17357;20755;20533;20727;5;10",
+    "unitPrice": "14.50",
+    "floorPrice": "7.50",
+    "maxPrice": "24.00"
+  },
+  "MVP": {
+    "allowReprice": true,
+    "ownVendorId": "20755",
+    "sisterVendorId": "17357;20722;20533;20727;5;10",
+    "unitPrice": "14.75",
+    "floorPrice": "7.75",
+    "maxPrice": "24.50"
+  },
+  "TOPDENT": {
+    "allowReprice": true,
+    "ownVendorId": "20727",
+    "sisterVendorId": "17357;20722;20755;20533;5;10",
+    "unitPrice": "15.25",
+    "floorPrice": "8.25",
+    "maxPrice": "25.50"
+  },
+  "FIRSTDENT": {
+    "allowReprice": true,
+    "ownVendorId": "20533",
+    "sisterVendorId": "17357;20722;20755;20727;5;10",
+    "unitPrice": "16.00",
+    "floorPrice": "9.00",
+    "maxPrice": "26.00"
+  },
+  "TRIAD": {
+    "allowReprice": true,
+    "ownVendorId": "5",
+    "sisterVendorId": "17357;20722;20755;20533;20727;10",
+    "unitPrice": "14.00",
+    "floorPrice": "7.00",
+    "maxPrice": "23.00"
+  },
+  "BITESUPPLY": {
+    "allowReprice": true,
+    "ownVendorId": "10",
+    "sisterVendorId": "17357;20722;20755;20533;20727;5",
+    "unitPrice": "15.50",
+    "floorPrice": "8.50",
+    "maxPrice": "25.50"
+  }
+}
