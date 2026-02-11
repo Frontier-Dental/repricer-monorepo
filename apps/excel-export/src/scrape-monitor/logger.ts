@@ -4,7 +4,7 @@ function emit(level: LogLevel, event: string, data: Record<string, unknown>) {
   const entry = {
     ...data,
   };
-  process.stdout.write(JSON.stringify(entry) + "\n");
+  process.stdout.write(`[direct-scrape-cron] ${JSON.stringify(entry)}\n`);
 }
 
 export const log = {
