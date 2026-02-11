@@ -27,7 +27,7 @@ function detectBlock(status: number, body: unknown): { blocked: boolean; blockTy
 }
 
 export async function scrapeViaProxy(mpId: number): Promise<ScrapeResult> {
-  const proxyUrl = `http://${applicationConfig.PROXY_IP}:${applicationConfig.PROXY_PORT}/tls-fetch`;
+  const proxyUrl = `http://${applicationConfig.DIRECT_SCRAPE_CRON_PROXY_IP}:${applicationConfig.DIRECT_SCRAPE_CRON_PROXY_PORT}/tls-fetch`;
   const targetUrl = applicationConfig.SCRAPE_URL.replace("{mpId}", String(mpId));
   const start = Date.now();
 
@@ -35,8 +35,8 @@ export async function scrapeViaProxy(mpId: number): Promise<ScrapeResult> {
     const response = await axios.get(proxyUrl, {
       params: { url: targetUrl },
       auth: {
-        username: applicationConfig.PROXY_USERNAME!,
-        password: applicationConfig.PROXY_PASSWORD!,
+        username: applicationConfig.DIRECT_SCRAPE_CRON_PROXY_USERNAME!,
+        password: applicationConfig.DIRECT_SCRAPE_CRON_PROXY_PASSWORD!,
       },
       headers: {
         "Content-Type": "application/json",
@@ -89,7 +89,7 @@ export async function scrapeViaProxy(mpId: number): Promise<ScrapeResult> {
 
 export async function getOutboundIp(): Promise<string> {
   try {
-    const proxyUrl = `http://${applicationConfig.PROXY_IP}:${applicationConfig.PROXY_PORT}/proxy`;
+    const proxyUrl = `http://${applicationConfig.DIRECT_SCRAPE_CRON_PROXY_IP}:${applicationConfig.DIRECT_SCRAPE_CRON_PROXY_PORT}/proxy`;
     const response = await axios.post(
       proxyUrl,
       {
@@ -98,7 +98,7 @@ export async function getOutboundIp(): Promise<string> {
         headers: { "Content-Type": "application/json" },
       },
       {
-        auth: { username: applicationConfig.PROXY_USERNAME!, password: applicationConfig.PROXY_PASSWORD! },
+        auth: { username: applicationConfig.DIRECT_SCRAPE_CRON_PROXY_USERNAME!, password: applicationConfig.DIRECT_SCRAPE_CRON_PROXY_PASSWORD! },
         headers: { "Content-Type": "application/json" },
         timeout: 15000,
       }

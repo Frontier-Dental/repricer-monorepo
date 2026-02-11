@@ -88,7 +88,6 @@ async function runCycle(cycleNumber: number): Promise<void> {
 
     if (consecutiveBlocks >= applicationConfig.DIRECT_SCRAPE_CRON_CONSECUTIVE_BLOCK_LIMIT) {
       log.warn("scraping_auto_stopped", {
-        cycle: cycleNumber,
         consecutiveBlocks,
         reason: "too_many_consecutive_blocks",
       });
@@ -103,7 +102,6 @@ async function runCycle(cycleNumber: number): Promise<void> {
   const avgResponseTimeMs = shuffled.length > 0 ? Math.round(totalResponseTime / shuffled.length) : 0;
 
   log.info("cycle_complete", {
-    cycle: cycleNumber,
     totalProducts: shuffled.length,
     successCount,
     errorCount,
@@ -115,8 +113,8 @@ async function runCycle(cycleNumber: number): Promise<void> {
 }
 
 export async function startScrapeLoop(): Promise<void> {
-  if (!applicationConfig.PROXY_IP || !applicationConfig.PROXY_PORT) {
-    log.warn("scrape_loop_skipped", { reason: "PROXY_IP or PROXY_PORT not configured" });
+  if (!applicationConfig.DIRECT_SCRAPE_CRON_PROXY_IP || !applicationConfig.DIRECT_SCRAPE_CRON_PROXY_PORT) {
+    log.warn("scrape_loop_skipped", { reason: "DIRECT_SCRAPE_CRON_PROXY_IP or DIRECT_SCRAPE_CRON_PROXY_PORT not configured" });
     return;
   }
 

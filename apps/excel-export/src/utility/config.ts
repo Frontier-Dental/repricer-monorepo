@@ -178,10 +178,10 @@ export const envSchema = z.object({
   REPRICER_ENCRYPTION_KEY: z.string(),
 
   // Scrape monitor (proxy)
-  PROXY_IP: z.string().optional(),
-  PROXY_PORT: z.coerce.number().optional(),
-  PROXY_USERNAME: z.string().optional(),
-  PROXY_PASSWORD: z.string().optional(),
+  DIRECT_SCRAPE_CRON_PROXY_IP: z.string().default("159.203.114.23"),
+  DIRECT_SCRAPE_CRON_PROXY_PORT: z.coerce.number().default(8888),
+  DIRECT_SCRAPE_CRON_PROXY_USERNAME: z.string().default("bypass-proxy-test"),
+  DIRECT_SCRAPE_CRON_PROXY_PASSWORD: z.string().default("gRZ02c7Q4Y5"),
   SCRAPE_URL: z.string().default("https://www.net32.com/rest/neo/pdp/{mpId}/vendor-options"),
   DIRECT_SCRAPE_CRON_DELAY_BETWEEN_CALLS_MS: z.coerce.number().default(200),
   DIRECT_SCRAPE_CRON_JITTER_MS: z.coerce.number().default(75),
