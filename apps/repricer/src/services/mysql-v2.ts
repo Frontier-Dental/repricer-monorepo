@@ -516,3 +516,12 @@ export async function BulkDeleteWaitlistItems(ids: number[]) {
     message: "Waitlist items deleted successfully",
   };
 }
+
+export async function GetFullRepricerHistory(startDateTime: any, endDateTime: any) {
+  const db = getKnexInstance();
+  const result = await db.raw(`call sp_GetRepricerHistoryForDateRange('${startDateTime}', '${endDateTime}')`);
+  if (result && result[0] && result[0].length > 0) {
+    return result[0];
+  }
+  return [];
+}
