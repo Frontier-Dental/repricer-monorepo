@@ -242,12 +242,12 @@ export async function ToggleDirectScrapeMonitorStatus(req: Request, res: Respons
     await axios.post(`${SCRAPE_MONITOR_URL}/api/scrape-monitor/toggle`, { enabled }, { timeout: 3000 });
     return res.json({
       status: true,
-      message: `Direct Scrape Monitor ${enabled ? "enabled" : "disabled"} successfully.`,
+      message: `Direct Scrape Cron ${enabled ? "enabled" : "disabled"} successfully.`,
     });
   } catch (e: any) {
     return res.json({
       status: false,
-      message: "Failed to reach Direct Scrape Monitor service.",
+      message: "Failed to reach Direct Scrape Cron service.",
     });
   }
 }

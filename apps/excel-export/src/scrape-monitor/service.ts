@@ -75,12 +75,10 @@ async function runCycle(cycleNumber: number): Promise<void> {
       mpId: result.mpId,
       httpStatus: result.httpStatus,
       responseTimeMs: result.responseTimeMs,
-      responseSizeBytes: result.responseSizeBytes,
-      vendorCount: result.vendorCount,
       blocked: result.blocked,
       blockType: result.blockType,
       error: result.error,
-      cycle: cycleNumber,
+      trimmedResponse: JSON.stringify(result.response).slice(0, 200),
     });
 
     await delay(randomDelay());

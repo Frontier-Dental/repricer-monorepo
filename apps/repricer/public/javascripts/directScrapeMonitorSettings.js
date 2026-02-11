@@ -1,6 +1,6 @@
 function toggleDirectScrapeMonitor(status) {
   var action = status === 1 ? "enable" : "disable";
-  if (confirm("Are you sure you want to " + action + " the Direct Scrape Monitor?")) {
+  if (confirm("Are you sure you want to " + action + " the Direct Scrape Cron?")) {
     $.ajax({
       type: "POST",
       url: "/filter/toggle_direct_scrape_monitor",

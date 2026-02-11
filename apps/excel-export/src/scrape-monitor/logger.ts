@@ -2,10 +2,6 @@ type LogLevel = "info" | "warn" | "error";
 
 function emit(level: LogLevel, event: string, data: Record<string, unknown>) {
   const entry = {
-    level,
-    event,
-    timestamp: new Date().toISOString(),
-    service: "scrape-monitor",
     ...data,
   };
   console.log(JSON.stringify(entry));

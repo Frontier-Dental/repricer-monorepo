@@ -5,8 +5,7 @@ export interface ScrapeResult {
   mpId: number;
   httpStatus: number;
   responseTimeMs: number;
-  responseSizeBytes: number;
-  vendorCount: number;
+  response: unknown;
   blocked: boolean;
   blockType: string | null;
   error: string | null;
@@ -49,16 +48,13 @@ export async function scrapeViaProxy(mpId: number): Promise<ScrapeResult> {
     const proxyStatus = body?.statusCode ?? response.status;
     const responseData = body?.data ?? body;
     const bodyStr = JSON.stringify(responseData);
-    console.log(mpId, bodyStr);
-    const vendorCount = Array.isArray(responseData) ? responseData.length : 0;
     const { blocked, blockType } = detectBlock(proxyStatus, bodyStr);
 
     return {
       mpId,
       httpStatus: proxyStatus,
       responseTimeMs: elapsed,
-      responseSizeBytes: Buffer.byteLength(bodyStr, "utf8"),
-      vendorCount,
+      response: responseData,
       blocked,
       blockType,
       error: null,
@@ -83,8 +79,7 @@ export async function scrapeViaProxy(mpId: number): Promise<ScrapeResult> {
       mpId,
       httpStatus: status,
       responseTimeMs: elapsed,
-      responseSizeBytes: 0,
-      vendorCount: 0,
+      response: null,
       blocked,
       blockType,
       error: errorMsg,

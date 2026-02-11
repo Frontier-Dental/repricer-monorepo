@@ -436,27 +436,21 @@
                             </table>
                         </div>
                     </div>
-                    <div class="d-flex justify-content-between">
-                        <h1 class="commanHeading">Direct Scrape Monitor Cron</h1>
-                    </div>
-                    <hr>
-                    <div class="card">
-                        <div class="body p-3">
-                            <div class="d-flex align-items-center justify-content-between" style="max-width: 400px;">
-                                <div>
-                                    <% if(directScrapeMonitorEnabled) { %>
-                                        <button type="button" id="btnDirectScrapeToggle"
-                                            onclick="toggleDirectScrapeMonitor(0)"
-                                            class="btn btn-success" style="width:70px;">ON</button>
-                                    <% } else { %>
-                                        <button type="button" id="btnDirectScrapeToggle"
-                                            onclick="toggleDirectScrapeMonitor(1)"
-                                            class="btn btn-danger" style="width:70px;">OFF</button>
-                                    <% } %>
-                                </div>
-                            </div>
+                    <div class="d-flex align-items-center" style="gap: 15px;">
+                        <h1 class="commanHeading mb-0">Direct Scrape Cron:</h1>
+                        <div>
+                            <% if(directScrapeMonitorEnabled) { %>
+                                <button type="button" id="btnDirectScrapeToggle"
+                                    onclick="toggleDirectScrapeMonitor(0)"
+                                    class="btn btn-success" style="width:70px;">ON</button>
+                            <% } else { %>
+                                <button type="button" id="btnDirectScrapeToggle"
+                                    onclick="toggleDirectScrapeMonitor(1)"
+                                    class="btn btn-danger" style="width:70px;">OFF</button>
+                            <% } %>
                         </div>
                     </div>
+                    <hr>
                 </div>
 
             </div>
