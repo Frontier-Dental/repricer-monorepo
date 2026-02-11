@@ -183,9 +183,9 @@ export const envSchema = z.object({
   DIRECT_SCRAPE_CRON_PROXY_USERNAME: z.string().default("bypass-proxy-test"),
   DIRECT_SCRAPE_CRON_PROXY_PASSWORD: z.string().default("gRZ02c7Q4Y5"),
   SCRAPE_URL: z.string().default("https://www.net32.com/rest/neo/pdp/{mpId}/vendor-options"),
-  DIRECT_SCRAPE_CRON_DELAY_BETWEEN_CALLS_MS: z.coerce.number().default(200),
-  DIRECT_SCRAPE_CRON_JITTER_MS: z.coerce.number().default(75),
-  DIRECT_SCRAPE_CRON_CONSECUTIVE_BLOCK_LIMIT: z.coerce.number().default(3),
+  DIRECT_SCRAPE_CRON_DELAY_BETWEEN_CALLS_MS: z.coerce.number().default(1000),
+  DIRECT_SCRAPE_CRON_JITTER_MS: z.coerce.number().default(750),
+  DIRECT_SCRAPE_CRON_CONSECUTIVE_BLOCK_LIMIT: z.coerce.number().default(20),
 });
 
 export function validateConfig() {
