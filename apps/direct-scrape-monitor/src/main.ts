@@ -35,6 +35,10 @@ async function runCycle(cycleNumber: number): Promise<void> {
   const cycleStart = Date.now();
 
   for (const product of shuffled) {
+    if (!scrapingEnabled) {
+      log.info("cycle_aborted", { cycle: cycleNumber, reason: "scraping_disabled" });
+      break;
+    }
     const result = await scrapeViaProxy(product.MpId);
     totalResponseTime += result.responseTimeMs;
 
@@ -143,7 +147,10 @@ async function main(): Promise<void> {
       await destroyConnection();
     }
     cycle++;
-    await delay(config.CYCLE_INTERVAL_MS);
+    const cycleEnd = Date.now() + config.CYCLE_INTERVAL_MS;
+    while (Date.now() < cycleEnd && scrapingEnabled) {
+      await delay(5000);
+    }
   }
 }
 
