@@ -83,7 +83,6 @@ async function runCycle(cycleNumber: number): Promise<void> {
       blocked: result.blocked,
       blockType: result.blockType,
       error: result.error,
-      trimmedResponse: JSON.stringify(result.response).slice(0, 200),
     });
 
     if (consecutiveBlocks >= applicationConfig.DIRECT_SCRAPE_CRON_CONSECUTIVE_BLOCK_LIMIT) {
