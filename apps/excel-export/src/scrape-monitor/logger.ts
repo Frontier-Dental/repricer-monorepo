@@ -2,8 +2,6 @@ type LogLevel = "info" | "warn" | "error";
 
 function emit(level: LogLevel, event: string, data: Record<string, unknown>) {
   const entry = {
-    level,
-    event,
     ...data,
   };
   process.stdout.write(JSON.stringify(entry) + "\n");
