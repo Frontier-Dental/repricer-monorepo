@@ -11,7 +11,7 @@ import { Request, Response } from "express";
 import axios from "axios";
 import { GetConfigurations, GetCronSettingsList, GetSlowCronDetails, ToggleCronStatus as SqlToggleCronStatus, UpdateCronSettingsList, GetFilteredCrons, ToggleFilterCronStatus, UpsertFilterCronSettings, GetMiniErpCronDetails } from "../services/mysql-v2";
 
-const SCRAPE_MONITOR_URL = process.env.EXCEL_EXPORT_SERVICE_URL || "http://localhost:3003";
+const SCRAPE_MONITOR_URL = process.env.EXCEL_SERVICE_URL || (process.env.NODE_ENV === "production" ? "http://excel-export:3003" : "http://localhost:3003");
 
 export async function GetFilterCron(req: Request, res: Response) {
   let filterCronDetails = await GetFilteredCrons();
