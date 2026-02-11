@@ -75,7 +75,7 @@ async function runCycle(cycleNumber: number): Promise<void> {
       consecutiveBlocks = 0;
     }
 
-    console.log("direct-scrape-cron-result", {
+    log.info("scrape_result", {
       mpId: result.mpId,
       httpStatus: result.httpStatus,
       responseTimeMs: result.responseTimeMs,
