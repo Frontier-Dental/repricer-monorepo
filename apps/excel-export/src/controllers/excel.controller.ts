@@ -192,7 +192,7 @@ export async function exportItems(req: Request, res: Response) {
   });
 }
 
-function parseBadgeIndicator(stringValue: any, evalType: any) {
+export function parseBadgeIndicator(stringValue: any, evalType: any) {
   if (_.isEqual(evalType, "KEY")) {
     const $eval = badgeResx.find((x: any) => _.isEqual(x.key, stringValue.trim().toUpperCase()));
     return $eval ? $eval.value.trim() : _.first(badgeResx)!.value.trim();
@@ -203,7 +203,7 @@ function parseBadgeIndicator(stringValue: any, evalType: any) {
   return undefined;
 }
 
-function spliceResult(arrayResult: any[], pageNo: number, pageSize: number) {
+export function spliceResult(arrayResult: any[], pageNo: number, pageSize: number) {
   const splicesResult = _.chunk(arrayResult, pageSize);
   return splicesResult[pageNo];
 }
