@@ -26,7 +26,7 @@ function shuffle<T>(array: T[]): T[] {
 }
 
 function randomDelay(): number {
-  const value = applicationConfig.DELAY_BETWEEN_CALLS_MS - applicationConfig.DELAY_JITTER_MS + Math.floor(Math.random() * applicationConfig.DELAY_JITTER_MS * 2);
+  const value = applicationConfig.DIRECT_SCRAPE_CRON_DELAY_BETWEEN_CALLS_MS - applicationConfig.DIRECT_SCRAPE_CRON_JITTER_MS + Math.floor(Math.random() * applicationConfig.DIRECT_SCRAPE_CRON_JITTER_MS * 2);
   return Math.max(0, value);
 }
 
@@ -44,10 +44,10 @@ async function getActiveProducts(): Promise<{ MpId: number }[]> {
 async function runCycle(cycleNumber: number): Promise<void> {
   const products = await getActiveProducts();
   const shuffled = shuffle(products);
-
   let successCount = 0;
   let errorCount = 0;
   let blockedCount = 0;
+  let consecutiveBlocks = 0;
   let totalResponseTime = 0;
   const errorBreakdown: Record<string, number> = {};
   const cycleStart = Date.now();
@@ -68,7 +68,12 @@ async function runCycle(cycleNumber: number): Promise<void> {
       successCount++;
     }
 
-    if (result.blocked) blockedCount++;
+    if (result.blocked) {
+      blockedCount++;
+      consecutiveBlocks++;
+    } else {
+      consecutiveBlocks = 0;
+    }
 
     const level = result.blocked ? "warn" : result.error ? "warn" : "info";
     log[level]("scrape_result", {
@@ -81,12 +86,21 @@ async function runCycle(cycleNumber: number): Promise<void> {
       trimmedResponse: JSON.stringify(result.response).slice(0, 200),
     });
 
+    if (consecutiveBlocks >= applicationConfig.DIRECT_SCRAPE_CRON_CONSECUTIVE_BLOCK_LIMIT) {
+      log.warn("scraping_auto_stopped", {
+        cycle: cycleNumber,
+        consecutiveBlocks,
+        reason: "too_many_consecutive_blocks",
+      });
+      setScrapingEnabled(false);
+      break;
+    }
+
     await delay(randomDelay());
   }
 
   const cycleDurationMin = parseFloat(((Date.now() - cycleStart) / 60000).toFixed(2));
   const avgResponseTimeMs = shuffled.length > 0 ? Math.round(totalResponseTime / shuffled.length) : 0;
-  const nextCycleAt = new Date(Date.now() + applicationConfig.CYCLE_INTERVAL_MS).toISOString();
 
   log.info("cycle_complete", {
     cycle: cycleNumber,
@@ -97,7 +111,6 @@ async function runCycle(cycleNumber: number): Promise<void> {
     errorBreakdown,
     avgResponseTimeMs,
     cycleDurationMin,
-    nextCycleAt,
   });
 }
 
@@ -113,8 +126,7 @@ export async function startScrapeLoop(): Promise<void> {
   log.info("monitor_start", {
     outboundIp,
     productCount: products.length,
-    delayBetweenCallsMs: `${applicationConfig.DELAY_BETWEEN_CALLS_MS - applicationConfig.DELAY_JITTER_MS}-${applicationConfig.DELAY_BETWEEN_CALLS_MS + applicationConfig.DELAY_JITTER_MS}`,
-    cycleIntervalMin: Math.round(applicationConfig.CYCLE_INTERVAL_MS / 60000),
+    delayBetweenCallsMs: `${applicationConfig.DIRECT_SCRAPE_CRON_DELAY_BETWEEN_CALLS_MS - applicationConfig.DIRECT_SCRAPE_CRON_JITTER_MS}-${applicationConfig.DIRECT_SCRAPE_CRON_DELAY_BETWEEN_CALLS_MS + applicationConfig.DIRECT_SCRAPE_CRON_JITTER_MS}`,
   });
 
   let cycle = 1;
@@ -130,9 +142,5 @@ export async function startScrapeLoop(): Promise<void> {
       await destroyKnexInstance();
     }
     cycle++;
-    const cycleEnd = Date.now() + applicationConfig.CYCLE_INTERVAL_MS;
-    while (Date.now() < cycleEnd && scrapingEnabled) {
-      await delay(5000);
-    }
   }
 }

@@ -183,9 +183,9 @@ export const envSchema = z.object({
   PROXY_USERNAME: z.string().optional(),
   PROXY_PASSWORD: z.string().optional(),
   SCRAPE_URL: z.string().default("https://www.net32.com/rest/neo/pdp/{mpId}/vendor-options"),
-  DELAY_BETWEEN_CALLS_MS: z.coerce.number().default(400),
-  DELAY_JITTER_MS: z.coerce.number().default(75),
-  CYCLE_INTERVAL_MS: z.coerce.number().default(1800000),
+  DIRECT_SCRAPE_CRON_DELAY_BETWEEN_CALLS_MS: z.coerce.number().default(200),
+  DIRECT_SCRAPE_CRON_JITTER_MS: z.coerce.number().default(75),
+  DIRECT_SCRAPE_CRON_CONSECUTIVE_BLOCK_LIMIT: z.coerce.number().default(3),
 });
 
 export function validateConfig() {
