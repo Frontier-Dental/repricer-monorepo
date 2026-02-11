@@ -17,8 +17,8 @@ const envSchema = z.object({
 
   // Scraping
   SCRAPE_URL: z.string().default("https://www.net32.com/rest/neo/pdp/{mpId}/vendor-options"),
-  DELAY_BETWEEN_CALLS_MS: z.coerce.number().default(375),
-  DELAY_JITTER_MS: z.coerce.number().default(75),
+  DELAY_BETWEEN_CALLS_MS: z.coerce.number().default(2000),
+  DELAY_JITTER_MS: z.coerce.number().default(150),
   CYCLE_INTERVAL_MS: z.coerce.number().default(1800000),
   PRODUCT_TABLE: z.string().default("table_scrapeProductList"),
 });

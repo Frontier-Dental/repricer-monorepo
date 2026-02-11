@@ -1,13 +1,20 @@
-import "dotenv/config";
-import http from "http";
-import { config } from "./config";
-import { getActiveProducts, destroyConnection } from "./db";
+import { applicationConfig } from "../utility/config";
+import { getKnexInstance, destroyKnexInstance } from "../services/knex-wrapper";
 import { scrapeViaProxy, getOutboundIp } from "./scraper";
 import { log } from "./logger";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 let scrapingEnabled = false;
+
+export function isScrapingEnabled(): boolean {
+  return scrapingEnabled;
+}
+
+export function setScrapingEnabled(enabled: boolean): void {
+  scrapingEnabled = enabled;
+  log.info("scraping_toggled", { enabled: scrapingEnabled });
+}
 
 function shuffle<T>(array: T[]): T[] {
   const arr = [...array];
@@ -19,8 +26,19 @@ function shuffle<T>(array: T[]): T[] {
 }
 
 function randomDelay(): number {
-  const value = config.DELAY_BETWEEN_CALLS_MS - config.DELAY_JITTER_MS + Math.floor(Math.random() * config.DELAY_JITTER_MS * 2);
+  const value = applicationConfig.DELAY_BETWEEN_CALLS_MS - applicationConfig.DELAY_JITTER_MS + Math.floor(Math.random() * applicationConfig.DELAY_JITTER_MS * 2);
   return Math.max(0, value);
+}
+
+async function getActiveProducts(): Promise<{ MpId: number }[]> {
+  const db = getKnexInstance();
+  return db(applicationConfig.SQL_SCRAPEPRODUCTLIST)
+    .distinct("MpId")
+    .where(function () {
+      this.whereNotNull("RegularCronId").orWhereNotNull("LinkedCronId");
+    })
+    .where("IsActive", true)
+    .orderBy("MpId");
 }
 
 async function runCycle(cycleNumber: number): Promise<void> {
@@ -70,7 +88,7 @@ async function runCycle(cycleNumber: number): Promise<void> {
 
   const cycleDurationMin = parseFloat(((Date.now() - cycleStart) / 60000).toFixed(2));
   const avgResponseTimeMs = shuffled.length > 0 ? Math.round(totalResponseTime / shuffled.length) : 0;
-  const nextCycleAt = new Date(Date.now() + config.CYCLE_INTERVAL_MS).toISOString();
+  const nextCycleAt = new Date(Date.now() + applicationConfig.CYCLE_INTERVAL_MS).toISOString();
 
   log.info("cycle_complete", {
     cycle: cycleNumber,
@@ -85,44 +103,11 @@ async function runCycle(cycleNumber: number): Promise<void> {
   });
 }
 
-function startHealthServer(): void {
-  const server = http.createServer((req, res) => {
-    res.setHeader("Content-Type", "application/json");
-
-    if (req.url === "/status") {
-      res.writeHead(200);
-      res.end(JSON.stringify({ enabled: scrapingEnabled }));
-      return;
-    }
-
-    if (req.url === "/toggle" && req.method === "POST") {
-      let body = "";
-      req.on("data", (chunk) => (body += chunk));
-      req.on("end", () => {
-        try {
-          const { enabled } = JSON.parse(body);
-          scrapingEnabled = !!enabled;
-          log.info("scraping_toggled", { enabled: scrapingEnabled });
-          res.writeHead(200);
-          res.end(JSON.stringify({ enabled: scrapingEnabled }));
-        } catch {
-          res.writeHead(400);
-          res.end(JSON.stringify({ error: "invalid JSON" }));
-        }
-      });
-      return;
-    }
-
-    res.writeHead(200);
-    res.end(JSON.stringify({ status: "ok" }));
-  });
-  server.listen(5002, () => {
-    log.info("health_server", { port: 5002 });
-  });
-}
-
-async function main(): Promise<void> {
-  startHealthServer();
+export async function startScrapeLoop(): Promise<void> {
+  if (!applicationConfig.PROXY_IP || !applicationConfig.PROXY_PORT) {
+    log.warn("scrape_loop_skipped", { reason: "PROXY_IP or PROXY_PORT not configured" });
+    return;
+  }
 
   const outboundIp = await getOutboundIp();
   const products = await getActiveProducts();
@@ -130,8 +115,8 @@ async function main(): Promise<void> {
   log.info("monitor_start", {
     outboundIp,
     productCount: products.length,
-    delayBetweenCallsMs: `${config.DELAY_BETWEEN_CALLS_MS - config.DELAY_JITTER_MS}-${config.DELAY_BETWEEN_CALLS_MS + config.DELAY_JITTER_MS}`,
-    cycleIntervalMin: Math.round(config.CYCLE_INTERVAL_MS / 60000),
+    delayBetweenCallsMs: `${applicationConfig.DELAY_BETWEEN_CALLS_MS - applicationConfig.DELAY_JITTER_MS}-${applicationConfig.DELAY_BETWEEN_CALLS_MS + applicationConfig.DELAY_JITTER_MS}`,
+    cycleIntervalMin: Math.round(applicationConfig.CYCLE_INTERVAL_MS / 60000),
   });
 
   let cycle = 1;
@@ -144,27 +129,12 @@ async function main(): Promise<void> {
       await runCycle(cycle);
     } catch (err: any) {
       log.error("cycle_error", { cycle, error: err.message ?? String(err) });
-      await destroyConnection();
+      await destroyKnexInstance();
     }
     cycle++;
-    const cycleEnd = Date.now() + config.CYCLE_INTERVAL_MS;
+    const cycleEnd = Date.now() + applicationConfig.CYCLE_INTERVAL_MS;
     while (Date.now() < cycleEnd && scrapingEnabled) {
       await delay(5000);
     }
   }
 }
-
-async function gracefulShutdown(reason: string): Promise<void> {
-  log.info("shutdown", { reason });
-  await Promise.race([destroyConnection(), delay(5000)]);
-  process.exit(0);
-}
-
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-
-main().catch(async (err) => {
-  log.error("fatal", { error: err.message ?? String(err) });
-  await destroyConnection();
-  process.exit(1);
-});

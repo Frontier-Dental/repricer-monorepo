@@ -11,7 +11,7 @@ import { Request, Response } from "express";
 import axios from "axios";
 import { GetConfigurations, GetCronSettingsList, GetSlowCronDetails, ToggleCronStatus as SqlToggleCronStatus, UpdateCronSettingsList, GetFilteredCrons, ToggleFilterCronStatus, UpsertFilterCronSettings, GetMiniErpCronDetails } from "../services/mysql-v2";
 
-const DIRECT_SCRAPE_MONITOR_URL = process.env.DIRECT_SCRAPE_MONITOR_URL || "http://localhost:5002";
+const SCRAPE_MONITOR_URL = process.env.EXCEL_EXPORT_SERVICE_URL || "http://localhost:3003";
 
 export async function GetFilterCron(req: Request, res: Response) {
   let filterCronDetails = await GetFilteredCrons();
@@ -68,7 +68,7 @@ export async function GetFilterCron(req: Request, res: Response) {
 
   let directScrapeMonitorEnabled = false;
   try {
-    const statusRes = await axios.get(`${DIRECT_SCRAPE_MONITOR_URL}/status`, { timeout: 3000 });
+    const statusRes = await axios.get(`${SCRAPE_MONITOR_URL}/api/scrape-monitor/status`, { timeout: 3000 });
     directScrapeMonitorEnabled = !!statusRes.data?.enabled;
   } catch {
     // monitor service may not be running
@@ -239,7 +239,7 @@ export async function ToggleDirectScrapeMonitorStatus(req: Request, res: Respons
   const status = parseInt(req.body.status);
   const enabled = status === 1;
   try {
-    await axios.post(`${DIRECT_SCRAPE_MONITOR_URL}/toggle`, { enabled }, { timeout: 3000 });
+    await axios.post(`${SCRAPE_MONITOR_URL}/api/scrape-monitor/toggle`, { enabled }, { timeout: 3000 });
     return res.json({
       status: true,
       message: `Direct Scrape Monitor ${enabled ? "enabled" : "disabled"} successfully.`,
