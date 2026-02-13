@@ -1,4 +1,8 @@
-DELIMITER $$
+use repricerDb;
+
+DROP PROCEDURE IF EXISTS sp_UpsertTradentDetailsV3;
+
+DELIMITER / /
 CREATE PROCEDURE "sp_UpsertTradentDetailsV3" (
   IN mpid int,
   IN channelname varchar(50),
@@ -213,4 +217,6 @@ SELECT
 
 COMMIT;
 
-END $$ DELIMITER;
+END;
+
+/ /

@@ -1,4 +1,8 @@
-DELIMITER $$
+use repricerDb;
+
+DROP PROCEDURE IF EXISTS sp_UpdateMvpDetailsByIdV3;
+
+DELIMITER / /
 CREATE PROCEDURE "sp_UpdateMvpDetailsByIdV3" (
   IN _mpid int,
   IN _channelname varchar(50),
@@ -140,4 +144,6 @@ where
 
 COMMIT;
 
-END $$ DELIMITER;
+END;
+
+/ /
