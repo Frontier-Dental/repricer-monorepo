@@ -8,6 +8,8 @@ import mysql from "mysql2";
 // Helper: safely decrypt if format matches IV:CipherText
 function tryDecrypt(value: string): string {
   if (typeof value !== "string" || !value.includes(":")) return value;
+
+  console.log("applicationConfig.REPRICER_ENCRYPTION_KEY", applicationConfig.REPRICER_ENCRYPTION_KEY);
   const encrypto = new Encrypto(applicationConfig.REPRICER_ENCRYPTION_KEY);
   return encrypto.decrypt(value);
 }
