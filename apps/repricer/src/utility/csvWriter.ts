@@ -35,22 +35,7 @@ class CsvWriter {
     this.csvWriter = createObjectCsvWriter({
       path: filePath,
       header: [
-        { id: "RefTime_Str", title: "TIME" },
-        { id: "MpId", title: "MPID" },
-        { id: "ContextCronName", title: "CRON NAME" },
-        { id: "ChannelName", title: "CHANNEL NAME" },
-        { id: "ExistingPrice", title: "EXISTING PRICE" },
-        { id: "MinQty", title: "MIN QTY" },
-        { id: "Position", title: "RANK" },
-        { id: "LowestVendor", title: "LOWEST VENDOR" },
-        { id: "LowestPrice", title: "LOWEST PRICE" },
-        { id: "SuggestedPrice", title: "SUGGESTED PRICE" },
-        { id: "RepriceComment", title: "REPRICE COMMENT" },
-        { id: "MaxVendor", title: "MAX VENDOR" },
-        { id: "MaxVendorPrice", title: "MAX VENDOR PRICE" },
-        { id: "OtherVendorList", title: "OTHER VENDOR LIST" },
-        { id: "TriggeredByVendor", title: "TRIGGERED BY VENDOR" },
-        { id: "RepriceResult", title: "REPRICE RESULT" },
+        { id: "RefTime", title: "TIME" },
         { id: "ApiResponse", title: "NET32 RESPONSE" },
       ],
     });

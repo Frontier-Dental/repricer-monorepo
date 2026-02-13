@@ -525,3 +525,8 @@ export async function GetFullRepricerHistory(startDateTime: any, endDateTime: an
   }
   return [];
 }
+
+export async function GetHistoryApiResponse(startDateTime: any, endDateTime: any) {
+  const db = getKnexInstance();
+  return await db("table_history_apiResponse").select("*").whereBetween("RefTime", [startDateTime, endDateTime]);
+}

@@ -3,7 +3,7 @@ import moment from "moment";
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import { GetFullRepricerHistory } from "../services/mysql-v2";
+import { GetHistoryApiResponse } from "../services/mysql-v2";
 import { CsvWriter } from "./csvWriter";
 import { applicationConfig } from "./config";
 
@@ -32,9 +32,8 @@ export const archiveHistory = async () => {
     }
     if (intervals.length > 0) {
       for (const interval of intervals) {
-        fs.unlinkSync(filePath);
         console.debug(`HISTORY_ARCHIVE_CRON : Fetching History for ALL | START_DATE : ${interval.start} | END_DATE : ${interval.end}`);
-        const [historyResults] = await GetFullRepricerHistory(interval.start, interval.end);
+        const historyResults = await GetHistoryApiResponse(interval.start, interval.end);
         if (historyResults && historyResults.length > 0) {
           console.debug(`HISTORY_ARCHIVE_CRON : Writing ${historyResults.length} records to CSV`);
           await csvWriterObj.writeData(historyResults);
