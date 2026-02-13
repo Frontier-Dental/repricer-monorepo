@@ -8,10 +8,7 @@ import cronMapping from "../../resources/cronMapping.json";
 import * as SessionHelper from "../utility/session-helper";
 import * as MapperHelper from "../middleware/mapper-helper";
 import { Request, Response } from "express";
-import axios from "axios";
 import { GetConfigurations, GetCronSettingsList, GetSlowCronDetails, ToggleCronStatus as SqlToggleCronStatus, UpdateCronSettingsList, GetFilteredCrons, ToggleFilterCronStatus, UpsertFilterCronSettings, GetMiniErpCronDetails } from "../services/mysql-v2";
-
-const SCRAPE_MONITOR_URL = process.env.EXCEL_SERVICE_URL || (process.env.NODE_ENV === "production" ? "http://excel-export:3003" : "http://localhost:3003");
 
 export async function GetFilterCron(req: Request, res: Response) {
   let filterCronDetails = await GetFilteredCrons();
@@ -66,20 +63,11 @@ export async function GetFilterCron(req: Request, res: Response) {
     }
   }
 
-  let directScrapeMonitorEnabled = false;
-  try {
-    const statusRes = await axios.get(`${SCRAPE_MONITOR_URL}/api/scrape-monitor/status`, { timeout: 3000 });
-    directScrapeMonitorEnabled = !!statusRes.data?.enabled;
-  } catch {
-    // monitor service may not be running
-  }
-
   res.render("pages/filter/filteredList", {
     configItems: configItems,
     slowCronData: slowCronDetails,
     filterCronData: filterCronDetails,
     miniErpCronData: miniErpCronDetails || [],
-    directScrapeMonitorEnabled,
     groupName: "filter",
     userRole: (req as any).session.users_id.userRole,
   });
@@ -231,23 +219,6 @@ export async function ToggleCronStatus(req: Request, res: Response) {
     return res.json({
       status: false,
       message: `Sorry some error occurred!! Please try again...`,
-    });
-  }
-}
-
-export async function ToggleDirectScrapeMonitorStatus(req: Request, res: Response) {
-  const status = parseInt(req.body.status);
-  const enabled = status === 1;
-  try {
-    await axios.post(`${SCRAPE_MONITOR_URL}/api/scrape-monitor/toggle`, { enabled }, { timeout: 3000 });
-    return res.json({
-      status: true,
-      message: `Direct Scrape Cron ${enabled ? "enabled" : "disabled"} successfully.`,
-    });
-  } catch (e: any) {
-    return res.json({
-      status: false,
-      message: "Failed to reach Direct Scrape Cron service.",
     });
   }
 }
