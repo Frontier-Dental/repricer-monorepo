@@ -530,7 +530,7 @@ export async function addExcelData(req: Request, res: Response) {
         getBBBadgeValue: row[62] != null && row[62] != "" ? parseFloat(row[62]) : 0,
         qBreakCount: row[63] ? parseInt(row[63]) : null,
         qBreakDetails: row[64] ? row[64] : null,
-        badge: row[65] != null && row[65] != "" ? JSON.parse(row[65]) : false,
+        badge: row[65] != null && row[65] != "" ? JSON.parse(row[65]) : null,
       };
       items.push($item as never);
     } else {
