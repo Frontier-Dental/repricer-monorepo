@@ -272,6 +272,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
                   inStock?: boolean;
                   inventory?: number;
                   ourPrice?: number | null;
+                  badgeId?: boolean;
                 }
               | undefined;
             try {
@@ -285,6 +286,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
                   inStock: ownVendorData.inStock ?? undefined,
                   inventory: ownVendorData.inventory ?? undefined,
                   ourPrice: parseNumericPrice(unitPriceBreak?.unitPrice),
+                  badgeId: ownVendorData.badgeId != null ? ownVendorData.badgeId > 0 : undefined,
                 };
               }
             } catch (error) {
@@ -309,6 +311,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
                   inStock?: boolean;
                   inventory?: number;
                   ourPrice?: number | null;
+                  badgeId?: boolean;
                 }
               | undefined;
             try {
@@ -322,6 +325,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
                   inStock: ownVendorData.inStock ?? undefined,
                   inventory: ownVendorData.inventory ?? undefined,
                   ourPrice: parseNumericPrice(unitPriceBreak?.unitPrice),
+                  badgeId: ownVendorData.badgeId != null ? ownVendorData.badgeId > 0 : undefined,
                 };
               }
             } catch (error) {
@@ -512,7 +516,7 @@ export async function UpdateToMax(cronLogs: any, net32resp: any, prod: any, cron
     prod = await updateCronBasedDetails(repriceResult, prod, false);
 
     // Extract market data for manual reprice
-    let marketData: { inStock?: boolean; inventory?: number; ourPrice?: number | null } | undefined;
+    let marketData: { inStock?: boolean; inventory?: number; ourPrice?: number | null; badgeId?: boolean } | undefined;
     try {
       const contextVendorId = VendorIdLookup[contextVendor as VendorName]?.toString();
 
@@ -525,6 +529,7 @@ export async function UpdateToMax(cronLogs: any, net32resp: any, prod: any, cron
           inStock: ownVendorData.inStock ?? undefined,
           inventory: ownVendorData.inventory ?? undefined,
           ourPrice: parseNumericPrice(unitPriceBreak?.unitPrice),
+          badgeId: ownVendorData.badgeId != null ? ownVendorData.badgeId > 0 : undefined,
         };
       }
     } catch (error) {
@@ -672,7 +677,7 @@ async function repriceSingleVendor(net32resp: Net32Response, prod: any, cronSett
   prod = await updateCronBasedDetails(repriceResult, prod, false);
 
   // Extract market data from our vendor in the API response
-  let marketData: { inStock?: boolean; inventory?: number; ourPrice?: number | null } | undefined;
+  let marketData: { inStock?: boolean; inventory?: number; ourPrice?: number | null; badgeId?: boolean } | undefined;
   try {
     // Get the vendor ID for the specific vendor being repriced
     const contextVendorId = VendorIdLookup[contextVendor as VendorName]?.toString();
@@ -688,6 +693,7 @@ async function repriceSingleVendor(net32resp: Net32Response, prod: any, cronSett
         inStock: ownVendorData.inStock ?? undefined,
         inventory: ownVendorData.inventory ?? undefined,
         ourPrice: parseNumericPrice(unitPriceBreak?.unitPrice),
+        badgeId: ownVendorData.badgeId != null ? ownVendorData.badgeId > 0 : undefined,
       };
     }
   } catch (error) {
