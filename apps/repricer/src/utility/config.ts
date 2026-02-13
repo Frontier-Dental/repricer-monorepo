@@ -194,14 +194,19 @@ export const envSchema = z.object({
   MINI_ERP_CRON_RECREATE_ENDPOINT: z.string().default("/mini_erp/recreate"),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(1), // 1 minutes
   MAX_IPS_PER_REQUEST: z.coerce.number().default(50),
-  HISTORY_DELETION_CRON_SCHEDULE: z.string().default("0 1 * * *"),
-  CRON_LOGS_DELETION_CRON_SCHEDULE: z.string().default("0 2 * * *"),
+  HISTORY_DELETION_CRON_SCHEDULE: z.string().default("0 3 * * *"),
+  CRON_LOGS_DELETION_CRON_SCHEDULE: z.string().default("0 4 * * *"),
   PROXY_USERNAME: z.string(),
   PROXY_PASSWORD: z.string(),
   FTP_HOST: z.string(),
   FTP_USER: z.string(),
   FTP_PASSWORD: z.string(),
   DEV_SYNC_API_KEY: z.string(),
+  HISTORY_ARCHIVE_CRON_SCHEDULE: z.string().default("0 0 * * *"),
+  AWS_ACCESS_KEY_ID: z.string(),
+  AWS_SECRET_ACCESS_KEY: z.string(),
+  AWS_BUCKET_NAME: z.string().default("fd-repricer"),
+  AWS_REGION: z.string().default("us-east-1"),
 });
 
 export function validateConfig() {
