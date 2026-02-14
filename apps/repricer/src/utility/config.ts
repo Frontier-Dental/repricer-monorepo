@@ -121,8 +121,8 @@ export const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(false),
-  SMTP_USER: z.string().default("40b12a64-d25d-4c48-8da5-4996f64a42a2"),
-  SMTP_HOST: z.string().default("smtp.postmarkapp.com"),
+  SMTP_USER: z.string(),
+  SMTP_HOST: z.string(),
   SMTP_PORT: z.coerce.number().default(25),
   SMTP_PWD: z.string(),
   EMAIL_ID: z.string().default("storage-sense@frontierdental.com"),
@@ -183,7 +183,7 @@ export const envSchema = z.object({
   CACHE_USERNAME: z.string(),
   CACHE_PASSWORD: z.string(),
   CACHE_PORT: z.coerce.number(),
-  REPRICER_ENCRYPTION_KEY: z.string().default("3v9sKkLZ2z1Yq9eU8 + XgJk1YbZ9n3vLQ0mF9ZkQhJxgE="),
+  REPRICER_ENCRYPTION_KEY: z.string(),
   IS_DEV: z
     .string()
     .toLowerCase()
@@ -194,8 +194,19 @@ export const envSchema = z.object({
   MINI_ERP_CRON_RECREATE_ENDPOINT: z.string().default("/mini_erp/recreate"),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(1), // 1 minutes
   MAX_IPS_PER_REQUEST: z.coerce.number().default(50),
-  HISTORY_DELETION_CRON_SCHEDULE: z.string().default("0 1 * * *"),
-  CRON_LOGS_DELETION_CRON_SCHEDULE: z.string().default("0 2 * * *"),
+  HISTORY_DELETION_CRON_SCHEDULE: z.string().default("0 3 * * *"),
+  CRON_LOGS_DELETION_CRON_SCHEDULE: z.string().default("0 4 * * *"),
+  PROXY_USERNAME: z.string(),
+  PROXY_PASSWORD: z.string(),
+  FTP_HOST: z.string(),
+  FTP_USER: z.string(),
+  FTP_PASSWORD: z.string(),
+  DEV_SYNC_API_KEY: z.string(),
+  HISTORY_ARCHIVE_CRON_SCHEDULE: z.string().default("0 0 * * *"),
+  AWS_ACCESS_KEY_ID: z.string(),
+  AWS_SECRET_ACCESS_KEY: z.string(),
+  AWS_BUCKET_NAME: z.string().default("fd-repricer"),
+  AWS_REGION: z.string().default("us-east-1"),
 });
 
 export function validateConfig() {

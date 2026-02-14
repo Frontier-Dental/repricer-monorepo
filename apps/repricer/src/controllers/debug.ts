@@ -9,14 +9,11 @@ import * as mongoMiddleware from "../services/mongo";
 import * as mySqlMiddleware from "../services/mysql";
 import { applicationConfig } from "../utility/config";
 import { GetCronSettingsList } from "../services/mysql-v2";
+import { archiveHistory } from "../utility/history-archive-helper";
 
 export async function ResetSlowCronUpdate(req: Request, res: Response) {
   const query = {
-    $or: [
-      { "tradentDetails.cronId": "b597ffd1ce4d463088ce12a6f05b55d6" },
-      { "frontierDetails.cronId": "b597ffd1ce4d463088ce12a6f05b55d6" },
-      { "mvpDetails.cronId": "b597ffd1ce4d463088ce12a6f05b55d6" },
-    ],
+    $or: [{ "tradentDetails.cronId": "b597ffd1ce4d463088ce12a6f05b55d6" }, { "frontierDetails.cronId": "b597ffd1ce4d463088ce12a6f05b55d6" }, { "mvpDetails.cronId": "b597ffd1ce4d463088ce12a6f05b55d6" }],
   };
   let impactedProductList = await mongoMiddleware.GetProductListByQuery(query);
   if (impactedProductList && impactedProductList.length > 0) {
@@ -29,8 +26,7 @@ export async function ResetSlowCronUpdate(req: Request, res: Response) {
       }
       if (product.frontierDetails) {
         product.frontierDetails.cronId = product.frontierDetails.parentCronId;
-        product.frontierDetails.cronName =
-          product.frontierDetails.parentCronName;
+        product.frontierDetails.cronName = product.frontierDetails.parentCronName;
         product.frontierDetails.parentCronId = null;
         product.frontierDetails.parentCronName = null;
       }
@@ -57,10 +53,7 @@ export async function RefillParentCronDetails(req: Request, res: Response) {
   if (payload && payload.length > 0) {
     for (const mpId of payload) {
       let product = _.first(await mongoMiddleware.FindProductById(mpId)) as any;
-      const contextCronDetails: any = await getContextCronDetails(
-        product,
-        cronSettingsResponse,
-      );
+      const contextCronDetails: any = await getContextCronDetails(product, cronSettingsResponse);
       if (contextCronDetails && contextCronDetails.cronName) {
         if (product.tradentDetails) {
           product.tradentDetails.cronId = contextCronDetails.cronId;
@@ -80,9 +73,7 @@ export async function RefillParentCronDetails(req: Request, res: Response) {
           product.mvpDetails.parentCronId = null;
           product.mvpDetails.parentCronName = null;
         }
-        console.log(
-          `Resetting General Cron Details for ${product.mpId} with context cron : ${contextCronDetails.cronName}`,
-        );
+        console.log(`Resetting General Cron Details for ${product.mpId} with context cron : ${contextCronDetails.cronName}`);
         await mongoMiddleware.InsertOrUpdateProduct(product, req);
         results.push({
           productId: mpId,
@@ -108,7 +99,7 @@ export async function CorrectSlowCronDetails(req: Request, res: Response) {
       console.log(`Resetting Slow Cron Details for ${mpId}`);
       const mongoResult = await mongoMiddleware.InsertOrUpdateProductWithQuery(
         mpId.toString(),
-        { $set: { isSlowActivated: false } },
+        { $set: { isSlowActivated: false } }
         // req,
       );
       results.push({ productId: mpId, result: mongoResult });
@@ -134,9 +125,7 @@ export async function MapVendorToRoot(req: Request, res: Response) {
   if (mpIdList && mpIdList.length > 0) {
     const regCronData = await GetCronSettingsList();
     for (const $ of mpIdList) {
-      $.CronId = regCronData.find(
-        (x: any) => x.CronName == $.CronName.trim(),
-      )?.CronId;
+      $.CronId = regCronData.find((x: any) => x.CronName == $.CronName.trim())?.CronId;
       await mySqlMiddleware.MapVendorToRoot($);
     }
   }
@@ -150,24 +139,11 @@ export async function GetFloorBelowProducts(req: Request, res: Response) {
   if (results && results.length > 0) {
     for (const item of results) {
       const unitPrice = parseFloat(item.UnitPrice);
-      const traFloor =
-        item["TRA_FloorPrice"] != "NULL"
-          ? parseFloat(item["TRA_FloorPrice"])
-          : -1;
-      const froFloor =
-        item["FRO_FloorPrice"] != "NULL"
-          ? parseFloat(item["FRO_FloorPrice"])
-          : -1;
-      const mvpFloor =
-        item["MVP_FloorPrice"] != "NULL"
-          ? parseFloat(item["MVP_FloorPrice"])
-          : -1;
+      const traFloor = item["TRA_FloorPrice"] != "NULL" ? parseFloat(item["TRA_FloorPrice"]) : -1;
+      const froFloor = item["FRO_FloorPrice"] != "NULL" ? parseFloat(item["FRO_FloorPrice"]) : -1;
+      const mvpFloor = item["MVP_FloorPrice"] != "NULL" ? parseFloat(item["MVP_FloorPrice"]) : -1;
       if (unitPrice < traFloor) {
-        if (
-          !filterResults.some(
-            (item) => item.MPID == item["Mpid"] && item.VENDOR == "TRADENT",
-          )
-        )
+        if (!filterResults.some((item) => item.MPID == item["Mpid"] && item.VENDOR == "TRADENT"))
           filterResults.push({
             MPID: item["Mpid"],
             VENDOR: "TRADENT",
@@ -176,11 +152,7 @@ export async function GetFloorBelowProducts(req: Request, res: Response) {
           });
       }
       if (unitPrice < froFloor) {
-        if (
-          !filterResults.some(
-            (item) => item.MPID == item["Mpid"] && item.VENDOR == "FRONTIER",
-          )
-        ) {
+        if (!filterResults.some((item) => item.MPID == item["Mpid"] && item.VENDOR == "FRONTIER")) {
           filterResults.push({
             MPID: item["Mpid"],
             VENDOR: "FRONTIER",
@@ -190,11 +162,7 @@ export async function GetFloorBelowProducts(req: Request, res: Response) {
         }
       }
       if (unitPrice < mvpFloor) {
-        if (
-          !filterResults.some(
-            (item) => item.MPID == item["Mpid"] && item.VENDOR == "MVP",
-          )
-        ) {
+        if (!filterResults.some((item) => item.MPID == item["Mpid"] && item.VENDOR == "MVP")) {
           filterResults.push({
             MPID: item["Mpid"],
             VENDOR: "MVP",
@@ -220,25 +188,15 @@ export async function DeleteHistory(req: Request, res: Response) {
   const _endDate = new Date(endDate);
   let currentDate = _startDate;
   while (currentDate <= _endDate) {
-    console.log(
-      `Deleting History for Date : ${moment(currentDate).format("YYYY-MM-DD HH:mm:ss")}`,
-    );
+    console.log(`Deleting History for Date : ${moment(currentDate).format("YYYY-MM-DD HH:mm:ss")}`);
     const apiResponseQuery = `delete from table_history_apiResponse where RefTime < ?`;
     const historyQuery = `delete from table_history where RefTime < ?`;
-    const apiUpdated = await mySqlMiddleware.ExecuteQuery(apiResponseQuery, [
-      currentDate,
-    ]);
-    const historyUpdated = await mySqlMiddleware.ExecuteQuery(historyQuery, [
-      currentDate,
-    ]);
-    console.log(
-      `Deleted Records : EFFECTIVE DATE : ${currentDate} || ${JSON.stringify(apiUpdated)} || ${JSON.stringify(historyUpdated)}`,
-    );
+    const apiUpdated = await mySqlMiddleware.ExecuteQuery(apiResponseQuery, [currentDate]);
+    const historyUpdated = await mySqlMiddleware.ExecuteQuery(historyQuery, [currentDate]);
+    console.log(`Deleted Records : EFFECTIVE DATE : ${currentDate} || ${JSON.stringify(apiUpdated)} || ${JSON.stringify(historyUpdated)}`);
     currentDate.setDate(currentDate.getDate() + 1);
   }
-  return res.json(
-    `DeleteHistory done for StartDate : ${startDate} | EndDate : ${endDate}`,
-  );
+  return res.json(`DeleteHistory done for StartDate : ${startDate} | EndDate : ${endDate}`);
 }
 
 export async function DeleteProdHistory(req: Request, res: Response) {
@@ -246,9 +204,12 @@ export async function DeleteProdHistory(req: Request, res: Response) {
   let _startDate = new Date(startDate);
   const _endDate = new Date(endDate);
   startDeletingHistoryFromProduction(_startDate, _endDate);
-  return res.json(
-    `DeleteHistory done from Live for StartDate : ${startDate} | EndDate : ${endDate}`,
-  );
+  return res.json(`DeleteHistory done from Live for StartDate : ${startDate} | EndDate : ${endDate}`);
+}
+
+export async function ArchiveHistory(req: Request, res: Response) {
+  await archiveHistory();
+  return res.json(`Archive History Cron Executed!`);
 }
 
 async function readCSV(filePath: any) {
@@ -274,14 +235,10 @@ async function getContextCronDetails(product: any, cronSettingsResponse: any) {
       const lastUpdatedBy = product.tradentDetails.lastUpdatedBy;
       if (lastCronRun && lastCronRun != excludedCronName) {
         data.cronName = lastCronRun;
-        data.cronId = cronSettingsResponse.find(
-          (x: any) => x.CronName == lastCronRun,
-        ).CronId;
+        data.cronId = cronSettingsResponse.find((x: any) => x.CronName == lastCronRun).CronId;
       } else if (lastUpdatedBy && lastUpdatedBy != excludedCronName) {
         data.cronName = lastUpdatedBy;
-        data.cronId = cronSettingsResponse.find(
-          (x: any) => x.CronName == lastUpdatedBy,
-        ).CronId;
+        data.cronId = cronSettingsResponse.find((x: any) => x.CronName == lastUpdatedBy).CronId;
       }
     }
     return data;
@@ -295,14 +252,10 @@ async function getContextCronDetails(product: any, cronSettingsResponse: any) {
       const lastUpdatedBy = product.frontierDetails.lastUpdatedBy;
       if (lastCronRun && lastCronRun != excludedCronName) {
         data.cronName = lastCronRun;
-        data.cronId = cronSettingsResponse.find(
-          (x: any) => x.CronName == lastCronRun,
-        ).CronId;
+        data.cronId = cronSettingsResponse.find((x: any) => x.CronName == lastCronRun).CronId;
       } else if (lastUpdatedBy && lastUpdatedBy != excludedCronName) {
         data.cronName = lastUpdatedBy;
-        data.cronId = cronSettingsResponse.find(
-          (x: any) => x.CronName == lastUpdatedBy,
-        ).CronId;
+        data.cronId = cronSettingsResponse.find((x: any) => x.CronName == lastUpdatedBy).CronId;
       }
     }
     return data;
@@ -316,41 +269,29 @@ async function getContextCronDetails(product: any, cronSettingsResponse: any) {
       const lastUpdatedBy = product.mvpDetails.lastUpdatedBy;
       if (lastCronRun && lastCronRun != excludedCronName) {
         data.cronName = lastCronRun;
-        data.cronId = cronSettingsResponse.find(
-          (x: any) => x.CronName == lastCronRun,
-        ).CronId;
+        data.cronId = cronSettingsResponse.find((x: any) => x.CronName == lastCronRun).CronId;
       } else if (lastUpdatedBy && lastUpdatedBy != excludedCronName) {
         data.cronName = lastUpdatedBy;
-        data.cronId = cronSettingsResponse.find(
-          (x: any) => x.CronName == lastUpdatedBy,
-        ).CronId;
+        data.cronId = cronSettingsResponse.find((x: any) => x.CronName == lastUpdatedBy).CronId;
       }
     }
     return data;
   }
 }
 
-async function startDeletingHistoryFromProduction(
-  _startDate: any,
-  _endDate: any,
-) {
+async function startDeletingHistoryFromProduction(_startDate: any, _endDate: any) {
   while (_startDate < _endDate) {
     const startDateStr = moment(_startDate).format("YYYY-MM-DD 00:00:00");
     const nextDay = _startDate;
     nextDay.setDate(_startDate.getDate() + 1);
     const nextDayStr = moment(nextDay).format("YYYY-MM-DD 00:00:00");
-    console.log(
-      `Deleting History from LIVE : START DATE : ${startDateStr} || END DATE : ${nextDayStr}`,
-    );
+    console.log(`Deleting History from LIVE : START DATE : ${startDateStr} || END DATE : ${nextDayStr}`);
     //Call the Delete API & Wait for Response
     const payload = {
       startDate: startDateStr,
       endDate: nextDayStr,
     };
-    await httpMiddleware.native_post(
-      "http://159.89.121.57:3000/debug/delete_history",
-      payload,
-    );
+    await httpMiddleware.native_post("http://159.89.121.57:3000/debug/delete_history", payload);
     _startDate = nextDay;
   }
 }

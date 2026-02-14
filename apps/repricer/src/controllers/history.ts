@@ -6,7 +6,7 @@ import moment from "moment";
 import path from "path";
 import { v4 } from "uuid";
 import * as ftpMiddleware from "../services/ftp";
-import * as historyExportMiddleware from "../services/history-export";
+import * as historyExportMiddleware from "../utility/history-export";
 import * as mongoMiddleware from "../services/mongo";
 import ExportModel from "../models/export-model";
 import * as SessionHelper from "../utility/session-helper";
@@ -16,9 +16,7 @@ import { InitExportStatus } from "../services/mysql-v2";
 export async function getHistory(req: Request, res: Response) {
   const maxProductsCount = 65; //await Item.countDocuments({ activated: true });
   let viewObject: any = {};
-  viewObject.maxCount = Math.ceil(
-    maxProductsCount / applicationConfig.HISTORY_LIMIT,
-  );
+  viewObject.maxCount = Math.ceil(maxProductsCount / applicationConfig.HISTORY_LIMIT);
   viewObject.batchLimit = applicationConfig.HISTORY_LIMIT;
   viewObject.totalCount = maxProductsCount;
   res.render("pages/history/index", {
@@ -36,21 +34,11 @@ export async function exportHistory(req: Request, res: Response) {
     if (param2 && param3) {
       const startDate = new Date(param2 as string).setHours(0, 0, 0, 0);
       const endDate = new Date(param3 as string).setHours(23, 59, 59, 59);
-      mongoResponse = await mongoMiddleware.GetHistoryDetailsForIdByDate(
-        parseInt(param1 as string),
-        startDate,
-        endDate,
-      );
+      mongoResponse = await mongoMiddleware.GetHistoryDetailsForIdByDate(parseInt(param1 as string), startDate, endDate);
     } else {
-      mongoResponse = await mongoMiddleware.GetHistoryDetailsForId(
-        parseInt(param1 as string),
-      );
+      mongoResponse = await mongoMiddleware.GetHistoryDetailsForId(parseInt(param1 as string));
     }
-    if (
-      mongoResponse &&
-      mongoResponse.historicalLogs &&
-      mongoResponse.historicalLogs.length > 0
-    ) {
+    if (mongoResponse && mongoResponse.historicalLogs && mongoResponse.historicalLogs.length > 0) {
       for (const h of mongoResponse.historicalLogs) {
         excelOutput = await flattenObject(h, mongoResponse.mpId, excelOutput);
       }
@@ -58,11 +46,7 @@ export async function exportHistory(req: Request, res: Response) {
   } else if (_.isEqual(searchBy, "srchDate")) {
     const startDate = new Date(param1 as string).setHours(0, 0, 0, 0);
     const endDate = new Date(param2 as string).setHours(23, 59, 59, 59);
-    const mongoResponse = await mongoMiddleware.GetHistoryDetailsForDateRange(
-      startDate,
-      endDate,
-      counter,
-    );
+    const mongoResponse = await mongoMiddleware.GetHistoryDetailsForDateRange(startDate, endDate, counter);
     if (mongoResponse && mongoResponse.length > 0) {
       for (const mr of mongoResponse) {
         if (mr.historicalLogs.length > 0) {
@@ -93,14 +77,8 @@ export async function exportHistory(req: Request, res: Response) {
       { header: "Net32 API Response", key: "api_response", width: 100 },
     ];
     worksheet.addRows(excelOutput);
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    );
-    res.setHeader(
-      "Content-Disposition",
-      "attachment; filename=" + `history_batch_${counter}.xlsx`,
-    );
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", "attachment; filename=" + `history_batch_${counter}.xlsx`);
 
     return workbook.xlsx.write(res).then(function () {
       res.status(200).end();
@@ -115,20 +93,9 @@ export async function getAllHistory(req: Request, res: Response) {
   const startDate = new Date(param1 as string).setHours(0, 0, 0, 0);
   const endDate = new Date(param2 as string).setHours(23, 59, 59, 59);
   const auditInfo = await SessionHelper.GetAuditInfo(req);
-  const initPayload = new ExportModel(
-    "IN-PROGRESS",
-    historyFileName,
-    new Date(),
-    new Date(),
-    auditInfo.UpdatedBy,
-  );
+  const initPayload = new ExportModel("IN-PROGRESS", historyFileName, new Date(), new Date(), auditInfo.UpdatedBy);
   await InitExportStatus(initPayload);
-  historyExportMiddleware.ExportAndSaveV2(
-    startDate,
-    endDate,
-    historyFileName,
-    auditInfo,
-  );
+  historyExportMiddleware.ExportAndSaveV2(startDate, endDate, historyFileName, auditInfo);
   return res.json({
     status: true,
     message: `The export request is being worked upon. Kindly download the same once ready from Downloads. FileName : ${historyFileName}`,
@@ -143,21 +110,9 @@ export async function getHistoryById(req: Request, res: Response) {
   const startDate = new Date(param2).setHours(0, 0, 0, 0);
   const endDate = new Date(param3).setHours(23, 59, 59, 59);
   const auditInfo = await SessionHelper.GetAuditInfo(req);
-  const initPayload = new ExportModel(
-    "IN-PROGRESS",
-    historyFileName,
-    new Date(),
-    new Date(),
-    auditInfo.UpdatedBy,
-  );
+  const initPayload = new ExportModel("IN-PROGRESS", historyFileName, new Date(), new Date(), auditInfo.UpdatedBy);
   await InitExportStatus(initPayload);
-  historyExportMiddleware.ExportAndSaveByIdV2(
-    mpid,
-    startDate,
-    endDate,
-    historyFileName,
-    auditInfo,
-  );
+  historyExportMiddleware.ExportAndSaveByIdV2(mpid, startDate, endDate, historyFileName, auditInfo);
   return res.json({
     status: true,
     message: `The export request is being worked upon. Kindly download the same once ready from Downloads. FileName : ${historyFileName}`,
@@ -166,9 +121,7 @@ export async function getHistoryById(req: Request, res: Response) {
 
 export async function downloadFile(req: Request, res: Response) {
   const filename = req.params.file;
-  const remotePath = applicationConfig.IS_DEV
-    ? `/REPRICER/DEV_HISTORY/${filename}`
-    : `/REPRICER/HISTORY/${filename}`;
+  const remotePath = applicationConfig.IS_DEV ? `/REPRICER/DEV_HISTORY/${filename}` : `/REPRICER/HISTORY/${filename}`;
   const localPath = path.join(__dirname, `${filename}`);
   await ftpMiddleware.DownloadFile(remotePath, localPath);
   res.download(localPath, (err) => {
@@ -187,11 +140,7 @@ export async function downloadFile(req: Request, res: Response) {
 }
 
 async function flattenObject(history: any, mpid: any, output: any) {
-  if (
-    history &&
-    history.historicalPrice &&
-    history.historicalPrice.length > 0
-  ) {
+  if (history && history.historicalPrice && history.historicalPrice.length > 0) {
     for (const p of history.historicalPrice) {
       let flat = _.cloneDeep(p);
       flat.mpId = mpid;

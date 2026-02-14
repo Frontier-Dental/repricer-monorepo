@@ -361,7 +361,7 @@ export async function syncProductDetails(req: Request, res: Response) {
   const productDetailsUrl = applicationConfig.PROD_SYNC_URL!.replace("{productId}", idx);
   const headers = {
     oprType: "DEV_SYNC",
-    apiKey: "gMoRUrPRDdQVuDRPBzO3wo3rcSaSdhlqpi8vR2QMsrRtg2yvhotES0DLd60VR3YIlyEYfmybIa6Du5NM1UbzcG57jCPN9SZFDbI7GbmCZO2KSlR7fcnWYODoChyKA3jr",
+    apiKey: applicationConfig.DEV_SYNC_API_KEY,
   };
   const getProdResponse = await httpHelper.native_get_V2(productDetailsUrl, headers);
   if (getProdResponse && getProdResponse.data.message != null && getProdResponse.data.message.length > 0) {

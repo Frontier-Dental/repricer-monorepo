@@ -13,6 +13,7 @@ import fs from "fs";
 import * as mongoHelper from "../services/mongo";
 import { GetCronSettingsList, GetSlowCronDetails } from "../services/mysql-v2";
 import * as mySqlMiddleware from "../services/mysql";
+import { archiveHistory } from "../utility/history-archive-helper";
 
 export const monitorSenseController = express.Router();
 var monitorCrons: Record<string, ScheduledTask> = {};
@@ -24,6 +25,7 @@ export async function startAllMonitorCrons() {
   await startExpressCronValidationCheck();
   await startHistoryDeletionCron();
   await startCronLogsDeletionCron();
+  await startArchiveHistoryCron();
   console.info(`Successfully Started All Monitor CRONS Check at ${new Date()}`);
 }
 
@@ -150,9 +152,9 @@ async function uploadToFTP(localFilePath: any, fileName: any) {
   const client = new Client();
   client.ftp.verbose = true;
   await client.access({
-    host: "165.22.229.139",
-    user: "voyantcs",
-    password: ">mL3.rEtJtsP@43",
+    host: applicationConfig.FTP_HOST,
+    user: applicationConfig.FTP_USER,
+    password: applicationConfig.FTP_PASSWORD,
     secure: false,
   });
   console.log("Connected to FTP server");
@@ -255,4 +257,21 @@ async function DeleteHistory() {
 async function DeleteCronLogs() {
   const deletionResults = await mongoHelper.DeleteCronLogsPast15Days();
   console.log(`CRON_LOGS_DELETION_CRON : Deleted Cron Logs Results : ${JSON.stringify(deletionResults)} `);
+}
+
+async function startArchiveHistoryCron() {
+  console.info(`HISTORY_ARCHIVE_CRON : Starting History Archive Cron at ${new Date()} with expression : ${applicationConfig.HISTORY_ARCHIVE_CRON_SCHEDULE}`);
+  monitorCrons["HistoryArchiveCron"] = schedule(
+    applicationConfig.HISTORY_ARCHIVE_CRON_SCHEDULE,
+    async () => {
+      try {
+        await archiveHistory();
+      } catch (error) {
+        console.error(`HISTORY_ARCHIVE_CRON : Error running HistoryArchiveCron:`, error);
+      }
+    },
+    {
+      scheduled: true,
+    }
+  );
 }

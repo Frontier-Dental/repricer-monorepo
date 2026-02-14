@@ -5,9 +5,9 @@ import fs from "fs";
 import { lstatSync, readdirSync } from "fs";
 import ExportModel from "../models/export-model";
 import path from "path";
-import * as httpMiddleware from "../utility/http-wrappers";
-import { applicationConfig } from "../utility/config";
-import { UpdateExportStatusV2 } from "./mysql-v2";
+import * as httpMiddleware from "./http-wrappers";
+import { applicationConfig } from "./config";
+import { UpdateExportStatusV2 } from "../services/mysql-v2";
 export async function FindAllDownloads() {
   return fs
     .readdirSync("./exports", { withFileTypes: true })
@@ -20,38 +20,21 @@ export async function FindAllDownloads() {
     });
 }
 
-export async function ExportAndSaveById(
-  mpid: any,
-  startDate: any,
-  endDate: any,
-  historyFileName: any,
-  auditInfo: any,
-) {
+export async function ExportAndSaveById(mpid: any, startDate: any, endDate: any, historyFileName: any, auditInfo: any) {
   //Prepare Folder History Path
   const rootDirectory = process.cwd();
   //console.log(`rootDirectory || ${rootDirectory}`);
-  const rootPath = rootDirectory.substring(
-    0,
-    rootDirectory.lastIndexOf(applicationConfig.FILE_DELIMITER!),
-  );
-  const historyBasePath = path.join(
-    rootPath,
-    applicationConfig.HISTORY_BASE_PATH!,
-  );
+  const rootPath = rootDirectory.substring(0, rootDirectory.lastIndexOf(applicationConfig.FILE_DELIMITER!));
+  const historyBasePath = path.join(rootPath, applicationConfig.HISTORY_BASE_PATH!);
   const contextDirectory = path.join(historyBasePath, `/${mpid}/`);
   let contextSubFolders: any[] = [];
-  console.log(
-    `ExportAndSaveById for ${mpid} | ContextPath : ${contextDirectory} `,
-  );
+  console.log(`ExportAndSaveById for ${mpid} | ContextPath : ${contextDirectory} `);
   //Get Context Folders based on Date Time Range
   if (isDirectory(contextDirectory) == true) {
     const listOfSubDirectories = getDirectories(contextDirectory);
     if (listOfSubDirectories.length > 0) {
       for (const dir of listOfSubDirectories) {
-        const dateFieldStr = dir.substring(
-          dir.lastIndexOf(applicationConfig.FILE_DELIMITER!) + 1,
-          dir.lastIndexOf(applicationConfig.FILE_DELIMITER!) + 1,
-        );
+        const dateFieldStr = dir.substring(dir.lastIndexOf(applicationConfig.FILE_DELIMITER!) + 1, dir.lastIndexOf(applicationConfig.FILE_DELIMITER!) + 1);
         const dateField = new Date(dateFieldStr).setHours(0, 0, 0, 0);
         if (dateField >= startDate && dateField <= endDate) {
           contextSubFolders.push(dir as never);
@@ -70,60 +53,29 @@ export async function ExportAndSaveById(
           const jsonFilePath = path.join(contextSubFolders[parseInt(idx)], $);
           //console.log(`Reading file ${$} | Path : ${jsonFilePath}`);
           const fileData = fs.readFileSync(jsonFilePath, "utf8");
-          historyResponse = historyResponse.concat(
-            flattenObject(JSON.parse(fileData), mpid) as never,
-          );
+          historyResponse = historyResponse.concat(flattenObject(JSON.parse(fileData), mpid) as never);
         });
       }
       if (historyResponse.length > 0) {
-        parseInt(idx) == 0
-          ? await createExcel(historyResponse, historyFileName, 1)
-          : await upsertExcel(
-              historyResponse,
-              historyFileName,
-              parseInt(idx) + 1,
-            );
+        parseInt(idx) == 0 ? await createExcel(historyResponse, historyFileName, 1) : await upsertExcel(historyResponse, historyFileName, parseInt(idx) + 1);
       }
     }
   } else {
     //create blank Excel
     await createExcel([], historyFileName, 1);
   }
-  const finalPayload = new ExportModel(
-    "COMPLETE",
-    historyFileName,
-    new Date(),
-    new Date(),
-    auditInfo.UpdatedBy,
-  );
+  const finalPayload = new ExportModel("COMPLETE", historyFileName, new Date(), new Date(), auditInfo.UpdatedBy);
   await UpdateExportStatusV2(finalPayload);
 }
 
-export async function ExportAndSave(
-  startDate: any,
-  endDate: any,
-  historyFileName: any,
-  auditInfo: any,
-) {
+export async function ExportAndSave(startDate: any, endDate: any, historyFileName: any, auditInfo: any) {
   const rootDirectory = process.cwd();
   //console.log(`rootDirectory || ${rootDirectory}`);
-  const rootPath = rootDirectory.substring(
-    0,
-    rootDirectory.lastIndexOf(applicationConfig.FILE_DELIMITER!),
-  );
-  const historyBasePath = path.join(
-    rootPath,
-    applicationConfig.HISTORY_BASE_PATH!,
-  );
+  const rootPath = rootDirectory.substring(0, rootDirectory.lastIndexOf(applicationConfig.FILE_DELIMITER!));
+  const historyBasePath = path.join(rootPath, applicationConfig.HISTORY_BASE_PATH!);
   const listOfSubDirectories = getDirectories(historyBasePath);
-  const noOfDaysToRecord =
-    getMomentDate(new Date(endDate)).diff(
-      getMomentDate(new Date(startDate)),
-      "days",
-    ) + 1;
-  console.log(
-    `ExportAndSave for StartDate : ${new Date(startDate)} | EndDate : ${new Date(endDate)} | ContextPath : ${historyBasePath} `,
-  );
+  const noOfDaysToRecord = getMomentDate(new Date(endDate)).diff(getMomentDate(new Date(startDate)), "days") + 1;
+  console.log(`ExportAndSave for StartDate : ${new Date(startDate)} | EndDate : ${new Date(endDate)} | ContextPath : ${historyBasePath} `);
   let datesToConsider: any[] = [];
   for (let count = 1; count <= noOfDaysToRecord; count++) {
     const contextDate = getNextDate(new Date(startDate), count);
@@ -132,40 +84,19 @@ export async function ExportAndSave(
   console.log(`Dates to Consider for History : ${datesToConsider.join(" |")}`);
   if (listOfSubDirectories.length > 0 && datesToConsider.length > 0) {
     await createExcel([], historyFileName, 1);
-    await SaveAllHistoryByDate(
-      datesToConsider,
-      listOfSubDirectories,
-      historyFileName,
-    );
+    await SaveAllHistoryByDate(datesToConsider, listOfSubDirectories, historyFileName);
   } else {
     //create blank Excel
     await createExcel([], historyFileName, 1);
   }
-  const finalPayload = new ExportModel(
-    "COMPLETE",
-    historyFileName,
-    new Date(),
-    new Date(),
-    auditInfo.UpdatedBy,
-  );
+  const finalPayload = new ExportModel("COMPLETE", historyFileName, new Date(), new Date(), auditInfo.UpdatedBy);
   await UpdateExportStatusV2(finalPayload);
-  console.log(
-    `Completed ExportAndSave for Date ${new Date(startDate)} | ${new Date(endDate)} | ContextPath : ${historyBasePath} `,
-  );
+  console.log(`Completed ExportAndSave for Date ${new Date(startDate)} | ${new Date(endDate)} | ContextPath : ${historyBasePath} `);
 }
 
-export async function ExportAndSaveByIdV2(
-  mpid: any,
-  startDate: any,
-  endDate: any,
-  historyFileName: any,
-  auditInfo: any,
-) {
+export async function ExportAndSaveByIdV2(mpid: any, startDate: any, endDate: any, historyFileName: any, auditInfo: any) {
   //Prepare History Export Url & payload
-  const historyExportUrl = applicationConfig.HISTORY_EXPORT_URL_BY_ID.replace(
-    "{productId}",
-    parseInt(mpid as any) as never,
-  );
+  const historyExportUrl = applicationConfig.HISTORY_EXPORT_URL_BY_ID.replace("{productId}", parseInt(mpid as any) as never);
   const requestPayload = {
     startDate: moment(startDate).format("YYYY-MM-DD HH:mm:ss") as any,
     endDate: moment(endDate).format("YYYY-MM-DD HH:mm:ss") as any,
@@ -174,12 +105,7 @@ export async function ExportAndSaveByIdV2(
   await httpMiddleware.native_post(historyExportUrl, requestPayload);
 }
 
-export async function ExportAndSaveV2(
-  startDate: any,
-  endDate: any,
-  historyFileName: any,
-  auditInfo: any,
-) {
+export async function ExportAndSaveV2(startDate: any, endDate: any, historyFileName: any, auditInfo: any) {
   const historyExportUrl = applicationConfig.HISTORY_EXPORT_URL_FOR_ALL;
   const requestPayload = {
     startDate: moment(startDate).format("YYYY-MM-DD HH:mm:ss"),
@@ -187,18 +113,12 @@ export async function ExportAndSaveV2(
     fileName: historyFileName,
   };
   await httpMiddleware.native_post(historyExportUrl, requestPayload);
-  console.log(
-    `Called ExportAndSave For All for Date ${new Date(startDate)} | ${new Date(endDate)} | ContextPath : ${historyFileName} `,
-  );
+  console.log(`Called ExportAndSave For All for Date ${new Date(startDate)} | ${new Date(endDate)} | ContextPath : ${historyFileName} `);
 }
 
 function flattenObject(history: any, mpid: any): any[] {
   let result: any[] = [];
-  if (
-    history &&
-    history.historicalPrice &&
-    history.historicalPrice.length > 0
-  ) {
+  if (history && history.historicalPrice && history.historicalPrice.length > 0) {
     for (let p of history.historicalPrice) {
       //let flat = _.cloneDeep(p);
       p.mpId = mpid;
@@ -268,42 +188,26 @@ const getAllFileNames = (source: any) =>
     .readdirSync(source, { withFileTypes: true })
     .filter((item) => !item.isDirectory())
     .map((item) => item.name);
-const getMomentDate = (date: any) =>
-  moment([date.getFullYear(), date.getMonth(), date.getDate()]);
-const getNextDate = (date: any, noOfDays: any) =>
-  date.setDate(date.getDate() + noOfDays);
+const getMomentDate = (date: any) => moment([date.getFullYear(), date.getMonth(), date.getDate()]);
+const getNextDate = (date: any, noOfDays: any) => date.setDate(date.getDate() + noOfDays);
 
-async function SaveAllHistoryByDate(
-  datesToConsider: any,
-  listOfSubDirectories: any,
-  historyFileName: any,
-) {
-  const chunkOfData = _.chunk(
-    listOfSubDirectories,
-    applicationConfig.HISTORY_LIMIT,
-  );
+async function SaveAllHistoryByDate(datesToConsider: any, listOfSubDirectories: any, historyFileName: any) {
+  const chunkOfData = _.chunk(listOfSubDirectories, applicationConfig.HISTORY_LIMIT);
   for (const chunk of chunkOfData) {
     let listOfRecords: any = [];
     for (const dir of chunk as any) {
       for (const folderDateToLook of datesToConsider) {
-        console.log(
-          `Getting History for Date : ${folderDateToLook} | DIR : ${dir}`,
-        );
+        console.log(`Getting History for Date : ${folderDateToLook} | DIR : ${dir}`);
         const folderPath = path.join(dir as any, folderDateToLook as any);
         if (isDirectory(folderPath)) {
           const allFiles = getAllFileNames(folderPath);
-          const mpid = dir.substr(
-            dir.lastIndexOf(applicationConfig.FILE_DELIMITER!) + 1,
-            dir.length,
-          );
+          const mpid = dir.substr(dir.lastIndexOf(applicationConfig.FILE_DELIMITER!) + 1, dir.length);
           console.log(`Found ${allFiles.length} history for MPID : ${mpid}`);
           if (allFiles.length > 0) {
             _.forEach(allFiles, ($) => {
               const jsonFilePath = path.join(folderPath, $);
               const fileData = fs.readFileSync(jsonFilePath, "utf8");
-              listOfRecords = listOfRecords.concat(
-                flattenObject(JSON.parse(fileData), mpid),
-              );
+              listOfRecords = listOfRecords.concat(flattenObject(JSON.parse(fileData), mpid));
             });
           }
         }
@@ -315,19 +219,13 @@ async function SaveAllHistoryByDate(
   }
 }
 
-async function appendRecords(
-  listOfRecords: any,
-  historyFileName: any,
-  folderDateToLook: any,
-) {
+async function appendRecords(listOfRecords: any, historyFileName: any, folderDateToLook: any) {
   let workbook: any = new excelJs.Workbook();
   const workSheetName = `HistoryList-${folderDateToLook}`;
   await workbook.xlsx.readFile(`./exports/${historyFileName}`);
   let worksheet = workbook.getWorksheet(workSheetName as any);
   let lastRow = worksheet?.lastRow;
-  console.log(
-    `Appending ${listOfRecords.length} history rows to sheet : ${workSheetName}`,
-  );
+  console.log(`Appending ${listOfRecords.length} history rows to sheet : ${workSheetName}`);
   for (let count = 1; count <= listOfRecords.length; count++) {
     let getRowInsert: any = worksheet?.getRow((lastRow.number + count) as any);
     getRowInsert.getCell("A").value = listOfRecords[count - 1].vendorName;
@@ -346,9 +244,7 @@ async function appendRecords(
     getRowInsert.getCell("N").value = listOfRecords[count - 1].api_response;
     getRowInsert.commit();
   }
-  console.log(
-    `Completed appending ${listOfRecords.length} history rows to sheet : ${workSheetName}`,
-  );
+  console.log(`Completed appending ${listOfRecords.length} history rows to sheet : ${workSheetName}`);
   await workbook.xlsx.writeFile(`./exports/${historyFileName}`);
   workbook = null;
   listOfRecords = null;
