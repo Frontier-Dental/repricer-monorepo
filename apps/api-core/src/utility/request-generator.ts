@@ -25,7 +25,7 @@ export async function GetPrioritySequence(productInfo: ProductDetailsListItem, c
   const _triad = { name: VendorName.TRIAD, value: "triadDetails" };
   const _biteSupply = { name: VendorName.BITESUPPLY, value: "biteSupplyDetails" };
   const vendorList = [_tradent, _frontier, _mvp, _topDent, _firstDent, _triad, _biteSupply];
-  let prioritySequence = [];
+  let prioritySequence: any[] = [];
   const globalConfig = await sqlV2Service.GetGlobalConfig();
   const isOverrideEnabled = IsOverrideExecutionPriorityEnabled(globalConfig!);
   let productDetails = _.cloneDeep(productInfo);
@@ -34,13 +34,13 @@ export async function GetPrioritySequence(productInfo: ProductDetailsListItem, c
   if (isOverrideEnabled) {
     productDetails = responseUtility.MapOverrideExecutionPriority(productDetails, globalConfig!.override_execution_priority_details!.priority_settings);
   }
-  // For Express Cron, Context Vendor will be given first priority
-  if (isExpressCron && contextVendor) {
-    const vendorMap = vendorList.find((v) => v.name === contextVendor);
-    if (vendorMap) {
-      prioritySequence.push(vendorMap);
-    }
-  }
+  // // For Express Cron, Context Vendor will be given first priority
+  // if (isExpressCron && contextVendor) {
+  //   const vendorMap = vendorList.find((v) => v.name === contextVendor);
+  //   if (vendorMap) {
+  //     prioritySequence.push(vendorMap);
+  //   }
+  // }
   for (let pty = 1; pty <= applicationConfig.VENDOR_COUNT; pty++) {
     const vendors = [
       { details: productDetails.tradentDetails, obj: _tradent },
