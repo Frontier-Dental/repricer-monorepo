@@ -16,10 +16,7 @@ export const archiveHistory = async () => {
     const uniqueKey = _.last(generatedGuid)?.trim() ?? "";
     let startDate = moment(yesterday.setHours(0, 0, 0, 0)).format("YYYY-MM-DD HH:mm:ss");
     let endDate = moment(yesterday.setHours(23, 59, 59, 59)).format("YYYY-MM-DD HH:mm:ss");
-    const historyFileName = `history-${uniqueKey}-${startDate.split(" ")[0]}-TO-${endDate.split(" ")[0]}.csv`;
-    const filePath = path.join("exportArchives", historyFileName);
-    const csvWriterObj = new CsvWriter(filePath, applicationConfig.AWS_BUCKET_NAME, applicationConfig.AWS_REGION);
-    console.debug(`HISTORY_ARCHIVE_CRON : Fetching History for ALL | START_DATE : ${startDate} | END_DATE : ${endDate} | FILE_NAME : ${historyFileName}`);
+    console.debug(`HISTORY_ARCHIVE_CRON : Fetching History for ALL | START_DATE : ${startDate} | END_DATE : ${endDate}`);
     const intervals: { start: string; end: string; isFinal: boolean }[] = [];
     for (let interval = 0; interval < 24; interval++) {
       const start = moment(yesterday).set({ hour: interval, minute: 0, second: 0, millisecond: 0 }).format("YYYY-MM-DD HH:mm:ss");
@@ -31,16 +28,17 @@ export const archiveHistory = async () => {
       });
     }
     if (intervals.length > 0) {
-      for (const interval of intervals) {
+      for (const [index, interval] of intervals.entries()) {
         console.debug(`HISTORY_ARCHIVE_CRON : Fetching History for ALL | START_DATE : ${interval.start} | END_DATE : ${interval.end}`);
         const historyResults = await GetHistoryApiResponse(interval.start, interval.end);
         if (historyResults && historyResults.length > 0) {
-          console.debug(`HISTORY_ARCHIVE_CRON : Writing ${historyResults.length} records to CSV`);
+          let historyFileName = `history-${uniqueKey}-${startDate.split(" ")[0]}-TO-${endDate.split(" ")[0]}_${index}.csv`;
+          const filePath = path.join("exportArchives", historyFileName);
+          const csvWriterObj = new CsvWriter(filePath, applicationConfig.AWS_BUCKET_NAME, applicationConfig.AWS_REGION);
+          console.debug(`HISTORY_ARCHIVE_CRON : Writing ${historyResults.length} records to CSV || FILE_NAME : ${historyFileName}`);
           await csvWriterObj.writeData(historyResults);
-          if (interval.isFinal == true) {
-            await csvWriterObj.uploadToS3Multipart(filePath);
-            fs.unlinkSync(filePath);
-          }
+          await csvWriterObj.uploadToS3Multipart(filePath);
+          fs.unlinkSync(filePath);
         }
       }
     }
