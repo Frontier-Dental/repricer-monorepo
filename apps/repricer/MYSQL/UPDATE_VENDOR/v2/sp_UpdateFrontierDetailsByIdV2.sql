@@ -66,11 +66,11 @@ CREATE PROCEDURE "sp_UpdateFrontierDetailsByIdV2" (
 select
   *
 from
-  table_triadDetails
+  table_frontierDetails
 where
   MpId = _mpid;
 
-Update table_triadDetails
+Update table_frontierDetails
 set
   ChannelName = _channelname,
   ScrapeOn = _scrapeon,
