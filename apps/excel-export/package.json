@@ -9,12 +9,16 @@
     "start": "tsx src/main.ts",
     "build": "tsc",
     "format": "prettier --write \"src/**/*.{js,ts}\"",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:coverage:watch": "jest --coverage --watch"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@repricer-monorepo/shared": "*",
+    "axios": "^1.7.9",
     "cors": "^2.8.5",
     "dotenv": "^16.0.1",
     "exceljs": "^4.3.0",
