@@ -8,7 +8,7 @@ export enum RepriceRenewedMessageEnum {
   OFFSET_LESS_THAN_FLOOR = `IGNORE: #HitFloor`,
   PRICE_UP_SECOND = `CHANGE: 2nd lowest validated`,
   PRICE_UP_SECOND_FLOOR = `CHANGE: Floor greater than the next lowest`,
-  PRICE_UP_SECOND_MAX = `CHANGE: Max price greater than the next lowest price`,
+  PRICE_UP_SECOND_MAX = `CHANGE: Next Lowest Price greater than the max price`,
   REPRICE_DEFAULT = `CHANGE: updated `,
   NEW_PRICE_BREAK = `CHANGE: New Break created `,
   IGNORE_LOWEST_PRICE_BREAK = `IGNORE :#otherbreakslower`,

@@ -580,7 +580,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
         //1. If Next Lowest price is Greater Than Floor Price
         //2. Floor Price is Not Equal to Existing Price
         //SET: Floor Price
-        else if (nextLowestPrice > floorPrice && floorPrice !== existingPrice) {
+        else if (nextLowestPrice > floorPrice && floorPrice !== existingPrice && nextLowestPrice > maxPrice) {
           // repriceModel.repriceDetails.newPrice = floorPrice.toFixed(2);
           // repriceModel.repriceDetails.isRepriced = true;
           // repriceModel.repriceDetails.explained = _enum.PRICE_UP_SECOND_FLOOR;
@@ -588,14 +588,14 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
         //1. If Next Lowest price is Greater Than Max Price
         //2. Max Price is Not Equal to Existing Price
         //SET: Max Price
-        else if (nextLowestPrice > productItem.maxPrice && productItem.maxPrice != existingPrice) {
-          repriceModel.repriceDetails!.newPrice = productItem.maxPrice.toFixed(2);
+        if (repriceModel.repriceDetails!.isRepriced == false && nextLowestPrice > productItem.maxPrice && productItem.maxPrice != existingPrice) {
+          repriceModel.repriceDetails!.newPrice = maxPrice - standardShippingPrice;
           repriceModel.repriceDetails!.isRepriced = true;
           repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX;
         }
         repriceModel.updateTriggeredBy(sortedPayload[nextIndex].vendorName, sortedPayload[nextIndex].vendorId, priceBreak.minQty);
       } else {
-        repriceModel.repriceDetails!.newPrice = productItem.maxPrice ? productItem.maxPrice : "N/A";
+        repriceModel.repriceDetails!.newPrice = productItem.maxPrice ? maxPrice - standardShippingPrice : "N/A";
         repriceModel.repriceDetails!.isRepriced = true;
         repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.PRICE_UP_SECOND_MAX;
       }
