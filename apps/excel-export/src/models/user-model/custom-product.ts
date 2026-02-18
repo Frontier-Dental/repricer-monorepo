@@ -70,6 +70,7 @@ export default class CustomProduct {
   getBBShippingValue: any;
   getBBBadge: boolean;
   getBBShipping: boolean;
+  badge: boolean | null = null;
   qBreakCount: number;
   qBreakDetails: string;
 
@@ -145,6 +146,7 @@ export default class CustomProduct {
     this.getBBShippingValue = sqlEntity["GetBBShippingValue"];
     this.getBBBadge = sqlEntity["GetBBBadge"] == 1 ? true : false;
     this.getBBShipping = sqlEntity["GetBBShipping"] == 1 ? true : false;
+    this.badge = sqlEntity["Badge"] ?? null;
     this.qBreakCount = sqlEntity["QBreakCount"];
     this.qBreakDetails = sqlEntity["QBreakDetails"];
   }

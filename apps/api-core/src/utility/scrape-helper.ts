@@ -137,11 +137,12 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
                     inStock: resp.inStock === "true" || resp.inStock === true,
                     inventory: parseInt(resp.inventory) || 0,
                     ourPrice: basePrice ? parseFloat(basePrice) : undefined,
+                    badgeId: resp.badgeId != null ? parseInt(resp.badgeId) > 0 : undefined,
                   };
 
                   await mySqlHelper.UpdateMarketStateOnly(prod.MpId, vendorName, marketData);
 
-                  console.log(`SCRAPE-ONLY : Updated market state for ${vendorName} - MPID: ${prod.MpId}, InStock: ${resp.inStock}, Inventory: ${resp.inventory}, Price: ${resp.price}`);
+                  console.log(`SCRAPE-ONLY : Updated market state for ${vendorName} - MPID: ${prod.MpId}, InStock: ${resp.inStock}, Inventory: ${resp.inventory}, Price: ${resp.price}, Badge: ${marketData.badgeId}`);
                 }
               } catch (error) {
                 // Log error but don't stop scraping process

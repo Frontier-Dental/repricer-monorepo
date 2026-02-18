@@ -71,6 +71,7 @@ interface SqlEntity {
   CurrentInStock?: boolean | null;
   CurrentInventory?: number | null;
   OurLastPrice?: number | null;
+  Badge?: boolean | null;
   MarketStateUpdatedAt?: Date | string | null;
   QBreakCount?: number;
   QBreakDetails?: string;
@@ -154,6 +155,7 @@ export class OwnVendorProductDetails {
   currentInStock: boolean | null;
   currentInventory: number | null;
   ourLastPrice: number | null;
+  badge: boolean | null;
   marketStateUpdatedAt: Date | string | null;
   qBreakCount: number;
   qBreakDetails: string;
@@ -235,6 +237,7 @@ export class OwnVendorProductDetails {
     this.currentInStock = sqlEntity["CurrentInStock"] ?? null;
     this.currentInventory = sqlEntity["CurrentInventory"] ?? null;
     this.ourLastPrice = sqlEntity["OurLastPrice"] ?? null;
+    this.badge = sqlEntity["Badge"] ?? null;
     this.marketStateUpdatedAt = sqlEntity["MarketStateUpdatedAt"] ?? null;
     this.qBreakCount = sqlEntity["QBreakCount"] || 0;
     this.qBreakDetails = sqlEntity["QBreakDetails"] || "";

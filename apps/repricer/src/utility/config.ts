@@ -70,9 +70,9 @@ export const envSchema = z.object({
   SQL_SP_GET_ALL_SCRAPEPRODUCT_DETAILS: z.string().default("sp_GetAllScrapeProducts"),
   SQL_SP_UPSERT_PRODUCT_DETAILS: z.string().default("sp_UpsertProductDetailsV2"),
   SQL_SP_GETLASTSCRAPEDETAILSBYID: z.string().default("sp_GetLastScrapeDetailsByID"),
-  SQL_SP_UPSERT_TRADENT: z.string().default("sp_UpsertTradentDetailsV2"),
-  SQL_SP_UPSERT_FRONTIER: z.string().default("sp_UpsertFrontierDetailsV2"),
-  SQL_SP_UPSERT_MVP: z.string().default("sp_UpsertMvpDetailsV2"),
+  SQL_SP_UPSERT_TRADENT: z.string().default("sp_UpsertTradentDetailsV3"),
+  SQL_SP_UPSERT_FRONTIER: z.string().default("sp_UpsertFrontierDetailsV3"),
+  SQL_SP_UPSERT_MVP: z.string().default("sp_UpsertMvpDetailsV3"),
   USE_MYSQL: z
     .string()
     .toLowerCase()
@@ -80,23 +80,23 @@ export const envSchema = z.object({
     .pipe(z.boolean())
     .default(true),
   SQL_SP_GET_FULL_PRODUCT_DETAILS_BY_ID: z.string().default("sp_GetFullProductDetailsByIdV4"),
-  SQL_SP_UPDATE_TRADENT: z.string().default("sp_UpdateTradentDetailsByIdV2"),
-  SQL_SP_UPDATE_FRONTIER: z.string().default("sp_UpdateFrontierDetailsByIdV2"),
-  SQL_SP_UPDATE_MVP: z.string().default("sp_UpdateMvpDetailsByIdV2"),
+  SQL_SP_UPDATE_TRADENT: z.string().default("sp_UpdateTradentDetailsByIdV3"),
+  SQL_SP_UPDATE_FRONTIER: z.string().default("sp_UpdateFrontierDetailsByIdV3"),
+  SQL_SP_UPDATE_MVP: z.string().default("sp_UpdateMvpDetailsByIdV3"),
   DOWNTIME_ON: z
     .string()
     .toLowerCase()
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(false),
-  SQL_SP_UPDATE_FIRSTDENT: z.string().default("sp_UpdateFirstDentDetailsByIdV2"),
-  SQL_SP_UPDATE_TOPDENT: z.string().default("sp_UpdateTopDentDetailsByIdV2"),
-  SQL_SP_UPDATE_TRIAD: z.string().default("sp_UpdateTriadDetailsByIdV2"),
-  SQL_SP_UPDATE_BITESUPPLY: z.string().default("sp_UpdateBiteSupplyDetailsByIdV2"),
-  SQL_SP_UPSERT_TOPDENT: z.string().default("sp_UpsertTopDentDetailsV2"),
-  SQL_SP_UPSERT_FIRSTDENT: z.string().default("sp_UpsertFirstDentDetailsV2"),
-  SQL_SP_UPSERT_TRIAD: z.string().default("sp_UpsertTriadDetailsV2"),
-  SQL_SP_UPSERT_BITESUPPLY: z.string().default("sp_UpsertBiteSupplyDetailsV2"),
+  SQL_SP_UPDATE_FIRSTDENT: z.string().default("sp_UpdateFirstDentDetailsByIdV3"),
+  SQL_SP_UPDATE_TOPDENT: z.string().default("sp_UpdateTopDentDetailsByIdV3"),
+  SQL_SP_UPDATE_TRIAD: z.string().default("sp_UpdateTriadDetailsByIdV3"),
+  SQL_SP_UPDATE_BITESUPPLY: z.string().default("sp_UpdateBiteSupplyDetailsByIdV3"),
+  SQL_SP_UPSERT_TOPDENT: z.string().default("sp_UpsertTopDentDetailsV3"),
+  SQL_SP_UPSERT_FIRSTDENT: z.string().default("sp_UpsertFirstDentDetailsV3"),
+  SQL_SP_UPSERT_TRIAD: z.string().default("sp_UpsertTriadDetailsV3"),
+  SQL_SP_UPSERT_BITESUPPLY: z.string().default("sp_UpsertBiteSupplyDetailsV3"),
   SQL_SP_UPSERT_PRODUCT_DETAILSV3: z.string().default("sp_UpsertProductDetailsV3"),
   SQL_SP_UPSERT_PRODUCT_DETAILSV4: z.string().default("sp_UpsertProductDetailsV4"),
   SQL_SP_GET_PRODUCT_LIST_BY_TAGV2: z.string().default("sp_GetFullProductDetailsListByTagV2"),
