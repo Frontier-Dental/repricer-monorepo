@@ -78,6 +78,7 @@ async function handleResponse(response: string, scrapingLog: string, url: string
 }
 
 async function getFormattedResponse(response: string): Promise<any> {
+  if (response.indexOf("<List/>") >= 0) return { data: [] };
   let responseStartIndex = response.indexOf('<List xmlns="">');
   if (responseStartIndex < 0) responseStartIndex = response.indexOf("<List>");
   const responseEndIndex = response.indexOf("</List>");
