@@ -251,6 +251,7 @@ export async function UpdateProductAsync(
     inStock?: boolean;
     inventory?: number;
     ourPrice?: number | null;
+    badgeId?: boolean;
   }
 ) {
   try {
@@ -280,6 +281,9 @@ export async function UpdateProductAsync(
       }
       if (marketData.ourPrice !== undefined) {
         updateObj.OurLastPrice = marketData.ourPrice;
+      }
+      if (marketData.badgeId !== undefined) {
+        updateObj.Badge = marketData.badgeId;
       }
       // Update timestamp when market data is provided
       updateObj.MarketStateUpdatedAt = new Date();
@@ -312,6 +316,7 @@ export async function UpdateMarketStateOnly(
     inStock?: boolean;
     inventory?: number;
     ourPrice?: number;
+    badgeId?: boolean;
   }
 ) {
   try {
@@ -334,6 +339,9 @@ export async function UpdateMarketStateOnly(
     }
     if (marketData.ourPrice !== undefined) {
       updateObj.OurLastPrice = marketData.ourPrice;
+    }
+    if (marketData.badgeId !== undefined) {
+      updateObj.Badge = marketData.badgeId;
     }
 
     // Only perform update if we have fields to update

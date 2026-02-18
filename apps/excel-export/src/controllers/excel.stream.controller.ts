@@ -128,9 +128,10 @@ export async function streamProductDetails(req: Request, res: Response) {
     { header: "Get BB - Badge Value", key: "getBBBadgeValue", width: 20 },
     { header: "Qbreak Count", key: "qBreakCount", width: 20 },
     { header: "Qbreak Details", key: "qBreakDetails", width: 50 },
+    { header: "Badge", key: "badge", width: 20 },
   ];
 
-  worksheet.autoFilter = "A1:BK1";
+  worksheet.autoFilter = "A1:BN1";
   let isPaused = false;
   stream.on("data", async (row: any) => {
     if (isPaused) return;
@@ -239,6 +240,7 @@ function transformRow(item: any) {
     nextCronTime: fixTime(item.next_cron_time),
 
     badge_indicator: parseBadge(item.badgeIndicator),
+    badge: item.badge != null ? !!item.badge : null,
 
     mpid: item.mpid ? parseInt(item.mpid) : null,
     unitPrice: item.unitPrice ? parseFloat(item.unitPrice) : null,

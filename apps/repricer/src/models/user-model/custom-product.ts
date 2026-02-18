@@ -73,6 +73,7 @@ export default class CustomProduct {
   currentInStock: boolean;
   currentInventory: number;
   ourLastPrice: number;
+  badge: boolean | null = null;
   marketStateUpdatedAt: Date;
   qBreakCount: number;
   qBreakDetails: string;
@@ -152,6 +153,7 @@ export default class CustomProduct {
     this.currentInStock = sqlEntity["CurrentInStock"] == 1 ? true : false;
     this.currentInventory = sqlEntity["CurrentInventory"];
     this.ourLastPrice = sqlEntity["OurLastPrice"];
+    this.badge = sqlEntity["Badge"] ?? null;
     this.marketStateUpdatedAt = sqlEntity["MarketStateUpdatedAt"];
     this.qBreakCount = sqlEntity["QBreakCount"];
     this.qBreakDetails = sqlEntity["QBreakDetails"];
