@@ -8,7 +8,7 @@ export enum RepriceMessageEnum {
   OFFSET_LESS_THAN_FLOOR = `IGNORED: The suggested price is less than the floor price #HitFloor`,
   PRICE_UP_SECOND = `PRICE CHANGE : Second lowest vendor's price validated`,
   PRICE_UP_SECOND_FLOOR = `PRICE CHANGE : Floor price greater than the next lowest price`,
-  PRICE_UP_SECOND_MAX = `PRICE CHANGE : Max price greater than the next lowest price`,
+  PRICE_UP_SECOND_MAX = `PRICE CHANGE : Next Lowest Price greater than the max price`,
   REPRICE_DEFAULT = `Price updated as per Repricing Logic`,
   NEW_PRICE_BREAK = `New Price Break created for MinQty`,
   IGNORE_LOWEST_PRICE_BREAK = `IGNORED : The price break price is higher than the previous price breaks`,
