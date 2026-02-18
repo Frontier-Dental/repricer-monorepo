@@ -68,7 +68,7 @@ export const envSchema = z.object({
   SQL_SP_GET_SCRAPEPRODUCT_DETAILS: z.string().default("sp_GetScrapeProductDetails"),
   SQL_SP_GET_SCRAPEPRODUCT_DETAILS_FILTER: z.string().default("sp_GetScrapeProductDetailsByFilter"),
   SQL_SP_GET_ALL_SCRAPEPRODUCT_DETAILS: z.string().default("sp_GetAllScrapeProducts"),
-  SQL_SP_UPSERT_PRODUCT_DETAILS: z.string().default("sp_UpsertProductDetailsV3"),
+  SQL_SP_UPSERT_PRODUCT_DETAILS: z.string().default("sp_UpsertProductDetailsV2"),
   SQL_SP_GETLASTSCRAPEDETAILSBYID: z.string().default("sp_GetLastScrapeDetailsByID"),
   SQL_SP_UPSERT_TRADENT: z.string().default("sp_UpsertTradentDetailsV3"),
   SQL_SP_UPSERT_FRONTIER: z.string().default("sp_UpsertFrontierDetailsV3"),
