@@ -180,8 +180,8 @@ export const envSchema = z.object({
   _422_ERROR_MAX_COUNT: z.coerce.number().default(100),
   _422_ERROR_ELIGIBLE_MAX_COUNT: z.coerce.number().default(500),
   CACHE_HOST_URL: z.string(),
-  CACHE_USERNAME: z.string(),
-  CACHE_PASSWORD: z.string(),
+  CACHE_USERNAME: z.string().optional(),
+  CACHE_PASSWORD: z.string().optional(),
   CACHE_PORT: z.coerce.number(),
   REPRICER_ENCRYPTION_KEY: z.string(),
   IS_DEV: z

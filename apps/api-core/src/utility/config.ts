@@ -201,8 +201,8 @@ const envSchema = z.object({
     .pipe(z.boolean())
     .default(false),
   CACHE_HOST_URL: z.string(),
-  CACHE_USERNAME: z.string(),
-  CACHE_PASSWORD: z.string(),
+  CACHE_USERNAME: z.string().optional(),
+  CACHE_PASSWORD: z.string().optional(),
   CACHE_PORT: z.coerce.number(),
   REPRICER_ENCRYPTION_KEY: z.string(),
   MINI_ERP_BASE_URL: z.string(),

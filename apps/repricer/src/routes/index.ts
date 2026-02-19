@@ -26,6 +26,7 @@ import { monitorSenseController } from "../controllers/monitor-sense";
 import { v2AlgoRouter } from "./v2-algo";
 import { waitlistRouter } from "./waitlist";
 import { miniErpRouter } from "./mini-erp";
+import { testsRouter } from "./tests";
 
 const router = Express.Router();
 
@@ -50,15 +51,12 @@ router.use("/app-log", appLogRouter);
 router.use("/scrape", scrapeLogsRouter);
 router.use("/waitlist", waitlistRouter);
 router.use("/mini-erp", miniErpRouter);
+router.use("/tests", testsRouter);
 router.use(storageSenseController);
 router.use(notifyController);
 router.use(ipHealthController);
 router.use(monitorSenseController);
 
-router.post(
-  "/masteritem/sync_excel_data",
-  AuthToken,
-  productController.addExcelData,
-);
+router.post("/masteritem/sync_excel_data", AuthToken, productController.addExcelData);
 
 export default router;

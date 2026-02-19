@@ -8,7 +8,10 @@
     "start": "node dist/main.js",
     "format": "prettier --write \"src/**/*.{js,ts}\"",
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "test:json": "jest --json --outputFile=reports/test-results.json --forceExit",
+    "test:verbose": "jest --verbose",
+    "test:watch": "jest --watch"
   },
   "author": "pranoyg52@gmail.com",
   "license": "ISC",
@@ -63,6 +66,7 @@
     "@types/request-promise": "^4.1.51",
     "@types/uuid": "^10.0.0",
     "@types/xml2js": "^0.4.14",
+    "fast-check": "^4.5.3",
     "jest": "^30.0.4",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",
