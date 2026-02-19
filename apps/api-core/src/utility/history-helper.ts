@@ -135,9 +135,9 @@ function getOwnVendorId(vendorName: string) {
     case VendorName.MVP:
       return "20755";
     case VendorName.TOPDENT:
-      return "20533";
-    case VendorName.FIRSTDENT:
       return "20727";
+    case VendorName.FIRSTDENT:
+      return "20533";
     case VendorName.TRIAD:
       return "5";
     case VendorName.BITESUPPLY:

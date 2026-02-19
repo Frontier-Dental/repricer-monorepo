@@ -254,10 +254,10 @@ function getOwnVendorId(vendorName: string): string | null {
       vendorId = "20755";
       break;
     case "TOPDENT":
-      vendorId = "20533";
+      vendorId = "20727";
       break;
     case "FIRSTDENT":
-      vendorId = "20727";
+      vendorId = "20533";
       break;
     case "TRIAD":
       vendorId = "5";
