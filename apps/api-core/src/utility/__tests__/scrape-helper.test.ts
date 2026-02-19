@@ -43,7 +43,7 @@ jest.mock("../job-id-helper", () => ({
 
 jest.mock("../config", () => ({
   applicationConfig: {
-    OWN_VENDOR_LIST: "17357;20722;20755;20727;20533;5;10",
+    OWN_VENDOR_LIST: "17357;20722;20755;20727;20533;5;20891",
     GET_SEARCH_RESULTS: "https://api.test.com/search/{mpId}",
     SCRAPE_ONLY_LOGGING: true,
     SCRAPE_RUN_LOGGING: true,
@@ -501,7 +501,7 @@ describe("scrape-helper", () => {
       const mockApiResponse = {
         data: [
           createMockVendorResponse({
-            vendorId: "10",
+            vendorId: "20891",
             vendorName: "BITESUPPLY",
             priceBreaks: [{ minQty: 1, unitPrice: 10.5, pmId: "PM1", promoAddlDescr: "None" }],
           }),
@@ -1103,7 +1103,7 @@ describe("scrape-helper", () => {
       const mockApiResponse = {
         data: [
           createMockVendorResponse({
-            vendorId: "10",
+            vendorId: "20891",
             vendorName: "BITESUPPLY",
             inventory: "90",
             priceBreaks: [{ minQty: 1, unitPrice: 10.25, pmId: "PM1", promoAddlDescr: "None" }],
@@ -1507,7 +1507,7 @@ describe("scrape-helper", () => {
       expect(mySqlHelper.UpdateMarketStateOnly).not.toHaveBeenCalled();
 
       // Reset
-      (applicationConfig as any).OWN_VENDOR_LIST = "17357;20722;20755;20727;20533;5;10";
+      (applicationConfig as any).OWN_VENDOR_LIST = "17357;20722;20755;20727;20533;5;20891";
     });
 
     it("should handle runInfoResult as object with insertId", async () => {

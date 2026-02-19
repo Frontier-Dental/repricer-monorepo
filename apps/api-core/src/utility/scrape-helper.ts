@@ -263,7 +263,7 @@ function getOwnVendorId(vendorName: string): string | null {
       vendorId = "5";
       break;
     case "BITESUPPLY":
-      vendorId = "10";
+      vendorId = "20891";
       break;
     default:
       break;
