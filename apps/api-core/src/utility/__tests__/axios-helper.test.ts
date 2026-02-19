@@ -358,7 +358,7 @@ describe("axios-helper", () => {
       mockedSqlV2Service.GetProxyConfigByProviderId.mockResolvedValue([{ config: "test" }]);
       mockedAxiosRetryHelper.getScrapingBeeResponse.mockResolvedValue({ data: {} } as any);
 
-      await getAsyncProxy("http://test.com", { ...mockCronSetting, ProxyProvider: 0 } as CronSettings);
+      await getAsyncProxy("http://test.com", { ...mockCronSetting, ProxyProvider: 0 } as CronSettings, "100");
 
       expect(mockedAxiosRetryHelper.getScrapingBeeResponse).toHaveBeenCalledWith("http://test.com", expect.any(Object), null, false);
     });
@@ -373,7 +373,7 @@ describe("axios-helper", () => {
       mockedSqlV2Service.GetRotatingProxyUrl.mockResolvedValue("other-proxy.com");
       (mockedAxios.get as jest.Mock).mockResolvedValue({ data: {} } as any);
 
-      await getAsyncProxy("http://test.com", { ...mockCronSetting, ProxyProvider: 11 } as CronSettings);
+      await getAsyncProxy("http://test.com", { ...mockCronSetting, ProxyProvider: 11 } as CronSettings, "100");
 
       expect(mockedSqlV2Service.GetProxyConfigByProviderId).toHaveBeenCalledWith(1);
       expect(mockedAxios.get).toHaveBeenCalled();
@@ -389,13 +389,13 @@ describe("axios-helper", () => {
       mockedSqlV2Service.GetRotatingProxyUrl.mockResolvedValue("other-proxy.com");
       (mockedAxios.get as jest.Mock).mockResolvedValue({ data: {} } as any);
 
-      await getAsyncProxy("http://test.com", { ...mockCronSetting, ProxyProvider: 12 } as CronSettings);
+      await getAsyncProxy("http://test.com", { ...mockCronSetting, ProxyProvider: 12 } as CronSettings, "100");
 
       expect(mockedSqlV2Service.GetProxyConfigByProviderId).toHaveBeenCalledWith(1);
     });
 
     it("should handle null proxyProvider", async () => {
-      const result = await getAsyncProxy("http://test.com", { ...mockCronSetting, ProxyProvider: undefined } as CronSettings);
+      const result = await getAsyncProxy("http://test.com", { ...mockCronSetting, ProxyProvider: undefined } as CronSettings, "100");
 
       expect(result).toBeNull();
       expect(mockedSqlV2Service.GetProxyConfigByProviderId).not.toHaveBeenCalled();
@@ -414,7 +414,7 @@ describe("axios-helper", () => {
         json: jest.fn().mockResolvedValue({ data: "test" }),
       } as any);
 
-      await getAsyncProxy("http://test.com", { ...mockCronSetting, ProxyProvider: 1 } as CronSettings);
+      await getAsyncProxy("http://test.com", { ...mockCronSetting, ProxyProvider: 1 } as CronSettings, "100");
 
       expect(mockedNodeFetch).toHaveBeenCalled();
     });
