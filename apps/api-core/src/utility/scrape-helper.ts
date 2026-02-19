@@ -41,7 +41,7 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
       const scrapeStartTime = new Date();
       const getSearchResultsEnv = applicationConfig.GET_SEARCH_RESULTS || "";
       const searchRequest = getSearchResultsEnv.replace("{mpId}", prod.MpId);
-      const net32resp = await axiosHelper.getAsyncProxy(searchRequest, cronSetting);
+      const net32resp = await axiosHelper.getAsyncProxy(searchRequest, cronSetting, prod.MpId);
       if (net32resp && net32resp.data) {
         await mySqlHelper.UpdateLastScrapeInfo(prod.MpId, moment(scrapeStartTime).format("YYYY-MM-DD HH:mm:ss"));
         const allowHistoryLoggingEnv = applicationConfig.SCRAPE_ONLY_LOGGING;
