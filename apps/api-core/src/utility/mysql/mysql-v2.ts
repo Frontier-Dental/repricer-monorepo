@@ -324,6 +324,20 @@ export async function UpdateQBreakDetails(mpid: string, vendorProducts: any) {
   }
 }
 
+/**
+ * Updates product-level badge flag in table_scrapeProductList.
+ * If any vendor has a badge on the product, the product is considered to have a badge.
+ */
+export async function UpdateProductLevelBadgeDetails(mpid: string, vendorProducts: any) {
+  const hasAnyBadge = Array.isArray(vendorProducts) && vendorProducts.some((v: any) => v != null && v.badgeId != null && Number(v.badgeId) > 0);
+
+  console.log(`UpdateProductLevelBadgeDetails: ${mpid} hasAnyBadge: ${hasAnyBadge}`);
+  const db = getKnexInstance();
+  await db(applicationConfig.SQL_SCRAPE_PRODUCT_LIST!)
+    .where({ MpId: parseInt(mpid) })
+    .update({ IsBadgeItem: hasAnyBadge ? 1 : 0 });
+}
+
 function getContextTableNameByVendorId(vendorId: string) {
   let contextTableName: string | null = null;
   const vendorIdNum = parseInt(vendorId, 10);
