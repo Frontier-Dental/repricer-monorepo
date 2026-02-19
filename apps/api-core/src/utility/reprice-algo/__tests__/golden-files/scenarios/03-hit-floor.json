@@ -1,0 +1,51 @@
+{
+  "name": "All competitors below floor price",
+  "description": "Every competitor's price minus one penny falls below our floor_price, so no valid undercut exists. The algorithm should IGNORE with a floor indication.",
+  "tags": ["ignore", "floor"],
+  "input": {
+    "mpId": 10003,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 10.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "CheapVendor",
+        "inStock": true,
+        "standardShipping": 0,
+        "shippingTime": 2,
+        "inventory": 50,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 4.5 }],
+        "freeShippingGap": 0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 25.0,
+      "up_down": "UP/DOWN",
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "IGNORE #FLOOR",
+    "suggestedPrice": null,
+    "commentContains": ["Hit the floor"]
+  }
+}

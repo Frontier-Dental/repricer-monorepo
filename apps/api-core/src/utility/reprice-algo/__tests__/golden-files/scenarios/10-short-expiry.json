@@ -1,0 +1,51 @@
+{
+  "name": "Short expiry product",
+  "description": "When the own vendor's price break contains promoAddlDescr with 'EXP', the product is short-expiry and the algorithm should IGNORE to avoid repricing expiring stock.",
+  "tags": ["ignore", "short-expiry"],
+  "input": {
+    "mpId": 10010,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 10.0, "promoAddlDescr": "Short EXP 2026-03" }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "CompetitorA",
+        "inStock": true,
+        "standardShipping": 5.0,
+        "shippingTime": 3,
+        "inventory": 50,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 14.0 }],
+        "freeShippingGap": 25.0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 25.0,
+      "up_down": "UP/DOWN",
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "IGNORE #SHORT_EXPIRY",
+    "suggestedPrice": 13.99,
+    "commentContains": ["Short expiry"]
+  }
+}

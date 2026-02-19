@@ -1,0 +1,65 @@
+{
+  "name": "All competitors below floor -- push to max",
+  "description": "Every competitor's price is so low that undercutting them would be below floor. The algorithm should push our price to the max_price since effectively there are no reachable competitors.",
+  "tags": ["change", "max", "push-to-max"],
+  "input": {
+    "mpId": 10013,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 10.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "DirtCheap1",
+        "inStock": true,
+        "standardShipping": 0,
+        "shippingTime": 1,
+        "inventory": 100,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 2.0 }],
+        "freeShippingGap": 0,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99002,
+        "vendorName": "DirtCheap2",
+        "inStock": true,
+        "standardShipping": 0,
+        "shippingTime": 1,
+        "inventory": 100,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 1.5 }],
+        "freeShippingGap": 0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 8.0,
+      "max_price": 20.0,
+      "up_down": "UP/DOWN",
+      "floor_compete_with_next": true,
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "IGNORE #FLOOR",
+    "suggestedPrice": null,
+    "commentContains": ["Hit the floor"]
+  }
+}

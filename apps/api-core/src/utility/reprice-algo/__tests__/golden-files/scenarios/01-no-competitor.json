@@ -1,0 +1,38 @@
+{
+  "name": "No competitor -- only own vendor present",
+  "description": "When the Net32 product list contains only our own vendor, there are no competitors. The algorithm should push the price to max_price since there is nobody to undercut.",
+  "tags": ["ignore", "no-competitor"],
+  "input": {
+    "mpId": 10001,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 10.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 25.0,
+      "up_down": "UP/DOWN",
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "CHANGE #UP",
+    "suggestedPrice": 25.0,
+    "commentContains": ["undercut"]
+  }
+}

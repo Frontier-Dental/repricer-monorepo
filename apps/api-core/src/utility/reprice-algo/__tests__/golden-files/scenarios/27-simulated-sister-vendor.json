@@ -1,0 +1,65 @@
+{
+  "name": "Simulated sister vendor in winning position",
+  "description": "The sister_vendor_ids setting includes a competitor vendor ID. When this simulated sister holds the buy-box position, the algorithm should IGNORE to avoid competing with the simulated sister.",
+  "tags": ["ignore", "sister", "simulated"],
+  "input": {
+    "mpId": 10027,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 15.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "SimulatedSister",
+        "inStock": true,
+        "standardShipping": 0,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 9.0 }],
+        "freeShippingGap": 0,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99002,
+        "vendorName": "RealCompetitor",
+        "inStock": true,
+        "standardShipping": 5.0,
+        "shippingTime": 3,
+        "inventory": 50,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 14.0 }],
+        "freeShippingGap": 25.0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 25.0,
+      "up_down": "UP/DOWN",
+      "sister_vendor_ids": "99001",
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "IGNORE #SISTER_LOWEST",
+    "suggestedPrice": 8.99,
+    "commentContains": ["simulated sister"]
+  }
+}

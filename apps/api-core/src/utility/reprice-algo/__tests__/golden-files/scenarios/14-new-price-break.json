@@ -1,0 +1,51 @@
+{
+  "name": "New price break -- vendor not currently listed at Q1",
+  "description": "Our vendor exists in the product list but does not have an active Q1 price break. The algorithm creates a new break to compete, resulting in CHANGE #NEW.",
+  "tags": ["change", "new", "price-break"],
+  "input": {
+    "mpId": 10014,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 2, "unitPrice": 9.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "CompetitorA",
+        "inStock": true,
+        "standardShipping": 5.0,
+        "shippingTime": 3,
+        "inventory": 50,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 14.0 }],
+        "freeShippingGap": 25.0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 25.0,
+      "up_down": "UP/DOWN",
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "CHANGE #NEW",
+    "suggestedPrice": 13.99,
+    "commentContains": ["New price break"]
+  }
+}
