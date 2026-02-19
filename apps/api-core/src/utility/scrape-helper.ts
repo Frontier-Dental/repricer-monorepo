@@ -122,7 +122,7 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
                   case "5":
                     vendorName = "TRIAD";
                     break;
-                  case "10":
+                  case "20891":
                     vendorName = "BITESUPPLY";
                     break;
                 }
