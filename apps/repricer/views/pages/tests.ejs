@@ -101,81 +101,102 @@
           </div>
 
           <div id="layer-<%= layerIdx %>" class="collapse">
+            <% if (layer.description) { %>
+              <div class="px-3 py-2" style="background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-size: 13px; color: #555;">
+                <i class="fa fa-info-circle mr-1"></i> <%= layer.description %>
+              </div>
+            <% } %>
             <div class="card-body p-0">
-              <table class="table table-striped table-bordered mb-0">
-                <thead>
-                  <tr style="background: #f5f5f5;">
-                    <th style="width: 40%;">Suite</th>
-                    <th style="width: 15%; text-align: center;">Tests</th>
-                    <th style="width: 15%; text-align: center;">Passed</th>
-                    <th style="width: 10%; text-align: center;">Failed</th>
-                    <th style="width: 10%; text-align: center;">Status</th>
-                    <th style="width: 10%; text-align: center;">Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% layer.suites.forEach(function(suite, suiteIdx) { %>
-                    <tr style="cursor: pointer;"
-                        data-toggle="collapse"
-                        data-target="#suite-<%= layerIdx %>-<%= suiteIdx %>">
-                      <td>
-                        <i class="fa fa-caret-right mr-1"></i>
-                        <strong><%= suite.name %></strong>
-                      </td>
-                      <td style="text-align: center;"><%= suite.numTotal %></td>
-                      <td style="text-align: center;" class="text-success"><%= suite.numPassed %></td>
-                      <td style="text-align: center;" class="<%= suite.numFailed > 0 ? 'text-danger font-weight-bold' : '' %>"><%= suite.numFailed %></td>
-                      <td style="text-align: center;">
-                        <% if (suite.status === 'passed') { %>
-                          <span class="badge badge-success">PASS</span>
-                        <% } else if (suite.status === 'failed') { %>
-                          <span class="badge badge-danger">FAIL</span>
-                        <% } else { %>
-                          <span class="badge badge-warning">SKIP</span>
-                        <% } %>
-                      </td>
-                      <td style="text-align: center;"><%= (suite.duration / 1000).toFixed(2) %>s</td>
-                    </tr>
+              <% layer.suites.forEach(function(suite, suiteIdx) { %>
+                <!-- Suite header -->
+                <div class="d-flex justify-content-between align-items-center px-3 py-2"
+                     style="background: #f5f5f5; border-bottom: 1px solid #dee2e6;">
+                  <div>
+                    <strong><%= suite.name %></strong>
+                    <span class="text-muted ml-2">
+                      <span class="text-success"><%= suite.numPassed %> passed</span>
+                      <% if (suite.numFailed > 0) { %><span class="text-danger ml-1"><%= suite.numFailed %> failed</span><% } %>
+                      <% if (suite.numPending > 0) { %><span class="text-warning ml-1"><%= suite.numPending %> skipped</span><% } %>
+                    </span>
+                  </div>
+                  <div>
+                    <% if (suite.sourcePath) { %>
+                      <button class="btn btn-sm btn-outline-secondary mr-2 btn-view-source"
+                              data-source-path="<%= suite.sourcePath %>">
+                        <i class="fa fa-code"></i>&nbsp;Source
+                      </button>
+                    <% } %>
+                    <% if (suite.status === 'passed') { %>
+                      <span class="badge badge-success">PASS</span>
+                    <% } else if (suite.status === 'failed') { %>
+                      <span class="badge badge-danger">FAIL</span>
+                    <% } else { %>
+                      <span class="badge badge-warning">SKIP</span>
+                    <% } %>
+                    <span class="text-muted ml-2"><%= (suite.duration / 1000).toFixed(2) %>s</span>
+                  </div>
+                </div>
 
-                    <!-- Expanded individual tests -->
-                    <tr class="collapse" id="suite-<%= layerIdx %>-<%= suiteIdx %>">
-                      <td colspan="6" style="padding: 0; background: #fafafa;">
-                        <table class="table table-sm mb-0" style="margin-left: 30px;">
-                          <% suite.tests.forEach(function(test) { %>
+                <!-- Suite tests (grouped by describe blocks) — always visible -->
+                <div style="padding: 10px 15px 10px 30px; background: #fafafa; border-bottom: 1px solid #dee2e6;">
+                    <%
+                      // Group tests by their describe block (ancestorTitles)
+                      var groups = {};
+                      suite.tests.forEach(function(test) {
+                        var groupKey = (test.ancestorTitles || []).join(' > ') || suite.name;
+                        if (!groups[groupKey]) groups[groupKey] = [];
+                        groups[groupKey].push(test);
+                      });
+                      var groupKeys = Object.keys(groups);
+                    %>
+                    <% groupKeys.forEach(function(groupName, gIdx) { %>
+                      <% if (groupKeys.length > 1) { %>
+                        <div style="font-weight: 600; color: #495057; margin-top: <%= gIdx > 0 ? '12px' : '0' %>; margin-bottom: 6px; font-size: 13px;">
+                          <i class="fa fa-folder-open-o mr-1" style="color: #6c757d;"></i>
+                          <%= groupName %>
+                        </div>
+                      <% } %>
+                      <table class="table table-sm mb-0" style="<%= groupKeys.length > 1 ? 'margin-left: 18px;' : '' %>">
+                        <% groups[groupName].forEach(function(test) { %>
+                          <tr>
+                            <td style="width: 65%; padding: 4px 8px; border-top: 1px solid #eee;">
+                              <% if (test.status === 'passed') { %>
+                                <i class="fa fa-check-circle text-success mr-1"></i>
+                              <% } else if (test.status === 'failed') { %>
+                                <i class="fa fa-times-circle text-danger mr-1"></i>
+                              <% } else { %>
+                                <i class="fa fa-minus-circle text-warning mr-1"></i>
+                              <% } %>
+                              <span style="font-size: 13px;"><%= test.title %></span>
+                            </td>
+                            <td style="width: 20%; text-align: center; padding: 4px 8px; border-top: 1px solid #eee;">
+                              <span class="badge badge-sm <%= test.status === 'passed' ? 'badge-success' : test.status === 'failed' ? 'badge-danger' : 'badge-warning' %>">
+                                <%= test.status.toUpperCase() %>
+                              </span>
+                            </td>
+                            <td style="width: 15%; text-align: right; padding: 4px 8px; border-top: 1px solid #eee; color: #888; font-size: 12px;">
+                              <%= test.duration %>ms
+                            </td>
+                          </tr>
+                          <% if (test.code) { %>
                             <tr>
-                              <td style="width: 70%; padding-left: 20px;">
-                                <% if (test.status === 'passed') { %>
-                                  <i class="fa fa-check-circle text-success mr-1"></i>
-                                <% } else if (test.status === 'failed') { %>
-                                  <i class="fa fa-times-circle text-danger mr-1"></i>
-                                <% } else { %>
-                                  <i class="fa fa-minus-circle text-warning mr-1"></i>
-                                <% } %>
-                                <%= test.title %>
-                              </td>
-                              <td style="width: 15%; text-align: center;">
-                                <span class="badge <%= test.status === 'passed' ? 'badge-success' : test.status === 'failed' ? 'badge-danger' : 'badge-warning' %>">
-                                  <%= test.status.toUpperCase() %>
-                                </span>
-                              </td>
-                              <td style="width: 15%; text-align: center; color: #888;">
-                                <%= test.duration %>ms
+                              <td colspan="3" style="padding: 2px 8px 6px 28px;">
+                                <pre style="background: #1e1e1e; color: #d4d4d4; padding: 10px; border-radius: 4px; max-height: 180px; overflow: auto; font-size: 12px; white-space: pre; tab-size: 2; margin: 0; line-height: 1.4;"><%= test.code %></pre>
                               </td>
                             </tr>
-                            <% if (test.failureMessages && test.failureMessages.length > 0) { %>
-                              <tr>
-                                <td colspan="3" style="padding-left: 40px;">
-                                  <pre style="background: #2d2d2d; color: #f8d7da; padding: 10px; border-radius: 4px; max-height: 200px; overflow: auto; font-size: 12px; white-space: pre-wrap;"><%= test.failureMessages.join('\n') %></pre>
-                                </td>
-                              </tr>
-                            <% } %>
-                          <% }); %>
-                        </table>
-                      </td>
-                    </tr>
-                  <% }); %>
-                </tbody>
-              </table>
+                          <% } %>
+                          <% if (test.failureMessages && test.failureMessages.length > 0) { %>
+                            <tr>
+                              <td colspan="3" style="padding: 2px 8px 6px 28px;">
+                                <pre style="background: #2d2d2d; color: #f8d7da; padding: 10px; border-radius: 4px; max-height: 200px; overflow: auto; font-size: 12px; white-space: pre-wrap; margin: 0;"><%= test.failureMessages.join('\n') %></pre>
+                              </td>
+                            </tr>
+                          <% } %>
+                        <% }); %>
+                      </table>
+                    <% }); %>
+                  </div>
+              <% }); %>
             </div>
           </div>
         </div>
@@ -201,6 +222,21 @@
   </div>
 </div>
 
+<!-- Source Code Modal -->
+<div class="modal fade" id="sourceModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sourceModalTitle">Test Source</h5>
+        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+      </div>
+      <div class="modal-body p-0">
+        <pre id="sourceModalContent" style="background: #1e1e1e; color: #d4d4d4; padding: 16px; margin: 0; max-height: 70vh; overflow: auto; font-size: 13px; line-height: 1.5; white-space: pre; tab-size: 2;"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
 <%- include("./footer"); %>
 
 <script>
@@ -209,5 +245,33 @@
     var btn = document.getElementById('btnRunTests');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>&nbsp;Running...';
+  });
+
+  // View Source button handler
+  var API_BASE = '<%= typeof apiBaseUrl !== "undefined" ? apiBaseUrl : "" %>';
+  document.querySelectorAll('.btn-view-source').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var sourcePath = this.getAttribute('data-source-path');
+      var modal = $('#sourceModal');
+      var content = document.getElementById('sourceModalContent');
+      var title = document.getElementById('sourceModalTitle');
+
+      title.textContent = sourcePath;
+      content.textContent = 'Loading...';
+      modal.modal('show');
+
+      fetch(API_BASE + '/tests/source?file=' + encodeURIComponent(sourcePath))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.error) {
+            content.textContent = 'Error: ' + data.error;
+          } else {
+            content.textContent = data.content;
+          }
+        })
+        .catch(function(err) {
+          content.textContent = 'Failed to load source: ' + err.message;
+        });
+    });
   });
 </script>
