@@ -547,7 +547,7 @@ describe("history-helper", () => {
 
     it("should map TOPDENT to correct vendor ID", async () => {
       const repriceDetails = createMockRepriceData();
-      const eligibleList = [createMockNet32Product({ vendorId: 20533, vendorName: "TOPDENT" })];
+      const eligibleList = [createMockNet32Product({ vendorId: 20727, vendorName: "TOPDENT" })];
 
       const result = await getHistoricalPrice(repriceDetails, eligibleList, false, 12345, "TOPDENT", "TestCron", null, RepriceResultEnum.DEFAULT);
 
@@ -556,7 +556,7 @@ describe("history-helper", () => {
 
     it("should map FIRSTDENT to correct vendor ID", async () => {
       const repriceDetails = createMockRepriceData();
-      const eligibleList = [createMockNet32Product({ vendorId: 20727, vendorName: "FIRSTDENT" })];
+      const eligibleList = [createMockNet32Product({ vendorId: 20533, vendorName: "FIRSTDENT" })];
 
       const result = await getHistoricalPrice(repriceDetails, eligibleList, false, 12345, "FIRSTDENT", "TestCron", null, RepriceResultEnum.DEFAULT);
 
@@ -574,7 +574,7 @@ describe("history-helper", () => {
 
     it("should map BITESUPPLY to correct vendor ID", async () => {
       const repriceDetails = createMockRepriceData();
-      const eligibleList = [createMockNet32Product({ vendorId: 10, vendorName: "BITESUPPLY" })];
+      const eligibleList = [createMockNet32Product({ vendorId: 20891, vendorName: "BITESUPPLY" })];
 
       const result = await getHistoricalPrice(repriceDetails, eligibleList, false, 12345, "BITESUPPLY", "TestCron", null, RepriceResultEnum.DEFAULT);
 

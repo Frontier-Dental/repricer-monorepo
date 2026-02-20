@@ -29,7 +29,7 @@ const VENDOR_CONFIGS: VendorConfig[] = [
     channelName: "FIRSTDENT",
   },
   { tableName: "table_triadDetails", vendorId: 5, channelName: "TRIAD" },
-  { tableName: "table_biteSupplyDetails", vendorId: 10, channelName: "BITESUPPLY" },
+  { tableName: "table_biteSupplyDetails", vendorId: 20891, channelName: "BITESUPPLY" },
 ];
 
 export async function up(knex: Knex): Promise<void> {

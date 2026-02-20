@@ -600,7 +600,7 @@ describe("repricer-rule-helper", () => {
   });
 
   describe("ApplyBuyBoxRule", () => {
-    const contextVendorIds = ["17357", "20722", "20755", "20533", "20727", "5"];
+    const contextVendorIds = ["17357", "20722", "20755", "20533", "20727", "5", "20891"];
 
     it("should ignore price down when vendorId is in contextVendorIds", () => {
       const net32Result: Net32Product[] = [
