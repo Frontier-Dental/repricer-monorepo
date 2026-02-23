@@ -686,7 +686,7 @@ describe("format-wrapper", () => {
       const result = SetGlobalDetails(productItem, VendorName.TRADENT);
 
       expect(result.ownVendorId).toBe("17357");
-      expect(result.sisterVendorId).toBe("20722;20755;20533;20727;5;10");
+      expect(result.sisterVendorId).toBe("20722;20755;20533;20727;5;20891");
     });
 
     it("should preserve existing sisterVendorId if already set", () => {
@@ -775,7 +775,7 @@ describe("format-wrapper", () => {
         { name: VendorName.TOPDENT, ownVendorId: "20727" },
         { name: VendorName.FIRSTDENT, ownVendorId: "20533" },
         { name: VendorName.TRIAD, ownVendorId: "5" },
-        { name: VendorName.BITESUPPLY, ownVendorId: "10" },
+        { name: VendorName.BITESUPPLY, ownVendorId: "20891" },
       ];
 
       for (const vendor of vendors) {
@@ -932,12 +932,12 @@ describe("format-wrapper", () => {
       };
 
       const vendors = [
-        { name: VendorName.FRONTIER, ownVendorId: "20722", sisterVendorId: "17357;20755;20533;20727;5;10" },
-        { name: VendorName.MVP, ownVendorId: "20755", sisterVendorId: "17357;20722;20533;20727;5;10" },
-        { name: VendorName.TOPDENT, ownVendorId: "20727", sisterVendorId: "17357;20722;20533;20755;5;10" },
-        { name: VendorName.FIRSTDENT, ownVendorId: "20533", sisterVendorId: "17357;20722;20755;20727;5;10" },
-        { name: VendorName.TRIAD, ownVendorId: "5", sisterVendorId: "17357;20722;20755;20727;20533;10" },
-        { name: VendorName.BITESUPPLY, ownVendorId: "10", sisterVendorId: "17357;20722;20755;20727;20533;5" },
+        { name: VendorName.FRONTIER, ownVendorId: "20722", sisterVendorId: "17357;20755;20533;20727;5;20891" },
+        { name: VendorName.MVP, ownVendorId: "20755", sisterVendorId: "17357;20722;20533;20727;5;20891" },
+        { name: VendorName.TOPDENT, ownVendorId: "20727", sisterVendorId: "17357;20722;20533;20755;5;20891" },
+        { name: VendorName.FIRSTDENT, ownVendorId: "20533", sisterVendorId: "17357;20722;20755;20727;5;20891" },
+        { name: VendorName.TRIAD, ownVendorId: "5", sisterVendorId: "17357;20722;20755;20727;20533;20891" },
+        { name: VendorName.BITESUPPLY, ownVendorId: "20891", sisterVendorId: "17357;20722;20755;20727;20533;5" },
       ];
 
       for (const vendor of vendors) {

@@ -122,7 +122,7 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
                   case "5":
                     vendorName = "TRIAD";
                     break;
-                  case "10":
+                  case "20891":
                     vendorName = "BITESUPPLY";
                     break;
                 }
@@ -254,16 +254,16 @@ function getOwnVendorId(vendorName: string): string | null {
       vendorId = "20755";
       break;
     case "TOPDENT":
-      vendorId = "20533";
+      vendorId = "20727";
       break;
     case "FIRSTDENT":
-      vendorId = "20727";
+      vendorId = "20533";
       break;
     case "TRIAD":
       vendorId = "5";
       break;
     case "BITESUPPLY":
-      vendorId = "10";
+      vendorId = "20891";
       break;
     default:
       break;

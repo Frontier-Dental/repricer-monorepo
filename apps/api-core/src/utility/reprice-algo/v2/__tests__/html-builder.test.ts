@@ -30,7 +30,7 @@ jest.mock("@repricer-monorepo/shared", () => ({
     FIRSTDENT: 20533,
     TOPDENT: 20727,
     TRIAD: 5,
-    BITESUPPLY: 10,
+    BITESUPPLY: 20891,
   },
   VendorNameLookup: {
     20722: "FRONTIER",
@@ -39,7 +39,7 @@ jest.mock("@repricer-monorepo/shared", () => ({
     20533: "FIRSTDENT",
     20727: "TOPDENT",
     5: "TRIAD",
-    10: "BITESUPPLY",
+    20891: "BITESUPPLY",
     999: "UNKNOWN_VENDOR",
   },
   AlgoPriceDirection: {

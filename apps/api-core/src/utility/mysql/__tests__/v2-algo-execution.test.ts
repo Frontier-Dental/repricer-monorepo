@@ -312,7 +312,7 @@ describe("v2-algo-execution", () => {
         created_at: new Date("2024-12-01T10:00:00Z"),
         expires_at: new Date("2024-12-02T10:00:00Z"),
         chain_of_thought_html: Buffer.from(utf8Content, "utf-8"),
-        vendor_id: 10,
+        vendor_id: 20891,
         mp_id: 1000,
         job_id: "job-utf8-001",
       };

@@ -99,8 +99,8 @@ export function MapOverrideExecutionPriority(productDetails: any, priorityList: 
   if (productDetails.topDentDetails) {
     productDetails.topDentDetails.executionPriority = parseInt(priorityList.topDent_priority);
   }
-  if (productDetails.mvpDetails) {
-    productDetails.mvpDetails.firstDentDetails = parseInt(priorityList.firstDent_priority);
+  if (productDetails.firstDentDetails) {
+    productDetails.firstDentDetails.executionPriority = parseInt(priorityList.firstDent_priority);
   }
   if (productDetails.triadDetails) {
     productDetails.triadDetails.executionPriority = parseInt(priorityList.triad_priority);
