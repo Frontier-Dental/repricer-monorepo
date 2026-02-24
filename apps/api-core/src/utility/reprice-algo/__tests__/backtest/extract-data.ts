@@ -3,10 +3,15 @@ import { BacktestRecord, ExtractOptions, HistoryApiResponseRow, V2AlgoResultRow 
 import { V2AlgoSettingsData } from "../../../../utility/mysql/v2-algo-settings";
 import { VendorThreshold } from "../../v2/shipping-threshold";
 import { Net32Product } from "../../../../types/net32";
+import { VendorIdLookup } from "@repricer-monorepo/shared";
 
 // ─── Database connection ───────────────────────────────────────────────
 
 let _knex: Knex | null = null;
+
+export function setBacktestKnex(instance: Knex): void {
+  _knex = instance;
+}
 
 export function getBacktestKnex(): Knex {
   if (_knex) return _knex;
@@ -184,6 +189,9 @@ async function extractFromV2AlgoResults(db: Knex, options: ExtractOptions): Prom
         qBreakValid: row.q_break_valid,
         lowestPrice: row.lowest_price,
         lowestVendorId: row.lowest_vendor_id,
+        existingPrice: null, // v2_algo_results doesn't store this
+        position: null,
+        lowestVendor: null,
       },
     });
   }
@@ -192,10 +200,12 @@ async function extractFromV2AlgoResults(db: Knex, options: ExtractOptions): Prom
   return records;
 }
 
-// ─── table_history extraction (fallback for V1 data) ───────────────────
+// ─── Channel name → vendor ID mapping (from shared package) ─────────────
+
+// ─── table_history extraction (for V1 data) ─────────────────────────────
 
 async function extractFromTableHistory(db: Knex, options: ExtractOptions): Promise<BacktestRecord[]> {
-  let query = db("table_history as h").join("table_history_apiResponse as a", "h.LinkedApiResponse", "a.Id").select("h.*", "a.ApiResponse").whereBetween("h.RefTime", [options.dateFrom, options.dateTo]).orderBy("h.RefTime", "desc");
+  let query = db("table_history as h").join("table_history_apiResponse as a", "h.LinkedApiResponse", "a.ApiResponseId").select("h.*", "a.ApiResponse").whereBetween("h.RefTime", [options.dateFrom, options.dateTo]).orderBy("h.RefTime", "desc");
 
   if (options.mpIds && options.mpIds.length > 0) {
     query = query.whereIn("h.MpId", options.mpIds);
@@ -223,9 +233,9 @@ async function extractFromTableHistory(db: Knex, options: ExtractOptions): Promi
       const apiResponse = safeParseApiResponse(row.ApiResponse);
       if (!apiResponse || apiResponse.length === 0) continue;
 
-      // For table_history rows, we don't have vendor_id directly.
-      // ChannelName is the vendor name (e.g., "TRADENT"). We need to map it.
-      const vendorId = 0; // Caller should map ChannelName -> VendorId
+      // Map ChannelName (e.g., "TRADENT") to vendor ID using shared package
+      const channelName = (row.ChannelName || "").toUpperCase().trim() as keyof typeof VendorIdLookup;
+      const vendorId = VendorIdLookup[channelName] || 0;
 
       // Try to fetch settings
       let vendorSettings: V2AlgoSettingsData;
@@ -262,13 +272,16 @@ async function extractFromTableHistory(db: Knex, options: ExtractOptions): Promi
         vendorSettings,
         vendorThresholds,
         historical: {
-          algoResult: row.RepriceResult ?? "UNKNOWN",
-          suggestedPrice: row.SuggestedPrice,
+          algoResult: parseV1AlgoResult(row.RepriceComment),
+          suggestedPrice: row.SuggestedPrice ? parseFloat(row.SuggestedPrice) : null,
           comment: row.RepriceComment ?? "",
           triggeredByVendor: row.TriggeredByVendor,
           qBreakValid: true, // table_history doesn't track this
-          lowestPrice: row.LowestPrice,
+          lowestPrice: row.LowestPrice ? parseFloat(row.LowestPrice) : null,
           lowestVendorId: null,
+          existingPrice: row.ExistingPrice ? parseFloat(row.ExistingPrice) : null,
+          position: row.Position ?? null,
+          lowestVendor: row.LowestVendor ?? null,
         },
       });
     } catch (err) {
@@ -296,11 +309,33 @@ async function findApiResponseForRecord(db: Knex, mpId: number, timestamp: Date)
     return null;
   }
 
-  const apiRow: HistoryApiResponseRow | undefined = await db("table_history_apiResponse").where("Id", historyRow.LinkedApiResponse).first();
+  const apiRow: HistoryApiResponseRow | undefined = await db("table_history_apiResponse").where("ApiResponseId", historyRow.LinkedApiResponse).first();
 
   if (!apiRow) return null;
 
   return safeParseApiResponse(apiRow.ApiResponse);
+}
+
+// ─── Helper: parse V1 RepriceComment into algo result ─────────────────
+// V1 format: "CHANGE: #BB_BADGE | $DOWN", "IGNORE: #Sister #DOWN", "N/A"
+// V2 format: "CHANGE #DOWN", "IGNORE #FLOOR", "NO_SOLUTION"
+
+function parseV1AlgoResult(comment: string | null | undefined): string {
+  if (!comment || comment === "N/A") return "NO_SOLUTION";
+  const upper = comment.toUpperCase().trim();
+
+  if (upper.startsWith("CHANGE")) {
+    if (upper.includes("$DOWN") || upper.includes("#DOWN")) return "CHANGE #DOWN";
+    if (upper.includes("$UP") || upper.includes("#UP")) return "CHANGE #UP";
+    return "CHANGE #DOWN"; // default for CHANGE
+  }
+  if (upper.startsWith("IGNORE")) {
+    if (upper.includes("#FLOOR") || upper.includes("#HITFLOOR")) return "IGNORE #FLOOR";
+    if (upper.includes("#SISTER")) return "IGNORE #SISTER";
+    if (upper.includes("#LOWEST")) return "IGNORE #LOWEST";
+    return "IGNORE #OTHER";
+  }
+  return "NO_SOLUTION";
 }
 
 // ─── Helper: safely parse API response JSON ────────────────────────────

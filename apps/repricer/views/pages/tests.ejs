@@ -219,6 +219,253 @@
       </div>
     <% } %>
 
+    <!-- ═══════ BACKTEST SECTION ═══════ -->
+    <hr>
+    <h2 class="commanHeading mb-3"><i class="fa fa-history"></i>&nbsp;Backtesting</h2>
+
+    <!-- Section 1: Regression Backtest -->
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center" style="background: #e9ecef;">
+        <strong><i class="fa fa-refresh"></i>&nbsp;Regression Backtest</strong>
+        <button class="btn btn-success btn-sm" id="btnRegression" onclick="runRegression()">
+          <i class="fa fa-play"></i>&nbsp;Run Regression
+        </button>
+      </div>
+      <div class="card-body pb-2">
+        <div class="row mb-2">
+          <div class="col-md-2">
+            <label><small>Date From</small></label>
+            <input type="date" id="regDateFrom" class="form-control form-control-sm">
+          </div>
+          <div class="col-md-2">
+            <label><small>Date To</small></label>
+            <input type="date" id="regDateTo" class="form-control form-control-sm">
+          </div>
+          <div class="col-md-1">
+            <label><small>Limit</small></label>
+            <input type="number" id="regLimit" class="form-control form-control-sm" value="200" min="1" max="2000">
+          </div>
+          <div class="col-md-2">
+            <label><small>MP IDs <span class="text-muted">(comma-sep)</span></small></label>
+            <input type="text" id="regMpIds" class="form-control form-control-sm" placeholder="optional">
+          </div>
+          <div class="col-md-2">
+            <label><small>Vendor IDs <span class="text-muted">(comma-sep)</span></small></label>
+            <input type="text" id="regVendorIds" class="form-control form-control-sm" placeholder="optional">
+          </div>
+          <div class="col-md-2">
+            <label><small>Cron Name</small></label>
+            <input type="text" id="regCronName" class="form-control form-control-sm" placeholder="optional">
+          </div>
+        </div>
+      </div>
+      <div id="regressionResults" style="display:none;">
+        <div class="card-body pt-0">
+          <hr class="mt-0">
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <div class="card text-center"><div class="card-body p-2">
+                <h4 class="mb-0" id="regTotal">-</h4><small class="text-muted">Total Records</small>
+              </div></div>
+            </div>
+            <div class="col-md-3">
+              <div class="card text-center" style="border-left: 4px solid #28a745;"><div class="card-body p-2">
+                <h4 class="mb-0 text-success" id="regMatches">-</h4><small class="text-muted">Matches</small>
+              </div></div>
+            </div>
+            <div class="col-md-3">
+              <div class="card text-center" id="regMatchRateCard"><div class="card-body p-2">
+                <h4 class="mb-0" id="regMatchRate">-</h4><small class="text-muted">Match Rate</small>
+              </div></div>
+            </div>
+            <div class="col-md-3">
+              <div class="card text-center" style="border-left: 4px solid #17a2b8;"><div class="card-body p-2">
+                <h4 class="mb-0" id="regTime">-</h4><small class="text-muted">Execution Time</small>
+              </div></div>
+            </div>
+          </div>
+          <div id="regProductsSection" style="display:none;">
+            <h6><i class="fa fa-cubes"></i>&nbsp;Products <span id="regProductsCount" class="text-muted"></span></h6>
+            <div id="regProductsContainer" style="max-height: 600px; overflow-y: auto;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: What-If Analysis -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center" style="background: #e9ecef;">
+        <strong><i class="fa fa-sliders"></i>&nbsp;What-If Analysis</strong>
+        <button class="btn btn-info btn-sm" id="btnWhatIf" onclick="runWhatIf()">
+          <i class="fa fa-play"></i>&nbsp;Run What-If
+        </button>
+      </div>
+      <div class="card-body pb-2">
+        <!-- Filters -->
+        <div class="row mb-2">
+          <div class="col-md-2">
+            <label><small>Date From</small></label>
+            <input type="date" id="wiDateFrom" class="form-control form-control-sm">
+          </div>
+          <div class="col-md-2">
+            <label><small>Date To</small></label>
+            <input type="date" id="wiDateTo" class="form-control form-control-sm">
+          </div>
+          <div class="col-md-1">
+            <label><small>Limit</small></label>
+            <input type="number" id="wiLimit" class="form-control form-control-sm" value="200" min="1" max="2000">
+          </div>
+          <div class="col-md-2">
+            <label><small>MP IDs <span class="text-muted">(comma-sep)</span></small></label>
+            <input type="text" id="wiMpIds" class="form-control form-control-sm" placeholder="optional">
+          </div>
+          <div class="col-md-2">
+            <label><small>Vendor IDs <span class="text-muted">(comma-sep)</span></small></label>
+            <input type="text" id="wiVendorIds" class="form-control form-control-sm" placeholder="optional">
+          </div>
+          <div class="col-md-2">
+            <label><small>Cron Name</small></label>
+            <input type="text" id="wiCronName" class="form-control form-control-sm" placeholder="optional">
+          </div>
+        </div>
+        <hr>
+        <!-- Overrides -->
+        <div class="row mb-2">
+          <div class="col-md-2">
+            <label><small>Direction (up_down)</small></label>
+            <select id="wiUpDown" class="form-control form-control-sm">
+              <option value="">-- no override --</option>
+              <option value="UP">UP</option>
+              <option value="UP/DOWN">UP/DOWN</option>
+              <option value="DOWN">DOWN</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label><small>Floor Price</small></label>
+            <input type="number" id="wiFloorPrice" class="form-control form-control-sm" placeholder="no override" step="0.01">
+          </div>
+          <div class="col-md-2">
+            <label><small>Max Price</small></label>
+            <input type="number" id="wiMaxPrice" class="form-control form-control-sm" placeholder="no override" step="0.01">
+          </div>
+          <div class="col-md-2">
+            <label><small>Price Strategy</small></label>
+            <select id="wiPriceStrategy" class="form-control form-control-sm">
+              <option value="">-- no override --</option>
+              <option value="UNIT">UNIT</option>
+              <option value="TOTAL">TOTAL</option>
+              <option value="BUY_BOX">BUY_BOX</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label><small>Up %</small></label>
+            <input type="number" id="wiUpPct" class="form-control form-control-sm" placeholder="no override" step="0.1">
+          </div>
+          <div class="col-md-2">
+            <label><small>Down %</small></label>
+            <input type="number" id="wiDownPct" class="form-control form-control-sm" placeholder="no override" step="0.1">
+          </div>
+        </div>
+        <div class="row mb-2">
+          <div class="col-md-2">
+            <label><small>Badge Indicator</small></label>
+            <select id="wiBadge" class="form-control form-control-sm">
+              <option value="">-- no override --</option>
+              <option value="ALL">ALL</option>
+              <option value="BADGE">BADGE</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label><small>Handling Time</small></label>
+            <select id="wiHandling" class="form-control form-control-sm">
+              <option value="">-- no override --</option>
+              <option value="ALL">ALL</option>
+              <option value="FAST_SHIPPING">FAST_SHIPPING</option>
+              <option value="STOCKED">STOCKED</option>
+              <option value="LONG_HANDLING">LONG_HANDLING</option>
+            </select>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="wiFloorCompete">
+              <label class="form-check-label" for="wiFloorCompete"><small>Floor Compete Next</small></label>
+            </div>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="wiCompeteAll">
+              <label class="form-check-label" for="wiCompeteAll"><small>Compete All Vendors</small></label>
+            </div>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="wiSuppressPB">
+              <label class="form-check-label" for="wiSuppressPB"><small>Suppress Price Break</small></label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="whatIfResults" style="display:none;">
+        <div class="card-body pt-0">
+          <hr class="mt-0">
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <div class="card text-center"><div class="card-body p-2">
+                <h4 class="mb-0" id="wiTotal">-</h4><small class="text-muted">Total Records</small>
+              </div></div>
+            </div>
+            <div class="col-md-3">
+              <div class="card text-center" style="border-left: 4px solid #ffc107;"><div class="card-body p-2">
+                <h4 class="mb-0" id="wiChanged">-</h4><small class="text-muted">Prices Changed</small>
+              </div></div>
+            </div>
+            <div class="col-md-3">
+              <div class="card text-center" style="border-left: 4px solid #17a2b8;"><div class="card-body p-2">
+                <h4 class="mb-0" id="wiAvgDelta">-</h4><small class="text-muted">Avg Price Delta</small>
+              </div></div>
+            </div>
+            <div class="col-md-3">
+              <div class="card text-center" style="border-left: 4px solid #6c757d;"><div class="card-body p-2">
+                <h4 class="mb-0" id="wiUnchanged">-</h4><small class="text-muted">Unchanged</small>
+              </div></div>
+            </div>
+          </div>
+          <!-- Direction Breakdown -->
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <div class="d-flex justify-content-around text-center" style="font-size: 13px;">
+                <div><span class="badge badge-success" style="font-size: 18px;" id="wiNewlyRepriced">0</span><br><small>Newly Repriced</small></div>
+                <div><span class="badge badge-danger" style="font-size: 18px;" id="wiNoLonger">0</span><br><small>No Longer Repriced</small></div>
+                <div><span class="badge badge-warning" style="font-size: 18px;" id="wiHigher">0</span><br><small>Priced Higher</small></div>
+                <div><span class="badge badge-info" style="font-size: 18px;" id="wiLower">0</span><br><small>Priced Lower</small></div>
+              </div>
+            </div>
+          </div>
+          <!-- Samples -->
+          <div id="wiSamplesSection" style="display:none;">
+            <h6>Samples <span id="wiSamplesCount" class="text-muted"></span></h6>
+            <div style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px;">
+              <table class="table table-sm mb-0" style="font-size: 12px; border-collapse: separate; border-spacing: 0;">
+                <thead>
+                  <tr>
+                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">MpId</th>
+                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Vendor</th>
+                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Qty</th>
+                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Original Result</th>
+                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Original Price</th>
+                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Modified Result</th>
+                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Modified Price</th>
+                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Delta</th>
+                  </tr>
+                </thead>
+                <tbody id="wiSamplesBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -247,8 +494,10 @@
     btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>&nbsp;Running...';
   });
 
-  // View Source button handler
+  // API base URL
   var API_BASE = '<%= typeof apiBaseUrl !== "undefined" ? apiBaseUrl : "" %>';
+
+  // View Source button handler
   document.querySelectorAll('.btn-view-source').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var sourcePath = this.getAttribute('data-source-path');
@@ -274,4 +523,376 @@
         });
     });
   });
+
+  // ═══════ BACKTEST FUNCTIONS ═══════
+
+  // Set default dates (7 days ago → today) for both sections
+  (function initBacktestDates() {
+    var today = new Date().toISOString().split('T')[0];
+    var weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    var weekAgoStr = weekAgo.toISOString().split('T')[0];
+    document.getElementById('regDateFrom').value = weekAgoStr;
+    document.getElementById('regDateTo').value = today;
+    document.getElementById('wiDateFrom').value = weekAgoStr;
+    document.getElementById('wiDateTo').value = today;
+  })();
+
+  function setButtonLoading(btn, loading, originalHtml) {
+    if (loading) {
+      btn.disabled = true;
+      btn.dataset.originalHtml = btn.innerHTML;
+      btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>&nbsp;Running...';
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml || btn.dataset.originalHtml;
+    }
+  }
+
+  var VENDOR_NAMES = {};
+  function vendorLabel(id) { return id + '<br><small class="text-muted">' + (VENDOR_NAMES[id] || '') + '</small>'; }
+
+  function formatDelta(val) {
+    if (val == null) return 'N/A';
+    var n = Number(val);
+    var sign = n > 0 ? '+' : n < 0 ? '-' : '';
+    var color = n > 0 ? '#dc3545' : n < 0 ? '#28a745' : '#6c757d';
+    return '<span style="color: ' + color + '; font-weight: 600;">' + sign + '$' + Math.abs(n).toFixed(2) + '</span>';
+  }
+
+  function getFilterBody(prefix) {
+    var body = {
+      dateFrom: document.getElementById(prefix + 'DateFrom').value,
+      dateTo: document.getElementById(prefix + 'DateTo').value,
+      limit: parseInt(document.getElementById(prefix + 'Limit').value) || 200,
+    };
+    var mpIds = document.getElementById(prefix + 'MpIds').value.trim();
+    if (mpIds) body.mpIds = mpIds;
+    var vendorIds = document.getElementById(prefix + 'VendorIds').value.trim();
+    if (vendorIds) body.vendorIds = vendorIds;
+    var cronName = document.getElementById(prefix + 'CronName').value.trim();
+    if (cronName) body.cronName = cronName;
+    return body;
+  }
+
+  function runRegression() {
+    var btn = document.getElementById('btnRegression');
+    setButtonLoading(btn, true);
+    document.getElementById('regressionResults').style.display = 'none';
+
+    fetch(API_BASE + '/backtest/regression', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(getFilterBody('reg')),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error) {
+        alert('Regression error: ' + data.error);
+        setButtonLoading(btn, false, '<i class="fa fa-play"></i>&nbsp;Run Regression');
+        return;
+      }
+      if (data.vendorNames) VENDOR_NAMES = data.vendorNames;
+      // Populate summary cards
+      document.getElementById('regTotal').textContent = data.total + ' products';
+      document.getElementById('regMatches').textContent = data.matches;
+      var rate = (data.matchRate * 100).toFixed(1) + '%';
+      document.getElementById('regMatchRate').textContent = rate;
+      document.getElementById('regMatchRate').className = 'mb-0 ' + (data.matchRate >= 0.95 ? 'text-success' : 'text-danger');
+      var rateCard = document.getElementById('regMatchRateCard');
+      rateCard.style.borderLeft = '4px solid ' + (data.matchRate >= 0.95 ? '#28a745' : '#dc3545');
+      document.getElementById('regTime').textContent = (data.executionTimeMs / 1000).toFixed(1) + 's';
+
+      // Product cards
+      var productsSection = document.getElementById('regProductsSection');
+      var container = document.getElementById('regProductsContainer');
+      container.innerHTML = '';
+
+      if (data.products && data.products.length > 0) {
+        document.getElementById('regProductsCount').textContent = '(' + data.products.length + ' products)';
+
+        for (var i = 0; i < data.products.length; i++) {
+          var p = data.products[i];
+          var statusColor = p.isMatch ? '#28a745' : '#dc3545';
+          var statusIcon = p.isMatch ? 'fa-check-circle' : 'fa-times-circle';
+          var statusText = p.isMatch ? 'MATCH' : 'DIFF';
+          var ts = p.timestamp ? new Date(p.timestamp).toLocaleString() : '';
+
+          var card = document.createElement('div');
+          card.className = 'card mb-2';
+          card.style.borderLeft = '4px solid ' + statusColor;
+          card.style.fontSize = '12px';
+
+          // Header (clickable to expand/collapse)
+          var header = document.createElement('div');
+          header.className = 'card-header p-2 d-flex justify-content-between align-items-center';
+          header.style.cursor = 'pointer';
+          header.style.background = '#f8f9fa';
+          header.innerHTML =
+            '<span>' +
+              '<i class="fa ' + statusIcon + '" style="color:' + statusColor + '"></i>&nbsp;' +
+              '<strong>MpId: ' + p.mpId + '</strong>' +
+              '&nbsp;&nbsp;<span class="text-muted">' + ts + '</span>' +
+              '&nbsp;&nbsp;<span class="badge" style="background:' + statusColor + ';color:#fff">' + statusText + '</span>' +
+              '&nbsp;&nbsp;<span class="text-muted">' + p.vendors.length + ' vendor(s)</span>' +
+            '</span>' +
+            '<i class="fa fa-chevron-down text-muted"></i>';
+
+          var bodyId = 'regProduct_' + i;
+          header.setAttribute('data-toggle-id', bodyId);
+          header.onclick = function() {
+            var tgt = document.getElementById(this.getAttribute('data-toggle-id'));
+            var chevron = this.querySelector('.fa-chevron-down, .fa-chevron-up');
+            if (tgt.style.display === 'none') {
+              tgt.style.display = 'block';
+              if (chevron) { chevron.className = chevron.className.replace('fa-chevron-down', 'fa-chevron-up'); }
+            } else {
+              tgt.style.display = 'none';
+              if (chevron) { chevron.className = chevron.className.replace('fa-chevron-up', 'fa-chevron-down'); }
+            }
+          };
+
+          // Body (collapsed by default for matches, expanded for diffs)
+          var body = document.createElement('div');
+          body.id = bodyId;
+          body.className = 'card-body p-2';
+          body.style.display = p.isMatch ? 'none' : 'block';
+
+          // Market snapshot table
+          var marketHtml =
+            '<h6 class="mb-1" style="font-size:11px"><i class="fa fa-globe"></i>&nbsp;Market Snapshot <span class="text-muted">(' + p.market.length + ' vendors, sorted by total price)</span></h6>' +
+            '<table class="table table-sm mb-2" style="font-size:11px; border-collapse:separate; border-spacing:0;">' +
+            '<thead><tr>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">#</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Vendor</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Unit Price</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Shipping</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Total</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Badge</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">In Stock</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Inventory</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Free Ship @</th>' +
+            '</tr></thead><tbody>';
+
+          for (var m = 0; m < p.market.length; m++) {
+            var mv = p.market[m];
+            var rowStyle = mv.isOwnVendor ? 'background:#fff3cd;font-weight:600;' : '';
+            var vName = mv.vendorName + (mv.isOwnVendor ? ' *' : '');
+            var badgeLabel = mv.badgeName ? mv.badgeName : '-';
+            marketHtml +=
+              '<tr style="' + rowStyle + '">' +
+              '<td style="padding:3px 6px;">' + (m + 1) + '</td>' +
+              '<td style="padding:3px 6px;">' + vName + '</td>' +
+              '<td style="padding:3px 6px;">' + (mv.unitPrice != null ? '$' + Number(mv.unitPrice).toFixed(2) : 'N/A') + '</td>' +
+              '<td style="padding:3px 6px;">' + (mv.shipping != null ? '$' + Number(mv.shipping).toFixed(2) : 'Free') + '</td>' +
+              '<td style="padding:3px 6px;font-weight:600;">' + (mv.totalPrice != null ? '$' + Number(mv.totalPrice).toFixed(2) : 'N/A') + '</td>' +
+              '<td style="padding:3px 6px;">' + badgeLabel + '</td>' +
+              '<td style="padding:3px 6px;">' + (mv.inStock ? '<span class="text-success">Yes</span>' : '<span class="text-danger">No</span>') + '</td>' +
+              '<td style="padding:3px 6px;">' + (mv.inventory != null ? mv.inventory : '-') + '</td>' +
+              '<td style="padding:3px 6px;">' + (mv.freeShippingThreshold != null ? '$' + Number(mv.freeShippingThreshold).toFixed(0) : '-') + '</td>' +
+              '</tr>';
+          }
+          marketHtml += '</tbody></table>';
+
+          // Decisions table
+          var decisionsHtml =
+            '<h6 class="mb-1" style="font-size:11px"><i class="fa fa-balance-scale"></i>&nbsp;Decisions (V1 vs V2)</h6>' +
+            '<table class="table table-sm mb-0" style="font-size:11px; border-collapse:separate; border-spacing:0;">' +
+            '<thead><tr>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Vendor</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Existing Price</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Position</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">V1 Result</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">V1 Price</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">V1 Comment</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">V2 Result</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">V2 Price</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">V2 Comment</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Delta</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Status</th>' +
+            '</tr></thead><tbody>';
+
+          for (var v = 0; v < p.vendors.length; v++) {
+            var vd = p.vendors[v];
+            var rowBg = vd.isMatch ? '' : 'background:#fff0f0;';
+            var matchBadge = vd.isMatch
+              ? '<span class="text-success"><i class="fa fa-check"></i></span>'
+              : '<span class="text-danger"><i class="fa fa-times"></i></span>';
+            decisionsHtml +=
+              '<tr style="' + rowBg + '">' +
+              '<td style="padding:3px 6px;">' + vendorLabel(vd.vendorId) + '</td>' +
+              '<td style="padding:3px 6px;">' + (vd.existingPrice != null ? '$' + Number(vd.existingPrice).toFixed(2) : 'N/A') + '</td>' +
+              '<td style="padding:3px 6px;">' + (vd.position != null ? vd.position : 'N/A') + '</td>' +
+              '<td style="padding:3px 6px;">' + vd.v1.algoResult + '</td>' +
+              '<td style="padding:3px 6px;">' + (vd.v1.suggestedPrice != null ? '$' + Number(vd.v1.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
+              '<td style="padding:3px 6px;max-width:180px;word-break:break-word;" title="' + (vd.v1.comment || '').replace(/"/g, '&quot;') + '">' + (vd.v1.comment || '-') + '</td>' +
+              '<td style="padding:3px 6px;">' + vd.v2.algoResult + '</td>' +
+              '<td style="padding:3px 6px;">' + (vd.v2.suggestedPrice != null ? '$' + Number(vd.v2.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
+              '<td style="padding:3px 6px;max-width:180px;word-break:break-word;" title="' + (vd.v2.comment || '').replace(/"/g, '&quot;') + '">' + (vd.v2.comment || '-') + '</td>' +
+              '<td style="padding:3px 6px;">' + formatDelta(vd.priceDelta) + '</td>' +
+              '<td style="padding:3px 6px;">' + matchBadge + '</td>' +
+              '</tr>';
+          }
+          decisionsHtml += '</tbody></table>';
+
+          // Algo settings per vendor
+          var settingsHtml =
+            '<h6 class="mb-1 mt-2" style="font-size:11px"><i class="fa fa-cog"></i>&nbsp;Algo Settings (per vendor)</h6>' +
+            '<table class="table table-sm mb-0" style="font-size:11px; border-collapse:separate; border-spacing:0;">' +
+            '<thead><tr>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Vendor</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Enabled</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Direction</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Floor</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Max</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Badge</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Strategy</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Up %</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Down %</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Keep Pos</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Sisters</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Excluded</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">All Vendors</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Handling</th>' +
+              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Inv Threshold</th>' +
+            '</tr></thead><tbody>';
+
+          for (var sv = 0; sv < p.vendors.length; sv++) {
+            var vds = p.vendors[sv];
+            var st = vds.settings;
+            var enColor = st.enabled ? 'text-success' : 'text-danger';
+            settingsHtml +=
+              '<tr>' +
+              '<td style="padding:3px 6px;">' + vendorLabel(vds.vendorId) + '</td>' +
+              '<td style="padding:3px 6px;" class="' + enColor + '">' + (st.enabled ? 'Yes' : 'No') + '</td>' +
+              '<td style="padding:3px 6px;">' + st.up_down + '</td>' +
+              '<td style="padding:3px 6px;">$' + Number(st.floor_price).toFixed(2) + '</td>' +
+              '<td style="padding:3px 6px;">$' + Number(st.max_price).toFixed(2) + '</td>' +
+              '<td style="padding:3px 6px;">' + st.badge_indicator + '</td>' +
+              '<td style="padding:3px 6px;">' + st.price_strategy + '</td>' +
+              '<td style="padding:3px 6px;">' + (st.reprice_up_percentage >= 0 ? st.reprice_up_percentage + '%' : 'unlimited') + '</td>' +
+              '<td style="padding:3px 6px;">' + (st.reprice_down_percentage >= 0 ? st.reprice_down_percentage + '%' : 'unlimited') + '</td>' +
+              '<td style="padding:3px 6px;">' + (st.keep_position ? 'Yes' : 'No') + '</td>' +
+              '<td style="padding:3px 6px;">' + (st.sister_vendor_ids || '-') + '</td>' +
+              '<td style="padding:3px 6px;">' + (st.exclude_vendors || '-') + '</td>' +
+              '<td style="padding:3px 6px;">' + (st.compete_with_all_vendors ? 'Yes' : 'No') + '</td>' +
+              '<td style="padding:3px 6px;">' + st.handling_time_group + '</td>' +
+              '<td style="padding:3px 6px;">' + st.inventory_competition_threshold + '</td>' +
+              '</tr>';
+          }
+          settingsHtml += '</tbody></table>';
+
+          body.innerHTML = marketHtml + decisionsHtml + settingsHtml;
+          card.appendChild(header);
+          card.appendChild(body);
+          container.appendChild(card);
+        }
+        productsSection.style.display = 'block';
+      } else {
+        productsSection.style.display = 'none';
+      }
+
+      document.getElementById('regressionResults').style.display = 'block';
+      setButtonLoading(btn, false, '<i class="fa fa-play"></i>&nbsp;Run Regression');
+    })
+    .catch(function(err) {
+      alert('Request failed: ' + err.message);
+      setButtonLoading(btn, false, '<i class="fa fa-play"></i>&nbsp;Run Regression');
+    });
+  }
+
+  function runWhatIf() {
+    var btn = document.getElementById('btnWhatIf');
+    setButtonLoading(btn, true);
+    document.getElementById('whatIfResults').style.display = 'none';
+
+    // Build overrides from form (only include non-empty fields)
+    var overrides = {};
+    var upDown = document.getElementById('wiUpDown').value;
+    if (upDown) overrides.up_down = upDown;
+    var floor = document.getElementById('wiFloorPrice').value;
+    if (floor !== '') overrides.floor_price = parseFloat(floor);
+    var max = document.getElementById('wiMaxPrice').value;
+    if (max !== '') overrides.max_price = parseFloat(max);
+    var strategy = document.getElementById('wiPriceStrategy').value;
+    if (strategy) overrides.price_strategy = strategy;
+    var upPct = document.getElementById('wiUpPct').value;
+    if (upPct !== '') overrides.reprice_up_percentage = parseFloat(upPct);
+    var downPct = document.getElementById('wiDownPct').value;
+    if (downPct !== '') overrides.reprice_down_percentage = parseFloat(downPct);
+    var badge = document.getElementById('wiBadge').value;
+    if (badge) overrides.badge_indicator = badge;
+    var handling = document.getElementById('wiHandling').value;
+    if (handling) overrides.handling_time_group = handling;
+    if (document.getElementById('wiFloorCompete').checked) overrides.floor_compete_with_next = true;
+    if (document.getElementById('wiCompeteAll').checked) overrides.compete_with_all_vendors = true;
+    if (document.getElementById('wiSuppressPB').checked) overrides.suppress_price_break = true;
+
+    if (Object.keys(overrides).length === 0) {
+      alert('Select at least one override to run what-if analysis.');
+      setButtonLoading(btn, false, '<i class="fa fa-play"></i>&nbsp;Run What-If');
+      return;
+    }
+
+    var body = getFilterBody('wi');
+    body.overrides = overrides;
+
+    fetch(API_BASE + '/backtest/what-if', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error) {
+        alert('What-if error: ' + data.error);
+        setButtonLoading(btn, false, '<i class="fa fa-play"></i>&nbsp;Run What-If');
+        return;
+      }
+      if (data.vendorNames) VENDOR_NAMES = data.vendorNames;
+      // Summary
+      document.getElementById('wiTotal').textContent = data.total;
+      document.getElementById('wiChanged').textContent = data.pricesChanged + ' (' + (data.total > 0 ? ((data.pricesChanged / data.total) * 100).toFixed(1) : 0) + '%)';
+      document.getElementById('wiAvgDelta').textContent = '$' + Number(data.avgPriceDelta || 0).toFixed(4);
+      document.getElementById('wiUnchanged').textContent = data.directionBreakdown.unchanged;
+
+      // Direction breakdown
+      document.getElementById('wiNewlyRepriced').textContent = data.directionBreakdown.newlyRepriced;
+      document.getElementById('wiNoLonger').textContent = data.directionBreakdown.noLongerRepriced;
+      document.getElementById('wiHigher').textContent = data.directionBreakdown.pricedHigher;
+      document.getElementById('wiLower').textContent = data.directionBreakdown.pricedLower;
+
+      // Samples table
+      var samplesSection = document.getElementById('wiSamplesSection');
+      if (data.samples && data.samples.length > 0) {
+        document.getElementById('wiSamplesCount').textContent = '(first ' + data.samples.length + ')';
+        var tbody = document.getElementById('wiSamplesBody');
+        tbody.innerHTML = '';
+        for (var i = 0; i < data.samples.length; i++) {
+          var s = data.samples[i];
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td>' + s.mpId + '</td>' +
+            '<td>' + vendorLabel(s.vendorId) + '</td>' +
+            '<td>' + s.quantity + '</td>' +
+            '<td>' + s.original.algoResult + '</td>' +
+            '<td>' + (s.original.suggestedPrice != null ? '$' + Number(s.original.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
+            '<td>' + s.modified.algoResult + '</td>' +
+            '<td>' + (s.modified.suggestedPrice != null ? '$' + Number(s.modified.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
+            '<td>' + formatDelta(s.priceDelta) + '</td>';
+          tbody.appendChild(tr);
+        }
+        samplesSection.style.display = 'block';
+      } else {
+        samplesSection.style.display = 'none';
+      }
+
+      document.getElementById('whatIfResults').style.display = 'block';
+      setButtonLoading(btn, false, '<i class="fa fa-play"></i>&nbsp;Run What-If');
+    })
+    .catch(function(err) {
+      alert('Request failed: ' + err.message);
+      setButtonLoading(btn, false, '<i class="fa fa-play"></i>&nbsp;Run What-If');
+    });
+  }
 </script>

@@ -10,7 +10,7 @@ import { BacktestRecord } from "./types";
  * All own vendor IDs in the system.
  * Mirrors utility/reprice-algo/v2/utility.ts -> getAllOwnVendorIds()
  */
-const ALL_OWN_VENDOR_IDS: number[] = [VendorId.TRADENT, VendorId.FRONTIER, VendorId.MVP, VendorId.TOPDENT, VendorId.FIRSTDENT, VendorId.TRIAD, VendorId.BITESUPPLY];
+export const ALL_OWN_VENDOR_IDS: number[] = [VendorId.TRADENT, VendorId.FRONTIER, VendorId.MVP, VendorId.TOPDENT, VendorId.FIRSTDENT, VendorId.TRIAD, VendorId.BITESUPPLY];
 
 export interface ReplayResult {
   mpId: number;

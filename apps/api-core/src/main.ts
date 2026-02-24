@@ -29,6 +29,7 @@ import { initializeThresholdScraping } from "./utility/reprice-algo/v2/threshold
 import { startMiniErpCronLogic } from "./controller/mini-erp-cron/start-cron";
 import { minErpCronController } from "./controller/mini-erp-cron";
 import { testsController as testsCtrl } from "./controller/tests";
+import { backtestController } from "./controller/backtest";
 
 process.on("uncaughtException", (err) => {
   console.error("Uncaught Exception:", err);
@@ -77,6 +78,7 @@ nodeApp.use(appLogController);
 nodeApp.use(scrapeCronController);
 nodeApp.use(minErpCronController);
 nodeApp.use(testsCtrl);
+nodeApp.use(backtestController);
 
 // Health check endpoint
 nodeApp.get("/health", (req: Request, res: Response) => {

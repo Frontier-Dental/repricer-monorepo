@@ -81,6 +81,9 @@ export interface BacktestRecord {
     qBreakValid: boolean;
     lowestPrice: number | null;
     lowestVendorId: number | null;
+    existingPrice: number | null;
+    position: number | null;
+    lowestVendor: string | null;
   };
 }
 
@@ -92,6 +95,11 @@ export interface BacktestDiff {
   vendorId: number;
   quantity: number;
   timestamp: Date;
+  /** Market context at decision time */
+  existingPrice: number | null;
+  position: number | null;
+  lowestPrice: number | null;
+  lowestVendor: string | null;
   historical: {
     algoResult: string;
     suggestedPrice: number | null;
@@ -111,6 +119,64 @@ export interface BacktestResult {
   diffs: BacktestDiff[];
   matchRate: number;
   executionTimeMs: number;
+}
+
+// ─── Product-level regression output ─────────────────────────────────
+
+export interface ProductBacktestResult {
+  total: number;
+  matches: number;
+  products: ProductDiff[];
+  matchRate: number;
+  executionTimeMs: number;
+}
+
+export interface ProductDiff {
+  mpId: number;
+  timestamp: Date;
+  cronName: string;
+  market: MarketVendor[];
+  vendors: VendorDecision[];
+  isMatch: boolean;
+}
+
+export interface MarketVendor {
+  vendorId: number;
+  vendorName: string;
+  unitPrice: number | null;
+  shipping: number | null;
+  totalPrice: number | null;
+  badgeName: string | null;
+  inStock: boolean;
+  inventory: number | null;
+  freeShippingThreshold: number | null;
+  isOwnVendor: boolean;
+}
+
+export interface VendorDecision {
+  vendorId: number;
+  existingPrice: number | null;
+  position: number | null;
+  v1: { algoResult: string; suggestedPrice: number | null; comment: string };
+  v2: { algoResult: string; suggestedPrice: number | null; comment: string };
+  priceDelta: number | null;
+  isMatch: boolean;
+  settings: {
+    up_down: string;
+    floor_price: number;
+    max_price: number;
+    badge_indicator: string;
+    price_strategy: string;
+    reprice_up_percentage: number;
+    reprice_down_percentage: number;
+    keep_position: boolean;
+    sister_vendor_ids: string;
+    exclude_vendors: string;
+    compete_with_all_vendors: boolean;
+    handling_time_group: string;
+    inventory_competition_threshold: number;
+    enabled: boolean;
+  };
 }
 
 // ─── What-if backtest output ───────────────────────────────────────────

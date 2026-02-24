@@ -1,5 +1,5 @@
-import { BacktestRecord, BacktestResult, BacktestDiff } from "./types";
-import { replayRecord, ReplayResult } from "./replay-algo";
+import { BacktestRecord, BacktestResult, BacktestDiff, ProductBacktestResult, ProductDiff, MarketVendor, VendorDecision } from "./types";
+import { replayRecord, ReplayResult, ALL_OWN_VENDOR_IDS } from "./replay-algo";
 
 /**
  * Run a regression backtest: replay each record through the current algo
@@ -24,24 +24,33 @@ export async function runRegressionBacktest(records: BacktestRecord[]): Promise<
     const matchingResult = replayResults.find((r) => r.vendorId === record.vendorId && r.quantity === record.quantity);
 
     if (!matchingResult) {
-      diffs.push({
-        recordId: record.recordId,
-        mpId: record.mpId,
-        vendorId: record.vendorId,
-        quantity: record.quantity,
-        timestamp: record.timestamp,
-        historical: {
-          algoResult: record.historical.algoResult,
-          suggestedPrice: record.historical.suggestedPrice,
-          comment: record.historical.comment,
-        },
-        current: {
-          algoResult: "NO_SOLUTION",
-          suggestedPrice: null,
-          comment: "Replay did not produce a solution for this vendor+quantity.",
-        },
-        priceDelta: null,
-      });
+      // If historical was also NO_SOLUTION, this is a match
+      if (normalizeAlgoResult(record.historical.algoResult) === "NO_SOLUTION") {
+        matches++;
+      } else {
+        diffs.push({
+          recordId: record.recordId,
+          mpId: record.mpId,
+          vendorId: record.vendorId,
+          quantity: record.quantity,
+          timestamp: record.timestamp,
+          existingPrice: record.historical.existingPrice,
+          position: record.historical.position,
+          lowestPrice: record.historical.lowestPrice,
+          lowestVendor: record.historical.lowestVendor,
+          historical: {
+            algoResult: record.historical.algoResult,
+            suggestedPrice: record.historical.suggestedPrice,
+            comment: record.historical.comment,
+          },
+          current: {
+            algoResult: "NO_SOLUTION",
+            suggestedPrice: null,
+            comment: "Replay did not produce a solution for this vendor+quantity.",
+          },
+          priceDelta: null,
+        });
+      }
       continue;
     }
 
@@ -58,6 +67,10 @@ export async function runRegressionBacktest(records: BacktestRecord[]): Promise<
         vendorId: record.vendorId,
         quantity: record.quantity,
         timestamp: record.timestamp,
+        existingPrice: record.historical.existingPrice,
+        position: record.historical.position,
+        lowestPrice: record.historical.lowestPrice,
+        lowestVendor: record.historical.lowestVendor,
         historical: {
           algoResult: record.historical.algoResult,
           suggestedPrice: record.historical.suggestedPrice,
@@ -83,6 +96,136 @@ export async function runRegressionBacktest(records: BacktestRecord[]): Promise<
     diffs,
     matchRate,
     executionTimeMs,
+  };
+}
+
+// ─── Product-level regression ─────────────────────────────────────────
+
+/**
+ * Run a product-level regression: group records by product, build market
+ * snapshot from API response, compare V1 vs V2 decisions for each vendor.
+ */
+export async function runProductRegressionBacktest(records: BacktestRecord[]): Promise<ProductBacktestResult> {
+  const startTime = Date.now();
+
+  // Group records by mpId + 2-minute timestamp bucket
+  const groups = new Map<string, BacktestRecord[]>();
+  for (const record of records) {
+    const bucket = Math.floor(new Date(record.timestamp).getTime() / 120_000);
+    const key = `${record.mpId}:${bucket}`;
+    const group = groups.get(key) ?? [];
+    group.push(record);
+    groups.set(key, group);
+  }
+
+  const products: ProductDiff[] = [];
+  let matches = 0;
+
+  for (const [, group] of groups) {
+    const first = group[0];
+
+    // Build market snapshot from API response
+    const market: MarketVendor[] = first.apiResponse
+      .map((p) => {
+        const vid = typeof p.vendorId === "string" ? parseInt(p.vendorId, 10) : p.vendorId;
+        const q1Price = Array.isArray(p.priceBreaks) && p.priceBreaks.length > 0 ? p.priceBreaks[0].unitPrice : null;
+        const shipping = p.standardShipping ?? null;
+        const totalPrice = q1Price != null ? q1Price + (shipping ?? 0) : null;
+        return {
+          vendorId: vid,
+          vendorName: p.vendorName || String(vid),
+          unitPrice: q1Price,
+          shipping,
+          totalPrice,
+          badgeName: p.badgeName ?? null,
+          inStock: p.inStock,
+          inventory: p.inventory ?? null,
+          freeShippingThreshold: p.freeShippingThreshold ?? null,
+          isOwnVendor: ALL_OWN_VENDOR_IDS.includes(vid),
+        };
+      })
+      .sort((a, b) => (a.totalPrice ?? 999999) - (b.totalPrice ?? 999999));
+
+    // Build vendor decisions: pair V1 (from historical records) with V2 (from replay)
+    const vendors: VendorDecision[] = [];
+    let allMatch = true;
+
+    for (const record of group) {
+      // V1 decision from historical
+      const v1 = {
+        algoResult: record.historical.algoResult,
+        suggestedPrice: record.historical.suggestedPrice,
+        comment: record.historical.comment,
+      };
+
+      // V2 decision from replay
+      const replayResults = replayRecord(record);
+      const matchingReplay = replayResults.find((r) => r.vendorId === record.vendorId && r.quantity === record.quantity);
+
+      const v2 = matchingReplay ? { algoResult: matchingReplay.algoResult, suggestedPrice: matchingReplay.suggestedPrice, comment: matchingReplay.comment } : { algoResult: "NO_SOLUTION", suggestedPrice: null as number | null, comment: "No replay result" };
+
+      // Compare
+      const v1Norm = normalizeAlgoResult(v1.algoResult);
+      const v2Norm = normalizeAlgoResult(v2.algoResult);
+      let isVendorMatch = v1Norm === v2Norm;
+      if (isVendorMatch && v1.suggestedPrice !== null && v2.suggestedPrice !== null) {
+        isVendorMatch = Math.abs(v1.suggestedPrice - v2.suggestedPrice) <= 0.01;
+      }
+      if (isVendorMatch && (v1.suggestedPrice === null) !== (v2.suggestedPrice === null)) {
+        isVendorMatch = false;
+      }
+
+      if (!isVendorMatch) allMatch = false;
+
+      const s = record.vendorSettings;
+      vendors.push({
+        vendorId: record.vendorId,
+        existingPrice: record.historical.existingPrice,
+        position: record.historical.position,
+        v1,
+        v2,
+        priceDelta: computePriceDelta(v1.suggestedPrice, v2.suggestedPrice),
+        isMatch: isVendorMatch,
+        settings: {
+          up_down: String(s.up_down),
+          floor_price: s.floor_price,
+          max_price: s.max_price,
+          badge_indicator: String(s.badge_indicator),
+          price_strategy: String(s.price_strategy),
+          reprice_up_percentage: s.reprice_up_percentage,
+          reprice_down_percentage: s.reprice_down_percentage,
+          keep_position: s.keep_position,
+          sister_vendor_ids: s.sister_vendor_ids,
+          exclude_vendors: s.exclude_vendors,
+          compete_with_all_vendors: s.compete_with_all_vendors,
+          handling_time_group: String(s.handling_time_group),
+          inventory_competition_threshold: s.inventory_competition_threshold,
+          enabled: s.enabled,
+        },
+      });
+    }
+
+    if (allMatch) matches++;
+
+    products.push({
+      mpId: first.mpId,
+      timestamp: first.timestamp,
+      cronName: first.cronName,
+      market,
+      vendors,
+      isMatch: allMatch,
+    });
+  }
+
+  const total = products.length;
+  const matchRate = total > 0 ? matches / total : 1;
+
+  return {
+    total,
+    matches,
+    products,
+    matchRate,
+    executionTimeMs: Date.now() - startTime,
   };
 }
 
