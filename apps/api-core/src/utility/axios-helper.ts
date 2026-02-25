@@ -94,9 +94,6 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings, mpi
       case 3:
         responseData = await axiosRetryHelper.getScrappingResponse(_url, _.first(proxyConfigDetails), null);
         break;
-      case 4:
-        responseData = await brightDataHelper.fetchDataV2(_url, _.first(proxyConfigDetails));
-        break;
       case 5:
         responseData = await axiosRetryHelper.getScrapingBeeResponse(_url, _.first(proxyConfigDetails), null, true);
         break;

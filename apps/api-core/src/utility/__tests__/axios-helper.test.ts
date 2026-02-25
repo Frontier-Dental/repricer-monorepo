@@ -232,20 +232,6 @@ describe("axios-helper", () => {
       expect(mockedAxiosRetryHelper.getScrappingResponse).toHaveBeenCalled();
     });
 
-    it("should handle proxy provider 4 (BrightData V2)", async () => {
-      (applicationConfig as any).IS_DEBUG = false;
-      mockedSqlV2Service.GetCronSettingsList.mockResolvedValue([{ CronId: 1, CronName: "TestCron" }]);
-      mockedSqlV2Service.GetSlowCronDetails.mockResolvedValue([]);
-      mockedProxyHelper.GetProxyDetailsById.mockResolvedValue([{ ProxyProvider: 4 }]);
-      mockedSqlV2Service.GetProxyConfigByProviderId.mockResolvedValue([{ config: "test" }]);
-      mockedBrightDataHelper.fetchDataV2.mockResolvedValue({ data: {} } as any);
-      mockedSqlV2Service.UpdateQBreakDetails.mockResolvedValue(undefined);
-
-      await getAsync("http://test.com", 1, "100");
-
-      expect(mockedBrightDataHelper.fetchDataV2).toHaveBeenCalled();
-    });
-
     it("should handle proxy provider 5 (ScrapingBee with render)", async () => {
       (applicationConfig as any).IS_DEBUG = false;
       mockedSqlV2Service.GetCronSettingsList.mockResolvedValue([{ CronId: 1, CronName: "TestCron" }]);

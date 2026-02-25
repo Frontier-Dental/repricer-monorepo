@@ -25,7 +25,7 @@ jest.mock("../../config", () => ({
 import puppeteer from "puppeteer-core";
 import requestPromise from "request-promise";
 import * as proxySwitchHelper from "../../proxy-switch-helper";
-import { fetchData, fetchDataV2, fetchDataForDebug } from "../bright-data-helper";
+import { fetchData, fetchDataForDebug } from "../bright-data-helper";
 
 const mockedPuppeteer = puppeteer as jest.Mocked<typeof puppeteer>;
 const mockedRequestPromise = requestPromise as jest.MockedFunction<typeof requestPromise>;
@@ -265,145 +265,6 @@ describe("bright-data-helper", () => {
     });
   });
 
-  describe("fetchDataV2", () => {
-    describe("successful responses", () => {
-      it("should successfully fetch data using request-promise", async () => {
-        const mockResponse = '{"product": "test", "price": 99.99}';
-        mockedRequestPromise.mockResolvedValueOnce(mockResponse);
-
-        const result = await fetchDataV2(mockUrl, mockProxyDetails);
-
-        expect(result).toEqual({});
-        expect(mockedRequestPromise).toHaveBeenCalledWith({
-          url: mockUrl,
-          proxy: `${mockProxyDetails.userName}:${mockProxyDetails.password}@${mockProxyDetails.hostUrl}:${mockProxyDetails.port}`,
-          rejectUnauthorized: false,
-        });
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("SCRAPE : BrightData - Residential :"));
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("TimeTaken"));
-      });
-
-      it("should correctly construct proxy endpoint for request-promise", async () => {
-        const customProxyDetails = {
-          userName: "v2-user",
-          password: "v2-pass",
-          hostUrl: "https://v2-proxy.com",
-          port: "3128",
-          proxyProvider: "3",
-        };
-        mockedRequestPromise.mockResolvedValueOnce("response");
-
-        await fetchDataV2(mockUrl, customProxyDetails);
-
-        expect(mockedRequestPromise).toHaveBeenCalledWith({
-          url: mockUrl,
-          proxy: "v2-user:v2-pass@https://v2-proxy.com:3128",
-          rejectUnauthorized: false,
-        });
-      });
-
-      it("should handle empty response", async () => {
-        mockedRequestPromise.mockResolvedValueOnce("");
-
-        const result = await fetchDataV2(mockUrl, mockProxyDetails);
-
-        expect(result).toEqual({});
-      });
-
-      it("should handle null response", async () => {
-        mockedRequestPromise.mockResolvedValueOnce(null as any);
-
-        const result = await fetchDataV2(mockUrl, mockProxyDetails);
-
-        expect(result).toEqual({});
-      });
-
-      it("should always set rejectUnauthorized to false", async () => {
-        mockedRequestPromise.mockResolvedValueOnce("response");
-
-        await fetchDataV2(mockUrl, mockProxyDetails);
-
-        expect(mockedRequestPromise).toHaveBeenCalledWith(
-          expect.objectContaining({
-            rejectUnauthorized: false,
-          })
-        );
-      });
-    });
-
-    describe("error handling", () => {
-      it("should handle request-promise errors", async () => {
-        const requestError = new Error("Request failed");
-        mockedRequestPromise.mockRejectedValueOnce(requestError);
-
-        const result = await fetchDataV2(mockUrl, mockProxyDetails);
-
-        expect(result).toEqual({});
-        expect(mockedProxySwitchHelper.ExecuteCounter).toHaveBeenCalledWith(1);
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("BRIGHTDATA - Fetch Response Exception"));
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining(mockUrl));
-      });
-
-      it("should handle network timeout errors", async () => {
-        const timeoutError = { code: "ETIMEDOUT", message: "Request timeout" };
-        mockedRequestPromise.mockRejectedValueOnce(timeoutError);
-
-        const result = await fetchDataV2(mockUrl, mockProxyDetails);
-
-        expect(result).toEqual({});
-        expect(mockedProxySwitchHelper.ExecuteCounter).toHaveBeenCalledWith(1);
-      });
-
-      it("should handle proxy authentication errors", async () => {
-        const authError = { statusCode: 407, message: "Proxy authentication required" };
-        mockedRequestPromise.mockRejectedValueOnce(authError);
-
-        const result = await fetchDataV2(mockUrl, mockProxyDetails);
-
-        expect(result).toEqual({});
-        expect(mockedProxySwitchHelper.ExecuteCounter).toHaveBeenCalledWith(1);
-      });
-
-      it("should call ExecuteCounter with correct proxyProvider when error occurs", async () => {
-        const error = new Error("Test error");
-        mockedRequestPromise.mockRejectedValueOnce(error);
-
-        await fetchDataV2(mockUrl, { ...mockProxyDetails, proxyProvider: "7" });
-
-        expect(mockedProxySwitchHelper.ExecuteCounter).toHaveBeenCalledWith(7);
-      });
-
-      it("should log error details in exception handler", async () => {
-        const error = new Error("Detailed error message");
-        mockedRequestPromise.mockRejectedValueOnce(error);
-
-        await fetchDataV2(mockUrl, mockProxyDetails);
-
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("BRIGHTDATA - Fetch Response Exception"));
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("ERROR"));
-      });
-    });
-
-    describe("timing and logging", () => {
-      it("should log timing information after successful fetch", async () => {
-        mockedRequestPromise.mockResolvedValueOnce("response");
-
-        await fetchDataV2(mockUrl, mockProxyDetails);
-
-        expect(console.log).toHaveBeenCalledWith(expect.stringMatching(/SCRAPE : BrightData - Residential : .* \|\| TimeTaken  :  \d+\.\d{3} seconds/));
-      });
-
-      it("should include URL in log message", async () => {
-        const customUrl = "https://custom-v2-url.com/test";
-        mockedRequestPromise.mockResolvedValueOnce("response");
-
-        await fetchDataV2(customUrl, mockProxyDetails);
-
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining(customUrl));
-      });
-    });
-  });
-
   describe("fetchDataForDebug", () => {
     describe("successful responses", () => {
       it("should successfully fetch data and parse JSON from page body", async () => {
@@ -585,23 +446,6 @@ describe("bright-data-helper", () => {
           const timeValue = parseFloat(timeMatch[1]);
           expect(timeValue).toBeGreaterThanOrEqual(0);
           expect(timeValue).toBeLessThan(100); // Reasonable upper bound
-        }
-      }
-    });
-
-    it("should format timing correctly in fetchDataV2", async () => {
-      mockedRequestPromise.mockResolvedValueOnce("response");
-
-      await fetchDataV2(mockUrl, mockProxyDetails);
-
-      const logCall = (console.log as jest.Mock).mock.calls.find((call) => call[0].includes("TimeTaken"));
-      expect(logCall).toBeDefined();
-      if (logCall) {
-        const timeMatch = logCall[0].match(/TimeTaken  :  (\d+\.\d{3}) seconds/);
-        expect(timeMatch).toBeTruthy();
-        if (timeMatch) {
-          const timeValue = parseFloat(timeMatch[1]);
-          expect(timeValue).toBeGreaterThanOrEqual(0);
         }
       }
     });
