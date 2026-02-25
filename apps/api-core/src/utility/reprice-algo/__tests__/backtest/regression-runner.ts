@@ -1,5 +1,5 @@
 import { BacktestRecord, BacktestResult, BacktestDiff, ProductBacktestResult, ProductDiff, MarketVendor, VendorDecision } from "./types";
-import { replayRecord, ReplayResult, ALL_OWN_VENDOR_IDS } from "./replay-algo";
+import { replayRecord, replayRecordV1, ReplayResult, ALL_OWN_VENDOR_IDS } from "./replay-algo";
 
 /**
  * Run a regression backtest: replay each record through the current algo
@@ -103,7 +103,7 @@ export async function runRegressionBacktest(records: BacktestRecord[]): Promise<
 
 /**
  * Run a product-level regression: group records by product, build market
- * snapshot from API response, compare V1 vs V2 decisions for each vendor.
+ * snapshot from API response, compare historical vs current decisions for each vendor.
  */
 export async function runProductRegressionBacktest(records: BacktestRecord[]): Promise<ProductBacktestResult> {
   const startTime = Date.now();
@@ -120,6 +120,8 @@ export async function runProductRegressionBacktest(records: BacktestRecord[]): P
 
   const products: ProductDiff[] = [];
   let matches = 0;
+  let matchesV1 = 0;
+  let matchesV2 = 0;
 
   for (const [, group] of groups) {
     const first = group[0];
@@ -146,35 +148,36 @@ export async function runProductRegressionBacktest(records: BacktestRecord[]): P
       })
       .sort((a, b) => (a.totalPrice ?? 999999) - (b.totalPrice ?? 999999));
 
-    // Build vendor decisions: pair V1 (from historical records) with V2 (from replay)
+    // Build vendor decisions: three-way comparison (historical vs current V1 vs current V2)
     const vendors: VendorDecision[] = [];
     let allMatch = true;
+    let allMatchV1 = true;
+    let allMatchV2 = true;
 
     for (const record of group) {
-      // V1 decision from historical
-      const v1 = {
+      // Historical decision from DB
+      const hist = {
         algoResult: record.historical.algoResult,
         suggestedPrice: record.historical.suggestedPrice,
         comment: record.historical.comment,
       };
 
-      // V2 decision from replay
-      const replayResults = replayRecord(record);
-      const matchingReplay = replayResults.find((r) => r.vendorId === record.vendorId && r.quantity === record.quantity);
+      // Current V2 decision from replay
+      const replayV2Results = replayRecord(record);
+      const matchingV2 = replayV2Results.find((r) => r.vendorId === record.vendorId && r.quantity === record.quantity);
+      const currV2 = matchingV2 ? { algoResult: matchingV2.algoResult, suggestedPrice: matchingV2.suggestedPrice, comment: matchingV2.comment } : { algoResult: "NO_SOLUTION", suggestedPrice: null as number | null, comment: "No V2 replay result" };
 
-      const v2 = matchingReplay ? { algoResult: matchingReplay.algoResult, suggestedPrice: matchingReplay.suggestedPrice, comment: matchingReplay.comment } : { algoResult: "NO_SOLUTION", suggestedPrice: null as number | null, comment: "No replay result" };
+      // Current V1 decision from replay
+      const v1Result = await replayRecordV1(record);
+      const currV1: { algoResult: string; suggestedPrice: number | null; comment: string } | null = v1Result ? { algoResult: v1Result.algoResult, suggestedPrice: v1Result.suggestedPrice, comment: v1Result.comment } : null;
 
-      // Compare
-      const v1Norm = normalizeAlgoResult(v1.algoResult);
-      const v2Norm = normalizeAlgoResult(v2.algoResult);
-      let isVendorMatch = v1Norm === v2Norm;
-      if (isVendorMatch && v1.suggestedPrice !== null && v2.suggestedPrice !== null) {
-        isVendorMatch = Math.abs(v1.suggestedPrice - v2.suggestedPrice) <= 0.01;
-      }
-      if (isVendorMatch && (v1.suggestedPrice === null) !== (v2.suggestedPrice === null)) {
-        isVendorMatch = false;
-      }
+      // Compare V1 and V2 separately against historical
+      const isMatchV2 = compareDecision(hist, currV2);
+      const isMatchV1: boolean | null = currV1 ? compareDecision(hist, currV1) : null; // null = no V1 settings, N/A
+      const isVendorMatch = (isMatchV1 === null || isMatchV1) && isMatchV2;
 
+      if (isMatchV1 === false) allMatchV1 = false;
+      if (!isMatchV2) allMatchV2 = false;
       if (!isVendorMatch) allMatch = false;
 
       const s = record.vendorSettings;
@@ -182,9 +185,13 @@ export async function runProductRegressionBacktest(records: BacktestRecord[]): P
         vendorId: record.vendorId,
         existingPrice: record.historical.existingPrice,
         position: record.historical.position,
-        v1,
-        v2,
-        priceDelta: computePriceDelta(v1.suggestedPrice, v2.suggestedPrice),
+        historical: hist,
+        currentV1: currV1,
+        currentV2: currV2,
+        priceDeltaV1: currV1 ? computePriceDelta(hist.suggestedPrice, currV1.suggestedPrice) : null,
+        priceDeltaV2: computePriceDelta(hist.suggestedPrice, currV2.suggestedPrice),
+        isMatchV1,
+        isMatchV2,
         isMatch: isVendorMatch,
         settings: {
           up_down: String(s.up_down),
@@ -206,6 +213,8 @@ export async function runProductRegressionBacktest(records: BacktestRecord[]): P
     }
 
     if (allMatch) matches++;
+    if (allMatchV1) matchesV1++;
+    if (allMatchV2) matchesV2++;
 
     products.push({
       mpId: first.mpId,
@@ -219,17 +228,34 @@ export async function runProductRegressionBacktest(records: BacktestRecord[]): P
 
   const total = products.length;
   const matchRate = total > 0 ? matches / total : 1;
+  const matchRateV1 = total > 0 ? matchesV1 / total : 1;
+  const matchRateV2 = total > 0 ? matchesV2 / total : 1;
 
   return {
     total,
     matches,
+    matchesV1,
+    matchesV2,
     products,
     matchRate,
+    matchRateV1,
+    matchRateV2,
     executionTimeMs: Date.now() - startTime,
   };
 }
 
 // ─── Comparison logic ──────────────────────────────────────────────────
+
+function compareDecision(hist: { algoResult: string; suggestedPrice: number | null }, curr: { algoResult: string; suggestedPrice: number | null }): boolean {
+  const histNorm = normalizeAlgoResult(hist.algoResult);
+  const currNorm = normalizeAlgoResult(curr.algoResult);
+  if (histNorm !== currNorm) return false;
+  if (hist.suggestedPrice !== null && curr.suggestedPrice !== null) {
+    if (Math.abs(hist.suggestedPrice - curr.suggestedPrice) > 0.01) return false;
+  }
+  if ((hist.suggestedPrice === null) !== (curr.suggestedPrice === null)) return false;
+  return true;
+}
 
 function compareResults(record: BacktestRecord, replay: ReplayResult): boolean {
   // Primary comparison: AlgoResult must match

@@ -23,7 +23,7 @@ import * as buyBoxHelper from "../../../utility/buy-box-helper";
 import { findTinyProxyConfigByVendorId } from "../../mysql/tinyproxy-configs";
 import { updatePrice } from "../v2/wrapper";
 
-export async function repriceProduct(mpid: string, net32Products: Net32Product[], internalProduct: any, contextVendor: string) {
+export async function repriceProduct(mpid: string, net32Products: Net32Product[], internalProduct: any, contextVendor: string, options?: { dryRun?: boolean }) {
   let productItem = internalProduct;
 
   let result = net32Products;
@@ -44,6 +44,9 @@ export async function repriceProduct(mpid: string, net32Products: Net32Product[]
   let output = responseUtility.FilterActiveResponse(result, productItem);
 
   if (!ownProduct) {
+    if (options?.dryRun) {
+      return { cronResponse: null, priceUpdateResponse: null, historyIdentifier: null, repriceResult: new RepriceModel(mpid, null, productItem.productName, productItem.unitPrice, false, false, [], RepriceMessageEnum.IGNORE_NOT_FOUND_API), output, ownProduct: null, isDryRun: true } as any;
+    }
     return {
       cronResponse: new RepriceAsyncResponse(new RepriceModel(mpid, null, productItem.productName, productItem.unitPrice, false, false, [], RepriceMessageEnum.IGNORE_NOT_FOUND_API), output),
       priceUpdateResponse: null,
@@ -97,6 +100,9 @@ export async function repriceProduct(mpid: string, net32Products: Net32Product[]
   } else {
     ownVendorAvailableInStock = false;
     repriceResult = new RepriceModel(mpid, ownProduct, productItem.productName, productItem.unitPrice, false, false, [], RepriceMessageEnum.IGNORE_PRODUCT_INACTIVE);
+    if (options?.dryRun) {
+      return { cronResponse: null, priceUpdateResponse: null, historyIdentifier: null, repriceResult, output, ownProduct, isDryRun: true } as any;
+    }
   }
 
   let isNcForBuyBoxApplied = false;
@@ -213,6 +219,11 @@ export async function repriceProduct(mpid: string, net32Products: Net32Product[]
 
   // Align IsRepriced Field Based on Price Suggestion
   repriceResult = await Rule.AlignIsRepriced(repriceResult);
+
+  // Dry-run exit: return pricing decision without side effects
+  if (options?.dryRun) {
+    return { cronResponse: null, priceUpdateResponse: null, historyIdentifier: null, repriceResult, output, ownProduct, isDryRun: true } as any;
+  }
 
   //Update TriggeredByVendor
   await mySqlHelper.UpdateTriggeredByVendor(repriceResult, contextVendor, mpid);

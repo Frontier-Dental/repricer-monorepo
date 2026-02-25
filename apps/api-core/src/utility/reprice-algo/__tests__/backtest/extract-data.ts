@@ -3,7 +3,8 @@ import { BacktestRecord, ExtractOptions, HistoryApiResponseRow, V2AlgoResultRow 
 import { V2AlgoSettingsData } from "../../../../utility/mysql/v2-algo-settings";
 import { VendorThreshold } from "../../v2/shipping-threshold";
 import { Net32Product } from "../../../../types/net32";
-import { VendorIdLookup } from "@repricer-monorepo/shared";
+import { VendorId, VendorIdLookup } from "@repricer-monorepo/shared";
+import OwnVendorProductDetails from "../../../../model/user-models/custom-product";
 
 // ─── Database connection ───────────────────────────────────────────────
 
@@ -34,6 +35,53 @@ export async function destroyBacktestKnex(): Promise<void> {
     await _knex.destroy();
     _knex = null;
   }
+}
+
+// ─── V1 vendor detail table mapping ─────────────────────────────────────
+
+function getVendorDetailTableName(vendorId: number): string | null {
+  switch (vendorId) {
+    case VendorId.TRADENT:
+      return "table_tradentDetails";
+    case VendorId.FRONTIER:
+      return "table_frontierDetails";
+    case VendorId.MVP:
+      return "table_mvpDetails";
+    case VendorId.TOPDENT:
+      return "table_topDentDetails";
+    case VendorId.FIRSTDENT:
+      return "table_firstDentDetails";
+    case VendorId.TRIAD:
+      return "table_triadDetails";
+    case VendorId.BITESUPPLY:
+      return "table_biteSupplyDetails";
+    default:
+      return null;
+  }
+}
+
+async function fetchV1Settings(db: Knex, uniquePairs: string[]): Promise<Map<string, any>> {
+  const cache = new Map<string, any>();
+  for (const pair of uniquePairs) {
+    const [mpId, vendorId] = pair.split(":").map(Number);
+    const tableName = getVendorDetailTableName(vendorId);
+    if (!tableName) {
+      cache.set(pair, null);
+      continue;
+    }
+    try {
+      const row = await db(tableName).where("MpId", mpId).first();
+      if (row) {
+        cache.set(pair, new OwnVendorProductDetails(row, ""));
+      } else {
+        cache.set(pair, null);
+      }
+    } catch (err) {
+      console.warn(`[backtest] Error fetching V1 settings for ${pair} from ${tableName}:`, err);
+      cache.set(pair, null);
+    }
+  }
+  return cache;
 }
 
 // ─── Main extraction function ──────────────────────────────────────────
@@ -125,6 +173,9 @@ async function extractFromV2AlgoResults(db: Knex, options: ExtractOptions): Prom
     }
   }
 
+  // Step 3b: Fetch V1 settings from per-vendor detail tables
+  const v1SettingsCache = await fetchV1Settings(db, uniquePairs);
+
   // Step 4: Fetch vendor thresholds for all vendor IDs seen in API responses
   const allVendorIdsInResponses = new Set<number>();
   for (const products of apiResponseCache.values()) {
@@ -181,6 +232,7 @@ async function extractFromV2AlgoResults(db: Knex, options: ExtractOptions): Prom
       apiResponse,
       vendorSettings,
       vendorThresholds,
+      v1Settings: v1SettingsCache.get(settingsKey) ?? null,
       historical: {
         algoResult: row.result,
         suggestedPrice: row.suggested_price,
@@ -246,6 +298,18 @@ async function extractFromTableHistory(db: Knex, options: ExtractOptions): Promi
         vendorSettings = createDefaultSettings(row.MpId, vendorId);
       }
 
+      // Fetch V1 settings
+      let v1Settings: any = null;
+      const v1TableName = getVendorDetailTableName(vendorId);
+      if (v1TableName) {
+        try {
+          const v1Row = await db(v1TableName).where("MpId", row.MpId).first();
+          if (v1Row) v1Settings = new OwnVendorProductDetails(v1Row, "");
+        } catch {
+          /* continue without V1 settings */
+        }
+      }
+
       // Fetch thresholds
       const vendorIdsInResponse = apiResponse.map((p) => (typeof p.vendorId === "string" ? parseInt(p.vendorId, 10) : p.vendorId));
       let vendorThresholds: VendorThreshold[] = [];
@@ -271,6 +335,7 @@ async function extractFromTableHistory(db: Knex, options: ExtractOptions): Promi
         apiResponse,
         vendorSettings,
         vendorThresholds,
+        v1Settings,
         historical: {
           algoResult: parseV1AlgoResult(row.RepriceComment),
           suggestedPrice: row.SuggestedPrice ? parseFloat(row.SuggestedPrice) : null,

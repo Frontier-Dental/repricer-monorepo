@@ -72,6 +72,9 @@ export interface BacktestRecord {
   /** Vendor shipping thresholds for all vendors in the API response */
   vendorThresholds: VendorThreshold[];
 
+  /** V1 settings: FrontierProduct row from the vendor detail table (e.g., table_tradentDetails) */
+  v1Settings: any | null;
+
   /** What the algo actually decided in production */
   historical: {
     algoResult: string;
@@ -126,8 +129,12 @@ export interface BacktestResult {
 export interface ProductBacktestResult {
   total: number;
   matches: number;
+  matchesV1: number;
+  matchesV2: number;
   products: ProductDiff[];
   matchRate: number;
+  matchRateV1: number;
+  matchRateV2: number;
   executionTimeMs: number;
 }
 
@@ -157,9 +164,13 @@ export interface VendorDecision {
   vendorId: number;
   existingPrice: number | null;
   position: number | null;
-  v1: { algoResult: string; suggestedPrice: number | null; comment: string };
-  v2: { algoResult: string; suggestedPrice: number | null; comment: string };
-  priceDelta: number | null;
+  historical: { algoResult: string; suggestedPrice: number | null; comment: string };
+  currentV1: { algoResult: string; suggestedPrice: number | null; comment: string } | null;
+  currentV2: { algoResult: string; suggestedPrice: number | null; comment: string };
+  priceDeltaV1: number | null;
+  priceDeltaV2: number | null;
+  isMatchV1: boolean | null;
+  isMatchV2: boolean;
   isMatch: boolean;
   settings: {
     up_down: string;

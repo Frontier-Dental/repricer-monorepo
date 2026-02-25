@@ -51,8 +51,12 @@ backtestController.post("/backtest/regression", async (req: Request, res: Respon
       return res.status(StatusCodes.OK).json({
         total: 0,
         matches: 0,
+        matchesV1: 0,
+        matchesV2: 0,
         products: [],
         matchRate: 1,
+        matchRateV1: 1,
+        matchRateV2: 1,
         executionTimeMs: 0,
       });
     }

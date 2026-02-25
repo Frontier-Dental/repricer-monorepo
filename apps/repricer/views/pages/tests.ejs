@@ -263,29 +263,44 @@
         <div class="card-body pt-0">
           <hr class="mt-0">
           <div class="row mb-3">
-            <div class="col-md-3">
+            <div class="col">
               <div class="card text-center"><div class="card-body p-2">
-                <h4 class="mb-0" id="regTotal">-</h4><small class="text-muted">Total Records</small>
+                <h4 class="mb-0" id="regTotal">-</h4><small class="text-muted">Total Products</small>
               </div></div>
             </div>
-            <div class="col-md-3">
-              <div class="card text-center" style="border-left: 4px solid #28a745;"><div class="card-body p-2">
-                <h4 class="mb-0 text-success" id="regMatches">-</h4><small class="text-muted">Matches</small>
+            <div class="col">
+              <div class="card text-center" id="regV1MatchCard"><div class="card-body p-2">
+                <h4 class="mb-0" id="regV1MatchRate">-</h4><small class="text-muted">V1 Match Rate</small>
               </div></div>
             </div>
-            <div class="col-md-3">
+            <div class="col">
+              <div class="card text-center" id="regV2MatchCard"><div class="card-body p-2">
+                <h4 class="mb-0" id="regV2MatchRate">-</h4><small class="text-muted">V2 Match Rate</small>
+              </div></div>
+            </div>
+            <div class="col">
               <div class="card text-center" id="regMatchRateCard"><div class="card-body p-2">
-                <h4 class="mb-0" id="regMatchRate">-</h4><small class="text-muted">Match Rate</small>
+                <h4 class="mb-0" id="regMatchRate">-</h4><small class="text-muted">Both Match</small>
               </div></div>
             </div>
-            <div class="col-md-3">
+            <div class="col">
               <div class="card text-center" style="border-left: 4px solid #17a2b8;"><div class="card-body p-2">
                 <h4 class="mb-0" id="regTime">-</h4><small class="text-muted">Execution Time</small>
               </div></div>
             </div>
           </div>
           <div id="regProductsSection" style="display:none;">
-            <h6><i class="fa fa-cubes"></i>&nbsp;Products <span id="regProductsCount" class="text-muted"></span></h6>
+            <div class="d-flex align-items-center mb-2">
+              <h6 class="mb-0"><i class="fa fa-cubes"></i>&nbsp;Products <span id="regProductsCount" class="text-muted"></span></h6>
+              <label class="ml-4 mb-0" style="font-size:12px;cursor:pointer;">
+                <input type="checkbox" id="regFilterDiffsOnly" onchange="applyRegFilters()"> Show only diffs
+              </label>
+              <label class="ml-3 mb-0" style="font-size:12px;cursor:pointer;">
+                <input type="checkbox" id="regFilterHideNoSolution" onchange="applyRegFilters()"> Hide Historical all-NO_SOLUTION
+              </label>
+              <button class="btn btn-outline-secondary btn-sm ml-3" onclick="toggleAllProducts(true)" style="font-size:11px;">Expand All</button>
+              <button class="btn btn-outline-secondary btn-sm ml-1" onclick="toggleAllProducts(false)" style="font-size:11px;">Collapse All</button>
+            </div>
             <div id="regProductsContainer" style="max-height: 600px; overflow-y: auto;"></div>
           </div>
         </div>
@@ -552,6 +567,36 @@
   var VENDOR_NAMES = {};
   function vendorLabel(id) { return id + '<br><small class="text-muted">' + (VENDOR_NAMES[id] || '') + '</small>'; }
 
+  function applyRegFilters() {
+    var diffsOnly = document.getElementById('regFilterDiffsOnly').checked;
+    var hideNoSolution = document.getElementById('regFilterHideNoSolution').checked;
+    var cards = document.querySelectorAll('.reg-product-card');
+    var shown = 0;
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      var hide = false;
+      if (diffsOnly && c.dataset.isMatch === '1') hide = true;
+      if (hideNoSolution && c.dataset.allHistNoSolution === '1') hide = true;
+      c.style.display = hide ? 'none' : '';
+      if (!hide) shown++;
+    }
+    document.getElementById('regProductsCount').textContent = '(' + shown + ' of ' + cards.length + ' products)';
+  }
+
+  function toggleAllProducts(expand) {
+    var cards = document.querySelectorAll('.reg-product-card');
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      if (c.style.display === 'none') continue;
+      var body = c.querySelector('.card-body');
+      var chevron = c.querySelector('.fa-chevron-down, .fa-chevron-up');
+      if (body) body.style.display = expand ? 'block' : 'none';
+      if (chevron) {
+        chevron.className = chevron.className.replace(expand ? 'fa-chevron-down' : 'fa-chevron-up', expand ? 'fa-chevron-up' : 'fa-chevron-down');
+      }
+    }
+  }
+
   function formatDelta(val) {
     if (val == null) return 'N/A';
     var n = Number(val);
@@ -595,12 +640,27 @@
       if (data.vendorNames) VENDOR_NAMES = data.vendorNames;
       // Populate summary cards
       document.getElementById('regTotal').textContent = data.total + ' products';
-      document.getElementById('regMatches').textContent = data.matches;
+
+      // V1 match rate
+      var v1Rate = data.matchRateV1 != null ? data.matchRateV1 : 0;
+      var v1RateStr = (v1Rate * 100).toFixed(1) + '%';
+      document.getElementById('regV1MatchRate').textContent = data.matchesV1 + ' / ' + data.total + ' (' + v1RateStr + ')';
+      document.getElementById('regV1MatchRate').className = 'mb-0 ' + (v1Rate >= 0.95 ? 'text-success' : 'text-danger');
+      document.getElementById('regV1MatchCard').style.borderLeft = '4px solid ' + (v1Rate >= 0.95 ? '#28a745' : '#dc3545');
+
+      // V2 match rate
+      var v2Rate = data.matchRateV2 != null ? data.matchRateV2 : 0;
+      var v2RateStr = (v2Rate * 100).toFixed(1) + '%';
+      document.getElementById('regV2MatchRate').textContent = data.matchesV2 + ' / ' + data.total + ' (' + v2RateStr + ')';
+      document.getElementById('regV2MatchRate').className = 'mb-0 ' + (v2Rate >= 0.95 ? 'text-success' : 'text-danger');
+      document.getElementById('regV2MatchCard').style.borderLeft = '4px solid ' + (v2Rate >= 0.95 ? '#28a745' : '#dc3545');
+
+      // Both match rate
       var rate = (data.matchRate * 100).toFixed(1) + '%';
-      document.getElementById('regMatchRate').textContent = rate;
+      document.getElementById('regMatchRate').textContent = data.matches + ' / ' + data.total + ' (' + rate + ')';
       document.getElementById('regMatchRate').className = 'mb-0 ' + (data.matchRate >= 0.95 ? 'text-success' : 'text-danger');
-      var rateCard = document.getElementById('regMatchRateCard');
-      rateCard.style.borderLeft = '4px solid ' + (data.matchRate >= 0.95 ? '#28a745' : '#dc3545');
+      document.getElementById('regMatchRateCard').style.borderLeft = '4px solid ' + (data.matchRate >= 0.95 ? '#28a745' : '#dc3545');
+
       document.getElementById('regTime').textContent = (data.executionTimeMs / 1000).toFixed(1) + 's';
 
       // Product cards
@@ -618,12 +678,20 @@
           var statusText = p.isMatch ? 'MATCH' : 'DIFF';
           var ts = p.timestamp ? new Date(p.timestamp).toLocaleString() : '';
 
+          // Check if all historical results are NO_SOLUTION
+          var allHistNoSolution = p.vendors.every(function(vd) {
+            return vd.historical.algoResult.toUpperCase() === 'NO_SOLUTION';
+          });
+
           var card = document.createElement('div');
-          card.className = 'card mb-2';
+          card.className = 'card mb-2 reg-product-card';
           card.style.borderLeft = '4px solid ' + statusColor;
           card.style.fontSize = '12px';
+          card.dataset.isMatch = p.isMatch ? '1' : '0';
+          card.dataset.allHistNoSolution = allHistNoSolution ? '1' : '0';
 
           // Header (clickable to expand/collapse)
+          var cronLabel = p.cronName && p.cronName !== 'unknown' ? p.cronName : '';
           var header = document.createElement('div');
           header.className = 'card-header p-2 d-flex justify-content-between align-items-center';
           header.style.cursor = 'pointer';
@@ -633,8 +701,10 @@
               '<i class="fa ' + statusIcon + '" style="color:' + statusColor + '"></i>&nbsp;' +
               '<strong>MpId: ' + p.mpId + '</strong>' +
               '&nbsp;&nbsp;<span class="text-muted">' + ts + '</span>' +
+              (cronLabel ? '&nbsp;&nbsp;<span class="badge badge-light" style="font-size:10px;">' + cronLabel + '</span>' : '') +
               '&nbsp;&nbsp;<span class="badge" style="background:' + statusColor + ';color:#fff">' + statusText + '</span>' +
               '&nbsp;&nbsp;<span class="text-muted">' + p.vendors.length + ' vendor(s)</span>' +
+              (allHistNoSolution ? '&nbsp;&nbsp;<span class="badge badge-secondary" style="font-size:10px;">Hist. N/A</span>' : '') +
             '</span>' +
             '<i class="fa fa-chevron-down text-muted"></i>';
 
@@ -694,46 +764,65 @@
           }
           marketHtml += '</tbody></table>';
 
-          // Decisions table
+          // Decisions table (three-way: Historical | Current V1 | Current V2)
+          var thStyle = 'padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;';
+          var thHistStyle = 'padding:4px 6px;background:#e8eaf6;border-bottom:1px solid #dee2e6;';
+          var thV1Style = 'padding:4px 6px;background:#fff3e0;border-bottom:1px solid #dee2e6;';
+          var thV2Style = 'padding:4px 6px;background:#e8f5e9;border-bottom:1px solid #dee2e6;';
           var decisionsHtml =
-            '<h6 class="mb-1" style="font-size:11px"><i class="fa fa-balance-scale"></i>&nbsp;Decisions (V1 vs V2)</h6>' +
-            '<table class="table table-sm mb-0" style="font-size:11px; border-collapse:separate; border-spacing:0;">' +
+            '<h6 class="mb-1" style="font-size:11px"><i class="fa fa-balance-scale"></i>&nbsp;Decisions (Production Historical vs Current V1 Replay vs Current V2 Replay)</h6>' +
+            '<div style="overflow-x:auto;">' +
+            '<table class="table table-sm mb-0" style="font-size:11px; border-collapse:separate; border-spacing:0; min-width:1000px;">' +
             '<thead><tr>' +
-              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Vendor</th>' +
-              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Existing Price</th>' +
-              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Position</th>' +
-              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">V1 Result</th>' +
-              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">V1 Price</th>' +
-              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">V1 Comment</th>' +
-              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">V2 Result</th>' +
-              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">V2 Price</th>' +
-              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">V2 Comment</th>' +
-              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Delta</th>' +
-              '<th style="padding:4px 6px;background:#f0f0f0;border-bottom:1px solid #dee2e6;">Status</th>' +
+              '<th style="' + thStyle + '">Vendor</th>' +
+              '<th style="' + thStyle + '">Existing</th>' +
+              '<th style="' + thStyle + '">Pos</th>' +
+              '<th style="' + thHistStyle + '">Historical Result</th>' +
+              '<th style="' + thHistStyle + '">Historical Price</th>' +
+              '<th style="' + thV1Style + '">Current V1 Result</th>' +
+              '<th style="' + thV1Style + '">Current V1 Price</th>' +
+              '<th style="' + thV2Style + '">Current V2 Result</th>' +
+              '<th style="' + thV2Style + '">Current V2 Price</th>' +
+              '<th style="' + thStyle + '">&Delta; V1</th>' +
+              '<th style="' + thStyle + '">&Delta; V2</th>' +
+              '<th style="' + thStyle + '">V1 Match</th>' +
+              '<th style="' + thStyle + '">V2 Match</th>' +
             '</tr></thead><tbody>';
 
           for (var v = 0; v < p.vendors.length; v++) {
             var vd = p.vendors[v];
             var rowBg = vd.isMatch ? '' : 'background:#fff0f0;';
-            var matchBadge = vd.isMatch
+            var v1Badge = vd.isMatchV1 === null
+              ? '<span class="text-muted">N/A</span>'
+              : vd.isMatchV1
+                ? '<span class="text-success"><i class="fa fa-check"></i></span>'
+                : '<span class="text-danger"><i class="fa fa-times"></i></span>';
+            var v2Badge = vd.isMatchV2
               ? '<span class="text-success"><i class="fa fa-check"></i></span>'
               : '<span class="text-danger"><i class="fa fa-times"></i></span>';
+            var v1Result = vd.currentV1 ? vd.currentV1.algoResult : '<span class="text-muted">N/A</span>';
+            var v1Price = vd.currentV1 && vd.currentV1.suggestedPrice != null ? '$' + Number(vd.currentV1.suggestedPrice).toFixed(2) : 'N/A';
+            var v1Comment = vd.currentV1 ? (vd.currentV1.comment || '-') : 'No V1 settings';
+            var histComment = (vd.historical.comment || '-');
+            var v2Comment = (vd.currentV2.comment || '-');
             decisionsHtml +=
               '<tr style="' + rowBg + '">' +
               '<td style="padding:3px 6px;">' + vendorLabel(vd.vendorId) + '</td>' +
               '<td style="padding:3px 6px;">' + (vd.existingPrice != null ? '$' + Number(vd.existingPrice).toFixed(2) : 'N/A') + '</td>' +
               '<td style="padding:3px 6px;">' + (vd.position != null ? vd.position : 'N/A') + '</td>' +
-              '<td style="padding:3px 6px;">' + vd.v1.algoResult + '</td>' +
-              '<td style="padding:3px 6px;">' + (vd.v1.suggestedPrice != null ? '$' + Number(vd.v1.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
-              '<td style="padding:3px 6px;max-width:180px;word-break:break-word;" title="' + (vd.v1.comment || '').replace(/"/g, '&quot;') + '">' + (vd.v1.comment || '-') + '</td>' +
-              '<td style="padding:3px 6px;">' + vd.v2.algoResult + '</td>' +
-              '<td style="padding:3px 6px;">' + (vd.v2.suggestedPrice != null ? '$' + Number(vd.v2.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
-              '<td style="padding:3px 6px;max-width:180px;word-break:break-word;" title="' + (vd.v2.comment || '').replace(/"/g, '&quot;') + '">' + (vd.v2.comment || '-') + '</td>' +
-              '<td style="padding:3px 6px;">' + formatDelta(vd.priceDelta) + '</td>' +
-              '<td style="padding:3px 6px;">' + matchBadge + '</td>' +
+              '<td style="padding:3px 6px;" title="' + histComment.replace(/"/g, '&quot;') + '">' + vd.historical.algoResult + '</td>' +
+              '<td style="padding:3px 6px;">' + (vd.historical.suggestedPrice != null ? '$' + Number(vd.historical.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
+              '<td style="padding:3px 6px;" title="' + v1Comment.replace(/"/g, '&quot;') + '">' + v1Result + '</td>' +
+              '<td style="padding:3px 6px;">' + v1Price + '</td>' +
+              '<td style="padding:3px 6px;" title="' + v2Comment.replace(/"/g, '&quot;') + '">' + vd.currentV2.algoResult + '</td>' +
+              '<td style="padding:3px 6px;">' + (vd.currentV2.suggestedPrice != null ? '$' + Number(vd.currentV2.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
+              '<td style="padding:3px 6px;">' + formatDelta(vd.priceDeltaV1) + '</td>' +
+              '<td style="padding:3px 6px;">' + formatDelta(vd.priceDeltaV2) + '</td>' +
+              '<td style="padding:3px 6px;">' + v1Badge + '</td>' +
+              '<td style="padding:3px 6px;">' + v2Badge + '</td>' +
               '</tr>';
           }
-          decisionsHtml += '</tbody></table>';
+          decisionsHtml += '</tbody></table></div>';
 
           // Algo settings per vendor
           var settingsHtml =
