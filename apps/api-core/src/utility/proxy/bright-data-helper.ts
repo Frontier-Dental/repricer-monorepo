@@ -1,6 +1,9 @@
-import puppeteer from "puppeteer-core";
-import requestPromise from "request-promise";
 import * as proxySwitchHelper from "../proxy-switch-helper";
+import * as formatWrapper from "../format-wrapper";
+import xml2js from "xml2js";
+import { applicationConfig } from "../config";
+
+const BRIGHT_DATA_ZONE = "unblocker1";
 
 function parseHrtimeToSeconds(hrtime: [number, number]): string {
   var seconds = (hrtime[0] + hrtime[1] / 1e9).toFixed(3);
@@ -9,84 +12,86 @@ function parseHrtimeToSeconds(hrtime: [number, number]): string {
 
 export async function fetchData(url: string, proxyDetails: any): Promise<any> {
   let response: any = {};
-  const SBR_WS_ENDPOINT = `${proxyDetails.userName}:${proxyDetails.password}@${proxyDetails.hostUrl}:${proxyDetails.port}`;
-  let browser: any;
   try {
-    browser = await puppeteer.connect({
-      browserWSEndpoint: SBR_WS_ENDPOINT,
-    });
-
     var startTime = process.hrtime();
-    const page = await browser.newPage();
-    // The following function runs in the browser context, so 'document' is valid there
-    const contextJson = await page.evaluate((/* intentionally shadow global */ document: any) => {
-      return JSON.parse(document.querySelector("body").innerText);
-    });
-    console.log(`SCRAPE : BrightData : ${url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds`);
-    if (contextJson) {
-      response.data = contextJson;
+    const result = await callBrightData(url, proxyDetails);
+    console.log(`SCRAPE : BrightData : ${url} || TimeTaken : ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds`);
+    if (result) {
+      if (applicationConfig.FORMAT_RESPONSE_CUSTOM) {
+        return await getFormattedResponse(result);
+      }
+      response.data = result;
     }
   } catch (exception: any) {
     console.log(`BRIGHTDATA - Fetch Response Exception for ${url} || ERROR : ${exception}`);
     await proxySwitchHelper.ExecuteCounter(parseInt(proxyDetails.proxyProvider));
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
   return response;
 }
 
-export async function fetchDataV2(_url: string, proxyDetails: any): Promise<any> {
-  let response: any = {};
-  const BD_ENDPOINT = `${proxyDetails.userName}:${proxyDetails.password}@${proxyDetails.hostUrl}:${proxyDetails.port}`;
+async function callBrightData(url: string, proxyDetails: any): Promise<any> {
+  const response = await fetch(proxyDetails.hostUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${proxyDetails.userName}`,
+    },
+    body: JSON.stringify({
+      zone: BRIGHT_DATA_ZONE,
+      url: url,
+      format: "raw",
+    }),
+  });
+
+  const data = await response.text();
+
   try {
-    var startTime = process.hrtime();
-    var brightDataResponse = await requestPromise({
-      url: _url,
-      proxy: BD_ENDPOINT,
-      rejectUnauthorized: false,
-    });
-    console.log(`SCRAPE : BrightData - Residential : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds`);
-    if (brightDataResponse) {
-      // Optionally assign to response.data if needed
-    }
-  } catch (exception: any) {
-    console.log(`BRIGHTDATA - Fetch Response Exception for ${_url} || ERROR : ${exception}`);
-    await proxySwitchHelper.ExecuteCounter(parseInt(proxyDetails.proxyProvider));
+    return JSON.parse(data);
+  } catch {
+    return data;
   }
-  return response;
+}
+
+async function getFormattedResponse(response: string): Promise<any> {
+  if (response.indexOf("<List/>") >= 0) return { data: [] };
+  let responseStartIndex = response.indexOf('<List xmlns="">');
+  if (responseStartIndex < 0) responseStartIndex = response.indexOf("<List>");
+  const responseEndIndex = response.indexOf("</List>");
+  const responseString = `${response.substring(responseStartIndex, responseEndIndex)}</List>`;
+  const formatOption = { mergeAttrs: true, explicitArray: false };
+  const scrapeResponseData = await xml2js.parseStringPromise(responseString, formatOption);
+
+  if (scrapeResponseData && scrapeResponseData["List"] && scrapeResponseData["List"]["item"]) {
+    if (Array.isArray(scrapeResponseData["List"]["item"])) {
+      return {
+        data: formatWrapper.FormatScrapeResponse(scrapeResponseData["List"]["item"]),
+      };
+    } else {
+      return {
+        data: formatWrapper.FormatSingleScrapeResponse(scrapeResponseData["List"]["item"]),
+      };
+    }
+  }
 }
 
 export async function fetchDataForDebug(url: string, proxyDetails: any): Promise<any> {
   let response: any = {};
-  const SBR_WS_ENDPOINT = `${proxyDetails.userName}:${proxyDetails.password}@${proxyDetails.hostUrl}:${proxyDetails.port}`;
-  let browser: any;
   try {
-    browser = await puppeteer.connect({
-      browserWSEndpoint: SBR_WS_ENDPOINT,
-    });
-
     var startTime = process.hrtime();
-    const page = await browser.newPage();
-    // The following function runs in the browser context, so 'document' is valid there
-    const contextJson = await page.evaluate((/* intentionally shadow global */ document: any) => {
-      return JSON.parse(document.querySelector("body").innerText);
-    });
+    const result = await callBrightData(url, proxyDetails);
     console.log(`SCRAPE : BrightData : ${url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds`);
-    if (contextJson) {
-      response.data = contextJson;
+    if (result) {
+      if (applicationConfig.FORMAT_RESPONSE_CUSTOM) {
+        return await getFormattedResponse(result);
+      }
+      response.data = result;
     }
   } catch (exception: any) {
     console.log(`BRIGHTDATA - Fetch Response Exception for ${url} || ERROR : ${exception}`);
     response.data = {
-      message: exception.error?.message,
-      stack: exception.error?.stack,
+      message: exception.message,
+      stack: exception.stack,
     };
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
   return response;
 }
