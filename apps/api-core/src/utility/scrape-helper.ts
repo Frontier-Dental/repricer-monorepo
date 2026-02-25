@@ -41,7 +41,7 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
       const scrapeStartTime = new Date();
       const getSearchResultsEnv = applicationConfig.GET_SEARCH_RESULTS || "";
       const searchRequest = getSearchResultsEnv.replace("{mpId}", prod.MpId);
-      const net32resp = await axiosHelper.getAsyncProxy(searchRequest, cronSetting);
+      const net32resp = await axiosHelper.getAsyncProxy(searchRequest, cronSetting, prod.MpId);
       if (net32resp && net32resp.data) {
         await mySqlHelper.UpdateLastScrapeInfo(prod.MpId, moment(scrapeStartTime).format("YYYY-MM-DD HH:mm:ss"));
         const allowHistoryLoggingEnv = applicationConfig.SCRAPE_ONLY_LOGGING;
@@ -122,7 +122,7 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
                   case "5":
                     vendorName = "TRIAD";
                     break;
-                  case "10":
+                  case "20891":
                     vendorName = "BITESUPPLY";
                     break;
                 }
@@ -137,11 +137,12 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
                     inStock: resp.inStock === "true" || resp.inStock === true,
                     inventory: parseInt(resp.inventory) || 0,
                     ourPrice: basePrice ? parseFloat(basePrice) : undefined,
+                    badgeId: resp.badgeId != null ? parseInt(resp.badgeId) > 0 : undefined,
                   };
 
                   await mySqlHelper.UpdateMarketStateOnly(prod.MpId, vendorName, marketData);
 
-                  console.log(`SCRAPE-ONLY : Updated market state for ${vendorName} - MPID: ${prod.MpId}, InStock: ${resp.inStock}, Inventory: ${resp.inventory}, Price: ${resp.price}`);
+                  console.log(`SCRAPE-ONLY : Updated market state for ${vendorName} - MPID: ${prod.MpId}, InStock: ${resp.inStock}, Inventory: ${resp.inventory}, Price: ${resp.price}, Badge: ${marketData.badgeId}`);
                 }
               } catch (error) {
                 // Log error but don't stop scraping process
@@ -253,16 +254,16 @@ function getOwnVendorId(vendorName: string): string | null {
       vendorId = "20755";
       break;
     case "TOPDENT":
-      vendorId = "20533";
+      vendorId = "20727";
       break;
     case "FIRSTDENT":
-      vendorId = "20727";
+      vendorId = "20533";
       break;
     case "TRIAD":
       vendorId = "5";
       break;
     case "BITESUPPLY":
-      vendorId = "10";
+      vendorId = "20891";
       break;
     default:
       break;

@@ -11,4 +11,3 @@ cronFilterRouter.post("/update_filter_cron", cronFilterController.UpdateFilterCr
 cronFilterRouter.post("/update_slow_cron", cronFilterController.UpdateSlowCronExpression);
 cronFilterRouter.get("/export_log/:key", cronFilterController.ExportLogDetails);
 cronFilterRouter.post("/toggle_cron_status", cronFilterController.ToggleCronStatus);
-cronFilterRouter.post("/toggle_direct_scrape_monitor", cronFilterController.ToggleDirectScrapeMonitorStatus);

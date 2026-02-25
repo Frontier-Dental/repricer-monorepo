@@ -102,7 +102,7 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
       // If no Competitor found
       if (sortedPayload.length == 1) {
         const newPrice = productItem.maxPrice && lowestPrice != parseFloat(productItem.maxPrice) ? productItem.maxPrice : "N/A";
-        const model = new RepriceModel(sourceId, refProduct, productItem.productName, newPrice, newPrice != "N/A", false, [], RepriceRenewedMessageEnum.NO_COMPETITOR);
+        const model = new RepriceModel(sourceId, refProduct, productItem.productName, newPrice, newPrice != "N/A", false, [], newPrice != "N/A" ? RepriceRenewedMessageEnum.PRICE_MAXED_MANUAL : RepriceRenewedMessageEnum.NO_COMPETITOR);
         model.updateLowest(_.first(sortedPayload)!.vendorName, lowestPrice);
         model.updateTriggeredBy(_.first(sortedPayload)!.vendorName, _.first(sortedPayload)!.vendorId, 1);
         return model;

@@ -1,4 +1,4 @@
-import { InternalProduct } from "./types";
+import { InternalProduct } from "../types";
 
 describe("repriceProductV3 basic", () => {
   it("should run without throwing for basic mock data", () => {

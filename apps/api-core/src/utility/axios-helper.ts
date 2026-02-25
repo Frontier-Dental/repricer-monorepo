@@ -49,9 +49,6 @@ export async function getAsync(_url: string, cronId: any, mpid: string, seqStrin
     case 3:
       responseData = await axiosRetryHelper.getScrappingResponse(_url, _.first(proxyConfigDetails), seqString);
       break;
-    case 4:
-      responseData = await brightDataHelper.fetchDataV2(_url, _.first(proxyConfigDetails));
-      break;
     case 5:
       responseData = await axiosRetryHelper.getScrapingBeeResponse(_url, _.first(proxyConfigDetails), seqString, true);
       break;
@@ -75,10 +72,12 @@ export async function getAsync(_url: string, cronId: any, mpid: string, seqStrin
 
   //update qbreak details
   await sqlV2Service.UpdateQBreakDetails(mpid, responseData.data);
+  //update badge details product level
+  sqlV2Service.UpdateProductLevelBadgeDetails(mpid, responseData.data);
   return responseData;
 }
 
-export async function getAsyncProxy(_url: string, cronSetting: CronSettings) {
+export async function getAsyncProxy(_url: string, cronSetting: CronSettings, mpid: string) {
   let responseData = null;
   const cronName = cronSetting.CronName;
 
@@ -94,9 +93,6 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings) {
         break;
       case 3:
         responseData = await axiosRetryHelper.getScrappingResponse(_url, _.first(proxyConfigDetails), null);
-        break;
-      case 4:
-        responseData = await brightDataHelper.fetchDataV2(_url, _.first(proxyConfigDetails));
         break;
       case 5:
         responseData = await axiosRetryHelper.getScrapingBeeResponse(_url, _.first(proxyConfigDetails), null, true);
@@ -119,6 +115,9 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings) {
         break;
     }
   }
+
+  //update badge details product level
+  sqlV2Service.UpdateProductLevelBadgeDetails(mpid, responseData.data);
 
   return responseData;
 }

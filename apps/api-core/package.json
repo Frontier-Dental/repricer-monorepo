@@ -8,16 +8,17 @@
     "start": "node dist/main.js",
     "format": "prettier --write \"src/**/*.{js,ts}\"",
     "build": "tsc",
-    "test": "jest",
-    "test:json": "jest --json --outputFile=reports/test-results.json --forceExit",
-    "test:verbose": "jest --verbose",
-    "test:watch": "jest --watch"
+    "test": "NODE_OPTIONS='--unhandled-rejections=warn' jest",
+    "test:json": "NODE_OPTIONS='--unhandled-rejections=warn' jest --json --outputFile=reports/test-results.json --forceExit",
+    "test:verbose": "NODE_OPTIONS='--unhandled-rejections=warn' jest --verbose",
+    "test:watch": "NODE_OPTIONS='--unhandled-rejections=warn' jest --watch",
+    "test:coverage": "NODE_OPTIONS='--unhandled-rejections=warn' jest --coverage"
   },
   "author": "pranoyg52@gmail.com",
   "license": "ISC",
   "dependencies": {
     "@repricer-monorepo/shared": "*",
-    "axios": "^0.27.2",
+    "axios": "^1.7.9",
     "axios-retry": "^3.3.1",
     "cheerio": "^1.1.2",
     "compression": "^1.7.4",
