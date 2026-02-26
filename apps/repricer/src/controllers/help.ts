@@ -21,22 +21,6 @@ import { applicationConfig } from "../utility/config";
 
 const execFileAsync = (util as any).promisify(execFile);
 
-/** Normalize JSON import to array (supports both direct array and { default: [] } in test/build envs). */
-function asArray<T>(v: T[] | { default?: T[] }): T[] {
-  return Array.isArray(v) ? v : ((v as any)?.default ?? []);
-}
-interface ServerIpEntry {
-  ip: string;
-  port: number;
-}
-interface SecretKeyEntry {
-  CronName: string;
-  Vendor: string;
-  SecretKey: string;
-}
-const serverIpList = asArray<ServerIpEntry>(configIpResx as any);
-const secretKeyList = asArray<SecretKeyEntry>(secretDetailsResx as any);
-
 export async function getLogsById(req: Request, res: Response) {
   const idx = req.params.id;
   const getResponse = await mongoMiddleware.GetLogsById(idx);
@@ -72,8 +56,8 @@ export async function doHealthCheck(req: Request, res: Response) {
 
 export async function doIpHealthCheck(req: Request, res: Response) {
   let healthResp: any[] = [];
-  if (serverIpList.length > 0) {
-    for (const $ of serverIpList) {
+  if (configIpResx && configIpResx.length > 0) {
+    for (const $ of configIpResx) {
       console.log(`Checking health for IP : ${$.ip} || PORT : ${$.port} `);
       if (!validateIPAddress($.ip)) {
         healthResp.push({
@@ -128,8 +112,8 @@ export async function doIpHealthCheck(req: Request, res: Response) {
 
 export async function pingCheck(req: Request, res: Response) {
   let healthResp: any = [];
-  if (serverIpList.length > 0) {
-    for (const $ of serverIpList) {
+  if (configIpResx && configIpResx.length > 0) {
+    for (const $ of configIpResx) {
       if (!validateIPAddress($.ip)) {
         healthResp.push({
           ip: $.ip,
@@ -442,7 +426,7 @@ async function getSecretKeyDetails(cronName: any) {
   for (const v of vendorName) {
     let vDetail: any = {};
     vDetail.vendorName = v;
-    vDetail.secretKey = secretKeyList.find((x) => x.CronName.toUpperCase() == cronName.trim().toUpperCase() && x.Vendor == v)?.SecretKey;
+    vDetail.secretKey = secretDetailsResx.find((x) => x.CronName.toUpperCase() == cronName.trim().toUpperCase() && x.Vendor == v)?.SecretKey;
     secretDetails.push(vDetail);
   }
   return secretDetails;
