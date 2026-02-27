@@ -247,33 +247,33 @@ export async function runProductRegressionBacktest(records: BacktestRecord[]): P
 // ─── Comparison logic ──────────────────────────────────────────────────
 
 function compareDecision(hist: { algoResult: string; suggestedPrice: number | null }, curr: { algoResult: string; suggestedPrice: number | null }): boolean {
-  const histNorm = normalizeAlgoResult(hist.algoResult);
-  const currNorm = normalizeAlgoResult(curr.algoResult);
-  if (histNorm !== currNorm) return false;
+  const histOutcome = getOutcomeCategory(hist.algoResult);
+  const currOutcome = getOutcomeCategory(curr.algoResult);
+
+  // Both must agree on outcome: CHANGE_UP, CHANGE_DOWN, or NO_CHANGE
+  if (histOutcome !== currOutcome) return false;
+
+  // For CHANGE outcomes, prices must match within tolerance
   if (hist.suggestedPrice !== null && curr.suggestedPrice !== null) {
     if (Math.abs(hist.suggestedPrice - curr.suggestedPrice) > 0.01) return false;
   }
-  if ((hist.suggestedPrice === null) !== (curr.suggestedPrice === null)) return false;
+  // If one has a price and the other doesn't (e.g. CHANGE vs CHANGE with missing price), mismatch
+  if (histOutcome.startsWith("CHANGE") && (hist.suggestedPrice === null) !== (curr.suggestedPrice === null)) return false;
+
   return true;
 }
 
 function compareResults(record: BacktestRecord, replay: ReplayResult): boolean {
-  // Primary comparison: AlgoResult must match
-  if (normalizeAlgoResult(record.historical.algoResult) !== normalizeAlgoResult(replay.algoResult)) {
-    return false;
-  }
+  const histOutcome = getOutcomeCategory(record.historical.algoResult);
+  const replayOutcome = getOutcomeCategory(replay.algoResult);
 
-  // Secondary comparison: if both have a suggested price, they should match
-  // within a small tolerance (0.01) to account for floating point
+  if (histOutcome !== replayOutcome) return false;
+
   if (record.historical.suggestedPrice !== null && replay.suggestedPrice !== null) {
-    const delta = Math.abs(record.historical.suggestedPrice - replay.suggestedPrice);
-    if (delta > 0.01) {
-      return false;
-    }
+    if (Math.abs(record.historical.suggestedPrice - replay.suggestedPrice) > 0.01) return false;
   }
 
-  // If one has a price and the other doesn't, that's a mismatch
-  if ((record.historical.suggestedPrice === null) !== (replay.suggestedPrice === null)) {
+  if (histOutcome.startsWith("CHANGE") && (record.historical.suggestedPrice === null) !== (replay.suggestedPrice === null)) {
     return false;
   }
 
@@ -281,7 +281,27 @@ function compareResults(record: BacktestRecord, replay: ReplayResult): boolean {
 }
 
 /**
- * Normalize AlgoResult strings for comparison.
+ * Categorize an algo result into an outcome for comparison:
+ *   CHANGE_UP   — price increased
+ *   CHANGE_DOWN — price decreased
+ *   NO_CHANGE   — price stays the same (IGNORE, NO_SOLUTION, SKIP, ERROR, etc.)
+ *
+ * This lets us compare V1 vs V2 vs historical fairly: "IGNORE #SISTER" and
+ * "NO_SOLUTION" are both NO_CHANGE outcomes and should match.
+ */
+function getOutcomeCategory(result: string): string {
+  if (!result) return "NO_CHANGE";
+  const upper = result.trim().toUpperCase();
+  if (upper.startsWith("CHANGE") || upper.includes("PRICE CHANGE")) {
+    if (upper.includes("DOWN")) return "CHANGE_DOWN";
+    if (upper.includes("UP") || upper.includes("NEW") || upper.includes("MAXED")) return "CHANGE_UP";
+    return "CHANGE_DOWN"; // default direction for CHANGE
+  }
+  return "NO_CHANGE";
+}
+
+/**
+ * Normalize AlgoResult strings for display.
  */
 function normalizeAlgoResult(result: string): string {
   if (!result) return "UNKNOWN";

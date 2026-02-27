@@ -5,6 +5,7 @@ import { VendorThreshold } from "../../v2/shipping-threshold";
 import { Net32Product } from "../../../../types/net32";
 import { VendorId, VendorIdLookup } from "@repricer-monorepo/shared";
 import OwnVendorProductDetails from "../../../../model/user-models/custom-product";
+import { ALL_OWN_VENDOR_IDS } from "./replay-algo";
 
 // ─── Database connection ───────────────────────────────────────────────
 
@@ -173,7 +174,30 @@ async function extractFromV2AlgoResults(db: Knex, options: ExtractOptions): Prom
     }
   }
 
-  // Step 3b: Fetch V1 settings from per-vendor detail tables
+  // Step 3b: Fetch ALL own vendor settings per mpId (mirrors production's findOrCreateV2AlgoSettingsForVendors)
+  const uniqueMpIds = [...new Set(rows.map((r) => r.mp_id))];
+  const allVendorSettingsCache = new Map<number, V2AlgoSettingsData[]>();
+
+  for (const mpId of uniqueMpIds) {
+    const allSettings: V2AlgoSettingsData[] = [];
+    for (const vid of ALL_OWN_VENDOR_IDS) {
+      const key = `${mpId}:${vid}`;
+      // Reuse from settingsCache if already fetched
+      if (settingsCache.has(key)) {
+        allSettings.push(settingsCache.get(key)!);
+      } else {
+        try {
+          const settings = await db("v2_algo_settings").where({ mp_id: mpId, vendor_id: vid }).first();
+          allSettings.push(settings ?? createDefaultSettings(mpId, vid));
+        } catch {
+          allSettings.push(createDefaultSettings(mpId, vid));
+        }
+      }
+    }
+    allVendorSettingsCache.set(mpId, allSettings);
+  }
+
+  // Step 3c: Fetch V1 settings from per-vendor detail tables
   const v1SettingsCache = await fetchV1Settings(db, uniquePairs);
 
   // Step 4: Fetch vendor thresholds for all vendor IDs seen in API responses
@@ -233,6 +257,7 @@ async function extractFromV2AlgoResults(db: Knex, options: ExtractOptions): Prom
       vendorSettings,
       vendorThresholds,
       v1Settings: v1SettingsCache.get(settingsKey) ?? null,
+      allVendorSettings: allVendorSettingsCache.get(row.mp_id) ?? [vendorSettings],
       historical: {
         algoResult: row.result,
         suggestedPrice: row.suggested_price,
@@ -289,13 +314,21 @@ async function extractFromTableHistory(db: Knex, options: ExtractOptions): Promi
       const channelName = (row.ChannelName || "").toUpperCase().trim() as keyof typeof VendorIdLookup;
       const vendorId = VendorIdLookup[channelName] || 0;
 
-      // Try to fetch settings
+      // Try to fetch settings for this vendor + ALL own vendors
       let vendorSettings: V2AlgoSettingsData;
+      const allVendorSettings: V2AlgoSettingsData[] = [];
       try {
-        const settings = await db("v2_algo_settings").where({ mp_id: row.MpId, vendor_id: vendorId }).first();
-        vendorSettings = settings ?? createDefaultSettings(row.MpId, vendorId);
+        const allSettings = await db("v2_algo_settings").where({ mp_id: row.MpId }).whereIn("vendor_id", ALL_OWN_VENDOR_IDS);
+        for (const vid of ALL_OWN_VENDOR_IDS) {
+          const s = allSettings.find((r: any) => r.vendor_id === vid);
+          allVendorSettings.push(s ?? createDefaultSettings(row.MpId, vid));
+        }
+        vendorSettings = allVendorSettings.find((s) => s.vendor_id === vendorId) ?? createDefaultSettings(row.MpId, vendorId);
       } catch {
         vendorSettings = createDefaultSettings(row.MpId, vendorId);
+        for (const vid of ALL_OWN_VENDOR_IDS) {
+          allVendorSettings.push(createDefaultSettings(row.MpId, vid));
+        }
       }
 
       // Fetch V1 settings
@@ -336,8 +369,9 @@ async function extractFromTableHistory(db: Knex, options: ExtractOptions): Promi
         vendorSettings,
         vendorThresholds,
         v1Settings,
+        allVendorSettings,
         historical: {
-          algoResult: parseV1AlgoResult(row.RepriceComment),
+          algoResult: parseHistoricalAlgoResult(row.RepriceResult, row.RepriceComment),
           suggestedPrice: row.SuggestedPrice ? parseFloat(row.SuggestedPrice) : null,
           comment: row.RepriceComment ?? "",
           triggeredByVendor: row.TriggeredByVendor,
@@ -381,13 +415,35 @@ async function findApiResponseForRecord(db: Knex, mpId: number, timestamp: Date)
   return safeParseApiResponse(apiRow.ApiResponse);
 }
 
-// ─── Helper: parse V1 RepriceComment into algo result ─────────────────
-// V1 format: "CHANGE: #BB_BADGE | $DOWN", "IGNORE: #Sister #DOWN", "N/A"
-// V2 format: "CHANGE #DOWN", "IGNORE #FLOOR", "NO_SOLUTION"
+// ─── Helper: parse historical algo result from table_history ──────────
+// Primary: use RepriceResult column (clean enum values from RepriceResultEnum)
+//   e.g. "CHANGE #DOWN", "CHANGE #UP", "IGNORE #FLOOR", "IGNORE #SISTERLOWEST"
+// Fallback: parse RepriceComment (which has "1@CHANGE: #BB_BADGE | $DOWN/" format
+//   after UpdateHistoryWithMessage overwrites the initial value)
+
+function parseHistoricalAlgoResult(repriceResult: string | null | undefined, repriceComment: string | null | undefined): string {
+  // Prefer RepriceResult column — it stores clean RepriceResultEnum values
+  if (repriceResult && repriceResult !== "UNKNOWN") {
+    const upper = repriceResult.toUpperCase().trim();
+    if (upper.startsWith("CHANGE") || upper.startsWith("IGNORE") || upper === "422 ERROR") {
+      return upper;
+    }
+  }
+
+  // Fallback: parse RepriceComment (handles both raw and "1@..." formats)
+  return parseV1AlgoResult(repriceComment);
+}
 
 function parseV1AlgoResult(comment: string | null | undefined): string {
   if (!comment || comment === "N/A") return "NO_SOLUTION";
-  const upper = comment.toUpperCase().trim();
+  let upper = comment.toUpperCase().trim();
+
+  // Handle multi-price-break format: "1@CHANGE: #BB_BADGE | $DOWN/"
+  // Strip the leading quantity prefix (e.g., "1@") to get the actual result
+  const qtyPrefixMatch = upper.match(/^\d+@(.+)/);
+  if (qtyPrefixMatch) {
+    upper = qtyPrefixMatch[1].replace(/\/\s*$/, "").trim(); // also strip trailing "/"
+  }
 
   if (upper.startsWith("CHANGE")) {
     if (upper.includes("$DOWN") || upper.includes("#DOWN")) return "CHANGE #DOWN";
@@ -421,6 +477,11 @@ function safeParseApiResponse(raw: string | null | undefined): Net32Product[] | 
 
 // ─── Helper: create default V2 settings ────────────────────────────────
 
+/**
+ * Create default V2 settings matching production's createV2AlgoSettings().
+ * Important: enabled defaults to FALSE — same as production.
+ * Vendors without explicit settings in v2_algo_settings are disabled.
+ */
 function createDefaultSettings(mpId: number, vendorId: number): V2AlgoSettingsData {
   return {
     id: 0,
@@ -449,7 +510,7 @@ function createDefaultSettings(mpId: number, vendorId: number): V2AlgoSettingsDa
     floor_compete_with_next: false,
     own_vendor_threshold: 1,
     price_strategy: "UNIT" as any,
-    enabled: true,
+    enabled: false,
   };
 }
 

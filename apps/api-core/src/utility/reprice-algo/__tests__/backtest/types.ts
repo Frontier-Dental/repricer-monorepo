@@ -75,6 +75,9 @@ export interface BacktestRecord {
   /** V1 settings: FrontierProduct row from the vendor detail table (e.g., table_tradentDetails) */
   v1Settings: any | null;
 
+  /** V2 settings for ALL own vendors for this mpId (used by replay to match production behavior) */
+  allVendorSettings: V2AlgoSettingsData[];
+
   /** What the algo actually decided in production */
   historical: {
     algoResult: string;
@@ -210,6 +213,8 @@ export interface WhatIfSample {
   mpId: number;
   vendorId: number;
   quantity: number;
+  historical: { algoResult: string; suggestedPrice: number | null };
+  currentV1: { algoResult: string; suggestedPrice: number | null } | null;
   original: { algoResult: string; suggestedPrice: number | null };
   modified: { algoResult: string; suggestedPrice: number | null };
   priceDelta: number | null;

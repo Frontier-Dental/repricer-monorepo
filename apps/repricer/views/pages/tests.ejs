@@ -466,10 +466,14 @@
                     <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">MpId</th>
                     <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Vendor</th>
                     <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Qty</th>
-                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Original Result</th>
-                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Original Price</th>
-                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Modified Result</th>
-                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Modified Price</th>
+                    <th style="position: sticky; top: 0; background: #f0e6ff; border-bottom: 2px solid #d4b8ff; padding: 6px 8px;">Hist Result</th>
+                    <th style="position: sticky; top: 0; background: #f0e6ff; border-bottom: 2px solid #d4b8ff; padding: 6px 8px;">Hist Price</th>
+                    <th style="position: sticky; top: 0; background: #fff3e0; border-bottom: 2px solid #ffcc80; padding: 6px 8px;">V1 Result</th>
+                    <th style="position: sticky; top: 0; background: #fff3e0; border-bottom: 2px solid #ffcc80; padding: 6px 8px;">V1 Price</th>
+                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">V2 Original</th>
+                    <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">V2 Orig Price</th>
+                    <th style="position: sticky; top: 0; background: #e3f2fd; border-bottom: 2px solid #90caf9; padding: 6px 8px;">V2 Modified</th>
+                    <th style="position: sticky; top: 0; background: #e3f2fd; border-bottom: 2px solid #90caf9; padding: 6px 8px;">V2 Mod Price</th>
                     <th style="position: sticky; top: 0; background: #e9ecef; border-bottom: 2px solid #dee2e6; padding: 6px 8px;">Delta</th>
                   </tr>
                 </thead>
@@ -801,6 +805,7 @@
               ? '<span class="text-success"><i class="fa fa-check"></i></span>'
               : '<span class="text-danger"><i class="fa fa-times"></i></span>';
             var v1Result = vd.currentV1 ? vd.currentV1.algoResult : '<span class="text-muted">N/A</span>';
+            if (v1Result === 'ERROR') v1Result = '<span class="badge badge-danger" style="font-size:10px;">ERROR</span>';
             var v1Price = vd.currentV1 && vd.currentV1.suggestedPrice != null ? '$' + Number(vd.currentV1.suggestedPrice).toFixed(2) : 'N/A';
             var v1Comment = vd.currentV1 ? (vd.currentV1.comment || '-') : 'No V1 settings';
             var histComment = (vd.historical.comment || '-');
@@ -812,7 +817,7 @@
               '<td style="padding:3px 6px;">' + (vd.position != null ? vd.position : 'N/A') + '</td>' +
               '<td style="padding:3px 6px;" title="' + histComment.replace(/"/g, '&quot;') + '">' + vd.historical.algoResult + '</td>' +
               '<td style="padding:3px 6px;">' + (vd.historical.suggestedPrice != null ? '$' + Number(vd.historical.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
-              '<td style="padding:3px 6px;" title="' + v1Comment.replace(/"/g, '&quot;') + '">' + v1Result + '</td>' +
+              '<td style="padding:3px 6px;" title="' + v1Comment.replace(/"/g, '&quot;') + '">' + v1Result + (vd.currentV1 && vd.currentV1.algoResult === 'ERROR' ? '<br><small class="text-danger" style="font-size:9px;word-break:break-all;max-width:300px;display:inline-block;">' + v1Comment.substring(0, 300) + '</small>' : '') + '</td>' +
               '<td style="padding:3px 6px;">' + v1Price + '</td>' +
               '<td style="padding:3px 6px;" title="' + v2Comment.replace(/"/g, '&quot;') + '">' + vd.currentV2.algoResult + '</td>' +
               '<td style="padding:3px 6px;">' + (vd.currentV2.suggestedPrice != null ? '$' + Number(vd.currentV2.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
@@ -960,14 +965,23 @@
         for (var i = 0; i < data.samples.length; i++) {
           var s = data.samples[i];
           var tr = document.createElement('tr');
+          var v1Result = s.currentV1 ? s.currentV1.algoResult : 'N/A';
+          if (v1Result === 'ERROR') v1Result = '<span class="badge badge-danger" style="font-size:10px;">ERROR</span>';
+          var v1Price = s.currentV1 && s.currentV1.suggestedPrice != null ? '$' + Number(s.currentV1.suggestedPrice).toFixed(2) : 'N/A';
+          var histResult = s.historical ? s.historical.algoResult : 'N/A';
+          var histPrice = s.historical && s.historical.suggestedPrice != null ? '$' + Number(s.historical.suggestedPrice).toFixed(2) : 'N/A';
           tr.innerHTML =
             '<td>' + s.mpId + '</td>' +
             '<td>' + vendorLabel(s.vendorId) + '</td>' +
             '<td>' + s.quantity + '</td>' +
+            '<td style="background:#f9f0ff;">' + histResult + '</td>' +
+            '<td style="background:#f9f0ff;">' + histPrice + '</td>' +
+            '<td style="background:#fff8e1;">' + v1Result + '</td>' +
+            '<td style="background:#fff8e1;">' + v1Price + '</td>' +
             '<td>' + s.original.algoResult + '</td>' +
             '<td>' + (s.original.suggestedPrice != null ? '$' + Number(s.original.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
-            '<td>' + s.modified.algoResult + '</td>' +
-            '<td>' + (s.modified.suggestedPrice != null ? '$' + Number(s.modified.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
+            '<td style="background:#e8f4fd;">' + s.modified.algoResult + '</td>' +
+            '<td style="background:#e8f4fd;">' + (s.modified.suggestedPrice != null ? '$' + Number(s.modified.suggestedPrice).toFixed(2) : 'N/A') + '</td>' +
             '<td>' + formatDelta(s.priceDelta) + '</td>';
           tbody.appendChild(tr);
         }

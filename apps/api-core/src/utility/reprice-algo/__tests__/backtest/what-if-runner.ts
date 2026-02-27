@@ -1,5 +1,5 @@
 import { BacktestRecord, WhatIfReport, WhatIfSample } from "./types";
-import { replayRecord, replayRecordWithOverrides, ReplayResult } from "./replay-algo";
+import { replayRecord, replayRecordV1, replayRecordWithOverrides, ReplayResult } from "./replay-algo";
 import { V2AlgoSettingsData } from "../../../../utility/mysql/v2-algo-settings";
 
 /** AlgoResult values that indicate a price change was made */
@@ -74,10 +74,16 @@ export async function runWhatIfBacktest(records: BacktestRecord[], overrides: Pa
 
     // Collect sample (first 50)
     if (samples.length < 50) {
+      // V1 replay for context
+      const v1Result = await replayRecordV1(record);
+      const currV1: { algoResult: string; suggestedPrice: number | null } | null = v1Result ? { algoResult: v1Result.algoResult, suggestedPrice: v1Result.suggestedPrice } : null;
+
       samples.push({
         mpId: record.mpId,
         vendorId: record.vendorId,
         quantity: record.quantity,
+        historical: { algoResult: record.historical.algoResult, suggestedPrice: record.historical.suggestedPrice },
+        currentV1: currV1,
         original: { algoResult: origResult, suggestedPrice: origPrice },
         modified: { algoResult: modResult, suggestedPrice: modPrice },
         priceDelta: origPrice !== null && modPrice !== null ? Number((modPrice - origPrice).toFixed(4)) : null,
