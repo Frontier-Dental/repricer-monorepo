@@ -203,8 +203,8 @@ export const envSchema = z.object({
   FTP_PASSWORD: z.string(),
   DEV_SYNC_API_KEY: z.string(),
   HISTORY_ARCHIVE_CRON_SCHEDULE: z.string().default("0 0 * * *"),
-  AWS_ACCESS_KEY_ID: z.string(),
-  AWS_SECRET_ACCESS_KEY: z.string(),
+  AWS_ACCESS_KEY_ID: z.string().default(""),
+  AWS_SECRET_ACCESS_KEY: z.string().default(""),
   AWS_BUCKET_NAME: z.string().default("fd-repricer"),
   AWS_REGION: z.string().default("us-east-1"),
 });

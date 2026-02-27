@@ -224,13 +224,18 @@ function mapV1RepriceModelToReplayResult(mpId: number, vendorId: number, quantit
     const matchingBreak = repriceResult.listOfRepriceDetails.find((rd: any) => rd.minQty === quantity);
     if (matchingBreak) {
       const oldP = parseV1Price(matchingBreak.oldPrice);
-      const newP = parseV1Price(matchingBreak.newPrice);
+      const rawNewP = parseV1Price(matchingBreak.newPrice);
+      // SuggestedPrice matches production: goToPrice ? goToPrice : newPrice (history-helper.ts:45)
+      // Uses || (truthy) not ?? (nullish) — production treats 0 as falsy
+      const suggestedP = parseV1Price(matchingBreak.goToPrice) || rawNewP;
+      // Direction uses oldPrice vs raw newPrice — matches production's getPriceStepValue()
+      // which compares oldPrice/newPrice BEFORE goToPrice overrides (shared.ts:92-99)
       return {
         mpId,
         vendorId,
         quantity,
-        algoResult: mapV1ExplainedToAlgoResult(matchingBreak.explained, oldP, newP),
-        suggestedPrice: newP,
+        algoResult: mapV1ExplainedToAlgoResult(matchingBreak.explained, oldP, rawNewP),
+        suggestedPrice: suggestedP,
         comment: matchingBreak.explained || "",
         triggeredByVendor: matchingBreak.triggeredByVendor ?? null,
         qBreakValid: true,
@@ -242,13 +247,16 @@ function mapV1RepriceModelToReplayResult(mpId: number, vendorId: number, quantit
   if (repriceResult.repriceDetails) {
     const rd = repriceResult.repriceDetails;
     const oldP = parseV1Price(rd.oldPrice);
-    const newP = parseV1Price(rd.newPrice);
+    const rawNewP = parseV1Price(rd.newPrice);
+    // SuggestedPrice matches production: goToPrice ? goToPrice : newPrice (history-helper.ts:45)
+    const suggestedP = parseV1Price(rd.goToPrice) || rawNewP;
+    // Direction uses oldPrice vs raw newPrice — matches production's getPriceStepValue()
     return {
       mpId,
       vendorId,
       quantity,
-      algoResult: mapV1ExplainedToAlgoResult(rd.explained, oldP, newP),
-      suggestedPrice: newP,
+      algoResult: mapV1ExplainedToAlgoResult(rd.explained, oldP, rawNewP),
+      suggestedPrice: suggestedP,
       comment: rd.explained || "",
       triggeredByVendor: rd.triggeredByVendor ?? null,
       qBreakValid: true,
@@ -267,7 +275,7 @@ function mapV1RepriceModelToReplayResult(mpId: number, vendorId: number, quantit
   };
 }
 
-function parseV1Price(price: string | number | null): number | null {
+function parseV1Price(price: string | number | null | undefined): number | null {
   if (price === null || price === undefined || price === "N/A") return null;
   const num = typeof price === "number" ? price : parseFloat(price);
   return isNaN(num) ? null : num;

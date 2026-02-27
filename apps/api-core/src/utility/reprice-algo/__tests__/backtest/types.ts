@@ -231,4 +231,6 @@ export interface ExtractOptions {
   cronName?: string;
   /** If true, use v2_algo_results as the source. If false, use table_history. Default: true */
   useV2Results?: boolean;
+  /** If true, exclude SCRAPE-ONLY records from table_history (they have no algo decisions). Default: true */
+  excludeScrapeOnly?: boolean;
 }

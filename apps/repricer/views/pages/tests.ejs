@@ -284,6 +284,11 @@
               </div></div>
             </div>
             <div class="col">
+              <div class="card text-center" style="border-left: 4px solid #ffc107;"><div class="card-body p-2">
+                <h4 class="mb-0" id="regExpressCount">-</h4><small class="text-muted">ExpressCron (422)</small>
+              </div></div>
+            </div>
+            <div class="col">
               <div class="card text-center" style="border-left: 4px solid #17a2b8;"><div class="card-body p-2">
                 <h4 class="mb-0" id="regTime">-</h4><small class="text-muted">Execution Time</small>
               </div></div>
@@ -292,11 +297,20 @@
           <div id="regProductsSection" style="display:none;">
             <div class="d-flex align-items-center mb-2">
               <h6 class="mb-0"><i class="fa fa-cubes"></i>&nbsp;Products <span id="regProductsCount" class="text-muted"></span></h6>
-              <label class="ml-4 mb-0" style="font-size:12px;cursor:pointer;">
-                <input type="checkbox" id="regFilterDiffsOnly" onchange="applyRegFilters()"> Show only diffs
-              </label>
+              <select id="regDiffFilter" class="form-control form-control-sm ml-4" style="width:auto;font-size:12px;" onchange="applyRegFilters()">
+                <option value="all">Show All</option>
+                <option value="hist_v1">Diffs: Historical vs V1</option>
+                <option value="hist_v2">Diffs: Historical vs V2</option>
+                <option value="hist_both">Diffs: Historical vs V1 & V2</option>
+                <option value="v1_v2">Diffs: V1 vs V2</option>
+                <option value="express_only">ExpressCron Only</option>
+                <option value="422_only">422 Error Only (vendor not in API)</option>
+              </select>
               <label class="ml-3 mb-0" style="font-size:12px;cursor:pointer;">
                 <input type="checkbox" id="regFilterHideNoSolution" onchange="applyRegFilters()"> Hide Historical all-NO_SOLUTION
+              </label>
+              <label class="ml-3 mb-0" style="font-size:12px;cursor:pointer;">
+                <input type="checkbox" id="regFilterHideExpressCron" onchange="applyRegFilters()"> Hide ExpressCron
               </label>
               <button class="btn btn-outline-secondary btn-sm ml-3" onclick="toggleAllProducts(true)" style="font-size:11px;">Expand All</button>
               <button class="btn btn-outline-secondary btn-sm ml-1" onclick="toggleAllProducts(false)" style="font-size:11px;">Collapse All</button>
@@ -572,15 +586,24 @@
   function vendorLabel(id) { return id + '<br><small class="text-muted">' + (VENDOR_NAMES[id] || '') + '</small>'; }
 
   function applyRegFilters() {
-    var diffsOnly = document.getElementById('regFilterDiffsOnly').checked;
+    var diffMode = document.getElementById('regDiffFilter').value;
     var hideNoSolution = document.getElementById('regFilterHideNoSolution').checked;
+    var hideExpressCron = document.getElementById('regFilterHideExpressCron').checked;
     var cards = document.querySelectorAll('.reg-product-card');
     var shown = 0;
     for (var i = 0; i < cards.length; i++) {
       var c = cards[i];
       var hide = false;
-      if (diffsOnly && c.dataset.isMatch === '1') hide = true;
+      // Diff filter modes
+      if (diffMode === 'hist_v1' && c.dataset.hasV1Diff !== '1') hide = true;
+      else if (diffMode === 'hist_v2' && c.dataset.hasV2Diff !== '1') hide = true;
+      else if (diffMode === 'hist_both' && c.dataset.hasBothDiff !== '1') hide = true;
+      else if (diffMode === 'v1_v2' && c.dataset.hasV1V2Diff !== '1') hide = true;
+      else if (diffMode === 'express_only' && c.dataset.isExpressCron !== '1') hide = true;
+      else if (diffMode === '422_only' && c.dataset.is422Error !== '1') hide = true;
+      // Secondary filters
       if (hideNoSolution && c.dataset.allHistNoSolution === '1') hide = true;
+      if (hideExpressCron && c.dataset.isExpressCron === '1') hide = true;
       c.style.display = hide ? 'none' : '';
       if (!hide) shown++;
     }
@@ -667,6 +690,24 @@
 
       document.getElementById('regTime').textContent = (data.executionTimeMs / 1000).toFixed(1) + 's';
 
+      // Count ExpressCron records and true 422 errors (vendor not in API)
+      var expressCronCount = 0;
+      var true422Count = 0;
+      if (data.products) {
+        for (var ei = 0; ei < data.products.length; ei++) {
+          var ep = data.products[ei];
+          if (ep.cronName && ep.cronName.toUpperCase() === 'EXPRESSCRON') {
+            expressCronCount++;
+            // Check if own vendor is NOT in the market snapshot → true 422 error
+            var ownVid = ep.vendors && ep.vendors.length > 0 ? ep.vendors[0].vendorId : null;
+            if (ownVid && ep.market && !ep.market.some(function(m) { return m.vendorId == ownVid; })) {
+              true422Count++;
+            }
+          }
+        }
+      }
+      document.getElementById('regExpressCount').textContent = expressCronCount + ' (422: ' + true422Count + ')';
+
       // Product cards
       var productsSection = document.getElementById('regProductsSection');
       var container = document.getElementById('regProductsContainer');
@@ -687,15 +728,41 @@
             return vd.historical.algoResult.toUpperCase() === 'NO_SOLUTION';
           });
 
+          // Compute per-product diff flags for filtering
+          var hasV1Diff = p.vendors.some(function(vd) { return vd.isMatchV1 === false; });
+          var hasV2Diff = p.vendors.some(function(vd) { return vd.isMatchV2 === false; });
+          var hasBothDiff = p.vendors.some(function(vd) { return vd.isMatchV1 === false && vd.isMatchV2 === false; });
+          var hasV1V2Diff = p.vendors.some(function(vd) {
+            if (!vd.currentV1 || !vd.currentV2) return false;
+            return vd.currentV1.algoResult !== vd.currentV2.algoResult
+              || (vd.currentV1.suggestedPrice != null && vd.currentV2.suggestedPrice != null && vd.currentV1.suggestedPrice !== vd.currentV2.suggestedPrice)
+              || ((vd.currentV1.suggestedPrice == null) !== (vd.currentV2.suggestedPrice == null));
+          });
+
           var card = document.createElement('div');
           card.className = 'card mb-2 reg-product-card';
           card.style.borderLeft = '4px solid ' + statusColor;
           card.style.fontSize = '12px';
           card.dataset.isMatch = p.isMatch ? '1' : '0';
           card.dataset.allHistNoSolution = allHistNoSolution ? '1' : '0';
+          card.dataset.hasV1Diff = hasV1Diff ? '1' : '0';
+          card.dataset.hasV2Diff = hasV2Diff ? '1' : '0';
+          card.dataset.hasBothDiff = hasBothDiff ? '1' : '0';
+          card.dataset.hasV1V2Diff = hasV1V2Diff ? '1' : '0';
+
+          // Detect ExpressCron records and distinguish 422 error vs price-update re-check
+          var isExpressCron = p.cronName && p.cronName.toUpperCase() === 'EXPRESSCRON';
+          var vendorNotInApi = false;
+          if (isExpressCron && vendorId && p.market) {
+            vendorNotInApi = !p.market.some(function(m) { return m.vendorId == vendorId; });
+          }
+          card.dataset.isExpressCron = isExpressCron ? '1' : '0';
+          card.dataset.is422Error = (isExpressCron && vendorNotInApi) ? '1' : '0';
 
           // Header (clickable to expand/collapse)
           var cronLabel = p.cronName && p.cronName !== 'unknown' ? p.cronName : '';
+          var vendorId = p.vendors.length > 0 ? p.vendors[0].vendorId : '';
+          var vendorName = vendorId ? (VENDOR_NAMES[vendorId] || '') : '';
           var header = document.createElement('div');
           header.className = 'card-header p-2 d-flex justify-content-between align-items-center';
           header.style.cursor = 'pointer';
@@ -704,10 +771,12 @@
             '<span>' +
               '<i class="fa ' + statusIcon + '" style="color:' + statusColor + '"></i>&nbsp;' +
               '<strong>MpId: ' + p.mpId + '</strong>' +
+              (vendorName ? '&nbsp;&nbsp;<span class="badge badge-info" style="font-size:10px;">' + vendorName + '</span>' : '') +
               '&nbsp;&nbsp;<span class="text-muted">' + ts + '</span>' +
-              (cronLabel ? '&nbsp;&nbsp;<span class="badge badge-light" style="font-size:10px;">' + cronLabel + '</span>' : '') +
+              (isExpressCron && vendorNotInApi ? '&nbsp;&nbsp;<span class="badge badge-danger" style="font-size:10px;" title="422 Error: vendor not found in API response">422 Error</span>' : '') +
+              (isExpressCron && !vendorNotInApi ? '&nbsp;&nbsp;<span class="badge badge-warning" style="font-size:10px;" title="ExpressCron: price-update re-check (vendor is in API)">ExpressCron</span>' : '') +
+              (cronLabel && !isExpressCron ? '&nbsp;&nbsp;<span class="badge badge-light" style="font-size:10px;">' + cronLabel + '</span>' : '') +
               '&nbsp;&nbsp;<span class="badge" style="background:' + statusColor + ';color:#fff">' + statusText + '</span>' +
-              '&nbsp;&nbsp;<span class="text-muted">' + p.vendors.length + ' vendor(s)</span>' +
               (allHistNoSolution ? '&nbsp;&nbsp;<span class="badge badge-secondary" style="font-size:10px;">Hist. N/A</span>' : '') +
             '</span>' +
             '<i class="fa fa-chevron-down text-muted"></i>';

@@ -108,26 +108,21 @@ export async function runRegressionBacktest(records: BacktestRecord[]): Promise<
 export async function runProductRegressionBacktest(records: BacktestRecord[]): Promise<ProductBacktestResult> {
   const startTime = Date.now();
 
-  // Group records by mpId + 2-minute timestamp bucket
-  const groups = new Map<string, BacktestRecord[]>();
-  for (const record of records) {
-    const bucket = Math.floor(new Date(record.timestamp).getTime() / 120_000);
-    const key = `${record.mpId}:${bucket}`;
-    const group = groups.get(key) ?? [];
-    group.push(record);
-    groups.set(key, group);
-  }
-
+  // No grouping — each record is one card (matches production: each vendor processed independently)
   const products: ProductDiff[] = [];
   let matches = 0;
   let matchesV1 = 0;
   let matchesV2 = 0;
 
-  for (const [, group] of groups) {
-    const first = group[0];
+  for (let i = 0; i < records.length; i++) {
+    const record = records[i];
+
+    if ((i + 1) % 100 === 0) {
+      console.log(`[backtest] Processing record ${i + 1}/${records.length}...`);
+    }
 
     // Build market snapshot from API response
-    const market: MarketVendor[] = first.apiResponse
+    const market: MarketVendor[] = record.apiResponse
       .map((p) => {
         const vid = typeof p.vendorId === "string" ? parseInt(p.vendorId, 10) : p.vendorId;
         const q1Price = Array.isArray(p.priceBreaks) && p.priceBreaks.length > 0 ? p.priceBreaks[0].unitPrice : null;
@@ -148,81 +143,91 @@ export async function runProductRegressionBacktest(records: BacktestRecord[]): P
       })
       .sort((a, b) => (a.totalPrice ?? 999999) - (b.totalPrice ?? 999999));
 
-    // Build vendor decisions: three-way comparison (historical vs current V1 vs current V2)
-    const vendors: VendorDecision[] = [];
-    let allMatch = true;
-    let allMatchV1 = true;
-    let allMatchV2 = true;
+    // Historical decision from DB
+    const hist = {
+      algoResult: record.historical.algoResult,
+      suggestedPrice: record.historical.suggestedPrice,
+      comment: record.historical.comment,
+    };
 
-    for (const record of group) {
-      // Historical decision from DB
-      const hist = {
-        algoResult: record.historical.algoResult,
-        suggestedPrice: record.historical.suggestedPrice,
-        comment: record.historical.comment,
-      };
+    // Detect 422 error: ExpressCron + vendor not in API response
+    const isExpressCron = record.cronName?.toUpperCase() === "EXPRESSCRON";
+    const vendorInApi = record.apiResponse.some((p) => {
+      const vid = typeof p.vendorId === "string" ? parseInt(p.vendorId, 10) : p.vendorId;
+      return vid === record.vendorId;
+    });
+    const is422Error = isExpressCron && !vendorInApi;
+    const rawMaxPrice = record.vendorSettings?.max_price;
+    const maxPrice = rawMaxPrice != null ? Number(rawMaxPrice) : null;
 
-      // Current V2 decision from replay
+    // Current V2 decision from replay
+    let currV2: { algoResult: string; suggestedPrice: number | null; comment: string };
+    if (is422Error && maxPrice != null && !isNaN(maxPrice)) {
+      // Simulate repriceProductToMax: vendor not in API → set price to maxPrice
+      currV2 = { algoResult: "CHANGE #UP", suggestedPrice: maxPrice, comment: "422 Error: vendor not in API → repriceToMax (maxPrice: $" + maxPrice.toFixed(2) + ")" };
+    } else {
       const replayV2Results = replayRecord(record);
       const matchingV2 = replayV2Results.find((r) => r.vendorId === record.vendorId && r.quantity === record.quantity);
-      const currV2 = matchingV2 ? { algoResult: matchingV2.algoResult, suggestedPrice: matchingV2.suggestedPrice, comment: matchingV2.comment } : { algoResult: "NO_SOLUTION", suggestedPrice: null as number | null, comment: "No V2 replay result" };
-
-      // Current V1 decision from replay
-      const v1Result = await replayRecordV1(record);
-      const currV1: { algoResult: string; suggestedPrice: number | null; comment: string } | null = v1Result ? { algoResult: v1Result.algoResult, suggestedPrice: v1Result.suggestedPrice, comment: v1Result.comment } : null;
-
-      // Compare V1 and V2 separately against historical
-      const isMatchV2 = compareDecision(hist, currV2);
-      const isMatchV1: boolean | null = currV1 ? compareDecision(hist, currV1) : null; // null = no V1 settings, N/A
-      const isVendorMatch = (isMatchV1 === null || isMatchV1) && isMatchV2;
-
-      if (isMatchV1 === false) allMatchV1 = false;
-      if (!isMatchV2) allMatchV2 = false;
-      if (!isVendorMatch) allMatch = false;
-
-      const s = record.vendorSettings;
-      vendors.push({
-        vendorId: record.vendorId,
-        existingPrice: record.historical.existingPrice,
-        position: record.historical.position,
-        historical: hist,
-        currentV1: currV1,
-        currentV2: currV2,
-        priceDeltaV1: currV1 ? computePriceDelta(hist.suggestedPrice, currV1.suggestedPrice) : null,
-        priceDeltaV2: computePriceDelta(hist.suggestedPrice, currV2.suggestedPrice),
-        isMatchV1,
-        isMatchV2,
-        isMatch: isVendorMatch,
-        settings: {
-          up_down: String(s.up_down),
-          floor_price: s.floor_price,
-          max_price: s.max_price,
-          badge_indicator: String(s.badge_indicator),
-          price_strategy: String(s.price_strategy),
-          reprice_up_percentage: s.reprice_up_percentage,
-          reprice_down_percentage: s.reprice_down_percentage,
-          keep_position: s.keep_position,
-          sister_vendor_ids: s.sister_vendor_ids,
-          exclude_vendors: s.exclude_vendors,
-          compete_with_all_vendors: s.compete_with_all_vendors,
-          handling_time_group: String(s.handling_time_group),
-          inventory_competition_threshold: s.inventory_competition_threshold,
-          enabled: s.enabled,
-        },
-      });
+      currV2 = matchingV2 ? { algoResult: matchingV2.algoResult, suggestedPrice: matchingV2.suggestedPrice, comment: matchingV2.comment } : { algoResult: "NO_SOLUTION", suggestedPrice: null, comment: "No V2 replay result" };
     }
 
-    if (allMatch) matches++;
-    if (allMatchV1) matchesV1++;
-    if (allMatchV2) matchesV2++;
+    // Current V1 decision from replay
+    let currV1: { algoResult: string; suggestedPrice: number | null; comment: string } | null;
+    if (is422Error && maxPrice != null && !isNaN(maxPrice)) {
+      // Simulate repriceProductToMax for V1 as well
+      currV1 = { algoResult: "CHANGE #UP", suggestedPrice: maxPrice, comment: "422 Error: vendor not in API → repriceToMax (maxPrice: $" + maxPrice.toFixed(2) + ")" };
+    } else {
+      const v1Result = await replayRecordV1(record);
+      currV1 = v1Result ? { algoResult: v1Result.algoResult, suggestedPrice: v1Result.suggestedPrice, comment: v1Result.comment } : null;
+    }
+
+    // Compare V1 and V2 separately against historical
+    const isMatchV2 = compareDecision(hist, currV2);
+    const isMatchV1: boolean | null = currV1 ? compareDecision(hist, currV1) : null;
+    const isVendorMatch = (isMatchV1 === null || isMatchV1) && isMatchV2;
+
+    if (isVendorMatch) matches++;
+    if (isMatchV1 !== false) matchesV1++;
+    if (isMatchV2) matchesV2++;
+
+    const s = record.vendorSettings;
+    const vendor: VendorDecision = {
+      vendorId: record.vendorId,
+      existingPrice: record.historical.existingPrice,
+      position: record.historical.position,
+      historical: hist,
+      currentV1: currV1,
+      currentV2: currV2,
+      priceDeltaV1: currV1 ? computePriceDelta(hist.suggestedPrice, currV1.suggestedPrice) : null,
+      priceDeltaV2: computePriceDelta(hist.suggestedPrice, currV2.suggestedPrice),
+      isMatchV1,
+      isMatchV2,
+      isMatch: isVendorMatch,
+      settings: {
+        up_down: String(s.up_down),
+        floor_price: s.floor_price,
+        max_price: s.max_price,
+        badge_indicator: String(s.badge_indicator),
+        price_strategy: String(s.price_strategy),
+        reprice_up_percentage: s.reprice_up_percentage,
+        reprice_down_percentage: s.reprice_down_percentage,
+        keep_position: s.keep_position,
+        sister_vendor_ids: s.sister_vendor_ids,
+        exclude_vendors: s.exclude_vendors,
+        compete_with_all_vendors: s.compete_with_all_vendors,
+        handling_time_group: String(s.handling_time_group),
+        inventory_competition_threshold: s.inventory_competition_threshold,
+        enabled: s.enabled,
+      },
+    };
 
     products.push({
-      mpId: first.mpId,
-      timestamp: first.timestamp,
-      cronName: first.cronName,
+      mpId: record.mpId,
+      timestamp: record.timestamp,
+      cronName: record.cronName,
       market,
-      vendors,
-      isMatch: allMatch,
+      vendors: [vendor],
+      isMatch: isVendorMatch,
     });
   }
 

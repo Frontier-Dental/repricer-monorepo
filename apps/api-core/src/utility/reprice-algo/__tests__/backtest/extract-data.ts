@@ -290,6 +290,10 @@ async function extractFromTableHistory(db: Knex, options: ExtractOptions): Promi
   if (options.cronName) {
     query = query.where("h.ContextCronName", options.cronName);
   }
+  // Exclude SCRAPE-ONLY records by default — they have no algo decisions (RepriceResult=null, SuggestedPrice="N/A")
+  if (options.excludeScrapeOnly !== false) {
+    query = query.whereNot("h.ContextCronName", "SCRAPE-ONLY");
+  }
   if (options.limit) {
     query = query.limit(options.limit);
   }
@@ -371,7 +375,7 @@ async function extractFromTableHistory(db: Knex, options: ExtractOptions): Promi
         v1Settings,
         allVendorSettings,
         historical: {
-          algoResult: parseHistoricalAlgoResult(row.RepriceResult, row.RepriceComment),
+          algoResult: parseHistoricalAlgoResult(row.RepriceResult, row.RepriceComment, row.ContextCronName),
           suggestedPrice: row.SuggestedPrice ? parseFloat(row.SuggestedPrice) : null,
           comment: row.RepriceComment ?? "",
           triggeredByVendor: row.TriggeredByVendor,
@@ -421,7 +425,7 @@ async function findApiResponseForRecord(db: Knex, mpId: number, timestamp: Date)
 // Fallback: parse RepriceComment (which has "1@CHANGE: #BB_BADGE | $DOWN/" format
 //   after UpdateHistoryWithMessage overwrites the initial value)
 
-function parseHistoricalAlgoResult(repriceResult: string | null | undefined, repriceComment: string | null | undefined): string {
+function parseHistoricalAlgoResult(repriceResult: string | null | undefined, repriceComment: string | null | undefined, cronName?: string | null): string {
   // Prefer RepriceResult column — it stores clean RepriceResultEnum values
   if (repriceResult && repriceResult !== "UNKNOWN") {
     const upper = repriceResult.toUpperCase().trim();
@@ -431,7 +435,16 @@ function parseHistoricalAlgoResult(repriceResult: string | null | undefined, rep
   }
 
   // Fallback: parse RepriceComment (handles both raw and "1@..." formats)
-  return parseV1AlgoResult(repriceComment);
+  // RepriceComment is the historical decision — trust its $DOWN/$UP direction
+  const parsed = parseV1AlgoResult(repriceComment);
+
+  // SCRAPE-ONLY crons write "N/A" for both RepriceComment and RepriceResult —
+  // they only capture market snapshots, no algo runs. Show a clear label.
+  if (parsed === "NO_SOLUTION" && cronName?.toUpperCase().includes("SCRAPE")) {
+    return "SCRAPE_ONLY";
+  }
+
+  return parsed;
 }
 
 function parseV1AlgoResult(comment: string | null | undefined): string {
