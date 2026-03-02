@@ -8,6 +8,7 @@ import { apiLimiter } from "../middleware/rate-limiter";
 
 export const helpRouter = express.Router();
 //helpRouter.use(authMiddleware);
+helpRouter.use(apiLimiter);
 
 helpRouter.get("/GetLogsById/:id", authMiddleware, helpController.getLogsById);
 helpRouter.get("/ProductDetails/:id", authMiddleware, helpController.getProductDetails);
@@ -16,8 +17,8 @@ helpRouter.get("/ip_health_check", authMiddleware, helpController.doIpHealthChec
 
 helpRouter.get("/ip_ping_check", authMiddleware, helpController.pingCheck);
 helpRouter.get("/let_me_in", authMiddleware, helpController.troubleshoot);
-helpRouter.post("/check_ip_status", apiLimiter, authMiddleware, helpController.debugIp);
-helpRouter.post("/check_ip_status_v2", apiLimiter, authMiddleware, helpController.debugIpV2);
+helpRouter.post("/check_ip_status", authMiddleware, helpController.debugIp);
+helpRouter.post("/check_ip_status_v2", authMiddleware, helpController.debugIpV2);
 
 helpRouter.get("/load_product/:id", authMiddleware, helpController.loadProductDetails);
 
