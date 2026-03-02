@@ -62,8 +62,9 @@ function saveSlowCron() {
           location.reload();
         }, 5000);
       },
-      error: function () {
-        showErrorToast("Something went wrong, Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   }

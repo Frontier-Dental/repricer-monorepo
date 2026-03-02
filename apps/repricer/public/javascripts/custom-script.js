@@ -125,8 +125,9 @@ function updateAllPrice(index) {
           location.reload();
         }, 3000);
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -151,8 +152,9 @@ function updatePriceForProduct(mpid, index) {
           location.reload();
         }, 5000);
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -222,8 +224,9 @@ function saveAll() {
           location.reload();
         }, 5000);
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -250,8 +253,9 @@ function startAllCron() {
           location.reload();
         }, 5000);
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -278,8 +282,9 @@ function stopAllCron(params) {
           location.reload();
         }, 5000);
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -302,8 +307,9 @@ function switchOffCron(cronId) {
         showSuccessToast(data.message);
         location.reload();
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -326,8 +332,9 @@ function switchOnCron(cronId) {
         showSuccessToast(data.message);
         location.reload();
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -378,8 +385,9 @@ function submitPurge() {
           showSuccessToast(data.message);
           location.reload();
         },
-        error: function () {
-          showErrorToast("Something went wrong. Please try again");
+        error: function (error) {
+          const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+          showErrorToast(errorMessage);
         },
       });
     } else {
@@ -405,8 +413,9 @@ function submitPurge() {
           showSuccessToast(data.message);
           location.reload();
         },
-        error: function () {
-          showErrorToast("Something went wrong. Please try again");
+        error: function (error) {
+          const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+          showErrorToast(errorMessage);
         },
       });
     } else {
@@ -430,8 +439,9 @@ function stop422Cron(cronName) {
         showSuccessToast(data.message);
         location.reload();
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -454,8 +464,9 @@ function start422Cron(cronName) {
         showSuccessToast(data.message);
         location.reload();
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -503,8 +514,9 @@ function saveConfiguration() {
         showSuccessToast(data.message);
         //location.reload();
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -571,8 +583,9 @@ function exportHistory(maxCount) {
         success: function (data) {
           showSuccessToast(data.message);
         },
-        error: function () {
-          showErrorToast("Something went wrong. Please try again");
+        error: function (error) {
+          const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+          showErrorToast(errorMessage);
         },
       });
     } else {
@@ -588,8 +601,9 @@ function exportHistory(maxCount) {
         success: function (data) {
           showSuccessToast(data.message);
         },
-        error: function () {
-          showErrorToast("Something went wrong. Please try again");
+        error: function (error) {
+          const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+          showErrorToast(errorMessage);
         },
       });
     }
@@ -657,8 +671,9 @@ function saveEnvConfigurations() {
           location.reload();
         }, 5000);
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -681,8 +696,9 @@ function purgeAllCache() {
           location.reload();
         }, 5000);
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -710,8 +726,9 @@ function deleteCacheItem() {
           location.reload();
         }, 5000);
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -733,8 +750,9 @@ function showCacheValue() {
         `Cache Value for '${cacheKey}' : \n ${JSON.stringify(data.message)}`,
       );
     },
-    error: function () {
-      showErrorToast("Something went wrong. Please try again");
+    error: function (error) {
+      const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+      showErrorToast(errorMessage);
     },
   });
 }
@@ -860,8 +878,9 @@ function activateProductForAll(mpid) {
         location.reload();
       }, 5000);
     },
-    error: function () {
-      showErrorToast("Something went wrong. Please try again");
+    error: function (error) {
+      const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+      showErrorToast(errorMessage);
     },
   });
 }
@@ -882,8 +901,9 @@ function deActivateProductForAll(mpid) {
         location.reload();
       }, 5000);
     },
-    error: function () {
-      showErrorToast("Something went wrong. Please try again");
+    error: function (error) {
+      const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+      showErrorToast(errorMessage);
     },
   });
 }
@@ -987,8 +1007,9 @@ function saveBranches(mpid) {
         location.reload();
       }, 5000);
     },
-    error: function () {
-      showErrorToast("Something went wrong. Please try again");
+    error: function (error) {
+      const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+      showErrorToast(errorMessage);
     },
   });
 }
@@ -1005,8 +1026,9 @@ function runSpecificCron() {
     success: function (data) {
       showSuccessToast(`${cronName} executed successfully.`);
     },
-    error: function () {
-      showErrorToast("Something went wrong. Please try again");
+    error: function (error) {
+      const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+      showErrorToast(errorMessage);
     },
   });
 }
@@ -1086,10 +1108,11 @@ if ($("#add_scrape_excel").length > 0) {
                   showErrorToast(data.message);
                 }
               },
-              error: function () {
+              error: function (error) {
+                const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
                 $(".addItemExcel").html("Submit");
                 $(".addItemExcel").prop("disabled", false);
-                showErrorToast("Something went wrong. Please try again");
+                showErrorToast(errorMessage);
               },
             });
           }
@@ -1143,8 +1166,9 @@ if ($("#add_scrape_item").length > 0) {
               showErrorToast(data.message);
             }
           },
-          error: function () {
-            showErrorToast("Something went wrong. Please try again");
+          error: function (error) {
+            const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+            showErrorToast(errorMessage);
           },
         });
       },
@@ -1195,8 +1219,9 @@ if ($("#edit_scrape_item").length > 0) {
               showErrorToast(data.message);
             }
           },
-          error: function () {
-            showErrorToast("Something went wrong. Please try again");
+          error: function (error) {
+            const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+            showErrorToast(errorMessage);
           },
         });
       },
@@ -1224,8 +1249,9 @@ function deleteItem(id) {
           showErrorToast(data.message);
         }
       },
-      error: function () {
-        alert("Oops unable to connect with server!!");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -1296,8 +1322,9 @@ function activateDataScrape(mpid) {
         location.reload();
       }, 5000);
     },
-    error: function () {
-      showErrorToast("Something went wrong. Please try again");
+    error: function (error) {
+      const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+      showErrorToast(errorMessage);
     },
   });
 }
@@ -1318,8 +1345,9 @@ function deActivateDataScrape(mpid) {
         location.reload();
       }, 5000);
     },
-    error: function () {
-      showErrorToast("Something went wrong. Please try again");
+    error: function (error) {
+      const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+      showErrorToast(errorMessage);
     },
   });
 }
@@ -1383,8 +1411,9 @@ function saveRootDetails(mpid) {
         location.reload();
       }, 5000);
     },
-    error: function () {
-      showErrorToast("Something went wrong. Please try again");
+    error: function (error) {
+      const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+      showErrorToast(errorMessage);
     },
   });
 }
@@ -1413,8 +1442,9 @@ function simulateManualReprice() {
         newWindow.document.close();
         showSuccessToast("Simulation report opened in new window");
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -1456,8 +1486,9 @@ function runManualScrape(isProductPage, isV2Algorithm) {
           );
         }
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -1493,8 +1524,9 @@ function removeFrom422() {
           location.reload();
         }, 1000);
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -1520,8 +1552,9 @@ function removeFrom422ForAll() {
         location.reload();
       }, 1000);
     },
-    error: function () {
-      showErrorToast("Something went wrong. Please try again");
+    error: function (error) {
+      const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+      showErrorToast(errorMessage);
     },
   });
 }
@@ -1549,8 +1582,9 @@ function runManualSyncForAll() {
           location.reload();
         }, 10000);
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -1579,8 +1613,9 @@ function removeFrom422ById(mpId) {
           location.reload();
         }, 1000);
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
@@ -1616,8 +1651,9 @@ function runUpdateToMax() {
           `/productV2/show_all?tags=${payLoadForManualUpdate[0]}&search=true`,
         );
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   } else {
