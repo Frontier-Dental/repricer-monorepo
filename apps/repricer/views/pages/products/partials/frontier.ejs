@@ -72,6 +72,10 @@
                 days (Stocked)</option>
               <option <%=model.frontierDetails.handlingTimeFilter=='LONG_HANDLING' ? "selected" : "" %>
                 value='LONG_HANDLING'>6+ days (Long Handling)</option>
+              <option <%=model.frontierDetails.handlingTimeFilter=='ONE_TO_TEN_DAYS' ? "selected" : "" %>
+                value='ONE_TO_TEN_DAYS'>1-10 days</option>
+              <option <%=model.frontierDetails.handlingTimeFilter=='MIN_ELEVEN_DAYS' ? "selected" : "" %>
+                value='MIN_ELEVEN_DAYS'>11+ days</option>
             </select>
           </div>
         </div>
