@@ -118,7 +118,9 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings, mpi
   }
 
   //update badge details product level
-  sqlV2Service.UpdateProductLevelBadgeDetails(mpid, responseData.data);
+  if (responseData?.data) {
+    sqlV2Service.UpdateProductLevelBadgeDetails(mpid, responseData.data);
+  }
 
   return responseData;
 }

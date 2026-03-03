@@ -231,7 +231,7 @@ export async function logBlankCronDetailsV3(cronId: any) {
   let cronLogs = { time: new Date(), logs: [], cronId: cronId };
   const logInDb = await dbHelper.PushLogsAsync(cronLogs);
   if (logInDb) {
-    console.debug(`Successfully logged blank reprice data at ${cronLogs.time} for cron ${cronId}`);
+    logger.debug(`Successfully logged blank reprice data at ${cronLogs.time} for cron ${cronId}`);
   }
 }
 

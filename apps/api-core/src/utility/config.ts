@@ -219,7 +219,7 @@ const envSchema = z.object({
     .pipe(z.boolean())
     .default(true),
   LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("info"),
-  NODE_ENV: z.enum(["development", "production", "staging"]).default("development"),
+  NODE_ENV: z.enum(["development", "production", "staging", "test"]).default("development"),
 });
 
 export function validateConfig() {
