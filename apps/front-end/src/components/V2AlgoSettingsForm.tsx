@@ -2,33 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import {
-  AlgoHandlingTimeGroup,
-  AlgoPriceStrategy,
-  AlgoPriceDirection,
-  AlgoBadgeIndicator,
-} from "@repricer-monorepo/shared";
+import { AlgoHandlingTimeGroup, AlgoPriceStrategy, AlgoPriceDirection, AlgoBadgeIndicator } from "@repricer-monorepo/shared";
 
 // Zod schema for the settings form
 const settingsSchema = z.object({
@@ -108,21 +90,13 @@ function formatDefaultValues(settings: V2AlgoSettings) {
     reprice_up_percentage: Number(settings.reprice_up_percentage),
     reprice_down_percentage: Number(settings.reprice_down_percentage),
     reprice_up_badge_percentage: Number(settings.reprice_up_badge_percentage),
-    reprice_down_badge_percentage: Number(
-      settings.reprice_down_badge_percentage,
-    ),
+    reprice_down_badge_percentage: Number(settings.reprice_down_badge_percentage),
     max_price: Number(settings.max_price),
     floor_price: Number(settings.floor_price),
   };
 }
 
-export function V2AlgoSettingsForm({
-  vendorId,
-  vendorName,
-  initialSettings,
-  onSave,
-  onToggleEnabled,
-}: V2AlgoSettingsFormProps) {
+export function V2AlgoSettingsForm({ vendorId, vendorName, initialSettings, onSave, onToggleEnabled }: V2AlgoSettingsFormProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SettingsFormData>({
@@ -174,10 +148,7 @@ export function V2AlgoSettingsForm({
       </div>
 
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className={`space-y-4 ${!isEnabled ? "opacity-50 pointer-events-none" : ""}`}
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)} className={`space-y-4 ${!isEnabled ? "opacity-50 pointer-events-none" : ""}`}>
           {/* General Settings */}
           <div className="grid grid-cols-3 gap-3">
             <FormField
@@ -206,10 +177,7 @@ export function V2AlgoSettingsForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Up/Down Direction</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue />
@@ -231,10 +199,7 @@ export function V2AlgoSettingsForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Handling Time Group</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue />
@@ -242,15 +207,11 @@ export function V2AlgoSettingsForm({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="ALL">ALL</SelectItem>
-                      <SelectItem value="FAST_SHIPPING">
-                        FAST_SHIPPING (1 - 2 days)
-                      </SelectItem>
-                      <SelectItem value="STOCKED">
-                        STOCKED (1 - 5 days)
-                      </SelectItem>
-                      <SelectItem value="LONG_HANDLING">
-                        LONG_HANDLING (6+ days)
-                      </SelectItem>
+                      <SelectItem value="FAST_SHIPPING">FAST_SHIPPING (1 - 2 days)</SelectItem>
+                      <SelectItem value="STOCKED">STOCKED (1 - 5 days)</SelectItem>
+                      <SelectItem value="LONG_HANDLING">LONG_HANDLING (6+ days)</SelectItem>
+                      <SelectItem value="ONE_TO_TEN_DAYS">1 - 10 days</SelectItem>
+                      <SelectItem value="MIN_ELEVEN_DAYS">11+ days</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -263,10 +224,7 @@ export function V2AlgoSettingsForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Badge Indicator</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue />
@@ -290,25 +248,16 @@ export function V2AlgoSettingsForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Price Strategy</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value={AlgoPriceStrategy.UNIT}>
-                        UNIT
-                      </SelectItem>
-                      <SelectItem value={AlgoPriceStrategy.TOTAL}>
-                        TOTAL
-                      </SelectItem>
-                      <SelectItem value={AlgoPriceStrategy.BUY_BOX}>
-                        BUY_BOX
-                      </SelectItem>
+                      <SelectItem value={AlgoPriceStrategy.UNIT}>UNIT</SelectItem>
+                      <SelectItem value={AlgoPriceStrategy.TOTAL}>TOTAL</SelectItem>
+                      <SelectItem value={AlgoPriceStrategy.BUY_BOX}>BUY_BOX</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -468,10 +417,7 @@ export function V2AlgoSettingsForm({
                 <FormItem>
                   <FormLabel>Sister Vendor IDs</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Comma-separated vendor IDs"
-                    />
+                    <Input {...field} placeholder="Comma-separated vendor IDs" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -487,10 +433,7 @@ export function V2AlgoSettingsForm({
                 <FormItem>
                   <FormLabel>Exclude Vendors</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Comma-separated vendor IDs"
-                    />
+                    <Input {...field} placeholder="Comma-separated vendor IDs" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -503,10 +446,7 @@ export function V2AlgoSettingsForm({
                 <FormItem>
                   <FormLabel>Inactive Vendor ID</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Vendor ID to mark as inactive"
-                    />
+                    <Input {...field} placeholder="Vendor ID to mark as inactive" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -542,15 +482,10 @@ export function V2AlgoSettingsForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">
-                      Suppress Price Break
-                    </FormLabel>
+                    <FormLabel className="text-base">Suppress Price Break</FormLabel>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}
@@ -561,15 +496,10 @@ export function V2AlgoSettingsForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">
-                      Compete on Price Break Only
-                    </FormLabel>
+                    <FormLabel className="text-base">Compete on Price Break Only</FormLabel>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}
@@ -580,15 +510,10 @@ export function V2AlgoSettingsForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">
-                      Compare Q2 with Q1
-                    </FormLabel>
+                    <FormLabel className="text-base">Compare Q2 with Q1</FormLabel>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}
@@ -602,15 +527,10 @@ export function V2AlgoSettingsForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">
-                      Floor Compete with Next
-                    </FormLabel>
+                    <FormLabel className="text-base">Floor Compete with Next</FormLabel>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}
@@ -621,15 +541,10 @@ export function V2AlgoSettingsForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">
-                      Compete with All Vendors
-                    </FormLabel>
+                    <FormLabel className="text-base">Compete with All Vendors</FormLabel>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}
@@ -643,15 +558,10 @@ export function V2AlgoSettingsForm({
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-base">
-                      Suppress Price Break if Q1 Not Updated
-                    </FormLabel>
+                    <FormLabel className="text-base">Suppress Price Break if Q1 Not Updated</FormLabel>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}
@@ -665,10 +575,7 @@ export function V2AlgoSettingsForm({
                     <FormLabel className="text-base">Keep Position</FormLabel>
                   </div>
                   <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>
                 </FormItem>
               )}

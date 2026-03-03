@@ -14,5 +14,13 @@
   {
     "key": "LONG_HANDLING",
     "value": "6+ days (Long Handling)"
+  },
+  {
+    "key": "ONE_TO_TEN_DAYS",
+    "value": "1-10 days"
+  },
+  {
+    "key": "MIN_ELEVEN_DAYS",
+    "value": "11+ days"
   }
 ]
