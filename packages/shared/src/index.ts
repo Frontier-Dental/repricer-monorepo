@@ -61,6 +61,8 @@ export enum AlgoHandlingTimeGroup {
   FAST_SHIPPING = "FAST_SHIPPING",
   STOCKED = "STOCKED",
   LONG_HANDLING = "LONG_HANDLING",
+  ONE_TO_TEN_DAYS = "ONE_TO_TEN_DAYS",
+  MIN_ELEVEN_DAYS = "MIN_ELEVEN_DAYS",
 }
 
 export enum AlgoPriceStrategy {
