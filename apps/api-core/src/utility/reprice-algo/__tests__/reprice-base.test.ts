@@ -42,8 +42,13 @@ jest.mock("../v2/wrapper");
 jest.mock("../../filter-mapper");
 jest.mock("../../../utility/mysql/mysql-v2");
 jest.mock("fs");
+jest.mock("../../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
 
 import { AlgoExecutionMode } from "@repricer-monorepo/shared";
+import logger from "../../logger";
 import { parseNumericPrice, Execute, RepriceErrorItem, CheckReprice, RepriceErrorItemV2, UpdateToMax, repriceWrapper } from "../reprice-base";
 import * as axiosHelper from "../../axios-helper";
 import * as dbHelper from "../../mongo/db-helper";
@@ -278,7 +283,7 @@ describe("reprice-base", () => {
 
       await Execute(mockJobId, productList, mockCronInitTime, mockCronSetting, false);
 
-      expect(console.log).toHaveBeenCalledWith("Skipping product: ", "12345", " because no vendors are enabled.");
+      expect(logger.info).toHaveBeenCalledWith("Skipping product: ", "12345", " because no vendors are enabled.");
     });
 
     it("should handle skipNextVendor flag", async () => {
@@ -306,7 +311,7 @@ describe("reprice-base", () => {
 
       await Execute(mockJobId, productList, mockCronInitTime, mockCronSetting, false);
 
-      expect(console.error).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
       expect(dbHelper.PushLogsAsync).toHaveBeenCalled();
     });
 
@@ -837,7 +842,7 @@ describe("reprice-base", () => {
 
       await CheckReprice(mockNet32Response, mockProd, mockCronSetting, false, mockJobId, "TRADENT");
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("History Updated"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("History Updated"));
     });
 
     it("should handle multiple price breaks in repriceResult", async () => {

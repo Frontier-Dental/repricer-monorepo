@@ -64,6 +64,11 @@ jest.mock("../../../config", () => ({
   },
 }));
 
+jest.mock("../../../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
 jest.mock("../../../mongo/db-helper", () => ({
   GetErrorItemsByMpId: jest.fn(),
   UpsertErrorItemLog: jest.fn(),
@@ -130,18 +135,11 @@ import { AlgoResult, ChangeResult } from "../types";
 import { getPriceListFormatted } from "../utility";
 import { GetCronSettingsDetailsByName, GetCronSettingsDetailsById } from "../../../mysql/mysql-v2";
 import { applicationConfig } from "../../../config";
-
-// Suppress console methods during tests
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
+import logger from "../../../logger";
 
 describe("wrapper", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Mock console methods
-    console.log = jest.fn();
-    console.error = jest.fn();
 
     // Default mock implementations
     (mongoHelper.GetErrorItemsByMpId as jest.Mock).mockResolvedValue([]);
@@ -176,12 +174,6 @@ describe("wrapper", () => {
     (insertMultipleV2AlgoResults as jest.Mock).mockResolvedValue(undefined);
     (insertV2AlgoExecution as jest.Mock).mockResolvedValue(undefined);
     (mongoHelper.UpsertErrorItemLog as jest.Mock).mockResolvedValue(undefined);
-  });
-
-  afterEach(() => {
-    // Restore console methods
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
   });
 
   describe("updatePrice", () => {
@@ -423,7 +415,7 @@ describe("wrapper", () => {
       // When no solutions, updatePricesIfNecessary returns empty array, then wrapper returns empty
       if (results) {
         expect(results).toEqual([]);
-        expect(console.log).toHaveBeenCalledWith("No solutions found for product 12345");
+        expect(logger.info).toHaveBeenCalledWith("No solutions found for product 12345");
       } else {
         // If error occurred, it should be logged
         expect(insertV2AlgoError).toHaveBeenCalled();
@@ -450,7 +442,7 @@ describe("wrapper", () => {
       const results = await repriceProductV2Wrapper(mockNet32Products, mockProd, "TestCron", false);
 
       expect(insertV2AlgoError).toHaveBeenCalled();
-      expect(console.error).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
     });
 
     it("should handle price update with ChangeResult.OK", async () => {
@@ -508,7 +500,7 @@ describe("wrapper", () => {
           cron_name: "TestCron",
         })
       );
-      expect(console.error).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
     });
 
     it("should use contextCronId when cronName is MANUAL", async () => {
@@ -636,7 +628,7 @@ describe("wrapper", () => {
       // Function may return undefined if error occurs, or array if successful
       if (results) {
         expect(Array.isArray(results)).toBe(true);
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("We are in dev mode"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("We are in dev mode"));
         expect(axios.post).not.toHaveBeenCalled();
         // Results should have CHANGE_PREVENTED_DEV
         const devResults = results.filter((r: any) => r.changeResult === ChangeResult.CHANGE_PREVENTED_DEV);
@@ -726,7 +718,7 @@ describe("wrapper", () => {
       const results = await repriceProductV2Wrapper(mockNet32Products, mockProd, "TestCron", false);
 
       expect(insertV2AlgoError).toHaveBeenCalled();
-      expect(console.error).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
     });
 
     it("should handle missing proxy config", async () => {
@@ -745,7 +737,7 @@ describe("wrapper", () => {
       const results = await repriceProductV2Wrapper(mockNet32Products, mockProd, "TestCron", false);
 
       expect(insertV2AlgoError).toHaveBeenCalled();
-      expect(console.error).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
     });
 
     it("should handle missing cron settings", async () => {
@@ -761,7 +753,7 @@ describe("wrapper", () => {
       const results = await repriceProductV2Wrapper(mockNet32Products, mockProd, "TestCron", false);
 
       expect(insertV2AlgoError).toHaveBeenCalled();
-      expect(console.error).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
     });
 
     it("should handle invalid Q breaks removal", async () => {
@@ -889,7 +881,7 @@ describe("wrapper", () => {
       const results = await repriceProductV2Wrapper(mockNet32Products, mockProd, "TestCron", false);
 
       expect(insertV2AlgoError).toHaveBeenCalled();
-      expect(console.error).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
     });
 
     it("should log algorithm execution completion", async () => {
@@ -897,7 +889,7 @@ describe("wrapper", () => {
 
       await repriceProductV2Wrapper(mockNet32Products, mockProd, "TestCron", false);
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Algorithm execution completed with job ID"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Algorithm execution completed with job ID"));
     });
 
     it("should handle slow cron flag", async () => {

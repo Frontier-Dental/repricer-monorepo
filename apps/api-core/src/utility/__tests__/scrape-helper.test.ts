@@ -50,7 +50,13 @@ jest.mock("../config", () => ({
   },
 }));
 
+jest.mock("../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
 import { Execute } from "../scrape-helper";
+import logger from "../logger";
 import * as axiosHelper from "../axios-helper";
 import * as mySqlHelper from "../mysql/mysql-helper";
 import { Generate } from "../job-id-helper";
@@ -408,7 +414,7 @@ describe("scrape-helper", () => {
       const mockApiResponse = {
         data: [
           createMockVendorResponse({
-            vendorId: "20533",
+            vendorId: "20727",
             vendorName: "TOPDENT",
             priceBreaks: [{ minQty: 1, unitPrice: 10.5, pmId: "PM1", promoAddlDescr: "None" }],
           }),
@@ -439,7 +445,7 @@ describe("scrape-helper", () => {
       const mockApiResponse = {
         data: [
           createMockVendorResponse({
-            vendorId: "20727",
+            vendorId: "20533",
             vendorName: "FIRSTDENT",
             priceBreaks: [{ minQty: 1, unitPrice: 10.5, pmId: "PM1", promoAddlDescr: "None" }],
           }),
@@ -1156,7 +1162,7 @@ describe("scrape-helper", () => {
 
       await Execute(productList, mockCronSetting);
 
-      expect(console.error).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
       expect(mySqlHelper.InsertProductInfo).toHaveBeenCalled(); // Should continue processing
     });
 

@@ -2,8 +2,13 @@
 jest.mock("../../model/reprice-model", () => ({
   RepriceModel: jest.fn(),
 }));
+jest.mock("../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
 
 import { parseShippingBuyBox, parseBadgeBuyBox } from "../buy-box-helper";
+import logger from "../logger";
 import { RepriceModel } from "../../model/reprice-model";
 import { RepriceRenewedMessageEnum } from "../../model/reprice-renewed-message";
 
@@ -154,7 +159,6 @@ describe("buy-box-helper", () => {
     });
 
     it("should handle error gracefully", async () => {
-      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
       const repriceResult = {
         repriceDetails: {
           isRepriced: false,
@@ -182,9 +186,7 @@ describe("buy-box-helper", () => {
 
       const result = await parseShippingBuyBox(repriceResult, net32Result, productItem);
       expect(result).toBe(repriceResult);
-      expect(consoleErrorSpy).toHaveBeenCalled();
-
-      consoleErrorSpy.mockRestore();
+      expect(logger.error).toHaveBeenCalled();
     });
   });
 

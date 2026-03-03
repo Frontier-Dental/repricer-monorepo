@@ -20,19 +20,22 @@ jest.mock("path");
 jest.mock("cheerio");
 jest.mock("node-cron");
 
+jest.mock("../../../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
 import { scrapeAndStoreVendorData, scheduleDailyThresholdScraping, initializeThresholdScraping, parseAndStoreVendorData, ParsedVendorData } from "../threshold-scraping";
 import { scrapflyFetch } from "../../../proxy/scrapfly-helper";
 import { getKnexInstance } from "../../../../model/sql-models/knex-wrapper";
 import { applicationConfig } from "../../../config";
+import logger from "../../../logger";
 import fs from "fs";
 import path from "path";
 import * as cheerio from "cheerio";
 import * as cron from "node-cron";
 
 describe("threshold-scraping", () => {
-  const originalConsoleLog = console.log;
-  const originalConsoleError = console.error;
-
   let mockKnex: any;
   let mockCheerio: any;
   let mockCronTask: any;
@@ -77,10 +80,6 @@ describe("threshold-scraping", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Suppress console methods during tests
-    console.log = jest.fn();
-    console.error = jest.fn();
-
     // Mock path.join
     (path.join as jest.Mock) = jest.fn((...args) => args.join("/"));
 
@@ -121,11 +120,6 @@ describe("threshold-scraping", () => {
       responseContent: "<html><body></body></html>",
       timeTaken: "1.5",
     });
-  });
-
-  afterEach(() => {
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
   });
 
   describe("scrapeAndStoreVendorData", () => {
@@ -186,7 +180,7 @@ describe("threshold-scraping", () => {
 
       await scrapeAndStoreVendorData();
 
-      expect(console.error).toHaveBeenCalledWith("❌ Error scraping and storing vendor data:", error);
+      expect(logger.error).toHaveBeenCalledWith("❌ Error scraping and storing vendor data:", error);
     });
 
     it("should write to file when SHIPPING_THRESHOLD_SAVE_FILE is true", async () => {
@@ -207,7 +201,7 @@ describe("threshold-scraping", () => {
       await scrapeAndStoreVendorData();
 
       expect(fs.writeFileSync).toHaveBeenCalledWith("/test/path/scraped-threshold-data.html", mockHtml, "utf8");
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Scraped data written to:"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Scraped data written to:"));
     });
   });
 
@@ -221,7 +215,7 @@ describe("threshold-scraping", () => {
         runOnInit: applicationConfig.RUN_SHIPPING_THRESHOLD_SCRAPE_ON_STARTUP,
       });
       expect(mockCronTask.start).toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith("📅 Daily threshold scraping scheduled for 2:00 AM UTC");
+      expect(logger.info).toHaveBeenCalledWith("📅 Daily threshold scraping scheduled for 2:00 AM UTC");
       expect(task).toBe(mockCronTask);
     });
 
@@ -251,7 +245,7 @@ describe("threshold-scraping", () => {
 
       if (scheduledCallback) {
         await scheduledCallback();
-        expect(console.log).toHaveBeenCalledWith("🕐 Running scheduled daily threshold scraping...");
+        expect(logger.info).toHaveBeenCalledWith("🕐 Running scheduled daily threshold scraping...");
       }
     });
 
@@ -353,7 +347,7 @@ describe("threshold-scraping", () => {
       const result = await parseAndStoreVendorData(mockHtml);
 
       expect(cheerio.load).toHaveBeenCalledWith(mockHtml);
-      expect(console.log).toHaveBeenCalledWith("Using provided HTML content...");
+      expect(logger.info).toHaveBeenCalledWith("Using provided HTML content...");
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
         vendorId: 1,
@@ -400,7 +394,7 @@ describe("threshold-scraping", () => {
       await parseAndStoreVendorData();
 
       expect(fs.readFileSync).toHaveBeenCalledWith("/test/path/scraped-threshold-data.html", "utf8");
-      expect(console.log).toHaveBeenCalledWith("Reading HTML from file...");
+      expect(logger.info).toHaveBeenCalledWith("Reading HTML from file...");
       expect(cheerio.load).toHaveBeenCalledWith(mockFileContent);
     });
 
@@ -667,7 +661,7 @@ describe("threshold-scraping", () => {
         expect(countCall.value.count).toHaveBeenCalledWith("* as count");
         expect(countCall.value.first).toHaveBeenCalled();
       }
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Final record count:"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Final record count:"));
     });
   });
 });

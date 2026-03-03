@@ -51,6 +51,12 @@ jest.mock("../../../utility/feed-helper");
 jest.mock("../../../utility/mysql/mysql-v2");
 jest.mock("../../../utility/config");
 jest.mock("../../../client/cacheClient");
+jest.mock("../../../utility/logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() },
+}));
+
+import logger from "../../../utility/logger";
 
 const mockSchedule = schedule as jest.MockedFunction<typeof schedule>;
 const mockGetCronGeneric = responseUtility.GetCronGeneric as jest.MockedFunction<typeof responseUtility.GetCronGeneric>;
@@ -76,12 +82,6 @@ const mockCacheClient = {
   disconnect: jest.fn(),
 };
 
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-const originalConsoleInfo = console.info;
-const originalConsoleWarn = console.warn;
-const originalConsoleDebug = console.debug;
-
 describe("main-cron/shared", () => {
   let mockCronTask: ScheduledTask;
   let mockCronSetting: CronSettingsDetail;
@@ -98,13 +98,6 @@ describe("main-cron/shared", () => {
     } catch (e) {
       // Ignore if not accessible
     }
-
-    // Mock console methods
-    console.log = jest.fn();
-    console.error = jest.fn();
-    console.info = jest.fn();
-    console.warn = jest.fn();
-    console.debug = jest.fn();
 
     // Create mock ScheduledTask with proper mock functions
     mockCronTask = {
@@ -177,14 +170,7 @@ describe("main-cron/shared", () => {
     mockCacheClient.disconnect.mockResolvedValue(undefined);
   });
 
-  afterEach(() => {
-    // Restore console methods
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
-    console.info = originalConsoleInfo;
-    console.warn = originalConsoleWarn;
-    console.debug = originalConsoleDebug;
-  });
+  afterEach(() => {});
 
   describe("stopAllMainCrons", () => {
     it("should stop all crons and reset mainCrons to empty", () => {
@@ -201,7 +187,7 @@ describe("main-cron/shared", () => {
       shared.stopAllMainCrons();
 
       // Verify the function completed successfully and logged the message
-      expect(console.info).toHaveBeenCalledWith("Stopped all main crons & reset to Empty.");
+      expect(logger.info).toHaveBeenCalledWith("Stopped all main crons & reset to Empty.");
 
       // Verify that after stopping, we can't start a cron that was stopped
       // (indirect verification that mainCrons was reset)
@@ -216,7 +202,7 @@ describe("main-cron/shared", () => {
 
       shared.stopAllMainCrons();
 
-      expect(console.info).toHaveBeenCalledWith("Stopped all main crons & reset to Empty.");
+      expect(logger.info).toHaveBeenCalledWith("Stopped all main crons & reset to Empty.");
     });
 
     it("should handle null cron values", () => {
@@ -226,7 +212,7 @@ describe("main-cron/shared", () => {
       // The function should handle null values gracefully
       shared.stopAllMainCrons();
 
-      expect(console.info).toHaveBeenCalledWith("Stopped all main crons & reset to Empty.");
+      expect(logger.info).toHaveBeenCalledWith("Stopped all main crons & reset to Empty.");
     });
   });
 
@@ -245,7 +231,7 @@ describe("main-cron/shared", () => {
 
       expect(mockGetCronGeneric).toHaveBeenCalledWith("hours", 1, 0);
       expect(mockSchedule).toHaveBeenCalled();
-      expect(console.info).toHaveBeenCalledWith(expect.stringContaining("Setting up 422 cron with schedule:"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Setting up 422 cron with schedule:"));
     });
 
     it("should throw error if 422 cron setting not found", () => {
@@ -307,7 +293,7 @@ describe("main-cron/shared", () => {
           runOnInit: false,
         })
       );
-      expect(console.info).not.toHaveBeenCalledWith("Started 422 cron.");
+      expect(logger.info).not.toHaveBeenCalledWith("Started 422 cron.");
     });
   });
 
@@ -385,7 +371,7 @@ describe("main-cron/shared", () => {
 
       expect(mockCacheClient.get).toHaveBeenCalledWith(CacheKey._422_RUNNING_CACHE);
       expect(mockGetContextErrorItems).not.toHaveBeenCalled();
-      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("Skipped Cron-422"));
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Skipped Cron-422"));
     });
 
     it("should handle cache validation with threshold from env variables", async () => {
@@ -435,7 +421,7 @@ describe("main-cron/shared", () => {
 
       await shared.runCoreCronLogicFor422();
 
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Error in IsCacheValid for 422 Cron:"), expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Error in IsCacheValid for 422 Cron:"), expect.any(Error));
       expect(mockGetContextErrorItems).toHaveBeenCalled();
     });
 
@@ -462,7 +448,7 @@ describe("main-cron/shared", () => {
       expect(mockRepriceErrorItemV2).toHaveBeenCalledTimes(2);
       expect(mockRepriceErrorItemV2).toHaveBeenCalledWith({ mpId: 1 }, initTime, "test-keygen-0");
       expect(mockRepriceErrorItemV2).toHaveBeenCalledWith({ mpId: 2 }, initTime, "test-keygen-1");
-      expect(console.info).toHaveBeenCalledWith(expect.stringContaining("PARALLEL EXECUTION"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("PARALLEL EXECUTION"));
     });
 
     it("should handle empty item list", async () => {
@@ -572,8 +558,8 @@ describe("main-cron/shared", () => {
 
       expect(mockGetCronGeneric).toHaveBeenCalledWith("hours", 1, 0);
       expect(mockSchedule).toHaveBeenCalled();
-      expect(console.info).toHaveBeenCalledWith(expect.stringContaining("Setting up cron Cron-1"));
-      expect(console.info).toHaveBeenCalledWith("Started cron Cron-1");
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Setting up cron Cron-1"));
+      expect(logger.info).toHaveBeenCalledWith("Started cron Cron-1");
     });
 
     it("should not log started message if CronStatus is false", () => {
@@ -592,7 +578,7 @@ describe("main-cron/shared", () => {
           runOnInit: false,
         })
       );
-      expect(console.info).not.toHaveBeenCalledWith("Started cron Cron-1");
+      expect(logger.info).not.toHaveBeenCalledWith("Started cron Cron-1");
     });
 
     it("should handle cron execution errors", async () => {
@@ -615,7 +601,7 @@ describe("main-cron/shared", () => {
 
       await cronFunction();
 
-      expect(console.error).toHaveBeenCalledWith("Error running Cron-1:", error);
+      expect(logger.error).toHaveBeenCalledWith("Error running Cron-1:", error);
     });
   });
 
@@ -662,7 +648,7 @@ describe("main-cron/shared", () => {
       await shared.runCoreCronLogic(mockCronSetting, false);
 
       expect(mockPushLogsAsync).toHaveBeenCalled();
-      expect(console.warn).toHaveBeenCalledWith(expect.stringContaining("No eligible products found"));
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("No eligible products found"));
     });
 
     it("should use slowCronBatchSize from env variables", async () => {
@@ -765,7 +751,7 @@ describe("main-cron/shared", () => {
           logs: [],
         })
       );
-      expect(console.debug).toHaveBeenCalledWith(expect.stringContaining("Successfully logged blank reprice data"));
+      expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining("Successfully logged blank reprice data"));
     });
 
     it("should handle logging failure", async () => {
@@ -774,7 +760,7 @@ describe("main-cron/shared", () => {
       await shared.logBlankCronDetailsV3("1");
 
       expect(mockPushLogsAsync).toHaveBeenCalled();
-      expect(console.debug).not.toHaveBeenCalled();
+      expect(logger.debug).not.toHaveBeenCalled();
     });
   });
 
@@ -885,7 +871,7 @@ describe("main-cron/shared", () => {
 
       const result = await shared.getSlowCronEligibleProductsV3("1");
 
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Error while getSlowCronEligibleProductsV3"), error);
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Error while getSlowCronEligibleProductsV3"), error);
       expect(result).toEqual([]);
     });
 
@@ -1321,7 +1307,7 @@ describe("main-cron/shared", () => {
       expect(mockExecute).toHaveBeenCalledTimes(2);
       expect(mockExecute).toHaveBeenCalledWith("test-keygen-0", [{ mpId: 1 }], initTime, cronSettingsResponse, false);
       expect(mockExecute).toHaveBeenCalledWith("test-keygen-1", [{ mpId: 2 }], initTime, cronSettingsResponse, false);
-      expect(console.info).toHaveBeenCalledWith(expect.stringContaining("PARALLEL EXECUTION CRON"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("PARALLEL EXECUTION CRON"));
     });
 
     it("should handle empty item list", async () => {
