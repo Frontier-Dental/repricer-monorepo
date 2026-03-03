@@ -1,4 +1,5 @@
 import { ScheduledTask } from "node-cron";
+import logger from "../../utility/logger";
 
 export const slowCrons: Record<string, ScheduledTask> = {};
 
@@ -20,13 +21,13 @@ export async function toggleCronStatus(cronObject: ScheduledTask, status: any, c
     case 0:
       if (cronObject) {
         cronObject.stop();
-        console.log(`${cronName} cron stopped successfully at ${new Date()} `);
+        logger.info(`${cronName} cron stopped successfully at ${new Date()} `);
       }
       break;
     case 1:
       if (cronObject) {
         cronObject.start();
-        console.log(`${cronName} cron started successfully at ${new Date()} `);
+        logger.info(`${cronName} cron started successfully at ${new Date()} `);
       }
       break;
     default:

@@ -10,6 +10,7 @@ import { PriceBreakInfo } from "../model/sql-models/price-break-info";
 import { RunCompletionStatus } from "../model/sql-models/run-completion-status";
 import { applicationConfig } from "./config";
 import { HistoryModel } from "../model/sql-models/history";
+import logger from "./logger";
 
 export async function Execute(productList: any[], cronSetting: any): Promise<void> {
   if (productList && productList.length > 0) {
@@ -37,7 +38,7 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
   const insertId = Array.isArray(runInfoResult) ? runInfoResult[0] : (runInfoResult as any)?.insertId;
   if (runInfoResult) {
     for (let prod of productList) {
-      console.log(`SCRAPE-ONLY : Scraping started for ${prod.MpId}`);
+      logger.info(`SCRAPE-ONLY : Scraping started for ${prod.MpId}`);
       const scrapeStartTime = new Date();
       const getSearchResultsEnv = applicationConfig.GET_SEARCH_RESULTS || "";
       const searchRequest = getSearchResultsEnv.replace("{mpId}", prod.MpId);
@@ -47,7 +48,7 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
         const allowHistoryLoggingEnv = applicationConfig.SCRAPE_ONLY_LOGGING;
         const allowRunInfoLoggingEnv = applicationConfig.SCRAPE_RUN_LOGGING;
         if (allowHistoryLoggingEnv) {
-          console.log(`SCRAPE-ONLY : Logging in history for ${prod.MpId} started at ${scrapeStartTime}`);
+          logger.info(`SCRAPE-ONLY : Logging in history for ${prod.MpId} started at ${scrapeStartTime}`);
           const apiResponseLinkedId = await mySqlHelper.InsertHistoricalApiResponse(net32resp.data, scrapeStartTime);
           let historyList: any[] = [];
           if (prod.LinkedTradentDetailsInfo > 0) {
@@ -78,7 +79,7 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
           }
         }
         if (allowRunInfoLoggingEnv) {
-          console.log(`SCRAPE-ONLY : Logging in run info for ${prod.MpId} started at ${scrapeStartTime}`);
+          logger.info(`SCRAPE-ONLY : Logging in run info for ${prod.MpId} started at ${scrapeStartTime}`);
           for (const [index, resp] of net32resp.data.entries()) {
             const isOwnVendor = _.includes(ownVendorList, resp.vendorId.toString());
 
@@ -93,7 +94,7 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
             productInfo.addStartTime(scrapeStartTime);
             productInfo.addEndTime(new Date());
             const productInfoResult = await mySqlHelper.InsertProductInfo(productInfo);
-            console.log(`SCRAPE-ONLY : ${cronSetting.CronName} : ${keyGen} : Inserted Product Info for MPID : ${prod.MpId} | VENDOR : ${productInfo.VendorId}`);
+            logger.info(`SCRAPE-ONLY : ${cronSetting.CronName} : ${keyGen} : Inserted Product Info for MPID : ${prod.MpId} | VENDOR : ${productInfo.VendorId}`);
 
             // Update vendor detail tables with market state for our own vendor
             if (isOwnVendor) {
@@ -142,11 +143,11 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
 
                   await mySqlHelper.UpdateMarketStateOnly(prod.MpId, vendorName, marketData);
 
-                  console.log(`SCRAPE-ONLY : Updated market state for ${vendorName} - MPID: ${prod.MpId}, InStock: ${resp.inStock}, Inventory: ${resp.inventory}, Price: ${resp.price}, Badge: ${marketData.badgeId}`);
+                  logger.info(`SCRAPE-ONLY : Updated market state for ${vendorName} - MPID: ${prod.MpId}, InStock: ${resp.inStock}, Inventory: ${resp.inventory}, Price: ${resp.price}, Badge: ${marketData.badgeId}`);
                 }
               } catch (error) {
                 // Log error but don't stop scraping process
-                console.error(`SCRAPE-ONLY : Failed to update market state for MPID: ${prod.MpId}`, error);
+                logger.error(`SCRAPE-ONLY : Failed to update market state for MPID: ${prod.MpId}`, error);
               }
             }
 
@@ -169,7 +170,7 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
     await mySqlHelper.UpdateRunInfo(runInfo.GetFailureCountQuery(), [runInfo.ScrapedFailureCount, insertId]);
     await mySqlHelper.UpdateRunInfo(runInfo.GetRunEndTimeQuery(), [moment(runInfo.RunEndTime).format("DD-MM-YYYY HH:mm:ss"), insertId]);
   }
-  console.log(`SCRAPE-ONLY : Successfully scraped  ${runInfo.ScrapedSuccessCount} products || total Count : ${productList.length} || Cron Name : ${cronSetting.CronName} || KeyGen : ${keyGen}`);
+  logger.info(`SCRAPE-ONLY : Successfully scraped  ${runInfo.ScrapedSuccessCount} products || total Count : ${productList.length} || Cron Name : ${cronSetting.CronName} || KeyGen : ${keyGen}`);
 }
 
 const IsChunkNeeded = async (list: any[]): Promise<boolean> => {
@@ -180,14 +181,14 @@ async function GetHistoryModel(vendorDetails: any, apiResponse: any, apiResponse
   let listOfHistory: any[] = [];
   const ownVendorProductId = getOwnVendorId(vendorName);
   if (!ownVendorProductId) {
-    console.log(`No own vendor found for ${vendorName}`);
+    logger.info(`No own vendor found for ${vendorName}`);
     return listOfHistory;
   }
   const ownVendorDetails = apiResponse.find((x: any) => {
     return x.vendorId.toString() == ownVendorProductId;
   });
   if (!ownVendorDetails) {
-    console.log(`No own vendor details found for ${vendorName}`);
+    logger.info(`No own vendor details found for ${vendorName}`);
     return listOfHistory;
   }
   if (ownVendorDetails.priceBreaks && ownVendorDetails.priceBreaks.length > 0) {

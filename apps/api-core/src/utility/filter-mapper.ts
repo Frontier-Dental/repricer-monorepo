@@ -11,15 +11,16 @@ import { FrontierProduct } from "../types/frontier";
 import { Net32Product } from "../types/net32";
 import { applicationConfig } from "./config";
 import Decimal from "decimal.js";
+import logger from "./logger";
 
 export async function FilterProducts(filterCronDetails: any) {
   const filterDuration = parseInt(filterCronDetails.filterValue);
   let filterDateValue = moment(Date.now()).subtract(filterDuration, "h").format();
   let filterDate = new Date(filterDateValue);
-  console.log(`Filter Cron : Running ${filterCronDetails.cronName} for Filter Date : ${filterDate} at ${new Date()}`);
+  logger.info(`Filter Cron : Running ${filterCronDetails.cronName} for Filter Date : ${filterDate} at ${new Date()}`);
   //const filterQuery = await getFilterQuery(filterDate, regularCronSet);
   let listOfEligibleProducts = await sqlHelper.GetFilterEligibleProductsList(filterDate); //ait dbHelper.GetProductListByQuery(filterQuery);
-  console.log(`Received Filter Products for ${filterCronDetails.cronName} | Product Count : ${listOfEligibleProducts.length}`);
+  logger.info(`Received Filter Products for ${filterCronDetails.cronName} | Product Count : ${listOfEligibleProducts.length}`);
   if (listOfEligibleProducts && listOfEligibleProducts.length > 0) {
     let filterCronLog = new FilterCronLog(Generate(), filterCronDetails.cronId, filterDate as any, []);
     for (let product of listOfEligibleProducts) {
@@ -197,7 +198,7 @@ export async function GetContextPrice(nextLowestPrice: any, processOffset: any, 
       }
     }
   } catch (exception) {
-    console.log(`Exception while getting ContextPrice : ${exception}`);
+    logger.info(`Exception while getting ContextPrice : ${exception}`);
   }
   return returnObj;
 }

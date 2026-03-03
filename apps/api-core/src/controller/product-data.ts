@@ -7,6 +7,7 @@ import moment from "moment";
 import * as axiosHelper from "../utility/axios-helper";
 import { applicationConfig } from "../utility/config";
 import { processUpdateProductQuantities } from "../utility/net32/updateProductQuantity";
+import logger from "../utility/logger";
 export const dataController = express.Router();
 
 /************* PUBLIC APIS *************/
@@ -43,7 +44,7 @@ dataController.post("/data/UpdateProductQuantity", async (req: Request, res: Res
 
     res.status(_codes.StatusCodes.OK).json({ results });
   } catch (error) {
-    console.log("Error while updating product quantity", error);
+    logger.error("Error while updating product quantity", error);
     res.status(_codes.StatusCodes.INTERNAL_SERVER_ERROR).json({
       error: "Error while updating product quantity",
       message: error instanceof Error ? error?.message : "Unknown error",

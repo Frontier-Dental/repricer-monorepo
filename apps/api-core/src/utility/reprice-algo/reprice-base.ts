@@ -19,6 +19,7 @@ import { AlgoExecutionMode, VendorName, VendorIdLookup } from "@repricer-monorep
 import { repriceProductV2Wrapper } from "./v2/wrapper";
 import * as filterMapper from "../filter-mapper";
 import { GetCronSettingsList, GetCronSettingsDetailsByName, GetSlowCronDetails } from "../../utility/mysql/mysql-v2";
+import logger from "../logger";
 
 /**
  * Safely parse a price value to number, filtering out non-numeric values like 'N/A'
@@ -61,7 +62,7 @@ export async function Execute(jobId: string, productList: any[], cronInitTime: a
   let productIndex = 0;
   for (let prod of productList) {
     //Set cronSetting if it is Null
-    console.log(`Repricing product: ${prod.mpId} (${productIndex + 1}/${productList.length}). Cron name: ${cronSetting != null ? cronSetting.CronName : "N/A"}`);
+    logger.info(`Repricing product: ${prod.mpId} (${productIndex + 1}/${productList.length}). Cron name: ${cronSetting != null ? cronSetting.CronName : "N/A"}`);
     try {
       if (!cronSetting) {
         cronSetting = _.first(await GetCronSettingsDetailsByName(prod.cronName));
@@ -107,22 +108,22 @@ export async function Execute(jobId: string, productList: any[], cronInitTime: a
           }
         }
       } else {
-        console.log("Skipping product: ", prod.mpId, " because no vendors are enabled.");
+        logger.info("Skipping product: ", prod.mpId, " because no vendors are enabled.");
       }
       if (productLogs.length > 0) {
         cronLogs.logs.push(productLogs);
       }
       cronProdCounter++;
     } catch (error) {
-      console.log(`Exception while repricing product: ${prod.mpId}. Error: ${error}`);
-      console.error(error);
+      logger.info(`Exception while repricing product: ${prod.mpId}. Error: ${error}`);
+      logger.error(error);
       cronLogs.logs.push({
         productId: prod.mpId,
         logs: error,
         vendor: "UNKNOWN",
       });
     } finally {
-      console.log(`Repricing product ${prod.mpId} completed`);
+      logger.info(`Repricing product ${prod.mpId} completed`);
     }
     productIndex++;
   }
@@ -133,7 +134,7 @@ export async function Execute(jobId: string, productList: any[], cronInitTime: a
   cronLogs.RepricedProductCount = repricedProductCount;
   const logInDb = await dbHelper.PushLogsAsync(cronLogs);
   if (logInDb) {
-    console.log(`Successfully logged Cron Logs in DB at ${cronLogs.time} || Id : ${logInDb}`);
+    logger.info(`Successfully logged Cron Logs in DB at ${cronLogs.time} || Id : ${logInDb}`);
   }
   _contextCronStatus.SetStatus("Complete");
   await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
@@ -149,7 +150,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
   const contextErrorDetails = await dbHelper.GetEligibleContextErrorItems(true, details.mpId, _contextVendor);
   const prioritySequence = await requestGenerator.GetPrioritySequence(details, contextErrorDetails, true, true, _contextVendor);
   const seqString = `SEQ : ${prioritySequence.map((p) => p.name).join(", ")}`;
-  console.log(`EXPRESS_CRON : Repricing ${details.mpId} for ${_contextVendor} with sequence ${seqString} at ${new Date()}`);
+  logger.info(`EXPRESS_CRON : Repricing ${details.mpId} for ${_contextVendor} with sequence ${seqString} at ${new Date()}`);
   if (prioritySequence && prioritySequence.length > 0) {
     const searchRequest = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", details.mpId);
     var net32result = await axiosHelper.getAsync(searchRequest, "DUMMY-422-Error", details.mpId, seqString);
@@ -166,7 +167,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
           prod.last_cron_time = new Date();
           let isPriceUpdated = false;
           if (prod.scrapeOn == true && prod.activated == true) {
-            console.log(`REPRICE : Cron-422 : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid} at Time :  ${new Date().toISOString()}`);
+            logger.info(`REPRICE : Cron-422 : ${details.insertReason} : ${contextVendor} : Requesting Reprice info for ${prod.mpid} at Time :  ${new Date().toISOString()}`);
             prod.last_attempted_time = new Date();
             prod.lastCronRun = `Cron-422`;
             tempProd.cronName = applicationConfig.CRON_NAME_422;
@@ -205,7 +206,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
                     prod.next_cron_time = calculateNextCronTime(new Date(), 12);
                     const priceUpdatedItem = new ErrorItemModel(prod.mpid, prod.next_cron_time, true, prod.cronId, "PRICE_UPDATE", contextVendor);
                     await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
-                    console.log({
+                    logger.info({
                       message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                       obj: JSON.stringify(priceUpdatedItem),
                     });
@@ -213,14 +214,14 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
                     prod.next_cron_time = null;
                     const priceUpdatedItem = new ErrorItemModel(prod.mpid, prod.next_cron_time, false, prod.cronId, "IGNORE", contextVendor);
                     await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
-                    console.log(`GHOST : ${prod.mpid} - ${contextVendor}`);
+                    logger.info(`GHOST : ${prod.mpid} - ${contextVendor}`);
                   }
                 } else if (JSON.stringify(repriceResult.priceUpdateResponse).indexOf("ERROR:422") > -1) {
                   prod.next_cron_time = await getNextCronTime(repriceResult.priceUpdateResponse);
                   // Add the product to Error Item Table.
                   const errorItem = new ErrorItemModel(prod.mpid, prod.next_cron_time, true, prod.cronId, "422_ERROR", contextVendor);
                   await dbHelper.UpsertErrorItemLog(errorItem);
-                  console.log({
+                  logger.info({
                     message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                     obj: JSON.stringify(errorItem),
                   });
@@ -237,7 +238,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
                   prod.next_cron_time = null;
                   const priceUpdatedItem = new ErrorItemModel(prod.mpid, prod.next_cron_time, false, prod.cronId, "IGNORE", contextVendor);
                   await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
-                  console.log(`ERROR WHILE PRICE UPDATE : ${prod.mpid} - ${contextVendor}`);
+                  logger.info(`ERROR WHILE PRICE UPDATE : ${prod.mpid} - ${contextVendor}`);
                 }
               } else {
                 prod.next_cron_time = null;
@@ -260,7 +261,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
               for (const histItem of repriceResult.historyIdentifier) {
                 const errorMessage = await getErrorMessage(repriceResult, histItem.minQty);
                 await sqlHelper.UpdateHistoryWithMessage(histItem.historyIdentifier, prod.last_cron_message);
-                console.log(`History Updated for ${prod.mpid} with Identifier : ${histItem.historyIdentifier} and Message : ${prod.last_cron_message}`);
+                logger.info(`History Updated for ${prod.mpid} with Identifier : ${histItem.historyIdentifier} and Message : ${prod.last_cron_message}`);
               }
             }
             prod = updateLowestVendor(repriceResult as any, prod);
@@ -290,7 +291,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
                 };
               }
             } catch (error) {
-              console.log(`Market data extraction error for 422 recovery ${prod.mpid}:`, error);
+              logger.info(`Market data extraction error for 422 recovery ${prod.mpid}:`, error);
             }
 
             await sqlHelper.UpdateProductAsync(
@@ -329,7 +330,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
                 };
               }
             } catch (error) {
-              console.log(`Market data extraction error for ignored product ${prod.mpid}:`, error);
+              logger.info(`Market data extraction error for ignored product ${prod.mpid}:`, error);
             }
 
             await sqlHelper.UpdateProductAsync(
@@ -383,7 +384,7 @@ export async function RepriceErrorItem(details: any, cronInitTime: any, cronSett
     if (productUpdateNeeded) {
       details.isSlowActivated = false;
       await sqlHelper.UpdateCronForProductAsync(details); //await dbHelper.UpdateCronForProductAsync(details);
-      console.log(`MOVEMENT(CRON-422) : Product : ${details.mpId}`);
+      logger.info(`MOVEMENT(CRON-422) : Product : ${details.mpId}`);
     }
   }
   // if (cronLogs.logs && cronLogs.logs.length > 0) {
@@ -415,7 +416,7 @@ export async function RepriceErrorItemV2(productList: any[], cronInitTime: any, 
   let cronProdCounter = 1;
   for (let prod of productList) {
     try {
-      console.log(`422_ERROR: Repricing ${prod.mpId} for 422 at ${new Date()}`);
+      logger.info(`422_ERROR: Repricing ${prod.mpId} for 422 at ${new Date()}`);
       const repriceErrorItemResponse = await RepriceErrorItem(prod, cronInitTime, prod.cronSettingsResponse, prod.contextVendor);
       if (repriceErrorItemResponse && repriceErrorItemResponse.logs && repriceErrorItemResponse.logs.length > 0) {
         if (repriceErrorItemResponse.logs.length == 1) {
@@ -431,7 +432,7 @@ export async function RepriceErrorItemV2(productList: any[], cronInitTime: any, 
       _contextCronStatus.SetProductCount(cronProdCounter);
       await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
     } catch (error) {
-      console.log(`Exception while repricing 422 error item: ${prod.mpId}. Error: ${error}`);
+      logger.info(`Exception while repricing 422 error item: ${prod.mpId}. Error: ${error}`);
     }
     cronProdCounter++;
   }
@@ -477,20 +478,20 @@ export async function UpdateToMax(cronLogs: any, net32resp: any, prod: any, cron
           prod.next_cron_time = await calculateNextCronTime(new Date(), 12);
           const priceUpdatedItem = new ErrorItemModel(prod.mpid, prod.next_cron_time, true, prod.cronId, "PRICE_UPDATE", contextVendor);
           await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
-          console.log({
+          logger.info({
             message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
             obj: JSON.stringify(priceUpdatedItem),
           });
         } else {
           prod.next_cron_time = null;
-          console.log(`GHOST : ${prod.mpid} - ${contextVendor} - ${keyGen}`);
+          logger.info(`GHOST : ${prod.mpid} - ${contextVendor} - ${keyGen}`);
         }
       } else {
         prod.next_cron_time = await getNextCronTime(repriceResult.priceUpdateResponse);
         // Add the product to Error Item Table.
         const errorItem = new ErrorItemModel(prod.mpid, prod.next_cron_time, true, prod.cronId, "422_ERROR", contextVendor);
         await dbHelper.UpsertErrorItemLog(errorItem);
-        console.log({
+        logger.info({
           message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(errorItem),
         });
@@ -533,7 +534,7 @@ export async function UpdateToMax(cronLogs: any, net32resp: any, prod: any, cron
         };
       }
     } catch (error) {
-      console.log(`Market data extraction error for manual reprice ${prod.mpid}:`, error);
+      logger.info(`Market data extraction error for manual reprice ${prod.mpid}:`, error);
     }
 
     await sqlHelper.UpdateProductAsync(prod, isPriceUpdated, contextVendor, marketData);
@@ -571,7 +572,7 @@ async function repriceSingleVendor(net32resp: Net32Response, prod: any, cronSett
   const cronLogs: any[] = [];
   let isPriceUpdated = false;
   let skipNextVendor = false;
-  console.log(`REPRICE : ${cronSetting.CronName} : Cron Key : ${keyGen} : Vendor : ${contextVendor} : Requesting Reprice info for ${prod.mpid} at Time :  ${new Date()}`);
+  logger.info(`REPRICE : ${cronSetting.CronName} : Cron Key : ${keyGen} : Vendor : ${contextVendor} : Requesting Reprice info for ${prod.mpid} at Time :  ${new Date()}`);
   prod.secretKey = cronSetting.SecretKey;
   prod.last_attempted_time = new Date();
   prod.lastCronRun = isManualRun ? "Manual" : `${cronSetting.CronName}`;
@@ -614,7 +615,7 @@ async function repriceSingleVendor(net32resp: Net32Response, prod: any, cronSett
         prod.next_cron_time = null;
         const priceUpdatedItem = new ErrorItemModel(prod.mpid!, prod.next_cron_time, false, prod.cronId!, "IGNORE", contextVendor);
         await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
-        console.log({
+        logger.info({
           message: `${prod.mpid} moved to REGULAR CRON`,
           obj: JSON.stringify(priceUpdatedItem),
         });
@@ -625,13 +626,13 @@ async function repriceSingleVendor(net32resp: Net32Response, prod: any, cronSett
           prod.next_cron_time = calculateNextCronTime(new Date(), 12);
           const priceUpdatedItem = new ErrorItemModel(prod.mpid!, prod.next_cron_time, true, prod.cronId!, "PRICE_UPDATE", contextVendor);
           await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
-          console.log({
+          logger.info({
             message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
             obj: JSON.stringify(priceUpdatedItem),
           });
         } else {
           prod.next_cron_time = null;
-          console.log(`GHOST : ${prod.mpid} - ${contextVendor} - ${keyGen}`);
+          logger.info(`GHOST : ${prod.mpid} - ${contextVendor} - ${keyGen}`);
         }
       }
     } else {
@@ -639,7 +640,7 @@ async function repriceSingleVendor(net32resp: Net32Response, prod: any, cronSett
       // Add the product to Error Item Table.
       const errorItem = new ErrorItemModel(prod.mpid!, prod.next_cron_time, true, prod.cronId, "422_ERROR", contextVendor);
       await dbHelper.UpsertErrorItemLog(errorItem);
-      console.log({
+      logger.info({
         message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
         obj: JSON.stringify(errorItem),
       });
@@ -671,7 +672,7 @@ async function repriceSingleVendor(net32resp: Net32Response, prod: any, cronSett
     //   repriceResult.historyIdentifier,
     //   prod.last_cron_message,
     // );
-    console.log(`History Updated for ${prod.mpid} with Identifier : ${repriceResult.historyIdentifier} and Message : ${prod.last_cron_message}`);
+    logger.info(`History Updated for ${prod.mpid} with Identifier : ${repriceResult.historyIdentifier} and Message : ${prod.last_cron_message}`);
   }
   prod = updateLowestVendor(repriceResult!, prod);
   prod = await updateCronBasedDetails(repriceResult, prod, false);
@@ -698,7 +699,7 @@ async function repriceSingleVendor(net32resp: Net32Response, prod: any, cronSett
     }
   } catch (error) {
     // Log but don't fail if market data extraction fails
-    console.log(`Market data extraction error for ${prod.mpid}:`, error);
+    logger.info(`Market data extraction error for ${prod.mpid}:`, error);
   }
 
   // Pass market data to UpdateProductAsync (backward compatible)
@@ -841,7 +842,7 @@ function filterDeltaProducts(productList: any[], keygen: string) {
     if (finalList && finalList.length > 0) {
       fileContent.push({ key: keygen, products: finalList });
       contentsToWrite = fileContent;
-      console.log(`Delta Found for KeyGen : ${keygen} : Fresh Products : ${freshProducts.length} || Active Products : ${activeProducts.length} || Delta Products : ${finalList.length}`);
+      logger.info(`Delta Found for KeyGen : ${keygen} : Fresh Products : ${freshProducts.length} || Active Products : ${activeProducts.length} || Delta Products : ${finalList.length}`);
       //Write in Existing File
       fs.writeFileSync(filePath, JSON.stringify(contentsToWrite));
     }

@@ -4,6 +4,7 @@ import * as _ from "lodash";
 import { runCoreCronLogic, runCoreCronLogicFor422 } from "./shared";
 import { BadRequest } from "http-errors";
 import { GetCronSettingsDetailsByName } from "../../utility/mysql/mysql-v2";
+import logger from "../../utility/logger";
 
 export async function startSpecificCronHandler(req: Request, res: Response): Promise<any> {
   const cronName = req.params.key;
@@ -14,7 +15,7 @@ export async function startSpecificCronHandler(req: Request, res: Response): Pro
   if (!cronDetails.CronStatus) {
     throw BadRequest(`Cron ${cronName} is not active`);
   }
-  console.log(`Starting Manually the cron ${cronName} at ${new Date()}`);
+  logger.info(`Starting Manually the cron ${cronName} at ${new Date()}`);
   if (cronDetails && cronDetails.IsHidden == true) {
     await runCoreCronLogicFor422();
   } else {

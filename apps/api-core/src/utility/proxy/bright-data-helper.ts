@@ -2,6 +2,7 @@ import * as proxySwitchHelper from "../proxy-switch-helper";
 import * as formatWrapper from "../format-wrapper";
 import xml2js from "xml2js";
 import { applicationConfig } from "../config";
+import logger from "../logger";
 
 const BRIGHT_DATA_ZONE = "unblocker1";
 const STATUS_CODE_OK = 200;
@@ -17,7 +18,7 @@ interface BrightDataError extends Error {
 
 export async function fetchData(url: string, proxyDetails: any, retryCount = 0): Promise<any> {
   try {
-    console.log(`SCRAPE STARTED : BrightData : ${url} || ${new Date()} || retry count : ${retryCount}`);
+    logger.info(`SCRAPE STARTED : BrightData : ${url} || ${new Date()} || retry count : ${retryCount}`);
 
     const { responseContent, timeTaken } = await callBrightData(url, proxyDetails);
     return await handleResponse(responseContent, url, timeTaken, retryCount);
@@ -68,7 +69,7 @@ function validateResponse(data: any, httpStatusCode: number): void {
 
 async function handleResponse(response: any, url: string, timeTaken: string, retryCount: number): Promise<any> {
   const formatResponse = applicationConfig.FORMAT_RESPONSE_CUSTOM;
-  console.log(`SCRAPE COMPLETED : BrightData : ${url} || TimeTaken : ${timeTaken} seconds || retry count : ${retryCount}`);
+  logger.info(`SCRAPE COMPLETED : BrightData : ${url} || TimeTaken : ${timeTaken} seconds || retry count : ${retryCount}`);
   if (formatResponse) {
     return await getFormattedResponse(response);
   }
@@ -78,7 +79,7 @@ async function handleResponse(response: any, url: string, timeTaken: string, ret
 
 async function getFormattedResponse(response: string): Promise<any> {
   if (typeof response !== "string") {
-    console.log(`BRIGHTDATA - Non-string response received: ${JSON.stringify(response)}`);
+    logger.info(`BRIGHTDATA - Non-string response received: ${JSON.stringify(response)}`);
     return { data: [] };
   }
   if (response.indexOf("<List/>") >= 0) return { data: [] };
@@ -103,15 +104,15 @@ async function getFormattedResponse(response: string): Promise<any> {
 }
 
 async function handleRetry(error: any, retryCount: number, url: string, proxyDetails: any): Promise<any> {
-  console.log(`BrightData Exception : ${error} || URL : ${url}`);
+  logger.info(`BrightData Exception : ${error} || URL : ${url}`);
 
   await proxySwitchHelper.ExecuteCounter(parseInt(proxyDetails.proxyProvider || "0"));
   const retryEligible = retryCondition(error);
 
   if (retryCount <= applicationConfig.NO_OF_RETRIES && retryEligible) {
-    console.log(`REPRICER CORE | BRIGHTDATA | : ERROR (WITH RETRY) : ${error} `);
+    logger.info(`REPRICER CORE | BRIGHTDATA | : ERROR (WITH RETRY) : ${error} `);
 
-    console.log(`REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`, `REPRICER CORE | BRIGHTDATA`);
+    logger.info(`REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`, `REPRICER CORE | BRIGHTDATA`);
 
     await delay(applicationConfig.RETRY_INTERVAL);
     return await fetchData(url, proxyDetails, retryCount + 1);
@@ -135,7 +136,7 @@ export async function fetchDataForDebug(url: string, proxyDetails: any): Promise
   let response: any = {};
   try {
     const { responseContent, timeTaken } = await callBrightData(url, proxyDetails);
-    console.log(`SCRAPE : BrightData : ${url} || TimeTaken : ${timeTaken} seconds`);
+    logger.info(`SCRAPE : BrightData : ${url} || TimeTaken : ${timeTaken} seconds`);
     if (responseContent) {
       if (applicationConfig.FORMAT_RESPONSE_CUSTOM) {
         return await getFormattedResponse(responseContent);
@@ -143,7 +144,7 @@ export async function fetchDataForDebug(url: string, proxyDetails: any): Promise
       response.data = responseContent;
     }
   } catch (exception: any) {
-    console.log(`BRIGHTDATA - Fetch Response Exception for ${url} || ERROR : ${exception}`);
+    logger.info(`BRIGHTDATA - Fetch Response Exception for ${url} || ERROR : ${exception}`);
     response.data = {
       message: exception.message,
       stack: exception.stack,

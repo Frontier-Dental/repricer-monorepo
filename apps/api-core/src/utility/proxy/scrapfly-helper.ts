@@ -4,6 +4,7 @@ import * as formatWrapper from "../format-wrapper";
 import xml2js from "xml2js";
 import fetch from "node-fetch";
 import { applicationConfig } from "../config";
+import logger from "../logger";
 
 const STATUS_CODE_OK = 200;
 const STATUS_CODE_MULTIPLE_CHOICES = 300;
@@ -24,7 +25,7 @@ interface ScrapflyError extends Error {
 export async function scrapflyFetchData(url: string, proxyDetailsResponse: ProxyDetailsResponse, seqString: string | null, renderJs: boolean, retryCount = 0): Promise<any> {
   try {
     const scrapingLog = renderJs ? "Scrapfly - JS Rendering" : "Scrapfly - Non JS Rendering";
-    console.log(`SCRAPE STARTED : ${scrapingLog} : ${url} || ${seqString} || ${new Date()} || ${retryCount}`);
+    logger.info(`SCRAPE STARTED : ${scrapingLog} : ${url} || ${seqString} || ${new Date()} || ${retryCount}`);
 
     const { responseContent, timeTaken } = await scrapflyFetch(url, proxyDetailsResponse.hostUrl, proxyDetailsResponse.userName, renderJs);
     return await handleResponse(responseContent, scrapingLog, url, seqString, renderJs, timeTaken, retryCount);
@@ -69,7 +70,7 @@ function validateResponse(data: any, httpStatusCode: number): void {
 
 async function handleResponse(response: string, scrapingLog: string, url: string, seqString: string | null, renderJs: boolean, timeTaken: string, retryCount: number): Promise<any> {
   const formatResponse = applicationConfig.FORMAT_RESPONSE_CUSTOM;
-  console.log(`SCRAPE COMPLETED : ${scrapingLog} : ${url} || TimeTaken  :  ${timeTaken} seconds || ${seqString} || retry count : ${retryCount}`);
+  logger.info(`SCRAPE COMPLETED : ${scrapingLog} : ${url} || TimeTaken  :  ${timeTaken} seconds || ${seqString} || retry count : ${retryCount}`);
   if (formatResponse) {
     return await getFormattedResponse(response);
   }
@@ -100,15 +101,15 @@ async function getFormattedResponse(response: string): Promise<any> {
 }
 
 async function handleRetry(error: any, retryCount: number, url: string, proxyDetailsResponse: ProxyDetailsResponse, seqString: string | null, renderJs: boolean): Promise<any> {
-  console.log(`Scrapfly Exception : ${error} || URL : ${url}`);
+  logger.info(`Scrapfly Exception : ${error} || URL : ${url}`);
 
   await proxySwitchHelper.ExecuteCounter(parseInt(proxyDetailsResponse.proxyProvider || "0"));
   const retryEligible = await retryCondition(error);
 
   if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible) {
-    console.log(`REPRICER CORE | SCRAPFLY | : ERROR (WITH RETRY) : ${error} `);
+    logger.info(`REPRICER CORE | SCRAPFLY | : ERROR (WITH RETRY) : ${error} `);
 
-    console.log(`REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`, `REPRICER CORE | SCRAPFLY | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`);
+    logger.info(`REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`, `REPRICER CORE | SCRAPFLY | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`);
 
     if (retryCount > 1) {
       await proxySwitchHelper.SwitchProxy();

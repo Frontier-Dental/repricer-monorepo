@@ -3,9 +3,10 @@ import * as _codes from "http-status-codes";
 import { setError422CronAndStart } from "./shared";
 import { applicationConfig } from "../../utility/config";
 import { GetCronSettingsList } from "../../utility/mysql/mysql-v2";
+import logger from "../../utility/logger";
 
 export async function start422Handler(req: Request, res: Response): Promise<any> {
-  console.log(`Cron-422 started due to 422 Handler Request`);
+  logger.info(`Cron-422 started due to 422 Handler Request`);
   await start422Logic();
   return res.status(_codes.StatusCodes.OK).send(`${applicationConfig.CRON_NAME_422} started.`);
 }
@@ -15,6 +16,6 @@ export async function start422Logic() {
   try {
     setError422CronAndStart(cronSettings);
   } catch (exception) {
-    console.error(`Error initializing 422 Cron || ${exception}`);
+    logger.error(`Error initializing 422 Cron || ${exception}`);
   }
 }
