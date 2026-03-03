@@ -1,0 +1,51 @@
+{
+  "name": "Badge competitor -- UNIT strategy undercut",
+  "description": "Competitor has a badge but under UNIT price strategy, badge status does not affect the unit price comparison. Our vendor undercuts by one penny.",
+  "tags": ["change", "badge", "unit"],
+  "input": {
+    "mpId": 10016,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 15.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "BadgeVendor",
+        "inStock": true,
+        "standardShipping": 0,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 12.0 }],
+        "freeShippingGap": 0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 25.0,
+      "up_down": "UP/DOWN",
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "CHANGE #DOWN",
+    "suggestedPrice": 11.99,
+    "commentContains": ["Pricing down"]
+  }
+}

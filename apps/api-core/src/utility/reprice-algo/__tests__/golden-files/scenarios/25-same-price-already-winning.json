@@ -1,0 +1,51 @@
+{
+  "name": "Same price already at rank 0 -- no change needed",
+  "description": "When the algo computes a suggested price that equals our current price and we are already at buy-box rank 0, the result should be IGNORE because there is nothing to update.",
+  "tags": ["ignore", "same-price", "winning"],
+  "input": {
+    "mpId": 10025,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 11.99 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "CompetitorA",
+        "inStock": true,
+        "standardShipping": 5.0,
+        "shippingTime": 3,
+        "inventory": 50,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 12.0 }],
+        "freeShippingGap": 25.0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 25.0,
+      "up_down": "UP/DOWN",
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "IGNORE #LOWEST",
+    "suggestedPrice": 11.99,
+    "commentContains": ["winning"]
+  }
+}

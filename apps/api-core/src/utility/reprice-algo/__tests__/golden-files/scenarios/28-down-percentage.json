@@ -1,0 +1,52 @@
+{
+  "name": "Down percentage -- 5% undercut instead of 1 cent",
+  "description": "When reprice_down_percentage is set to a positive value and direction is DOWN, the algorithm undercuts by that percentage instead of a penny. For a $20 competitor, 5% off = $19.00.",
+  "tags": ["change", "percentage", "down"],
+  "input": {
+    "mpId": 10028,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 22.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "CompetitorA",
+        "inStock": true,
+        "standardShipping": 5.0,
+        "shippingTime": 3,
+        "inventory": 50,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 20.0 }],
+        "freeShippingGap": 25.0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 30.0,
+      "up_down": "DOWN",
+      "reprice_down_percentage": 5,
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "CHANGE #DOWN",
+    "suggestedPrice": 19.0,
+    "commentContains": ["Pricing down"]
+  }
+}

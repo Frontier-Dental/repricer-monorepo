@@ -180,8 +180,8 @@ export const envSchema = z.object({
   _422_ERROR_MAX_COUNT: z.coerce.number().default(100),
   _422_ERROR_ELIGIBLE_MAX_COUNT: z.coerce.number().default(500),
   CACHE_HOST_URL: z.string(),
-  CACHE_USERNAME: z.string(),
-  CACHE_PASSWORD: z.string(),
+  CACHE_USERNAME: z.string().optional(),
+  CACHE_PASSWORD: z.string().optional(),
   CACHE_PORT: z.coerce.number(),
   REPRICER_ENCRYPTION_KEY: z.string(),
   IS_DEV: z
@@ -203,8 +203,8 @@ export const envSchema = z.object({
   FTP_PASSWORD: z.string(),
   DEV_SYNC_API_KEY: z.string(),
   HISTORY_ARCHIVE_CRON_SCHEDULE: z.string().default("0 0 * * *"),
-  AWS_ACCESS_KEY_ID: z.string(),
-  AWS_SECRET_ACCESS_KEY: z.string(),
+  AWS_ACCESS_KEY_ID: z.string().default(""),
+  AWS_SECRET_ACCESS_KEY: z.string().default(""),
   AWS_BUCKET_NAME: z.string().default("fd-repricer"),
   AWS_REGION: z.string().default("us-east-1"),
 });

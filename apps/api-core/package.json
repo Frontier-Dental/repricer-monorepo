@@ -9,6 +9,9 @@
     "format": "prettier --write \"src/**/*.{js,ts}\"",
     "build": "tsc",
     "test": "NODE_OPTIONS='--unhandled-rejections=warn' jest",
+    "test:json": "NODE_OPTIONS='--unhandled-rejections=warn' jest --json --outputFile=reports/test-results.json --forceExit",
+    "test:verbose": "NODE_OPTIONS='--unhandled-rejections=warn' jest --verbose",
+    "test:watch": "NODE_OPTIONS='--unhandled-rejections=warn' jest --watch",
     "test:coverage": "NODE_OPTIONS='--unhandled-rejections=warn' jest --coverage"
   },
   "author": "pranoyg52@gmail.com",
@@ -64,6 +67,7 @@
     "@types/request-promise": "^4.1.51",
     "@types/uuid": "^10.0.0",
     "@types/xml2js": "^0.4.14",
+    "fast-check": "^4.5.3",
     "jest": "^30.0.4",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",

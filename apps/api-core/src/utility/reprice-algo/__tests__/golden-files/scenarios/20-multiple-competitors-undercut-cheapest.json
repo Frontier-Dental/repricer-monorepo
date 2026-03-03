@@ -1,0 +1,77 @@
+{
+  "name": "Multiple competitors -- undercut the cheapest",
+  "description": "With three competitors at different price points, the algorithm should target the cheapest one and undercut by a penny.",
+  "tags": ["change", "multiple", "undercut"],
+  "input": {
+    "mpId": 10020,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 20.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "CheapVendor",
+        "inStock": true,
+        "standardShipping": 5.0,
+        "shippingTime": 3,
+        "inventory": 50,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 10.0 }],
+        "freeShippingGap": 25.0,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99002,
+        "vendorName": "MidVendor",
+        "inStock": true,
+        "standardShipping": 3.0,
+        "shippingTime": 2,
+        "inventory": 75,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 14.0 }],
+        "freeShippingGap": 15.0,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99003,
+        "vendorName": "ExpensiveVendor",
+        "inStock": true,
+        "standardShipping": 0,
+        "shippingTime": 1,
+        "inventory": 200,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 22.0 }],
+        "freeShippingGap": 0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 30.0,
+      "up_down": "UP/DOWN",
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "CHANGE #DOWN",
+    "suggestedPrice": 9.99,
+    "commentContains": ["Pricing down"]
+  }
+}

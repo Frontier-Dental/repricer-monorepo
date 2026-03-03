@@ -1,0 +1,51 @@
+{
+  "name": "Max price cap -- competitor above max",
+  "description": "The only competitor's price is so high that undercutting by a penny still exceeds our max_price. The algorithm should cap the suggested price at max_price.",
+  "tags": ["change", "max-price", "cap"],
+  "input": {
+    "mpId": 10017,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 10.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "ExpensiveVendor",
+        "inStock": true,
+        "standardShipping": 0,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 50.0 }],
+        "freeShippingGap": 0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 20.0,
+      "up_down": "UP/DOWN",
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "CHANGE #UP",
+    "suggestedPrice": 20.0,
+    "commentContains": ["Pricing up"]
+  }
+}

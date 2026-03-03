@@ -1,0 +1,65 @@
+{
+  "name": "Excluded vendor -- skip cheapest and target next",
+  "description": "The cheapest competitor is in the exclude_vendors setting. The algorithm should ignore this vendor entirely and compete with the next available competitor.",
+  "tags": ["change", "exclude", "filter"],
+  "input": {
+    "mpId": 10023,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 20.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "ExcludedVendor",
+        "inStock": true,
+        "standardShipping": 0,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 8.0 }],
+        "freeShippingGap": 0,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99002,
+        "vendorName": "IncludedVendor",
+        "inStock": true,
+        "standardShipping": 5.0,
+        "shippingTime": 3,
+        "inventory": 50,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 14.0 }],
+        "freeShippingGap": 25.0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 30.0,
+      "up_down": "UP/DOWN",
+      "exclude_vendors": "99001",
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "CHANGE #DOWN",
+    "suggestedPrice": 13.99,
+    "commentContains": ["Pricing down"]
+  }
+}

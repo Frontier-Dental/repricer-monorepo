@@ -1,0 +1,65 @@
+{
+  "name": "Inventory threshold -- low-stock competitor filtered out",
+  "description": "A competitor has inventory below the inventory_competition_threshold. They are excluded from competition, so the algorithm targets the next competitor with sufficient stock.",
+  "tags": ["change", "inventory", "filter"],
+  "input": {
+    "mpId": 10024,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 18.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "LowStockVendor",
+        "inStock": true,
+        "standardShipping": 0,
+        "shippingTime": 2,
+        "inventory": 2,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 8.0 }],
+        "freeShippingGap": 0,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99002,
+        "vendorName": "HighStockVendor",
+        "inStock": true,
+        "standardShipping": 5.0,
+        "shippingTime": 3,
+        "inventory": 80,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 14.0 }],
+        "freeShippingGap": 25.0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 30.0,
+      "up_down": "UP/DOWN",
+      "inventory_competition_threshold": 10,
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "CHANGE #DOWN",
+    "suggestedPrice": 13.99,
+    "commentContains": ["Pricing down"]
+  }
+}

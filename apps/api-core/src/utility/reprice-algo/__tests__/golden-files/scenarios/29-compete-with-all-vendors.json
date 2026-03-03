@@ -1,0 +1,52 @@
+{
+  "name": "Compete with all vendors -- sister treated as competitor",
+  "description": "When compete_with_all_vendors is true, sister vendor IDs are added to the competition pool. Our vendor should undercut the sister just like any other competitor.",
+  "tags": ["change", "compete-all", "sister"],
+  "input": {
+    "mpId": 10029,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 18.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 20722,
+        "vendorName": "Frontier",
+        "inStock": true,
+        "standardShipping": 5.0,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 14.0 }],
+        "freeShippingGap": 20.0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 25.0,
+      "up_down": "UP/DOWN",
+      "compete_with_all_vendors": true,
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357, 20722],
+    "nonBlocked422VendorIds": [17357, 20722],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "CHANGE #DOWN",
+    "suggestedPrice": 13.99,
+    "commentContains": ["Pricing down"]
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "name": "Floor compete with next -- skip unreachable, compete with 2nd",
+  "description": "The cheapest competitor is below our floor price, but floor_compete_with_next is enabled. The algorithm should skip the unreachable vendor and undercut the next one instead, resulting in a CHANGE.",
+  "tags": ["change", "floor", "floor-compete-next"],
+  "input": {
+    "mpId": 10012,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 15.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "SuperCheap",
+        "inStock": true,
+        "standardShipping": 0,
+        "shippingTime": 1,
+        "inventory": 100,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 3.0 }],
+        "freeShippingGap": 0,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99002,
+        "vendorName": "MidRange",
+        "inStock": true,
+        "standardShipping": 5.0,
+        "shippingTime": 3,
+        "inventory": 50,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 12.0 }],
+        "freeShippingGap": 25.0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 7.0,
+      "max_price": 25.0,
+      "up_down": "UP/DOWN",
+      "floor_compete_with_next": true,
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "CHANGE #DOWN",
+    "suggestedPrice": 11.99,
+    "commentContains": ["Pricing down"]
+  }
+}

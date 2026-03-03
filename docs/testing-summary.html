@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repricer Algorithm Testing Framework -- Executive Summary</title>
+<style>
+  /* ── Reset & Base ─────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue-900: #0c2340;
+    --blue-800: #163a5f;
+    --blue-700: #1a4a7a;
+    --blue-600: #1d6db5;
+    --blue-500: #2980d4;
+    --blue-400: #5ba0e0;
+    --blue-300: #8fc0ec;
+    --blue-200: #bdd9f5;
+    --blue-100: #e4f0fb;
+    --blue-50:  #f3f8fd;
+    --gray-900: #1a1a2e;
+    --gray-700: #3d3d56;
+    --gray-600: #555568;
+    --gray-500: #6e6e80;
+    --gray-400: #9a9aad;
+    --gray-300: #c4c4d0;
+    --gray-200: #e0e0e8;
+    --gray-100: #f0f0f5;
+    --gray-50:  #f8f8fb;
+    --green-600: #16884a;
+    --green-100: #e6f7ee;
+    --amber-600: #c47f17;
+    --amber-100: #fef7e0;
+    --red-600:   #c0392b;
+    --red-100:   #fce8e6;
+    --radius: 10px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.04);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,.08), 0 4px 8px rgba(0,0,0,.04);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--gray-900);
+    background: var(--gray-50);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Print ────────────────────────────────────────────── */
+  @media print {
+    body { background: #fff; font-size: 11pt; }
+    .hero { padding: 24px 0 !important; background: var(--blue-900) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    section { break-inside: avoid; }
+    .layer-card { break-inside: avoid; }
+    .container { max-width: 100%; padding: 0 20px; }
+  }
+
+  /* ── Layout ───────────────────────────────────────────── */
+  .container { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── Hero ──────────────────────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-700) 100%);
+    color: #fff;
+    padding: 56px 0 48px;
+    text-align: center;
+  }
+  .hero h1 { font-size: 2.2rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: 6px; }
+  .hero .subtitle { font-size: 1.05rem; opacity: .78; font-weight: 400; }
+
+  /* ── Stats ribbon ─────────────────────────────────────── */
+  .stats-ribbon {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-top: -32px;
+    position: relative;
+    z-index: 2;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .stat-card .stat-value {
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--blue-600);
+    line-height: 1.15;
+  }
+  .stat-card .stat-label {
+    font-size: .82rem;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-top: 2px;
+  }
+
+  /* ── Section ──────────────────────────────────────────── */
+  section { padding: 48px 0 0; }
+  section:last-child { padding-bottom: 60px; }
+  .section-number {
+    display: inline-block;
+    background: var(--blue-600);
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .section-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--blue-900);
+    margin-bottom: 4px;
+  }
+  .section-lead {
+    color: var(--gray-600);
+    font-size: .97rem;
+    margin-bottom: 24px;
+    max-width: 700px;
+  }
+
+  /* ── Approach card ────────────────────────────────────── */
+  .approach-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+  }
+  .approach-item {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 22px 24px;
+    border-left: 4px solid var(--blue-500);
+  }
+  .approach-item h3 {
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--blue-800);
+    margin-bottom: 6px;
+  }
+  .approach-item p {
+    font-size: .88rem;
+    color: var(--gray-600);
+    line-height: 1.55;
+  }
+  .approach-item code {
+    background: var(--blue-100);
+    color: var(--blue-700);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: .82rem;
+    font-family: "SF Mono", "Fira Code", Consolas, monospace;
+  }
+
+  /* ── Layer cards ──────────────────────────────────────── */
+  .layers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 16px;
+  }
+  .layer-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 20px 22px;
+    border-top: 4px solid var(--blue-400);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: box-shadow .15s;
+  }
+  .layer-card:hover { box-shadow: var(--shadow-md); }
+  .layer-card .layer-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .layer-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    background: var(--blue-600);
+    color: #fff;
+    font-weight: 700;
+    font-size: .85rem;
+    flex-shrink: 0;
+  }
+  .layer-card .layer-name {
+    font-size: .97rem;
+    font-weight: 700;
+    color: var(--gray-900);
+  }
+  .layer-card .layer-desc {
+    font-size: .84rem;
+    color: var(--gray-600);
+    line-height: 1.5;
+  }
+  .layer-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+  }
+  .meta-tag {
+    display: inline-block;
+    font-size: .72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: .03em;
+  }
+  .meta-tests   { background: var(--blue-100); color: var(--blue-700); }
+  .meta-low     { background: var(--green-100); color: var(--green-600); }
+  .meta-medium  { background: var(--amber-100); color: var(--amber-600); }
+  .meta-high    { background: var(--red-100); color: var(--red-600); }
+  .meta-nomock  { background: var(--gray-100); color: var(--gray-600); }
+  .meta-mock    { background: #f3e8ff; color: #6b21a8; }
+  .meta-infra   { background: var(--blue-50); color: var(--blue-600); }
+
+  /* ── Change matrix ────────────────────────────────────── */
+  .matrix-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    font-size: .88rem;
+  }
+  .matrix-table thead th {
+    background: var(--blue-900);
+    color: #fff;
+    font-weight: 600;
+    text-align: left;
+    padding: 14px 18px;
+    font-size: .82rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .matrix-table tbody td {
+    background: #fff;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: top;
+  }
+  .matrix-table tbody tr:last-child td { border-bottom: none; }
+  .matrix-table tbody tr:hover td { background: var(--blue-50); }
+  .matrix-table .change-trigger {
+    font-weight: 600;
+    color: var(--blue-800);
+    white-space: nowrap;
+  }
+  .matrix-table .layer-ref {
+    display: inline-block;
+    background: var(--blue-100);
+    color: var(--blue-700);
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: .78rem;
+    font-weight: 600;
+    margin: 1px 2px;
+  }
+
+  .callout {
+    background: var(--blue-50);
+    border-left: 4px solid var(--blue-500);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 16px 20px;
+    margin-top: 18px;
+    font-size: .88rem;
+    color: var(--gray-700);
+  }
+  .callout strong { color: var(--blue-800); }
+
+  /* ── Benefits ─────────────────────────────────────────── */
+  .benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 16px;
+  }
+  .benefit-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 22px 24px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    transition: box-shadow .15s;
+  }
+  .benefit-card:hover { box-shadow: var(--shadow-md); }
+  .benefit-icon {
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+  }
+  .benefit-icon svg { width: 22px; height: 22px; }
+  .icon-shield   { background: #e0f2fe; color: #0369a1; }
+  .icon-check    { background: #dcfce7; color: #15803d; }
+  .icon-bolt     { background: #fef9c3; color: #a16207; }
+  .icon-data     { background: #f3e8ff; color: #7c3aed; }
+  .icon-rocket   { background: #ffe4e6; color: #be123c; }
+  .icon-history  { background: #e0e7ff; color: #4338ca; }
+  .icon-lock     { background: #f0fdf4; color: #16a34a; }
+  .benefit-body h3 {
+    font-size: .93rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 3px;
+  }
+  .benefit-body p {
+    font-size: .84rem;
+    color: var(--gray-600);
+    line-height: 1.5;
+  }
+
+  /* ── Phases / Timeline ────────────────────────────────── */
+  .phases-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .phase-row {
+    display: flex;
+    gap: 20px;
+    position: relative;
+  }
+  .phase-track {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 48px;
+    flex-shrink: 0;
+  }
+  .phase-dot {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--blue-600);
+    color: #fff;
+    font-weight: 700;
+    font-size: .82rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+  .phase-line {
+    width: 3px;
+    flex: 1;
+    background: var(--blue-200);
+  }
+  .phase-row:last-child .phase-line { display: none; }
+  .phase-content {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 22px 26px;
+    flex: 1;
+    margin-bottom: 18px;
+    border-left: 4px solid var(--blue-400);
+  }
+  .phase-content h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--blue-900);
+    margin-bottom: 2px;
+  }
+  .phase-content .phase-subtitle {
+    font-size: .82rem;
+    color: var(--gray-500);
+    margin-bottom: 10px;
+  }
+  .phase-layers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .phase-layer-tag {
+    font-size: .76rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--blue-100);
+    color: var(--blue-700);
+  }
+  .phase-content p {
+    font-size: .86rem;
+    color: var(--gray-600);
+    line-height: 1.5;
+  }
+  .progress-bar-bg {
+    height: 8px;
+    background: var(--gray-200);
+    border-radius: 4px;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width .4s ease;
+  }
+  .fill-phase1 { width: 33%; background: linear-gradient(90deg, var(--blue-500), var(--blue-400)); }
+  .fill-phase2 { width: 66%; background: linear-gradient(90deg, var(--blue-500), var(--blue-400)); }
+  .fill-phase3 { width: 100%; background: linear-gradient(90deg, var(--blue-500), #22c55e); }
+
+  .progress-label {
+    font-size: .72rem;
+    color: var(--gray-500);
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  /* ── Footer ───────────────────────────────────────────── */
+  .footer {
+    background: var(--blue-900);
+    color: rgba(255,255,255,.55);
+    text-align: center;
+    padding: 24px 0;
+    font-size: .78rem;
+    margin-top: 48px;
+  }
+
+  /* ── SVG icons (inline) ───────────────────────────────── */
+  .svg-shield { fill: #0369a1; }
+  .svg-check  { fill: #15803d; }
+  .svg-bolt   { fill: #a16207; }
+  .svg-data   { fill: #7c3aed; }
+  .svg-rocket { fill: #be123c; }
+  .svg-hist   { fill: #4338ca; }
+  .svg-lock   { fill: #16a34a; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════
+     HERO
+     ════════════════════════════════════════════════════════ -->
+<header class="hero">
+  <div class="container">
+    <h1>Repricer Algorithm Testing Framework</h1>
+    <p class="subtitle">Executive Summary &mdash; 7-Layer Architecture for Production-Grade Confidence</p>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════════════════
+     STATS RIBBON
+     ════════════════════════════════════════════════════════ -->
+<div class="container">
+  <div class="stats-ribbon">
+    <div class="stat-card">
+      <div class="stat-value">~300</div>
+      <div class="stat-label">Total Tests</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">16</div>
+      <div class="stat-label">Test Files</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">7</div>
+      <div class="stat-label">Layers</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">0</div>
+      <div class="stat-label">Source Files Modified</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     SECTION 1 ── APPROACH OVERVIEW
+     ════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <span class="section-number">Section 1</span>
+    <h2 class="section-title">Approach Overview</h2>
+    <p class="section-lead">A layered, independent testing architecture that adds comprehensive safety without touching a single line of existing code.</p>
+
+    <div class="approach-grid">
+      <div class="approach-item">
+        <h3>7-Layer Architecture</h3>
+        <p>Each layer is <strong>independent</strong> and adds value on its own. Layers range from fast, isolated unit tests to full historical replay. You can implement them incrementally &mdash; Phase&nbsp;1 alone catches most regressions.</p>
+      </div>
+      <div class="approach-item">
+        <h3>Tools &amp; Dependencies</h3>
+        <p><strong>Existing:</strong> <code>jest ^30.0.4</code> + <code>ts-jest ^29.4.0</code> &mdash; already installed. <strong>New:</strong> <code>fast-check</code> (dev-only) for property-based tests in Layer&nbsp;5. That is the <em>only</em> new dependency.</p>
+      </div>
+      <div class="approach-item">
+        <h3>Zero Impact on Existing Code</h3>
+        <p>All tests live in new <code>__tests__/</code> directories alongside the source code. No existing files are modified. Tests import existing functions and types directly &mdash; they observe, they never alter.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     SECTION 2 ── WHAT EACH LAYER COVERS
+     ════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <span class="section-number">Section 2</span>
+    <h2 class="section-title">What Each Layer Covers</h2>
+    <p class="section-lead">Eight layers from infrastructure through cross-algorithm comparison. Each card shows the layer's purpose, approximate test volume, complexity, and external dependencies.</p>
+
+    <div class="layers-grid">
+      <!-- Layer 0 -->
+      <div class="layer-card">
+        <div class="layer-header">
+          <span class="layer-badge">0</span>
+          <span class="layer-name">Setup &amp; Infrastructure</span>
+        </div>
+        <p class="layer-desc">Builders, custom matchers, and shared types that make writing every other test trivial. Handles 77-field FrontierProduct with sensible defaults.</p>
+        <div class="layer-meta">
+          <span class="meta-tag meta-infra">Infrastructure</span>
+          <span class="meta-tag meta-low">Low Complexity</span>
+          <span class="meta-tag meta-nomock">No Mocks</span>
+        </div>
+      </div>
+
+      <!-- Layer 1 -->
+      <div class="layer-card">
+        <div class="layer-header">
+          <span class="layer-badge">1</span>
+          <span class="layer-name">Unit Tests &mdash; Rules</span>
+        </div>
+        <p class="layer-desc">Isolated tests for all 15 rule functions in <code>repricer-rule-helper.ts</code>: floor check, buy box, keep position, direction, max price, and more.</p>
+        <div class="layer-meta">
+          <span class="meta-tag meta-tests">~126 tests</span>
+          <span class="meta-tag meta-low">Low Complexity</span>
+          <span class="meta-tag meta-nomock">No Mocks / No DB</span>
+        </div>
+      </div>
+
+      <!-- Layer 2 -->
+      <div class="layer-card">
+        <div class="layer-header">
+          <span class="layer-badge">2</span>
+          <span class="layer-name">Unit Tests &mdash; Filters</span>
+        </div>
+        <p class="layer-desc">Tests for 8 filter/eligibility functions: excluded vendor, inventory threshold, handling time, badge indicator, phantom price break, and others.</p>
+        <div class="layer-meta">
+          <span class="meta-tag meta-tests">~80 tests</span>
+          <span class="meta-tag meta-low">Low Complexity</span>
+          <span class="meta-tag meta-nomock">No Mocks / No DB</span>
+        </div>
+      </div>
+
+      <!-- Layer 3 -->
+      <div class="layer-card">
+        <div class="layer-header">
+          <span class="layer-badge">3</span>
+          <span class="layer-name">Integration Tests</span>
+        </div>
+        <p class="layer-desc">Full V1 pipeline tests for Standard and NC modes, including multi-price-break scenarios. External services are mocked at the boundary.</p>
+        <div class="layer-meta">
+          <span class="meta-tag meta-tests">~22 tests</span>
+          <span class="meta-tag meta-medium">Medium Complexity</span>
+          <span class="meta-tag meta-mock">Mocked Externals</span>
+        </div>
+      </div>
+
+      <!-- Layer 4 -->
+      <div class="layer-card">
+        <div class="layer-header">
+          <span class="layer-badge">4</span>
+          <span class="layer-name">Golden File Tests</span>
+        </div>
+        <p class="layer-desc">JSON-driven V2 scenario tests. Each scenario is a self-contained JSON file with inputs and expected outputs. Add new tests by adding JSON &mdash; no code changes needed.</p>
+        <div class="layer-meta">
+          <span class="meta-tag meta-tests">~30 scenarios</span>
+          <span class="meta-tag meta-low">Low Complexity</span>
+          <span class="meta-tag meta-nomock">No Mocks / No DB</span>
+        </div>
+      </div>
+
+      <!-- Layer 5 -->
+      <div class="layer-card">
+        <div class="layer-header">
+          <span class="layer-badge">5</span>
+          <span class="layer-name">Invariant Tests</span>
+        </div>
+        <p class="layer-desc">Property-based tests using <code>fast-check</code>. 10 universal invariants (e.g., price never below floor) verified across 1,000 randomly generated inputs each.</p>
+        <div class="layer-meta">
+          <span class="meta-tag meta-tests">~10 props &times; 1K runs</span>
+          <span class="meta-tag meta-high">High Complexity</span>
+          <span class="meta-tag meta-nomock">No Mocks / No DB</span>
+        </div>
+      </div>
+
+      <!-- Layer 6 -->
+      <div class="layer-card">
+        <div class="layer-header">
+          <span class="layer-badge">6</span>
+          <span class="layer-name">Backtesting</span>
+        </div>
+        <p class="layer-desc">Historical replay framework. Extracts real production data, re-runs the algorithm, and confirms that new code produces the same (or improved) decisions.</p>
+        <div class="layer-meta">
+          <span class="meta-tag meta-tests">Configurable</span>
+          <span class="meta-tag meta-high">High Complexity</span>
+          <span class="meta-tag meta-mock">DB Access Required</span>
+        </div>
+      </div>
+
+      <!-- Layer 7 -->
+      <div class="layer-card">
+        <div class="layer-header">
+          <span class="layer-badge">7</span>
+          <span class="layer-name">Cross-Algorithm</span>
+        </div>
+        <p class="layer-desc">V1 vs V2 comparison via normalized adapters. Shared test suite validates both algorithms. Adding V3 is just one new adapter file.</p>
+        <div class="layer-meta">
+          <span class="meta-tag meta-tests">~20 tests</span>
+          <span class="meta-tag meta-medium">Medium Complexity</span>
+          <span class="meta-tag meta-nomock">No Mocks / No DB</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     SECTION 3 ── WHAT CHANGES WHEN THE ALGO CHANGES
+     ════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <span class="section-number">Section 3</span>
+    <h2 class="section-title">What Changes When the Algorithm Changes</h2>
+    <p class="section-lead">A practical guide showing exactly which test layers are affected by common types of algorithm modifications.</p>
+
+    <table class="matrix-table">
+      <thead>
+        <tr>
+          <th style="width:28%;">If You Change&hellip;</th>
+          <th style="width:36%;">What To Update</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="change-trigger">A rule function</td>
+          <td>
+            <span class="layer-ref">Layer 1</span> unit test for that rule, possibly <span class="layer-ref">Layer 4</span> golden file JSON
+          </td>
+          <td>Most changes are isolated to one test file and one or two JSON scenarios.</td>
+        </tr>
+        <tr>
+          <td class="change-trigger">Add a new filter</td>
+          <td>
+            Add a new <span class="layer-ref">Layer 2</span> test file
+          </td>
+          <td>One new <code>*.test.ts</code> file in the filters directory. Other layers are unaffected.</td>
+        </tr>
+        <tr>
+          <td class="change-trigger">Pricing logic</td>
+          <td>
+            <span class="layer-ref">Layer 4</span> golden file JSON may need updates; <span class="layer-ref">Layer 5</span> invariants should still pass
+          </td>
+          <td>Golden files capture expected outputs. Invariants test universal rules that should hold regardless of logic changes.</td>
+        </tr>
+        <tr>
+          <td class="change-trigger">Create a V3 algorithm</td>
+          <td>
+            Implement one <span class="layer-ref">Layer 7</span> adapter
+          </td>
+          <td>All shared cross-algorithm tests automatically apply to V3 &mdash; no new test code needed.</td>
+        </tr>
+        <tr>
+          <td class="change-trigger">Floor / max price behavior</td>
+          <td>
+            <span class="layer-ref">Layer 5</span> invariant tests catch violations automatically
+          </td>
+          <td>Property-based tests run 1,000 random inputs. If the floor or max constraint is violated, the test fails immediately.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <strong>Key insight:</strong> Golden files (Layer 4) are the easiest to update &mdash; just edit a JSON file, no code changes required. Invariant tests (Layer 5) should <strong>never</strong> need updating because they test universal pricing rules that must always hold true.
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     SECTION 4 ── BENEFITS
+     ════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <span class="section-number">Section 4</span>
+    <h2 class="section-title">Key Benefits</h2>
+    <p class="section-lead">Each layer is independently valuable. Together they form a comprehensive safety net for pricing algorithm development.</p>
+
+    <div class="benefits-grid">
+
+      <div class="benefit-card">
+        <div class="benefit-icon icon-shield">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="benefit-body">
+          <h3>Regression Safety</h3>
+          <p>Every rule function tested in isolation and in integration. Changes that break existing behavior are caught immediately before they reach production.</p>
+        </div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon icon-check">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="benefit-body">
+          <h3>Confidence in Changes</h3>
+          <p>Property-based tests explore thousands of edge cases that humans would never think to write. Random inputs reveal hidden assumptions in the code.</p>
+        </div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon icon-bolt">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#a16207" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div class="benefit-body">
+          <h3>Fast Feedback</h3>
+          <p>Unit tests (Layers 1 and 2) run in seconds with zero database or network dependencies. Developers get instant feedback on every save.</p>
+        </div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon icon-data">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        </div>
+        <div class="benefit-body">
+          <h3>Data-Driven Testing</h3>
+          <p>Golden file scenarios are pure JSON. Non-engineers and domain experts can contribute test scenarios by editing data files &mdash; no TypeScript knowledge required.</p>
+        </div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon icon-rocket">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#be123c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+        </div>
+        <div class="benefit-body">
+          <h3>Future-Proof</h3>
+          <p>The cross-algorithm framework (Layer 7) makes adopting V3 trivial. Implement one adapter and all shared tests apply automatically.</p>
+        </div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon icon-history">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#4338ca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="benefit-body">
+          <h3>Historical Validation</h3>
+          <p>Backtesting replays real production decisions to prove that algorithm changes do not break real-world pricing outcomes.</p>
+        </div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon icon-lock">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="benefit-body">
+          <h3>Zero Disruption</h3>
+          <p>No existing source files are modified. The entire framework is additive &mdash; only new test files and one dev dependency (<code>fast-check</code>) are introduced.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     SECTION 5 ── IMPLEMENTATION PHASES
+     ════════════════════════════════════════════════════════ -->
+<section>
+  <div class="container">
+    <span class="section-number">Section 5</span>
+    <h2 class="section-title">Implementation Phases</h2>
+    <p class="section-lead">Three incremental phases. Each phase is independently valuable &mdash; Phase 1 alone catches the majority of regressions.</p>
+
+    <div class="phases-container">
+
+      <!-- Phase 1 -->
+      <div class="phase-row">
+        <div class="phase-track">
+          <div class="phase-dot">1</div>
+          <div class="phase-line"></div>
+        </div>
+        <div class="phase-content">
+          <h3>Foundation</h3>
+          <p class="phase-subtitle">Layers 0, 1, 2 &mdash; catches most regressions</p>
+          <div class="phase-layers">
+            <span class="phase-layer-tag">Layer 0 &middot; Setup</span>
+            <span class="phase-layer-tag">Layer 1 &middot; Unit Rules</span>
+            <span class="phase-layer-tag">Layer 2 &middot; Unit Filters</span>
+          </div>
+          <p>Build the test infrastructure (builders, matchers, shared types), then write unit tests for all 15 rule functions and 8 filter functions. Runs in seconds with no external dependencies. This phase alone provides coverage for the most common regressions.</p>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill fill-phase1"></div>
+          </div>
+          <div class="progress-label">~206 tests &middot; 33% of framework</div>
+        </div>
+      </div>
+
+      <!-- Phase 2 -->
+      <div class="phase-row">
+        <div class="phase-track">
+          <div class="phase-dot">2</div>
+          <div class="phase-line"></div>
+        </div>
+        <div class="phase-content">
+          <h3>Integration</h3>
+          <p class="phase-subtitle">Layers 3, 4 &mdash; end-to-end confidence</p>
+          <div class="phase-layers">
+            <span class="phase-layer-tag">Layer 3 &middot; Integration</span>
+            <span class="phase-layer-tag">Layer 4 &middot; Golden Files</span>
+          </div>
+          <p>Full pipeline tests with mocked externals verify that rules compose correctly. Golden file scenarios provide data-driven end-to-end validation. Non-engineers can contribute new scenarios via JSON without writing code.</p>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill fill-phase2"></div>
+          </div>
+          <div class="progress-label">+52 tests &middot; 66% of framework</div>
+        </div>
+      </div>
+
+      <!-- Phase 3 -->
+      <div class="phase-row">
+        <div class="phase-track">
+          <div class="phase-dot">3</div>
+          <div class="phase-line"></div>
+        </div>
+        <div class="phase-content">
+          <h3>Advanced</h3>
+          <p class="phase-subtitle">Layers 5, 6, 7 &mdash; production-grade safety net</p>
+          <div class="phase-layers">
+            <span class="phase-layer-tag">Layer 5 &middot; Invariants</span>
+            <span class="phase-layer-tag">Layer 6 &middot; Backtesting</span>
+            <span class="phase-layer-tag">Layer 7 &middot; Cross-Algo</span>
+          </div>
+          <p>Property-based tests explore edge cases no human would write. Historical backtesting validates against real production data. Cross-algorithm comparison future-proofs the framework for V3 and beyond.</p>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill fill-phase3"></div>
+          </div>
+          <div class="progress-label">+40 tests + 10K property runs &middot; 100% of framework</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     FOOTER
+     ════════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="container">
+    Repricer Algorithm Testing Framework &mdash; Frontier Dental &mdash; Generated February 2026
+  </div>
+</footer>
+
+</body>
+</html>

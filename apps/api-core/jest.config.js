@@ -9,6 +9,7 @@ module.exports = {
   transform: {
     ...tsJestTransformCfg,
   },
+  testMatch: ["**/__tests__/**/*.test.ts"],
   maxWorkers: "50%",
   collectCoverageFrom: ["src/**/*.{ts,js}", "!src/**/*.d.ts", "!src/**/*.test.ts", "!src/**/*.spec.ts", "!src/main.ts", "!src/**/__tests__/**", "!src/**/__mocks__/**"],
   coverageDirectory: "coverage",

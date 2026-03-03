@@ -1,0 +1,65 @@
+{
+  "name": "Handling time filter -- only fast shipping competitors",
+  "description": "With handling_time_group set to FAST_SHIPPING, competitors with shipping time > 2 days are excluded. Only fast-shipping competitors are considered for pricing.",
+  "tags": ["change", "handling-time", "filter"],
+  "input": {
+    "mpId": 10022,
+    "net32Products": [
+      {
+        "vendorId": 17357,
+        "vendorName": "Tradent",
+        "inStock": true,
+        "standardShipping": 7.95,
+        "shippingTime": 2,
+        "inventory": 100,
+        "badgeId": 1,
+        "badgeName": "Authorized",
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 20.0 }],
+        "freeShippingGap": 42.05,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99001,
+        "vendorName": "SlowVendor",
+        "inStock": true,
+        "standardShipping": 0,
+        "shippingTime": 7,
+        "inventory": 100,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 8.0 }],
+        "freeShippingGap": 0,
+        "freeShippingThreshold": 50.0
+      },
+      {
+        "vendorId": 99002,
+        "vendorName": "FastVendor",
+        "inStock": true,
+        "standardShipping": 3.0,
+        "shippingTime": 1,
+        "inventory": 75,
+        "badgeId": 0,
+        "badgeName": null,
+        "priceBreaks": [{ "minQty": 1, "unitPrice": 16.0 }],
+        "freeShippingGap": 15.0,
+        "freeShippingThreshold": 50.0
+      }
+    ],
+    "vendorSettings": {
+      "floor_price": 5.0,
+      "max_price": 30.0,
+      "up_down": "UP/DOWN",
+      "handling_time_group": "FAST_SHIPPING",
+      "price_strategy": "UNIT"
+    },
+    "ownVendorId": 17357,
+    "allOwnVendorIds": [17357],
+    "nonBlocked422VendorIds": [17357],
+    "isSlowCron": false
+  },
+  "expected": {
+    "algoResult": "CHANGE #DOWN",
+    "suggestedPrice": 15.99,
+    "commentContains": ["Pricing down"]
+  }
+}
