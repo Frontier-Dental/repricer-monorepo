@@ -28,14 +28,16 @@ import { errorMiddleware } from "./utility/error-middleware";
 import { initializeThresholdScraping } from "./utility/reprice-algo/v2/threshold-scraping";
 import { startMiniErpCronLogic } from "./controller/mini-erp-cron/start-cron";
 import { minErpCronController } from "./controller/mini-erp-cron";
+import { requestLogger } from "./middleware/request-logger";
+import logger from "./utility/logger";
 
 process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err);
+  logger.error("Uncaught Exception:", err);
   // Optionally: process.exit(1);
 });
 
 process.on("unhandledRejection", (reason) => {
-  console.error("Unhandled Rejection:", reason);
+  logger.error("Unhandled Rejection:", reason);
   // Optionally: process.exit(1);
 });
 
@@ -59,6 +61,7 @@ nodeApp.use(
     level: 9,
   })
 );
+nodeApp.use(requestLogger);
 const port = applicationConfig.PORT;
 process.env.TZ = "Canada/Eastern";
 nodeApp.use(searchController);
@@ -88,11 +91,11 @@ nodeApp.get("/api/GetStatus", async (req: Request, res: Response) => {
 nodeApp.use(errorMiddleware);
 
 nodeApp.listen(port, async () => {
-  console.info(`Application server running on post ${port} at ${new Date()}`);
-  console.info(`Application version: ${packageJson.version}`);
+  logger.info(`Application server running on post ${port} at ${new Date()}`);
+  logger.info(`Application version: ${packageJson.version}`);
   initializeThresholdScraping();
   if (applicationConfig.SCHEDULE_CRONS_ON_STARTUP) {
-    console.info("Scheduling enabled crons on startup");
+    logger.info("Scheduling enabled crons on startup");
     await startAllCronLogic();
     await start422Logic();
     await startFilterCronLogic();
@@ -102,10 +105,10 @@ nodeApp.listen(port, async () => {
     await startScrapeCronLogic();
     await startMiniErpCronLogic();
     startV2AlgoHtmlFileCleanupCron();
-    console.info("All enabled crons started on startup");
+    logger.info("All enabled crons started on startup");
   }
   if (!fs.existsSync("./activeProducts.json")) {
     fs.writeFileSync("./activeProducts.json", JSON.stringify([]));
-    console.info(`Resetting complete for Active Products for Application Reset at ${new Date()}`);
+    logger.info(`Resetting complete for Active Products for Application Reset at ${new Date()}`);
   }
 });
