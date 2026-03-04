@@ -1,8 +1,11 @@
 import winston from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
 import path from "path";
+import util from "util";
 import { applicationConfig } from "./config";
 import { LogLevel } from "../types/logger.types";
+
+const SPLAT = Symbol.for("splat");
 
 const logDir = applicationConfig.APP_LOG_PATH;
 
@@ -13,16 +16,15 @@ const levelMap: Record<string, string> = {
   debug: "DEBUG",
 };
 
-// Plain text format with Datadog-recognized level prefix (message only, no JSON meta)
+// Plain text format: full message when args are primitives (pattern 1), omit objects (pattern 2)
 const consoleFormat = winston.format.combine(
-  winston.format.timestamp(),
-  winston.format.errors({ stack: true }),
-  winston.format.printf(({ level, message, module, ...meta }) => {
+  winston.format.errors({ stack: false }),
+  winston.format.printf(({ level, message, module, [SPLAT]: splat, ...meta }) => {
     const ddLevel = levelMap[level] || level.toUpperCase();
     const prefix = module ? `[${module}]` : "";
-    const stringMeta = Object.fromEntries(Object.entries(meta).filter(([k, v]) => k !== "timestamp" && typeof v === "string" && v.length < 50));
-    const metaString = Object.keys(stringMeta).length ? JSON.stringify(stringMeta) : "";
-    return `[${ddLevel}] ${prefix} ${message} ${metaString}`;
+    const isPrimitive = (v: unknown) => v === null || v === undefined || typeof v !== "object";
+    const displayMessage = Array.isArray(splat) && splat.length > 0 ? util.format(message, ...splat.filter(isPrimitive)) : message;
+    return `[${ddLevel}] ${prefix} ${displayMessage}`;
   })
 );
 
