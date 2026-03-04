@@ -183,6 +183,7 @@ export const MapUserResponse = async (productDetails: any, updateDetails: any, c
   productDetails.getBBShippingValue = !isNaN(parseInt(updateDetails.getBBShippingValue)) ? parseFloat(updateDetails.getBBShippingValue) : 0.005;
   productDetails.getBBBadge = updateDetails.getBBBadge == "on" ? true : false;
   productDetails.getBBShipping = updateDetails.getBBShipping == "on" ? true : false;
+  productDetails.badgeUpExceptionPercentage = updateDetails.badgeUpExceptionPercentage ? parseFloat(updateDetails.badgeUpExceptionPercentage) : 0;
   return productDetails;
 };
 export const MapFormData = async (productDetails: any, formData: any, formVendorData: any) => {

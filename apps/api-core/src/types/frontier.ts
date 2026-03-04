@@ -74,4 +74,5 @@ export interface FrontierProduct {
   algo_execution_mode?: AlgoExecutionMode;
   getBBShipping?: any;
   getBBBadge?: any;
+  badgeUpExceptionPercentage?: number;
 }

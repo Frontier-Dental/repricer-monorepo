@@ -75,6 +75,7 @@ interface SqlEntity {
   MarketStateUpdatedAt?: Date | string | null;
   QBreakCount?: number;
   QBreakDetails?: string;
+  BadgeUpExceptionPercentage?: number;
 }
 
 export class OwnVendorProductDetails {
@@ -159,6 +160,7 @@ export class OwnVendorProductDetails {
   marketStateUpdatedAt: Date | string | null;
   qBreakCount: number;
   qBreakDetails: string;
+  badgeUpExceptionPercentage: number;
 
   constructor(sqlEntity: SqlEntity, _algo_execution_mode: string) {
     this.channelName = sqlEntity["ChannelName"] || "";
@@ -241,6 +243,7 @@ export class OwnVendorProductDetails {
     this.marketStateUpdatedAt = sqlEntity["MarketStateUpdatedAt"] ?? null;
     this.qBreakCount = sqlEntity["QBreakCount"] || 0;
     this.qBreakDetails = sqlEntity["QBreakDetails"] || "";
+    this.badgeUpExceptionPercentage = sqlEntity["BadgeUpExceptionPercentage"] || 0;
   }
 }
 

@@ -1,8 +1,15 @@
 import knex, { Knex } from "knex";
+
 import { applicationConfig } from "../utility/config";
 import Encrypto from "../utility/encrypto";
 
-let knexInstance: Knex | null = null;
+export async function destroyKnexInstance() {
+  if (knexInstance) {
+    console.warn("Destroying Knex Instance");
+    await knexInstance.destroy();
+    knexInstance = null;
+  }
+}
 
 export function getKnexInstance(): Knex {
   if (knexInstance) {
@@ -26,10 +33,4 @@ export function getKnexInstance(): Knex {
   }
 }
 
-export async function destroyKnexInstance() {
-  if (knexInstance) {
-    console.warn("Destroying Knex Instance");
-    await knexInstance.destroy();
-    knexInstance = null;
-  }
-}
+let knexInstance: Knex | null = null;

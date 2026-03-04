@@ -531,6 +531,7 @@ export async function addExcelData(req: Request, res: Response) {
         qBreakCount: row[63] ? parseInt(row[63]) : null,
         qBreakDetails: row[64] ? row[64] : null,
         badge: row[65] != null && row[65] != "" ? JSON.parse(row[65]) : null,
+        badgeUpExceptionPercentage: row[66] != null && row[66] != "" ? parseFloat(row[66]) : 0,
       };
       items.push($item as never);
     } else {
@@ -612,7 +613,6 @@ export async function addExcelData(req: Request, res: Response) {
     }
 
     itemData.biteSupplyDetails = items.find((x: any) => x.channelName && x.channelName.toUpperCase() == "BITESUPPLY" && x.mpid == pId);
-
     if (itemData.biteSupplyDetails && itemData.biteSupplyDetails.executionPriority == null) {
       itemData.biteSupplyDetails.executionPriority = 7;
     }

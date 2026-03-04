@@ -14,14 +14,18 @@ import { HistoryModel } from "../model/sql-models/history";
 export async function Execute(productList: any[], cronSetting: any): Promise<void> {
   if (productList && productList.length > 0) {
     const keyGen = Generate();
-    await mySqlHelper.InsertRunCompletionStatus(new RunCompletionStatus(keyGen, "SCRAPE_ONLY", false));
-    const isChunkNeeded = await IsChunkNeeded(productList);
-    if (isChunkNeeded) {
-      let chunkedList = _.chunk(productList, 2000);
-      for (let chunk of chunkedList) {
-        await executeScrapeLogic(keyGen, chunk, cronSetting);
-      }
-    } else await executeScrapeLogic(keyGen, productList, cronSetting);
+    try {
+      await mySqlHelper.InsertRunCompletionStatus(new RunCompletionStatus(keyGen, "SCRAPE_ONLY", false));
+      const isChunkNeeded = await IsChunkNeeded(productList);
+      if (isChunkNeeded) {
+        let chunkedList = _.chunk(productList, 2000);
+        for (let chunk of chunkedList) {
+          await executeScrapeLogic(keyGen, chunk, cronSetting);
+        }
+      } else await executeScrapeLogic(keyGen, productList, cronSetting);
+    } catch (exception) {
+      console.error(`Error in Execute function of Scrape Helper for keyGen ${keyGen} :`, exception);
+    }
     await mySqlHelper.UpdateRunCompletionStatus(new RunCompletionStatus(keyGen, "SCRAPE_ONLY", true));
   }
 }
@@ -37,128 +41,132 @@ async function executeScrapeLogic(keyGen: string, productList: any[], cronSettin
   const insertId = Array.isArray(runInfoResult) ? runInfoResult[0] : (runInfoResult as any)?.insertId;
   if (runInfoResult) {
     for (let prod of productList) {
-      console.log(`SCRAPE-ONLY : Scraping started for ${prod.MpId}`);
-      const scrapeStartTime = new Date();
-      const getSearchResultsEnv = applicationConfig.GET_SEARCH_RESULTS || "";
-      const searchRequest = getSearchResultsEnv.replace("{mpId}", prod.MpId);
-      const net32resp = await axiosHelper.getAsyncProxy(searchRequest, cronSetting, prod.MpId);
-      if (net32resp && net32resp.data) {
-        await mySqlHelper.UpdateLastScrapeInfo(prod.MpId, moment(scrapeStartTime).format("YYYY-MM-DD HH:mm:ss"));
-        const allowHistoryLoggingEnv = applicationConfig.SCRAPE_ONLY_LOGGING;
-        const allowRunInfoLoggingEnv = applicationConfig.SCRAPE_RUN_LOGGING;
-        if (allowHistoryLoggingEnv) {
-          console.log(`SCRAPE-ONLY : Logging in history for ${prod.MpId} started at ${scrapeStartTime}`);
-          const apiResponseLinkedId = await mySqlHelper.InsertHistoricalApiResponse(net32resp.data, scrapeStartTime);
-          let historyList: any[] = [];
-          if (prod.LinkedTradentDetailsInfo > 0) {
-            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "TRADENT"));
-          }
-          if (prod.LinkedFrontiersDetailsInfo > 0) {
-            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "FRONTIER"));
-          }
-          if (prod.LinkedMvpDetailsInfo > 0) {
-            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "MVP"));
-          }
-          if (prod.LinkedTopDentDetailsInfo > 0) {
-            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "TOPDENT"));
-          }
-          if (prod.LinkedFirstDentDetailsInfo > 0) {
-            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "FIRSTDENT"));
-          }
-          if (prod.LinkedTriadDetailsInfo > 0) {
-            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "TRIAD"));
-          }
-          if (prod.LinkedBiteSupplyDetailsInfo > 0) {
-            historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "BITESUPPLY"));
-          }
-          if (historyList && historyList.length > 0) {
-            for (const historyItem of historyList) {
-              await mySqlHelper.InsertHistory(historyItem, scrapeStartTime);
+      try {
+        console.log(`SCRAPE-ONLY : Scraping started for ${prod.MpId}`);
+        const scrapeStartTime = new Date();
+        const getSearchResultsEnv = applicationConfig.GET_SEARCH_RESULTS || "";
+        const searchRequest = getSearchResultsEnv.replace("{mpId}", prod.MpId);
+        const net32resp = await axiosHelper.getAsyncProxy(searchRequest, cronSetting, prod.MpId);
+        if (net32resp && net32resp.data) {
+          await mySqlHelper.UpdateLastScrapeInfo(prod.MpId, moment(scrapeStartTime).format("YYYY-MM-DD HH:mm:ss"));
+          const allowHistoryLoggingEnv = applicationConfig.SCRAPE_ONLY_LOGGING;
+          const allowRunInfoLoggingEnv = applicationConfig.SCRAPE_RUN_LOGGING;
+          if (allowHistoryLoggingEnv) {
+            console.log(`SCRAPE-ONLY : Logging in history for ${prod.MpId} started at ${scrapeStartTime}`);
+            const apiResponseLinkedId = await mySqlHelper.InsertHistoricalApiResponse(net32resp.data, scrapeStartTime);
+            let historyList: any[] = [];
+            if (prod.LinkedTradentDetailsInfo > 0) {
+              historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "TRADENT"));
             }
-          }
-        }
-        if (allowRunInfoLoggingEnv) {
-          console.log(`SCRAPE-ONLY : Logging in run info for ${prod.MpId} started at ${scrapeStartTime}`);
-          for (const [index, resp] of net32resp.data.entries()) {
-            const isOwnVendor = _.includes(ownVendorList, resp.vendorId.toString());
-
-            // Conversion needs to be done from boolean to number for the InsertProductInfo function
-            if (resp.isFulfillmentPolicyStock === "true" || resp.isFulfillmentPolicyStock === true) {
-              resp.isFulfillmentPolicyStock = 1;
-            } else if (resp.isFulfillmentPolicyStock === "false" || resp.isFulfillmentPolicyStock === false) {
-              resp.isFulfillmentPolicyStock = 0;
+            if (prod.LinkedFrontiersDetailsInfo > 0) {
+              historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "FRONTIER"));
             }
-
-            const productInfo = new ProductInfo(prod.MpId, resp, insertId, index + 1, isOwnVendor);
-            productInfo.addStartTime(scrapeStartTime);
-            productInfo.addEndTime(new Date());
-            const productInfoResult = await mySqlHelper.InsertProductInfo(productInfo);
-            console.log(`SCRAPE-ONLY : ${cronSetting.CronName} : ${keyGen} : Inserted Product Info for MPID : ${prod.MpId} | VENDOR : ${productInfo.VendorId}`);
-
-            // Update vendor detail tables with market state for our own vendor
-            if (isOwnVendor) {
-              try {
-                // Determine which vendor detail table to update based on the response vendorId
-                const vendorIdStr = resp.vendorId.toString();
-                let vendorName = "";
-
-                // Match the response vendorId to the correct vendor name
-                switch (vendorIdStr) {
-                  case "17357":
-                    vendorName = "TRADENT";
-                    break;
-                  case "20722":
-                    vendorName = "FRONTIER";
-                    break;
-                  case "20755":
-                    vendorName = "MVP";
-                    break;
-                  case "20727":
-                    vendorName = "TOPDENT";
-                    break;
-                  case "20533":
-                    vendorName = "FIRSTDENT";
-                    break;
-                  case "5":
-                    vendorName = "TRIAD";
-                    break;
-                  case "20891":
-                    vendorName = "BITESUPPLY";
-                    break;
-                }
-
-                if (vendorName) {
-                  // Use the new function that ONLY updates market state columns
-
-                  // Get price from priceBreaks for minQty=1
-                  const basePrice = resp.priceBreaks?.find((pb: { minQty: number }) => pb.minQty === 1)?.unitPrice;
-
-                  const marketData = {
-                    inStock: resp.inStock === "true" || resp.inStock === true,
-                    inventory: parseInt(resp.inventory) || 0,
-                    ourPrice: basePrice ? parseFloat(basePrice) : undefined,
-                    badgeId: resp.badgeId != null ? parseInt(resp.badgeId) > 0 : undefined,
-                  };
-
-                  await mySqlHelper.UpdateMarketStateOnly(prod.MpId, vendorName, marketData);
-
-                  console.log(`SCRAPE-ONLY : Updated market state for ${vendorName} - MPID: ${prod.MpId}, InStock: ${resp.inStock}, Inventory: ${resp.inventory}, Price: ${resp.price}, Badge: ${marketData.badgeId}`);
-                }
-              } catch (error) {
-                // Log error but don't stop scraping process
-                console.error(`SCRAPE-ONLY : Failed to update market state for MPID: ${prod.MpId}`, error);
-              }
+            if (prod.LinkedMvpDetailsInfo > 0) {
+              historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "MVP"));
             }
-
-            if (productInfoResult && productInfoResult[0] && resp.priceBreaks) {
-              for (const pb of resp.priceBreaks) {
-                const priceBreakInfo = new PriceBreakInfo(productInfoResult[0], pb);
-                await mySqlHelper.InsertPriceBreakInfo(priceBreakInfo);
+            if (prod.LinkedTopDentDetailsInfo > 0) {
+              historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "TOPDENT"));
+            }
+            if (prod.LinkedFirstDentDetailsInfo > 0) {
+              historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "FIRSTDENT"));
+            }
+            if (prod.LinkedTriadDetailsInfo > 0) {
+              historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "TRIAD"));
+            }
+            if (prod.LinkedBiteSupplyDetailsInfo > 0) {
+              historyList = historyList.concat(await GetHistoryModel(prod, net32resp.data, apiResponseLinkedId, scrapeStartTime, "BITESUPPLY"));
+            }
+            if (historyList && historyList.length > 0) {
+              for (const historyItem of historyList) {
+                await mySqlHelper.InsertHistory(historyItem, scrapeStartTime);
               }
             }
           }
+          if (allowRunInfoLoggingEnv) {
+            console.log(`SCRAPE-ONLY : Logging in run info for ${prod.MpId} started at ${scrapeStartTime}`);
+            for (const [index, resp] of net32resp.data.entries()) {
+              const isOwnVendor = _.includes(ownVendorList, resp.vendorId.toString());
+
+              // Conversion needs to be done from boolean to number for the InsertProductInfo function
+              if (resp.isFulfillmentPolicyStock === "true" || resp.isFulfillmentPolicyStock === true) {
+                resp.isFulfillmentPolicyStock = 1;
+              } else if (resp.isFulfillmentPolicyStock === "false" || resp.isFulfillmentPolicyStock === false) {
+                resp.isFulfillmentPolicyStock = 0;
+              }
+
+              const productInfo = new ProductInfo(prod.MpId, resp, insertId, index + 1, isOwnVendor);
+              productInfo.addStartTime(scrapeStartTime);
+              productInfo.addEndTime(new Date());
+              const productInfoResult = await mySqlHelper.InsertProductInfo(productInfo);
+              console.log(`SCRAPE-ONLY : ${cronSetting.CronName} : ${keyGen} : Inserted Product Info for MPID : ${prod.MpId} | VENDOR : ${productInfo.VendorId}`);
+
+              // Update vendor detail tables with market state for our own vendor
+              if (isOwnVendor) {
+                try {
+                  // Determine which vendor detail table to update based on the response vendorId
+                  const vendorIdStr = resp.vendorId.toString();
+                  let vendorName = "";
+
+                  // Match the response vendorId to the correct vendor name
+                  switch (vendorIdStr) {
+                    case "17357":
+                      vendorName = "TRADENT";
+                      break;
+                    case "20722":
+                      vendorName = "FRONTIER";
+                      break;
+                    case "20755":
+                      vendorName = "MVP";
+                      break;
+                    case "20727":
+                      vendorName = "TOPDENT";
+                      break;
+                    case "20533":
+                      vendorName = "FIRSTDENT";
+                      break;
+                    case "5":
+                      vendorName = "TRIAD";
+                      break;
+                    case "20891":
+                      vendorName = "BITESUPPLY";
+                      break;
+                  }
+
+                  if (vendorName) {
+                    // Use the new function that ONLY updates market state columns
+
+                    // Get price from priceBreaks for minQty=1
+                    const basePrice = resp.priceBreaks?.find((pb: { minQty: number }) => pb.minQty === 1)?.unitPrice;
+
+                    const marketData = {
+                      inStock: resp.inStock === "true" || resp.inStock === true,
+                      inventory: parseInt(resp.inventory) || 0,
+                      ourPrice: basePrice ? parseFloat(basePrice) : undefined,
+                      badgeId: resp.badgeId != null ? parseInt(resp.badgeId) > 0 : undefined,
+                    };
+
+                    await mySqlHelper.UpdateMarketStateOnly(prod.MpId, vendorName, marketData);
+
+                    console.log(`SCRAPE-ONLY : Updated market state for ${vendorName} - MPID: ${prod.MpId}, InStock: ${resp.inStock}, Inventory: ${resp.inventory}, Price: ${resp.price}, Badge: ${marketData.badgeId}`);
+                  }
+                } catch (error) {
+                  // Log error but don't stop scraping process
+                  console.error(`SCRAPE-ONLY : Failed to update market state for MPID: ${prod.MpId}`, error);
+                }
+              }
+
+              if (productInfoResult && productInfoResult[0] && resp.priceBreaks) {
+                for (const pb of resp.priceBreaks) {
+                  const priceBreakInfo = new PriceBreakInfo(productInfoResult[0], pb);
+                  await mySqlHelper.InsertPriceBreakInfo(priceBreakInfo);
+                }
+              }
+            }
+          }
+          runInfo.UpdateSuccessCount();
         }
-        runInfo.UpdateSuccessCount();
+      } catch (error) {
+        console.error(`SCRAPE-ONLY : Error scraping product with MpId ${prod.MpId} for keyGen ${keyGen}}`, error);
       }
       await mySqlHelper.UpdateRunInfo(runInfo.GetCompletedProductCountQuery(), [productCounter + 1, insertId]);
       productCounter++;

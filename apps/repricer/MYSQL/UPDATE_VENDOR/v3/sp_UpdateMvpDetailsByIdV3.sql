@@ -66,7 +66,8 @@ CREATE PROCEDURE "sp_UpdateMvpDetailsByIdV3" (
   IN _getBBShippingValue decimal(5, 3),
   IN _qBreakCount int,
   IN _qBreakDetails varchar(1024),
-  IN _badge boolean
+  IN _badge boolean,
+  IN _badgeUpExceptionPercentage decimal(5, 3)
 ) BEGIN
 select
   *
@@ -138,7 +139,8 @@ set
   GetBBShippingValue = _getBBShippingValue,
   QBreakCount = _qBreakCount,
   QBreakDetails = _qBreakDetails,
-  Badge = _badge
+  Badge = _badge,
+  BadgeUpExceptionPercentage = _badgeUpExceptionPercentage
 where
   MpId = _mpid;
 
@@ -146,4 +148,4 @@ COMMIT;
 
 END;
 
-/ /
+/ / / /
