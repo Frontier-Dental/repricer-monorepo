@@ -95,6 +95,16 @@ export async function FilterBasedOnParams(inputResult: Net32Product[], productIt
             return item.shippingTime && item.shippingTime >= 6;
           });
           break;
+        case "ONE_TO_TEN_DAYS":
+          outputResult = inputResult.filter((item) => {
+            return item.shippingTime && item.shippingTime <= 10;
+          });
+          break;
+        case "MIN_ELEVEN_DAYS":
+          outputResult = inputResult.filter((item) => {
+            return item.shippingTime && item.shippingTime >= 11;
+          });
+          break;
         default:
           outputResult = inputResult;
           break;
