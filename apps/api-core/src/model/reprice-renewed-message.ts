@@ -36,4 +36,5 @@ export enum RepriceRenewedMessageEnum {
   IGNORED_Q2_VS_Q1_SISTER = `IGNORE : Q2_VS_Q1_SISTER`,
   BB_SHIPPING = `CHANGE: #BB_SHIPPING`,
   BB_BADGE = `CHANGE: #BB_BADGE`,
+  BADGE_UP_EXCEPTION = `CHANGE: #UP Badge Exception`,
 }

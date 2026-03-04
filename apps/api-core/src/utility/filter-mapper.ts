@@ -96,6 +96,16 @@ export async function FilterBasedOnParams(inputResult: Net32Product[], productIt
             return item.shippingTime && item.shippingTime >= 6;
           });
           break;
+        case "ONE_TO_TEN_DAYS":
+          outputResult = inputResult.filter((item) => {
+            return item.shippingTime && item.shippingTime <= 10;
+          });
+          break;
+        case "MIN_ELEVEN_DAYS":
+          outputResult = inputResult.filter((item) => {
+            return item.shippingTime && item.shippingTime >= 11;
+          });
+          break;
         default:
           outputResult = inputResult;
           break;
@@ -189,7 +199,7 @@ export async function GetContextPrice(nextLowestPrice: any, processOffset: any, 
   returnObj.Type = "OFFSET";
   try {
     if (percentageDown != 0 && minQty == 1) {
-      const percentageDownPrice = subtractPercentage(nextLowestPrice + heavyShippingPrice, percentageDown) - heavyShippingPrice;
+      const percentageDownPrice = (await subtractPercentage(nextLowestPrice + heavyShippingPrice, percentageDown)) - heavyShippingPrice;
       if (percentageDownPrice > floorPrice) {
         returnObj.Price = percentageDownPrice;
         returnObj.Type = "PERCENTAGE";
@@ -343,8 +353,12 @@ function getLastUpdateTime(product: any) {
   return str;
 }
 
-export function subtractPercentage(originalNumber: number, percentage: number) {
+export async function subtractPercentage(originalNumber: number, percentage: number) {
   return parseFloat((Math.floor((originalNumber - originalNumber * percentage) * 100) / 100).toFixed(2));
+}
+
+export async function addPercentage(originalNumber: number, percentage: number) {
+  return parseFloat((Math.floor((originalNumber + originalNumber * percentage) * 100) / 100).toFixed(2));
 }
 
 export async function GetProductDetailsByVendor(details: any, contextVendor: string) {

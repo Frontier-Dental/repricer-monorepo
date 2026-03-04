@@ -129,9 +129,10 @@ export async function streamProductDetails(req: Request, res: Response) {
     { header: "Qbreak Count", key: "qBreakCount", width: 20 },
     { header: "Qbreak Details", key: "qBreakDetails", width: 50 },
     { header: "Badge", key: "badge", width: 20 },
+    { header: "Badge Up Exception %", key: "badgeUpExceptionPercentage", width: 20 },
   ];
 
-  worksheet.autoFilter = "A1:BN1";
+  worksheet.autoFilter = "A1:BO1";
   let isPaused = false;
   stream.on("data", async (row: any) => {
     if (isPaused) return;

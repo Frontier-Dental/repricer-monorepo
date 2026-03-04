@@ -73,6 +73,7 @@ export default class CustomProduct {
   badge: boolean | null = null;
   qBreakCount: number;
   qBreakDetails: string;
+  badgeUpExceptionPercentage: number;
 
   constructor(sqlEntity: any) {
     this.channelName = sqlEntity["ChannelName"];
@@ -149,5 +150,6 @@ export default class CustomProduct {
     this.badge = sqlEntity["Badge"] ?? null;
     this.qBreakCount = sqlEntity["QBreakCount"];
     this.qBreakDetails = sqlEntity["QBreakDetails"];
+    this.badgeUpExceptionPercentage = sqlEntity["BadgeUpExceptionPercentage"] ?? 0;
   }
 }

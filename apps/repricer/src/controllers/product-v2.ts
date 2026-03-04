@@ -1,10 +1,8 @@
 import axios from "axios";
 import { Request, Response } from "express";
 import _ from "lodash";
-import moment from "moment";
 import apiMapping from "../../resources/apiMapping.json";
 import badgeResx from "../../resources/badgeIndicatorMapping.json";
-import handlingTimeGroupResx from "../../resources/HandlingTimeFilterMapping.json";
 import * as mapper from "../middleware/mapper-helper";
 import * as productHelper from "../middleware/product-helper";
 import * as mongoMiddleware from "../services/mongo";
