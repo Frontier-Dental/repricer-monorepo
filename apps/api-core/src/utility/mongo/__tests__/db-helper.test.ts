@@ -18,8 +18,10 @@ jest.mock("../../config", () => ({
   },
 }));
 
-// Suppress console.log during tests
-const originalConsoleLog = console.log;
+jest.mock("../../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
 
 // Create error factory - only creates error when called, not during setup
 const createDbError = () => {
@@ -32,6 +34,7 @@ const createDbError = () => {
 
 import { getMongoDb } from "../index";
 import { applicationConfig } from "../../config";
+import logger from "../../logger";
 import { InitCronStatusAsync, UpdateCronStatusAsync, PushLogsAsync, UpdateProductAsync, ResetPendingCronLogs, UpsertErrorItemLog, FindErrorItemByIdAndStatus, FindProductById, GetListOfOverrideProducts, ExecuteProductQuery, ExecuteProductUpdate, GetErrorItemsByMpId, GetEligibleContextErrorItems, GetProductListByQuery, SaveFilterCronLogs, UpdateCronForProductAsync, Push422LogsAsync, GetScrapeProductList, InsertScrapeProduct, PushLogs, UpdateScrapeProducts, GetContextErrorItems } from "../db-helper";
 
 describe("db-helper", () => {
@@ -41,9 +44,6 @@ describe("db-helper", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetAllMocks();
-
-    // Mock console.log
-    console.log = jest.fn();
 
     // Create mock collection with all MongoDB methods
     mockCollection = {
@@ -65,20 +65,14 @@ describe("db-helper", () => {
   });
 
   afterEach(async () => {
-    console.log = originalConsoleLog;
     jest.clearAllMocks();
     // Wait for any pending promises to resolve
     await new Promise((resolve) => setImmediate(resolve));
   });
 
   afterAll(async () => {
-    // Ensure all pending promises are resolved
     await new Promise((resolve) => setImmediate(resolve));
-    // Clear all timers if any
     jest.clearAllTimers();
-    // Restore console.log
-    console.log = originalConsoleLog;
-    // Clear all mocks one final time
     jest.clearAllMocks();
   });
 
@@ -630,8 +624,8 @@ describe("db-helper", () => {
       expect(mockCollection.find).toHaveBeenCalledWith({
         $and: [{ active: activeStatus }, { mpId: 123 }, { vendorName: { $ne: contextVendor } }],
       });
-      expect(console.log).toHaveBeenCalledWith(`DB_HELPER: Fetching GetEligibleContextErrorItems for mpId: ${mpId} excluding vendor: ${contextVendor}`);
-      expect(console.log).toHaveBeenCalledWith(`DB_HELPER: Retrieved ${mockErrorItems.length} eligible context error items for mpId: ${mpId} : ${JSON.stringify(mockErrorItems)}`);
+      expect(logger.info).toHaveBeenCalledWith(`DB_HELPER: Fetching GetEligibleContextErrorItems for mpId: ${mpId} excluding vendor: ${contextVendor}`);
+      expect(logger.info).toHaveBeenCalledWith(`DB_HELPER: Retrieved ${mockErrorItems.length} eligible context error items for mpId: ${mpId} : ${JSON.stringify(mockErrorItems)}`);
       expect(result).toBe(mockErrorItems);
     });
 
@@ -1004,7 +998,7 @@ describe("db-helper", () => {
         },
         active: activeStatus,
       });
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("DB_HELPER: Fetching GetContextErrorItems with active status:"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("DB_HELPER: Fetching GetContextErrorItems with active status:"));
       expect(mockFind.toArray).toHaveBeenCalled();
       expect(result).toBe(mockErrorItems);
     });

@@ -16,10 +16,11 @@ import { getContextCronId, proceedNext } from "./shared";
 import { v4 } from "uuid";
 import { AlgoExecutionMode } from "@repricer-monorepo/shared";
 import { GetCronSettingsDetailsById } from "../../utility/mysql/mysql-v2";
+import logger from "../../utility/logger";
 
 export async function manualRepriceHandler(req: Request<{ id: string }, any, any, any>, res: Response): Promise<any> {
   const mpid = req.params.id;
-  console.log(`Running Manual Reprice for ${mpid} at ${new Date()}`);
+  logger.info(`Running Manual Reprice for ${mpid} at ${new Date()}`);
   const jobId = v4();
   const isOverrideRun = false;
   let prod: ProductDetailsListItem | undefined = await sqlHelper.GetItemListById(mpid);
@@ -72,7 +73,7 @@ export async function manualRepriceHandler(req: Request<{ id: string }, any, any
   (cronLogs as any).completionTime = new Date();
   const logInDb = await mongoHelper.PushLogsAsync(cronLogs);
   if (logInDb) {
-    console.log(`Successfully logged Cron Logs in DB at ${cronLogs.time} || Id : ${logInDb}`);
+    logger.info(`Successfully logged Cron Logs in DB at ${cronLogs.time} || Id : ${logInDb}`);
   }
   return res.status(_codes.StatusCodes.OK).json({ success: true, logId: logInDb });
 }

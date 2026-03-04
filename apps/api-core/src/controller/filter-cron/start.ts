@@ -4,6 +4,7 @@ import { filterCrons } from "./shared";
 import { schedule } from "node-cron";
 import * as _codes from "http-status-codes";
 import { GetFilteredCrons } from "../../utility/mysql/mysql-v2";
+import logger from "../../utility/logger";
 
 export async function startAllFilterCronHandler(req: Request, res: Response): Promise<any> {
   await startFilterCronLogic();
@@ -20,16 +21,16 @@ export async function startFilterCronLogic() {
           try {
             await filterMapper.FilterProducts(cronDetails);
           } catch (error) {
-            console.error(`Error running ${cronDetails.cronName}:`, error);
+            logger.info(`Error running ${cronDetails.cronName}:`, error);
           }
         },
         { scheduled: JSON.parse(cronDetails.status) }
       );
       if (JSON.parse(cronDetails.status)) {
-        console.log(`Started ${cronDetails.cronName} at ${new Date()} with expression ${cronDetails.cronExpression}`);
+        logger.info(`Started ${cronDetails.cronName} at ${new Date()} with expression ${cronDetails.cronExpression}`);
       }
     } catch (exception) {
-      console.error(`Error initializing ${cronDetails.cronName} || ${exception}`);
+      logger.error(`Error initializing ${cronDetails.cronName} || ${exception}`);
     }
   }
 }

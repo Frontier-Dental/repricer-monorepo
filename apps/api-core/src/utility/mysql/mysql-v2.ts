@@ -5,6 +5,7 @@ import CacheClient from "../../client/cacheClient";
 import { CacheKey, VendorName, VendorNameLookup } from "@repricer-monorepo/shared";
 import { getKnexInstance } from "../../model/sql-models/knex-wrapper";
 import * as SqlMapper from "./mySql-mapper";
+import logger from "../logger";
 
 export async function GetFullCronSettingsList() {
   const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
@@ -63,7 +64,7 @@ export async function GetGlobalConfig() {
     }
     await cacheClient.disconnect();
   } catch (err) {
-    console.error(`Error in GetGlobalConfig while getting from DB:`, err);
+    logger.error(`Error in GetGlobalConfig while getting from DB:`, err);
   }
   return envSettings;
 }
@@ -318,7 +319,7 @@ export async function UpdateQBreakDetails(mpid: string, vendorProducts: any) {
             QBreakDetails: qbreakDetails,
             QBreakCount: qbreakCount,
           });
-        console.log(`Updated QBreakDetails for ${mpid} in ${contextTableName} with qbreakCount: ${qbreakCount} and qbreakDetails: ${qbreakDetails}`);
+        logger.info(`Updated QBreakDetails for ${mpid} in ${contextTableName} with qbreakCount: ${qbreakCount} and qbreakDetails: ${qbreakDetails}`);
       }
     }
   }
@@ -331,7 +332,7 @@ export async function UpdateQBreakDetails(mpid: string, vendorProducts: any) {
 export async function UpdateProductLevelBadgeDetails(mpid: string, vendorProducts: any) {
   const hasAnyBadge = Array.isArray(vendorProducts) && vendorProducts.some((v: any) => v != null && v.badgeId != null && Number(v.badgeId) > 0);
 
-  console.log(`UpdateProductLevelBadgeDetails: ${mpid} hasAnyBadge: ${hasAnyBadge}`);
+  logger.info(`UpdateProductLevelBadgeDetails: ${mpid} hasAnyBadge: ${hasAnyBadge}`);
   const db = getKnexInstance();
   await db(applicationConfig.SQL_SCRAPE_PRODUCT_LIST!)
     .where({ MpId: parseInt(mpid) })

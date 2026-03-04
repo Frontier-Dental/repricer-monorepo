@@ -1,15 +1,20 @@
+jest.mock("../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import { errorMiddleware } from "../error-middleware";
+import logger from "../logger";
 
 describe("error-middleware", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
   let mockNext: NextFunction;
-  let consoleErrorSpy: jest.SpyInstance;
 
   beforeEach(() => {
-    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    jest.clearAllMocks();
     mockRequest = {};
     mockNext = jest.fn();
     mockResponse = {
@@ -20,7 +25,6 @@ describe("error-middleware", () => {
   });
 
   afterEach(() => {
-    consoleErrorSpy.mockRestore();
     delete process.env.NODE_ENV;
   });
 
@@ -30,8 +34,8 @@ describe("error-middleware", () => {
 
     errorMiddleware(error, mockRequest as Request, mockResponse as Response, mockNext);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith("=== ERROR MIDDLEWARE ===");
-    expect(consoleErrorSpy).toHaveBeenCalledWith(error.stack);
+    expect(logger.error).toHaveBeenCalledWith("=== ERROR MIDDLEWARE ===");
+    expect(logger.error).toHaveBeenCalledWith(error.stack);
     expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.INTERNAL_SERVER_ERROR);
     expect(mockResponse.json).toHaveBeenCalled();
   });
@@ -41,8 +45,8 @@ describe("error-middleware", () => {
 
     errorMiddleware(error as Error, mockRequest as Request, mockResponse as Response, mockNext);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith("=== ERROR MIDDLEWARE ===");
-    expect(consoleErrorSpy).toHaveBeenCalledWith(error);
+    expect(logger.error).toHaveBeenCalledWith("=== ERROR MIDDLEWARE ===");
+    expect(logger.error).toHaveBeenCalledWith(String(error));
     expect(mockResponse.status).toHaveBeenCalledWith(StatusCodes.INTERNAL_SERVER_ERROR);
   });
 
@@ -113,8 +117,8 @@ describe("error-middleware", () => {
   it("should handle null error gracefully", () => {
     errorMiddleware(null as any, mockRequest as Request, mockResponse as Response, mockNext);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith("=== ERROR MIDDLEWARE ===");
-    expect(consoleErrorSpy).toHaveBeenCalledWith(null);
+    expect(logger.error).toHaveBeenCalledWith("=== ERROR MIDDLEWARE ===");
+    expect(logger.error).toHaveBeenCalledWith("null");
     expect(mockResponse.json).toHaveBeenCalledWith({
       error: {
         message: "Internal Server Error",

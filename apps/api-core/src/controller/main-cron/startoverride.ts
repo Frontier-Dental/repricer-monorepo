@@ -7,6 +7,7 @@ import * as dbHelper from "../../utility/mongo/db-helper";
 import * as repriceBase from "../../utility/reprice-algo/reprice-base";
 import { startAllCronAsIs, stopAllMainCrons } from "./shared";
 import { GetCronSettingsList, UpdateCronDetailsByCronId } from "../../utility/mysql/mysql-v2";
+import logger from "../../utility/logger";
 
 export async function startOverrideHandler(req: Request, res: Response): Promise<any> {
   //Update All Cron to Stop
@@ -27,7 +28,7 @@ export async function startOverrideHandler(req: Request, res: Response): Promise
   if (listOfOverrideProducts && listOfOverrideProducts.length > 0) {
     const keyGen = keyGenHelper.Generate();
     const initTime = new Date();
-    console.log(`Override Bulk Update Process running on ${initTime} with Eligible Product count : ${listOfOverrideProducts.length}  || Key : ${keyGen}`);
+    logger.info(`Override Bulk Update Process running on ${initTime} with Eligible Product count : ${listOfOverrideProducts.length}  || Key : ${keyGen}`);
     let chunkedList = _.chunk(listOfOverrideProducts, applicationConfig.BATCH_SIZE);
     for (let chunk of chunkedList) {
       await repriceBase.Execute(keyGen, chunk, new Date(), null, true);

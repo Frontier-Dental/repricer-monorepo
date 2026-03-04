@@ -2,14 +2,11 @@ import { applicationConfig } from "../config";
 import * as axiosHelper from "../axios-helper";
 import { CacheKey } from "@repricer-monorepo/shared";
 import CacheClient, { GetCacheClientOptions } from "../../client/cacheClient";
-import {
-  MiniErpLoginResponse,
-  MiniErpNormalizedResponse,
-  MiniErpProduct,
-} from ".";
+import { MiniErpLoginResponse, MiniErpNormalizedResponse, MiniErpProduct } from ".";
 import { GetCurrentStock, WaitlistInsert } from "../mysql/mysql-helper";
 import { WaitlistModel } from "../../model/waitlist-model";
 import { GetMiniErpCronDetails } from "../mysql/mysql-v2";
+import logger from "../logger";
 
 const DEFAULT_MINI_ERP_PAGE_SIZE = applicationConfig.MINI_ERP_DATA_PAGE_SIZE;
 const CACHE_TTL_SECONDS = 60 * 60 * 20; // 20 hours
@@ -22,14 +19,11 @@ const CACHE_TTL_SECONDS = 60 * 60 * 20; // 20 hours
 async function loginToMiniErp(): Promise<MiniErpLoginResponse | undefined> {
   const cacheKey = CacheKey.MINI_ERP_LOGIN_RESPONSE;
   try {
-    console.log("Logging into Mini ERP");
-    let cacheClient = CacheClient.getInstance(
-      GetCacheClientOptions(applicationConfig),
-    );
-    const cachedLoginResponse =
-      await cacheClient.get<MiniErpLoginResponse>(cacheKey);
+    logger.info("Logging into Mini ERP");
+    let cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
+    const cachedLoginResponse = await cacheClient.get<MiniErpLoginResponse>(cacheKey);
     if (cachedLoginResponse) {
-      console.log("Cached login response found");
+      logger.info("Cached login response found");
       return cachedLoginResponse;
     }
 
@@ -43,23 +37,20 @@ async function loginToMiniErp(): Promise<MiniErpLoginResponse | undefined> {
 
     const loginResponse = await axiosHelper.postAsync(loginPayload, loginUrl);
 
-    console.log("Mini ERP Login response status", loginResponse?.status);
+    logger.info("Mini ERP Login response status", loginResponse?.status);
 
     if (!loginResponse?.data?.access_token) {
       throw new Error("Invalid login response: missing access_token");
     }
 
     // Cache the login response
-    cacheClient = CacheClient.getInstance(
-      GetCacheClientOptions(applicationConfig),
-    );
+    cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
 
     cacheClient.set(cacheKey, loginResponse.data, CACHE_TTL_SECONDS);
     return loginResponse.data;
   } catch (error: any) {
-    const errorMessage =
-      error.response?.data?.message || error.message || "Unknown error";
-    console.error(`Error logging into Mini ERP: ${errorMessage}`);
+    const errorMessage = error.response?.data?.message || error.message || "Unknown error";
+    logger.error(`Error logging into Mini ERP: ${errorMessage}`);
     return;
   }
 }
@@ -70,10 +61,10 @@ async function loginToMiniErp(): Promise<MiniErpLoginResponse | undefined> {
  */
 export async function getProductsFromMiniErp(): Promise<boolean> {
   try {
-    console.log(`Fetching products from Mini ERP cron at ${new Date()}`);
+    logger.info(`Fetching products from Mini ERP cron at ${new Date()}`);
     const loginResponse = await loginToMiniErp();
     if (!loginResponse?.access_token) {
-      console.error("Failed to obtain access token from Mini ERP");
+      logger.error("Failed to obtain access token from Mini ERP");
       return false;
     }
 
@@ -87,7 +78,7 @@ export async function getProductsFromMiniErp(): Promise<boolean> {
     return true;
   } catch (error: any) {
     const errorMessage = error.message || "Unknown error";
-    console.error(`Error getting products from Mini ERP: ${errorMessage}`);
+    logger.error(`Error getting products from Mini ERP: ${errorMessage}`);
     return false;
   }
 }
@@ -98,51 +89,41 @@ export async function getProductsFromMiniErp(): Promise<boolean> {
  * @param requestUrl - The GraphQL endpoint URL
  * @param accessToken - Authentication token
  */
-async function fetchAllMiniErpProducts(
-  requestUrl: string,
-  accessToken: string,
-): Promise<void> {
+async function fetchAllMiniErpProducts(requestUrl: string, accessToken: string): Promise<void> {
   let page = 1;
   let hasMore = true;
   let totalProductsFetched = 0;
   let shouldContinue = true;
 
   while (hasMore) {
-    console.log(`Fetching products from Mini ERP page ${page}`);
+    logger.info(`Fetching products from Mini ERP page ${page}`);
 
     try {
       if (!shouldContinue) {
-        console.log(`MiniErpFetchCron cancelled, stopped at page ${page}`);
+        logger.info(`MiniErpFetchCron cancelled, stopped at page ${page}`);
         break;
       }
 
-      const productsResponse = await axiosHelper.getProductsFromMiniErp(
-        requestUrl,
-        accessToken,
-        { page: page, pageSize: DEFAULT_MINI_ERP_PAGE_SIZE },
-      );
+      const productsResponse = await axiosHelper.getProductsFromMiniErp(requestUrl, accessToken, { page: page, pageSize: DEFAULT_MINI_ERP_PAGE_SIZE });
 
       if (!productsResponse?.data) {
-        console.error(`Invalid response from Mini ERP for page ${page}`);
+        logger.error(`Invalid response from Mini ERP for page ${page}`);
         break;
       }
 
-      const { items, hasMore: hasMoreResponse } =
-        normalizeMiniErpProductsResponse(productsResponse.data);
+      const { items, hasMore: hasMoreResponse } = normalizeMiniErpProductsResponse(productsResponse.data);
 
       if (!items || items.length === 0) {
-        console.log(`No items found on page ${page}, stopping pagination`);
+        logger.info(`No items found on page ${page}, stopping pagination`);
         break;
       }
 
       // Seed data to SQL table before fetching next page (sequential approach)
       try {
         await seedProductsToDatabase(items, page);
-        console.log(
-          `Seeded ${items.length} products from page ${page} to database`,
-        );
+        logger.info(`Seeded ${items.length} products from page ${page} to database`);
       } catch (error: any) {
-        console.error(`Error seeding page ${page} to database:`, error.message);
+        logger.error(`Error seeding page ${page} to database:`, error.message);
       }
 
       totalProductsFetched += items.length;
@@ -151,20 +132,13 @@ async function fetchAllMiniErpProducts(
       page = hasMore ? page + 1 : page;
       shouldContinue = !(await isCancelled("MiniErpFetchCron"));
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.errors?.[0]?.message ||
-        error.message ||
-        "Unknown error";
-      console.error(
-        `Error fetching page ${page} from Mini ERP: ${errorMessage}`,
-      );
+      const errorMessage = error.response?.data?.errors?.[0]?.message || error.message || "Unknown error";
+      logger.error(`Error fetching page ${page} from Mini ERP: ${errorMessage}`);
       break;
     }
   }
 
-  console.log(
-    `Completed fetching all products. Total products fetched: ${totalProductsFetched}`,
-  );
+  logger.info(`Completed fetching all products. Total products fetched: ${totalProductsFetched}`);
 }
 
 /**
@@ -173,14 +147,9 @@ async function fetchAllMiniErpProducts(
  * @returns Normalized response with items and pagination metadata
  * @throws Error if payload structure is invalid
  */
-function normalizeMiniErpProductsResponse(
-  payload: any,
-): MiniErpNormalizedResponse {
+function normalizeMiniErpProductsResponse(payload: any): MiniErpNormalizedResponse {
   if (!payload?.data?.getUpdatedProductsWithOffsetPagination) {
-    console.error(
-      "Invalid response structure: missing getUpdatedProducts",
-      payload,
-    );
+    logger.error("Invalid response structure: missing getUpdatedProducts", payload);
     throw new Error("Invalid response structure: missing getUpdatedProducts");
   }
 
@@ -188,7 +157,7 @@ function normalizeMiniErpProductsResponse(
   const { items, hasMore } = getUpdatedProductsWithOffsetPagination;
 
   if (!Array.isArray(items)) {
-    console.error("Invalid response structure: items is not an array", items);
+    logger.error("Invalid response structure: items is not an array", items);
     throw new Error("Invalid response structure: items is not an array");
   }
 
@@ -203,10 +172,7 @@ function normalizeMiniErpProductsResponse(
  * @param products - Array of products to insert
  * @param pageNumber - Current page number for logging
  */
-async function seedProductsToDatabase(
-  products: MiniErpProduct[],
-  pageNumber: number,
-): Promise<void> {
+async function seedProductsToDatabase(products: MiniErpProduct[], pageNumber: number): Promise<void> {
   const waitlistItems: WaitlistModel[] = [];
 
   const stockDataMap = await getInventoryStockMap(products);
@@ -221,9 +187,7 @@ async function seedProductsToDatabase(
     const currentStock = stockDataMap.get(stockKey);
 
     if (!currentStock) {
-      console.warn(
-        `Product ${product.mpid}/${product.vendorName} has no current stock data, skipping...`,
-      );
+      logger.warn(`Product ${product.mpid}/${product.vendorName} has no current stock data, skipping...`);
       continue;
     }
 
@@ -238,33 +202,21 @@ async function seedProductsToDatabase(
     } else if (repricerInventory === 0 && miniErpInventory > 0) {
       targetInventory = getRandomizedNet32Quantity(miniErpInventory);
     } else {
-      console.log(
-        `Product ${product.mpid}/${product.vendorName} inventory states match (repricer: ${repricerInventory}, sql: ${miniErpInventory}), skipping...`,
-      );
+      logger.info(`Product ${product.mpid}/${product.vendorName} inventory states match (repricer: ${repricerInventory}, sql: ${miniErpInventory}), skipping...`);
       continue;
     }
 
     // create an array of watchlist models for bulk insert
-    waitlistItems.push(
-      new WaitlistModel(
-        Number(product.mpid),
-        product.vendorName,
-        repricerInventory,
-        miniErpInventory,
-        targetInventory,
-      ),
-    );
+    waitlistItems.push(new WaitlistModel(Number(product.mpid), product.vendorName, repricerInventory, miniErpInventory, targetInventory));
   }
 
   if (waitlistItems.length === 0) {
-    console.log(`No eligible watchlist items found for page ${pageNumber}`);
+    logger.info(`No eligible watchlist items found for page ${pageNumber}`);
     return;
   }
 
   await WaitlistInsert(waitlistItems);
-  console.log(
-    `Inserted ${waitlistItems.length} watchlist items for page ${pageNumber}`,
-  );
+  logger.info(`Inserted ${waitlistItems.length} watchlist items for page ${pageNumber}`);
 }
 
 async function getInventoryStockMap(products: MiniErpProduct[]) {
@@ -276,7 +228,7 @@ async function getInventoryStockMap(products: MiniErpProduct[]) {
   const productsByVendor = products.reduce(
     (acc, product) => {
       if (!product?.mpid || !product?.vendorName) {
-        console.warn(`Skipping product due to missing identifiers`, {
+        logger.warn(`Skipping product due to missing identifiers`, {
           mpid: product?.mpid,
           vendorName: product?.vendorName,
         });
@@ -285,14 +237,11 @@ async function getInventoryStockMap(products: MiniErpProduct[]) {
       acc[product.vendorName] = [...(acc[product.vendorName] || []), product];
       return acc;
     },
-    {} as Record<string, MiniErpProduct[]>,
+    {} as Record<string, MiniErpProduct[]>
   );
 
   // Create a map for quick lookup: mpid -> stock data
-  const stockDataMap = new Map<
-    string,
-    { CurrentInStock?: number; CurrentInventory?: number }
-  >();
+  const stockDataMap = new Map<string, { CurrentInStock?: number; CurrentInventory?: number }>();
 
   // Fetch stock data in batches (one call per vendor)
   for (const vendor in productsByVendor) {
@@ -311,7 +260,7 @@ async function getInventoryStockMap(products: MiniErpProduct[]) {
         }
       }
     } catch (error) {
-      console.error(`Failed to load current stock for vendor ${vendor}`, error);
+      logger.error(`Failed to load current stock for vendor ${vendor}`, error);
     }
   }
 
@@ -330,10 +279,7 @@ export function getRandomizedNet32Quantity(sqlInventory: number): number {
 
   const normalizedInventory = Math.max(0, Math.floor(sqlInventory));
 
-  const range =
-    NET32_RANDOMIZATION_RULES.find(
-      (rule) => normalizedInventory <= rule.upperBound,
-    ) ?? DEFAULT_RANDOMIZATION_RANGE;
+  const range = NET32_RANDOMIZATION_RULES.find((rule) => normalizedInventory <= rule.upperBound) ?? DEFAULT_RANDOMIZATION_RANGE;
 
   const lowerBound = Math.ceil(range.min);
   const upperBound = Math.floor(range.max);
@@ -343,9 +289,7 @@ export function getRandomizedNet32Quantity(sqlInventory: number): number {
 
 export async function isCancelled(cronName: string): Promise<boolean> {
   const cronDetails = await GetMiniErpCronDetails();
-  const cronDetail = cronDetails.find(
-    (cron: any) => cron.CronName === cronName,
-  );
-  console.log(`Cron ${cronName} status: ${cronDetail?.CronStatus}`);
+  const cronDetail = cronDetails.find((cron: any) => cron.CronName === cronName);
+  logger.info(`Cron ${cronName} status: ${cronDetail?.CronStatus}`);
   return cronDetail?.CronStatus == false;
 }

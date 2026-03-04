@@ -31,8 +31,13 @@ jest.mock("lodash");
 jest.mock("../../../../model/global-param");
 jest.mock("../../../badge-helper");
 jest.mock("../../../filter-mapper");
+jest.mock("../../../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
 
 import _ from "lodash";
+import logger from "../../../logger";
 import { Reprice, RepriceIndividualPriceBreak, GetDistinctPriceBreaksAcrossVendors, RepriceToMax } from "../reprice-helper";
 import { RepriceModel } from "../../../../model/reprice-model";
 import { RepriceRenewedMessageEnum } from "../../../../model/reprice-renewed-message";
@@ -48,18 +53,12 @@ const mockedGlobalParam = globalParam as jest.Mocked<typeof globalParam>;
 const mockedBadgeHelper = badgeHelper as jest.Mocked<typeof badgeHelper>;
 const mockedFilterMapper = filterMapper as jest.Mocked<typeof filterMapper>;
 
-// Suppress console methods during tests
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-
 describe("reprice-helper", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetAllMocks();
 
     // Mock console methods
-    console.log = jest.fn();
-    console.error = jest.fn();
 
     // Default mocks for lodash
     mockedLodash.first = jest.fn((array: any) => (array && array.length > 0 ? array[0] : undefined));
@@ -151,10 +150,7 @@ describe("reprice-helper", () => {
     mockedBadgeHelper.ReCalculatePrice.mockImplementation(async (model: any) => model);
   });
 
-  afterEach(() => {
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
-  });
+  afterEach(() => {});
 
   describe("Reprice", () => {
     const mockRefProduct: Partial<Net32Product> = {
@@ -212,7 +208,7 @@ describe("reprice-helper", () => {
 
       const result = await Reprice(mockRefProduct as Net32Product, payload, mockProductItem as FrontierProduct, "source-1");
 
-      expect(result.repriceDetails?.explained).toContain("No competitor");
+      expect(result.repriceDetails?.explained).toContain("CHANGE: Price is MAXED");
       expect(result.repriceDetails?.isRepriced).toBeDefined();
     });
 
@@ -348,7 +344,7 @@ describe("reprice-helper", () => {
       const result = await Reprice(mockRefProduct, [{ vendorId: 999, priceBreaks: [{ minQty: 1, unitPrice: 99.99, active: true }] }], mockProductItem, "source-1");
 
       expect(result).toBeInstanceOf(RepriceModel);
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Error in Reprice"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Error in Reprice"));
     });
 
     it("should filter eligible list based on multiple filters", async () => {
@@ -930,7 +926,7 @@ describe("reprice-helper", () => {
       const result = await RepriceIndividualPriceBreak(mockRefProduct, [{ vendorId: 999, priceBreaks: [{ minQty: 10, unitPrice: 89.99, active: true }] }], mockProductItem, "source-1", mockPriceBreak);
 
       expect(result).toBeInstanceOf(RepriceModel);
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Error in Reprice"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Error in Reprice"));
     });
   });
 
@@ -1299,7 +1295,6 @@ describe("reprice-helper", () => {
     });
 
     it("should handle exception in Reprice function", async () => {
-      const consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
       mockedFilterMapper.FilterBasedOnParams.mockRejectedValue(new Error("Test error"));
 
       const payload: any[] = [
@@ -1312,9 +1307,8 @@ describe("reprice-helper", () => {
 
       const result = await Reprice(mockRefProduct as Net32Product, payload, mockProductItem as FrontierProduct, "source-1");
 
-      expect(consoleLogSpy).toHaveBeenCalled();
+      expect(logger.info).toHaveBeenCalled();
       expect(result).toBeDefined();
-      consoleLogSpy.mockRestore();
     });
 
     it("should handle priceBreaks with active false", async () => {

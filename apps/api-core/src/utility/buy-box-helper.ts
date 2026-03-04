@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { RepriceModel } from "../model/reprice-model";
 import { RepriceRenewedMessageEnum } from "../model/reprice-renewed-message";
+import logger from "./logger";
 
 export async function parseShippingBuyBox(repriceResult: any, net32Result: any, productItem: any): Promise<any> {
   const getBBShippingValue = parseFloat(productItem.getBBShippingValue) || 0;
@@ -27,7 +28,7 @@ export async function parseShippingBuyBox(repriceResult: any, net32Result: any, 
         return repriceResult;
       }
     } catch (error) {
-      console.error(`Error parsing shipping buy box for ${productItem.mpid}:`, error);
+      logger.error(`Error parsing shipping buy box for ${productItem.mpid}:`, error);
     }
   }
   return repriceResult;

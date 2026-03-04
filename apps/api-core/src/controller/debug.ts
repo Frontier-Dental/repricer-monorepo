@@ -11,6 +11,7 @@ import * as mySqlHelper from "../utility/mysql/mysql-helper";
 import * as uuid from "uuid";
 import { applicationConfig } from "../utility/config";
 import * as sqlV2Service from "../utility/mysql/mysql-v2";
+import logger from "../utility/logger";
 
 export const debugController = express.Router();
 
@@ -68,7 +69,7 @@ debugController.get("/debug/fetch-data/:key/:cronId", async (req: Request, res: 
   const mpid = req.params.key;
   const cronId = req.params.cronId;
   const url = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", mpid);
-  console.log(`Calling debug/fetch-data for MPID : ${mpid} || URL : ${url}`);
+  logger.debug(`Calling debug/fetch-data for MPID : ${mpid} || URL : ${url}`);
   var axiosResponse = await axiosHelper.getAsync(url, cronId, mpid, null);
   res.status(_codes.StatusCodes.OK).send(axiosResponse.data);
 });
@@ -78,7 +79,7 @@ debugController.get("/debug/update_products_v1", async (req: Request, res: Respo
   const requiredProducts = await dbHelper.ExecuteProductQuery(query);
   if (requiredProducts) {
     for (let prod of requiredProducts) {
-      console.log(`Updating Execution Priority for ${prod.mpId}`);
+      logger.debug(`Updating Execution Priority for ${prod.mpId}`);
       await dbHelper.ExecuteProductUpdate(prod.mpId, {
         "frontierDetails.executionPriority": 1,
       });
@@ -108,7 +109,7 @@ debugController.post("/debug/update_cron/:cronName", async (req: Request, res: R
   if (cronSettingsResponse && cronSettingsResponse.length > 0) {
     const cronId = _.first(cronSettingsResponse).CronId as any;
     for (let prod of products) {
-      console.log(`Updating ${requiredCronName} for ${prod}`);
+      logger.debug(`Updating ${requiredCronName} for ${prod}`);
       let dbQuery: any = {};
       dbQuery["tradentDetails.cronId"] = cronId;
       dbQuery["tradentDetails.cronName"] = requiredCronName;
@@ -136,7 +137,7 @@ debugController.get("/debug/filterProductsWithFloor/:cronId", async (req: Reques
   };
   const cronId = req.params.cronId;
   const listOfActiveProducts = await dbHelper.GetProductListByQuery(filterQuery);
-  console.log(`Got ${listOfActiveProducts?.length} active Products to process`);
+  logger.debug(`Got ${listOfActiveProducts?.length} active Products to process`);
   let counter = 1;
   if (listOfActiveProducts && listOfActiveProducts.length > 0) {
     for (const prod of listOfActiveProducts) {
@@ -189,7 +190,7 @@ debugController.get("/debug/filterProductsWithFloor/:cronId", async (req: Reques
       counter++;
     }
   }
-  console.log(`Completed Fetching Records....`);
+  logger.debug(`Completed Fetching Records....`);
   const fileName = `${uuid.v4().toString()}_Output.json`;
   const filePath = `../../history`;
   await historyHelper.Write(resultantOutput, fileName, filePath, null);
@@ -203,12 +204,12 @@ debugController.get("/debug/get-data/:key/:proxyProviderId", async (req: Request
   const proxyProviderDetailsResponse = await sqlV2Service.GetProxyConfigByProviderId(proxyProvId);
   let proxyProviderDetails = getContextProxyProvider(proxyProviderDetailsResponse, proxyParam);
   const url = applicationConfig.GET_SEARCH_RESULTS.replace("{mpId}", mpid);
-  console.log(`Calling debug/get-data for MPID : ${mpid} || URL : ${url}`);
+  logger.debug(`Calling debug/get-data for MPID : ${mpid} || URL : ${url}`);
   if (!proxyProviderDetails || proxyProviderDetails.length == 0) {
     proxyProviderDetails = [{ proxyProvider: proxyProvId }];
   }
   var axiosResponse = await debugProxyHelper.GetData(url, _.first(proxyProviderDetails), proxyParam);
-  console.log(`Returning response for get-data for ${mpid}`);
+  logger.debug(`Returning response for get-data for ${mpid}`);
   res.status(_codes.StatusCodes.OK).send(axiosResponse);
 });
 
@@ -221,7 +222,7 @@ debugController.get("/debug/resetSlowCronSettings/", async (req: Request, res: R
   const productListDetails = await dbHelper.GetProductListByQuery(query);
   if (productListDetails && productListDetails.length > 0) {
     for (let product of productListDetails) {
-      console.log(`Updating Details for ${product.mpId}`);
+      logger.debug(`Updating Details for ${product.mpId}`);
       let dbQuery: any = {};
       dbQuery["isSlowActivated"] = true;
       if (product.tradentDetails) {

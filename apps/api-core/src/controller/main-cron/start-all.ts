@@ -3,6 +3,7 @@ import * as _codes from "http-status-codes";
 import * as dbHelper from "../../utility/mongo/db-helper";
 import { setCronAndStart, stopAllMainCrons } from "./shared";
 import { GetCronSettingsList } from "../../utility/mysql/mysql-v2";
+import logger from "../../utility/logger";
 
 export async function startAllCronHandler(req: Request, res: Response): Promise<any> {
   await startAllCronLogic();
@@ -18,7 +19,7 @@ export async function startAllCronLogic() {
     try {
       setCronAndStart(cronName, cronSetting);
     } catch (exception) {
-      console.error(`Exception while initializing Cron : ${cronName} || ${exception}`);
+      logger.error(`Exception while initializing Cron : ${cronName} || ${exception}`);
     }
   }
 }

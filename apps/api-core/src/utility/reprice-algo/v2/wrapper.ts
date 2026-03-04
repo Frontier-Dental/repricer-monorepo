@@ -18,6 +18,7 @@ import { getVendorThresholds } from "./shipping-threshold";
 import { AlgoResult, ChangeResult } from "./types";
 import { getAllOwnVendorIds, getPriceListFormatted, isChangeResult } from "./utility";
 import { GetCronSettingsDetailsByName, GetCronSettingsDetailsById } from "../../../utility/mysql/mysql-v2";
+import logger from "../../logger";
 // Custom proxy function for Net32 API calls
 async function updateProductInfoWithCustomProxy(
   proxyConfig: any,
@@ -38,9 +39,9 @@ async function updateProductInfoWithCustomProxy(
 
   const targetUrl = "https://api.net32.com/products/offers/update";
 
-  console.log("=== CUSTOM PROXY REQUEST ===");
-  console.log("Proxy URL:", PROXY_URL);
-  console.log("Target URL:", targetUrl);
+  logger.info("=== CUSTOM PROXY REQUEST ===");
+  logger.info("Proxy URL:", PROXY_URL);
+  logger.info("Target URL:", targetUrl);
   // console.log("Username:", USERNAME);
   // console.log("Subscription Key:", subscriptionKey);
   // console.log("Request Data:", JSON.stringify(data, null, 2));
@@ -64,10 +65,10 @@ async function updateProductInfoWithCustomProxy(
     }
   );
 
-  console.log("=== CUSTOM PROXY RESPONSE ===");
-  console.log("Status:", postResponse.status);
-  console.log("Response Data:", JSON.stringify(postResponse.data, null, 2));
-  console.log("==============================");
+  logger.info("=== CUSTOM PROXY RESPONSE ===");
+  logger.info("Status:", postResponse.status);
+  logger.info("Response Data:", JSON.stringify(postResponse.data, null, 2));
+  logger.info("==============================");
 
   if (postResponse.data.statusCode !== 200) {
     throw new Error(`Failed to update price for vendor ${proxyConfig.vendor_id}: ${postResponse.data}. Code: ${postResponse.data.statusCode}`);
@@ -110,7 +111,7 @@ export async function repriceProductV2Wrapper(net32Products: Net32Product[], pro
     const finalResults = await updatePricesIfNecessary(solutionResults, prod.mpId, applicationConfig.IS_DEV, prod.algo_execution_mode, cronName, contextCronId);
 
     if (finalResults.length === 0) {
-      console.log(`No solutions found for product ${prod.mpId}`);
+      logger.info(`No solutions found for product ${prod.mpId}`);
       return [];
     }
 
@@ -160,7 +161,7 @@ export async function repriceProductV2Wrapper(net32Products: Net32Product[], pro
         // Add the product to Error Item Table and update nextCronTime as +12 Hrs
         const priceUpdatedItem = new ErrorItemModel(prod.mpId!, calculateNextCronTime(new Date(), 12), true, prod.cronId!, "PRICE_UPDATE", vendorName);
         await mongoHelper.UpsertErrorItemLog(priceUpdatedItem);
-        console.log({
+        logger.info({
           message: `V2 Algo: ${prod.mpId} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(priceUpdatedItem),
         });
@@ -169,7 +170,7 @@ export async function repriceProductV2Wrapper(net32Products: Net32Product[], pro
 
     return finalResults;
   } catch (error) {
-    console.error(`Error executing repriceProductV2Wrapper for job ${jobId}:`, error);
+    logger.error(`Error executing repriceProductV2Wrapper for job ${jobId}:`, error);
 
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorStack = error instanceof Error ? error.stack : undefined;
@@ -182,7 +183,7 @@ export async function repriceProductV2Wrapper(net32Products: Net32Product[], pro
       created_at: new Date(),
     });
   } finally {
-    console.log(`Algorithm execution completed with job ID: ${jobId}`);
+    logger.info(`Algorithm execution completed with job ID: ${jobId}`);
   }
 }
 
@@ -193,13 +194,13 @@ export async function updatePrice(proxyConfig: any, subscriptionKey: string, pay
 
   const targetUrl = "https://api.net32.com/products/offers/update";
 
-  console.log("=== CUSTOM PROXY REQUEST ===");
-  console.log("Proxy URL:", PROXY_URL);
-  console.log("Target URL:", targetUrl);
-  console.log("Username:", USERNAME);
+  logger.info("=== CUSTOM PROXY REQUEST ===");
+  logger.info("Proxy URL:", PROXY_URL);
+  logger.info("Target URL:", targetUrl);
+  logger.info("Username:", USERNAME);
   // console.log("Subscription Key:", subscriptionKey);
   // console.log("Request Data:", JSON.stringify(payload, null, 2));
-  console.log("=============================");
+  logger.info("=============================");
 
   try {
     const postResponse = await axios.post(
@@ -220,17 +221,17 @@ export async function updatePrice(proxyConfig: any, subscriptionKey: string, pay
       }
     );
 
-    console.log("=== CUSTOM PROXY RESPONSE ===");
-    console.log("Status:", postResponse.status);
-    console.log("Response Data:", JSON.stringify(postResponse.data));
-    console.log("==============================");
+    logger.info("=== CUSTOM PROXY RESPONSE ===");
+    logger.info("Status:", postResponse.status);
+    logger.info("Response Data:", JSON.stringify(postResponse.data));
+    logger.info("==============================");
 
     if (postResponse.data.statusCode !== 200) {
       return { data: { status: false, message: `ERROR:${postResponse.data.statusCode}:Sorry some error occurred! Exception : ${postResponse.data.data.message}` } };
     }
     return { data: { status: true, message: postResponse.data.data.message } };
   } catch (error) {
-    console.error("Error during custom proxy request:", error);
+    logger.error("Error during custom proxy request:", error);
     return { data: { status: false, message: `ERROR::Sorry some error occurred! Exception : ${error}` } };
   }
 }
@@ -316,10 +317,10 @@ async function updatePricesIfNecessary(solutionResults: Net32AlgoSolutionWithQBr
       }[] = [...newlyValidQbreaks, ...newlyInvalidQBreaks];
 
       try {
-        console.log("Price changes in net32 format: ", qBreakDelta);
+        logger.info("Price changes in net32 format: ", qBreakDelta);
 
         if (isDev) {
-          console.log("We are in dev mode, not executing actual change.");
+          logger.info("We are in dev mode, not executing actual change.");
         }
 
         const priceChangeAllowed = algo_execution_mode === AlgoExecutionMode.V2_ONLY || algo_execution_mode === AlgoExecutionMode.V2_EXECUTE_V1_DRY;
@@ -330,7 +331,7 @@ async function updatePricesIfNecessary(solutionResults: Net32AlgoSolutionWithQBr
             mpid: mpId, // Assuming this is the vendor product code
             priceList: qBreakDelta,
           });
-          console.log(`Successfully updated price for vendor ${vendorId}`);
+          logger.info(`Successfully updated price for vendor ${vendorId}`);
           return {
             vendorId,
             changeResult: ChangeResult.OK,
@@ -363,7 +364,7 @@ async function updatePricesIfNecessary(solutionResults: Net32AlgoSolutionWithQBr
             priceList: qBreakDelta,
           };
         }
-        console.error(`Failed to update price for vendor ${vendorId}:`, error);
+        logger.error(`Failed to update price for vendor ${vendorId}:`, error);
         return {
           vendorId,
           changeResult: ChangeResult.UNKNOWN_ERROR,

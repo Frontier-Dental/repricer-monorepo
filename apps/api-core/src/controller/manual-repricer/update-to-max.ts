@@ -11,10 +11,11 @@ import { getContextCronId } from "./shared";
 import { proceedNext } from "./shared";
 import { applicationConfig } from "../../utility/config";
 import { GetCronSettingsDetailsById } from "../../utility/mysql/mysql-v2";
+import logger from "../../utility/logger";
 
 export async function updateToMax(req: Request<{ id: string }, any, any>, res: Response): Promise<any> {
   const mpid = req.params.id;
-  console.log(`Running Update To Max for ${mpid} at ${new Date()}`);
+  logger.info(`Running Update To Max for ${mpid} at ${new Date()}`);
   const keyGen = "N/A";
   let prod = await sqlHelper.GetItemListById(mpid); //await dbHelper.FindProductById(mpid);
   if (!prod) {
@@ -62,7 +63,7 @@ export async function updateToMax(req: Request<{ id: string }, any, any>, res: R
   cronLogs.completionTime = new Date();
   const logInDb = await dbHelper.PushLogsAsync(cronLogs);
   if (logInDb) {
-    console.log(`Successfully logged Cron Logs in DB at ${cronLogs.time} || Id : ${logInDb}`);
+    logger.info(`Successfully logged Cron Logs in DB at ${cronLogs.time} || Id : ${logInDb}`);
   }
   return res.status(_codes.StatusCodes.OK).json({ success: true, logId: logInDb });
 }

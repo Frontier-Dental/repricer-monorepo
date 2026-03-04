@@ -7,6 +7,7 @@ import * as filterMapper from "../../filter-mapper";
 import { Net32PriceBreak, Net32Product } from "../../../types/net32";
 import { FrontierProduct } from "../../../types/frontier";
 import { applicationConfig } from "../../config";
+import logger from "../../logger";
 
 //<!-- MODULE FUNCTIONS -->
 export async function Reprice(refProduct: any, payload: any, productItem: any, sourceId: string) {
@@ -85,8 +86,8 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
           excludedVendors = [];
         }
       } catch (exception) {
-        console.error(`Exception in TIE Scenario for ${productItem.mpid}`);
-        console.error(exception);
+        logger.error(`Exception in TIE Scenario for ${productItem.mpid}`);
+        logger.error(exception);
       }
     }
 
@@ -335,7 +336,7 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
       repriceModel = await badgeHelper.ReCalculatePrice(repriceModel, productItem, eligibleList, 1);
     }
   } catch (exception) {
-    console.log(`Error in Reprice for MpId : ${productItem.mpid} || Error : ${exception}`);
+    logger.info(`Error in Reprice for MpId : ${productItem.mpid} || Error : ${exception}`);
   }
   return repriceModel;
 }
@@ -428,8 +429,8 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
           excludedVendors = [];
         }
       } catch (exception) {
-        console.error(`Exception in TIE Scenario for ${productItem.mpid}`);
-        console.error(exception);
+        logger.error(`Exception in TIE Scenario for ${productItem.mpid}`);
+        logger.error(exception);
       }
     }
 
@@ -688,7 +689,7 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
       repriceModel = await badgeHelper.ReCalculatePrice(repriceModel, productItem, eligibleList, priceBreak.minQty);
     }
   } catch (exception) {
-    console.log(`Error in Reprice for mpid : ${productItem.mpid} || Error : ${exception}`);
+    logger.info(`Error in Reprice for mpid : ${productItem.mpid} || Error : ${exception}`);
   }
   return repriceModel;
 }

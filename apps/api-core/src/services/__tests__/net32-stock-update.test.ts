@@ -22,7 +22,13 @@ jest.mock("../../utility/mini-erp/min-erp-helper", () => ({
   isCancelled: jest.fn(),
 }));
 
+jest.mock("../../utility/logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
 import { updateNet32Stock } from "../net32-stock-update";
+import logger from "../../utility/logger";
 import { GetWaitlistPendingItems, UpdateVendorStock, UpdateWaitlistStatus } from "../../utility/mysql/mysql-helper";
 import { processUpdateProductQuantities } from "../../utility/net32/updateProductQuantity";
 import { delay } from "../../utility/reprice-algo/v1/shared";
@@ -30,17 +36,9 @@ import { applicationConfig } from "../../utility/config";
 import { isCancelled } from "../../utility/mini-erp/min-erp-helper";
 import { WaitlistModel } from "../../model/waitlist-model";
 
-// Suppress console methods during tests
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-
 describe("net32-stock-update", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    // Mock console methods
-    console.log = jest.fn();
-    console.error = jest.fn();
 
     // Default mock implementations
     (GetWaitlistPendingItems as jest.Mock).mockResolvedValue([]);
@@ -49,12 +47,6 @@ describe("net32-stock-update", () => {
     (isCancelled as jest.Mock).mockResolvedValue(false);
     (UpdateWaitlistStatus as jest.Mock).mockResolvedValue(undefined);
     (UpdateVendorStock as jest.Mock).mockResolvedValue(undefined);
-  });
-
-  afterEach(() => {
-    // Restore console methods
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
   });
 
   describe("updateNet32Stock", () => {
@@ -66,8 +58,8 @@ describe("net32-stock-update", () => {
       expect(result).toBe(true);
       expect(GetWaitlistPendingItems).toHaveBeenCalledTimes(1);
       expect(processUpdateProductQuantities).not.toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Running net32 stock update cron"));
-      expect(console.log).toHaveBeenCalledWith("Found 0 items in waitlist to update in net32 stock");
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Running net32 stock update cron"));
+      expect(logger.info).toHaveBeenCalledWith("Found 0 items in waitlist to update in net32 stock");
     });
 
     it("should successfully update stock for a single item", async () => {
@@ -98,8 +90,8 @@ describe("net32-stock-update", () => {
       });
       expect(UpdateWaitlistStatus).toHaveBeenCalledWith(1, "success");
       expect(UpdateVendorStock).toHaveBeenCalledWith("MVP", 12345, 20);
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Updating net32 stock for item"));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Net32 stock update status for item"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Updating net32 stock for item"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Net32 stock update status for item"));
     });
 
     it("should handle failed stock update for a single item", async () => {
@@ -122,7 +114,7 @@ describe("net32-stock-update", () => {
       expect(result).toBe(true);
       expect(UpdateWaitlistStatus).toHaveBeenCalledWith(1, "failed", "Internal server error");
       expect(UpdateVendorStock).not.toHaveBeenCalled();
-      expect(console.error).toHaveBeenCalledWith("Failed to update net32 stock for item", item, "Internal server error");
+      expect(logger.error).toHaveBeenCalledWith("Failed to update net32 stock for item", item, "Internal server error");
     });
 
     it("should process multiple items successfully", async () => {
@@ -213,7 +205,7 @@ describe("net32-stock-update", () => {
       expect(processUpdateProductQuantities).toHaveBeenCalledTimes(1);
       expect(UpdateWaitlistStatus).toHaveBeenCalledTimes(1);
       expect(UpdateWaitlistStatus).toHaveBeenCalledWith(1, "success");
-      expect(console.log).toHaveBeenCalledWith("Net32 stock update cron cancelled");
+      expect(logger.info).toHaveBeenCalledWith("Net32 stock update cron cancelled");
       // Item2 should not be processed
       expect(processUpdateProductQuantities).not.toHaveBeenCalledWith({
         mpid: 67890,
@@ -350,7 +342,7 @@ describe("net32-stock-update", () => {
       await updateNet32Stock();
 
       expect(UpdateWaitlistStatus).toHaveBeenCalledWith(1, "failed", undefined);
-      expect(console.error).toHaveBeenCalledWith("Failed to update net32 stock for item", item, undefined);
+      expect(logger.error).toHaveBeenCalledWith("Failed to update net32 stock for item", item, undefined);
     });
 
     it("should call delay with correct configuration value", async () => {
@@ -384,10 +376,10 @@ describe("net32-stock-update", () => {
 
       await updateNet32Stock();
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Running net32 stock update cron"));
-      expect(console.log).toHaveBeenCalledWith("Found 1 items in waitlist to update in net32 stock");
-      expect(console.log).toHaveBeenCalledWith("Updating net32 stock for item 12345 TRADENT 15");
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Net32 stock update status for item"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Running net32 stock update cron"));
+      expect(logger.info).toHaveBeenCalledWith("Found 1 items in waitlist to update in net32 stock");
+      expect(logger.info).toHaveBeenCalledWith("Updating net32 stock for item 12345 TRADENT 15");
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Net32 stock update status for item"));
     });
 
     it("should handle empty results array from processUpdateProductQuantities", async () => {

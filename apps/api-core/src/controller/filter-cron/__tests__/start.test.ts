@@ -31,9 +31,14 @@ jest.mock("../shared", () => ({
 }));
 jest.mock("node-cron");
 jest.mock("../../../utility/mysql/mysql-v2");
+jest.mock("../../../utility/logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
 
 import { Request, Response } from "express";
 import { startAllFilterCronHandler, startFilterCronLogic } from "../start";
+import logger from "../../../utility/logger";
 import * as filterMapper from "../../../utility/filter-mapper";
 import { filterCrons } from "../shared";
 import { schedule } from "node-cron";
@@ -44,10 +49,6 @@ const mockedFilterMapper = filterMapper as jest.Mocked<typeof filterMapper>;
 const mockedSchedule = schedule as jest.MockedFunction<typeof schedule>;
 const mockedGetFilteredCrons = GetFilteredCrons as jest.MockedFunction<typeof GetFilteredCrons>;
 
-// Suppress console methods during tests
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-
 describe("filter-cron/start", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
@@ -56,10 +57,6 @@ describe("filter-cron/start", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetAllMocks();
-
-    // Mock console methods
-    console.log = jest.fn();
-    console.error = jest.fn();
 
     // Clear filterCrons object
     Object.keys(filterCrons).forEach((key) => delete filterCrons[key]);
@@ -80,11 +77,6 @@ describe("filter-cron/start", () => {
       status: jest.fn().mockReturnThis(),
       send: jest.fn().mockReturnThis(),
     };
-  });
-
-  afterEach(() => {
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
   });
 
   describe("startAllFilterCronHandler", () => {
@@ -147,8 +139,8 @@ describe("filter-cron/start", () => {
 
       await startFilterCronLogic();
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Started FC-1"));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("0 * * * *"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Started FC-1"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("0 * * * *"));
     });
 
     it("should not log when cron status is false", async () => {
@@ -166,7 +158,7 @@ describe("filter-cron/start", () => {
       await startFilterCronLogic();
 
       expect(mockedSchedule).toHaveBeenCalledWith("0 * * * *", expect.any(Function), { scheduled: false });
-      expect(console.log).not.toHaveBeenCalledWith(expect.stringContaining("Started FC-1"));
+      expect(logger.info).not.toHaveBeenCalledWith(expect.stringContaining("Started FC-1"));
     });
 
     it("should handle empty cron details array", async () => {
@@ -195,8 +187,8 @@ describe("filter-cron/start", () => {
 
       await startFilterCronLogic();
 
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Error initializing FC-1"));
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Invalid cron expression"));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Error initializing FC-1"));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Invalid cron expression"));
     });
 
     it("should handle errors during cron execution", async () => {
@@ -220,7 +212,7 @@ describe("filter-cron/start", () => {
       // Execute the callback to simulate cron execution
       await cronCallback();
 
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Error running FC-1"), expect.any(Error));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Error running FC-1"), expect.any(Error));
     });
 
     it("should handle multiple crons with mixed status values", async () => {
@@ -251,7 +243,7 @@ describe("filter-cron/start", () => {
       expect(mockedSchedule).toHaveBeenCalledWith("0 * * * *", expect.any(Function), { scheduled: true });
       expect(mockedSchedule).toHaveBeenCalledWith("0 */2 * * *", expect.any(Function), { scheduled: false });
       expect(mockedSchedule).toHaveBeenCalledWith("0 */3 * * *", expect.any(Function), { scheduled: true });
-      expect(console.log).toHaveBeenCalledTimes(2); // Only for status "true" crons
+      expect(logger.info).toHaveBeenCalledTimes(2); // Only for status "true" crons
     });
 
     it("should continue processing other crons when one fails", async () => {
@@ -279,8 +271,8 @@ describe("filter-cron/start", () => {
       await startFilterCronLogic();
 
       expect(mockedSchedule).toHaveBeenCalledTimes(2);
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Error initializing FC-1"));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Started FC-2"));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Error initializing FC-1"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Started FC-2"));
       expect(filterCrons["FC-2"]).toBe(mockScheduledTask);
     });
 
@@ -306,7 +298,7 @@ describe("filter-cron/start", () => {
       await cronCallback();
 
       expect(mockedFilterMapper.FilterProducts).toHaveBeenCalledWith(mockCronDetails[0]);
-      expect(console.error).not.toHaveBeenCalled();
+      expect(logger.error).not.toHaveBeenCalled();
     });
 
     it("should parse status as JSON boolean", async () => {

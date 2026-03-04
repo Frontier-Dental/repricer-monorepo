@@ -39,8 +39,14 @@ jest.mock("../../../../resources/api-mapping", () => ({
   ],
 }));
 
+jest.mock("../../../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
 import { AlgoExecutionMode } from "@repricer-monorepo/shared";
 import { repriceProduct, repriceProductToMax } from "../algo-v1";
+import logger from "../../../logger";
 import * as axiosHelper from "../../../axios-helper";
 import { applicationConfig } from "../../../config";
 import * as formatter from "../../../format-wrapper";
@@ -980,7 +986,7 @@ describe("algo-v1", () => {
 
       const result = await repriceProductToMax(mockMpid, mockNet32Products, mockInternalProduct as any, mockContextVendor);
 
-      expect(console.error).toHaveBeenCalled();
+      expect(logger.error).toHaveBeenCalled();
       expect(result).toBeUndefined();
     });
 
