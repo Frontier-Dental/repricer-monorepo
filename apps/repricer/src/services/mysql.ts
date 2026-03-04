@@ -167,7 +167,11 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
     if (typeof payload.badge == "undefined" || payload.badge == null) {
       payload.badge = false;
     }
-    const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
+    if (typeof payload.badgeUpExceptionPercentage == "undefined" || payload.badgeUpExceptionPercentage == null) {
+      payload.badgeUpExceptionPercentage = 0;
+    }
+    const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
     var [rows] = await db.query(queryToCall, [
       parseInt(payload.mpid),
       payload.channelName,
@@ -233,6 +237,7 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
       payload.qBreakCount,
       payload.qBreakDetails,
       payload.badge,
+      payload.badgeUpExceptionPercentage,
     ]);
     let upsertResult: any = null;
     if (rows != null && (rows as any)[0] != null) {
@@ -522,6 +527,7 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
       default:
         break;
     }
+
     if (!payload.inventoryThreshold) {
       payload.inventoryThreshold = 0;
     }
@@ -561,7 +567,11 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
     if (typeof payload.badge == "undefined" || payload.badge == null) {
       payload.badge = false;
     }
-    const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
+    if (typeof payload.badgeUpExceptionPercentage == "undefined" || payload.badgeUpExceptionPercentage == null || payload.badgeUpExceptionPercentage == "") {
+      payload.badgeUpExceptionPercentage = 0;
+    }
+    const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
     var [rows] = await db.query(queryToCall, [
       parseInt(payload.mpid),
       payload.channelName,
@@ -626,6 +636,7 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
       payload.qBreakCount,
       payload.qBreakDetails,
       payload.badge,
+      parseFloat(payload.badgeUpExceptionPercentage),
     ]);
     let upsertResult: any = null;
     if (rows != null && (rows as any)[0] != null) {

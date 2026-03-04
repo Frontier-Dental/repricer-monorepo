@@ -77,6 +77,7 @@ export default class CustomProduct {
   marketStateUpdatedAt: Date;
   qBreakCount: number;
   qBreakDetails: string;
+  badgeUpExceptionPercentage: number;
 
   constructor(sqlEntity: any) {
     this.channelName = sqlEntity["ChannelName"];
@@ -157,5 +158,6 @@ export default class CustomProduct {
     this.marketStateUpdatedAt = sqlEntity["MarketStateUpdatedAt"];
     this.qBreakCount = sqlEntity["QBreakCount"];
     this.qBreakDetails = sqlEntity["QBreakDetails"];
+    this.badgeUpExceptionPercentage = sqlEntity["BadgeUpExceptionPercentage"];
   }
 }
