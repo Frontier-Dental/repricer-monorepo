@@ -16,11 +16,13 @@ const levelMap: Record<string, string> = {
 // Plain text format with Datadog-recognized level prefix (message only, no JSON meta)
 const consoleFormat = winston.format.combine(
   winston.format.timestamp(),
-  winston.format.errors({ stack: false }),
-  winston.format.printf(({ level, message, module }) => {
+  winston.format.errors({ stack: true }),
+  winston.format.printf(({ level, message, module, ...meta }) => {
     const ddLevel = levelMap[level] || level.toUpperCase();
     const prefix = module ? `[${module}]` : "";
-    return `[${ddLevel}] ${prefix} ${message}`;
+    const stringMeta = Object.fromEntries(Object.entries(meta).filter(([k, v]) => k !== "timestamp" && typeof v === "string" && v.length < 50));
+    const metaString = Object.keys(stringMeta).length ? JSON.stringify(stringMeta) : "";
+    return `[${ddLevel}] ${prefix} ${message} ${metaString}`;
   })
 );
 
