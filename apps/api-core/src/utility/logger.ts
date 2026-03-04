@@ -6,13 +6,21 @@ import { LogLevel } from "../types/logger.types";
 
 const logDir = applicationConfig.APP_LOG_PATH;
 
-// Custom format for console output
+const levelMap: Record<string, string> = {
+  error: "ERROR",
+  warn: "WARNING",
+  info: "INFO",
+  debug: "DEBUG",
+};
+
+// Plain text format with Datadog-recognized level prefix (message only, no JSON meta)
 const consoleFormat = winston.format.combine(
   winston.format.timestamp(),
-  winston.format.colorize(),
-  winston.format.printf(({ timestamp, level, message, ...meta }) => {
-    const metaString = Object.keys(meta).length ? JSON.stringify(meta) : "";
-    return `${timestamp} [${level}]: ${message} ${metaString}`;
+  winston.format.errors({ stack: false }),
+  winston.format.printf(({ level, message, module }) => {
+    const ddLevel = levelMap[level] || level.toUpperCase();
+    const prefix = module ? `[${module}]` : "";
+    return `[${ddLevel}] ${prefix} ${message}`;
   })
 );
 
@@ -22,10 +30,6 @@ const fileFormat = winston.format.combine(winston.format.timestamp(), winston.fo
 // Create the logger
 const logger = winston.createLogger({
   level: applicationConfig.LOG_LEVEL as LogLevel,
-  defaultMeta: {
-    service: "api-core",
-    environment: applicationConfig.NODE_ENV,
-  },
   transports: [
     new winston.transports.Console({
       format: consoleFormat,
