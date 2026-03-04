@@ -145,7 +145,7 @@ async function storeVendorData(vendorData: ParsedVendorData[]) {
     threshold: vendor.freeShippingThreshold,
   }));
 
-  logger.info("Vendor threshold insert data", { insertData });
+  logger.info(`Vendor threshold insert data: ${insertData.length} records`);
 
   // Insert new data
   await knex("vendor_thresholds").insert(insertData);
