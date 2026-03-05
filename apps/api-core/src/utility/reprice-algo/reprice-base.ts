@@ -115,8 +115,9 @@ export async function Execute(jobId: string, productList: any[], cronInitTime: a
       }
       cronProdCounter++;
     } catch (error) {
-      logger.info(`Exception while repricing product: ${prod.mpId}. Error: ${error}`);
-      logger.error(error);
+      const errMessage = error instanceof Error ? error.message : String(error ?? "Unknown error");
+      logger.error(`Exception while repricing product: ${prod.mpId}. Error: ${errMessage}`);
+      logger.error(errMessage);
       cronLogs.logs.push({
         productId: prod.mpId,
         logs: error,

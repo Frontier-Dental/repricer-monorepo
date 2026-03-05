@@ -6,8 +6,10 @@ export const errorMiddleware = (err: any, req: Request, res: Response, next: Nex
   logger.error("=== ERROR MIDDLEWARE ===");
   if (err && err.stack) {
     logger.error(err.stack);
-  } else {
+  } else if (err != null) {
     logger.error(String(err));
+  } else {
+    logger.error("Unknown error (err was null/undefined)");
   }
 
   if (res.headersSent) {
