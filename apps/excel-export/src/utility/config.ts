@@ -186,6 +186,8 @@ export const envSchema = z.object({
   DIRECT_SCRAPE_CRON_DELAY_BETWEEN_CALLS_MS: z.coerce.number().default(1000),
   DIRECT_SCRAPE_CRON_JITTER_MS: z.coerce.number().default(150),
   DIRECT_SCRAPE_CRON_CONSECUTIVE_BLOCK_LIMIT: z.coerce.number().default(20),
+  APP_LOG_PATH: z.string().default("logs/app.log"),
+  LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("info"),
 });
 
 export function validateConfig() {
