@@ -1,4 +1,4 @@
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { applicationConfig } from "../utility/config";
 
 // Strict limiter for login attempts
@@ -11,7 +11,7 @@ export const loginLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.ip + ":" + req.body.email, // Per IP + email
+  keyGenerator: (req) => ipKeyGenerator(req.ip ?? "") + ":" + (req.body?.email ?? ""), // Per IP + email (IPv6-safe)
 });
 
 // General API limiter
