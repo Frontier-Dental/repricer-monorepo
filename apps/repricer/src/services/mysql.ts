@@ -3,9 +3,7 @@ import * as SqlMapper from "../utility/mapper/mysql-mapper";
 import { applicationConfig } from "../utility/config";
 import { getKnexInstance, destroyKnexInstance } from "./knex-wrapper";
 import bcrypt from "bcrypt";
-import { createLogger } from "../utility/logger";
-
-const logger = createLogger("mysql");
+import logger from "../utility/logger";
 
 export async function GetLatestRunInfo(noOfRecords: any, startDateTime: any, endDateTime: any) {
   const db = getKnexInstance();
