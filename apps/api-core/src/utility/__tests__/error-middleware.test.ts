@@ -118,7 +118,7 @@ describe("error-middleware", () => {
     errorMiddleware(null as any, mockRequest as Request, mockResponse as Response, mockNext);
 
     expect(logger.error).toHaveBeenCalledWith("=== ERROR MIDDLEWARE ===");
-    expect(logger.error).toHaveBeenCalledWith("null");
+    expect(logger.error).toHaveBeenCalledWith("Unknown error (err was null/undefined)");
     expect(mockResponse.json).toHaveBeenCalledWith({
       error: {
         message: "Internal Server Error",

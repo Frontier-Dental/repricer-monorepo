@@ -778,20 +778,20 @@ describe("filter-mapper", () => {
   });
 
   describe("subtractPercentage", () => {
-    it("should subtract percentage correctly", () => {
-      const result = subtractPercentage(100, 0.1);
+    it("should subtract percentage correctly", async () => {
+      const result = await subtractPercentage(100, 0.1);
 
       expect(result).toBe(90.0);
     });
 
-    it("should handle decimal results", () => {
-      const result = subtractPercentage(10.5, 0.05);
+    it("should handle decimal results", async () => {
+      const result = await subtractPercentage(10.5, 0.05);
 
       expect(result).toBe(9.97);
     });
 
-    it("should floor the result", () => {
-      const result = subtractPercentage(10.99, 0.01);
+    it("should floor the result", async () => {
+      const result = await subtractPercentage(10.99, 0.01);
 
       expect(result).toBe(10.88);
     });
