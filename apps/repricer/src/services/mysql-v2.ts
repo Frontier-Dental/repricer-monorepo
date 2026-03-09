@@ -7,6 +7,7 @@ import { getKnexInstance } from "./knex-wrapper";
 import { GetAuditInfo } from "../utility/session-helper";
 import AuditInfo from "../models/audit-info";
 import ExportModel from "../models/export-model";
+import logger from "../utility/logger";
 
 export async function GetConfigurations(activeOnly = true) {
   const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
@@ -29,7 +30,7 @@ export async function GetConfigurations(activeOnly = true) {
 export async function UpdateConfiguration(payload: any, req: any) {
   const db = getKnexInstance();
   const auditInfo = await GetAuditInfo(req);
-  console.debug(`Updating IP Configurations at ${new Date().toISOString()} || By : ${auditInfo.UpdatedBy}`);
+  logger.debug(`Updating IP Configurations at ${new Date().toISOString()} || By : ${auditInfo.UpdatedBy}`);
   for (const element of payload) {
     await db("ipConfig")
       .where({ ProxyProvider: element.proxyProvider, IpType: element.ipType })
@@ -92,7 +93,7 @@ export async function GetEnvValueByKey(keyName: string) {
 export async function UpsertEnvSettings(payload: any) {
   let mongoResult: any = null;
   const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
-  console.debug(`Updating Env Settings at ${new Date().toISOString()} || By : ${payload.updatedBy}`);
+  logger.debug(`Updating Env Settings at ${new Date().toISOString()} || By : ${payload.updatedBy}`);
   const db = getKnexInstance();
   await db("env_settings")
     .where({ ConfigID: 1 })
@@ -158,16 +159,16 @@ export async function UpsertEnvSettings(payload: any) {
 export async function InsertOrUpdateCronSettings(cronSettingEntity: CronSettingsDto, cronSettingSecretKeys: SecretKeyDto[], alternateProxyProviders: AlternateProxyProviderDto[]) {
   const db = getKnexInstance();
   await db.transaction(async (trx) => {
-    console.debug(`Upserting Cron Setting : ${cronSettingEntity.CronId} || Name : ${cronSettingEntity.CronName}`);
+    logger.debug(`Upserting Cron Setting : ${cronSettingEntity.CronId} || Name : ${cronSettingEntity.CronName}`);
     await trx<CronSettingsDto>("cron_settings").insert(cronSettingEntity).onConflict("CronId").merge();
 
     for (const secretKey of cronSettingSecretKeys) {
-      console.debug(`Upserting Secret Key for Cron : ${secretKey.CronId} || Vendor : ${secretKey.VendorName} || Value : ${secretKey.SecretKey}`);
+      logger.debug(`Upserting Secret Key for Cron : ${secretKey.CronId} || Vendor : ${secretKey.VendorName} || Value : ${secretKey.SecretKey}`);
       await trx<SecretKeyDto>("secret_keys").insert(secretKey).onConflict(["CronId", "VendorName"]).merge();
     }
 
     for (const alternateProvider of alternateProxyProviders) {
-      console.debug(`Upserting Alternate Provider for Cron : ${cronSettingEntity.CronId} || Sequence : ${alternateProvider.Sequence} || Value : ${alternateProvider.ProxyProvider}`);
+      logger.debug(`Upserting Alternate Provider for Cron : ${cronSettingEntity.CronId} || Sequence : ${alternateProvider.Sequence} || Value : ${alternateProvider.ProxyProvider}`);
       await trx<AlternateProxyProviderDto>("alternate_proxy_providers").insert(alternateProvider).onConflict(["CronId", "Sequence"]).merge();
     }
   });
@@ -194,7 +195,7 @@ export async function GetCronSettingsList() {
 export async function UpdateCronSettingsList(payload: any, req: any) {
   const db = getKnexInstance();
   for (const element of payload) {
-    console.debug(`Updating Cron Settings at ${new Date().toISOString()} : ${element.CronId} || Name : ${element.CronName}`);
+    logger.debug(`Updating Cron Settings at ${new Date().toISOString()} : ${element.CronId} || Name : ${element.CronName}`);
     await db("cron_settings")
       .where({ CronId: element.CronId })
       .update({
@@ -210,7 +211,7 @@ export async function UpdateCronSettingsList(payload: any, req: any) {
 
     if (element.SecretKey && element.SecretKey.length > 0) {
       for (const secret of element.SecretKey) {
-        console.debug(`Updating Secret Key for Cron : ${element.CronId} || Vendor : ${secret.vendorName} || Value : ${secret.secretKey}`);
+        logger.debug(`Updating Secret Key for Cron : ${element.CronId} || Vendor : ${secret.vendorName} || Value : ${secret.secretKey}`);
         await db("secret_keys").where({ CronId: element.CronId, VendorName: secret.vendorName }).update({
           SecretKey: secret.secretKey,
         });
@@ -219,7 +220,7 @@ export async function UpdateCronSettingsList(payload: any, req: any) {
 
     if (element.AlternateProxyProvider && element.AlternateProxyProvider.length > 0) {
       for (const alternateProvider of element.AlternateProxyProvider) {
-        console.debug(`Updating Alternate Provider for Cron : ${element.CronId} || Sequence : ${alternateProvider.Sequence} || Value : ${alternateProvider.ProxyProvider}`);
+        logger.debug(`Updating Alternate Provider for Cron : ${element.CronId} || Sequence : ${alternateProvider.Sequence} || Value : ${alternateProvider.ProxyProvider}`);
         await db("alternate_proxy_providers")
           .where({
             CronId: element.CronId,
@@ -239,7 +240,7 @@ export async function UpdateCronSettingsList(payload: any, req: any) {
 }
 
 export async function ToggleCronStatus(cronId: string, cronStatus: string, req: any) {
-  console.debug(`Toggling Cron Status at ${new Date().toISOString()} : ${cronId} || Status : ${cronStatus}`);
+  logger.debug(`Toggling Cron Status at ${new Date().toISOString()} : ${cronId} || Status : ${cronStatus}`);
   const db = getKnexInstance();
   await db("cron_settings")
     .where({ CronId: cronId })
@@ -326,7 +327,7 @@ export async function UpsertFilterCronSettings(filterCronSettingsPayload: any) {
   if (filterCronSettingsPayload && filterCronSettingsPayload.length > 0) {
     const db = getKnexInstance();
     for (const filterCron of filterCronSettingsPayload) {
-      console.debug(`Upserting Filter Cron Settings for Cron : ${filterCron.cronName} at ${new Date().toISOString()}`);
+      logger.debug(`Upserting Filter Cron Settings for Cron : ${filterCron.cronName} at ${new Date().toISOString()}`);
       await db.transaction(async (trx) => {
         await trx("filter_cron_settings")
           .insert({

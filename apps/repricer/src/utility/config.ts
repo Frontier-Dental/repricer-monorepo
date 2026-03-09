@@ -207,6 +207,7 @@ export const envSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string(),
   AWS_BUCKET_NAME: z.string().default("fd-repricer"),
   AWS_REGION: z.string().default("us-east-1"),
+  LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("info"),
 });
 
 export function validateConfig() {

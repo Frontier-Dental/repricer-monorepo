@@ -14,27 +14,28 @@ import * as mongoHelper from "../services/mongo";
 import { GetCronSettingsList, GetSlowCronDetails } from "../services/mysql-v2";
 import * as mySqlMiddleware from "../services/mysql";
 import { archiveHistory } from "../utility/history-archive-helper";
+import logger from "../utility/logger";
 
 export const monitorSenseController = express.Router();
 var monitorCrons: Record<string, ScheduledTask> = {};
 /************* PUBLIC SCHEDULED APIS *************/
 export async function startAllMonitorCrons() {
   if (applicationConfig.IS_DEV) return;
-  console.info(`Scheduling All Monitor CRONS on startup at ${new Date()}`);
+  logger.info(`Scheduling All Monitor CRONS on startup at ${new Date()}`);
   await startInProgressCronCheck();
   await startExpressCronValidationCheck();
   await startHistoryDeletionCron();
   await startCronLogsDeletionCron();
   await startArchiveHistoryCron();
-  console.info(`Successfully Started All Monitor CRONS Check at ${new Date()}`);
+  logger.info(`Successfully Started All Monitor CRONS Check at ${new Date()}`);
 }
 
 monitorSenseController.get("/schedule/monitor-sense/export_save", async (req, res) => {
-  console.log(`Starting Export & Save Cron with Details : ${applicationConfig.EXPORT_SAVE_CRON_SCHEDULE}`);
+  logger.info(`Starting Export & Save Cron with Details : ${applicationConfig.EXPORT_SAVE_CRON_SCHEDULE}`);
   var _exportAndSaveCron = cron.schedule(
     applicationConfig.EXPORT_SAVE_CRON_SCHEDULE,
     async () => {
-      console.log(`MONITOR-SENSE : EXPORT_SAVE : Running at ${new Date()}`);
+      logger.info(`MONITOR-SENSE : EXPORT_SAVE : Running at ${new Date()}`);
       await StartExportAndSave();
     },
     { scheduled: true }
@@ -64,7 +65,7 @@ monitorSenseController.get("/debug/monitor-sense/exportAndSave", async (req, res
 
 /************* PRIVATE FUNCTIONS *************/
 async function ValidateCronDetails() {
-  console.info(`Running IN-PROGRESS Cron Validation Check at ${new Date()}`);
+  logger.info(`Running IN-PROGRESS Cron Validation Check at ${new Date()}`);
   const inProgressCronDetails = await mongoHelper.GetLatestCronStatus();
   const maxCount = applicationConfig.CRON_PROGRESS_MAX_COUNT;
   if (inProgressCronDetails && inProgressCronDetails.length > maxCount) {
@@ -100,7 +101,7 @@ async function getEmailBodyForInProgressCron(cronDetails: any, maxCount: any) {
 }
 
 async function Validate422ErrorProductDetails() {
-  console.info(`Running 422 ERROR Product Validation Check at ${new Date()}`);
+  logger.info(`Running 422 ERROR Product Validation Check at ${new Date()}`);
   const _422ProductDetails = await get422ProductDetails();
   const maxCountFor422Count = applicationConfig._422_ERROR_MAX_COUNT;
   const maxCountForEligibleCount = applicationConfig._422_ERROR_ELIGIBLE_MAX_COUNT;
@@ -115,7 +116,7 @@ async function Validate422ErrorProductDetails() {
       const emailSubject = `EXPRESS CRON | 422 Error Count Reached Maximum Limit`;
       await TriggerEmail(emailBody, emailSubject, applicationConfig.MONITOR_EMAIL_ID);
     }
-    console.log(`MONITOR-SENSE : 422ERROR : VALIDATION CHECK ran at ${new Date()}`);
+    logger.info(`MONITOR-SENSE : 422ERROR : VALIDATION CHECK ran at ${new Date()}`);
   }
 }
 
@@ -139,7 +140,7 @@ async function StartExportAndSave() {
     const pathToSave = path.join(rootPath, "Archive", fileName);
     await exportAndSaveInExcel(_url, pathToSave);
     await uploadToFTP(pathToSave, fileName);
-    console.log(`Saved file at ${pathToSave}`);
+    logger.info(`Saved file at ${pathToSave}`);
   }
 }
 
@@ -157,22 +158,22 @@ async function uploadToFTP(localFilePath: any, fileName: any) {
     password: applicationConfig.FTP_PASSWORD,
     secure: false,
   });
-  console.log("Connected to FTP server");
+  logger.info("Connected to FTP server");
   // Upload a local file to the server
   await client.uploadFrom(localFilePath, `REPRICER/${fileName}`);
-  console.log("File uploaded successfully");
+  logger.info("File uploaded successfully");
   client.close();
 }
 
 async function startInProgressCronCheck() {
-  console.info(`Starting IN-PROGRESS CRONS Check at ${new Date()} with expression : ${applicationConfig.CRON_PROGRESS_SCHEDULE}`);
+  logger.info(`Starting IN-PROGRESS CRONS Check at ${new Date()} with expression : ${applicationConfig.CRON_PROGRESS_SCHEDULE}`);
   monitorCrons["InProgressCheckCron"] = schedule(
     applicationConfig.CRON_PROGRESS_SCHEDULE,
     async () => {
       try {
         await ValidateCronDetails();
       } catch (error) {
-        console.error(`Error running InProgressCheckCron:`, error);
+        logger.error(`Error running InProgressCheckCron: ${error}`);
       }
     },
     {
@@ -182,14 +183,14 @@ async function startInProgressCronCheck() {
 }
 
 async function startExpressCronValidationCheck() {
-  console.info(`Starting EXPRESS CRONS Validation Check at ${new Date()} with expression : ${applicationConfig._422_ERROR_CRON_SCHEDULE}`);
+  logger.info(`Starting EXPRESS CRONS Validation Check at ${new Date()} with expression : ${applicationConfig._422_ERROR_CRON_SCHEDULE}`);
   monitorCrons["ExpressCheckCron"] = schedule(
     applicationConfig._422_ERROR_CRON_SCHEDULE,
     async () => {
       try {
         await Validate422ErrorProductDetails();
       } catch (error) {
-        console.error(`Error running ExpressCheckCron:`, error);
+        logger.error(`Error running ExpressCheckCron: ${error}`);
       }
     },
     {
@@ -204,19 +205,19 @@ async function get422ProductDetails() {
   productsCount.priceUpdateProducts = await mongoHelper.Get422ProductCountByType("PRICE_UPDATE");
   productsCount.eligibleProducts = await mongoHelper.GetContextErrorItemsCount(true);
   productsCount.time = moment(new Date()).format("DD-MM-YYYY HH:mm:ss");
-  console.log(`422 ERROR Products Count : ${productsCount.products422Error}, Price Update Products Count : ${productsCount.priceUpdateProducts}, Eligible Products Count : ${productsCount.eligibleProducts} as of ${productsCount.time}`);
+  logger.info(`422 ERROR Products Count : ${productsCount.products422Error}, Price Update Products Count : ${productsCount.priceUpdateProducts}, Eligible Products Count : ${productsCount.eligibleProducts} as of ${productsCount.time}`);
   return productsCount;
 }
 
 async function startHistoryDeletionCron() {
-  console.info(`HISTORY_DELETION_CRON : Starting History Deletion Cron at ${new Date()} with expression : ${applicationConfig.HISTORY_DELETION_CRON_SCHEDULE}`);
+  logger.info(`HISTORY_DELETION_CRON : Starting History Deletion Cron at ${new Date()} with expression : ${applicationConfig.HISTORY_DELETION_CRON_SCHEDULE}`);
   monitorCrons["HistoryDeletionCron"] = schedule(
     applicationConfig.HISTORY_DELETION_CRON_SCHEDULE,
     async () => {
       try {
         await DeleteHistory();
       } catch (error) {
-        console.error(`HISTORY_DELETION_CRON : Error running HistoryDeletionCron:`, error);
+        logger.error(`HISTORY_DELETION_CRON : Error running HistoryDeletionCron:`, error);
       }
     },
     {
@@ -226,14 +227,14 @@ async function startHistoryDeletionCron() {
 }
 
 async function startCronLogsDeletionCron() {
-  console.log(`CRON_LOGS_DELETION_CRON : Starting Cron Logs Deletion Cron at ${new Date()} with expression : ${applicationConfig.CRON_LOGS_DELETION_CRON_SCHEDULE}`);
+  logger.info(`CRON_LOGS_DELETION_CRON : Starting Cron Logs Deletion Cron at ${new Date()} with expression : ${applicationConfig.CRON_LOGS_DELETION_CRON_SCHEDULE}`);
   monitorCrons["CronLogsDeletionCron"] = schedule(
     applicationConfig.CRON_LOGS_DELETION_CRON_SCHEDULE,
     async () => {
       try {
         await DeleteCronLogs();
       } catch (error) {
-        console.error(`CRON_LOGS_DELETION_CRON : Error running CronLogsDeletionCron:`, error);
+        logger.error(`CRON_LOGS_DELETION_CRON : Error running CronLogsDeletionCron: ${error}`);
       }
     },
     {
@@ -251,23 +252,23 @@ async function DeleteHistory() {
   const historyQuery = `delete from table_history where RefTime < ?`;
   const apiResponseUpdated = await mySqlMiddleware.ExecuteQuery(apiResponseQuery, [pastDate]);
   const historyUpdated = await mySqlMiddleware.ExecuteQuery(historyQuery, [pastDate]);
-  console.log(`HISTORY_DELETION_CRON : EFFECTIVE DATE : ${pastDate} || ${JSON.stringify(apiResponseUpdated)} || ${JSON.stringify(historyUpdated)}`);
+  logger.info(`HISTORY_DELETION_CRON : EFFECTIVE DATE : ${pastDate} || ${JSON.stringify(apiResponseUpdated)} || ${JSON.stringify(historyUpdated)}`);
 }
 
 async function DeleteCronLogs() {
   const deletionResults = await mongoHelper.DeleteCronLogsPast15Days();
-  console.log(`CRON_LOGS_DELETION_CRON : Deleted Cron Logs Results : ${JSON.stringify(deletionResults)} `);
+  logger.info(`CRON_LOGS_DELETION_CRON : Deleted Cron Logs Results : ${JSON.stringify(deletionResults)} `);
 }
 
 async function startArchiveHistoryCron() {
-  console.info(`HISTORY_ARCHIVE_CRON : Starting History Archive Cron at ${new Date()} with expression : ${applicationConfig.HISTORY_ARCHIVE_CRON_SCHEDULE}`);
+  logger.info(`HISTORY_ARCHIVE_CRON : Starting History Archive Cron at ${new Date()} with expression : ${applicationConfig.HISTORY_ARCHIVE_CRON_SCHEDULE}`);
   monitorCrons["HistoryArchiveCron"] = schedule(
     applicationConfig.HISTORY_ARCHIVE_CRON_SCHEDULE,
     async () => {
       try {
         await archiveHistory();
       } catch (error) {
-        console.error(`HISTORY_ARCHIVE_CRON : Error running HistoryArchiveCron:`, error);
+        logger.error(`HISTORY_ARCHIVE_CRON : Error running HistoryArchiveCron: ${error}`);
       }
     },
     {
