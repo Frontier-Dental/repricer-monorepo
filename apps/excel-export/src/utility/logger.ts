@@ -1,13 +1,9 @@
 import winston from "winston";
-import DailyRotateFile from "winston-daily-rotate-file";
-import path from "path";
 import util from "util";
 import { applicationConfig } from "./config";
 import { LogLevel } from "../types/logger.types";
 
 const SPLAT = Symbol.for("splat");
-
-const logDir = applicationConfig.APP_LOG_PATH;
 
 const levelMap: Record<string, string> = {
   error: "ERROR",
@@ -16,7 +12,7 @@ const levelMap: Record<string, string> = {
   debug: "DEBUG",
 };
 
-// Plain text format: full message when args are primitives (pattern 1), omit objects (pattern 2)
+// Console-only format for stdout (e.g. Datadog agent collects from here)
 const consoleFormat = winston.format.combine(
   winston.format.errors({ stack: false }),
   winston.format.printf(({ level, message, module, [SPLAT]: splat, ...meta }) => {
@@ -28,32 +24,12 @@ const consoleFormat = winston.format.combine(
   })
 );
 
-// JSON format for file output
-const fileFormat = winston.format.combine(winston.format.timestamp(), winston.format.errors({ stack: true }), winston.format.json());
-
-// Create the logger
+// Create the logger - console only; logs are forwarded to Datadog via stdout
 const logger = winston.createLogger({
   level: applicationConfig.LOG_LEVEL as LogLevel,
   transports: [
     new winston.transports.Console({
       format: consoleFormat,
-    }),
-    // Error log file (rotated daily)
-    new DailyRotateFile({
-      filename: path.join(logDir, "error-%DATE%.log"),
-      datePattern: "YYYY-MM-DD",
-      level: "error",
-      format: fileFormat,
-      maxFiles: "30d",
-      maxSize: "20m",
-    }),
-    // Combined log file (rotated daily)
-    new DailyRotateFile({
-      filename: path.join(logDir, "combined-%DATE%.log"),
-      datePattern: "YYYY-MM-DD",
-      format: fileFormat,
-      maxFiles: "14d",
-      maxSize: "20m",
     }),
   ],
 });

@@ -27,7 +27,6 @@ jest.mock("../../models/sql-models/mysql-db", () => ({
 
 jest.mock("../../utility/config", () => ({
   applicationConfig: {
-    APP_LOG_PATH: "logs/test.log",
     LOG_LEVEL: "info",
     SQL_PASSWORD: "plainPasswordNoColon",
     REPRICER_ENCRYPTION_KEY: "test-key-32-bytes-long!!!!!!!!",
