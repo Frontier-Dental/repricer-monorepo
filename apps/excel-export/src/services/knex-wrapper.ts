@@ -2,10 +2,11 @@ import knex, { Knex } from "knex";
 
 import { applicationConfig } from "../utility/config";
 import Encrypto from "../utility/encrypto";
+import logger from "../utility/logger";
 
 export async function destroyKnexInstance() {
   if (knexInstance) {
-    console.warn("Destroying Knex Instance");
+    logger.warn("Destroying Knex Instance");
     await knexInstance.destroy();
     knexInstance = null;
   }

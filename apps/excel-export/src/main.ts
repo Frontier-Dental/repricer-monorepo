@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { excelRouter } from "./routes/excel.routes";
 import { scrapeMonitorRouter } from "./routes/scrape-monitor.routes";
 import { startScrapeLoop } from "./scrape-monitor/service";
+import logger from "./utility/logger";
 
 dotenv.config();
 
@@ -33,7 +34,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error("Error:", err);
+  logger.error(`Error: ${err?.message || "Unknown error"}`);
   res.status(err.status || 500).json({
     error: err.message || "Internal Server Error",
     timestamp: new Date().toISOString(),
@@ -41,8 +42,8 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 app.listen(PORT, () => {
-  console.log(`Excel Export Service is running on port ${PORT}`);
-  console.log(`Health check available at http://localhost:${PORT}/health`);
-  console.log(`Excel download endpoint: POST http://localhost:${PORT}/api/excel/download`);
+  logger.info(`Excel Export Service is running on port ${PORT}`);
+  logger.info(`Health check available at http://localhost:${PORT}/health`);
+  logger.info(`Excel download endpoint: POST http://localhost:${PORT}/api/excel/download`);
   startScrapeLoop();
 });

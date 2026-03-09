@@ -280,15 +280,15 @@ describe("scrape-helper", () => {
 
       (axiosHelper.getAsyncProxy as jest.Mock).mockRejectedValue(new Error("API Error"));
 
-      // The function will throw, and UpdateRunCompletionStatus won't be called since there's no try-finally
       try {
         await Execute(productList, mockCronSetting);
       } catch (error) {
         // Expected to throw
       }
 
-      // UpdateRunCompletionStatus is not called when errors occur (no try-finally in implementation)
-      expect(mySqlHelper.UpdateRunCompletionStatus).not.toHaveBeenCalled();
+      // UpdateRunCompletionStatus is always called after try-catch (run completion is updated even on error)
+      expect(mySqlHelper.UpdateRunCompletionStatus).toHaveBeenCalledTimes(1);
+      expect(mySqlHelper.UpdateRunCompletionStatus).toHaveBeenCalledWith(expect.objectContaining({ IsCompleted: true, KeyGenId: "test-keygen-123", RunType: "SCRAPE_ONLY" }));
     });
   });
 
