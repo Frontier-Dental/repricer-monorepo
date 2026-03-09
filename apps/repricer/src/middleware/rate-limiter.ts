@@ -14,18 +14,6 @@ export const loginLimiter = rateLimit({
   keyGenerator: (req) => req.ip + ":" + req.body.email, // Per IP + email
 });
 
-// Moderate limiter for password reset
-export const passwordResetLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, // 20 attempts per hour
-  message: {
-    status: "ERROR",
-    message: "Too many password reset requests. Please try again later.",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // General API limiter
 export const apiLimiter = rateLimit({
   windowMs: Number(applicationConfig.RATE_LIMIT_WINDOW_MS) * 60 * 1000, // windowMs minutes
