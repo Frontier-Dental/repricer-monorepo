@@ -11,6 +11,7 @@ import { applicationConfig } from "../utility/config";
 import * as httpHelper from "../utility/http-wrappers";
 import * as SessionHelper from "../utility/session-helper";
 import { GetCronSettingsList, GetSlowCronDetails, GetScrapeCrons } from "../services/mysql-v2";
+import logger from "../utility/logger";
 
 export async function showAllProducts(req: Request, res: Response) {
   let pgNo = 0;
@@ -86,7 +87,7 @@ export async function updateProductQuantity(req: Request, res: Response) {
       data: response.data,
     });
   } catch (error: any) {
-    console.error("Error calling API:", error);
+    logger.error(`Error calling API: ${error?.response?.data?.message || `Error updating product quantity for mpid ${mpid}`}`);
     return res.status(500).json({
       status: false,
       message: error?.response?.data?.message || `Error updating product quantity for mpid ${mpid}`,
@@ -335,7 +336,7 @@ export async function runManualReprice(req: Request, res: Response) {
       const manualRepriceUrl = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.MANUAL_REPRICER_ENDPOINT}/${prod}`;
       const repriceResult = await httpHelper.native_get(manualRepriceUrl);
       if (repriceResult && repriceResult.status == 200 && repriceResult.data && repriceResult.data.logId) {
-        console.log("Manual Log with _id " + repriceResult.data.logId + ", added successfully");
+        logger.info(`Manual Log with _id ${repriceResult.data.logId}, added successfully`);
       } else {
         failedIds.push(prod);
       }
@@ -588,7 +589,7 @@ export async function saveBranches(req: Request, res: Response) {
     await mySqlHelper.UpdateBranchDataForVendor(mpidTrimmed, "BITESUPPLY", updateData["biteSupplyDetails"]);
   }
 
-  console.log(`Updating product with specific branch fields for MPID ${mpidTrimmed}:`, updateData);
+  console.log(`Updating product with specific branch fields for MPID ${mpidTrimmed}: ${JSON.stringify(updateData)}`);
 
   // Apply the update with specific fields if there are any updates
   return res.json({
@@ -605,7 +606,7 @@ export async function updateToMax(req: Request, res: Response) {
       const updateToMaxResponse = `${applicationConfig.REPRICER_API_BASE_URL}${applicationConfig.MAX_UPDATE_REPRICER_ENDPOINT}/${prod.trim()}`;
       const repriceResult = await httpHelper.native_get(updateToMaxResponse);
       if (repriceResult && repriceResult.status == 200 && repriceResult.data && repriceResult.data.logId) {
-        console.log("Manual Log with _id " + repriceResult.data.logId + ", added successfully");
+        logger.info("Manual Log with _id " + repriceResult.data.logId + ", added successfully");
       } else {
         failedIds.push(prod.trim() as never);
       }
@@ -641,7 +642,7 @@ export async function exportItems(req: Request, res: Response) {
     // Pipe the response from excel-export service to the client
     response.data.pipe(res);
   } catch (error: any) {
-    console.error("Error proxying to excel-export service:", error);
+    logger.error(`Error proxying to excel-export service: ${error?.message || "Unknown error"}`);
     res.status(500).json({
       error: "Failed to export Excel file",
       details: error?.message || "Unknown error occurred",

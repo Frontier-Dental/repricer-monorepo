@@ -18,6 +18,7 @@ import * as sessionHelper from "../utility/session-helper";
 import { GetConfigurations, GetCronSettingsList, InsertOrUpdateCronSettings, UpdateCronSettingsList, UpsertFilterCronSettings, GetFilteredCrons } from "../services/mysql-v2";
 import { validateIPAddress } from "../utility/ip-validator";
 import { applicationConfig } from "../utility/config";
+import logger from "../utility/logger";
 
 const execFileAsync = (util as any).promisify(execFile);
 
@@ -58,7 +59,7 @@ export async function doIpHealthCheck(req: Request, res: Response) {
   let healthResp: any[] = [];
   if (configIpResx && configIpResx.length > 0) {
     for (const $ of configIpResx) {
-      console.log(`Checking health for IP : ${$.ip} || PORT : ${$.port} `);
+      logger.info(`Checking health for IP : ${$.ip} || PORT : ${$.port} `);
       if (!validateIPAddress($.ip)) {
         healthResp.push({
           ip: $.ip,
@@ -97,7 +98,7 @@ export async function doIpHealthCheck(req: Request, res: Response) {
           check.ipHealth = `Red`;
         }
       } catch (ex) {
-        console.log(ex);
+        logger.info(`IP health check failed for IP : ${$.ip} || PORT : ${$.port} || Error : ${ex}`);
         check.net32ReturnStatusCode = 9999;
         check.ipHealth = `Red`;
       }
@@ -123,7 +124,7 @@ export async function pingCheck(req: Request, res: Response) {
         } as never);
         continue;
       }
-      console.log(`Pinging IP : ${$.ip} `);
+      logger.info(`Pinging IP : ${$.ip} `);
       healthResp.push((await ping($.ip, $.port)) as never);
     }
   }
@@ -180,7 +181,7 @@ export async function debugIp(req: Request, res: Response) {
           } as never);
           continue;
         }
-        console.log(`Pinging IP : ${ip} `);
+        logger.info(`Pinging IP : ${ip} `);
         healthResp.push((await ping(ip, "N/A")) as never);
       }
     }
@@ -224,7 +225,7 @@ export async function debugIpV2(req: Request, res: Response) {
           } as never);
           continue;
         }
-        console.log(`Pinging IP : ${ip} `);
+        logger.info(`Pinging IP : ${ip} `);
         healthResp.push((await ping(ip, "N/A")) as never);
       }
     }
@@ -287,14 +288,14 @@ export async function createCrons(req: Request, res: Response) {
       cronId: $id,
       cronVariable: `_E${generalCronDetails.length + count}Cron`,
     });
-    console.log(`Inserted ${cron.CronName} with Id : ${cron.CronId}`);
+    logger.info(`Inserted ${cron.CronName} with Id : ${cron.CronId}`);
   }
 
   // Write ResourceFile
   if (newCronList.length > 0) {
     const filePath = path.resolve(__dirname, "../resources/cronMapping.json");
     (fs as any).writeFileSync(filePath, JSON.stringify(newCronList, null, 4), "utf8", () => {
-      console.log(`File Written Successfully !`);
+      logger.info(`File Written Successfully !`);
     });
   }
   return res.json({
