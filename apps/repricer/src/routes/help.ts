@@ -4,21 +4,11 @@ import * as helpController from "../controllers/help";
 import { authMiddleware } from "../middleware/auth-middleware";
 import AuthToken from "../middleware/auth-token";
 import { applicationConfig } from "../utility/config";
+import { apiLimiter } from "../middleware/rate-limiter";
 
 export const helpRouter = express.Router();
-
-const myRateLimiter = rateLimit({
-  windowMs: Number(applicationConfig.RATE_LIMIT_WINDOW_MS) * 60 * 1000,
-  max: 60, // limit each IP to 60 requests per windowMs
-  message: {
-    status: "ERROR",
-    message: "Too many IP check requests, please try again later",
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 //helpRouter.use(authMiddleware);
+helpRouter.use(apiLimiter);
 
 helpRouter.get("/GetLogsById/:id", authMiddleware, helpController.getLogsById);
 helpRouter.get("/ProductDetails/:id", authMiddleware, helpController.getProductDetails);
@@ -27,8 +17,8 @@ helpRouter.get("/ip_health_check", authMiddleware, helpController.doIpHealthChec
 
 helpRouter.get("/ip_ping_check", authMiddleware, helpController.pingCheck);
 helpRouter.get("/let_me_in", authMiddleware, helpController.troubleshoot);
-helpRouter.post("/check_ip_status", myRateLimiter, authMiddleware, helpController.debugIp);
-helpRouter.post("/check_ip_status_v2", myRateLimiter, authMiddleware, helpController.debugIpV2);
+helpRouter.post("/check_ip_status", authMiddleware, helpController.debugIp);
+helpRouter.post("/check_ip_status_v2", authMiddleware, helpController.debugIpV2);
 
 helpRouter.get("/load_product/:id", authMiddleware, helpController.loadProductDetails);
 

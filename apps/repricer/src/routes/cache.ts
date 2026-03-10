@@ -1,9 +1,10 @@
 import express from "express";
 import * as cacheController from "../controllers/cache";
 import { authMiddleware } from "../middleware/auth-middleware";
-
+import { apiLimiter } from "../middleware/rate-limiter";
 export const cacheRouter = express.Router();
 
+cacheRouter.use(apiLimiter);
 //cacheRouter.use(authMiddleware);
 cacheRouter.get("/get_all_cache", cacheController.get_all_cache);
 cacheRouter.get("/flush_all_cache", authMiddleware, cacheController.flush_all_cache);

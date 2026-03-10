@@ -26,8 +26,9 @@ function scrape_details() {
         $("#timeTknSpn").text(response.timeSpent);
         $("#responseSizeSpn").text(response.dataSize);
       },
-      error: function () {
-        alert("Oops unable to connect with server!!");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+        showErrorToast(errorMessage);
       },
     });
   }
