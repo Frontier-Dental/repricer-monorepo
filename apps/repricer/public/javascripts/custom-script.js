@@ -801,7 +801,7 @@ function pingIpAndTest() {
       togglePingResponse(data);
     },
     error: function (error) {
-     const errorMessage = error.responseJSON.message || "Something went wrong. Please try again";
+      const errorMessage = error.responseJSON.message || "Something went wrong. Please try again";
       showErrorToast(errorMessage);
     },
   });
@@ -826,7 +826,7 @@ function pingIpAndTestAll() {
       togglePingResponse(data);
     },
     error: function (error) {
-     const errorMessage = error.responseJSON.message || "Something went wrong. Please try again";
+      const errorMessage = error.responseJSON.message || "Something went wrong. Please try again";
       showErrorToast(errorMessage);
     },
   });
@@ -1815,4 +1815,77 @@ $(document).on("click", "#confirmQuantityUpdate", function () {
       $("#updateQuantityModal").modal("hide");
     },
   });
+});
+
+
+function showExpressCronRemovalInfo(mpid) {
+  $("#selectedMpId").text(mpid);
+  $("#expressCronInfoModal").modal("show");
+}
+
+// Store original modal content
+const expressCronRemovalModalElement = document.getElementById('expressCronInfoModal');
+const selectAllBtn = document.getElementById('selectAllVendors');
+
+selectAllBtn.addEventListener('click', () => {
+  expressCronRemovalModalElement.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.checked = true;
+  });
+});
+
+// Restore modal to original state when closed
+$("#expressCronInfoModal").on("hidden.bs.modal", function () {
+  // Clear the mpId text
+  document.getElementById('selectedMpId').textContent = "";
+
+  // Reset all checkboxes
+  expressCronRemovalModalElement.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.checked = false;
+  });
+});
+
+
+
+$(document).on("click", "#confirmExpressCronRemoval", function () {
+  const mpid = $("#selectedMpId").text();
+  let selectedVendors = [];
+  $(".vendor-checkbox:checked").each(function () {
+    const vendorName = $(this).attr("name").replace("Checked", "");
+    selectedVendors.push(vendorName);
+  });
+  if (selectedVendors.length === 0) {
+    showErrorToast("Please select at least one vendor.");
+    return;
+  }
+  else {
+    console.log("Selected Vendors for Express Cron Removal:", selectedVendors);
+    $.ajax({
+      type: "POST",
+      url: `/productV2/remove_vendor_express_cron/${mpid}`,
+      data: {
+        vendorsToRemove: selectedVendors,
+      },
+      dataType: "json",
+      cache: false,
+      beforeSend: function () {
+        showLoadingToast("Removing From Express Cron.....");
+      },
+      success: function (data) {
+        if (data.status == true) {
+          showSuccessToast(data.details);
+        } else {
+          showErrorToast(data.details);
+        }
+        $("#expressCronInfoModal").modal("hide");
+      },
+      error: function (xhr) {
+        let errorMessage = "Something went wrong. Please try again";
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage = xhr.responseJSON.message;
+        }
+        showErrorToast(errorMessage);
+        $("#expressCronInfoModal").modal("hide");
+      },
+    });
+  }
 });

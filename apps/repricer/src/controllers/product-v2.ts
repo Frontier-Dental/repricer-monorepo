@@ -12,6 +12,7 @@ import * as httpHelper from "../utility/http-wrappers";
 import * as SessionHelper from "../utility/session-helper";
 import { GetCronSettingsList, GetSlowCronDetails, GetScrapeCrons } from "../services/mysql-v2";
 import logger from "../utility/logger";
+import { mongo } from "mongoose";
 
 export async function showAllProducts(req: Request, res: Response) {
   let pgNo = 0;
@@ -622,6 +623,30 @@ export async function updateToMax(req: Request, res: Response) {
       status: true,
       message: `Update to Max Done Successfully!`,
     });
+}
+
+export async function getExpressCronDetails(req: Request, res: Response) {
+  const selectedProduct = req.params.mpId.trim();
+  const expressCronInfo = await mongoMiddleware.GetExpressCronDetailsByMpId(selectedProduct);
+  return res.json({
+    status: true,
+    details: expressCronInfo,
+  });
+}
+
+export async function updateExpressCronForMpId(req: Request, res: Response) {
+  const selectedProduct = req.params.mpId.trim();
+  const vendorsToRemove = req.body.vendorsToRemove || [];
+  if (vendorsToRemove.length > 0) {
+    for (const vendor of vendorsToRemove) {
+      logger.info(`Removing vendor ${vendor} from Express Cron for MPID ${selectedProduct}`);
+      await mongoMiddleware.Update422StatusByIdAndVendor(selectedProduct, vendor, false);
+    }
+  }
+  return res.json({
+    status: true,
+    details: `Removed selected vendors from Express Cron for MPID : ${selectedProduct} successfully.`,
+  });
 }
 
 /****** PRIVATE FUNCTIONS ******/
