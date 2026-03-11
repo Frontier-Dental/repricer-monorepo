@@ -22,8 +22,9 @@ function switchOffCron(cronId) {
           showErrorToast(data.message);
         }
       },
-      error: function () {
-        alert("Oops unable to connect with server !!");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -53,8 +54,9 @@ function switchOnCron(cronId) {
           showErrorToast(data.message);
         }
       },
-      error: function () {
-        alert("Oops unable to connect with server!!");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -120,8 +122,9 @@ function saveScrapeCron() {
           location.reload();
         }, 5000);
       },
-      error: function () {
-        showErrorToast("Something went wrong, Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   }

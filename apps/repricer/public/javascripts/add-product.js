@@ -157,10 +157,11 @@ $("#add_product_form_all").click(async function () {
         showErrorToast(data.message);
       }
     },
-    error: function () {
+    error: function (error) {
+      const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
       const button = $("#add_product_form_all");
       button.prop("disabled", false).html("Add Product");
-      showErrorToast("Something went wrong. Please try again");
+      showErrorToast(errorMessage);
     },
   });
 });

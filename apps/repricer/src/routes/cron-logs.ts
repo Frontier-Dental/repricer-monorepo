@@ -2,9 +2,11 @@ import { authMiddleware } from "../middleware/auth-middleware";
 import * as cronLogsController from "../controllers/cron_logs";
 
 import express from "express";
+import { apiLimiter } from "../middleware/rate-limiter";
 
 export const cronLogsRouter = express.Router();
 cronLogsRouter.use(authMiddleware);
+cronLogsRouter.use(apiLimiter);
 
 cronLogsRouter.get("/download_json", cronLogsController.downloadLog);
 cronLogsRouter.get("/", cronLogsController.getCronLogs);

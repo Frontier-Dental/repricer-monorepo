@@ -24,6 +24,8 @@ process.on("unhandledRejection", (reason) => {
 });
 
 const app = express();
+// Trust first proxy so req.ip reflects X-Forwarded-For (needed for rate limiting behind nginx/load balancer)
+app.set("trust proxy", 1);
 if (applicationConfig.REQUEST_LOGGING) {
   app.use(morgan("combined"));
 }
