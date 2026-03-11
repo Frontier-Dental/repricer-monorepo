@@ -48,7 +48,9 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
     //eligibleList = await getEligibleListBasedOnHandlingTimeFilter(eligibleList, productItem);
 
     // Set Active vendor list before applying the Badge Indicator check & Sort via Unit Price + Shipping
-    activeNonBadgedVendorList = await filterMapper.FilterBasedOnParams(eligibleList, productItem, "NON_BADGE_ONLY");
+    let nonBadgeDetailsCloned = _.cloneDeep(productItem);
+    nonBadgeDetailsCloned.badgeIndicator = "NON_BADGE_ONLY";
+    activeNonBadgedVendorList = await filterMapper.FilterBasedOnParams(eligibleList, nonBadgeDetailsCloned, "BADGE_INDICATOR");
     activeNonBadgedVendorList = _.sortBy(activeNonBadgedVendorList, [
       (prod) => {
         return (
@@ -467,13 +469,15 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
     //eligibleList = await getEligibleListBasedOnHandlingTimeFilter(eligibleList, productItem);
 
     // Set Active vendor list before applying the Badge Indicator check & Sort via Unit Price
-    activeNonBadgedVendorList = await filterMapper.FilterBasedOnParams(eligibleList, productItem, "NON_BADGE_ONLY");
+    let nonBadgeDetailsCloned = _.cloneDeep(productItem);
+    nonBadgeDetailsCloned.badgeIndicator = "NON_BADGE_ONLY";
+    activeNonBadgedVendorList = await filterMapper.FilterBasedOnParams(eligibleList, nonBadgeDetailsCloned, "BADGE_INDICATOR");
     activeNonBadgedVendorList = _.sortBy(activeNonBadgedVendorList, [
       (prod) => {
         return (
           (
             _.find(prod.priceBreaks, (x) => {
-              if (x.minQty == 1 && x.active == true) return true;
+              if (x.minQty == priceBreak.minQty && x.active == true) return true;
             })! as any
           ).unitPrice + GetShippingPriceForPriceBreak(prod, priceBreak)
         );

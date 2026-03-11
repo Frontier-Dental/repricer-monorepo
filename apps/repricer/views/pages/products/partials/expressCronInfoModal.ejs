@@ -1,0 +1,144 @@
+<div class="modal fade" id="expressCronInfoModal" tabindex="-1" role="dialog"
+  aria-labelledby="expressCronInfoModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-secondary text-white">
+        <h5 class="modal-title" id="expressCronInfoModalLabel">
+          Select Vendors to Remove from Express Cron for:
+          <strong id="selectedMpId"></strong>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="vendor-checkboxes">
+          <div class="form-group row mb-2">
+            <div class="col-6">
+              <strong>VENDOR</strong>
+            </div>
+            <div class="col-6">
+              <strong>REMOVE ?</strong>
+            </div>
+          </div>
+          <hr />
+          <div class="form-group row align-items-center mb-3 border-bottom pb-2">
+            <div class="col-6">
+              <div class="form-check">
+                <!-- <input class="form-check-input vendor-checkbox" type="checkbox" value="tradent" id="vendorTradent"> -->
+                <label class="form-check-label fw-semibold" for="vendorTradent">
+                  <strong>Tradent</strong>
+                </label>
+              </div>
+            </div>
+            <div class="col-6 text-end">
+              <label class="switch">
+                <input type="checkbox" class="vendor-checkbox" name="tradentChecked" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group row align-items-center mb-3 border-bottom pb-2">
+            <div class="col-6">
+              <div class="form-check">
+                <!-- <input class="form-check-input vendor-checkbox" type="checkbox" value="tradent" id="vendorTradent"> -->
+                <label class="form-check-label fw-semibold" for="vendorFrontier">
+                  <strong>Frontier</strong>
+                </label>
+              </div>
+            </div>
+            <div class="col-6 text-end">
+              <label class="switch">
+                <input type="checkbox" class="vendor-checkbox" name="frontierChecked" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group row align-items-center mb-3 border-bottom pb-2">
+            <div class="col-6">
+              <div class="form-check">
+                <!-- <input class="form-check-input vendor-checkbox" type="checkbox" value="tradent" id="vendorTradent"> -->
+                <label class="form-check-label fw-semibold" for="vendorMvp">
+                  <strong>Mvp</strong>
+                </label>
+              </div>
+            </div>
+            <div class="col-6 text-end">
+              <label class="switch">
+                <input type="checkbox" class="vendor-checkbox" name="mvpChecked" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group row align-items-center mb-3 border-bottom pb-2">
+            <div class="col-6">
+              <div class="form-check">
+                <!-- <input class="form-check-input vendor-checkbox" type="checkbox" value="tradent" id="vendorTradent"> -->
+                <label class="form-check-label fw-semibold" for="vendorTopDent">
+                  <strong>TopDent</strong>
+                </label>
+              </div>
+            </div>
+            <div class="col-6 text-end">
+              <label class="switch">
+                <input type="checkbox" class="vendor-checkbox" name="topDentChecked" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group row align-items-center mb-3 border-bottom pb-2">
+            <div class="col-6">
+              <div class="form-check">
+                <!-- <input class="form-check-input vendor-checkbox" type="checkbox" value="tradent" id="vendorTradent"> -->
+                <label class="form-check-label fw-semibold" for="vendorFirstDent">
+                  <strong>FirstDent</strong>
+                </label>
+              </div>
+            </div>
+            <div class="col-6 text-end">
+              <label class="switch">
+                <input type="checkbox" class="vendor-checkbox" name="firstDentChecked" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group row align-items-center mb-3 border-bottom pb-2">
+            <div class="col-6">
+              <div class="form-check">
+                <!-- <input class="form-check-input vendor-checkbox" type="checkbox" value="tradent" id="vendorTradent"> -->
+                <label class="form-check-label fw-semibold" for="vendorTriad">
+                  <strong>Triad</strong>
+                </label>
+              </div>
+            </div>
+            <div class="col-6 text-end">
+              <label class="switch">
+                <input type="checkbox" class="vendor-checkbox" name="triadChecked" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="form-group row align-items-center mb-3 border-bottom pb-2">
+            <div class="col-6">
+              <div class="form-check">
+                <!-- <input class="form-check-input vendor-checkbox" type="checkbox" value="tradent" id="vendorTradent"> -->
+                <label class="form-check-label fw-semibold" for="vendorBiteSupply">
+                  <strong>BiteSupply</strong>
+                </label>
+              </div>
+            </div>
+            <div class="col-6 text-end">
+              <label class="switch">
+                <input type="checkbox" class="vendor-checkbox" name="biteSupplyChecked" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-success ms-3" id="selectAllVendors">Select All</button>
+        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmExpressCronRemoval">Update</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -990,3 +990,29 @@ export const DeleteCronLogsPast15Days = async () => {
   const [cronLogsResult, errorLogsResult] = await Promise.all([dbo.collection(applicationConfig.GET_CRON_LOGS_COLLECTION_NAME!).deleteMany({ time: { $lte: cutoffDate } }), dbo.collection(applicationConfig.ERROR_422_CRON_LOGS!).deleteMany({ time: { $lte: cutoffDate } })]);
   return [cronLogsResult, errorLogsResult];
 };
+
+export const GetExpressCronDetailsByMpId = async (mpId: string) => {
+  let mongoResult: any = null;
+  const dbo = await getMongoDb();
+  mongoResult = await dbo
+    .collection(applicationConfig.ERROR_ITEM_COLLECTION!)
+    .find({ mpId: parseInt(mpId) })
+    .toArray();
+  return mongoResult;
+};
+
+export const Update422StatusByIdAndVendor = async (_mpId: any, _vendor: any, _status: any) => {
+  let mongoResult: any = null;
+  const dbo = await getMongoDb();
+  mongoResult = await dbo.collection(applicationConfig.ERROR_ITEM_COLLECTION!).findOneAndUpdate(
+    { $and: [{ mpId: parseInt(_mpId) }, { vendorName: _vendor.toUpperCase() }] },
+    {
+      $set: {
+        active: _status,
+        nextCronTime: null,
+        updatedOn: new Date(),
+      },
+    }
+  );
+  return mongoResult;
+};
