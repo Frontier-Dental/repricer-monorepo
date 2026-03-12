@@ -79,10 +79,10 @@ app.get("/vite*splat", (req, res) => {
 
 app.use(indexRouter);
 
+app.use("/public/images", express.static("./public/images"));
+
 app.use(notFoundHandler);
 app.use(errorHandler);
-
-app.use("/public/images", express.static("./public/images"));
 
 const PORT = applicationConfig.PORT || 3000;
 process.env.TZ = "Canada/Eastern";
