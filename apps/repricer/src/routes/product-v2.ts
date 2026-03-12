@@ -31,3 +31,5 @@ productV2Router.get("/removeFrom422ForAll", asyncHandler(productV2Controller.rem
 productV2Router.get("/sync_product/:id", asyncHandler(productV2Controller.syncProductDetails));
 productV2Router.post("/updateAllToMax", asyncHandler(productV2Controller.updateToMax));
 productV2Router.post("/updateProductQuantity", asyncHandler(productV2Controller.updateProductQuantity));
+productV2Router.get("/express_cron_details/:mpId", asyncHandler(productV2Controller.getExpressCronDetails));
+productV2Router.post("/remove_vendor_express_cron/:mpId", asyncHandler(productV2Controller.updateExpressCronForMpId));
