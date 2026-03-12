@@ -19,6 +19,7 @@ import { GetConfigurations, GetCronSettingsList, InsertOrUpdateCronSettings, Upd
 import { validateIPAddress } from "../utility/ip-validator";
 import { applicationConfig } from "../utility/config";
 import logger from "../utility/logger";
+import { NotFoundError } from "../errors/custom-errors";
 
 const execFileAsync = (util as any).promisify(execFile);
 
@@ -271,7 +272,7 @@ export async function createCrons(req: Request, res: Response) {
   const generalCronDetails = _.filter(existingCronDetails, (x) => x.IsHidden != true);
   const contextCron = _.first(generalCronDetails);
   if (!contextCron) {
-    throw new Error("No cron found");
+    throw new NotFoundError("cron");
   }
   let newCronList = cronMapping;
   for (let count = 1; count <= countOfCrons; count++) {

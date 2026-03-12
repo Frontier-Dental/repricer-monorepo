@@ -88,10 +88,7 @@ export async function updateProductQuantity(req: Request, res: Response) {
     });
   } catch (error: any) {
     logger.error(`Error calling API: ${error?.response?.data?.message || `Error updating product quantity for mpid ${mpid}`}`);
-    return res.status(500).json({
-      status: false,
-      message: error?.response?.data?.message || `Error updating product quantity for mpid ${mpid}`,
-    });
+    throw error;
   }
 }
 
@@ -643,10 +640,7 @@ export async function exportItems(req: Request, res: Response) {
     response.data.pipe(res);
   } catch (error: any) {
     logger.error(`Error proxying to excel-export service: ${error?.message || "Unknown error"}`);
-    res.status(500).json({
-      error: "Failed to export Excel file",
-      details: error?.message || "Unknown error occurred",
-    });
+    throw error;
   }
 }
 

@@ -2,57 +2,46 @@ import _ from "lodash";
 import express from "express";
 import _codes from "http-status-codes";
 import moment from "moment";
-import {
-  TriggerEmail,
-  TriggerEmailV2,
-} from "../middleware/storage-sense-helpers/email-helper";
+import { TriggerEmail, TriggerEmailV2 } from "../middleware/storage-sense-helpers/email-helper";
 import { Request, Response } from "express";
 import { applicationConfig } from "../utility/config";
+import { asyncHandler } from "../utility/async-handler";
 
 export const notifyController = express.Router();
 /************* PUBLIC APIS *************/
 notifyController.post(
   "/notify/proxy_switch_email",
-  async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const dateTimeStr = moment(new Date()).format("DD-MM-YY HH:mm:ss");
     const subject = `PROXY SWITCH : Proxy Provider Switched at ${dateTimeStr}`;
     const emailBody = await getEmailBodyForProxySwitch(req.body, dateTimeStr);
     await TriggerEmail(emailBody, subject, applicationConfig.MONITOR_EMAIL_ID);
-    return res
-      .status(_codes.OK)
-      .send(`Successfully sent email at ${new Date()}`);
-  },
+    return res.status(_codes.OK).send(`Successfully sent email at ${new Date()}`);
+  })
 );
 
 notifyController.post(
   "/notify/proxy_switch_threshold_email",
-  async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const dateTimeStr = moment(new Date()).format("DD-MM-YY HH:mm:ss");
     const subject = `ATTENTION : THRESHOLD REACHED : No More switch at ${dateTimeStr}`;
-    const emailBody = await getEmailBodyForThresholdProxySwitch(
-      req.body,
-      dateTimeStr,
-    );
+    const emailBody = await getEmailBodyForThresholdProxySwitch(req.body, dateTimeStr);
     await TriggerEmail(emailBody, subject, applicationConfig.MONITOR_EMAIL_ID);
-    return res
-      .status(_codes.OK)
-      .send(`Successfully sent email at ${new Date()}`);
-  },
+    return res.status(_codes.OK).send(`Successfully sent email at ${new Date()}`);
+  })
 );
 
-notifyController.post("/notify/user_creation_email", async (req, res) => {
-  const userInfo = req.body;
-  const dateTimeStr = moment(new Date()).format("DD-MM-YY HH:mm:ss");
-  const subject = `WELCOME TO REPRICER : User Created Successfully on ${dateTimeStr}`;
-  const emailBody = await getEmailBodyForUserCreation(req.body);
-  await TriggerEmailV2(
-    emailBody,
-    subject,
-    applicationConfig.MONITOR_EMAIL_ID,
-    userInfo.userName,
-  );
-  return res.status(_codes.OK).send(`Successfully sent email at ${new Date()}`);
-});
+notifyController.post(
+  "/notify/user_creation_email",
+  asyncHandler(async (req: Request, res: Response) => {
+    const userInfo = req.body;
+    const dateTimeStr = moment(new Date()).format("DD-MM-YY HH:mm:ss");
+    const subject = `WELCOME TO REPRICER : User Created Successfully on ${dateTimeStr}`;
+    const emailBody = await getEmailBodyForUserCreation(req.body);
+    await TriggerEmailV2(emailBody, subject, applicationConfig.MONITOR_EMAIL_ID, userInfo.userName);
+    return res.status(_codes.OK).send(`Successfully sent email at ${new Date()}`);
+  })
+);
 
 /************* PRIVATE FUNCTIONS *************/
 
@@ -70,10 +59,7 @@ async function getEmailBodyForProxySwitch(payload: any[], dateTimeStr: any) {
   return str;
 }
 
-async function getEmailBodyForThresholdProxySwitch(
-  payload: any[],
-  dateTimeStr: any,
-) {
+async function getEmailBodyForThresholdProxySwitch(payload: any[], dateTimeStr: any) {
   let str = `<h2>Hi, <br>Please note that the Proxy Provider for the below crons can no longer be switched as no more alternate Proxy Providers are available. Please look onto the accounts of all available proxy providers and change the details manually.<h2><br/> <br>The details of the switch is given below :</br><table border="1"><thead><tr><th scope="col">#</th><th scope="col">Cron Name</th><th scope="col">Existing Proxy Provider</th></tr></thead><tbody>`;
   let counter = 1;
   for (const info of payload) {

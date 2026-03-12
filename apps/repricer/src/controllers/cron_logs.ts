@@ -15,14 +15,7 @@ import { Request, Response } from "express";
 import * as ftpMiddleware from "../services/ftp";
 import * as scrapeOnlyMiddleware from "../middleware/scrape-only";
 import { applicationConfig } from "../utility/config";
-import {
-  GetCronSettingsList,
-  GetSlowCronDetails,
-  GetFilteredCrons,
-  GetScrapeCrons,
-  GetExportFileNamesByStatus,
-  GetExportFileStatus,
-} from "../services/mysql-v2";
+import { GetCronSettingsList, GetSlowCronDetails, GetFilteredCrons, GetScrapeCrons, GetExportFileNamesByStatus, GetExportFileStatus } from "../services/mysql-v2";
 
 let _contextLog: any = null;
 
@@ -58,9 +51,7 @@ function formatDateToEDT(date: Date): string {
     timeZoneName: "long",
   });
   const tzParts = tzFormatter.formatToParts(date);
-  const tzName =
-    tzParts.find((p) => p.type === "timeZoneName")?.value ||
-    "Eastern Daylight Time";
+  const tzName = tzParts.find((p) => p.type === "timeZoneName")?.value || "Eastern Daylight Time";
 
   // Determine offset based on whether it's DST or not
   // EDT is -4, EST is -5
@@ -102,16 +93,8 @@ export async function getCronLogs(req: Request, res: Response) {
     }
   }
 
-  let cronLogs = await mongoMiddleware.GetCronLogs(
-    pgNo,
-    type as any,
-    cronId,
-    date,
-  );
-  const logsList: any = cronLogs.mongoResult.sort(
-    (a: any, b: any) =>
-      (new Date(a.time as any) as any) - (new Date(b.time as any) as any),
-  );
+  let cronLogs = await mongoMiddleware.GetCronLogs(pgNo, type as any, cronId, date);
+  const logsList: any = cronLogs.mongoResult.sort((a: any, b: any) => (new Date(a.time as any) as any) - (new Date(b.time as any) as any));
   if (logsList && logsList.length > 0) {
     let idx = 0;
     for (let log of logsList) {
@@ -127,9 +110,7 @@ export async function getCronLogs(req: Request, res: Response) {
         _$cronLog.failureScrapeCount = getScrapeCountByFlag(log, 0); // FAILURE:0
         _$cronLog.repriceFailure422Count = getRepriceFailureByType(log, 1); //422-Error:1
         _$cronLog.repriceFailureOtherCount = getRepriceFailureByType(log, 0); //Any Other Error:0
-        _$cronLog.cronName = cronSettings.find(
-          (t: any) => t.CronId == log.cronId,
-        )?.CronName;
+        _$cronLog.cronName = cronSettings.find((t: any) => t.CronId == log.cronId)?.CronName;
         logViewModel.unshift(_$cronLog);
       }
     }
@@ -139,26 +120,20 @@ export async function getCronLogs(req: Request, res: Response) {
     cronStatus.forEach((x: any) => {
       if (x.cronId) {
         try {
-          x.cronName = cronSettings.find(
-            (t: any) => t.CronId == x.cronId,
-          )?.CronName;
+          x.cronName = cronSettings.find((t: any) => t.CronId == x.cronId)?.CronName;
         } catch (ex) {
           x.cronName = x.cronId;
         }
       }
     });
   }
-  let filterCronLogs = await mongoMiddleware.GetFilterCronLogsByLimit(
-    applicationConfig.FILTER_CRON_LOGS_LIMIT,
-  );
+  let filterCronLogs = await mongoMiddleware.GetFilterCronLogsByLimit(applicationConfig.FILTER_CRON_LOGS_LIMIT);
   const filterCronDetails = await GetFilteredCrons();
   _.forEach(filterCronLogs, (x: any) => {
     x.filterDate = moment(x.filterDate).format("DD-MM-YY HH:mm:ss");
     x.startTime = moment(x.startTime).format("DD-MM-YY HH:mm:ss");
     x.endTime = moment(x.endTime).format("DD-MM-YY HH:mm:ss");
-    x.cronName = filterCronDetails.find(
-      (c: any) => c.cronId == x.contextCronId,
-    )?.cronName;
+    x.cronName = filterCronDetails.find((c: any) => c.cronId == x.contextCronId)?.cronName;
   });
   let params = {
     items: logViewModel,
@@ -209,9 +184,7 @@ export async function getRawJson(req: Request, res: Response) {
         }
       }
     });
-    _contextLog.logs.scrapedOn = new Date(
-      _contextLog.logs.scrapedOn,
-    ).toLocaleString();
+    _contextLog.logs.scrapedOn = new Date(_contextLog.logs.scrapedOn).toLocaleString();
     _contextLog.serializedData = JSON.stringify(_contextLog, undefined, 4);
     _contextLog.parentIndex = idx;
     res.render("pages/dashboard/rawJson", {
@@ -264,14 +237,8 @@ export async function exportData(req: Request, res: Response) {
   const itemCollection = await getExcelItemCollection(cronObject);
   // console.log(itemCollection);
   worksheet.addRows(itemCollection);
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  );
-  res.setHeader(
-    "Content-Disposition",
-    "attachment; filename=" + `Item_Detailed.xlsx`,
-  );
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", "attachment; filename=" + `Item_Detailed.xlsx`);
 
   return workbook.xlsx.write(res).then(function () {
     res.status(200).end();
@@ -293,9 +260,7 @@ export async function exportBulkData(req: Request, res: Response) {
   });
   if (queueExport._id) {
     res.render("pages/msgDisplay", {
-      response:
-        "The export will finish shortly and be available in downloads by the name " +
-        filename,
+      response: "The export will finish shortly and be available in downloads by the name " + filename,
       groupName: "item",
       userRole: (req as any).session.users_id.userRole,
     });
@@ -317,11 +282,7 @@ export async function exportBulkDataCRON() {
     queuedExport = await mongoMiddleware.FetchQueuedExport();
     console.log(queuedExport);
     if (queuedExport != null) {
-      let updateExportStatus = await mongoMiddleware.UpdateExportStatus(
-        queuedExport._id,
-        "In Progress",
-        {},
-      );
+      let updateExportStatus = await mongoMiddleware.UpdateExportStatus(queuedExport._id, "In Progress", {});
       if (updateExportStatus?.lastErrorObject?.updatedExisting) {
         date.fromDate = new Date(queuedExport.fromDate);
         date.toDate = new Date(queuedExport.toDate);
@@ -332,18 +293,9 @@ export async function exportBulkDataCRON() {
 
           // creating cron object
           let exportStartedOn = new Date();
-          cronLogs = (await mongoMiddleware.GetCronLogs(
-            undefined as any,
-            "",
-            "",
-            date,
-          )) as any;
+          cronLogs = (await mongoMiddleware.GetCronLogs(undefined as any, "", "", date)) as any;
           let logVM: any[] = [];
-          let logsList = cronLogs.mongoResult.sort(
-            (a: any, b: any) =>
-              (new Date(a.time as any) as any) -
-              (new Date(b.time as any) as any),
-          );
+          let logsList = cronLogs.mongoResult.sort((a: any, b: any) => (new Date(a.time as any) as any) - (new Date(b.time as any) as any));
           if (logsList && logsList.length > 0) {
             let idx = 0;
             logsList.forEach((log: any) => {
@@ -364,17 +316,12 @@ export async function exportBulkDataCRON() {
           if (queuedExport.lastIndex < cronObj.length) {
             var startIndex = queuedExport.lastIndex + 1;
             // var lastIndex = Math.min(queuedExport.lastIndex + 1 + batchLen, cronObj.length)
-            var lastIndex = Math.min(
-              queuedExport.lastIndex + batchLen,
-              cronObj.length,
-            );
+            var lastIndex = Math.min(queuedExport.lastIndex + batchLen, cronObj.length);
             // var cronObj = logVM.slice(startIndex, lastIndex)
             var cronObj = logVM.slice(startIndex, lastIndex + 1);
             // console.log(cronObj)
             console.log({ lastIndex });
-            console.log(
-              "cronObj created for batch " + startIndex + " - " + lastIndex,
-            );
+            console.log("cronObj created for batch " + startIndex + " - " + lastIndex);
 
             var itemCollection: any[] = [],
               rowCount = 0,
@@ -387,111 +334,59 @@ export async function exportBulkDataCRON() {
               console.log("Fetched item collection " + ++cObj);
             }
             console.log("itemCollection created...");
-            const bulkItemCollection: any[] = [].concat.apply(
-              [],
-              itemCollection,
-            );
+            const bulkItemCollection: any[] = [].concat.apply([], itemCollection);
             console.log({ bulkItemCollection: bulkItemCollection.length });
             var progress = "Completed batch " + startIndex + " - " + lastIndex;
 
-            fs.writeFile(
-              "./exports/" +
-                queuedExport.fileName +
-                "_" +
-                startIndex +
-                "_" +
-                lastIndex +
-                ".json",
-              JSON.stringify(bulkItemCollection),
-              async (error) => {
-                console.log(progress);
-                if (error) {
-                  console.log(error);
-                  throw error;
-                } else {
-                  console.log("Updating export status");
-                  updateExportStatus = await mongoMiddleware.UpdateExportStatus(
-                    queuedExport._id,
-                    "Batched",
-                    {
-                      exportStartedOn,
-                      dates,
-                      rowCount,
-                      errorRowCount,
-                      lastIndex,
-                      progress,
-                    },
-                  );
-                  console.log(updateExportStatus);
-                }
-              },
-            );
+            fs.writeFile("./exports/" + queuedExport.fileName + "_" + startIndex + "_" + lastIndex + ".json", JSON.stringify(bulkItemCollection), async (error) => {
+              console.log(progress);
+              if (error) {
+                console.log(error);
+                throw error;
+              } else {
+                console.log("Updating export status");
+                updateExportStatus = await mongoMiddleware.UpdateExportStatus(queuedExport._id, "Batched", {
+                  exportStartedOn,
+                  dates,
+                  rowCount,
+                  errorRowCount,
+                  lastIndex,
+                  progress,
+                });
+                console.log(updateExportStatus);
+              }
+            });
           } else {
             // Merging JSONs into one worksheet
             console.log("All batches complete");
             let exportFinishedOn = new Date();
-            updateExportStatus = await mongoMiddleware.UpdateExportStatus(
-              queuedExport._id,
-              "In Progress",
-              {
-                exportFinishedOn,
-                progress: "All batches complete",
-              },
-            );
+            updateExportStatus = await mongoMiddleware.UpdateExportStatus(queuedExport._id, "In Progress", {
+              exportFinishedOn,
+              progress: "All batches complete",
+            });
 
             // var startIdx = 0, lastIdx = Math.min(startIdx + batchLen,queuedExport.lastIndex), batchedItemCollection = [], i = 0
             var startIdx = 0,
-              lastIdx = Math.min(
-                startIdx + batchLen - 1,
-                queuedExport.lastIndex,
-              ),
+              lastIdx = Math.min(startIdx + batchLen - 1, queuedExport.lastIndex),
               batchedItemCollection: any[] = [],
               i = 0;
             // while (i < Math.ceil(queuedExport.lastIndex / (batchLen + 1))) {
             while (i < Math.ceil(queuedExport.lastIndex / batchLen)) {
-              const file = await fs.promises.readFile(
-                "./exports/" +
-                  queuedExport.fileName +
-                  "_" +
-                  startIdx +
-                  "_" +
-                  lastIdx +
-                  ".json",
-              );
-              fs.unlinkSync(
-                "./exports/" +
-                  queuedExport.fileName +
-                  "_" +
-                  startIdx +
-                  "_" +
-                  lastIdx +
-                  ".json",
-              );
+              const file = await fs.promises.readFile("./exports/" + queuedExport.fileName + "_" + startIdx + "_" + lastIdx + ".json");
+              fs.unlinkSync("./exports/" + queuedExport.fileName + "_" + startIdx + "_" + lastIdx + ".json");
               let parsedData = JSON.parse(file as any);
               batchedItemCollection.push(parsedData as never);
               // console.log('./exports/' + queuedExport.fileName + '_' + startIdx + '_' + lastIdx + '.json')
-              console.log(
-                startIdx +
-                  "-" +
-                  lastIdx +
-                  " batch length: " +
-                  parsedData.length,
-              );
+              console.log(startIdx + "-" + lastIdx + " batch length: " + parsedData.length);
               startIdx = lastIdx + 1;
               // lastIdx = Math.min(startIdx + batchLen,queuedExport.lastIndex)
-              lastIdx = Math.min(
-                startIdx + batchLen - 1,
-                queuedExport.lastIndex,
-              );
+              lastIdx = Math.min(startIdx + batchLen - 1, queuedExport.lastIndex);
               i++;
             }
             console.log({
               batchedItemCollection: batchedItemCollection.length,
             });
-            const mergedItemCollection: any[] = [].concat.apply(
-              [],
-              batchedItemCollection,
-            );
+            const mergedItemCollection: any[] = [].concat.apply([], batchedItemCollection);
 
             const workbook = new excelJs.Workbook();
             const worksheet = workbook.addWorksheet("ItemList");
@@ -517,31 +412,22 @@ export async function exportBulkDataCRON() {
             worksheet.addRows(mergedItemCollection);
             console.log("worksheet created...");
 
-            workbook.xlsx
-              .writeFile("./exports/" + queuedExport.fileName + ".xlsx")
-              .then(async () => {
-                let exportFinishedOn = new Date();
-                // console.log({ exportStartedOn, exportFinishedOn, dates, rowCount, errorRowCount })
-                updateExportStatus = await mongoMiddleware.UpdateExportStatus(
-                  queuedExport._id,
-                  "Done",
-                  {
-                    exportFinishedOn,
-                    dates: cronObj.length,
-                    rowCount,
-                    progress: "Workbook created",
-                  },
-                );
-                console.log("Workbook created...");
+            workbook.xlsx.writeFile("./exports/" + queuedExport.fileName + ".xlsx").then(async () => {
+              let exportFinishedOn = new Date();
+              // console.log({ exportStartedOn, exportFinishedOn, dates, rowCount, errorRowCount })
+              updateExportStatus = await mongoMiddleware.UpdateExportStatus(queuedExport._id, "Done", {
+                exportFinishedOn,
+                dates: cronObj.length,
+                rowCount,
+                progress: "Workbook created",
               });
+              console.log("Workbook created...");
+            });
           }
         } catch (err) {
           console.log("CRON Log: Export error...");
           console.log(err);
-          updateExportStatus = await mongoMiddleware.UpdateExportStatus(
-            queuedExport._id,
-            "Error",
-          );
+          updateExportStatus = await mongoMiddleware.UpdateExportStatus(queuedExport._id, "Error");
         }
       } else {
         console.log("Status update error...");
@@ -568,36 +454,11 @@ async function getExcelItemCollection(cronObject: any, errorRows = 0) {
         }
         let _contextRow: any = _.cloneDeep(_.first(itemDetails));
         _contextRow.cronTime = String(cronObject.logTime);
-        _contextRow.vendorProductId = row.logs.repriceData
-          ? row.logs.repriceData.vendorProductId
-          : "";
-        _contextRow.oldPrice =
-          row.logs.repriceData && row.logs.repriceData.repriceDetails
-            ? row.logs.repriceData.repriceDetails.oldPrice
-            : row.logs.repriceData
-              ? await getMultiPriceOldPrice(
-                  row.logs.repriceData.listOfRepriceDetails,
-                )
-              : "N/A";
-        _contextRow.repricedPrice =
-          row.logs.repriceData && row.logs.repriceData.repriceDetails
-            ? row.logs.repriceData.repriceDetails.newPrice
-            : row.logs.repriceData
-              ? await getMultiPriceNewPrice(
-                  row.logs.repriceData.listOfRepriceDetails,
-                )
-              : "N/A";
-        _contextRow.isPriceUpdated = row.priceUpdated
-          ? row.priceUpdated
-          : "FALSE";
-        _contextRow.comments =
-          row.logs.repriceData && row.logs.repriceData.repriceDetails
-            ? row.logs.repriceData.repriceDetails.explained
-            : row.logs.repriceData
-              ? await getMultiPriceComments(
-                  row.logs.repriceData.listOfRepriceDetails,
-                )
-              : "N/A";
+        _contextRow.vendorProductId = row.logs.repriceData ? row.logs.repriceData.vendorProductId : "";
+        _contextRow.oldPrice = row.logs.repriceData && row.logs.repriceData.repriceDetails ? row.logs.repriceData.repriceDetails.oldPrice : row.logs.repriceData ? await getMultiPriceOldPrice(row.logs.repriceData.listOfRepriceDetails) : "N/A";
+        _contextRow.repricedPrice = row.logs.repriceData && row.logs.repriceData.repriceDetails ? row.logs.repriceData.repriceDetails.newPrice : row.logs.repriceData ? await getMultiPriceNewPrice(row.logs.repriceData.listOfRepriceDetails) : "N/A";
+        _contextRow.isPriceUpdated = row.priceUpdated ? row.priceUpdated : "FALSE";
+        _contextRow.comments = row.logs.repriceData && row.logs.repriceData.repriceDetails ? row.logs.repriceData.repriceDetails.explained : row.logs.repriceData ? await getMultiPriceComments(row.logs.repriceData.listOfRepriceDetails) : "N/A";
         // _contextRow.jsonData = JSON.stringify(row.logs,undefined,4);
         collection.push(_contextRow);
       } catch (err) {
@@ -620,16 +481,10 @@ export async function listDownloads(req: Request, res: Response) {
       if (fileDetailsInDb) {
         let obj = {
           name: fileName.name,
-          createdOn: moment(fileDetailsInDb.createdTime).format(
-            "DD-MM-YY HH:mm:ss",
-          ),
+          createdOn: moment(fileDetailsInDb.createdTime).format("DD-MM-YY HH:mm:ss"),
           status: fileDetailsInDb.status,
-          updatedOn: moment(fileDetailsInDb.updatedTime).format(
-            "DD-MM-YY HH:mm:ss",
-          ),
-          updatedBy: fileDetailsInDb.requestedBy
-            ? fileDetailsInDb.requestedBy
-            : "-",
+          updatedOn: moment(fileDetailsInDb.updatedTime).format("DD-MM-YY HH:mm:ss"),
+          updatedBy: fileDetailsInDb.requestedBy ? fileDetailsInDb.requestedBy : "-",
         };
         exportsList.push(obj as never);
       }
@@ -691,22 +546,13 @@ export async function updatePrice(req: Request, res: Response) {
   const cronObject = await getCustomLogsDetailsById(idx);
   if (cronObject) {
     _contextLog = cronObject.logData.logs.find((x: any) => x.productId == mpid);
-    const ownLog = _contextLog.logs.sourceResult.find(
-      (x: any) => x.vendorId == envInfo.ownVendorId,
-    );
+    const ownLog = _contextLog.logs.sourceResult.find((x: any) => x.vendorId == envInfo.ownVendorId);
     _contextLog.priceUpdated = true;
     _contextLog.priceUpdatedOn = new Date();
-    const request = new UpdateRequest(
-      mpid,
-      _contextLog.logs.repriceData.vendorProductCode,
-      _contextLog.logs.repriceData.repriceDetails.newPrice,
-      ownLog.inventory,
-    );
+    const request = new UpdateRequest(mpid, _contextLog.logs.repriceData.vendorProductCode, _contextLog.logs.repriceData.repriceDetails.newPrice, ownLog.inventory);
     const updatedResponse = await httpMiddleware.updatePrice(request);
     _contextLog.priceUpdateResponse = updatedResponse;
-    const updatePriceInDb = await mongoMiddleware.UpdateCronLogPostPriceUpdate(
-      cronObject.logData,
-    );
+    const updatePriceInDb = await mongoMiddleware.UpdateCronLogPostPriceUpdate(cronObject.logData);
     return res.json({
       status: true,
       message: `Price updated successfully for ${mpid}.Please wait for sometime for changes to reflect.`,
@@ -721,27 +567,13 @@ export async function updateAll(req: Request, res: Response) {
   let listOfProducts: any[] = [];
   if (cronObject) {
     for (const product of cronObject.logData.logs) {
-      if (
-        product.logs.repriceData.repriceDetails.newPrice != "N/A" &&
-        product.logs.repriceData.repriceDetails.newPrice !=
-          product.logs.repriceData.repriceDetails.oldPrice
-      ) {
+      if (product.logs.repriceData.repriceDetails.newPrice != "N/A" && product.logs.repriceData.repriceDetails.newPrice != product.logs.repriceData.repriceDetails.oldPrice) {
         product.priceUpdated = true;
         product.priceUpdatedOn = new Date();
-        const ownLog = product.logs.sourceResult.find(
-          (x: any) => x.vendorId == envInfo.ownVendorId,
-        );
-        const request = new UpdateRequest(
-          product.productId,
-          product.logs.repriceData.vendorProductCode,
-          product.logs.repriceData.repriceDetails.newPrice,
-          ownLog.inventory,
-        );
+        const ownLog = product.logs.sourceResult.find((x: any) => x.vendorId == envInfo.ownVendorId);
+        const request = new UpdateRequest(product.productId, product.logs.repriceData.vendorProductCode, product.logs.repriceData.repriceDetails.newPrice, ownLog.inventory);
         listOfProducts.push(request as never);
-        const updatePriceInDb =
-          await mongoMiddleware.UpdateCronLogPostPriceUpdate(
-            cronObject.logData,
-          );
+        const updatePriceInDb = await mongoMiddleware.UpdateCronLogPostPriceUpdate(cronObject.logData);
       }
     }
     if (listOfProducts.length > 0) {
@@ -749,8 +581,7 @@ export async function updateAll(req: Request, res: Response) {
     }
     return res.json({
       status: true,
-      message:
-        "Price updated successfully for all the products.Please wait for sometime for changes to reflect.",
+      message: "Price updated successfully for all the products.Please wait for sometime for changes to reflect.",
     });
   }
 }
@@ -758,9 +589,7 @@ export async function updateAll(req: Request, res: Response) {
 export async function updatePriceExternal(req: Request, res: Response) {
   const updatedRequest = req.body;
   const updatedResponse = await httpMiddleware.updatePrice(updatedRequest);
-  console.log(
-    `${updatedRequest.payload.cronName} : PRICE_UPDATE_SUCCESS : ${JSON.stringify(updatedResponse)}`,
-  );
+  console.log(`${updatedRequest.payload.cronName} : PRICE_UPDATE_SUCCESS : ${JSON.stringify(updatedResponse)}`);
   return res.json({
     status: true,
     message: updatedResponse,
@@ -807,8 +636,7 @@ async function getCustomLogsDetailsById(logId: any) {
 
 function getRepricerCount(logList: any) {
   if (logList) {
-    if (logList.RepricedProductCount)
-      return logList.RepricedProductCount.toString();
+    if (logList.RepricedProductCount) return logList.RepricedProductCount.toString();
     let repricedProductList = 0;
     _.forEach(logList.logs, (vendorLog: any) => {
       if (vendorLog.length > 0) {
@@ -831,20 +659,11 @@ function getScrapeCountByFlag(logList: any, flag: any) {
       if (vendorLogs.length > 0) {
         _.forEach(vendorLogs, (x: any) => {
           if (flag == 1) {
-            if (
-              x.logs &&
-              !_.includes(uniqueProductArray, x.productId.trim()) &&
-              (x.logs.repriceData || x.logs.listOfRepriceDetails)
-            ) {
+            if (x.logs && !_.includes(uniqueProductArray, x.productId.trim()) && (x.logs.repriceData || x.logs.listOfRepriceDetails)) {
               uniqueProductArray.push(x.productId.trim());
             }
           } else if (flag == 0) {
-            if (
-              x.logs &&
-              !_.includes(uniqueProductArray, x.productId.trim()) &&
-              !x.logs.repriceData &&
-              !x.logs.listOfRepriceDetails
-            ) {
+            if (x.logs && !_.includes(uniqueProductArray, x.productId.trim()) && !x.logs.repriceData && !x.logs.listOfRepriceDetails) {
               uniqueProductArray.push(x.productId.trim());
             }
           }
@@ -862,21 +681,12 @@ function getRepriceFailureByType(logList: any, flag: any) {
       if (vendorLogs.length > 0) {
         _.forEach(vendorLogs, (x: any) => {
           if (flag == 1) {
-            if (
-              x.priceUpdateResponse &&
-              x.priceUpdateResponse.message &&
-              x.priceUpdateResponse.message.indexOf("ERROR:422") >= 0
-            ) {
+            if (x.priceUpdateResponse && x.priceUpdateResponse.message && x.priceUpdateResponse.message.indexOf("ERROR:422") >= 0) {
               resultantCount++;
               //return false;
             }
           } else if (flag == 0) {
-            if (
-              x.priceUpdateResponse &&
-              x.priceUpdateResponse.message &&
-              x.priceUpdateResponse.message.statusCode &&
-              x.priceUpdateResponse.message.statusCode != 200
-            ) {
+            if (x.priceUpdateResponse && x.priceUpdateResponse.message && x.priceUpdateResponse.message.statusCode && x.priceUpdateResponse.message.statusCode != 200) {
               resultantCount++;
               //return false;
             }
@@ -908,14 +718,8 @@ export async function exportDataV2(req: Request, res: Response) {
   ];
   const itemCollection = await getExcelItemCollectionV2(cronObject);
   worksheet.addRows(itemCollection);
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  );
-  res.setHeader(
-    "Content-Disposition",
-    "attachment; filename=" + `Item_Detailed.xlsx`,
-  );
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", "attachment; filename=" + `Item_Detailed.xlsx`);
 
   return workbook.xlsx.write(res).then(function () {
     res.status(200).end();
@@ -935,39 +739,12 @@ async function getExcelItemCollectionV2(cronObject: any, errorRows = 0) {
             _contextRow.cronTime = cronObject.logTime;
             _contextRow.vendorName = vRow.vendor;
             _contextRow.mpid = vRow.productId;
-            _contextRow.vendorProductId = vRow.logs.repriceData
-              ? vRow.logs.repriceData.vendorProductId
-              : "";
-            _contextRow.productName = vRow.logs.repriceData
-              ? vRow.logs.repriceData.productName
-              : "";
-            _contextRow.oldPrice =
-              vRow.logs.repriceData && vRow.logs.repriceData.repriceDetails
-                ? vRow.logs.repriceData.repriceDetails.oldPrice
-                : vRow.logs.repriceData
-                  ? await getMultiPriceOldPrice(
-                      vRow.logs.repriceData.listOfRepriceDetails,
-                    )
-                  : "N/A";
-            _contextRow.repricedPrice =
-              vRow.logs.repriceData && vRow.logs.repriceData.repriceDetails
-                ? vRow.logs.repriceData.repriceDetails.newPrice
-                : vRow.logs.repriceData
-                  ? await getMultiPriceNewPrice(
-                      vRow.logs.repriceData.listOfRepriceDetails,
-                    )
-                  : "N/A";
-            _contextRow.isPriceUpdated = vRow.priceUpdated
-              ? vRow.priceUpdated
-              : "FALSE";
-            _contextRow.comments =
-              vRow.logs.repriceData && vRow.logs.repriceData.repriceDetails
-                ? vRow.logs.repriceData.repriceDetails.explained
-                : vRow.logs.repriceData
-                  ? await getMultiPriceComments(
-                      vRow.logs.repriceData.listOfRepriceDetails,
-                    )
-                  : "N/A";
+            _contextRow.vendorProductId = vRow.logs.repriceData ? vRow.logs.repriceData.vendorProductId : "";
+            _contextRow.productName = vRow.logs.repriceData ? vRow.logs.repriceData.productName : "";
+            _contextRow.oldPrice = vRow.logs.repriceData && vRow.logs.repriceData.repriceDetails ? vRow.logs.repriceData.repriceDetails.oldPrice : vRow.logs.repriceData ? await getMultiPriceOldPrice(vRow.logs.repriceData.listOfRepriceDetails) : "N/A";
+            _contextRow.repricedPrice = vRow.logs.repriceData && vRow.logs.repriceData.repriceDetails ? vRow.logs.repriceData.repriceDetails.newPrice : vRow.logs.repriceData ? await getMultiPriceNewPrice(vRow.logs.repriceData.listOfRepriceDetails) : "N/A";
+            _contextRow.isPriceUpdated = vRow.priceUpdated ? vRow.priceUpdated : "FALSE";
+            _contextRow.comments = vRow.logs.repriceData && vRow.logs.repriceData.repriceDetails ? vRow.logs.repriceData.repriceDetails.explained : vRow.logs.repriceData ? await getMultiPriceComments(vRow.logs.repriceData.listOfRepriceDetails) : "N/A";
             collection.push(_contextRow);
           }
         }
@@ -983,17 +760,14 @@ async function getExcelItemCollectionV2(cronObject: any, errorRows = 0) {
 
 export async function getFilterCronLogsByLimit(req: Request, res: Response) {
   const logsLimit = parseInt(req.params.noOfLogs);
-  let filterCronLogsResult =
-    await mongoMiddleware.GetFilterCronLogsByLimit(logsLimit);
+  let filterCronLogsResult = await mongoMiddleware.GetFilterCronLogsByLimit(logsLimit);
   if (filterCronLogsResult && filterCronLogsResult.length > 0) {
     const filterCronDetails = await GetFilteredCrons();
     _.forEach(filterCronLogsResult, (x: any) => {
       x.filterDate = moment(x.filterDate).format("DD-MM-YY HH:mm:ss");
       x.startTime = moment(x.startTime).format("DD-MM-YY HH:mm:ss");
       x.endTime = moment(x.endTime).format("DD-MM-YY HH:mm:ss");
-      x.cronName = filterCronDetails.find(
-        (c: any) => c.cronId == x.contextCronId,
-      ).cronName;
+      x.cronName = filterCronDetails.find((c: any) => c.cronId == x.contextCronId).cronName;
     });
   }
   return res.json({
@@ -1012,9 +786,7 @@ async function getInProgressRegularSecondaryAndExpressCrons() {
     cronStatus.forEach((x: any) => {
       if (x.cronId) {
         try {
-          x.cronName = cronSettings.find(
-            (t: any) => t.CronId == x.cronId,
-          )?.CronName;
+          x.cronName = cronSettings.find((t: any) => t.CronId == x.cronId)?.CronName;
         } catch (ex) {
           x.cronName = x.cronId;
         }
@@ -1038,12 +810,7 @@ export async function getInProgressRegularCrons(req: Request, res: Response) {
       cronStatus: cronStatus || [],
     });
   } catch (error) {
-    console.error("Error getting in-progress regular crons:", error);
-    return res.json({
-      status: false,
-      cronStatus: [],
-      error: error,
-    });
+    throw error;
   }
 }
 
@@ -1058,14 +825,11 @@ export async function getCurrentTasks(req: Request, res: Response) {
 
 export async function getInProgressScrapeCrons(req: Request, res: Response) {
   try {
-    const scrapeCronStatus =
-      await scrapeOnlyMiddleware.GetRecentInProgressScrapeRuns();
+    const scrapeCronStatus = await scrapeOnlyMiddleware.GetRecentInProgressScrapeRuns();
 
     const enrichedCronStatus = scrapeCronStatus.map((item: any) => {
       return {
-        cronTime: item.CronStartTime
-          ? formatDateToEDT(new Date(item.CronStartTime + " GMT-0400"))
-          : "-",
+        cronTime: item.CronStartTime ? formatDateToEDT(new Date(item.CronStartTime + " GMT-0400")) : "-",
         keyGenId: item.KeyGenId,
         cronName: item.CronName,
         eligibleCount: item.EligibleCount || 0,
@@ -1079,12 +843,7 @@ export async function getInProgressScrapeCrons(req: Request, res: Response) {
       scrapeCronStatus: enrichedCronStatus || [],
     });
   } catch (error) {
-    console.error("Error getting in-progress scrape crons:", error);
-    return res.json({
-      status: false,
-      scrapeCronStatus: [],
-      error: error,
-    });
+    throw error;
   }
 }
 
@@ -1108,13 +867,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   };
 
   // Check if this is an initial page load (no search performed)
-  const isInitialLoad =
-    !req.query.fromDate &&
-    !req.query.toDate &&
-    !req.query.pgno &&
-    !req.query.cronId &&
-    !req.query.cronType &&
-    !req.query.totalRecords;
+  const isInitialLoad = !req.query.fromDate && !req.query.toDate && !req.query.pgno && !req.query.cronId && !req.query.cronType && !req.query.totalRecords;
 
   if (req.query.fromDate && req.query.toDate) {
     date.fromDate = new Date(req.query.fromDate as any);
@@ -1141,9 +894,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
     pgLimit = totalRecords; //temp
   }
 
-  const type = req.query.cronType
-    ? (req.query.cronType as any)
-    : "ALL_EXCEPT_422";
+  const type = req.query.cronType ? (req.query.cronType as any) : "ALL_EXCEPT_422";
 
   let group = "";
   let cronId = "";
@@ -1155,23 +906,9 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
     const slowCronSettings = await GetSlowCronDetails();
     const scrapeOnlyCronSettings = await GetScrapeCrons();
     // Combine all cron settings
-    let cronSettings = _.concat(
-      cronSettingsBase,
-      slowCronSettings,
-      scrapeOnlyCronSettings,
-    );
+    let cronSettings = _.concat(cronSettingsBase, slowCronSettings, scrapeOnlyCronSettings);
 
-    let cronTypes = [
-      "ALL_EXCEPT_422",
-      "Regular",
-      "SLOWCRON",
-      "Manual",
-      "422Error",
-      "OVERRIDE_RUN",
-      "FEED_RUN",
-      "All",
-      "SCRAPE_ONLY",
-    ];
+    let cronTypes = ["ALL_EXCEPT_422", "Regular", "SLOWCRON", "Manual", "422Error", "OVERRIDE_RUN", "FEED_RUN", "All", "SCRAPE_ONLY"];
 
     let params = {
       filterCron: "",
@@ -1208,11 +945,7 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   const cronStatus = await mongoMiddleware.GetLatestCronStatus();
 
   // Combine all cron settings
-  let cronSettings = _.concat(
-    cronSettingsBase,
-    slowCronSettings,
-    scrapeOnlyCronSettings,
-  );
+  let cronSettings = _.concat(cronSettingsBase, slowCronSettings, scrapeOnlyCronSettings);
 
   // Create a map for O(1) lookup instead of using find() repeatedly
   const cronSettingsMap = new Map();
@@ -1239,34 +972,16 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
   let cronLogs: any = null;
   if (type == "SCRAPE_ONLY") {
     if (cronId != "") {
-      cronLogs = await scrapeOnlyMiddleware.GetRunInfoByCron(
-        totalRecords,
-        moment(date.fromDate).format("YYYY-MM-DD hh:mm:ss"),
-        moment(date.toDate).format("YYYY-MM-DD hh:mm:ss"),
-        cronId,
-      );
+      cronLogs = await scrapeOnlyMiddleware.GetRunInfoByCron(totalRecords, moment(date.fromDate).format("YYYY-MM-DD hh:mm:ss"), moment(date.toDate).format("YYYY-MM-DD hh:mm:ss"), cronId);
     } else {
-      cronLogs = await scrapeOnlyMiddleware.GetRunInfo(
-        totalRecords,
-        moment(date.fromDate).format("YYYY-MM-DD hh:mm:ss"),
-        moment(date.toDate).format("YYYY-MM-DD hh:mm:ss"),
-      );
+      cronLogs = await scrapeOnlyMiddleware.GetRunInfo(totalRecords, moment(date.fromDate).format("YYYY-MM-DD hh:mm:ss"), moment(date.toDate).format("YYYY-MM-DD hh:mm:ss"));
     }
   } else {
-    cronLogs = await mongoMiddleware.GetCronLogsV2(
-      pgNo,
-      type,
-      cronId,
-      date,
-      totalRecords,
-    );
+    cronLogs = await mongoMiddleware.GetCronLogsV2(pgNo, type, cronId, date, totalRecords);
   }
 
   if (type != "SCRAPE_ONLY") {
-    let logsList = cronLogs.mongoResult.sort(
-      (a: any, b: any) =>
-        (new Date(a.time as any) as any) - (new Date(b.time as any) as any),
-    );
+    let logsList = cronLogs.mongoResult.sort((a: any, b: any) => (new Date(a.time as any) as any) - (new Date(b.time as any) as any));
     if (logsList && logsList.length > 0) {
       let idx = 0;
       for (let log of logsList) {
@@ -1282,11 +997,8 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
           _$cronLog.successScrapeCount = logAnalysisInfo.successCount;
           _$cronLog.failureScrapeCount = logAnalysisInfo.failureCount;
           _$cronLog.repriceFailure422Count = logAnalysisInfo.failure422Count;
-          _$cronLog.repriceFailureOtherCount =
-            logAnalysisInfo.failureOtherCount;
-          _$cronLog.cronName = cronSettings.find(
-            (t: any) => t.CronId == log.cronId,
-          )?.CronName;
+          _$cronLog.repriceFailureOtherCount = logAnalysisInfo.failureOtherCount;
+          _$cronLog.cronName = cronSettings.find((t: any) => t.CronId == log.cronId)?.CronName;
           logViewModel.unshift(_$cronLog);
         }
       }
@@ -1295,29 +1007,15 @@ export async function getCronHistoryLogs(req: Request, res: Response) {
     logViewModel = cronLogs;
   }
   // filterCronLogs
-  let filterCronLogs = await mongoMiddleware.GetFilterCronLogsByLimit(
-    applicationConfig.FILTER_CRON_LOGS_LIMIT,
-  );
+  let filterCronLogs = await mongoMiddleware.GetFilterCronLogsByLimit(applicationConfig.FILTER_CRON_LOGS_LIMIT);
   const filterCronDetails = await GetFilteredCrons();
   _.forEach(filterCronLogs, (x: any) => {
     x.filterDate = moment(x.filterDate).format("DD-MM-YY HH:mm:ss");
     x.startTime = moment(x.startTime).format("DD-MM-YY HH:mm:ss");
     x.endTime = moment(x.endTime).format("DD-MM-YY HH:mm:ss");
-    x.cronName = filterCronDetails.find(
-      (c: any) => c.cronId == x.contextCronId,
-    ).cronName;
+    x.cronName = filterCronDetails.find((c: any) => c.cronId == x.contextCronId).cronName;
   });
-  let cronTypes = [
-    "ALL_EXCEPT_422",
-    "Regular",
-    "SLOWCRON",
-    "Manual",
-    "422Error",
-    "OVERRIDE_RUN",
-    "FEED_RUN",
-    "All",
-    "SCRAPE_ONLY",
-  ];
+  let cronTypes = ["ALL_EXCEPT_422", "Regular", "SLOWCRON", "Manual", "422Error", "OVERRIDE_RUN", "FEED_RUN", "All", "SCRAPE_ONLY"];
 
   let params = {
     filterCron: cronId,
@@ -1360,38 +1058,18 @@ function getLogAnalysis(logList: any) {
     for (const vendorLogs of logList.logs) {
       if (vendorLogs.length > 0) {
         for (const x of vendorLogs) {
-          if (
-            x.logs &&
-            !_.includes(uniqueSuccessProductArray, x.productId) &&
-            (x.logs.repriceData || x.logs.listOfRepriceDetails)
-          ) {
+          if (x.logs && !_.includes(uniqueSuccessProductArray, x.productId) && (x.logs.repriceData || x.logs.listOfRepriceDetails)) {
             logAnalysisInfo.successCount++;
             uniqueSuccessProductArray.push(x.productId);
           }
-          if (
-            x.logs &&
-            !_.includes(uniqueFailureProductArray, x.productId) &&
-            !x.logs.repriceData &&
-            !x.logs.listOfRepriceDetails
-          ) {
+          if (x.logs && !_.includes(uniqueFailureProductArray, x.productId) && !x.logs.repriceData && !x.logs.listOfRepriceDetails) {
             logAnalysisInfo.failureCount++;
             uniqueFailureProductArray.push(x.productId);
           }
-          if (
-            x.priceUpdateResponse &&
-            x.priceUpdateResponse.message &&
-            JSON.stringify(x.priceUpdateResponse.message).indexOf(
-              "ERROR:422",
-            ) >= 0
-          ) {
+          if (x.priceUpdateResponse && x.priceUpdateResponse.message && JSON.stringify(x.priceUpdateResponse.message).indexOf("ERROR:422") >= 0) {
             logAnalysisInfo.failure422Count++;
           }
-          if (
-            x.priceUpdateResponse &&
-            x.priceUpdateResponse.message &&
-            x.priceUpdateResponse.message.statusCode &&
-            x.priceUpdateResponse.message.statusCode != 200
-          ) {
+          if (x.priceUpdateResponse && x.priceUpdateResponse.message && x.priceUpdateResponse.message.statusCode && x.priceUpdateResponse.message.statusCode != 200) {
             logAnalysisInfo.failureOtherCount++;
           }
         }
@@ -1406,9 +1084,7 @@ export async function getCustomCronDetails(req: Request, res: Response) {
   let logViewModel: any[] = [];
   let pgNo = 0;
   let cronId = "";
-  let totalRecords = requestedPayload.totalRecords
-    ? parseInt(requestedPayload.totalRecords)
-    : 25;
+  let totalRecords = requestedPayload.totalRecords ? parseInt(requestedPayload.totalRecords) : 25;
   let date: any = {
     fromDate: new Date(requestedPayload.startDate),
     toDate: new Date(requestedPayload.endDate),
@@ -1421,17 +1097,8 @@ export async function getCustomCronDetails(req: Request, res: Response) {
   if (requestedPayload.cronId != "" && requestedPayload.cronId != "ALL") {
     cronId = requestedPayload.cronId;
   }
-  let cronLogs = await mongoMiddleware.GetCronLogsV2(
-    pgNo,
-    type,
-    cronId,
-    date,
-    totalRecords,
-  );
-  let logsList = cronLogs.mongoResult.sort(
-    (a: any, b: any) =>
-      (new Date(a.time as any) as any) - (new Date(b.time as any) as any),
-  );
+  let cronLogs = await mongoMiddleware.GetCronLogsV2(pgNo, type, cronId, date, totalRecords);
+  let logsList = cronLogs.mongoResult.sort((a: any, b: any) => (new Date(a.time as any) as any) - (new Date(b.time as any) as any));
   let cronSettings = await GetCronSettingsList();
   const slowCronSettings = await GetSlowCronDetails();
   cronSettings = _.concat(cronSettings, slowCronSettings);
@@ -1451,9 +1118,7 @@ export async function getCustomCronDetails(req: Request, res: Response) {
         _$cronLog.failureScrapeCount = logAnalysisInfo.failureCount;
         _$cronLog.repriceFailure422Count = logAnalysisInfo.failure422Count;
         _$cronLog.repriceFailureOtherCount = logAnalysisInfo.failureOtherCount;
-        _$cronLog.cronName = cronSettings.find(
-          (t: any) => t.CronId == log.cronId,
-        )?.CronName;
+        _$cronLog.cronName = cronSettings.find((t: any) => t.CronId == log.cronId)?.CronName;
         logViewModel.unshift(_$cronLog);
       }
     }

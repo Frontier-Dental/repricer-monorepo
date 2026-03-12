@@ -1,7 +1,7 @@
 import _ from "lodash";
+import express, { Request, Response } from "express";
 import { ScheduledTask, schedule } from "node-cron";
 import cron from "node-cron";
-import express from "express";
 import _codes from "http-status-codes";
 import moment from "moment";
 import { TriggerEmail } from "../middleware/storage-sense-helpers/email-helper";
@@ -15,6 +15,7 @@ import { GetCronSettingsList, GetSlowCronDetails } from "../services/mysql-v2";
 import * as mySqlMiddleware from "../services/mysql";
 import { archiveHistory } from "../utility/history-archive-helper";
 import logger from "../utility/logger";
+import { asyncHandler } from "../utility/async-handler";
 
 export const monitorSenseController = express.Router();
 var monitorCrons: Record<string, ScheduledTask> = {};
@@ -30,38 +31,50 @@ export async function startAllMonitorCrons() {
   logger.info(`Successfully Started All Monitor CRONS Check at ${new Date()}`);
 }
 
-monitorSenseController.get("/schedule/monitor-sense/export_save", async (req, res) => {
-  logger.info(`Starting Export & Save Cron with Details : ${applicationConfig.EXPORT_SAVE_CRON_SCHEDULE}`);
-  var _exportAndSaveCron = cron.schedule(
-    applicationConfig.EXPORT_SAVE_CRON_SCHEDULE,
-    async () => {
-      logger.info(`MONITOR-SENSE : EXPORT_SAVE : Running at ${new Date()}`);
-      await StartExportAndSave();
-    },
-    { scheduled: true }
-  );
-  if (_exportAndSaveCron) {
-    return res.status(_codes.OK).send(`Successfully Started Cron for Export And Save at ${new Date()}`);
-  } else {
-    return res.status(_codes.BAD_REQUEST).send(`Some error occurred while starting Cron for Export And Save at ${new Date()}`);
-  }
-});
+monitorSenseController.get(
+  "/schedule/monitor-sense/export_save",
+  asyncHandler(async (req: Request, res: Response) => {
+    logger.info(`Starting Export & Save Cron with Details : ${applicationConfig.EXPORT_SAVE_CRON_SCHEDULE}`);
+    var _exportAndSaveCron = cron.schedule(
+      applicationConfig.EXPORT_SAVE_CRON_SCHEDULE,
+      async () => {
+        logger.info(`MONITOR-SENSE : EXPORT_SAVE : Running at ${new Date()}`);
+        await StartExportAndSave();
+      },
+      { scheduled: true }
+    );
+    if (_exportAndSaveCron) {
+      return res.status(_codes.OK).send(`Successfully Started Cron for Export And Save at ${new Date()}`);
+    } else {
+      return res.status(_codes.BAD_REQUEST).send(`Some error occurred while starting Cron for Export And Save at ${new Date()}`);
+    }
+  })
+);
 
 /************* PUBLIC DEBUG APIS *************/
-monitorSenseController.get("/debug/monitor-sense/cron", async (req, res) => {
-  await ValidateCronDetails();
-  return res.status(_codes.OK).send(`Successfully Started IN-PROGRESS CRONS Check at ${new Date()}`);
-});
+monitorSenseController.get(
+  "/debug/monitor-sense/cron",
+  asyncHandler(async (req: Request, res: Response) => {
+    await ValidateCronDetails();
+    return res.status(_codes.OK).send(`Successfully Started IN-PROGRESS CRONS Check at ${new Date()}`);
+  })
+);
 
-monitorSenseController.get("/debug/monitor-sense/422Error", async (req, res) => {
-  await Validate422ErrorProductDetails();
-  return res.status(_codes.OK).send(`Successfully Started Cron for 422 Product Count Validation Check at ${new Date()}`);
-});
+monitorSenseController.get(
+  "/debug/monitor-sense/422Error",
+  asyncHandler(async (req: Request, res: Response) => {
+    await Validate422ErrorProductDetails();
+    return res.status(_codes.OK).send(`Successfully Started Cron for 422 Product Count Validation Check at ${new Date()}`);
+  })
+);
 
-monitorSenseController.get("/debug/monitor-sense/exportAndSave", async (req, res) => {
-  await StartExportAndSave();
-  return res.status(_codes.OK).send(`Successfully Saved Product Data at ${new Date()}`);
-});
+monitorSenseController.get(
+  "/debug/monitor-sense/exportAndSave",
+  asyncHandler(async (req: Request, res: Response) => {
+    await StartExportAndSave();
+    return res.status(_codes.OK).send(`Successfully Saved Product Data at ${new Date()}`);
+  })
+);
 
 /************* PRIVATE FUNCTIONS *************/
 async function ValidateCronDetails() {

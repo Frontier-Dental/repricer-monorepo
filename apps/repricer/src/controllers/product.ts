@@ -354,10 +354,7 @@ export async function excelDownload(req: Request, res: Response) {
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : "Unknown error";
     logger.error(`Error in excelDownload: ${errMsg}`);
-    res.status(500).json({
-      error: "Failed to generate Excel file",
-      message: errMsg,
-    });
+    throw error;
   }
 }
 

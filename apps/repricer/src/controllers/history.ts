@@ -1,5 +1,5 @@
 import excelJs from "exceljs";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import fs from "fs";
 import _ from "lodash";
 import moment from "moment";
@@ -119,17 +119,15 @@ export async function getHistoryById(req: Request, res: Response) {
   });
 }
 
-export async function downloadFile(req: Request, res: Response) {
+export async function downloadFile(req: Request, res: Response, next: NextFunction) {
   const filename = req.params.file;
   const remotePath = applicationConfig.IS_DEV ? `/REPRICER/DEV_HISTORY/${filename}` : `/REPRICER/HISTORY/${filename}`;
   const localPath = path.join(__dirname, `${filename}`);
   await ftpMiddleware.DownloadFile(remotePath, localPath);
   res.download(localPath, (err) => {
     if (err) {
-      console.error(err);
-      res.status(500).send("Error downloading file");
+      next(err);
     } else {
-      // Optionally delete the file after sending
       fs.unlink(localPath, (err) => {
         if (err) {
           console.error(err);
