@@ -124,7 +124,7 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
-  NO_OF_RETRIES: z.coerce.number().default(2),
+  NO_OF_RETRIES: z.coerce.number().default(3),
   RETRY_INTERVAL: z.coerce.number().default(2000),
   _422_CACHE_VALID_PERIOD: z.coerce.number().default(120),
   CRON_NAME_422: z.string().default("Cron-422"),

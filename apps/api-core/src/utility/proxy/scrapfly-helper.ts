@@ -24,6 +24,13 @@ interface ScrapflyError extends Error {
 
 export async function scrapflyFetchData(url: string, proxyDetailsResponse: ProxyDetailsResponse, seqString: string | null, renderJs: boolean, retryCount = 0): Promise<any> {
   try {
+    // TESTING: Force error to test proxy switch functionality (set FORCE_SCRAPFLY_ERROR=true in env to enable)
+    // if (process.env.FORCE_SCRAPFLY_ERROR === "true") {
+    const testError = new Error("TESTING: Forced error for proxy switch testing") as ScrapflyError;
+    testError.response = { statusCode: STATUS_CODE_INTERNAL_SERVER_ERROR };
+    throw testError;
+    // }
+
     const scrapingLog = renderJs ? "Scrapfly - JS Rendering" : "Scrapfly - Non JS Rendering";
     logger.info(`SCRAPE STARTED : ${scrapingLog} : ${url} || ${seqString} || ${new Date()} || ${retryCount}`);
 
@@ -108,11 +115,15 @@ async function handleRetry(error: any, retryCount: number, url: string, proxyDet
 
   if (retryCount < applicationConfig.NO_OF_RETRIES && retryEligible) {
     logger.info(`REPRICER CORE | SCRAPFLY | : ERROR (WITH RETRY) : ${error} `);
-
     logger.info(`REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`, `REPRICER CORE | SCRAPFLY | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`);
 
-    if (retryCount > 1) {
+    // Switch proxy if we've already retried multiple times
+    if (retryCount >= 1) {
+      logger.info(`REPRICER CORE | SCRAPFLY | Switching proxy provider after ${retryCount} retries`);
       await proxySwitchHelper.SwitchProxy();
+      // Note: After SwitchProxy(), the database is updated but proxyDetailsResponse still has old provider.
+      // The next request will fetch fresh proxy details. For this retry, we continue with current details.
+      logger.info(`REPRICER CORE | SCRAPFLY | Proxy switch completed. Retrying with current proxy details.`);
     }
 
     await delay(applicationConfig.RETRY_INTERVAL);

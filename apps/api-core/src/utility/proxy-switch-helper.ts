@@ -44,7 +44,7 @@ export const ExecuteCounter = async (proxyProviderId: number): Promise<void> => 
   const existingRecord = await sqlV2Service.GetProxyFailureDetailsByProxyProviderId(proxyProviderId);
 
   // Item Does not exist. So create the Item object with Count as 1
-  if (existingRecord && existingRecord.failureCount == 0) {
+  if (!existingRecord || existingRecord.failureCount == 0) {
     logger.info(`PROXY SWITCH COUNTER INIT : PROXY_PROV - ${proxyProviderId} || INIT_TIME : ${new Date()}`);
     await sqlV2Service.InitProxyFailureDetails(proxyProviderId, 1);
   }
@@ -77,28 +77,24 @@ export const SwitchProxy = async (): Promise<void> => {
         const linkedCronWithExistingProxyProvider = await sqlV2Service.GetLinkedCronSettingsByProviderId(record.proxyProvider);
 
         if (linkedCronWithExistingProxyProvider && linkedCronWithExistingProxyProvider.length > 0) {
+          console.log("LINKED CRON WITH EXISTING PROXY PROVIDER", linkedCronWithExistingProxyProvider);
           for (const linkedCron of linkedCronWithExistingProxyProvider) {
-            const result = await executeProxySwitch(linkedCron as any);
-            if (result) {
-              payloadForEmail.push(result);
+            console.log("LINKED CRON", linkedCron);
+            try {
+              const result = await executeProxySwitch(linkedCron as any);
+              if (result) {
+                payloadForEmail.push(result);
+              }
+            } catch (switchError) {
+              logger.error(`Failed to switch proxy for cron ${(linkedCron as any).CronName}: ${switchError}`);
             }
           }
         }
 
-        // Send Email Notification
         if (payloadForEmail && payloadForEmail.length > 0) {
-          const payloadForProxyChange = _.filter(payloadForEmail, (p) => !p.thresholdReached);
-          const payloadForThresholdReached = _.filter(payloadForEmail, (p) => p.thresholdReached);
-
-          if (payloadForProxyChange && payloadForProxyChange.length > 0) {
-            await axiosHelper.postAsync(payloadForProxyChange, applicationConfig.PROXY_SWITCH_EMAIL_NOTIFIER!);
-          }
-
-          if (payloadForThresholdReached && payloadForThresholdReached.length > 0) {
-            await axiosHelper.postAsync(payloadForThresholdReached, applicationConfig.PROXY_SWITCH_EMAIL_THRESHOLD_NOTIFIER!);
-          }
-
-          logger.info(`Email sent for Proxy Switch at ${new Date()}`);
+          await sqlV2Service.ResetProxyFailureDetails(record.proxyProvider, "SYSTEM");
+          logger.info(`Reset failure counter for ProxyProvider ${record.providerName} after switch`);
+          // TODO: Re-enable email notifications when notifier service is available
         }
       }
     }
@@ -147,7 +143,11 @@ async function updateProxyForCron(listOfCrons: CronSettings[], existingProxyProv
       payloadForEmail = cronInfo;
     }
 
-    await axiosHelper.native_get(applicationConfig.REPRICER_UI_CACHE_CLEAR!);
+    try {
+      await axiosHelper.native_get(applicationConfig.REPRICER_UI_CACHE_CLEAR!);
+    } catch (cacheError) {
+      logger.error(`Failed to clear UI cache after proxy switch: ${cacheError}`);
+    }
   }
 
   return payloadForEmail;
@@ -190,6 +190,7 @@ async function executeProxySwitch(cronDetails: CronSettings): Promise<CronInfo |
     }
   }
 
+  console.log("payloadForEmail", payloadForEmail);
   return payloadForEmail;
 }
 

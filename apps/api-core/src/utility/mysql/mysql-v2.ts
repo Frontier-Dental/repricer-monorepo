@@ -10,10 +10,10 @@ import logger from "../logger";
 export async function GetFullCronSettingsList() {
   const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   const cronSettingsList = await cacheClient.get<any>(CacheKey.CRON_SETTINGS_FULL_LIST);
-  if (cronSettingsList != null) {
-    await cacheClient.disconnect();
-    return cronSettingsList;
-  }
+  // if (cronSettingsList != null) {
+  //   await cacheClient.disconnect();
+  //   return cronSettingsList;
+  // }
   let cronSettingsDetails = null;
   const db = getKnexInstance();
   const result = await db.raw(`call GetFullCronSettingsList()`);
@@ -143,6 +143,7 @@ export async function UpdateProxyDetailsByCronId(cronId: any, proxyProvider: any
     });
   const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
+  await cacheClient.delete(CacheKey.CRON_SETTINGS_FULL_LIST);
   await cacheClient.disconnect();
 }
 
