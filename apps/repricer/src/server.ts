@@ -11,18 +11,21 @@ import { applicationConfig, validateConfig } from "./utility/config";
 import morgan from "morgan";
 import packageJson from "../package.json";
 import { startAllMonitorCrons } from "./controllers/monitor-sense";
+import logger from "./utility/logger";
 
 validateConfig();
 
 process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err);
+  logger.error(`Uncaught Exception: ${err}`);
 });
 
 process.on("unhandledRejection", (reason) => {
-  console.error("Unhandled Rejection:", reason);
+  logger.error(`Unhandled Rejection: ${reason}`);
 });
 
 const app = express();
+// Trust first proxy so req.ip reflects X-Forwarded-For (needed for rate limiting behind nginx/load balancer)
+app.set("trust proxy", 1);
 if (applicationConfig.REQUEST_LOGGING) {
   app.use(morgan("combined"));
 }
@@ -83,8 +86,8 @@ app.use(errorMiddleware);
 const PORT = applicationConfig.PORT || 3000;
 process.env.TZ = "Canada/Eastern";
 app.listen(PORT, async () => {
-  console.info(`Server running with node environment ${process.env.NODE_ENV} on port ${PORT} at ${new Date()}`);
-  console.info(`Application version: ${packageJson.version}`);
-  console.info("Scheduling enabled crons on startup");
+  logger.info(`Server running with node environment ${process.env.NODE_ENV} on port ${PORT} at ${new Date()}`);
+  logger.info(`Application version: ${packageJson.version}`);
+  logger.info("Scheduling enabled crons on startup");
   await startAllMonitorCrons();
 });

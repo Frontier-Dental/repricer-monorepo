@@ -12,6 +12,7 @@ import { applicationConfig } from "../utility/config";
 import * as SessionHelper from "../utility/session-helper";
 import { ExcelExportService } from "../services/excel-export.service";
 import { GetCronSettingsList, GetEnvValueByKey, ToggleCronStatus, GetSlowCronDetails, GetScrapeCrons } from "../services/mysql-v2";
+import logger from "../utility/logger";
 
 export const getMasterItemController = async (req: Request, res: Response) => {
   let query: any = {};
@@ -206,7 +207,7 @@ export async function excelDownload(req: Request, res: Response) {
 
     if (serviceAvailable) {
       // Use the new Excel export service
-      console.log("Using Excel export microservice");
+      logger.info("Using Excel export microservice");
       const filters = {
         tags: req.body.tags,
         activated: req.body.activated,
@@ -216,7 +217,7 @@ export async function excelDownload(req: Request, res: Response) {
       await ExcelExportService.downloadExcel(filters, res);
     } else {
       // Fallback to the old implementation
-      console.log("Excel export service not available, using fallback implementation");
+      logger.info("Excel export service not available, using fallback implementation");
 
       // Use lean() to get plain objects instead of Mongoose documents (uses less memory)
       let ItemCollection: any = await Item.find();
@@ -351,10 +352,11 @@ export async function excelDownload(req: Request, res: Response) {
       });
     }
   } catch (error) {
-    console.error("Error in excelDownload:", error);
+    const errMsg = error instanceof Error ? error.message : "Unknown error";
+    logger.error(`Error in excelDownload: ${errMsg}`);
     res.status(500).json({
       error: "Failed to generate Excel file",
-      message: error instanceof Error ? error.message : "Unknown error",
+      message: errMsg,
     });
   }
 }
@@ -411,7 +413,7 @@ export async function runManualCron(req: Request, res: Response) {
     }
     const mongoResult = await mongoMiddleware.PushManualCronLogAsync(cronLogs);
     if (mongoResult && mongoResult.insertedId) {
-      console.log("Manual Log with _id " + mongoResult.insertedId.toString() + ", added successfully");
+      logger.info(`Manual Log with _id ${mongoResult.insertedId.toString()}, added successfully`);
     }
     res.render("pages/cron/cronView", {
       response: "Manual repricing done",
@@ -531,6 +533,7 @@ export async function addExcelData(req: Request, res: Response) {
         qBreakCount: row[63] ? parseInt(row[63]) : null,
         qBreakDetails: row[64] ? row[64] : null,
         badge: row[65] != null && row[65] != "" ? JSON.parse(row[65]) : null,
+        badgeUpExceptionPercentage: row[66] != null && row[66] != "" ? parseFloat(row[66]) : 0,
       };
       items.push($item as never);
     } else {
@@ -612,7 +615,6 @@ export async function addExcelData(req: Request, res: Response) {
     }
 
     itemData.biteSupplyDetails = items.find((x: any) => x.channelName && x.channelName.toUpperCase() == "BITESUPPLY" && x.mpid == pId);
-
     if (itemData.biteSupplyDetails && itemData.biteSupplyDetails.executionPriority == null) {
       itemData.biteSupplyDetails.executionPriority = 7;
     }
@@ -623,7 +625,7 @@ export async function addExcelData(req: Request, res: Response) {
     } else {
       await mongoMiddleware.InsertOrUpdateProductWithCronName(itemData, req);
     }
-    console.log(`Updated product info for MPID : ${pId}`);
+    logger.info(`Updated product info for MPID : ${pId}`);
   }
   return res.json({
     status: true,

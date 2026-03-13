@@ -33,10 +33,15 @@ jest.mock("../shared", () => ({
 }));
 jest.mock("node-cron");
 jest.mock("../../../utility/mysql/mysql-v2");
+jest.mock("../../../utility/logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
 
 import { Request, Response } from "express";
 import cron from "node-cron";
 import { startAllSlowCronHandler, startSlowCronLogic } from "../start";
+import logger from "../../../utility/logger";
 import * as responseUtility from "../../../utility/response-utility";
 import * as _codes from "http-status-codes";
 import { runCoreCronLogic } from "../../main-cron/shared";
@@ -49,10 +54,6 @@ const mockedGetCronNameByJobName = getCronNameByJobName as jest.MockedFunction<t
 const mockedCron = cron as jest.Mocked<typeof cron>;
 const mockedGetSlowCronDetails = GetSlowCronDetails as jest.MockedFunction<typeof GetSlowCronDetails>;
 
-// Suppress console methods during tests
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-
 describe("slow-cron-group/start", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
@@ -61,10 +62,6 @@ describe("slow-cron-group/start", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetAllMocks();
-
-    // Mock console methods
-    console.log = jest.fn();
-    console.error = jest.fn();
 
     // Clear slowCrons object
     Object.keys(slowCrons).forEach((key) => delete slowCrons[key]);
@@ -101,10 +98,7 @@ describe("slow-cron-group/start", () => {
     };
   });
 
-  afterEach(() => {
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
-  });
+  afterEach(() => {});
 
   describe("startAllSlowCronHandler", () => {
     it("should start slow cron and return OK response", async () => {
@@ -194,8 +188,8 @@ describe("slow-cron-group/start", () => {
 
       await startSlowCronLogic();
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Started SCG-1"));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("*/30 * * * *"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Started SCG-1"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("*/30 * * * *"));
     });
 
     it("should not log when cron status is false", async () => {
@@ -216,7 +210,7 @@ describe("slow-cron-group/start", () => {
       await startSlowCronLogic();
 
       expect(mockedCron.schedule).toHaveBeenCalledWith("*/30 * * * *", expect.any(Function), { scheduled: false });
-      expect(console.log).not.toHaveBeenCalledWith(expect.stringContaining("Started SCG-1"));
+      expect(logger.info).not.toHaveBeenCalledWith(expect.stringContaining("Started SCG-1"));
     });
 
     it("should handle empty slow cron details array", async () => {
@@ -257,7 +251,7 @@ describe("slow-cron-group/start", () => {
 
       await startSlowCronLogic();
 
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Error running SCG-1:"), expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Error running SCG-1:"), expect.any(Error));
     });
 
     it("should handle errors during cron execution", async () => {
@@ -284,7 +278,7 @@ describe("slow-cron-group/start", () => {
       // Execute the callback to simulate cron execution
       await cronCallback();
 
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Error running SCG-1:"), expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Error running SCG-1:"), expect.any(Error));
     });
 
     it("should handle successful cron execution", async () => {
@@ -312,7 +306,7 @@ describe("slow-cron-group/start", () => {
       await cronCallback();
 
       expect(mockedRunCoreCronLogic).toHaveBeenCalledWith(mockCronDetails[0], true);
-      expect(console.error).not.toHaveBeenCalled();
+      expect(logger.error).not.toHaveBeenCalled();
     });
 
     it("should handle null/undefined cronDetail", async () => {
@@ -373,7 +367,7 @@ describe("slow-cron-group/start", () => {
       expect(mockedCron.schedule).toHaveBeenCalledTimes(3);
       expect(mockedCron.schedule).toHaveBeenCalledWith("0 * * * *", expect.any(Function), { scheduled: true });
       expect(mockedCron.schedule).toHaveBeenCalledWith("0 * * * *", expect.any(Function), { scheduled: false });
-      expect(console.log).toHaveBeenCalledTimes(2); // Only for status "true" crons
+      expect(logger.info).toHaveBeenCalledTimes(2); // Only for status "true" crons
     });
 
     it("should continue processing other crons when one fails", async () => {
@@ -406,8 +400,8 @@ describe("slow-cron-group/start", () => {
       await startSlowCronLogic();
 
       expect(mockedCron.schedule).toHaveBeenCalledTimes(2);
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Error running SCG-1:"), expect.any(Error));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Started SCG-2"));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Error running SCG-1:"), expect.any(Error));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Started SCG-2"));
       expect(slowCrons["SCG-2"]).toBe(mockScheduledTask);
     });
 

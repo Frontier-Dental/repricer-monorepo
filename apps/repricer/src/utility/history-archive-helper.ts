@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { GetHistoryApiResponse } from "../services/mysql-v2";
 import { CsvWriter } from "./csvWriter";
 import { applicationConfig } from "./config";
+import logger from "./logger";
 
 export const archiveHistory = async () => {
   try {
@@ -16,7 +17,7 @@ export const archiveHistory = async () => {
     const uniqueKey = _.last(generatedGuid)?.trim() ?? "";
     let startDate = moment(yesterday.setHours(0, 0, 0, 0)).format("YYYY-MM-DD HH:mm:ss");
     let endDate = moment(yesterday.setHours(23, 59, 59, 59)).format("YYYY-MM-DD HH:mm:ss");
-    console.debug(`HISTORY_ARCHIVE_CRON : Fetching History for ALL | START_DATE : ${startDate} | END_DATE : ${endDate}`);
+    logger.debug(`HISTORY_ARCHIVE_CRON : Fetching History for ALL | START_DATE : ${startDate} | END_DATE : ${endDate}`);
     const intervals: { start: string; end: string; isFinal: boolean }[] = [];
     for (let interval = 0; interval < 24; interval++) {
       const start = moment(yesterday).set({ hour: interval, minute: 0, second: 0, millisecond: 0 }).format("YYYY-MM-DD HH:mm:ss");
@@ -29,13 +30,13 @@ export const archiveHistory = async () => {
     }
     if (intervals.length > 0) {
       for (const [index, interval] of intervals.entries()) {
-        console.debug(`HISTORY_ARCHIVE_CRON : Fetching History for ALL | START_DATE : ${interval.start} | END_DATE : ${interval.end}`);
+        logger.debug(`HISTORY_ARCHIVE_CRON : Fetching History for ALL | START_DATE : ${interval.start} | END_DATE : ${interval.end}`);
         const historyResults = await GetHistoryApiResponse(interval.start, interval.end);
         if (historyResults && historyResults.length > 0) {
           let historyFileName = `history-${uniqueKey}-${startDate.split(" ")[0]}-TO-${endDate.split(" ")[0]}_${index}.csv`;
           const filePath = path.join("exportArchives", historyFileName);
           const csvWriterObj = new CsvWriter(filePath, applicationConfig.AWS_BUCKET_NAME, applicationConfig.AWS_REGION);
-          console.debug(`HISTORY_ARCHIVE_CRON : Writing ${historyResults.length} records to CSV || FILE_NAME : ${historyFileName}`);
+          logger.debug(`HISTORY_ARCHIVE_CRON : Writing ${historyResults.length} records to CSV || FILE_NAME : ${historyFileName}`);
           await csvWriterObj.writeData(historyResults);
           await csvWriterObj.uploadToS3Multipart(filePath);
           fs.unlinkSync(filePath);
@@ -43,6 +44,6 @@ export const archiveHistory = async () => {
       }
     }
   } catch (exception) {
-    console.error(`HISTORY_ARCHIVE_CRON : Sorry some error occurred! Error : ${exception}`);
+    logger.error(`HISTORY_ARCHIVE_CRON : Sorry some error occurred! Error : ${exception}`);
   }
 };

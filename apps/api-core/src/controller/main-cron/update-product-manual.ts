@@ -5,6 +5,7 @@ import * as filterMapper from "../../utility/filter-mapper";
 import * as dbHelper from "../../utility/mongo/db-helper";
 import { applicationConfig } from "../../utility/config";
 import { calculateNextCronTime, getNextCronTime, updateCronBasedDetails, updateLowestVendor } from "./shared";
+import logger from "../../utility/logger";
 
 export async function updateProductManualHandler(req: Request, res: Response): Promise<any> {
   let { prod, resultant, cronTime } = req.body;
@@ -19,7 +20,7 @@ export async function updateProductManualHandler(req: Request, res: Response): P
         prod.next_cron_time = calculateNextCronTime(new Date(cronTime), 12);
         const priceUpdatedItem = new ErrorItemModel(prod.mpid, prod.next_cron_time, true, prod.cronId, "PRICE_UPDATE", undefined);
         await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
-        console.log({
+        logger.info("updateProductManual", {
           message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
           obj: JSON.stringify(priceUpdatedItem),
         });

@@ -12,14 +12,15 @@ import * as filterMapper from "../../utility/filter-mapper";
 import * as dbHelper from "../../utility/mongo/db-helper";
 import { calculateNextCronTime, getNextCronTime, updateCronBasedDetails, updateLowestVendor } from "./shared";
 import * as sqlV2Service from "../../utility/mysql/mysql-v2";
+import logger from "../../utility/logger";
 let feedCron: ScheduledTask | null = null;
 
 export async function startFeedCronHandler(req: Request, res: Response): Promise<any> {
-  console.log(`Started Feed Cron with details ${applicationConfig.FEED_CRON_EXP}`);
+  logger.info(`Started Feed Cron with details ${applicationConfig.FEED_CRON_EXP}`);
   feedCron = schedule(applicationConfig.FEED_CRON_EXP, async () => {
     try {
       const eligibleProductList = await getFeedEligibleList();
-      console.log(`Feed Cron running on ${new Date()} with Eligible Products Count : ${eligibleProductList.length}`);
+      logger.info(`Feed Cron running on ${new Date()} with Eligible Products Count : ${eligibleProductList.length}`);
       if (!eligibleProductList || eligibleProductList.length === 0) {
         return;
       }
@@ -29,7 +30,7 @@ export async function startFeedCronHandler(req: Request, res: Response): Promise
         await repriceFeed(keyGen, chunk, new Date());
       }
     } catch (error) {
-      console.error(`Error running Feed Cron:`, error);
+      logger.error(`Error running Feed Cron:`, error);
     }
   });
 
@@ -65,7 +66,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
       _contextCronStatus.SetProductCount(cronProdCounter);
       await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
       const postUrl = applicationConfig.FEED_REPRICER_OWN_URL.replace("{mpId}", prod.mpid);
-      console.log(`${feedName} : Cron Key : ${keyGen} : Requesting Reprice info for ${prod.mpid}  on ${postUrl} at Time :  ${new Date()}`);
+      logger.info(`${feedName} : Cron Key : ${keyGen} : Requesting Reprice info for ${prod.mpid}  on ${postUrl} at Time :  ${new Date()}`);
       prod.last_attempted_time = new Date();
       prod.lastCronRun = `${feedName}`;
       const repriceResult = await axiosHelper.postAsync(prod, postUrl);
@@ -86,7 +87,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
               prod.next_cron_time = calculateNextCronTime(new Date(), 12);
               const priceUpdatedItem = new ErrorItemModel(prod.mpid, prod.next_cron_time, true, prod.cronId, "PRICE_UPDATE", undefined);
               await dbHelper.UpsertErrorItemLog(priceUpdatedItem);
-              console.log({
+              logger.info("feedCron", {
                 message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
                 obj: JSON.stringify(priceUpdatedItem),
               });
@@ -98,7 +99,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
             // Add the product to Error Item Table.
             const errorItem = new ErrorItemModel(prod.mpid, prod.next_cron_time, true, prod.cronId, "422_ERROR", undefined);
             await dbHelper.UpsertErrorItemLog(errorItem);
-            console.log({
+            logger.info("feedCron", {
               message: `${prod.mpid} moved to ${applicationConfig.CRON_NAME_422}`,
               obj: JSON.stringify(errorItem),
             });
@@ -142,7 +143,7 @@ async function repriceFeed(keyGen: any, productList: any, cronInitTime: any) {
   await dbHelper.UpdateCronStatusAsync(_contextCronStatus);
 
   if (logInDb) {
-    console.log(`Successfully logged Cron Logs in DB at ${cronLogs.time} || Id : ${logInDb}`);
+    logger.info(`Successfully logged Cron Logs in DB at ${cronLogs.time} || Id : ${logInDb}`);
   }
 }
 

@@ -31,8 +31,13 @@ jest.mock("lodash");
 jest.mock("../../../../model/global-param");
 jest.mock("../../../badge-helper");
 jest.mock("../../../filter-mapper");
+jest.mock("../../../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
 
 import _ from "lodash";
+import logger from "../../../logger";
 import { Reprice, RepriceIndividualPriceBreak } from "../reprice-helper-nc";
 import { RepriceModel } from "../../../../model/reprice-model";
 import { RepriceRenewedMessageEnum } from "../../../../model/reprice-renewed-message";
@@ -49,17 +54,10 @@ const mockedBadgeHelper = badgeHelper as jest.Mocked<typeof badgeHelper>;
 const mockedFilterMapper = filterMapper as jest.Mocked<typeof filterMapper>;
 
 // Suppress console methods during tests
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-
 describe("reprice-helper-nc", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetAllMocks();
-
-    // Mock console methods
-    console.log = jest.fn();
-    console.error = jest.fn();
 
     // Default mocks for lodash
     mockedLodash.first = jest.fn((array: any) => (array && array.length > 0 ? array[0] : undefined));
@@ -149,11 +147,6 @@ describe("reprice-helper-nc", () => {
 
     // Default badgeHelper mock
     mockedBadgeHelper.ReCalculatePriceForNc.mockImplementation(async (model: any) => model);
-  });
-
-  afterEach(() => {
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
   });
 
   describe("Reprice", () => {
@@ -369,7 +362,7 @@ describe("reprice-helper-nc", () => {
       const result = await Reprice(mockRefProduct, [{ vendorId: 999, priceBreaks: [{ minQty: 1, unitPrice: 99.99, active: true }] }], mockProductItem, "source-1");
 
       expect(result).toBeInstanceOf(RepriceModel);
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Error in Reprice"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Error in Reprice"));
     });
 
     it("should include shipping price in sorting", async () => {
@@ -1136,7 +1129,7 @@ describe("reprice-helper-nc", () => {
       const result = await RepriceIndividualPriceBreak(mockRefProduct, [{ vendorId: 999, priceBreaks: [{ minQty: 10, unitPrice: 89.99, active: true }] }], mockProductItem, "source-1", mockPriceBreak);
 
       expect(result).toBeInstanceOf(RepriceModel);
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Error in Reprice"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Error in Reprice"));
     });
 
     it("should handle excluded vendor as lowest", async () => {
@@ -1312,7 +1305,7 @@ describe("reprice-helper-nc", () => {
 
       const result = await RepriceIndividualPriceBreak(mockRefProduct, payload, mockProductItem, "source-1", mockPriceBreak);
 
-      expect(result.repriceDetails?.explained).toContain("IGNORE");
+      expect(result.repriceDetails?.explained).toContain("CHANGE: Next Lowest Price greater than the max price");
     });
 
     it("should handle no sortedPayload[nextIndex] scenario", async () => {

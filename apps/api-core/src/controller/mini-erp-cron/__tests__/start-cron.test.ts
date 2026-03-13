@@ -33,9 +33,14 @@ jest.mock("../../../services/net32-stock-update");
 jest.mock("../shared", () => ({
   miniErpCrons: {},
 }));
+jest.mock("../../../utility/logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
 
 import { Request, Response } from "express";
 import { startMiniErpCron, startMiniErpCronLogic } from "../start-cron";
+import logger from "../../../utility/logger";
 import { GetMiniErpCronDetails } from "../../../utility/mysql/mysql-v2";
 import * as _codes from "http-status-codes";
 import * as responseUtility from "../../../utility/response-utility";
@@ -50,10 +55,6 @@ const mockedCron = cron as jest.Mocked<typeof cron>;
 const mockedGetProductsFromMiniErp = getProductsFromMiniErp as jest.MockedFunction<typeof getProductsFromMiniErp>;
 const mockedUpdateNet32Stock = updateNet32Stock as jest.MockedFunction<typeof updateNet32Stock>;
 
-// Suppress console methods during tests
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
-
 describe("mini-erp-cron/start-cron", () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
@@ -62,10 +63,6 @@ describe("mini-erp-cron/start-cron", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetAllMocks();
-
-    // Mock console methods
-    console.log = jest.fn();
-    console.error = jest.fn();
 
     // Clear miniErpCrons object
     Object.keys(miniErpCrons).forEach((key) => delete miniErpCrons[key]);
@@ -86,11 +83,6 @@ describe("mini-erp-cron/start-cron", () => {
       status: jest.fn().mockReturnThis(),
       send: jest.fn().mockReturnThis(),
     };
-  });
-
-  afterEach(() => {
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
   });
 
   describe("startMiniErpCron", () => {
@@ -117,7 +109,7 @@ describe("mini-erp-cron/start-cron", () => {
 
       await startMiniErpCronLogic();
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Starting mini erp cron logic at"), expect.any(Date));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Starting mini erp cron logic at"), expect.any(Date));
     });
 
     it("should schedule crons for all mini ERP cron details", async () => {
@@ -252,7 +244,7 @@ describe("mini-erp-cron/start-cron", () => {
       // Execute the callback to simulate cron execution
       await cronCallback();
 
-      expect(console.error).toHaveBeenCalledWith("Cron UnknownCron not found");
+      expect(logger.error).toHaveBeenCalledWith("Cron UnknownCron not found");
       expect(mockedGetProductsFromMiniErp).not.toHaveBeenCalled();
       expect(mockedUpdateNet32Stock).not.toHaveBeenCalled();
     });
@@ -281,7 +273,7 @@ describe("mini-erp-cron/start-cron", () => {
       // Execute the callback to simulate cron execution
       await cronCallback();
 
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Error running MiniErpFetchCron:"), expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Error running MiniErpFetchCron:"), expect.any(Error));
     });
 
     it("should log when cron is started with status true", async () => {
@@ -301,7 +293,7 @@ describe("mini-erp-cron/start-cron", () => {
 
       await startMiniErpCronLogic();
 
-      expect(console.log).toHaveBeenCalledWith("Started MiniErpFetchCron");
+      expect(logger.info).toHaveBeenCalledWith("Started MiniErpFetchCron");
     });
 
     it("should not log when cron status is false", async () => {
@@ -322,7 +314,7 @@ describe("mini-erp-cron/start-cron", () => {
       await startMiniErpCronLogic();
 
       expect(mockedCron.schedule).toHaveBeenCalledWith("*/30 * * * *", expect.any(Function), { scheduled: false });
-      expect(console.log).not.toHaveBeenCalledWith("Started MiniErpFetchCron");
+      expect(logger.info).not.toHaveBeenCalledWith("Started MiniErpFetchCron");
     });
 
     it("should handle empty cron details array", async () => {
@@ -395,7 +387,7 @@ describe("mini-erp-cron/start-cron", () => {
       expect(mockedCron.schedule).toHaveBeenCalledTimes(2);
       expect(mockedCron.schedule).toHaveBeenCalledWith("0 * * * *", expect.any(Function), { scheduled: true });
       expect(mockedCron.schedule).toHaveBeenCalledWith("0 * * * *", expect.any(Function), { scheduled: false });
-      expect(console.log).toHaveBeenCalledTimes(2); // Start message + one "Started" log
+      expect(logger.info).toHaveBeenCalledTimes(2); // Start message + one "Started" log
     });
 
     it("should parse CronStatus as JSON boolean", async () => {
@@ -473,7 +465,7 @@ describe("mini-erp-cron/start-cron", () => {
 
       expect(mockedGetProductsFromMiniErp).toHaveBeenCalled();
       expect(mockedUpdateNet32Stock).toHaveBeenCalled();
-      expect(console.error).not.toHaveBeenCalled();
+      expect(logger.error).not.toHaveBeenCalled();
     });
 
     it("should handle errors in StockUpdateCron execution", async () => {
@@ -500,7 +492,7 @@ describe("mini-erp-cron/start-cron", () => {
       // Execute the callback to simulate cron execution
       await cronCallback();
 
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining("Error running StockUpdateCron:"), expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Error running StockUpdateCron:"), expect.any(Error));
     });
   });
 });

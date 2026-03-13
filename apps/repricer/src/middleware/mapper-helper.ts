@@ -8,6 +8,7 @@ import * as mySqlUtility from "../services/mysql";
 import MySqlProduct from "../models/sql-models/mysql-product";
 import * as SessionHelper from "../utility/session-helper";
 import { applicationConfig } from "../utility/config";
+import logger from "../utility/logger";
 
 export function MapV2(productDetails: any[]) {
   return productDetails.map((p) => {
@@ -183,6 +184,7 @@ export const MapUserResponse = async (productDetails: any, updateDetails: any, c
   productDetails.getBBShippingValue = !isNaN(parseInt(updateDetails.getBBShippingValue)) ? parseFloat(updateDetails.getBBShippingValue) : 0.005;
   productDetails.getBBBadge = updateDetails.getBBBadge == "on" ? true : false;
   productDetails.getBBShipping = updateDetails.getBBShipping == "on" ? true : false;
+  productDetails.badgeUpExceptionPercentage = updateDetails.badgeUpExceptionPercentage ? parseFloat(updateDetails.badgeUpExceptionPercentage) : 0;
   return productDetails;
 };
 export const MapFormData = async (productDetails: any, formData: any, formVendorData: any) => {
@@ -420,7 +422,7 @@ export const MapLatestPriceInfo = async (scrapeList: any, focusId: any) => {
 };
 
 export const UpsertProductDetailsInSql = async (payload: any, mpid: any, req: any) => {
-  console.log("UpsertProductDetailsInSql", payload);
+  logger.info(`UpsertProductDetailsInSql for ${mpid}: ${JSON.stringify(payload)}`);
   const sqlProductDetailsList = await mySqlUtility.GetFullProductDetailsById(mpid);
   let sqlProductDetails = _.first(sqlProductDetailsList);
   const AuditInfo = await SessionHelper.GetAuditInfo(req);
@@ -428,7 +430,7 @@ export const UpsertProductDetailsInSql = async (payload: any, mpid: any, req: an
     if (sqlProductDetails != null && sqlProductDetails.tradentDetails) {
       payload.tradentDetails = mapUserDataToDbData(payload.tradentDetails, sqlProductDetails.tradentDetails, AuditInfo);
       await mySqlUtility.UpdateVendorData(payload.tradentDetails, "TRADENT");
-      console.log(`Updated Tradent Info for ${mpid} at ${new Date()}`);
+      logger.info(`Updated Tradent Info for ${mpid} at ${new Date()}`);
     } else {
       if (!sqlProductDetails) {
         sqlProductDetails = {};
@@ -436,14 +438,14 @@ export const UpsertProductDetailsInSql = async (payload: any, mpid: any, req: an
       payload.tradentDetails.updatedBy = AuditInfo.UpdatedBy;
       payload.tradentDetails.updatedAt = moment(AuditInfo.UpdatedOn).format("YYYY-MM-DD HH:mm:ss");
       sqlProductDetails.tradentLinkInfo = await mySqlUtility.UpsertVendorData(payload.tradentDetails, "TRADENT");
-      console.log(`Inserted Tradent Info for ${mpid} with insertId : ${sqlProductDetails.tradentLinkInfo}`);
+      logger.info(`Inserted Tradent Info for ${mpid} with insertId ${sqlProductDetails.tradentLinkInfo}`);
     }
   }
   if (payload && payload.frontierDetails) {
     if (sqlProductDetails != null && sqlProductDetails.frontierDetails) {
       payload.frontierDetails = mapUserDataToDbData(payload.frontierDetails, sqlProductDetails.frontierDetails, AuditInfo);
       await mySqlUtility.UpdateVendorData(payload.frontierDetails, "FRONTIER");
-      console.log(`Updated Frontier Info for ${mpid} at ${new Date()}`);
+      logger.info(`Updated Frontier Info for ${mpid} at ${new Date()}`);
     } else {
       if (!sqlProductDetails) {
         sqlProductDetails = {};
@@ -451,14 +453,14 @@ export const UpsertProductDetailsInSql = async (payload: any, mpid: any, req: an
       payload.frontierDetails.updatedBy = AuditInfo.UpdatedBy;
       payload.frontierDetails.updatedAt = moment(AuditInfo.UpdatedOn).format("YYYY-MM-DD HH:mm:ss");
       sqlProductDetails.frontierLinkInfo = await mySqlUtility.UpsertVendorData(payload.frontierDetails, "FRONTIER");
-      console.log(`Inserted Frontier Info for ${mpid} with insertId : ${sqlProductDetails.frontierLinkInfo}`);
+      logger.info(`Inserted Frontier Info for ${mpid} with insertId : ${sqlProductDetails.frontierLinkInfo}`);
     }
   }
   if (payload && payload.mvpDetails) {
     if (sqlProductDetails != null && sqlProductDetails.mvpDetails) {
       payload.mvpDetails = mapUserDataToDbData(payload.mvpDetails, sqlProductDetails.mvpDetails, AuditInfo);
       await mySqlUtility.UpdateVendorData(payload.mvpDetails, "MVP");
-      console.log(`Updated MVP Info for ${mpid} at ${new Date()}`);
+      logger.info(`Updated MVP Info for ${mpid} at ${new Date()}`);
     } else {
       if (!sqlProductDetails) {
         sqlProductDetails = {};
@@ -466,14 +468,14 @@ export const UpsertProductDetailsInSql = async (payload: any, mpid: any, req: an
       payload.mvpDetails.updatedBy = AuditInfo.UpdatedBy;
       payload.mvpDetails.updatedAt = moment(AuditInfo.UpdatedOn).format("YYYY-MM-DD HH:mm:ss");
       sqlProductDetails.mvpLinkInfo = await mySqlUtility.UpsertVendorData(payload.mvpDetails, "MVP");
-      console.log(`Inserted MVP Info for ${mpid} with insertId : ${sqlProductDetails.mvpLinkInfo}`);
+      logger.info(`Inserted MVP Info for ${mpid} with insertId : ${sqlProductDetails.mvpLinkInfo}`);
     }
   }
   if (payload && payload.firstDentDetails) {
     if (sqlProductDetails != null && sqlProductDetails.firstDentDetails) {
       payload.firstDentDetails = mapUserDataToDbData(payload.firstDentDetails, sqlProductDetails.firstDentDetails, AuditInfo);
       await mySqlUtility.UpdateVendorData(payload.firstDentDetails, "FIRSTDENT");
-      console.log(`Updated FirstDent Info for ${mpid} at ${new Date()}`);
+      logger.info(`Updated FirstDent Info for ${mpid} at ${new Date()}`);
     } else {
       if (!sqlProductDetails) {
         sqlProductDetails = {};
@@ -481,14 +483,14 @@ export const UpsertProductDetailsInSql = async (payload: any, mpid: any, req: an
       payload.firstDentDetails.updatedBy = AuditInfo.UpdatedBy;
       payload.firstDentDetails.updatedAt = moment(AuditInfo.UpdatedOn).format("YYYY-MM-DD HH:mm:ss");
       sqlProductDetails.firstDentLinkInfo = await mySqlUtility.UpsertVendorData(payload.firstDentDetails, "FIRSTDENT");
-      console.log(`Inserted FirstDent Info for ${mpid} with insertId : ${sqlProductDetails.firstDentLinkInfo}`);
+      logger.info(`Inserted FirstDent Info for ${mpid} with insertId : ${sqlProductDetails.firstDentLinkInfo}`);
     }
   }
   if (payload && payload.topDentDetails) {
     if (sqlProductDetails != null && sqlProductDetails.topDentDetails) {
       payload.topDentDetails = mapUserDataToDbData(payload.topDentDetails, sqlProductDetails.topDentDetails, AuditInfo);
       await mySqlUtility.UpdateVendorData(payload.topDentDetails, "TOPDENT");
-      console.log(`Updated TopDent Info for ${mpid} at ${new Date()}`);
+      logger.info(`Updated TopDent Info for ${mpid} at ${new Date()}`);
     } else {
       if (!sqlProductDetails) {
         sqlProductDetails = {};
@@ -496,7 +498,7 @@ export const UpsertProductDetailsInSql = async (payload: any, mpid: any, req: an
       payload.topDentDetails.updatedBy = AuditInfo.UpdatedBy;
       payload.topDentDetails.updatedAt = moment(AuditInfo.UpdatedOn).format("YYYY-MM-DD HH:mm:ss");
       sqlProductDetails.topDentLinkInfo = await mySqlUtility.UpsertVendorData(payload.topDentDetails, "TOPDENT");
-      console.log(`Inserted TopDent Info for ${mpid} with insertId : ${sqlProductDetails.topDentLinkInfo}`);
+      logger.info(`Inserted TopDent Info for ${mpid} with insertId : ${sqlProductDetails.topDentLinkInfo}`);
     }
   }
 
@@ -504,7 +506,7 @@ export const UpsertProductDetailsInSql = async (payload: any, mpid: any, req: an
     if (sqlProductDetails != null && sqlProductDetails.triadDetails) {
       payload.triadDetails = mapUserDataToDbData(payload.triadDetails, sqlProductDetails.triadDetails, AuditInfo);
       await mySqlUtility.UpdateVendorData(payload.triadDetails, "TRIAD");
-      console.log(`Updated Triad Info for ${mpid} at ${new Date()}`);
+      logger.info(`Updated Triad Info for ${mpid} at ${new Date()}`);
     } else {
       if (!sqlProductDetails) {
         sqlProductDetails = {};
@@ -512,7 +514,7 @@ export const UpsertProductDetailsInSql = async (payload: any, mpid: any, req: an
       payload.triadDetails.updatedBy = AuditInfo.UpdatedBy;
       payload.triadDetails.updatedAt = moment(AuditInfo.UpdatedOn).format("YYYY-MM-DD HH:mm:ss");
       sqlProductDetails.triadLinkInfo = await mySqlUtility.UpsertVendorData(payload.triadDetails, "TRIAD");
-      console.log(`Inserted Triad Info for ${mpid} with insertId : ${sqlProductDetails.triadLinkInfo}`);
+      logger.info(`Inserted Triad Info for ${mpid} with insertId : ${sqlProductDetails.triadLinkInfo}`);
     }
   }
 
@@ -520,7 +522,7 @@ export const UpsertProductDetailsInSql = async (payload: any, mpid: any, req: an
     if (sqlProductDetails != null && sqlProductDetails.biteSupplyDetails) {
       payload.biteSupplyDetails = mapUserDataToDbData(payload.biteSupplyDetails, sqlProductDetails.biteSupplyDetails, AuditInfo);
       await mySqlUtility.UpdateVendorData(payload.biteSupplyDetails, "BITESUPPLY");
-      console.log(`Updated BiteSupply Info for ${mpid} at ${new Date()}`);
+      logger.info(`Updated BiteSupply Info for ${mpid} at ${new Date()}`);
     } else {
       if (!sqlProductDetails) {
         sqlProductDetails = {};
@@ -528,7 +530,7 @@ export const UpsertProductDetailsInSql = async (payload: any, mpid: any, req: an
       payload.biteSupplyDetails.updatedBy = AuditInfo.UpdatedBy;
       payload.biteSupplyDetails.updatedAt = moment(AuditInfo.UpdatedOn).format("YYYY-MM-DD HH:mm:ss");
       sqlProductDetails.biteSupplyLinkInfo = await mySqlUtility.UpsertVendorData(payload.biteSupplyDetails, "BITESUPPLY");
-      console.log(`Inserted BiteSupply Info for ${mpid} with insertId : ${sqlProductDetails.biteSupplyLinkInfo}`);
+      logger.info(`Inserted BiteSupply Info for ${mpid} with insertId : ${sqlProductDetails.biteSupplyLinkInfo}`);
     }
   }
 

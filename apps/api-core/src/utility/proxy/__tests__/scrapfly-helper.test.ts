@@ -26,20 +26,22 @@ jest.mock("../../config", () => ({
   },
 }));
 
+jest.mock("../../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
 import fetch from "node-fetch";
 import * as proxySwitchHelper from "../../proxy-switch-helper";
 import * as formatWrapper from "../../format-wrapper";
 import xml2js from "xml2js";
 import { scrapflyFetchData, scrapflyFetch } from "../scrapfly-helper";
+import logger from "../../logger";
 
 const mockedFetch = fetch as jest.MockedFunction<typeof fetch>;
 const mockedProxySwitchHelper = proxySwitchHelper as jest.Mocked<typeof proxySwitchHelper>;
 const mockedFormatWrapper = formatWrapper as jest.Mocked<typeof formatWrapper>;
 const mockedXml2js = xml2js as jest.Mocked<typeof xml2js>;
-
-// Suppress console.log during tests
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
 
 describe("scrapfly-helper", () => {
   const mockProxyDetails = {
@@ -58,8 +60,6 @@ describe("scrapfly-helper", () => {
     jest.useFakeTimers();
 
     // Mock console methods
-    console.log = jest.fn();
-    console.error = jest.fn();
 
     // Create mock response object
     mockResponse = {
@@ -92,8 +92,6 @@ describe("scrapfly-helper", () => {
 
   afterEach(() => {
     jest.useRealTimers();
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
   });
 
   describe("scrapflyFetchData", () => {
@@ -116,8 +114,8 @@ describe("scrapfly-helper", () => {
 
         expect(result).toEqual({ data: [{ formatted: "data" }] });
         expect(mockedFetch).toHaveBeenCalled();
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("SCRAPE STARTED : Scrapfly - JS Rendering"));
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("SCRAPE COMPLETED : Scrapfly - JS Rendering"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("SCRAPE STARTED : Scrapfly - JS Rendering"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("SCRAPE COMPLETED : Scrapfly - JS Rendering"));
       });
 
       it("should successfully fetch data with JS rendering disabled", async () => {
@@ -137,8 +135,8 @@ describe("scrapfly-helper", () => {
         const result = await scrapflyFetchData(mockUrl, mockProxyDetails, mockSeqString, false);
 
         expect(result).toEqual({ data: [{ formatted: "data" }] });
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("SCRAPE STARTED : Scrapfly - Non JS Rendering"));
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("SCRAPE COMPLETED : Scrapfly - Non JS Rendering"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("SCRAPE STARTED : Scrapfly - Non JS Rendering"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("SCRAPE COMPLETED : Scrapfly - Non JS Rendering"));
       });
 
       it("should handle null seqString", async () => {
@@ -157,7 +155,7 @@ describe("scrapfly-helper", () => {
         const result = await scrapflyFetchData(mockUrl, mockProxyDetails, null, true);
 
         expect(result).toEqual({ data: [{ formatted: "data" }] });
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("SCRAPE STARTED"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("SCRAPE STARTED"));
       });
 
       it("should include retry count in log", async () => {
@@ -175,8 +173,8 @@ describe("scrapfly-helper", () => {
 
         await scrapflyFetchData(mockUrl, mockProxyDetails, mockSeqString, true, 2);
 
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("|| 2"));
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("retry count : 2"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("|| 2"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("retry count : 2"));
       });
 
       it("should return formatted response when FORMAT_RESPONSE_CUSTOM is true", async () => {
@@ -450,8 +448,8 @@ describe("scrapfly-helper", () => {
 
         await scrapflyFetchData(mockUrl, mockProxyDetails, mockSeqString, true, 0);
 
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Scrapfly Exception"));
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining(mockUrl));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Scrapfly Exception"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(mockUrl));
       });
 
       it("should log retry attempt details", async () => {
@@ -464,9 +462,9 @@ describe("scrapfly-helper", () => {
         await jest.advanceTimersByTimeAsync(1000);
         await promise;
 
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("REPRICER CORE | SCRAPFLY | : ERROR (WITH RETRY)"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("REPRICER CORE | SCRAPFLY | : ERROR (WITH RETRY)"));
         // The retry attempt log uses two arguments
-        const retryLogCall = (console.log as jest.Mock).mock.calls.find((call) => call[0] && typeof call[0] === "string" && call[0].includes("RETRY ATTEMPT : 1"));
+        const retryLogCall = (logger.info as jest.Mock).mock.calls.find((call) => call[0] && typeof call[0] === "string" && call[0].includes("RETRY ATTEMPT : 1"));
         expect(retryLogCall).toBeDefined();
       });
     });
@@ -801,7 +799,7 @@ describe("scrapfly-helper", () => {
     it("should format timing correctly in scrapflyFetchData", async () => {
       await scrapflyFetchData(mockUrl, mockProxyDetails, mockSeqString, true);
 
-      const logCalls = (console.log as jest.Mock).mock.calls;
+      const logCalls = (logger.info as jest.Mock).mock.calls;
       const timeTakenCall = logCalls.find((call) => call[0] && typeof call[0] === "string" && call[0].includes("TimeTaken"));
       expect(timeTakenCall).toBeDefined();
       if (timeTakenCall) {

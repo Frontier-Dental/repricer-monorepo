@@ -6,17 +6,15 @@ import cron from "node-cron";
 import { getProductsFromMiniErp } from "../../utility/mini-erp/min-erp-helper";
 import { updateNet32Stock } from "../../services/net32-stock-update";
 import { miniErpCrons } from "./shared";
+import logger from "../../utility/logger";
 
-export async function startMiniErpCron(
-  req: Request,
-  res: Response,
-): Promise<any> {
+export async function startMiniErpCron(req: Request, res: Response): Promise<any> {
   await startMiniErpCronLogic();
   return res.status(_codes.StatusCodes.OK).send(`Cron started successfully`);
 }
 
 export async function startMiniErpCronLogic() {
-  console.log("Starting mini erp cron logic at", new Date());
+  logger.info("Starting mini erp cron logic at", new Date());
   const miniErpCronDetails = await GetMiniErpCronDetails();
 
   if (miniErpCronDetails && miniErpCronDetails.length > 0) {
@@ -24,11 +22,7 @@ export async function startMiniErpCronLogic() {
       if (miniErpCronDetails[i]) {
         const cronDetail = miniErpCronDetails[i];
         miniErpCrons[cronDetail.CronName] = cron.schedule(
-          responseUtility.GetCronGeneric(
-            cronDetail.CronTimeUnit,
-            cronDetail.CronTime,
-            parseInt(cronDetail.Offset),
-          ),
+          responseUtility.GetCronGeneric(cronDetail.CronTimeUnit, cronDetail.CronTime, parseInt(cronDetail.Offset)),
           async () => {
             try {
               switch (cronDetail.CronName) {
@@ -39,17 +33,17 @@ export async function startMiniErpCronLogic() {
                   await updateNet32Stock();
                   break;
                 default:
-                  console.error(`Cron ${cronDetail.CronName} not found`);
+                  logger.error(`Cron ${cronDetail.CronName} not found`);
                   break;
               }
             } catch (error) {
-              console.error(`Error running ${cronDetail.CronName}:`, error);
+              logger.error(`Error running ${cronDetail.CronName}:`, error);
             }
           },
-          { scheduled: JSON.parse(cronDetail.CronStatus) },
+          { scheduled: JSON.parse(cronDetail.CronStatus) }
         );
         if (JSON.parse(cronDetail.CronStatus)) {
-          console.log(`Started ${cronDetail.CronName}`);
+          logger.info(`Started ${cronDetail.CronName}`);
         }
       }
     }

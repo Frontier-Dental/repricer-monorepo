@@ -7,6 +7,7 @@ import { RepriceModel } from "../../../model/reprice-model";
 import { Net32Product } from "../../../types/net32";
 import { FrontierProduct } from "../../../types/frontier";
 import { applicationConfig } from "../../config";
+import logger from "../../logger";
 
 export function ApplyRule(repriceResult: any, ruleIdentifier: number, isNcNeeded?: boolean, net32Details?: Net32Product) {
   let $eval = repriceResult;
@@ -519,7 +520,7 @@ export async function AlignIsRepriced(repriceResult: any) {
       $eval.repriceDetails.explained = $eval.repriceDetails.explained + "_IGNORED_#SAMEPRICESUGGESTED";
     }
   } catch (exception) {
-    console.log(`Exception while AlignIsRepriced : ${exception}`);
+    logger.info(`Exception while AlignIsRepriced : ${exception}`);
   }
   return $eval;
 }

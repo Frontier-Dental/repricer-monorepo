@@ -12,6 +12,7 @@ import * as Rule from "../utility/reprice-algo/v1/repricer-rule-helper";
 import * as responseUtility from "../utility/response-utility";
 import { applicationConfig } from "../utility/config";
 import { apiMapping } from "../resources/api-mapping";
+import logger from "../utility/logger";
 
 export const feedController = express.Router();
 const ControllerName = "FEED";
@@ -21,7 +22,7 @@ feedController.post("/feed/RepriceProduct/:id", async (req: Request, res: Respon
   let productDetails = req.body;
   let feedOutput = null;
 
-  console.log(`${ControllerName} : Requesting Reprice info for ${mpid} at Time :  ${new Date()}`);
+  logger.info(`${ControllerName} : Requesting Reprice info for ${mpid} at Time :  ${new Date()}`);
 
   let repriceModel = new RepriceModel(req.params.id, null, productDetails.productName, productDetails.unitPrice, false, false, undefined, null);
 

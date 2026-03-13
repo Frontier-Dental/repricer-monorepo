@@ -40,8 +40,13 @@ jest.mock("../../../utility/reprice-algo/reprice-base");
 jest.mock("../../../utility/reprice-algo/v2/wrapper");
 jest.mock("../../../utility/request-generator");
 jest.mock("../../../utility/mysql/mysql-v2");
+jest.mock("../../../utility/logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
 
 import { Request, Response } from "express";
+import logger from "../../../utility/logger";
 import { StatusCodes } from "http-status-codes";
 import { AxiosResponse } from "axios";
 import { AlgoExecutionMode, VendorName } from "@repricer-monorepo/shared";
@@ -69,9 +74,6 @@ const mockRepriceWrapper = repriceBase.repriceWrapper as jest.MockedFunction<typ
 const mockRepriceProductV2Wrapper = repriceProductV2Wrapper as jest.MockedFunction<typeof repriceProductV2Wrapper>;
 const mockGetPrioritySequence = requestGenerator.GetPrioritySequence as jest.MockedFunction<typeof requestGenerator.GetPrioritySequence>;
 const mockGetCronSettingsDetailsById = GetCronSettingsDetailsById as jest.MockedFunction<typeof GetCronSettingsDetailsById>;
-
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
 
 describe("manual-repricer/manual-reprice", () => {
   let mockRequest: Partial<Request<{ id: string }>>;
@@ -164,8 +166,6 @@ describe("manual-repricer/manual-reprice", () => {
     mockV4.mockReturnValue("test-uuid-123");
 
     // Mock console methods
-    console.log = jest.fn();
-    console.error = jest.fn();
 
     // Create mock response object
     mockJson = jest.fn().mockReturnThis();
@@ -216,8 +216,6 @@ describe("manual-repricer/manual-reprice", () => {
 
   afterEach(() => {
     // Restore console methods
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
   });
 
   describe("manualRepriceHandler", () => {
@@ -473,7 +471,7 @@ describe("manual-repricer/manual-reprice", () => {
     it("should log success message when logInDb is returned", async () => {
       await manualRepriceHandler(mockRequest as Request<{ id: string }>, mockResponse as Response);
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Successfully logged Cron Logs in DB"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Successfully logged Cron Logs in DB"));
     });
 
     it("should not log success message when logInDb is empty string", async () => {
@@ -481,7 +479,7 @@ describe("manual-repricer/manual-reprice", () => {
 
       await manualRepriceHandler(mockRequest as Request<{ id: string }>, mockResponse as Response);
 
-      expect(console.log).not.toHaveBeenCalledWith(expect.stringContaining("Successfully logged Cron Logs in DB"));
+      expect(logger.info).not.toHaveBeenCalledWith(expect.stringContaining("Successfully logged Cron Logs in DB"));
     });
 
     it("should create cronLogs with correct structure", async () => {
@@ -580,7 +578,7 @@ describe("manual-repricer/manual-reprice", () => {
     it("should log running manual reprice message", async () => {
       await manualRepriceHandler(mockRequest as Request<{ id: string }>, mockResponse as Response);
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Running Manual Reprice for 123"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Running Manual Reprice for 123"));
     });
 
     it("should handle product with multiple algo execution modes", async () => {

@@ -2,6 +2,7 @@ import { Db, MongoClient } from "mongodb";
 import _ from "lodash";
 import { applicationConfig } from "../config";
 import Encrypto from "../encrypto";
+import logger from "../logger";
 
 // MongoDB Singleton Helper
 let mongoClient: MongoClient | null = null;
@@ -18,7 +19,7 @@ export async function getMongoDb(): Promise<Db> {
   }
 
   connectionPromise = connectToMongo().catch((error) => {
-    console.error("api-core MongoDB: Connection error:", error);
+    logger.error("api-core MongoDB: Connection error:", error);
     resetConnection();
     throw error;
   });
@@ -44,19 +45,19 @@ async function connectToMongo(): Promise<Db> {
   });
 
   client.on("close", () => {
-    console.warn("api-core MongoDB: Connection closed, resetting for reconnection");
+    logger.warn("api-core MongoDB: Connection closed, resetting for reconnection");
     resetConnection();
   });
 
   client.on("error", (err) => {
-    console.error("api-core MongoDB: Connection error, resetting for reconnection", err);
+    logger.error("api-core MongoDB: Connection error, resetting for reconnection", err);
     resetConnection();
   });
 
   await client.connect();
   mongoDb = client.db(dbName);
   mongoClient = client;
-  console.log("api-core MongoDB: Connection established successfully");
+  logger.info("api-core MongoDB: Connection established successfully");
   return mongoDb;
 }
 

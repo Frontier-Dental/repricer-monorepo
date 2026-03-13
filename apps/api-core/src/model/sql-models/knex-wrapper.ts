@@ -1,6 +1,7 @@
 import { Knex, knex } from "knex";
 import { applicationConfig } from "../../utility/config";
 import Encrypto from "../../utility/encrypto";
+import logger from "../../utility/logger";
 
 let knexInstance: Knex | null = null;
 
@@ -43,7 +44,7 @@ export function getKnexInstance(): Knex {
 
     // Log pool events for debugging
     knexInstance.on("query-error", (error, obj) => {
-      console.error("Knex query error:", error, obj);
+      logger.error("Knex query error:", error, obj);
     });
 
     return knexInstance;
@@ -52,7 +53,7 @@ export function getKnexInstance(): Knex {
 
 export async function destroyKnexInstance() {
   if (knexInstance) {
-    console.warn("Destroying Knex Instance");
+    logger.warn("Destroying Knex Instance");
     await knexInstance.destroy();
     knexInstance = null;
   }

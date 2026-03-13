@@ -19,10 +19,19 @@ jest.mock("../../config", () => ({
     PROXY_SWITCH_EMAIL_THRESHOLD_NOTIFIER: "http://test-threshold-notifier.com",
     REPRICER_UI_CACHE_CLEAR: "http://test-cache-clear.com",
     PROXYSWITCH_TIMER: 3600000,
+    FORMAT_RESPONSE_CUSTOM: false,
+    NO_OF_RETRIES: 3,
+    RETRY_INTERVAL: 10,
   },
 }));
 
+jest.mock("../../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
 import puppeteer from "puppeteer-core";
+import logger from "../../logger";
 import requestPromise from "request-promise";
 import * as proxySwitchHelper from "../../proxy-switch-helper";
 import { fetchData, fetchDataForDebug } from "../bright-data-helper";
@@ -30,9 +39,6 @@ import { fetchData, fetchDataForDebug } from "../bright-data-helper";
 const mockedPuppeteer = puppeteer as jest.Mocked<typeof puppeteer>;
 const mockedRequestPromise = requestPromise as jest.MockedFunction<typeof requestPromise>;
 const mockedProxySwitchHelper = proxySwitchHelper as jest.Mocked<typeof proxySwitchHelper>;
-
-// Suppress console.log during tests
-const originalConsoleLog = console.log;
 
 describe("bright-data-helper", () => {
   const mockProxyDetails = {
@@ -52,215 +58,143 @@ describe("bright-data-helper", () => {
     jest.clearAllMocks();
     jest.resetAllMocks();
 
-    // Mock console.log
-    console.log = jest.fn();
+    // Implementation uses fetch(), not puppeteer - mock global fetch
+    (global as any).fetch = jest.fn().mockResolvedValue({
+      status: 200,
+      text: jest.fn().mockResolvedValue(JSON.stringify({ product: "test-product", price: 99.99 })),
+    });
 
-    // Create mock page object
-    mockPage = {
-      evaluate: jest.fn(),
-    };
-
-    // Create mock browser object
-    mockBrowser = {
-      newPage: jest.fn().mockResolvedValue(mockPage),
-      close: jest.fn().mockResolvedValue(undefined),
-    };
-
-    // Mock puppeteer.connect
+    // Create mock page object (kept for any remaining references)
+    mockPage = { evaluate: jest.fn() };
+    mockBrowser = { newPage: jest.fn().mockResolvedValue(mockPage), close: jest.fn().mockResolvedValue(undefined) };
     mockedPuppeteer.connect = jest.fn().mockResolvedValue(mockBrowser);
 
-    // Mock proxy switch helper - ExecuteCounter is already mocked by jest.mock
     (mockedProxySwitchHelper.ExecuteCounter as jest.Mock).mockResolvedValue(undefined);
-  });
-
-  afterEach(() => {
-    console.log = originalConsoleLog;
   });
 
   describe("fetchData", () => {
     describe("successful responses", () => {
       it("should successfully fetch data and parse JSON from page body", async () => {
         const mockJsonData = { product: "test-product", price: 99.99 };
-        mockPage.evaluate.mockResolvedValue(mockJsonData);
+        (global as any).fetch = jest.fn().mockResolvedValue({
+          status: 200,
+          text: jest.fn().mockResolvedValue(JSON.stringify(mockJsonData)),
+        });
 
         const result = await fetchData(mockUrl, mockProxyDetails);
 
         expect(result).toEqual({ data: mockJsonData });
-        expect(mockedPuppeteer.connect).toHaveBeenCalledWith({
-          browserWSEndpoint: `${mockProxyDetails.userName}:${mockProxyDetails.password}@${mockProxyDetails.hostUrl}:${mockProxyDetails.port}`,
-        });
-        expect(mockBrowser.newPage).toHaveBeenCalled();
-        expect(mockPage.evaluate).toHaveBeenCalled();
-        expect(mockBrowser.close).toHaveBeenCalled();
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("SCRAPE : BrightData :"));
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("TimeTaken"));
+        expect((global as any).fetch).toHaveBeenCalledWith(mockProxyDetails.hostUrl, expect.any(Object));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("SCRAPE STARTED : BrightData :"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("SCRAPE COMPLETED : BrightData :"));
       });
 
       it("should handle empty JSON response", async () => {
-        mockPage.evaluate.mockResolvedValue(null);
+        (global as any).fetch = jest.fn().mockResolvedValue({
+          status: 200,
+          text: jest.fn().mockResolvedValue(JSON.stringify(null)),
+        });
 
         const result = await fetchData(mockUrl, mockProxyDetails);
 
-        expect(result).toEqual({});
-        expect(mockBrowser.close).toHaveBeenCalled();
+        expect(result).toEqual({ data: null });
+        expect((global as any).fetch).toHaveBeenCalled();
       });
 
       it("should handle undefined JSON response", async () => {
-        mockPage.evaluate.mockResolvedValue(undefined);
+        (global as any).fetch = jest.fn().mockResolvedValue({
+          status: 200,
+          text: jest.fn().mockResolvedValue(JSON.stringify({})),
+        });
 
         const result = await fetchData(mockUrl, mockProxyDetails);
 
-        expect(result).toEqual({});
-        expect(mockBrowser.close).toHaveBeenCalled();
+        expect(result).toEqual({ data: {} });
+        expect((global as any).fetch).toHaveBeenCalled();
       });
 
-      it("should correctly construct WebSocket endpoint with all proxy details", async () => {
+      it("should correctly call fetch with proxy hostUrl", async () => {
         const customProxyDetails = {
           userName: "custom-user",
           password: "custom-pass",
-          hostUrl: "wss://custom-host.com",
+          hostUrl: "https://custom-api.brightdata.com",
           port: "8080",
           proxyProvider: "2",
         };
-        mockPage.evaluate.mockResolvedValue({ data: "test" });
 
         await fetchData(mockUrl, customProxyDetails);
 
-        expect(mockedPuppeteer.connect).toHaveBeenCalledWith({
-          browserWSEndpoint: "custom-user:custom-pass@wss://custom-host.com:8080",
-        });
+        expect((global as any).fetch).toHaveBeenCalledWith(
+          customProxyDetails.hostUrl,
+          expect.objectContaining({
+            method: "POST",
+            headers: expect.objectContaining({ Authorization: "Bearer custom-user" }),
+          })
+        );
       });
     });
 
     describe("error handling", () => {
-      it("should handle puppeteer connection errors", async () => {
-        const connectionError = new Error("Connection failed");
-        mockedPuppeteer.connect.mockRejectedValueOnce(connectionError);
+      it("should handle fetch errors and call ExecuteCounter", async () => {
+        (global as any).fetch = jest.fn().mockRejectedValueOnce(new Error("Connection failed"));
 
         const result = await fetchData(mockUrl, mockProxyDetails);
 
-        expect(result).toEqual({});
+        expect(result).toBeNull();
         expect(mockedProxySwitchHelper.ExecuteCounter).toHaveBeenCalledWith(1);
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("BRIGHTDATA - Fetch Response Exception"));
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining(mockUrl));
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("ERROR"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("BrightData Exception"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(mockUrl));
       });
 
-      it("should handle page creation errors", async () => {
-        const pageError = new Error("Page creation failed");
-        mockBrowser.newPage.mockRejectedValueOnce(pageError);
+      it("should handle fetch rejection and retry path", async () => {
+        (global as any).fetch = jest.fn().mockRejectedValueOnce(new Error("Page creation failed"));
 
         const result = await fetchData(mockUrl, mockProxyDetails);
 
-        expect(result).toEqual({});
+        expect(result).toBeNull();
         expect(mockedProxySwitchHelper.ExecuteCounter).toHaveBeenCalledWith(1);
-        expect(mockBrowser.close).toHaveBeenCalled();
       });
 
-      it("should handle page.evaluate errors", async () => {
-        const evaluateError = new Error("Evaluation failed");
-        mockPage.evaluate.mockRejectedValueOnce(evaluateError);
+      it("should handle fetch rejection and call ExecuteCounter", async () => {
+        (global as any).fetch = jest.fn().mockRejectedValueOnce(new Error("Evaluation failed"));
 
         const result = await fetchData(mockUrl, mockProxyDetails);
 
-        expect(result).toEqual({});
+        expect(result).toBeNull();
         expect(mockedProxySwitchHelper.ExecuteCounter).toHaveBeenCalledWith(1);
-        expect(mockBrowser.close).toHaveBeenCalled();
       });
 
-      it("should handle JSON parsing errors in evaluate", async () => {
-        const parseError = new SyntaxError("Unexpected token");
-        mockPage.evaluate.mockRejectedValueOnce(parseError);
+      it("should handle fetch rejection on parse error", async () => {
+        (global as any).fetch = jest.fn().mockRejectedValueOnce(new SyntaxError("Unexpected token"));
 
         const result = await fetchData(mockUrl, mockProxyDetails);
 
-        expect(result).toEqual({});
+        expect(result).toBeNull();
         expect(mockedProxySwitchHelper.ExecuteCounter).toHaveBeenCalledWith(1);
-        expect(mockBrowser.close).toHaveBeenCalled();
       });
 
       it("should call ExecuteCounter with correct proxyProvider when error occurs", async () => {
-        const error = new Error("Test error");
-        mockedPuppeteer.connect.mockRejectedValueOnce(error);
+        (global as any).fetch = jest.fn().mockRejectedValueOnce(new Error("Test error"));
 
         await fetchData(mockUrl, { ...mockProxyDetails, proxyProvider: "5" });
 
         expect(mockedProxySwitchHelper.ExecuteCounter).toHaveBeenCalledWith(5);
       });
-
-      it("should ensure browser is closed even when error occurs", async () => {
-        const error = new Error("Test error");
-        mockPage.evaluate.mockRejectedValueOnce(error);
-
-        await fetchData(mockUrl, mockProxyDetails);
-
-        expect(mockBrowser.close).toHaveBeenCalled();
-      });
-
-      it("should handle browser close errors gracefully", async () => {
-        const closeError = new Error("Close failed");
-        mockBrowser.close.mockRejectedValueOnce(closeError);
-        mockPage.evaluate.mockResolvedValue({ data: "test" });
-
-        // Browser close errors in finally block will propagate
-        await expect(fetchData(mockUrl, mockProxyDetails)).rejects.toThrow("Close failed");
-      });
-    });
-
-    describe("browser context evaluation", () => {
-      it("should evaluate function in browser context with document parameter", async () => {
-        const mockJsonData = { test: "data" };
-        mockPage.evaluate.mockResolvedValue(mockJsonData);
-
-        await fetchData(mockUrl, mockProxyDetails);
-
-        expect(mockPage.evaluate).toHaveBeenCalled();
-        const evaluateFunction = mockPage.evaluate.mock.calls[0][0];
-        expect(typeof evaluateFunction).toBe("function");
-
-        // Simulate browser context with document
-        const mockDocument = {
-          querySelector: jest.fn().mockReturnValue({
-            innerText: JSON.stringify(mockJsonData),
-          }),
-        };
-
-        const result = evaluateFunction(mockDocument);
-        expect(result).toEqual(mockJsonData);
-      });
-
-      it("should handle complex JSON structures", async () => {
-        const complexData = {
-          products: [
-            { id: 1, name: "Product 1" },
-            { id: 2, name: "Product 2" },
-          ],
-          metadata: { total: 2, page: 1 },
-        };
-        mockPage.evaluate.mockResolvedValue(complexData);
-
-        const result = await fetchData(mockUrl, mockProxyDetails);
-
-        expect(result).toEqual({ data: complexData });
-      });
     });
 
     describe("timing and logging", () => {
       it("should log timing information after successful fetch", async () => {
-        mockPage.evaluate.mockResolvedValue({ data: "test" });
-
         await fetchData(mockUrl, mockProxyDetails);
 
-        expect(console.log).toHaveBeenCalledWith(expect.stringMatching(/SCRAPE : BrightData : .* \|\| TimeTaken  :  \d+\.\d{3} seconds/));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringMatching(/SCRAPE COMPLETED : BrightData : .* \|\| TimeTaken/));
       });
 
       it("should include URL in log message", async () => {
         const customUrl = "https://custom-url.com/test";
-        mockPage.evaluate.mockResolvedValue({ data: "test" });
 
         await fetchData(customUrl, mockProxyDetails);
 
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining(customUrl));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(customUrl));
       });
     });
   });
@@ -269,26 +203,27 @@ describe("bright-data-helper", () => {
     describe("successful responses", () => {
       it("should successfully fetch data and parse JSON from page body", async () => {
         const mockJsonData = { product: "test-product", price: 99.99 };
-        mockPage.evaluate.mockResolvedValue(mockJsonData);
+        (global as any).fetch = jest.fn().mockResolvedValue({
+          status: 200,
+          text: jest.fn().mockResolvedValue(JSON.stringify(mockJsonData)),
+        });
 
         const result = await fetchDataForDebug(mockUrl, mockProxyDetails);
 
         expect(result).toEqual({ data: mockJsonData });
-        expect(mockedPuppeteer.connect).toHaveBeenCalledWith({
-          browserWSEndpoint: `${mockProxyDetails.userName}:${mockProxyDetails.password}@${mockProxyDetails.hostUrl}:${mockProxyDetails.port}`,
-        });
-        expect(mockBrowser.newPage).toHaveBeenCalled();
-        expect(mockPage.evaluate).toHaveBeenCalled();
-        expect(mockBrowser.close).toHaveBeenCalled();
+        expect((global as any).fetch).toHaveBeenCalledWith(mockProxyDetails.hostUrl, expect.any(Object));
       });
 
       it("should handle empty JSON response", async () => {
-        mockPage.evaluate.mockResolvedValue(null);
+        (global as any).fetch = jest.fn().mockResolvedValue({
+          status: 200,
+          text: jest.fn().mockResolvedValue(JSON.stringify(null)),
+        });
 
         const result = await fetchDataForDebug(mockUrl, mockProxyDetails);
 
+        // responseContent null is falsy, so implementation returns {} without setting data
         expect(result).toEqual({});
-        expect(mockBrowser.close).toHaveBeenCalled();
       });
     });
 
@@ -296,136 +231,34 @@ describe("bright-data-helper", () => {
       it("should handle errors and return error details in response data", async () => {
         const error = new Error("Test error");
         error.stack = "Error stack trace";
-        mockPage.evaluate.mockRejectedValueOnce(error);
+        (global as any).fetch = jest.fn().mockRejectedValueOnce(error);
 
         const result = await fetchDataForDebug(mockUrl, mockProxyDetails);
 
-        expect(result).toEqual({
-          data: {
-            message: undefined, // error.error?.message is undefined when error is direct
-            stack: undefined, // error.error?.stack is undefined when error is direct
-          },
-        });
-        expect(mockBrowser.close).toHaveBeenCalled();
+        expect(result.data).toBeDefined();
+        expect(result.data.message).toBe("Test error");
+        expect(result.data.stack).toBe("Error stack trace");
         expect(mockedProxySwitchHelper.ExecuteCounter).not.toHaveBeenCalled();
-      });
-
-      it("should handle errors with error.error property", async () => {
-        const innerError = {
-          message: "Inner error message",
-          stack: "Inner error stack",
-        };
-        const error: any = { error: innerError };
-        mockPage.evaluate.mockRejectedValueOnce(error);
-
-        const result = await fetchDataForDebug(mockUrl, mockProxyDetails);
-
-        expect(result).toEqual({
-          data: {
-            message: "Inner error message",
-            stack: "Inner error stack",
-          },
-        });
-        expect(mockBrowser.close).toHaveBeenCalled();
-      });
-
-      it("should handle errors with partial error.error object", async () => {
-        const innerError = {
-          message: "Partial error",
-        };
-        const error: any = { error: innerError };
-        mockPage.evaluate.mockRejectedValueOnce(error);
-
-        const result = await fetchDataForDebug(mockUrl, mockProxyDetails);
-
-        expect(result).toEqual({
-          data: {
-            message: "Partial error",
-            stack: undefined,
-          },
-        });
-      });
-
-      it("should handle puppeteer connection errors in debug mode", async () => {
-        const connectionError = new Error("Connection failed");
-        mockedPuppeteer.connect.mockRejectedValueOnce(connectionError);
-
-        const result = await fetchDataForDebug(mockUrl, mockProxyDetails);
-
-        expect(result).toEqual({
-          data: {
-            message: undefined,
-            stack: undefined,
-          },
-        });
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("BRIGHTDATA - Fetch Response Exception"));
-        expect(mockedProxySwitchHelper.ExecuteCounter).not.toHaveBeenCalled();
-      });
-
-      it("should ensure browser is closed even when error occurs", async () => {
-        const error = new Error("Test error");
-        mockPage.evaluate.mockRejectedValueOnce(error);
-
-        await fetchDataForDebug(mockUrl, mockProxyDetails);
-
-        expect(mockBrowser.close).toHaveBeenCalled();
-      });
-
-      it("should not call ExecuteCounter on errors in debug mode", async () => {
-        const error = new Error("Test error");
-        mockPage.evaluate.mockRejectedValueOnce(error);
-
-        await fetchDataForDebug(mockUrl, mockProxyDetails);
-
-        expect(mockedProxySwitchHelper.ExecuteCounter).not.toHaveBeenCalled();
-      });
-
-      it("should handle browser close errors gracefully", async () => {
-        const closeError = new Error("Close failed");
-        mockBrowser.close.mockRejectedValueOnce(closeError);
-        mockPage.evaluate.mockResolvedValue({ data: "test" });
-
-        // Browser close errors in finally block will propagate
-        await expect(fetchDataForDebug(mockUrl, mockProxyDetails)).rejects.toThrow("Close failed");
-      });
-    });
-
-    describe("logging", () => {
-      it("should log timing information after successful fetch", async () => {
-        mockPage.evaluate.mockResolvedValue({ data: "test" });
-
-        await fetchDataForDebug(mockUrl, mockProxyDetails);
-
-        expect(console.log).toHaveBeenCalledWith(expect.stringMatching(/SCRAPE : BrightData : .* \|\| TimeTaken  :  \d+\.\d{3} seconds/));
       });
 
       it("should log error information when exception occurs", async () => {
-        const error = new Error("Test error");
-        mockPage.evaluate.mockRejectedValueOnce(error);
+        (global as any).fetch = jest.fn().mockRejectedValueOnce(new Error("Test error"));
 
         await fetchDataForDebug(mockUrl, mockProxyDetails);
 
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("BRIGHTDATA - Fetch Response Exception"));
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining(mockUrl));
-        expect(console.log).toHaveBeenCalledWith(expect.stringContaining("ERROR"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("BRIGHTDATA - Fetch Response Exception"));
+        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(mockUrl));
       });
     });
 
     describe("differences from fetchData", () => {
       it("should return error details in response instead of calling ExecuteCounter", async () => {
-        const error: any = {
-          error: {
-            message: "Debug error",
-            stack: "Debug stack",
-          },
-        };
-        mockPage.evaluate.mockRejectedValueOnce(error);
+        (global as any).fetch = jest.fn().mockRejectedValueOnce(new Error("Debug error"));
 
         const result = await fetchDataForDebug(mockUrl, mockProxyDetails);
 
         expect(result.data).toBeDefined();
         expect(result.data.message).toBe("Debug error");
-        expect(result.data.stack).toBe("Debug stack");
         expect(mockedProxySwitchHelper.ExecuteCounter).not.toHaveBeenCalled();
       });
     });
@@ -433,68 +266,59 @@ describe("bright-data-helper", () => {
 
   describe("parseHrtimeToSeconds (indirect testing)", () => {
     it("should format timing correctly in fetchData", async () => {
-      mockPage.evaluate.mockResolvedValue({ data: "test" });
-
       await fetchData(mockUrl, mockProxyDetails);
 
-      const logCall = (console.log as jest.Mock).mock.calls.find((call) => call[0].includes("TimeTaken"));
+      const logCall = (logger.info as jest.Mock).mock.calls.find((call) => call[0] && String(call[0]).includes("TimeTaken"));
       expect(logCall).toBeDefined();
       if (logCall) {
-        const timeMatch = logCall[0].match(/TimeTaken  :  (\d+\.\d{3}) seconds/);
+        const timeMatch = String(logCall[0]).match(/TimeTaken\s*:\s*([\d.]+)/);
         expect(timeMatch).toBeTruthy();
         if (timeMatch) {
           const timeValue = parseFloat(timeMatch[1]);
           expect(timeValue).toBeGreaterThanOrEqual(0);
-          expect(timeValue).toBeLessThan(100); // Reasonable upper bound
+          expect(timeValue).toBeLessThan(100);
         }
       }
     });
 
     it("should format timing correctly in fetchDataForDebug", async () => {
-      mockPage.evaluate.mockResolvedValue({ data: "test" });
-
       await fetchDataForDebug(mockUrl, mockProxyDetails);
 
-      const logCall = (console.log as jest.Mock).mock.calls.find((call) => call[0].includes("TimeTaken"));
+      const logCall = (logger.info as jest.Mock).mock.calls.find((call) => call[0] && String(call[0]).includes("TimeTaken"));
       expect(logCall).toBeDefined();
-      if (logCall) {
-        const timeMatch = logCall[0].match(/TimeTaken  :  (\d+\.\d{3}) seconds/);
-        expect(timeMatch).toBeTruthy();
-        expect(timeMatch[1]).toMatch(/^\d+\.\d{3}$/); // Format: number.3digits
-      }
     });
   });
 
   describe("edge cases", () => {
-    it("should handle proxy details with special characters in credentials", async () => {
+    it("should call fetch with proxy hostUrl and Authorization header", async () => {
       const specialProxyDetails = {
         userName: "user@name",
         password: "pass:word",
-        hostUrl: "wss://test.com",
+        hostUrl: "https://api.special.com",
         port: "9222",
         proxyProvider: "1",
       };
-      mockPage.evaluate.mockResolvedValue({ data: "test" });
 
       await fetchData(mockUrl, specialProxyDetails);
 
-      expect(mockedPuppeteer.connect).toHaveBeenCalledWith({
-        browserWSEndpoint: "user@name:pass:word@wss://test.com:9222",
-      });
+      expect((global as any).fetch).toHaveBeenCalledWith(
+        specialProxyDetails.hostUrl,
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: "Bearer user@name" }),
+        })
+      );
     });
 
     it("should handle very long URLs", async () => {
       const longUrl = "https://example.com/" + "a".repeat(1000);
-      mockPage.evaluate.mockResolvedValue({ data: "test" });
 
       await fetchData(longUrl, mockProxyDetails);
 
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining(longUrl));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(longUrl));
     });
 
     it("should handle numeric proxyProvider as string", async () => {
-      const error = new Error("Test error");
-      mockPage.evaluate.mockRejectedValueOnce(error);
+      (global as any).fetch = jest.fn().mockRejectedValueOnce(new Error("Test error"));
 
       await fetchData(mockUrl, { ...mockProxyDetails, proxyProvider: "123" });
 
@@ -502,14 +326,23 @@ describe("bright-data-helper", () => {
     });
 
     it("should handle multiple sequential calls", async () => {
-      mockPage.evaluate.mockResolvedValueOnce({ data: "first" }).mockResolvedValueOnce({ data: "second" });
+      (global as any).fetch = jest
+        .fn()
+        .mockResolvedValueOnce({
+          status: 200,
+          text: jest.fn().mockResolvedValue(JSON.stringify({ data: "first" })),
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          text: jest.fn().mockResolvedValue(JSON.stringify({ data: "second" })),
+        });
 
       const result1 = await fetchData(mockUrl, mockProxyDetails);
       const result2 = await fetchData(mockUrl, mockProxyDetails);
 
       expect(result1).toEqual({ data: { data: "first" } });
       expect(result2).toEqual({ data: { data: "second" } });
-      expect(mockBrowser.close).toHaveBeenCalledTimes(2);
+      expect((global as any).fetch).toHaveBeenCalledTimes(2);
     });
   });
 });

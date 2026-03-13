@@ -1,5 +1,6 @@
 import { createClient, RedisClientType } from "redis";
 import Encrypto from "../utility/encrypto";
+import logger from "../utility/logger";
 
 const OPERATION_TIMEOUT_MS = 5000;
 
@@ -16,10 +17,10 @@ class CacheClient {
         connectTimeout: 20000, // increase timeout (20s)
         reconnectStrategy: (retries) => {
           if (retries > 2) {
-            console.error("❌ Too many Redis reconnect attempts");
+            logger.error("❌ Too many Redis reconnect attempts");
             return new Error("Redis reconnect failed");
           }
-          console.warn(`⚡ Redis reconnecting... attempt #${retries}`);
+          logger.warn(`⚡ Redis reconnecting... attempt #${retries}`);
           return Math.min(retries * 500, 5000); // exponential backoff
         },
       },
@@ -28,12 +29,12 @@ class CacheClient {
     });
 
     this.client.on("error", (err) => {
-      console.error("❌ Redis Client Error:", err);
+      logger.error("❌ Redis Client Error:", err);
     });
 
     // Fire and forget initial connection - ensureConnected() will handle it
     this.client.connect().catch((err) => {
-      console.error("❌ Redis initial connection failed:", err);
+      logger.error("❌ Redis initial connection failed:", err);
     });
   }
 
@@ -58,7 +59,7 @@ class CacheClient {
   public async set<T>(key: string, value: T, ttlInSeconds?: number): Promise<void> {
     const connected = await this.ensureConnected();
     if (!connected) {
-      console.error(`❌ Redis set skipped for key ${key}: not connected`);
+      logger.error(`❌ Redis set skipped for key ${key}: not connected`);
       return;
     }
     try {
@@ -69,7 +70,7 @@ class CacheClient {
         await this.withTimeout(this.client.set(key, serialized), "set");
       }
     } catch (error) {
-      console.error(`❌ Redis set error for key ${key}:`, error);
+      logger.error(`❌ Redis set error for key ${key}:`, error);
     }
   }
 
@@ -82,7 +83,7 @@ class CacheClient {
       const data = await this.withTimeout(this.client.get(key), "get");
       return data ? (JSON.parse(data) as T) : null;
     } catch (error) {
-      console.error(`❌ Redis get error for key ${key}:`, error);
+      logger.error(`❌ Redis get error for key ${key}:`, error);
       return null;
     }
   }
@@ -95,7 +96,7 @@ class CacheClient {
     try {
       return await this.withTimeout(this.client.del(key), "delete");
     } catch (error) {
-      console.error(`❌ Redis delete error for key ${key}:`, error);
+      logger.error(`❌ Redis delete error for key ${key}:`, error);
       return 0;
     }
   }
@@ -109,7 +110,7 @@ class CacheClient {
       const result = await this.withTimeout(this.client.exists(key), "exists");
       return result === 1;
     } catch (error) {
-      console.error(`❌ Redis exists error for key ${key}:`, error);
+      logger.error(`❌ Redis exists error for key ${key}:`, error);
       return false;
     }
   }
@@ -130,11 +131,11 @@ class CacheClient {
       return true;
     }
     try {
-      console.warn("⚡ Redis reconnecting in ensureConnected...");
+      logger.warn("⚡ Redis reconnecting in ensureConnected...");
       await this.client.connect();
       return true;
     } catch (error) {
-      console.error("❌ Redis connection failed:", error);
+      logger.error("❌ Redis connection failed:", error);
       return false;
     }
   }
@@ -170,7 +171,7 @@ class CacheClient {
 
       return values;
     } catch (error) {
-      console.error("❌ Redis getAllKeys error:", error);
+      logger.error("❌ Redis getAllKeys error:", error);
       return withValues ? {} : [];
     }
   }

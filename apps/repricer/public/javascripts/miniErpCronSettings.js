@@ -49,8 +49,9 @@ function saveMiniErpCron() {
           location.reload();
         }, 5000);
       },
-      error: function () {
-        showErrorToast("Something went wrong, Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -80,8 +81,9 @@ function switchOffMiniErpCron(cronId) {
           showErrorToast(data.message);
         }
       },
-      error: function () {
-        showErrorToast("Oops unable to connect with server !!");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -111,8 +113,9 @@ function switchOnMiniErpCron(cronId) {
           showErrorToast(data.message);
         }
       },
-      error: function () {
-        showErrorToast("Oops unable to connect with server!!");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+        showErrorToast(errorMessage);
       },
     });
   }

@@ -50,6 +50,10 @@ jest.mock("@repricer-monorepo/shared", () => ({
   VendorNameLookup: {},
 }));
 
+jest.mock("../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
 jest.mock("../proxy/axios-retry-helper");
 jest.mock("../proxy/bright-data-helper");
 jest.mock("../proxy/scrapfly-helper");
@@ -62,6 +66,7 @@ import fs from "fs";
 import httpsProxyAgent from "https-proxy-agent";
 import _ from "lodash";
 import nodeFetch from "node-fetch";
+import logger from "../logger";
 import { postAsync, getAsync, getAsyncProxy, GetSisterVendorItemDetails, runFeedCron, getProduct, runProductCron, asyncProductData, native_get, fetch_product_data, fetchGetAsync, fetchGetAsyncV2, getProductsFromMiniErp } from "../axios-helper";
 import { applicationConfig } from "../config";
 import * as axiosRetryHelper from "../proxy/axios-retry-helper";
@@ -315,7 +320,7 @@ describe("axios-helper", () => {
       await getAsync("http://test.com", 1, "100", "seq123");
 
       expect(mockedAxios.get).toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("SCRAPE : TestProvider"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("SCRAPE : TestProvider"));
     });
 
     it("should handle slow cron details", async () => {

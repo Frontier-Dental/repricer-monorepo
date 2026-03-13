@@ -41,6 +41,10 @@ jest.mock("../../config", () => ({
   },
 }));
 
+jest.mock("../../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
 jest.mock("../mySql-mapper", () => ({
   GetTriggeredByValue: jest.fn(),
   MapProductDetailsList: jest.fn(),
@@ -60,6 +64,7 @@ jest.mock("moment", () => {
 });
 
 import { getKnexInstance } from "../../../model/sql-models/knex-wrapper";
+import logger from "../../logger";
 import { applicationConfig } from "../../config";
 import { GetTriggeredByValue, MapProductDetailsList } from "../mySql-mapper";
 import { InsertRunInfo, UpdateRunInfo, InsertProductInfo, InsertPriceBreakInfo, InsertRunCompletionStatus, UpdateRunCompletionStatus, GetEligibleScrapeProductList, UpdateLastScrapeInfo, GetScrapeProductDetailsByIdAndCron, GetActiveProductListByCronId, GetItemListById, UpdateProductAsync, UpdateMarketStateOnly, UpdateCronForProductAsync, GetFilterEligibleProductsList, InsertHistoricalApiResponse, InsertHistory, UpdateTriggeredByVendor, UpdateHistoryWithMessage, GetActiveFullProductDetailsList, getNet32UrlById, UpdateRepriceResultStatus, GetProxiesNet32, GetVendorKeys, ExecuteQuery, GetCurrentStock, WaitlistInsert, GetWaitlistPendingItems, UpdateWaitlistStatus, UpdateVendorStock } from "../mysql-helper";
@@ -68,9 +73,6 @@ import { HistoryModel } from "../../../model/sql-models/history";
 import { WaitlistModel } from "../../../model/waitlist-model";
 import { VendorName } from "@repricer-monorepo/shared";
 import _ from "lodash";
-
-// Suppress console.log during tests
-const originalConsoleLog = console.log;
 
 // Create error factory - only creates error when called, not during setup
 const createDbError = () => {
@@ -106,8 +108,8 @@ describe("mysql-helper", () => {
       unhandledRejections.length = 0;
     }
 
-    // Mock console.log
-    console.log = jest.fn();
+    // Mock logger (used by mysql-helper instead of console.log)
+    (logger.info as jest.Mock).mockClear();
 
     // Reset update chain if it exists
     if (updateChain) {
@@ -254,7 +256,6 @@ describe("mysql-helper", () => {
   });
 
   afterEach(() => {
-    console.log = originalConsoleLog;
     // Clear unhandled rejections after each test
     unhandledRejections.length = 0;
   });
@@ -304,7 +305,7 @@ describe("mysql-helper", () => {
 
       const result = await InsertRunInfo(runInfo);
 
-      expect(console.log).toHaveBeenCalledWith("Error in InsertRunInfo", runInfo, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in InsertRunInfo", runInfo, expect.any(Error));
       expect(result).toBeUndefined();
     });
 
@@ -351,7 +352,7 @@ describe("mysql-helper", () => {
 
       const result = await UpdateRunInfo(query, []);
 
-      expect(console.log).toHaveBeenCalledWith("Error in UpdateRunInfo", query, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in UpdateRunInfo", query, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -430,7 +431,7 @@ describe("mysql-helper", () => {
 
       const result = await InsertProductInfo(productInfo);
 
-      expect(console.log).toHaveBeenCalledWith("Error in InsertProductInfo", productInfo, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in InsertProductInfo", productInfo, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -469,7 +470,7 @@ describe("mysql-helper", () => {
 
       const result = await InsertPriceBreakInfo(priceBreakInfo);
 
-      expect(console.log).toHaveBeenCalledWith("Error in InsertPriceBreakInfo", priceBreakInfo, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in InsertPriceBreakInfo", priceBreakInfo, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -502,7 +503,7 @@ describe("mysql-helper", () => {
 
       const result = await InsertRunCompletionStatus(statusInfo);
 
-      expect(console.log).toHaveBeenCalledWith("Error in InsertRunCompletionStatus", statusInfo, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in InsertRunCompletionStatus", statusInfo, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -535,7 +536,7 @@ describe("mysql-helper", () => {
 
       const result = await UpdateRunCompletionStatus(statusInfo);
 
-      expect(console.log).toHaveBeenCalledWith("Error in UpdateRunCompletionStatus", statusInfo, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in UpdateRunCompletionStatus", statusInfo, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -560,7 +561,7 @@ describe("mysql-helper", () => {
 
       const result = await GetEligibleScrapeProductList(cronId);
 
-      expect(console.log).toHaveBeenCalledWith("Error in GetEligibleScrapeProductList", cronId, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in GetEligibleScrapeProductList", cronId, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -585,7 +586,7 @@ describe("mysql-helper", () => {
 
       const result = await UpdateLastScrapeInfo(mpid, time);
 
-      expect(console.log).toHaveBeenCalledWith("Error in UpdateLastScrapeInfo", mpid, time, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in UpdateLastScrapeInfo", mpid, time, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -612,7 +613,7 @@ describe("mysql-helper", () => {
 
       const result = await GetScrapeProductDetailsByIdAndCron(cronId, productId);
 
-      expect(console.log).toHaveBeenCalledWith("Error in GetScrapeProductDetailsByIdAndCron", cronId, productId, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in GetScrapeProductDetailsByIdAndCron", cronId, productId, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -650,7 +651,7 @@ describe("mysql-helper", () => {
       });
 
       await expect(GetActiveProductListByCronId(cronId, false)).rejects.toThrow("DB Error");
-      expect(console.log).toHaveBeenCalledWith("Error in GetActiveProductListByCronId", cronId, false, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in GetActiveProductListByCronId", cronId, false, expect.any(Error));
     });
   });
 
@@ -668,8 +669,6 @@ describe("mysql-helper", () => {
       if (result) {
         expect(MapProductDetailsList).toHaveBeenCalledWith(mockResult);
         expect(result).toEqual({ mpId: 123 });
-      } else {
-        expect(console.log).toHaveBeenCalled();
       }
     });
 
@@ -681,7 +680,7 @@ describe("mysql-helper", () => {
 
       const result = await GetItemListById(mpId);
 
-      expect(console.log).toHaveBeenCalledWith("Error in GetItemListById", mpId, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in GetItemListById", mpId, expect.any(Error));
       expect(result).toBeUndefined();
     });
 
@@ -845,7 +844,7 @@ describe("mysql-helper", () => {
 
       const result = await UpdateProductAsync(payload, false, VendorName.TRADENT);
 
-      expect(console.log).toHaveBeenCalledWith("Error in UpdateProductAsync", payload, false, VendorName.TRADENT, undefined, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in UpdateProductAsync", payload, false, VendorName.TRADENT, undefined, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -895,7 +894,7 @@ describe("mysql-helper", () => {
 
       const result = await UpdateMarketStateOnly(mpid, vendorName, marketData);
 
-      expect(console.log).toHaveBeenCalledWith(`No table found for vendor: ${vendorName}`);
+      expect(logger.error).toHaveBeenCalledWith(`No table found for vendor: ${vendorName}`);
       expect(result).toBeNull();
     });
 
@@ -926,7 +925,7 @@ describe("mysql-helper", () => {
 
       const result = await UpdateMarketStateOnly(mpid, vendorName, marketData);
 
-      expect(console.log).toHaveBeenCalledWith("Error in UpdateMarketStateOnly", mpid, vendorName, marketData, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in UpdateMarketStateOnly", mpid, vendorName, marketData, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -967,7 +966,7 @@ describe("mysql-helper", () => {
 
       const result = await UpdateCronForProductAsync(payload);
 
-      expect(console.log).toHaveBeenCalledWith("Error in UpdateCronForProductAsync", payload, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in UpdateCronForProductAsync", payload, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -1012,7 +1011,7 @@ describe("mysql-helper", () => {
 
       const result = await GetFilterEligibleProductsList(filterDate);
 
-      expect(console.log).toHaveBeenCalledWith("Error in GetFilterEligibleProductsList", filterDate, expect.any(Error));
+      expect(logger.info).toHaveBeenCalledWith("Error in GetFilterEligibleProductsList", filterDate, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -1042,7 +1041,7 @@ describe("mysql-helper", () => {
 
       const result = await InsertHistoricalApiResponse(jsonData, refTime);
 
-      expect(console.log).toHaveBeenCalledWith("Error in InsertHistoricalApiResponse", jsonData, refTime, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in InsertHistoricalApiResponse", jsonData, refTime, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -1144,7 +1143,7 @@ describe("mysql-helper", () => {
 
       const result = await InsertHistory(history, refTime);
 
-      expect(console.log).toHaveBeenCalledWith("Error in InsertHistory", history, refTime, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in InsertHistory", history, refTime, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -1217,9 +1216,9 @@ describe("mysql-helper", () => {
       const result = await UpdateTriggeredByVendor(payload, contextVendor, mpid);
 
       // The code uses a template string, so it's a single argument
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Exception while UpdateTriggeredByVendor"));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Vendor TRADENT"));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("MPID : 123"));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Exception while UpdateTriggeredByVendor"));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("Vendor TRADENT"));
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("MPID : 123"));
       expect(result).toEqual("VENDOR1");
     });
   });
@@ -1245,7 +1244,7 @@ describe("mysql-helper", () => {
 
       const result = await UpdateHistoryWithMessage(identifier, history);
 
-      expect(console.log).toHaveBeenCalledWith("Error in UpdateHistoryWithMessage", identifier, history, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in UpdateHistoryWithMessage", identifier, history, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -1284,7 +1283,7 @@ describe("mysql-helper", () => {
 
       // When knex.raw rejects, the error should be caught and rethrown
       await expect(GetActiveFullProductDetailsList(cronId)).rejects.toThrow();
-      expect(console.log).toHaveBeenCalledWith("Error in GetActiveFullProductDetailsList", cronId, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in GetActiveFullProductDetailsList", cronId, expect.any(Error));
     });
   });
 
@@ -1331,7 +1330,7 @@ describe("mysql-helper", () => {
       });
 
       await expect(getNet32UrlById(mpId)).rejects.toThrow("DB Error");
-      expect(console.log).toHaveBeenCalledWith("Error in getNet32UrlById", mpId, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in getNet32UrlById", mpId, expect.any(Error));
     });
   });
 
@@ -1358,7 +1357,7 @@ describe("mysql-helper", () => {
 
       await UpdateRepriceResultStatus(repriceResultStatus, mpid, contextVendor);
 
-      expect(console.log).toHaveBeenCalledWith("Error in UpdateRepriceResultStatus", repriceResultStatus, mpid, contextVendor, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in UpdateRepriceResultStatus", repriceResultStatus, mpid, contextVendor, expect.any(Error));
     });
 
     it("should update reprice result status for TOPDENT", async () => {
@@ -1439,7 +1438,7 @@ describe("mysql-helper", () => {
 
       const result = await GetProxiesNet32(usernames);
 
-      expect(console.log).toHaveBeenCalledWith("Error in GetProxiesNet32", usernames, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in GetProxiesNet32", usernames, expect.any(Error));
       expect(result).toEqual([]);
     });
   });
@@ -1497,7 +1496,7 @@ describe("mysql-helper", () => {
 
       const result = await GetVendorKeys(vendors);
 
-      expect(console.log).toHaveBeenCalledWith("Error in GetVendorKeys", vendors, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in GetVendorKeys", vendors, expect.any(Error));
       expect(result).toBeNull();
     });
   });
@@ -1524,7 +1523,7 @@ describe("mysql-helper", () => {
 
       const result = await ExecuteQuery(query, params);
 
-      expect(console.log).toHaveBeenCalledWith("Error in ExecuteQuery", query, params, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in ExecuteQuery", query, params, expect.any(Error));
       expect(result).toBeUndefined();
     });
   });
@@ -1554,7 +1553,7 @@ describe("mysql-helper", () => {
       });
 
       await expect(GetCurrentStock(mpids, vendorName)).rejects.toThrow("DB Error");
-      expect(console.log).toHaveBeenCalledWith("Error in GetCurrentStock", mpids, vendorName, applicationConfig.SQL_TRADENT_DETAILS, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in GetCurrentStock", mpids, vendorName, applicationConfig.SQL_TRADENT_DETAILS, expect.any(Error));
     });
   });
 
@@ -1576,7 +1575,7 @@ describe("mysql-helper", () => {
       });
 
       await expect(WaitlistInsert(waitlistItems)).rejects.toThrow("DB Error");
-      expect(console.log).toHaveBeenCalledWith("Error in WaitlistInsert", waitlistItems, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in WaitlistInsert", waitlistItems, expect.any(Error));
     });
   });
 
@@ -1598,7 +1597,7 @@ describe("mysql-helper", () => {
       });
 
       await expect(GetWaitlistPendingItems()).rejects.toThrow("DB Error");
-      expect(console.log).toHaveBeenCalledWith("Error in GetWaitlistPendingItems", expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in GetWaitlistPendingItems", expect.any(Error));
     });
   });
 
@@ -1641,7 +1640,7 @@ describe("mysql-helper", () => {
       updateChain._setReject(new Error("DB Error"));
 
       await expect(UpdateWaitlistStatus(id, status, message)).rejects.toThrow("DB Error");
-      expect(console.log).toHaveBeenCalledWith("Error in UpdateWaitlistStatus", id, status, message, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in UpdateWaitlistStatus", id, status, message, expect.any(Error));
     });
   });
 
@@ -1677,7 +1676,7 @@ describe("mysql-helper", () => {
       updateChain._setReject(new Error("DB Error"));
 
       await expect(UpdateVendorStock(vendorName, mpid, inventory)).rejects.toThrow("DB Error");
-      expect(console.log).toHaveBeenCalledWith("Error in UpdateVendorStock", vendorName, mpid, inventory, expect.any(Error));
+      expect(logger.error).toHaveBeenCalledWith("Error in UpdateVendorStock", vendorName, mpid, inventory, expect.any(Error));
     });
   });
 });

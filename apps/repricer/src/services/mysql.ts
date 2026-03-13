@@ -3,6 +3,7 @@ import * as SqlMapper from "../utility/mapper/mysql-mapper";
 import { applicationConfig } from "../utility/config";
 import { getKnexInstance, destroyKnexInstance } from "./knex-wrapper";
 import bcrypt from "bcrypt";
+import logger from "../utility/logger";
 
 export async function GetLatestRunInfo(noOfRecords: any, startDateTime: any, endDateTime: any) {
   const db = getKnexInstance();
@@ -167,7 +168,11 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
     if (typeof payload.badge == "undefined" || payload.badge == null) {
       payload.badge = false;
     }
-    const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
+    if (typeof payload.badgeUpExceptionPercentage == "undefined" || payload.badgeUpExceptionPercentage == null) {
+      payload.badgeUpExceptionPercentage = 0;
+    }
+    const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
     var [rows] = await db.query(queryToCall, [
       parseInt(payload.mpid),
       payload.channelName,
@@ -233,6 +238,7 @@ export async function UpsertVendorData(payload: any, vendorName: any) {
       payload.qBreakCount,
       payload.qBreakDetails,
       payload.badge,
+      payload.badgeUpExceptionPercentage,
     ]);
     let upsertResult: any = null;
     if (rows != null && (rows as any)[0] != null) {
@@ -522,6 +528,7 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
       default:
         break;
     }
+
     if (!payload.inventoryThreshold) {
       payload.inventoryThreshold = 0;
     }
@@ -561,7 +568,11 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
     if (typeof payload.badge == "undefined" || payload.badge == null) {
       payload.badge = false;
     }
-    const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+
+    if (typeof payload.badgeUpExceptionPercentage == "undefined" || payload.badgeUpExceptionPercentage == null || payload.badgeUpExceptionPercentage == "") {
+      payload.badgeUpExceptionPercentage = 0;
+    }
+    const queryToCall = `CALL ${contextSpName}(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
     var [rows] = await db.query(queryToCall, [
       parseInt(payload.mpid),
       payload.channelName,
@@ -626,11 +637,12 @@ export async function UpdateVendorData(payload: any, vendorName: any) {
       payload.qBreakCount,
       payload.qBreakDetails,
       payload.badge,
+      parseFloat(payload.badgeUpExceptionPercentage),
     ]);
     let upsertResult: any = null;
     if (rows != null && (rows as any)[0] != null) {
       upsertResult = (rows as any)[0][0];
-      console.log(`UPDATE_RESULT : ${payload.mpid} : ${JSON.stringify(upsertResult)}`);
+      logger.info(`UPDATE_RESULT for ${payload.mpid}: ${JSON.stringify(upsertResult)}`);
     }
     if (upsertResult && upsertResult != null) {
       return upsertResult["updatedIdentifier"];
@@ -679,7 +691,7 @@ export async function UpdateProductV2(mpid: any, itemData: any, tId: any, fId: a
     let tableName = applicationConfig.SQL_SCRAPEPRODUCTLIST;
     const queryToCall = `update ${tableName} set RegularCronName=?,RegularCronId=?,SlowCronName=?,SlowCronId=?,LinkedTradentDetailsInfo=?,LinkedFrontiersDetailsInfo=?,LinkedMvpDetailsInfo=?,IsSlowActivated=? where MpId=?`;
     const noOfRecords = await db.execute(queryToCall, [itemData.cronName, itemData.cronId, itemData.slowCronName, itemData.slowCronId, tId, fId, mId, itemData.isSlowActivated, parseInt(mpid)]);
-    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
+    logger.info(`Updated in DB for ${mpid} with records ${noOfRecords}`);
     return noOfRecords;
   } finally {
     SqlConnectionPool.releaseConnection(db);
@@ -692,26 +704,26 @@ export async function ChangeProductActivation(mpid: any, status: any) {
     let noOfRecords: any = null;
     let queryToCall = `update table_tradentDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
+    logger.info(`Updated in DB for ${mpid} with records ${noOfRecords}`);
     queryToCall = `update table_frontierDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
+    logger.info(`Updated in DB for ${mpid} with records ${noOfRecords}`);
     queryToCall = `update table_mvpDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
+    logger.info(`Updated in DB for ${mpid} with records ${noOfRecords}`);
     queryToCall = `update table_firstDentDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
+    logger.info(`Updated in DB for ${mpid} with records ${noOfRecords}`);
     queryToCall = `update table_topDentDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
+    logger.info(`Updated in DB for ${mpid} with records ${noOfRecords}`);
     queryToCall = `update table_triadDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
+    logger.info(`Updated in DB for ${mpid} with records ${noOfRecords}`);
 
     queryToCall = `update table_biteSupplyDetails set Activated=? where MpId=?`;
     noOfRecords = await db.execute(queryToCall, [status, parseInt(mpid)]);
-    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
+    logger.info(`Updated in DB for ${mpid} with records ${noOfRecords}`);
     return noOfRecords;
   } finally {
     SqlConnectionPool.releaseConnection(db);
@@ -732,7 +744,7 @@ export async function MapVendorToRoot(data: any) {
     queryToCall += `RegularCronId = ? `;
     queryToCall += `WHERE MpId = ?`;
     const noOfRecords = await db.execute(queryToCall, [traId, froId, mvpId, data.CronName.trim(), data.CronId, parseInt(data.MPID)]);
-    console.trace((noOfRecords[0] as any)[0]);
+    logger.debug(`MapVendorToRoot result: ${(noOfRecords[0] as any)[0]}`);
     return (noOfRecords[0] as any)[0];
   } finally {
     SqlConnectionPool.releaseConnection(db);
@@ -744,7 +756,7 @@ export async function ToggleDataScrapeForId(mpid: any, status: any, auditInfo: a
   try {
     let queryToCall = `update ${applicationConfig.SQL_SCRAPEPRODUCTLIST} set IsActive=?,LastUpdatedBy=?,LastUpdatedAt=? where MpId=?`;
     const noOfRecords = await db.execute(queryToCall, [status, auditInfo.UpdatedBy, auditInfo.UpdatedOn, parseInt(mpid)]);
-    console.log(`Updated in DB for ${mpid} with records ${JSON.stringify(noOfRecords)}`);
+    logger.info(`Updated in DB for ${mpid} with records ${noOfRecords}`);
     return noOfRecords;
   } finally {
     SqlConnectionPool.releaseConnection(db);
@@ -849,7 +861,7 @@ export async function GetAllRepriceEligibleProductByMpid(mpid: any) {
       scrapeDetails = (rows as any)[0];
     }
   } catch (exception) {
-    console.log(`Exception while GetAllRepriceEligibleProductByMpid : ${exception}`);
+    logger.error(`Exception while GetAllRepriceEligibleProductByMpid: ${exception}`);
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }
@@ -866,7 +878,7 @@ export async function GetAllRepriceEligibleProductByChannelId(channelId: any) {
       scrapeDetails = (rows as any)[0];
     }
   } catch (exception) {
-    console.log(`Exception while GetAllRepriceEligibleProductByChannelId : ${exception}`);
+    logger.error(`Exception while GetAllRepriceEligibleProductByChannelId: ${exception}`);
   } finally {
     SqlConnectionPool.releaseConnection(db);
   }

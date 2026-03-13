@@ -218,6 +218,8 @@ const envSchema = z.object({
     .transform(JSON.parse as any)
     .pipe(z.boolean())
     .default(true),
+  LOG_LEVEL: z.enum(["error", "warn", "info", "debug"]).default("debug"),
+  NODE_ENV: z.enum(["development", "production", "staging", "test"]).default("development"),
 });
 
 export function validateConfig() {

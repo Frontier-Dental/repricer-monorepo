@@ -2,6 +2,7 @@ import { createObjectCsvWriter } from "csv-writer";
 import { S3Client, CreateMultipartUploadCommand, UploadPartCommand, CompleteMultipartUploadCommand, AbortMultipartUploadCommand } from "@aws-sdk/client-s3";
 import fs from "fs";
 import { applicationConfig } from "./config";
+import logger from "./logger";
 
 interface CsvRecord {
   RefTime_Str?: string;
@@ -57,9 +58,9 @@ class CsvWriter {
         const batch = records.slice(i, i + batchSize);
         await this.csvWriter.writeRecords(batch);
       }
-      console.log("HISTORY_ARCHIVE_CRON : Data written to CSV file successfully.");
+      logger.info("HISTORY_ARCHIVE_CRON : Data written to CSV file successfully.");
     } catch (err) {
-      console.error("HISTORY_ARCHIVE_CRON : Error writing data to CSV file:", err);
+      logger.info(`HISTORY_ARCHIVE_CRON : Error writing data to CSV file: ${err}`);
     }
   }
 
@@ -80,7 +81,7 @@ class CsvWriter {
     try {
       let partNumber = 1;
       for await (const chunk of fileStream) {
-        console.debug(`HISTORY_ARCHIVE_CRON : Uploading part ${partNumber} for file ${key} to S3  bucket ${this.bucketName}`);
+        logger.debug(`HISTORY_ARCHIVE_CRON : Uploading part ${partNumber} for file ${key} to S3  bucket ${this.bucketName}`);
         const uploadRes = await this.s3.send(
           new UploadPartCommand({
             Bucket: this.bucketName,
@@ -91,7 +92,7 @@ class CsvWriter {
           })
         );
         parts.push({ ETag: uploadRes.ETag, PartNumber: partNumber });
-        console.debug(`HISTORY_ARCHIVE_CRON : Successfully uploaded part ${partNumber} for file ${key} to S3 bucket ${this.bucketName}`);
+        logger.debug(`HISTORY_ARCHIVE_CRON : Successfully uploaded part ${partNumber} for file ${key} to S3 bucket ${this.bucketName}`);
         partNumber++;
       }
 
@@ -104,7 +105,7 @@ class CsvWriter {
           MultipartUpload: { Parts: parts },
         })
       );
-      console.log(`HISTORY_ARCHIVE_CRON : File uploaded successfully to s3://${this.bucketName}/${key}`);
+      logger.info(`HISTORY_ARCHIVE_CRON : File uploaded successfully to s3://${this.bucketName}/${key}`);
     } catch (err) {
       // Abort if something goes wrong
       await this.s3.send(
@@ -114,7 +115,7 @@ class CsvWriter {
           UploadId: createRes.UploadId,
         })
       );
-      console.error("HISTORY_ARCHIVE_CRON : Error during multipart upload:", err);
+      logger.error(`HISTORY_ARCHIVE_CRON : Error during multipart upload: ${err}`);
       throw err;
     }
   }

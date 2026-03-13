@@ -8,6 +8,7 @@ import { applicationConfig } from "../config";
 import { GetTriggeredByValue, MapProductDetailsList } from "./mySql-mapper";
 import { CurrentStock, PriceBreakInfo, ProductInfo, ProxyNet32, RunInfo, StatusInfo, UpdateCronForProductPayload, UpdateProductPayload } from "./types";
 import { WaitlistModel } from "../../model/waitlist-model";
+import logger from "../logger";
 
 export async function InsertRunInfo(runInfo: RunInfo) {
   try {
@@ -27,7 +28,7 @@ export async function InsertRunInfo(runInfo: RunInfo) {
     const insertResult = await knex(applicationConfig.SQL_RUNINFO!).insert(insertObj);
     return insertResult;
   } catch (error) {
-    console.log("Error in InsertRunInfo", runInfo, error);
+    logger.error("Error in InsertRunInfo", runInfo, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -41,7 +42,7 @@ export async function UpdateRunInfo(query: string, params: any[]) {
     const updatedResult = await knex.raw(query, params);
     return updatedResult?.[0];
   } catch (error) {
-    console.log("Error in UpdateRunInfo", query, error);
+    logger.error("Error in UpdateRunInfo", query, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -82,7 +83,7 @@ export async function InsertProductInfo(productInfo: ProductInfo): Promise<any> 
     const insertResult = await knex(applicationConfig.SQL_PRODUCTINFO!).insert(insertObj);
     return insertResult;
   } catch (error) {
-    console.log("Error in InsertProductInfo", productInfo, error);
+    logger.error("Error in InsertProductInfo", productInfo, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -103,7 +104,7 @@ export async function InsertPriceBreakInfo(priceBreakInfo: PriceBreakInfo) {
     const insertResult = await knex(applicationConfig.SQL_PRICEBREAKINFO!).insert(insertObj);
     return insertResult;
   } catch (error) {
-    console.log("Error in InsertPriceBreakInfo", priceBreakInfo, error);
+    logger.error("Error in InsertPriceBreakInfo", priceBreakInfo, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -121,7 +122,7 @@ export async function InsertRunCompletionStatus(statusInfo: StatusInfo) {
     const insertResult = await knex(applicationConfig.SQL_RUNCOMPLETIONSTATUS!).insert(insertObj);
     return insertResult;
   } catch (error) {
-    console.log("Error in InsertRunCompletionStatus", statusInfo, error);
+    logger.error("Error in InsertRunCompletionStatus", statusInfo, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -134,7 +135,7 @@ export async function UpdateRunCompletionStatus(statusInfo: StatusInfo) {
     const updateResult = await knex(applicationConfig.SQL_RUNCOMPLETIONSTATUS!).update({ IsCompleted: statusInfo.IsCompleted }).where("KeyGenId", statusInfo.KeyGenId);
     return updateResult;
   } catch (error) {
-    console.log("Error in UpdateRunCompletionStatus", statusInfo, error);
+    logger.error("Error in UpdateRunCompletionStatus", statusInfo, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -149,7 +150,7 @@ export async function GetEligibleScrapeProductList(cronId: string) {
     const productList = await knex.raw(queryToCall, [cronId]);
     return (productList as any)?.[0]?.[0];
   } catch (error) {
-    console.log("Error in GetEligibleScrapeProductList", cronId, error);
+    logger.error("Error in GetEligibleScrapeProductList", cronId, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -162,7 +163,7 @@ export async function UpdateLastScrapeInfo(mpid: string, time: string) {
     const updateResult = await knex(applicationConfig.SQL_SCRAPE_PRODUCT_LIST!).update({ LastScrapedDate: time }).where("MpId", mpid);
     return updateResult;
   } catch (error) {
-    console.log("Error in UpdateLastScrapeInfo", mpid, time, error);
+    logger.error("Error in UpdateLastScrapeInfo", mpid, time, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -177,7 +178,7 @@ export async function GetScrapeProductDetailsByIdAndCron(cronId: string, product
     const productList = await knex.raw(queryToCall, [cronId, productId]);
     return (productList as any)?.[0]?.[0];
   } catch (error) {
-    console.log("Error in GetScrapeProductDetailsByIdAndCron", cronId, productId, error);
+    logger.error("Error in GetScrapeProductDetailsByIdAndCron", cronId, productId, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -196,7 +197,7 @@ export async function GetActiveProductListByCronId(cronId: string, isSlowCron = 
     const productList = (rows as any)[0];
     return MapProductDetailsList(productList);
   } catch (error) {
-    console.log("Error in GetActiveProductListByCronId", cronId, isSlowCron, error);
+    logger.error("Error in GetActiveProductListByCronId", cronId, isSlowCron, error);
     throw error;
   } finally {
     //destroyKnexInstance();
@@ -236,7 +237,7 @@ export async function GetItemListById(mpId: string | number) {
 
     return _.first(MapProductDetailsList(result));
   } catch (error) {
-    console.log("Error in GetItemListById", mpId, error);
+    logger.error("Error in GetItemListById", mpId, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -301,7 +302,7 @@ export async function UpdateProductAsync(
       .where("MpId", parseInt(payload.mpid as string));
     return result;
   } catch (error) {
-    console.log("Error in UpdateProductAsync", payload, isPriceUpdated, contextVendor, marketData, error);
+    logger.error("Error in UpdateProductAsync", payload, isPriceUpdated, contextVendor, marketData, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -324,7 +325,7 @@ export async function UpdateMarketStateOnly(
     const contextTableName = getContextTableNameByVendorName(vendorName);
 
     if (!contextTableName) {
-      console.log(`No table found for vendor: ${vendorName}`);
+      logger.error(`No table found for vendor: ${vendorName}`);
       return null;
     }
 
@@ -355,7 +356,7 @@ export async function UpdateMarketStateOnly(
 
     return 0; // No updates performed
   } catch (error) {
-    console.log("Error in UpdateMarketStateOnly", mpid, vendorName, marketData, error);
+    logger.error("Error in UpdateMarketStateOnly", mpid, vendorName, marketData, error);
     //throw error;
   }
 }
@@ -374,7 +375,7 @@ export async function UpdateCronForProductAsync(payload: UpdateCronForProductPay
       .where("MpId", parseInt(payload.mpId as string));
     return updateResult;
   } catch (error) {
-    console.log("Error in UpdateCronForProductAsync", payload, error);
+    logger.error("Error in UpdateCronForProductAsync", payload, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -391,7 +392,7 @@ export async function GetFilterEligibleProductsList(filterDate: Date | string) {
     const productList = (rows as any)[0];
     return productList;
   } catch (error) {
-    console.log("Error in GetFilterEligibleProductsList", filterDate, error);
+    logger.info("Error in GetFilterEligibleProductsList", filterDate, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -408,7 +409,7 @@ export async function InsertHistoricalApiResponse(jsonData: any, refTime: Date) 
     const insertResult = await knex(applicationConfig.SQL_HISTORY_API_RESPONSE!).insert(insertObj);
     return insertResult[0];
   } catch (error) {
-    console.log("Error in InsertHistoricalApiResponse", jsonData, refTime, error);
+    logger.error("Error in InsertHistoricalApiResponse", jsonData, refTime, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -440,7 +441,7 @@ export async function InsertHistory(history: HistoryModel, refTime: Date) {
     const insertResult = await knex(applicationConfig.SQL_HISTORY!).insert(insertObj);
     return insertResult[0];
   } catch (error) {
-    console.log("Error in InsertHistory", history, refTime, error);
+    logger.error("Error in InsertHistory", history, refTime, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -482,7 +483,7 @@ export async function UpdateTriggeredByVendor(payload: any, contextVendor: strin
     let updateQuery = `UPDATE ${contextTableName} SET TriggeredByVendor=? WHERE MpId =?`;
     updatedResult = await db.raw(updateQuery, [triggeredByValue, parseInt(mpid as string)]);
   } catch (exception) {
-    console.log(`Exception while UpdateTriggeredByVendor : ${exception} for Vendor ${contextVendor} || MPID : ${payload.mpid}`);
+    logger.error(`Exception while UpdateTriggeredByVendor : ${exception} for Vendor ${contextVendor} || MPID : ${payload.mpid}`);
   } finally {
     //destroyKnexInstance();
   }
@@ -495,7 +496,7 @@ export async function UpdateHistoryWithMessage(identifier: any, history: string)
     const updateResult = await knex(applicationConfig.SQL_HISTORY!).update({ RepriceComment: history }).where("Id", parseInt(identifier));
     return updateResult;
   } catch (error) {
-    console.log("Error in UpdateHistoryWithMessage", identifier, history, error);
+    logger.error("Error in UpdateHistoryWithMessage", identifier, history, error);
     //throw error;
   }
 }
@@ -563,7 +564,7 @@ export async function GetActiveFullProductDetailsList(cronId: string) {
     const result = await knex.raw(unionQuery);
     return MapProductDetailsList(result[0]);
   } catch (error) {
-    console.log("Error in GetActiveFullProductDetailsList", cronId, error);
+    logger.error("Error in GetActiveFullProductDetailsList", cronId, error);
     throw error;
   } finally {
     //destroyKnexInstance();
@@ -576,7 +577,7 @@ export async function getNet32UrlById(mpId: number) {
     const result = await knex("table_scrapeProductList").where("MpId", mpId).select("Net32Url").first();
     return result?.Net32Url || null;
   } catch (error) {
-    console.log("Error in getNet32UrlById", mpId, error);
+    logger.error("Error in getNet32UrlById", mpId, error);
     throw error;
   } finally {
     //destroyKnexInstance();
@@ -591,7 +592,7 @@ export async function UpdateRepriceResultStatus(repriceResultStatus: RepriceResu
       .where("MpId", parseInt(mpid as string))
       .update({ RepriceResult: repriceResultStatus });
   } catch (error) {
-    console.log("Error in UpdateRepriceResultStatus", repriceResultStatus, mpid, contextVendor, error);
+    logger.error("Error in UpdateRepriceResultStatus", repriceResultStatus, mpid, contextVendor, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -610,7 +611,7 @@ export async function GetProxiesNet32(usernames: string[]): Promise<ProxyNet32[]
 
     return proxyList;
   } catch (error) {
-    console.log("Error in GetProxiesNet32", usernames, error);
+    logger.error("Error in GetProxiesNet32", usernames, error);
     return [];
     //throw error;
   } finally {
@@ -637,7 +638,7 @@ export async function GetVendorKeys(vendors: string[]): Promise<Map<string, stri
 
     return vendorKeyMap;
   } catch (error) {
-    console.log("Error in GetVendorKeys", vendors, error);
+    logger.error("Error in GetVendorKeys", vendors, error);
     return null;
     //throw error;
   } finally {
@@ -651,7 +652,7 @@ export async function ExecuteQuery(_query: string, _params: any) {
     const result = await knex.raw(_query, _params);
     return result[0];
   } catch (error) {
-    console.log("Error in ExecuteQuery", _query, _params, error);
+    logger.error("Error in ExecuteQuery", _query, _params, error);
     //throw error;
   } finally {
     //destroyKnexInstance();
@@ -665,7 +666,7 @@ export async function GetCurrentStock(mpids: string[], vendorName: string): Prom
     const result = await knex(contextTableName!).whereIn("mpid", mpids).select("mpid", "CurrentInStock", "CurrentInventory");
     return result;
   } catch (error) {
-    console.log("Error in GetCurrentStock", mpids, vendorName, contextTableName, error);
+    logger.error("Error in GetCurrentStock", mpids, vendorName, contextTableName, error);
     throw error;
   } finally {
     //destroyKnexInstance();
@@ -677,7 +678,7 @@ export async function WaitlistInsert(waitlistItems: WaitlistModel[]) {
     const knex = getKnexInstance();
     await knex(applicationConfig.SQL_WAITLIST!).insert(waitlistItems);
   } catch (error) {
-    console.log("Error in WaitlistInsert", waitlistItems, error);
+    logger.error("Error in WaitlistInsert", waitlistItems, error);
     throw error;
   } finally {
     //destroyKnexInstance();
@@ -690,7 +691,7 @@ export async function GetWaitlistPendingItems(): Promise<WaitlistModel[]> {
     const result = await knex(applicationConfig.SQL_WAITLIST!).where("api_status", "pending").select("*");
     return result;
   } catch (error) {
-    console.log("Error in GetWaitlistPendingItems", error);
+    logger.error("Error in GetWaitlistPendingItems", error);
     throw error;
   } finally {
     //destroyKnexInstance();
@@ -702,7 +703,7 @@ export async function UpdateWaitlistStatus(id: number, status: string, message?:
     const knex = getKnexInstance();
     await knex(applicationConfig.SQL_WAITLIST!).where("id", id).update({ api_status: status, message: message, updated_at: new Date() });
   } catch (error) {
-    console.log("Error in UpdateWaitlistStatus", id, status, message, error);
+    logger.error("Error in UpdateWaitlistStatus", id, status, message, error);
     throw error;
   } finally {
     //destroyKnexInstance();
@@ -715,7 +716,7 @@ export async function UpdateVendorStock(vendorName: string, mpid: number, invent
     const knex = getKnexInstance();
     await knex(contextTableName!).where("MpId", mpid).update({ CurrentInventory: inventory });
   } catch (error) {
-    console.log("Error in UpdateVendorStock", vendorName, mpid, inventory, error);
+    logger.error("Error in UpdateVendorStock", vendorName, mpid, inventory, error);
     throw error;
   } finally {
     //destroyKnexInstance();

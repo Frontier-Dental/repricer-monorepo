@@ -5,6 +5,7 @@ import * as _codes from "http-status-codes";
 import { runCoreCronLogic } from "../main-cron/shared";
 import { slowCrons, getCronNameByJobName } from "./shared";
 import { GetSlowCronDetails } from "../../utility/mysql/mysql-v2";
+import logger from "../../utility/logger";
 
 export async function startAllSlowCronHandler(req: Request, res: Response): Promise<any> {
   await startSlowCronLogic();
@@ -28,17 +29,17 @@ export async function startSlowCronLogic() {
               try {
                 await runCoreCronLogic(cronDetail, true);
               } catch (error) {
-                console.error(`Error running ${cronDetail.CronName}:`, error);
+                logger.error(`Error running ${cronDetail.CronName}:`, error);
               }
             },
             { scheduled: JSON.parse(cronDetail.CronStatus) }
           );
           if (JSON.parse(cronDetail.CronStatus)) {
-            console.log(`Started ${cronDetail.CronName} at ${new Date()} with expression ${cronExpression}`);
+            logger.info(`Started ${cronDetail.CronName} at ${new Date()} with expression ${cronExpression}`);
           }
         }
       } catch (exception) {
-        console.error(`Error running ${cronName}: || ${exception}`, exception);
+        logger.error(`Error running ${cronName}: || ${exception}`, exception);
       }
     }
   }
