@@ -1,4 +1,5 @@
 import express from "express";
+import { asyncHandler } from "../../utility/async-handler";
 import { recreateCronHandler } from "./recreate";
 import { startCronHandler } from "./start";
 import { startAllCronHandler } from "./start-all";
@@ -14,15 +15,15 @@ import { startSpecificCronHandler } from "./start-specific-cron";
 
 export const mainCronController = express.Router();
 
-mainCronController.get("/schedule/StopAll", stopAllCronHandler);
-mainCronController.get("/schedule/StartCronV3", startAllCronHandler);
-mainCronController.post("/schedule/StopCron", stopCronHandler);
-mainCronController.post("/schedule/StartCron", startCronHandler);
-mainCronController.post("/schedule/RecreateCron", recreateCronHandler);
-mainCronController.get("/schedule/start422", start422Handler);
-mainCronController.post("/product/updateManualProd/:id", updateProductManualHandler);
-mainCronController.get("/schedule/startOverride", startOverrideHandler);
-mainCronController.get("/schedule/startFeedCron", startFeedCronHandler);
-mainCronController.get("/schedule/startProductCron", startProductCronHandler);
-mainCronController.get("/schedule/startManagedServiceCron", startManagedServiceCronHandler);
-mainCronController.get("/schedule/start_specific_cron/:key", startSpecificCronHandler);
+mainCronController.get("/schedule/StopAll", asyncHandler(stopAllCronHandler));
+mainCronController.get("/schedule/StartCronV3", asyncHandler(startAllCronHandler));
+mainCronController.post("/schedule/StopCron", asyncHandler(stopCronHandler));
+mainCronController.post("/schedule/StartCron", asyncHandler(startCronHandler));
+mainCronController.post("/schedule/RecreateCron", asyncHandler(recreateCronHandler));
+mainCronController.get("/schedule/start422", asyncHandler(start422Handler));
+mainCronController.post("/product/updateManualProd/:id", asyncHandler(updateProductManualHandler));
+mainCronController.get("/schedule/startOverride", asyncHandler(startOverrideHandler));
+mainCronController.get("/schedule/startFeedCron", asyncHandler(startFeedCronHandler));
+mainCronController.get("/schedule/startProductCron", asyncHandler(startProductCronHandler));
+mainCronController.get("/schedule/startManagedServiceCron", asyncHandler(startManagedServiceCronHandler));
+mainCronController.get("/schedule/start_specific_cron/:key", asyncHandler(startSpecificCronHandler));

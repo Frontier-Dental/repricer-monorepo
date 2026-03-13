@@ -7,50 +7,57 @@ import moment from "moment";
 import * as axiosHelper from "../utility/axios-helper";
 import { applicationConfig } from "../utility/config";
 import { processUpdateProductQuantities } from "../utility/net32/updateProductQuantity";
+import { asyncHandler } from "../utility/async-handler";
+import { ValidationError } from "../errors/custom-errors";
 import logger from "../utility/logger";
+
 export const dataController = express.Router();
 
 /************* PUBLIC APIS *************/
-dataController.get("/data/GetProductList", async (req: Request, res: Response) => {
-  const dataRequest = applicationConfig.GET_PRODUCT_RESULTS;
-  let result = await axiosHelper.getProduct(dataRequest as any);
+dataController.get(
+  "/data/GetProductList",
+  asyncHandler(async (req: Request, res: Response) => {
+    const dataRequest = applicationConfig.GET_PRODUCT_RESULTS;
+    let result = await axiosHelper.getProduct(dataRequest as any);
 
-  if (result && result.data && result.data.length > 0) {
-    const savedData = await saveProductData(result.data);
-    if (savedData) {
-      res.status(_codes.StatusCodes.OK).json({ message: "Product Data accessed" });
-    } else {
-      res.status(_codes.StatusCodes.INTERNAL_SERVER_ERROR).send("Sorry some error occurred!");
+    if (result && result.data && result.data.length > 0) {
+      const savedData = await saveProductData(result.data);
+      if (savedData) {
+        res.status(_codes.StatusCodes.OK).json({ message: "Product Data accessed" });
+      } else {
+        throw new Error("Sorry some error occurred!");
+      }
     }
-  }
-});
+  })
+);
 
-dataController.post("/data/UpdateProductQuantity", async (req: Request, res: Response) => {
-  if (!req.body.vendorData) {
-    res.status(_codes.StatusCodes.INTERNAL_SERVER_ERROR).send("Vendor data is missing");
-    return;
-  }
+dataController.post(
+  "/data/UpdateProductQuantity",
+  asyncHandler(async (req: Request, res: Response) => {
+    if (!req.body.vendorData) {
+      throw new ValidationError("Vendor data is missing");
+    }
 
-  if (!req.body.mpid) {
-    res.status(_codes.StatusCodes.INTERNAL_SERVER_ERROR).send("MPID is missing");
-    return;
-  }
+    if (!req.body.mpid) {
+      throw new ValidationError("MPID is missing");
+    }
 
-  try {
-    const results = await processUpdateProductQuantities({
-      mpid: req.body.mpid,
-      vendorData: req.body.vendorData,
-    });
+    try {
+      const results = await processUpdateProductQuantities({
+        mpid: req.body.mpid,
+        vendorData: req.body.vendorData,
+      });
 
-    res.status(_codes.StatusCodes.OK).json({ results });
-  } catch (error) {
-    logger.error("Error while updating product quantity", error);
-    res.status(_codes.StatusCodes.INTERNAL_SERVER_ERROR).json({
-      error: "Error while updating product quantity",
-      message: error instanceof Error ? error?.message : "Unknown error",
-    });
-  }
-});
+      res.status(_codes.StatusCodes.OK).json({ results });
+    } catch (error) {
+      logger.error("Error while updating product quantity", error);
+      res.status(_codes.StatusCodes.INTERNAL_SERVER_ERROR).json({
+        error: "Error while updating product quantity",
+        message: error instanceof Error ? error?.message : "Unknown error",
+      });
+    }
+  })
+);
 
 /************* PRIVATE FUNCTIONS *************/
 async function saveProductData(data: any) {

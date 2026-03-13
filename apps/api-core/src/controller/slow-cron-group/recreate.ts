@@ -6,6 +6,7 @@ import { runCoreCronLogic } from "../main-cron/shared";
 import { getCronNameByJobName, slowCrons } from "./shared";
 import { GetSlowCronDetails } from "../../utility/mysql/mysql-v2";
 import logger from "../../utility/logger";
+import { NotFoundError } from "../../errors/custom-errors";
 
 export async function recreateSlowCronHandler(req: Request, res: Response): Promise<any> {
   const { jobName } = req.body;
@@ -13,7 +14,7 @@ export async function recreateSlowCronHandler(req: Request, res: Response): Prom
   const cronName = getCronNameByJobName(jobName);
   const details = slowCronDetails.find((x: any) => x.CronName == cronName);
   if (!details) {
-    return res.status(_codes.StatusCodes.NOT_FOUND).send(`Cron not found: ${jobName}`);
+    throw new NotFoundError(`Cron ${jobName}`);
   }
   slowCrons[cronName].stop();
   delete slowCrons[details.CronName];
