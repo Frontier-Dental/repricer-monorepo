@@ -639,12 +639,17 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
         }
         repriceModel.updateTriggeredBy(sortedPayload[nextIndex].vendorName, sortedPayload[nextIndex].vendorId, priceBreak.minQty);
       } else if (productItem.badgeUpExceptionPercentage > 0 && _.isEqual(productItem.badgeIndicator, "BADGE_ONLY") && activeNonBadgedVendorList!.length > 0) {
+        if (priceBreak.minQty != 1) {
+          activeNonBadgedVendorList = activeNonBadgedVendorList.filter((x) => x.vendorId != $.VENDOR_ID);
+        }
         const lowestVendorPrice = _.first(activeNonBadgedVendorList).priceBreaks.find((x: any) => x.minQty == priceBreak.minQty && x.active == true)?.unitPrice + GetShippingPrice(_.first(activeNonBadgedVendorList)!);
         const suggestedPrice = await filterMapper.addPercentage(lowestVendorPrice, productItem.badgeUpExceptionPercentage);
-        const model = new RepriceModel(sourceId, refProduct, productItem.productName, suggestedPrice - standardShippingPrice, true, false, [], RepriceRenewedMessageEnum.BADGE_UP_EXCEPTION);
-        model.updateLowest(_.first(activeNonBadgedVendorList).vendorName, lowestVendorPrice);
-        model.updateTriggeredBy(_.first(activeNonBadgedVendorList).vendorName, _.first(activeNonBadgedVendorList).vendorId, 1);
-        return model;
+        repriceModel.repriceDetails!.newPrice = suggestedPrice - standardShippingPrice;
+        repriceModel.repriceDetails!.isRepriced = true;
+        repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.BADGE_UP_EXCEPTION;
+        repriceModel.updateLowest(_.first(activeNonBadgedVendorList).vendorName, lowestVendorPrice);
+        repriceModel.updateTriggeredBy(_.first(activeNonBadgedVendorList).vendorName, _.first(activeNonBadgedVendorList).vendorId, 1);
+        return repriceModel;
       } else {
         repriceModel.repriceDetails!.newPrice = productItem.maxPrice ? maxPrice - standardShippingPrice : "N/A";
         repriceModel.repriceDetails!.isRepriced = true;
