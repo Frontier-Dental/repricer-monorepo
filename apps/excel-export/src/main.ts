@@ -6,6 +6,7 @@ import { excelRouter } from "./routes/excel.routes";
 import { scrapeMonitorRouter } from "./routes/scrape-monitor.routes";
 import { startScrapeLoop } from "./scrape-monitor/service";
 import logger from "./utility/logger";
+import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 
 dotenv.config();
 
@@ -33,13 +34,8 @@ app.get("/health", (req, res) => {
   });
 });
 
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  logger.error(`Error: ${err?.message || "Unknown error"}`);
-  res.status(err.status || 500).json({
-    error: err.message || "Internal Server Error",
-    timestamp: new Date().toISOString(),
-  });
-});
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   logger.info(`Excel Export Service is running on port ${PORT}`);
