@@ -7,13 +7,15 @@ jest.mock("../../model/sql-models/knex-wrapper", () => ({
   destroyKnexInstance: jest.fn(),
 }));
 
+jest.mock("../../utility/logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
 import { schedule, ScheduledTask } from "node-cron";
 import { getKnexInstance, destroyKnexInstance } from "../../model/sql-models/knex-wrapper";
 import { startV2AlgoHtmlFileCleanupCron, stopCleanupCron, runCleanupManually, getExpiredRecordsCount, getTotalRecordsCount } from "../algo-html-file-cleanup";
-
-// Suppress console methods during tests
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
+import logger from "../../utility/logger";
 
 describe("algo-html-file-cleanup", () => {
   let mockKnex: any;
@@ -25,10 +27,6 @@ describe("algo-html-file-cleanup", () => {
 
     // Ensure cron is stopped before each test
     stopCleanupCron();
-
-    // Mock console methods
-    console.log = jest.fn();
-    console.error = jest.fn();
 
     // Create a mock query builder with chainable methods
     mockQueryBuilder = {
@@ -57,11 +55,6 @@ describe("algo-html-file-cleanup", () => {
   });
 
   afterEach(() => {
-    // Restore console methods
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
-
-    // Clean up any running cron
     stopCleanupCron();
   });
 
@@ -75,7 +68,7 @@ describe("algo-html-file-cleanup", () => {
         timezone: "UTC",
         runOnInit: true,
       });
-      expect(console.log).toHaveBeenCalledWith("Cleanup cron job started successfully. Running every 2 hours.");
+      expect(logger.info).toHaveBeenCalledWith("Cleanup cron job started successfully. Running every 2 hours.");
     });
 
     it("should not start cron if already running", () => {
@@ -85,7 +78,7 @@ describe("algo-html-file-cleanup", () => {
       startV2AlgoHtmlFileCleanupCron();
 
       expect(schedule).not.toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith("Cleanup cron is already running");
+      expect(logger.info).toHaveBeenCalledWith("Cleanup cron is already running");
     });
 
     it("should execute cleanup when cron callback is invoked", async () => {
@@ -105,9 +98,9 @@ describe("algo-html-file-cleanup", () => {
       expect(mockKnex).toHaveBeenCalledWith("v2_algo_execution");
       expect(mockQueryBuilder.where).toHaveBeenCalledWith("expires_at", "<", expect.any(Date));
       expect(mockDel).toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Starting cleanup of expired v2_algo_execution records"));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Cleanup completed successfully"));
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("Deleted 5 expired records"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Starting cleanup of expired v2_algo_execution records"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Cleanup completed successfully"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("Deleted 5 expired records"));
     });
 
     it("should handle errors during cron execution gracefully", async () => {
@@ -124,7 +117,7 @@ describe("algo-html-file-cleanup", () => {
       // Execute the callback
       await cronCallback();
 
-      expect(console.error).toHaveBeenCalledWith("Error during cleanup cron execution:", mockError);
+      expect(logger.error).toHaveBeenCalledWith("Error during cleanup cron execution:", mockError);
     });
 
     it("should use correct cron expression for every 2 hours", () => {
@@ -143,13 +136,13 @@ describe("algo-html-file-cleanup", () => {
       stopCleanupCron();
 
       expect(mockScheduledTask.stop).toHaveBeenCalledTimes(1);
-      expect(console.log).toHaveBeenCalledWith("Cleanup cron job stopped");
+      expect(logger.info).toHaveBeenCalledWith("Cleanup cron job stopped");
     });
 
     it("should not throw error when stopping non-existent cron", () => {
       expect(() => stopCleanupCron()).not.toThrow();
       expect(mockScheduledTask.stop).not.toHaveBeenCalled();
-      expect(console.log).not.toHaveBeenCalled();
+      expect(logger.info).not.toHaveBeenCalled();
     });
 
     it("should allow restarting cron after stopping", () => {
@@ -160,7 +153,7 @@ describe("algo-html-file-cleanup", () => {
       startV2AlgoHtmlFileCleanupCron();
 
       expect(schedule).toHaveBeenCalledTimes(1);
-      expect(console.log).toHaveBeenCalledWith("Cleanup cron job started successfully. Running every 2 hours.");
+      expect(logger.info).toHaveBeenCalledWith("Cleanup cron job started successfully. Running every 2 hours.");
     });
   });
 
@@ -175,9 +168,9 @@ describe("algo-html-file-cleanup", () => {
       expect(mockKnex).toHaveBeenCalledWith("v2_algo_execution");
       expect(mockQueryBuilder.where).toHaveBeenCalledWith("expires_at", "<", expect.any(Date));
       expect(mockDel).toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith("Starting manual cleanup of expired v2_algo_execution records");
-      expect(console.log).toHaveBeenCalledWith("Manual cleanup completed successfully");
-      expect(console.log).toHaveBeenCalledWith("Deleted 10 expired records from v2_algo_execution table");
+      expect(logger.info).toHaveBeenCalledWith("Starting manual cleanup of expired v2_algo_execution records");
+      expect(logger.info).toHaveBeenCalledWith("Manual cleanup completed successfully");
+      expect(logger.info).toHaveBeenCalledWith("Deleted 10 expired records from v2_algo_execution table");
     });
 
     it("should handle zero deleted records", async () => {
@@ -187,7 +180,7 @@ describe("algo-html-file-cleanup", () => {
       await runCleanupManually();
 
       expect(mockDel).toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith("Deleted 0 expired records from v2_algo_execution table");
+      expect(logger.info).toHaveBeenCalledWith("Deleted 0 expired records from v2_algo_execution table");
     });
 
     it("should throw error when cleanup fails", async () => {
@@ -197,7 +190,7 @@ describe("algo-html-file-cleanup", () => {
 
       await expect(runCleanupManually()).rejects.toThrow("Database error");
 
-      expect(console.error).toHaveBeenCalledWith("Error during manual cleanup:", mockError);
+      expect(logger.error).toHaveBeenCalledWith("Error during manual cleanup:", mockError);
     });
 
     it("should use current time for expiration check", async () => {
@@ -271,7 +264,7 @@ describe("algo-html-file-cleanup", () => {
 
       await expect(getExpiredRecordsCount()).rejects.toThrow("Query failed");
 
-      expect(console.error).toHaveBeenCalledWith("Error getting expired records count:", mockError);
+      expect(logger.error).toHaveBeenCalledWith("Error getting expired records count:", mockError);
     });
 
     it("should use current time for expiration check", async () => {
@@ -345,7 +338,7 @@ describe("algo-html-file-cleanup", () => {
 
       await expect(getTotalRecordsCount()).rejects.toThrow("Query execution failed");
 
-      expect(console.error).toHaveBeenCalledWith("Error getting total records count:", mockError);
+      expect(logger.error).toHaveBeenCalledWith("Error getting total records count:", mockError);
     });
   });
 
@@ -383,7 +376,7 @@ describe("algo-html-file-cleanup", () => {
       await runCleanupManually();
 
       expect(mockDel).toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith("Deleted 10000 expired records from v2_algo_execution table");
+      expect(logger.info).toHaveBeenCalledWith("Deleted 10000 expired records from v2_algo_execution table");
     });
   });
 });

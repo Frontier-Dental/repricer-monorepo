@@ -41,9 +41,10 @@ if ($("#sign_in_form").length > 0) {
               showErrorToast(data.message);
             }
           },
-          error: function () {
+          error: function (error) {
+            const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
             $(".signInButton").html("Login");
-            showErrorToast("Something went wrong. Please try again");
+            showErrorToast(errorMessage);
           },
         });
       },
@@ -130,10 +131,11 @@ if ($("#update_item_form").length > 0) {
               showErrorToast(data.message);
             }
           },
-          error: function () {
+          error: function (error) {
+            const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
             $(".addItemButton").html("Submit");
             $(".addItemButton").prop("disabled", false);
-            showErrorToast("Something went wrong. Please try again");
+            showErrorToast(errorMessage);
           },
         });
       },
@@ -216,10 +218,11 @@ if ($("#add_item_excel").length > 0) {
                   showErrorToast(data.message);
                 }
               },
-              error: function () {
+              error: function (error) {
+                const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
                 $(".addItemExcel").html("Submit");
                 $(".addItemExcel").prop("disabled", false);
-                showErrorToast("Something went wrong. Please try again");
+                showErrorToast(errorMessage);
               },
             });
           }
@@ -268,10 +271,11 @@ if ($("#change_password").length > 0) {
               showErrorToast(data.message);
             }
           },
-          error: function () {
+          error: function (error) {
+            const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
             $(".changePassword").html("Submit");
             $(".changePassword").prop("disabled", false);
-            showErrorToast("Something went wrong. Please try again");
+            showErrorToast(errorMessage);
           },
         });
       },
@@ -307,8 +311,9 @@ function removeItem($id) {
           showErrorToast(data.message);
         }
       },
-      error: function () {
-        alert("Oops unable to connect with server!!");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -332,8 +337,9 @@ function deleteAll() {
           window.location.href = "/masteritem";
         }, 5000);
       },
-      error: function () {
-        showErrorToast("Something went wrong. Please try again");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -410,10 +416,11 @@ if ($("#update_product_form_tradent").length > 0) {
               showErrorToast(data.message);
             }
           },
-          error: function () {
+          error: function (error) {
+            const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
             $(".addItemButton").html("Submit");
             $(".addItemButton").prop("disabled", false);
-            showErrorToast("Something went wrong. Please try again");
+            showErrorToast(errorMessage);
           },
         });
       },
@@ -491,10 +498,11 @@ if ($("#update_product_form_frontier").length > 0) {
               showErrorToast(data.message);
             }
           },
-          error: function () {
+          error: function (error) {
+            const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
             $(".addItemButton").html("Submit");
             $(".addItemButton").prop("disabled", false);
-            showErrorToast("Something went wrong. Please try again");
+            showErrorToast(errorMessage);
           },
         });
       },
@@ -572,10 +580,11 @@ if ($("#update_product_form_mvp").length > 0) {
               showErrorToast(data.message);
             }
           },
-          error: function () {
+          error: function (error) {
+            const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
             $(".addItemButton").html("Submit");
             $(".addItemButton").prop("disabled", false);
-            showErrorToast("Something went wrong. Please try again");
+            showErrorToast(errorMessage);
           },
         });
       },
@@ -653,10 +662,11 @@ if ($("#update_product_form_topDent").length > 0) {
               showErrorToast(data.message);
             }
           },
-          error: function () {
+          error: function (error) {
+            const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
             $(".addItemButton").html("Submit");
             $(".addItemButton").prop("disabled", false);
-            showErrorToast("Something went wrong. Please try again");
+            showErrorToast(errorMessage);
           },
         });
       },
@@ -734,10 +744,11 @@ if ($("#update_product_form_firstDent").length > 0) {
               showErrorToast(data.message);
             }
           },
-          error: function () {
+          error: function (error) {
+            const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
             $(".addItemButton").html("Submit");
             $(".addItemButton").prop("disabled", false);
-            showErrorToast("Something went wrong. Please try again");
+            showErrorToast(errorMessage);
           },
         });
       },
@@ -816,10 +827,11 @@ if ($("#update_product_form_triad").length > 0) {
               showErrorToast(data.message);
             }
           },
-          error: function () {
+          error: function (error) {
+            const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
             $(".addItemButton").html("Submit");
             $(".addItemButton").prop("disabled", false);
-            showErrorToast("Something went wrong. Please try again");
+            showErrorToast(errorMessage);
           },
         });
       },
@@ -898,10 +910,11 @@ if ($("#update_product_form_biteSupply").length > 0) {
               showErrorToast(data.message);
             }
           },
-          error: function () {
+          error: function (error) {
+            const errorMessage = error?.responseJSON?.message ?? "Something went wrong. Please try again";
             $(".addItemButton").html("Submit");
             $(".addItemButton").prop("disabled", false);
-            showErrorToast("Something went wrong. Please try again");
+            showErrorToast(errorMessage);
           },
         });
       },
@@ -931,8 +944,9 @@ function syncProductItem($id) {
           showErrorToast(data.message);
         }
       },
-      error: function () {
-        alert("Oops unable to connect with server!!");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+        showErrorToast(errorMessage);
       },
     });
   }

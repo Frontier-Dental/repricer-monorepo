@@ -1,6 +1,7 @@
 import * as dbHelper from "./mongo/db-helper";
 import * as axiosHelper from "./axios-helper";
 import _ from "lodash";
+import logger from "./logger";
 import { applicationConfig } from "./config";
 import * as sqlV2Service from "./mysql/mysql-v2";
 
@@ -44,12 +45,12 @@ export const ExecuteCounter = async (proxyProviderId: number): Promise<void> => 
 
   // Item Does not exist. So create the Item object with Count as 1
   if (existingRecord && existingRecord.failureCount == 0) {
-    console.log(`PROXY SWITCH COUNTER INIT : PROXY_PROV - ${proxyProviderId} || INIT_TIME : ${new Date()}`);
+    logger.info(`PROXY SWITCH COUNTER INIT : PROXY_PROV - ${proxyProviderId} || INIT_TIME : ${new Date()}`);
     await sqlV2Service.InitProxyFailureDetails(proxyProviderId, 1);
   }
   // Cache exist, so update the counter
   else {
-    console.log(`PROXY SWITCH COUNTER UPDATE : PROXY_PROV - ${proxyProviderId} || INIT_TIME : ${existingRecord?.initTime} || FAILURE_COUNT : ${existingRecord?.failureCount}`);
+    logger.info(`PROXY SWITCH COUNTER UPDATE : PROXY_PROV - ${proxyProviderId} || INIT_TIME : ${existingRecord?.initTime} || FAILURE_COUNT : ${existingRecord?.failureCount}`);
     await sqlV2Service.UpdateProxyFailureDetails(proxyProviderId, existingRecord?.failureCount + 1);
   }
 };
@@ -66,11 +67,11 @@ export const SwitchProxy = async (): Promise<void> => {
   for (const record of proxyFailureDetails || []) {
     if (record.failureCount > 0) {
       const failureCountThreshold = parseInt(record.thresholdCount.toString());
-      console.log(`Running Proxy Switch Check for ${record.providerName}`);
+      logger.info(`Running Proxy Switch Check for ${record.providerName}`);
       let payloadForEmail: CronInfo[] = [];
 
       if (record.failureCount > failureCountThreshold) {
-        console.log(`Maximum Threshold for Failures Reached for ProxyProvider ${record.providerName} with count :${record.failureCount}`);
+        logger.info(`Maximum Threshold for Failures Reached for ProxyProvider ${record.providerName} with count :${record.failureCount}`);
 
         // Changing Proxy Provider To All Linked Cron to Next Available Proxy Provider.
         const linkedCronWithExistingProxyProvider = await sqlV2Service.GetLinkedCronSettingsByProviderId(record.proxyProvider);
@@ -97,7 +98,7 @@ export const SwitchProxy = async (): Promise<void> => {
             await axiosHelper.postAsync(payloadForThresholdReached, applicationConfig.PROXY_SWITCH_EMAIL_THRESHOLD_NOTIFIER!);
           }
 
-          console.log(`Email sent for Proxy Switch at ${new Date()}`);
+          logger.info(`Email sent for Proxy Switch at ${new Date()}`);
         }
       }
     }
@@ -118,7 +119,7 @@ async function updateProxyForCron(listOfCrons: CronSettings[], existingProxyProv
   const existingProxyDetails = _.first(await sqlV2Service.GetProxyConfigByProviderId(existingProxyProviderId)) as ProxyConfig | undefined;
 
   for (let cronSettings of listOfCrons) {
-    console.log(`PROXY PROVIDER CHANGE : ${cronSettings.CronName} || Existing Proxy Provider : ${cronSettings.ProxyProvider} || New Proxy Provider : ${newProxyProvider}`);
+    logger.info(`PROXY PROVIDER CHANGE : ${cronSettings.CronName} || Existing Proxy Provider : ${cronSettings.ProxyProvider} || New Proxy Provider : ${newProxyProvider}`);
 
     // Threshold Reached. So Do nothing and Send Email About Threshold
     if (newProxyProvider == 99) {
@@ -156,10 +157,10 @@ async function ResetCounterForProvider(providerIdDetails: ProxyFailureDetails, u
   const proxySwitchTimer = applicationConfig.PROXYSWITCH_TIMER;
 
   if (isForceReset == true) {
-    console.log(`PROXY SWITCH COUNTER RESET : Resetting Counter for ${providerIdDetails.providerName} with failure Count : ${providerIdDetails.failureCount} and Init Time : ${providerIdDetails.initTime} || Force Reset : TRUE`);
+    logger.info(`PROXY SWITCH COUNTER RESET : Resetting Counter for ${providerIdDetails.providerName} with failure Count : ${providerIdDetails.failureCount} and Init Time : ${providerIdDetails.initTime} || Force Reset : TRUE`);
     await sqlV2Service.ResetProxyFailureDetails(providerIdDetails.proxyProvider, userId);
   } else if (providerIdDetails.failureCount > 0 && new Date().getTime() - providerIdDetails.initTime.getTime() > proxySwitchTimer) {
-    console.log(`PROXY SWITCH COUNTER RESET : Resetting Counter for ${providerIdDetails.providerName} with failure Count : ${providerIdDetails.failureCount} and Init Time : ${providerIdDetails.initTime}`);
+    logger.info(`PROXY SWITCH COUNTER RESET : Resetting Counter for ${providerIdDetails.providerName} with failure Count : ${providerIdDetails.failureCount} and Init Time : ${providerIdDetails.initTime}`);
     await sqlV2Service.ResetProxyFailureDetails(providerIdDetails.proxyProvider, userId);
   }
 }

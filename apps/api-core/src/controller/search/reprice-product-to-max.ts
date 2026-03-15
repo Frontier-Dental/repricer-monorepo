@@ -13,6 +13,7 @@ import * as repriceHelper from "../../utility/reprice-algo/v1/reprice-helper";
 import { delay, getPriceStepValue, getSecretKey, isPriceUpdateRequired } from "../../utility/reprice-algo/v1/shared";
 import * as responseUtility from "../../utility/response-utility";
 import * as sqlV2Service from "../../utility/mysql/mysql-v2";
+import logger from "../../utility/logger";
 
 export async function repriceProductToMax(req: Request, res: Response): Promise<any> {
   let productItem = req.body.prod;
@@ -56,7 +57,7 @@ export async function repriceProductToMax(req: Request, res: Response): Promise<
   const repriceNeeded = isPriceUpdateRequired(repriceResult, productItem.allowReprice);
   // const repriceNeeded = false;
   if (!repriceNeeded) {
-    console.log("=== SUCCESS RESPONSE (NO PRICE UPDATE) ===");
+    logger.info("=== SUCCESS RESPONSE (NO PRICE UPDATE) ===");
     return res.status(_codes.StatusCodes.OK).json({ cronResponse: outputResponse, priceUpdateResponse: null });
   }
   let priceUpdatedRequest: any = {};

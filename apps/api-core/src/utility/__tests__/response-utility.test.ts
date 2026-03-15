@@ -686,9 +686,9 @@ describe("response-utility", () => {
       expect(result.topDentDetails.executionPriority).toBe(20);
     });
 
-    it("should map firstDentDetails to mvpDetails.firstDentDetails", () => {
+    it("should map firstDent_priority to firstDentDetails.executionPriority", () => {
       const productDetails = {
-        mvpDetails: { executionPriority: 0 },
+        firstDentDetails: { executionPriority: 0 },
       };
       const priorityList = {
         firstDent_priority: "25",
@@ -696,7 +696,7 @@ describe("response-utility", () => {
 
       const result = MapOverrideExecutionPriority(productDetails, priorityList);
 
-      expect(result.mvpDetails.firstDentDetails).toBe(25);
+      expect(result.firstDentDetails.executionPriority).toBe(25);
     });
 
     it("should map priority for triadDetails", () => {
@@ -731,6 +731,7 @@ describe("response-utility", () => {
         frontierDetails: { executionPriority: 0 },
         mvpDetails: { executionPriority: 0 },
         topDentDetails: { executionPriority: 0 },
+        firstDentDetails: { executionPriority: 0 },
         triadDetails: { executionPriority: 0 },
         biteSupplyDetails: { executionPriority: 0 },
       };
@@ -750,7 +751,7 @@ describe("response-utility", () => {
       expect(result.frontierDetails.executionPriority).toBe(2);
       expect(result.mvpDetails.executionPriority).toBe(3);
       expect(result.topDentDetails.executionPriority).toBe(4);
-      expect(result.mvpDetails.firstDentDetails).toBe(5);
+      expect(result.firstDentDetails.executionPriority).toBe(5);
       expect(result.triadDetails.executionPriority).toBe(6);
       expect(result.biteSupplyDetails.executionPriority).toBe(7);
     });

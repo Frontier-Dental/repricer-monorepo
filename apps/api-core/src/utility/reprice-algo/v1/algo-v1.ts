@@ -22,6 +22,7 @@ import * as filterMapper from "../../../utility/filter-mapper";
 import * as buyBoxHelper from "../../../utility/buy-box-helper";
 import { findTinyProxyConfigByVendorId } from "../../mysql/tinyproxy-configs";
 import { updatePrice } from "../v2/wrapper";
+import logger from "../../logger";
 
 export async function repriceProduct(mpid: string, net32Products: Net32Product[], internalProduct: any, contextVendor: string) {
   let productItem = internalProduct;
@@ -416,7 +417,7 @@ export async function repriceProductToMax(mpid: string, net32Products: Net32Prod
               }
             }
           } catch (exception) {
-            console.error({ FOR: mpid, EXCEPTION: exception });
+            logger.error({ FOR: mpid, EXCEPTION: exception });
           }
 
           return {
@@ -432,7 +433,7 @@ export async function repriceProductToMax(mpid: string, net32Products: Net32Prod
     }
     //throw new Error("Sorry some error occurred!");
   } catch (exception) {
-    console.error({ MPID: mpid, EXCEPTION: exception });
+    logger.error({ MPID: mpid, EXCEPTION: exception });
     //throw exception;
   }
 }

@@ -8,6 +8,8 @@ import path from "path";
 import * as httpMiddleware from "./http-wrappers";
 import { applicationConfig } from "./config";
 import { UpdateExportStatusV2 } from "../services/mysql-v2";
+import logger from "./logger";
+
 export async function FindAllDownloads() {
   return fs
     .readdirSync("./exports", { withFileTypes: true })
@@ -28,7 +30,7 @@ export async function ExportAndSaveById(mpid: any, startDate: any, endDate: any,
   const historyBasePath = path.join(rootPath, applicationConfig.HISTORY_BASE_PATH!);
   const contextDirectory = path.join(historyBasePath, `/${mpid}/`);
   let contextSubFolders: any[] = [];
-  console.log(`ExportAndSaveById for ${mpid} | ContextPath : ${contextDirectory} `);
+  logger.info(`ExportAndSaveById for ${mpid} | ContextPath : ${contextDirectory} `);
   //Get Context Folders based on Date Time Range
   if (isDirectory(contextDirectory) == true) {
     const listOfSubDirectories = getDirectories(contextDirectory);
@@ -75,13 +77,13 @@ export async function ExportAndSave(startDate: any, endDate: any, historyFileNam
   const historyBasePath = path.join(rootPath, applicationConfig.HISTORY_BASE_PATH!);
   const listOfSubDirectories = getDirectories(historyBasePath);
   const noOfDaysToRecord = getMomentDate(new Date(endDate)).diff(getMomentDate(new Date(startDate)), "days") + 1;
-  console.log(`ExportAndSave for StartDate : ${new Date(startDate)} | EndDate : ${new Date(endDate)} | ContextPath : ${historyBasePath} `);
+  logger.info(`ExportAndSave for StartDate : ${new Date(startDate)} | EndDate : ${new Date(endDate)} | ContextPath : ${historyBasePath} `);
   let datesToConsider: any[] = [];
   for (let count = 1; count <= noOfDaysToRecord; count++) {
     const contextDate = getNextDate(new Date(startDate), count);
     datesToConsider.push(moment(contextDate).format("YYYY-MM-DD") as never);
   }
-  console.log(`Dates to Consider for History : ${datesToConsider.join(" |")}`);
+  logger.info(`Dates to Consider for History : ${datesToConsider.join(" |")}`);
   if (listOfSubDirectories.length > 0 && datesToConsider.length > 0) {
     await createExcel([], historyFileName, 1);
     await SaveAllHistoryByDate(datesToConsider, listOfSubDirectories, historyFileName);
@@ -91,7 +93,7 @@ export async function ExportAndSave(startDate: any, endDate: any, historyFileNam
   }
   const finalPayload = new ExportModel("COMPLETE", historyFileName, new Date(), new Date(), auditInfo.UpdatedBy);
   await UpdateExportStatusV2(finalPayload);
-  console.log(`Completed ExportAndSave for Date ${new Date(startDate)} | ${new Date(endDate)} | ContextPath : ${historyBasePath} `);
+  logger.info(`Completed ExportAndSave for Date ${new Date(startDate)} | ${new Date(endDate)} | ContextPath : ${historyBasePath} `);
 }
 
 export async function ExportAndSaveByIdV2(mpid: any, startDate: any, endDate: any, historyFileName: any, auditInfo: any) {
@@ -113,7 +115,7 @@ export async function ExportAndSaveV2(startDate: any, endDate: any, historyFileN
     fileName: historyFileName,
   };
   await httpMiddleware.native_post(historyExportUrl, requestPayload);
-  console.log(`Called ExportAndSave For All for Date ${new Date(startDate)} | ${new Date(endDate)} | ContextPath : ${historyFileName} `);
+  logger.info(`Called ExportAndSave For All for Date ${new Date(startDate)} | ${new Date(endDate)} | ContextPath : ${historyFileName} `);
 }
 
 function flattenObject(history: any, mpid: any): any[] {
@@ -197,12 +199,12 @@ async function SaveAllHistoryByDate(datesToConsider: any, listOfSubDirectories: 
     let listOfRecords: any = [];
     for (const dir of chunk as any) {
       for (const folderDateToLook of datesToConsider) {
-        console.log(`Getting History for Date : ${folderDateToLook} | DIR : ${dir}`);
+        logger.info(`Getting History for Date : ${folderDateToLook} | DIR : ${dir}`);
         const folderPath = path.join(dir as any, folderDateToLook as any);
         if (isDirectory(folderPath)) {
           const allFiles = getAllFileNames(folderPath);
           const mpid = dir.substr(dir.lastIndexOf(applicationConfig.FILE_DELIMITER!) + 1, dir.length);
-          console.log(`Found ${allFiles.length} history for MPID : ${mpid}`);
+          logger.info(`Found ${allFiles.length} history for MPID : ${mpid}`);
           if (allFiles.length > 0) {
             _.forEach(allFiles, ($) => {
               const jsonFilePath = path.join(folderPath, $);
@@ -225,7 +227,7 @@ async function appendRecords(listOfRecords: any, historyFileName: any, folderDat
   await workbook.xlsx.readFile(`./exports/${historyFileName}`);
   let worksheet = workbook.getWorksheet(workSheetName as any);
   let lastRow = worksheet?.lastRow;
-  console.log(`Appending ${listOfRecords.length} history rows to sheet : ${workSheetName}`);
+  logger.info(`Appending ${listOfRecords.length} history rows to sheet : ${workSheetName}`);
   for (let count = 1; count <= listOfRecords.length; count++) {
     let getRowInsert: any = worksheet?.getRow((lastRow.number + count) as any);
     getRowInsert.getCell("A").value = listOfRecords[count - 1].vendorName;
@@ -244,7 +246,7 @@ async function appendRecords(listOfRecords: any, historyFileName: any, folderDat
     getRowInsert.getCell("N").value = listOfRecords[count - 1].api_response;
     getRowInsert.commit();
   }
-  console.log(`Completed appending ${listOfRecords.length} history rows to sheet : ${workSheetName}`);
+  logger.info(`Completed appending ${listOfRecords.length} history rows to sheet : ${workSheetName}`);
   await workbook.xlsx.writeFile(`./exports/${historyFileName}`);
   workbook = null;
   listOfRecords = null;

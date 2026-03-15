@@ -40,8 +40,9 @@ function updateThresholdForProvider(providerId) {
             showErrorToast(data.message);
           }
         },
-        error: function () {
-          alert("Oops unable to connect with server!!");
+        error: function (error) {
+          const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+          showErrorToast(errorMessage);
         },
       });
     }
@@ -73,8 +74,9 @@ function resetProxyProvider(providerId) {
           showErrorToast(data.message);
         }
       },
-      error: function () {
-        alert("Oops unable to connect with server!!");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -97,8 +99,9 @@ function getFilterCronLogs() {
         showErrorToast(data.message);
       }
     },
-    error: function () {
-      alert("Oops unable to connect with server!!");
+    error: function (error) {
+      const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+      showErrorToast(errorMessage);
     },
   });
 }

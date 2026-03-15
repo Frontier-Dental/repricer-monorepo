@@ -28,8 +28,9 @@ function changeCronExpression(cronId) {
             showErrorToast(data.message);
           }
         },
-        error: function () {
-          alert("Oops unable to connect with server!!");
+        error: function (error) {
+          const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+          showErrorToast(errorMessage);
         },
       });
     }
@@ -68,8 +69,9 @@ function changeCronFilterValue(cronId) {
             showErrorToast(data.message);
           }
         },
-        error: function () {
-          alert("Oops unable to connect with server!!");
+        error: function (error) {
+          const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+          showErrorToast(errorMessage);
         },
       });
     }
@@ -102,8 +104,9 @@ function switchOffCron(cronId) {
           showErrorToast(data.message);
         }
       },
-      error: function () {
-        alert("Oops unable to connect with server!!");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -133,8 +136,9 @@ function switchOnCron(cronId) {
           showErrorToast(data.message);
         }
       },
-      error: function () {
-        alert("Oops unable to connect with server!!");
+      error: function (error) {
+        const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+        showErrorToast(errorMessage);
       },
     });
   }
@@ -172,8 +176,9 @@ function changeLinkedCronDetails(cronId) {
             showErrorToast(data.message);
           }
         },
-        error: function () {
-          alert("Oops unable to connect with server!!");
+        error: function (error) {
+          const errorMessage = error?.responseJSON?.message ?? "Oops unable to connect with server!!";
+          showErrorToast(errorMessage);
         },
       });
     }

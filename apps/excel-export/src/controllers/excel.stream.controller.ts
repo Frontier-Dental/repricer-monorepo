@@ -6,6 +6,7 @@ import handlingTimeGroupResx from "../resources/HandlingTimeFilterMapping.json" 
 import * as mySqlHelper from "../services/mysql";
 import _ from "lodash";
 import * as SqlMapper from "../utility/mapper/mysql-mapper";
+import logger from "../utility/logger";
 
 export async function streamProductDetails(req: Request, res: Response) {
   // MySQL streaming result set (your helper must return a stream!)
@@ -129,9 +130,10 @@ export async function streamProductDetails(req: Request, res: Response) {
     { header: "Qbreak Count", key: "qBreakCount", width: 20 },
     { header: "Qbreak Details", key: "qBreakDetails", width: 50 },
     { header: "Badge", key: "badge", width: 20 },
+    { header: "Badge Up Exception %", key: "badgeUpExceptionPercentage", width: 20 },
   ];
 
-  worksheet.autoFilter = "A1:BN1";
+  worksheet.autoFilter = "A1:BO1";
   let isPaused = false;
   stream.on("data", async (row: any) => {
     if (isPaused) return;
@@ -212,7 +214,7 @@ export async function streamProductDetails(req: Request, res: Response) {
     try {
       if (db) db.release();
     } catch {}
-    console.error("Streaming error:", err);
+    logger.error(`Streaming error: ${err?.message || "Unknown error"}`);
     res.status(500).send("Internal Error");
   });
 }
@@ -224,7 +226,7 @@ function transformRow(item: any) {
     try {
       return input ? moment(input).format("YYYY-MM - DD HH: mm:ss") : input;
     } catch (error) {
-      console.error(`Error fixTime for input : ${input}`);
+      logger.error(`Error fixTime for input : ${input}`);
       return input;
     }
   }

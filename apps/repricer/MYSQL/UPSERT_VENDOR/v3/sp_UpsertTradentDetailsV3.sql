@@ -67,7 +67,8 @@ CREATE PROCEDURE "sp_UpsertTradentDetailsV3" (
   IN getBBShippingValue decimal(5, 3),
   IN qBreakCount int,
   IN qBreakDetails varchar(1024),
-  IN badge boolean
+  IN badge boolean,
+  IN badgeUpExceptionPercentage decimal(5, 3)
 ) BEGIN DECLARE EXIT
 HANDLER FOR SQLEXCEPTION BEGIN
 -- Rollback the transaction if an error occurs
@@ -142,7 +143,8 @@ INSERT INTO
     GetBBShippingValue,
     QBreakCount,
     QBreakDetails,
-    Badge
+    Badge,
+    BadgeUpExceptionPercentage
   )
 values
   (
@@ -209,7 +211,8 @@ values
     getBBShippingValue,
     qBreakCount,
     qBreakDetails,
-    badge
+    badge,
+    badgeUpExceptionPercentage
   );
 
 SELECT
@@ -219,4 +222,4 @@ COMMIT;
 
 END;
 
-/ /
+/ / / /

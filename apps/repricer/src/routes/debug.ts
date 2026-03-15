@@ -1,10 +1,11 @@
 import express from "express";
 import * as debugController from "../controllers/debug";
 import { authMiddleware } from "../middleware/auth-middleware";
-
+import { apiLimiter } from "../middleware/rate-limiter";
 export const debugRouter = express.Router();
 
 //debugRouter.use(authMiddleware);
+debugRouter.use(apiLimiter);
 
 debugRouter.post("/delete_history", debugController.DeleteHistory);
 

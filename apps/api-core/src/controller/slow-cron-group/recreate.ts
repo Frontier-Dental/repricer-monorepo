@@ -5,6 +5,7 @@ import * as responseUtility from "../../utility/response-utility";
 import { runCoreCronLogic } from "../main-cron/shared";
 import { getCronNameByJobName, slowCrons } from "./shared";
 import { GetSlowCronDetails } from "../../utility/mysql/mysql-v2";
+import logger from "../../utility/logger";
 
 export async function recreateSlowCronHandler(req: Request, res: Response): Promise<any> {
   const { jobName } = req.body;
@@ -25,7 +26,7 @@ export async function recreateSlowCronHandler(req: Request, res: Response): Prom
       try {
         await runCoreCronLogic(details, true);
       } catch (error) {
-        console.error(`Error running ${details.CronName}:`, error);
+        logger.error(`Error running ${details.CronName}:`, error);
       }
     },
     { scheduled: JSON.parse(details.CronStatus) }

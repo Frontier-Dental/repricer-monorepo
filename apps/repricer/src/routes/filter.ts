@@ -1,10 +1,12 @@
 import express from "express";
 import * as cronFilterController from "../controllers/cron-filter";
 import { authMiddleware } from "../middleware/auth-middleware";
+import { apiLimiter } from "../middleware/rate-limiter";
 
 export const cronFilterRouter = express.Router();
 
 cronFilterRouter.use(authMiddleware);
+cronFilterRouter.use(apiLimiter);
 
 cronFilterRouter.get("/", cronFilterController.GetFilterCron);
 cronFilterRouter.post("/update_filter_cron", cronFilterController.UpdateFilterCron);

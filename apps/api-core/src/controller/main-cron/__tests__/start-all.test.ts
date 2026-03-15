@@ -36,14 +36,17 @@ import * as sqlV2Service from "../../../utility/mysql/mysql-v2";
 jest.mock("../shared");
 jest.mock("../../../utility/mongo/db-helper");
 jest.mock("../../../utility/mysql/mysql-v2");
+jest.mock("../../../utility/logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
+
+import logger from "../../../utility/logger";
 
 const mockStopAllMainCrons = shared.stopAllMainCrons as jest.MockedFunction<typeof shared.stopAllMainCrons>;
 const mockSetCronAndStart = shared.setCronAndStart as jest.MockedFunction<typeof shared.setCronAndStart>;
 const mockResetPendingCronLogs = dbHelper.ResetPendingCronLogs as jest.MockedFunction<typeof dbHelper.ResetPendingCronLogs>;
 const mockGetCronSettingsList = sqlV2Service.GetCronSettingsList as jest.MockedFunction<typeof sqlV2Service.GetCronSettingsList>;
-
-const originalConsoleLog = console.log;
-const originalConsoleError = console.error;
 
 describe("main-cron/start-all", () => {
   let mockRequest: Partial<Request>;
@@ -54,10 +57,6 @@ describe("main-cron/start-all", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.resetAllMocks();
-
-    // Mock console methods
-    console.log = jest.fn();
-    console.error = jest.fn();
 
     // Create mock response object
     mockSend = jest.fn().mockReturnThis();
@@ -77,12 +76,6 @@ describe("main-cron/start-all", () => {
     mockStopAllMainCrons.mockReturnValue(undefined);
     mockSetCronAndStart.mockReturnValue(undefined);
     mockGetCronSettingsList.mockResolvedValue([]);
-  });
-
-  afterEach(() => {
-    // Restore console methods
-    console.log = originalConsoleLog;
-    console.error = originalConsoleError;
   });
 
   describe("startAllCronHandler", () => {
@@ -264,7 +257,7 @@ describe("main-cron/start-all", () => {
       await startAllCronLogic();
 
       expect(mockSetCronAndStart).toHaveBeenCalledTimes(2);
-      expect(console.error).toHaveBeenCalledWith(`Exception while initializing Cron : Cron-1 || ${error}`);
+      expect(logger.error).toHaveBeenCalledWith(`Exception while initializing Cron : Cron-1 || ${error}`);
       // Second cron should still be processed
       expect(mockSetCronAndStart).toHaveBeenCalledWith("Cron-2", mockCronSettings[1]);
     });
@@ -317,8 +310,8 @@ describe("main-cron/start-all", () => {
       await startAllCronLogic();
 
       expect(mockSetCronAndStart).toHaveBeenCalledTimes(3);
-      expect(console.error).toHaveBeenCalledWith(`Exception while initializing Cron : Cron-1 || ${error1}`);
-      expect(console.error).toHaveBeenCalledWith(`Exception while initializing Cron : Cron-2 || ${error2}`);
+      expect(logger.error).toHaveBeenCalledWith(`Exception while initializing Cron : Cron-1 || ${error1}`);
+      expect(logger.error).toHaveBeenCalledWith(`Exception while initializing Cron : Cron-2 || ${error2}`);
       // Third cron should still be processed
       expect(mockSetCronAndStart).toHaveBeenCalledWith("Cron-3", mockCronSettings[2]);
     });
@@ -552,7 +545,7 @@ describe("main-cron/start-all", () => {
 
       await startAllCronLogic();
 
-      expect(console.error).toHaveBeenCalledWith(`Exception while initializing Cron : Cron-1 || ${error}`);
+      expect(logger.error).toHaveBeenCalledWith(`Exception while initializing Cron : Cron-1 || ${error}`);
     });
 
     it("should handle error with Error object", async () => {
@@ -576,7 +569,7 @@ describe("main-cron/start-all", () => {
 
       await startAllCronLogic();
 
-      expect(console.error).toHaveBeenCalledWith(`Exception while initializing Cron : Cron-1 || ${error}`);
+      expect(logger.error).toHaveBeenCalledWith(`Exception while initializing Cron : Cron-1 || ${error}`);
     });
 
     it("should call ResetPendingCronLogs before other operations", async () => {

@@ -12,6 +12,7 @@ import * as scrapflyHelper from "./proxy/scrapfly-helper";
 import * as ProxyHelper from "./proxy-helper";
 import * as responseUtility from "./response-utility";
 import * as sqlV2Service from "../utility/mysql/mysql-v2";
+import logger from "./logger";
 
 export async function postAsync(payload: any, _url: string) {
   const config = {
@@ -65,7 +66,7 @@ export async function getAsync(_url: string, cronId: any, mpid: string, seqStrin
       } else {
         var startTime = process.hrtime();
         responseData = await axios.get(_url, proxy);
-        console.log(`SCRAPE : ${(_.first(proxyConfigDetails) as any).proxyProviderName} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || ${seqString}`);
+        logger.info(`SCRAPE : ${(_.first(proxyConfigDetails) as any).proxyProviderName} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds || ${seqString}`);
       }
       break;
   }
@@ -110,14 +111,16 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings, mpi
         } else {
           var startTime = process.hrtime();
           responseData = await axios.get(_url, proxy);
-          console.log(`SCRAPE : ${(_.first(proxyConfigDetails) as any).proxyProviderName} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds `);
+          logger.info(`SCRAPE : ${(_.first(proxyConfigDetails) as any).proxyProviderName} : ${_url} || TimeTaken  :  ${parseHrtimeToSeconds(process.hrtime(startTime))} seconds `);
         }
         break;
     }
   }
 
   //update badge details product level
-  sqlV2Service.UpdateProductLevelBadgeDetails(mpid, responseData.data);
+  if (responseData?.data) {
+    sqlV2Service.UpdateProductLevelBadgeDetails(mpid, responseData.data);
+  }
 
   return responseData;
 }
@@ -218,7 +221,7 @@ function getMorphedResponse(): Promise<any> {
 }
 
 async function getScrappingResponse(_url: string, proxyDetailsResponse: any): Promise<any> {
-  console.log(`Calling SmartProxy - Web : ${_url}`);
+  logger.info(`Calling SmartProxy - Web : ${_url}`);
   const response = await axios({
     method: "post",
     url: proxyDetailsResponse.hostUrl,

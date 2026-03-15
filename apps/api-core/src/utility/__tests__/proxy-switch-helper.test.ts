@@ -33,8 +33,13 @@ jest.mock("lodash");
 jest.mock("../mysql/mysql-v2");
 jest.mock("../axios-helper");
 jest.mock("../mongo/db-helper");
+jest.mock("../logger", () => ({
+  __esModule: true,
+  default: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+}));
 
 import _ from "lodash";
+import logger from "../logger";
 import * as sqlV2Service from "../mysql/mysql-v2";
 import * as axiosHelper from "../axios-helper";
 import { ExecuteCounter, ResetFailureCounter, SwitchProxy, ResetProxyCounterForProvider, DebugProxySwitch } from "../proxy-switch-helper";
@@ -123,7 +128,7 @@ describe("proxy-switch-helper", () => {
 
       expect(mockedSqlV2Service.UpdateProxyFailureDetails).toHaveBeenCalledWith(1, 6);
       expect(mockedSqlV2Service.InitProxyFailureDetails).not.toHaveBeenCalled();
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("PROXY SWITCH COUNTER UPDATE"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("PROXY SWITCH COUNTER UPDATE"));
     });
 
     it("should handle undefined existing record", async () => {
@@ -542,7 +547,7 @@ describe("proxy-switch-helper", () => {
 
       expect(mockedSqlV2Service.GetProxyFailureDetailsByProxyProviderId).toHaveBeenCalledWith(1);
       expect(mockedSqlV2Service.ResetProxyFailureDetails).toHaveBeenCalledWith(1, "user123");
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("PROXY SWITCH COUNTER RESET"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("PROXY SWITCH COUNTER RESET"));
     });
 
     it("should handle null proxy failure details", async () => {
@@ -724,7 +729,7 @@ describe("proxy-switch-helper", () => {
       // So it will reset if timer threshold is exceeded
       expect(mockedSqlV2Service.ResetProxyFailureDetails).toHaveBeenCalledWith(1, "SYSTEM");
       // The console.log won't include "Force Reset : TRUE" because isForceReset is false
-      expect(console.log).toHaveBeenCalledWith(expect.stringContaining("PROXY SWITCH COUNTER RESET"));
+      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("PROXY SWITCH COUNTER RESET"));
     });
 
     it("should reset when timer threshold is exceeded", async () => {
