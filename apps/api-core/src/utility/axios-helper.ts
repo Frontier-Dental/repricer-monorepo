@@ -9,6 +9,7 @@ import { applicationConfig } from "./config";
 import * as axiosRetryHelper from "./proxy/axios-retry-helper";
 import * as brightDataHelper from "./proxy/bright-data-helper";
 import * as scrapflyHelper from "./proxy/scrapfly-helper";
+import * as scrapingAntHelper from "./proxy/scraping-ant-helper";
 import * as ProxyHelper from "./proxy-helper";
 import * as responseUtility from "./response-utility";
 import * as sqlV2Service from "../utility/mysql/mysql-v2";
@@ -52,6 +53,9 @@ export async function getAsync(_url: string, cronId: any, mpid: string, seqStrin
       break;
     case 5:
       responseData = await axiosRetryHelper.getScrapingBeeResponse(_url, _.first(proxyConfigDetails), seqString, true);
+      break;
+    case 6:
+      responseData = await scrapingAntHelper.scrapingAntFetchData(_url, _.first(proxyConfigDetails) as any, seqString ?? null);
       break;
     case 8:
       responseData = await scrapflyHelper.scrapflyFetchData(_url, _.first(proxyConfigDetails) as any, null, true);
@@ -97,6 +101,9 @@ export async function getAsyncProxy(_url: string, cronSetting: CronSettings, mpi
         break;
       case 5:
         responseData = await axiosRetryHelper.getScrapingBeeResponse(_url, _.first(proxyConfigDetails), null, true);
+        break;
+      case 6:
+        responseData = await scrapingAntHelper.scrapingAntFetchData(_url, _.first(proxyConfigDetails) as any, null);
         break;
       case 8:
         responseData = await scrapflyHelper.scrapflyFetchData(_url, _.first(proxyConfigDetails) as any, null, true);
