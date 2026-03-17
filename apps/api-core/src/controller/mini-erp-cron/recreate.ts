@@ -7,13 +7,14 @@ import { miniErpCrons } from "./shared";
 import { updateNet32Stock } from "../../services/net32-stock-update";
 import { getProductsFromMiniErp } from "../../utility/mini-erp/min-erp-helper";
 import logger from "../../utility/logger";
+import { NotFoundError } from "../../errors/custom-errors";
 
 export async function recreateMiniErpCronHandler(req: Request, res: Response): Promise<any> {
   const { jobName } = req.body;
   const cronDetails = await GetMiniErpCronDetails(true);
   const details = cronDetails.find((cron: any) => cron.CronName === jobName);
   if (!details) {
-    return res.status(_codes.StatusCodes.NOT_FOUND).send(`Cron not found for jobName : ${jobName}`);
+    throw new NotFoundError(`Cron for jobName ${jobName}`);
   }
   if (miniErpCrons.hasOwnProperty(jobName)) {
     miniErpCrons[jobName].stop();

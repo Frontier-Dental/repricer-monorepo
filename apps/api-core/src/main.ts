@@ -24,7 +24,8 @@ import { slowCronGroupRouter } from "./controller/slow-cron-group";
 import { startSlowCronLogic } from "./controller/slow-cron-group/start";
 import { startV2AlgoHtmlFileCleanupCron } from "./services/algo-html-file-cleanup";
 import { applicationConfig, validateConfig } from "./utility/config";
-import { errorMiddleware } from "./utility/error-middleware";
+import { asyncHandler } from "./utility/async-handler";
+import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 import { initializeThresholdScraping } from "./utility/reprice-algo/v2/threshold-scraping";
 import { startMiniErpCronLogic } from "./controller/mini-erp-cron/start-cron";
 import { minErpCronController } from "./controller/mini-erp-cron";
@@ -85,10 +86,14 @@ nodeApp.get("/health", (req: Request, res: Response) => {
 });
 
 /**** GET API COLLECTIONS ****/
-nodeApp.get("/api/GetStatus", async (req: Request, res: Response) => {
-  res.status(StatusCodes.OK).json(`Application server running on post ${port}`);
-});
-nodeApp.use(errorMiddleware);
+nodeApp.get(
+  "/api/GetStatus",
+  asyncHandler(async (req: Request, res: Response) => {
+    res.status(StatusCodes.OK).json(`Application server running on post ${port}`);
+  })
+);
+nodeApp.use(notFoundHandler);
+nodeApp.use(errorHandler);
 
 nodeApp.listen(port, async () => {
   logger.info(`Application server running on post ${port} at ${new Date()}`);
