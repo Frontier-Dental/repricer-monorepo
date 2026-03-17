@@ -5,6 +5,7 @@ import * as _codes from "http-status-codes";
 import { schedule } from "node-cron";
 import { GetFilteredCrons } from "../../utility/mysql/mysql-v2";
 import logger from "../../utility/logger";
+import { NotFoundError } from "../../errors/custom-errors";
 
 export async function recreateFilterCronHandler(req: Request, res: Response): Promise<any> {
   const { jobName } = req.body;
@@ -12,7 +13,7 @@ export async function recreateFilterCronHandler(req: Request, res: Response): Pr
   const cronName = getCronNameByJobName(jobName);
   const details = filterCronDetails.find((cron: any) => cron.cronName === cronName);
   if (!details) {
-    return res.status(_codes.StatusCodes.NOT_FOUND).send(`Cron not found for jobName : ${jobName}`);
+    throw new NotFoundError(`Cron for jobName ${jobName}`);
   }
   filterCrons[cronName].stop();
   delete filterCrons[cronName];

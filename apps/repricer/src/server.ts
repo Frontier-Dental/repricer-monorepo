@@ -6,12 +6,12 @@ import memorystore from "memorystore";
 import bodyParser from "body-parser";
 import indexRouter from "./routes";
 import { Request, Response } from "express";
-import { errorMiddleware } from "./utility/error-middleware";
 import { applicationConfig, validateConfig } from "./utility/config";
 import morgan from "morgan";
 import packageJson from "../package.json";
 import { startAllMonitorCrons } from "./controllers/monitor-sense";
 import logger from "./utility/logger";
+import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 
 validateConfig();
 
@@ -81,7 +81,8 @@ app.use(indexRouter);
 
 app.use("/public/images", express.static("./public/images"));
 
-app.use(errorMiddleware);
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 const PORT = applicationConfig.PORT || 3000;
 process.env.TZ = "Canada/Eastern";

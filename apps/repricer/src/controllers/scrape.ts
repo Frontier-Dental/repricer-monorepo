@@ -2,6 +2,7 @@ import excelJs from "exceljs";
 import { Request, Response } from "express";
 import _ from "lodash";
 import moment from "moment";
+import { AppError } from "../errors/custom-errors";
 import * as httpMiddleware from "../utility/http-wrappers";
 import * as MapperHelper from "../middleware/mapper-helper";
 import * as mongoMiddleware from "../services/mongo";
@@ -18,64 +19,19 @@ export const GetScrapeCron = async (req: Request, res: Response) => {
   for (let item of scrapeCronDetails) {
     item.lastUpdatedBy = await SessionHelper.GetAuditValue(item, "U_NAME");
     item.lastUpdatedOn = await SessionHelper.GetAuditValue(item, "U_TIME");
-    item.ProxyProvider_1 = await MapperHelper.GetAlternateProxyProviderId(
-      item,
-      1,
-    );
-    item.ProxyProvider_2 = await MapperHelper.GetAlternateProxyProviderId(
-      item,
-      2,
-    );
-    item.ProxyProvider_3 = await MapperHelper.GetAlternateProxyProviderId(
-      item,
-      3,
-    );
-    item.ProxyProvider_4 = await MapperHelper.GetAlternateProxyProviderId(
-      item,
-      4,
-    );
-    item.ProxyProvider_5 = await MapperHelper.GetAlternateProxyProviderId(
-      item,
-      5,
-    );
-    item.ProxyProvider_6 = await MapperHelper.GetAlternateProxyProviderId(
-      item,
-      6,
-    );
-    item.ProxyProvider_1_Name =
-      await MapperHelper.GetAlternateProxyProviderName(
-        configItems,
-        item.ProxyProvider_1,
-      );
-    item.ProxyProvider_2_Name =
-      await MapperHelper.GetAlternateProxyProviderName(
-        configItems,
-        item.ProxyProvider_2,
-      );
-    item.ProxyProvider_3_Name =
-      await MapperHelper.GetAlternateProxyProviderName(
-        configItems,
-        item.ProxyProvider_3,
-      );
-    item.ProxyProvider_4_Name =
-      await MapperHelper.GetAlternateProxyProviderName(
-        configItems,
-        item.ProxyProvider_4,
-      );
-    item.ProxyProvider_5_Name =
-      await MapperHelper.GetAlternateProxyProviderName(
-        configItems,
-        item.ProxyProvider_5,
-      );
-    item.ProxyProvider_6_Name =
-      await MapperHelper.GetAlternateProxyProviderName(
-        configItems,
-        item.ProxyProvider_6,
-      );
-    item.ProxyProvider_Name = await MapperHelper.GetAlternateProxyProviderName(
-      configItems,
-      item.ProxyProvider,
-    );
+    item.ProxyProvider_1 = await MapperHelper.GetAlternateProxyProviderId(item, 1);
+    item.ProxyProvider_2 = await MapperHelper.GetAlternateProxyProviderId(item, 2);
+    item.ProxyProvider_3 = await MapperHelper.GetAlternateProxyProviderId(item, 3);
+    item.ProxyProvider_4 = await MapperHelper.GetAlternateProxyProviderId(item, 4);
+    item.ProxyProvider_5 = await MapperHelper.GetAlternateProxyProviderId(item, 5);
+    item.ProxyProvider_6 = await MapperHelper.GetAlternateProxyProviderId(item, 6);
+    item.ProxyProvider_1_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, item.ProxyProvider_1);
+    item.ProxyProvider_2_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, item.ProxyProvider_2);
+    item.ProxyProvider_3_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, item.ProxyProvider_3);
+    item.ProxyProvider_4_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, item.ProxyProvider_4);
+    item.ProxyProvider_5_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, item.ProxyProvider_5);
+    item.ProxyProvider_6_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, item.ProxyProvider_6);
+    item.ProxyProvider_Name = await MapperHelper.GetAlternateProxyProviderName(configItems, item.ProxyProvider);
   }
   res.render("pages/scrape/scrapeOnlyList", {
     configItems: configItems,
@@ -89,11 +45,7 @@ export const ToggleCronStatus = async (req: Request, res: Response) => {
   const cronId = req.body.id;
   const cronStatus = parseInt(req.body.status);
   const jobName = cronMapping.find((x) => x.cronId == cronId)?.cronVariable;
-  await sqlV2Service.ToggleCronStatus(
-    cronId,
-    cronStatus == 1 ? "true" : "false",
-    req,
-  );
+  await sqlV2Service.ToggleCronStatus(cronId, cronStatus == 1 ? "true" : "false", req);
   const response = await httpMiddleware.toggleScrapeCron({
     jobName: jobName,
     status: cronStatus,
@@ -119,59 +71,14 @@ export const UpdateScrapeCronExp = async (req: Request, res: Response) => {
   const normalizedRequestPayload = await normalizePayload(requestedPayload);
 
   for (const en in normalizedRequestPayload.cron_id_hdn) {
-    var offset = scrapeCronDetails[en].Offset
-      ? scrapeCronDetails[en].Offset
-      : 0;
-    const proxyProvider = normalizedRequestPayload.scr_proxy_provider[en]
-      ? normalizedRequestPayload.scr_proxy_provider[en]
-      : scrapeCronDetails[en].ProxyProvider;
-    const altProxyProviderDetails =
-      await MapperHelper.MapAlternateProxyProviderDetails(
-        en,
-        normalizedRequestPayload,
-      );
+    var offset = scrapeCronDetails[en].Offset ? scrapeCronDetails[en].Offset : 0;
+    const proxyProvider = normalizedRequestPayload.scr_proxy_provider[en] ? normalizedRequestPayload.scr_proxy_provider[en] : scrapeCronDetails[en].ProxyProvider;
+    const altProxyProviderDetails = await MapperHelper.MapAlternateProxyProviderDetails(en, normalizedRequestPayload);
 
-    const scrapeSettingPayload = new cronSettings(
-      normalizedRequestPayload.cron_id_hdn[en],
-      normalizedRequestPayload.scr_cron_name[en],
-      normalizedRequestPayload.scr_cron_time_unit[en],
-      normalizedRequestPayload.scr_cron_time[en],
-      null as any,
-      scrapeCronDetails[en].status,
-      normalizedRequestPayload.scr_offset[en],
-      proxyProvider,
-      null as any,
-      null as any,
-      altProxyProviderDetails,
-    );
-    if (
-      !_.isEqual(
-        scrapeSettingPayload.CronName,
-        scrapeCronDetails[en].CronName,
-      ) ||
-      !_.isEqual(
-        scrapeSettingPayload.CronTime,
-        scrapeCronDetails[en].CronTime,
-      ) ||
-      !_.isEqual(
-        scrapeSettingPayload.CronTimeUnit,
-        scrapeCronDetails[en].CronTimeUnit,
-      ) ||
-      !_.isEqual(scrapeSettingPayload.Offset.toString(), offset.toString()) ||
-      !_.isEqual(
-        scrapeSettingPayload.ProxyProvider,
-        scrapeCronDetails[en].ProxyProvider,
-      ) ||
-      !_.isEqual(
-        JSON.stringify(altProxyProviderDetails),
-        JSON.stringify(scrapeCronDetails[en].AlternateProxyProvider),
-      )
-    ) {
+    const scrapeSettingPayload = new cronSettings(normalizedRequestPayload.cron_id_hdn[en], normalizedRequestPayload.scr_cron_name[en], normalizedRequestPayload.scr_cron_time_unit[en], normalizedRequestPayload.scr_cron_time[en], null as any, scrapeCronDetails[en].status, normalizedRequestPayload.scr_offset[en], proxyProvider, null as any, null as any, altProxyProviderDetails);
+    if (!_.isEqual(scrapeSettingPayload.CronName, scrapeCronDetails[en].CronName) || !_.isEqual(scrapeSettingPayload.CronTime, scrapeCronDetails[en].CronTime) || !_.isEqual(scrapeSettingPayload.CronTimeUnit, scrapeCronDetails[en].CronTimeUnit) || !_.isEqual(scrapeSettingPayload.Offset.toString(), offset.toString()) || !_.isEqual(scrapeSettingPayload.ProxyProvider, scrapeCronDetails[en].ProxyProvider) || !_.isEqual(JSON.stringify(altProxyProviderDetails), JSON.stringify(scrapeCronDetails[en].AlternateProxyProvider))) {
       updatedList.push(scrapeSettingPayload as never);
-      listOfUpdatedCronKey.push(
-        cronMapping.find((c: any) => c.cronId == scrapeSettingPayload.CronId)
-          ?.cronVariable as never,
-      );
+      listOfUpdatedCronKey.push(cronMapping.find((c: any) => c.cronId == scrapeSettingPayload.CronId)?.cronVariable as never);
     }
   }
 
@@ -209,16 +116,12 @@ export const GetLatestPriceInfo = async (req: Request, res: Response) => {
       },
     ],
   };
-  const productDetails =
-    await mongoMiddleware.GetProductListByQuery(productFetchQuery);
+  const productDetails = await mongoMiddleware.GetProductListByQuery(productFetchQuery);
   if (productDetails && productDetails.length > 0) {
     const contextProduct = _.first(productDetails);
     const mpId = (contextProduct as any).mpId;
     const sqlScrapeDetails = await sqlMiddleware.GetLastScrapeDetailsById(mpId);
-    const apiResponse = await MapperHelper.MapLatestPriceInfo(
-      sqlScrapeDetails,
-      focusId,
-    );
+    const apiResponse = await MapperHelper.MapLatestPriceInfo(sqlScrapeDetails, focusId);
     if (apiResponse) {
       return res.status(200).json({
         status: true,
@@ -232,11 +135,7 @@ export const GetLatestPriceInfo = async (req: Request, res: Response) => {
         error: `No Latest Scrape Data found for Focus Id : ${focusId} || Mpid : ${mpId}`,
       });
   }
-  return res.status(502).json({
-    status: false,
-    priceInfo: null,
-    error: `Product with FocusId : ${focusId} not found.`,
-  });
+  throw new AppError(`Product with FocusId : ${focusId} not found.`, 502);
 };
 
 // ----------- Products Section ----------------------------
@@ -265,16 +164,9 @@ export const GetScrapeProducts = async (req: Request, res: Response) => {
   let scrapeProductsDetails: any[] = [];
 
   if (incomingFilter != null && tags != "") {
-    scrapeProductsDetails = await sqlMiddleware.GetScrapeProductListByFilter(
-      incomingFilter,
-      pageSize,
-      pageNumber,
-    );
+    scrapeProductsDetails = await sqlMiddleware.GetScrapeProductListByFilter(incomingFilter, pageSize, pageNumber);
   } else {
-    scrapeProductsDetails = await sqlMiddleware.GetScrapeProductList(
-      pageNumber,
-      pageSize,
-    );
+    scrapeProductsDetails = await sqlMiddleware.GetScrapeProductList(pageNumber, pageSize);
   }
 
   totalDocs = await sqlMiddleware.GetNumberOfScrapeProducts();
@@ -317,14 +209,8 @@ export const exportItems = async (req: Request, res: Response) => {
     { header: "Is Badge Item", key: "Is_Badge", width: 20 },
   ];
   worksheet.addRows(scrapeCollection);
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  );
-  res.setHeader(
-    "Content-Disposition",
-    "attachment; filename=" + "scrapeExcel.xlsx",
-  );
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", "attachment; filename=" + "scrapeExcel.xlsx");
 
   return workbook.xlsx.write(res).then(function () {
     res.status(200).end();
@@ -344,9 +230,7 @@ export const importItems = async (req: Request, res: Response) => {
       mpId: parseInt(row[1]),
       net32Url: row[2] ? row[2] : "N/A",
       linkedCron: row[3].trim(),
-      linkedCronId: row[3]
-        ? scrapeCron.find((x: any) => x.CronName == row[3].trim()).CronId
-        : "",
+      linkedCronId: row[3] ? scrapeCron.find((x: any) => x.CronName == row[3].trim()).CronId : "",
       lastUpdatedBy: auditInfo.UpdatedBy,
       lastUpdatedOn: moment(auditInfo.UpdatedOn).format("YYYY-MM-DD HH:mm:ss"),
       isBadgeItem: row[8] ? JSON.parse(row[8]) : false,
@@ -375,9 +259,7 @@ export const addItems = async (req: Request, res: Response) => {
   scrapeData.linkedCronId = req.body.scrape_cron;
   scrapeData.lastUpdatedBy = auditInfo.UpdatedBy;
   scrapeData.isBadgeItem = req.body.is_badge_item == "on" ? true : false;
-  scrapeData.lastUpdatedOn = moment(auditInfo.UpdatedOn).format(
-    "YYYY-MM-DD HH:mm:ss",
-  );
+  scrapeData.lastUpdatedOn = moment(auditInfo.UpdatedOn).format("YYYY-MM-DD HH:mm:ss");
 
   let addScrapeResp = await sqlMiddleware.UpsertProductDetails(scrapeData);
   if (addScrapeResp) {
@@ -398,9 +280,7 @@ export const editItems = async (req: Request, res: Response) => {
   scrapeData.isBadgeItem = req.body.is_badge_item == "on" ? true : false;
   scrapeData.linkedCronId = req.body.scrape_cron;
   scrapeData.lastUpdatedBy = auditInfo.UpdatedBy;
-  scrapeData.lastUpdatedOn = moment(auditInfo.UpdatedOn).format(
-    "YYYY-MM-DD HH:mm:ss",
-  );
+  scrapeData.lastUpdatedOn = moment(auditInfo.UpdatedOn).format("YYYY-MM-DD HH:mm:ss");
   let editScrapeResp = await sqlMiddleware.UpsertProductDetails(scrapeData);
   if (editScrapeResp) {
     return res.json({
@@ -424,30 +304,14 @@ export const deleteItem = async (req: Request, res: Response) => {
 async function normalizePayload(requestedPayload: any) {
   const normalizeToArray = (item: any) => (Array.isArray(item) ? item : [item]);
   requestedPayload.cron_id_hdn = normalizeToArray(requestedPayload.cron_id_hdn);
-  requestedPayload.scr_cron_name = normalizeToArray(
-    requestedPayload.scr_cron_name,
-  );
-  requestedPayload.scr_cron_time_unit = normalizeToArray(
-    requestedPayload.scr_cron_time_unit,
-  );
-  requestedPayload.scr_cron_time = normalizeToArray(
-    requestedPayload.scr_cron_time,
-  );
+  requestedPayload.scr_cron_name = normalizeToArray(requestedPayload.scr_cron_name);
+  requestedPayload.scr_cron_time_unit = normalizeToArray(requestedPayload.scr_cron_time_unit);
+  requestedPayload.scr_cron_time = normalizeToArray(requestedPayload.scr_cron_time);
   requestedPayload.scr_offset = normalizeToArray(requestedPayload.scr_offset);
-  requestedPayload.scr_proxy_provider = normalizeToArray(
-    requestedPayload.scr_proxy_provider,
-  );
-  requestedPayload.proxy_provider_1 = normalizeToArray(
-    requestedPayload.proxy_provider_1,
-  );
-  requestedPayload.proxy_provider_2 = normalizeToArray(
-    requestedPayload.proxy_provider_2,
-  );
-  requestedPayload.proxy_provider_3 = normalizeToArray(
-    requestedPayload.proxy_provider_3,
-  );
-  requestedPayload.proxy_provider_4 = normalizeToArray(
-    requestedPayload.proxy_provider_4,
-  );
+  requestedPayload.scr_proxy_provider = normalizeToArray(requestedPayload.scr_proxy_provider);
+  requestedPayload.proxy_provider_1 = normalizeToArray(requestedPayload.proxy_provider_1);
+  requestedPayload.proxy_provider_2 = normalizeToArray(requestedPayload.proxy_provider_2);
+  requestedPayload.proxy_provider_3 = normalizeToArray(requestedPayload.proxy_provider_3);
+  requestedPayload.proxy_provider_4 = normalizeToArray(requestedPayload.proxy_provider_4);
   return requestedPayload;
 }
