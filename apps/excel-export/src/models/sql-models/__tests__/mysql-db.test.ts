@@ -46,9 +46,7 @@ describe("mysql-db", () => {
   });
 
   it("should create pool with correct configuration and password from tryDecrypt", async () => {
-    jest.resetModules();
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    require("../mysql-db");
+    await import("../mysql-db");
     expect(mockCreatePool).toHaveBeenCalled();
     const call = mockCreatePool.mock.calls[0][0];
     expect(call.host).toBe("localhost");
