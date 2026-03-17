@@ -1,25 +1,11 @@
 import { AlgoExecutionMode } from "@repricer-monorepo/shared";
 import { Request, Response } from "express";
 import { getAllV2AlgoErrors } from "../services/algo_v2/errors";
-import {
-  getAlgoExecutionMode,
-  updateAlgoExecutionMode,
-} from "../services/algo_v2/products";
+import { getAlgoExecutionMode, updateAlgoExecutionMode } from "../services/algo_v2/products";
 import { getAlgoResultsWithExecutionData } from "../services/algo_v2/results";
-import {
-  getAllProductsWithAlgoData,
-  getNet32Url,
-  getV2AlgoSettingsByMpId,
-  syncAllVendorSettings,
-  syncVendorSettingsForMpId,
-  toggleV2AlgoEnabled,
-  updateV2AlgoSettings as updateSettings,
-} from "../services/algo_v2/settings";
+import { getAllProductsWithAlgoData, getNet32Url, getV2AlgoSettingsByMpId, syncAllVendorSettings, syncVendorSettingsForMpId, toggleV2AlgoEnabled, updateV2AlgoSettings as updateSettings } from "../services/algo_v2/settings";
 
-export async function getAlgoResultsWithExecution(
-  req: Request<{ mpId: string }>,
-  res: Response,
-) {
+export async function getAlgoResultsWithExecution(req: Request<{ mpId: string }>, res: Response) {
   const { mpId } = req.params;
   const mpIdNumber = parseInt(mpId, 10);
 
@@ -38,10 +24,7 @@ export async function getAlgoResultsWithExecution(
   });
 }
 
-export async function getV2AlgoSettings(
-  req: Request<{ mpId: string }>,
-  res: Response,
-) {
+export async function getV2AlgoSettings(req: Request<{ mpId: string }>, res: Response) {
   const { mpId } = req.params;
   const mpIdNumber = parseInt(mpId, 10);
 
@@ -58,9 +41,7 @@ export async function getV2AlgoSettings(
       reprice_up_percentage: Number(setting.reprice_up_percentage),
       reprice_down_percentage: Number(setting.reprice_down_percentage),
       reprice_up_badge_percentage: Number(setting.reprice_up_badge_percentage),
-      reprice_down_badge_percentage: Number(
-        setting.reprice_down_badge_percentage,
-      ),
+      reprice_down_badge_percentage: Number(setting.reprice_down_badge_percentage),
       max_price: Number(setting.max_price),
       floor_price: Number(setting.floor_price),
       suppress_price_break: setting.suppress_price_break === 1,
@@ -68,8 +49,7 @@ export async function getV2AlgoSettings(
       keep_position: setting.keep_position === 1,
       compare_q2_with_q1: setting.compare_q2_with_q1 === 1,
       compete_on_price_break_only: setting.compete_on_price_break_only === 1,
-      suppress_price_break_if_Q1_not_updated:
-        setting.suppress_price_break_if_Q1_not_updated === 1,
+      suppress_price_break_if_Q1_not_updated: setting.suppress_price_break_if_Q1_not_updated === 1,
       compete_with_all_vendors: setting.compete_with_all_vendors === 1,
       enabled: setting.enabled === 1,
     };
@@ -82,10 +62,7 @@ export async function getV2AlgoSettings(
   });
 }
 
-export async function updateV2AlgoSettings(
-  req: Request<{ mpId: string }>,
-  res: Response,
-) {
+export async function updateV2AlgoSettings(req: Request<{ mpId: string }>, res: Response) {
   const { mpId } = req.params;
   const mpIdNumber = parseInt(mpId, 10);
   const settingsData = req.body;
@@ -119,10 +96,7 @@ export async function updateV2AlgoSettings(
   });
 }
 
-export async function getAllV2AlgoErrorsController(
-  req: Request,
-  res: Response,
-) {
+export async function getAllV2AlgoErrorsController(req: Request, res: Response) {
   const errors = await getAllV2AlgoErrors();
 
   return res.json({
@@ -131,10 +105,7 @@ export async function getAllV2AlgoErrorsController(
   });
 }
 
-export async function updateAlgoExecutionModeController(
-  req: Request<{ mpId: string }>,
-  res: Response,
-) {
+export async function updateAlgoExecutionModeController(req: Request<{ mpId: string }>, res: Response) {
   const { mpId } = req.params;
   const { algo_execution_mode } = req.body;
   const mpIdNumber = parseInt(mpId, 10);
@@ -146,22 +117,14 @@ export async function updateAlgoExecutionModeController(
   }
 
   // Validate the algo_execution_mode value
-  const validModes = [
-    AlgoExecutionMode.V2_ONLY,
-    AlgoExecutionMode.V1_ONLY,
-    AlgoExecutionMode.V2_EXECUTE_V1_DRY,
-    AlgoExecutionMode.V1_EXECUTE_V2_DRY,
-  ];
+  const validModes = [AlgoExecutionMode.V2_ONLY, AlgoExecutionMode.V1_ONLY, AlgoExecutionMode.V2_EXECUTE_V1_DRY, AlgoExecutionMode.V1_EXECUTE_V2_DRY];
   if (!validModes.includes(algo_execution_mode)) {
     return res.status(400).json({
       error: `algo_execution_mode must be one of: ${validModes.join(", ")}`,
     });
   }
 
-  const updatedRows = await updateAlgoExecutionMode(
-    mpIdNumber,
-    algo_execution_mode,
-  );
+  const updatedRows = await updateAlgoExecutionMode(mpIdNumber, algo_execution_mode);
 
   if (updatedRows === 0) {
     return res.status(404).json({
@@ -178,10 +141,7 @@ export async function updateAlgoExecutionModeController(
   });
 }
 
-export async function getAlgoExecutionModeController(
-  req: Request<{ mpId: string }>,
-  res: Response,
-) {
+export async function getAlgoExecutionModeController(req: Request<{ mpId: string }>, res: Response) {
   const { mpId } = req.params;
   const mpIdNumber = parseInt(mpId, 10);
 
@@ -200,10 +160,7 @@ export async function getAlgoExecutionModeController(
   });
 }
 
-export async function syncVendorSettings(
-  req: Request<{ mpId: string }>,
-  res: Response,
-) {
+export async function syncVendorSettings(req: Request<{ mpId: string }>, res: Response) {
   const { mpId } = req.params;
   const mpIdNumber = parseInt(mpId, 10);
 
@@ -228,10 +185,7 @@ let productsWithAlgoCache: any[] | null = null;
 let productsWithAlgoCacheTime: Date | null = null;
 const PRODUCTS_WITH_ALGO_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes in milliseconds
 
-export async function getAllProductsWithAlgoDataController(
-  req: Request,
-  res: Response,
-) {
+export async function getAllProductsWithAlgoDataController(req: Request, res: Response) {
   const ignoreCache = req.query.ignoreCache === "true";
   const now = new Date();
 
@@ -239,9 +193,7 @@ export async function getAllProductsWithAlgoDataController(
   if (!ignoreCache && productsWithAlgoCache && productsWithAlgoCacheTime) {
     const cacheAge = now.getTime() - productsWithAlgoCacheTime.getTime();
     if (cacheAge < PRODUCTS_WITH_ALGO_CACHE_DURATION) {
-      console.log(
-        `Returning cached products with algo data (age: ${Math.round(cacheAge / 1000)}s)`,
-      );
+      console.log(`Returning cached products with algo data (age: ${Math.round(cacheAge / 1000)}s)`);
       return res.json({
         data: productsWithAlgoCache,
         cacheTimestamp: productsWithAlgoCacheTime.toISOString(),
@@ -258,9 +210,7 @@ export async function getAllProductsWithAlgoDataController(
   productsWithAlgoCache = products;
   productsWithAlgoCacheTime = now;
 
-  console.log(
-    `Updated products with algo cache with ${products.length} records`,
-  );
+  console.log(`Updated products with algo cache with ${products.length} records`);
   return res.json({
     data: products,
     cacheTimestamp: now.toISOString(),
@@ -268,10 +218,7 @@ export async function getAllProductsWithAlgoDataController(
   });
 }
 
-export async function toggleV2AlgoEnabledController(
-  req: Request<{ mpId: string; vendorId: string }>,
-  res: Response,
-) {
+export async function toggleV2AlgoEnabledController(req: Request<{ mpId: string; vendorId: string }>, res: Response) {
   const { mpId, vendorId } = req.params;
   const mpIdNumber = parseInt(mpId, 10);
   const vendorIdNumber = parseInt(vendorId, 10);
@@ -299,10 +246,7 @@ export async function toggleV2AlgoEnabledController(
   });
 }
 
-export async function getNet32UrlController(
-  req: Request<{ mpId: string }>,
-  res: Response,
-) {
+export async function getNet32UrlController(req: Request<{ mpId: string }>, res: Response) {
   const { mpId } = req.params;
   const mpIdNumber = parseInt(mpId, 10);
 
@@ -321,17 +265,11 @@ export async function getNet32UrlController(
       net32_url: net32Url,
     });
   } catch (error) {
-    console.error("Error fetching net32 URL:", error);
-    return res.status(500).json({
-      error: "Internal server error while fetching net32 URL",
-    });
+    throw error;
   }
 }
 
-export async function syncAllVendorSettingsController(
-  req: Request,
-  res: Response,
-) {
+export async function syncAllVendorSettingsController(req: Request, res: Response) {
   console.log("🚀 Starting sync of all vendor settings and channel IDs...");
 
   const result = await syncAllVendorSettings();
