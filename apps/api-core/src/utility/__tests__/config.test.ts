@@ -165,14 +165,12 @@ describe("config", () => {
         MINI_ERP_PASSWORD: "erppass",
         SHIPPING_DATA_PROXY_SCRAPE_API_KEY: "apikey123",
         REPRICER_ENCRYPTION_KEY: "test-encryption-key-32-chars-long!!",
-        APP_LOG_PATH: "/custom/log/path",
         FILE_PATH: "/custom/file/path",
       };
 
       const { validateConfig } = require("../config");
       const result = validateConfig();
 
-      expect(result.APP_LOG_PATH).toBe("/custom/log/path");
       expect(result.FILE_PATH).toBe("/custom/file/path");
     });
   });

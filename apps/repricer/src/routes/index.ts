@@ -1,6 +1,7 @@
 import Express from "express";
 import * as productController from "../controllers/product";
 import AuthToken from "../middleware/auth-token";
+import { asyncHandler } from "../utility/async-handler";
 import { adminRouter } from "./admin";
 import { appLogRouter } from "./app-log";
 import { cacheRouter } from "./cache";
@@ -55,10 +56,6 @@ router.use(notifyController);
 router.use(ipHealthController);
 router.use(monitorSenseController);
 
-router.post(
-  "/masteritem/sync_excel_data",
-  AuthToken,
-  productController.addExcelData,
-);
+router.post("/masteritem/sync_excel_data", AuthToken, asyncHandler(productController.addExcelData));
 
 export default router;

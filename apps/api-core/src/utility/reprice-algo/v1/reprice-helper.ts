@@ -47,7 +47,9 @@ export async function Reprice(refProduct: any, payload: any, productItem: any, s
     eligibleList = await filterMapper.FilterBasedOnParams(eligibleList, productItem, "HANDLING_TIME");
 
     // Set Active vendor list before applying the Badge Indicator check & Sort via Unit Price
-    activeNonBadgedVendorList = await filterMapper.FilterBasedOnParams(eligibleList, productItem, "NON_BADGE_ONLY");
+    let nonBadgeDetailsCloned = _.cloneDeep(productItem);
+    nonBadgeDetailsCloned.badgeIndicator = "NON_BADGE_ONLY";
+    activeNonBadgedVendorList = await filterMapper.FilterBasedOnParams(eligibleList, nonBadgeDetailsCloned, "BADGE_INDICATOR");
     activeNonBadgedVendorList = _.sortBy(activeNonBadgedVendorList, [
       (prod) => {
         return (
@@ -390,7 +392,9 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
     eligibleList = await filterMapper.FilterBasedOnParams(eligibleList, productItem, "HANDLING_TIME");
 
     // Set Active vendor list before applying the Badge Indicator check & Sort via Unit Price
-    activeNonBadgedVendorList = await filterMapper.FilterBasedOnParams(eligibleList, productItem, "NON_BADGE_ONLY");
+    let nonBadgeDetailsCloned = _.cloneDeep(productItem);
+    nonBadgeDetailsCloned.badgeIndicator = "NON_BADGE_ONLY";
+    activeNonBadgedVendorList = await filterMapper.FilterBasedOnParams(eligibleList, nonBadgeDetailsCloned, "BADGE_INDICATOR");
     activeNonBadgedVendorList = _.sortBy(activeNonBadgedVendorList, [
       (prod) => {
         return (
@@ -548,12 +552,17 @@ export async function RepriceIndividualPriceBreak(refProduct: any, payload: any,
         }
         repriceModel.updateTriggeredBy(sortedPayload[nextIndex].vendorName, sortedPayload[nextIndex].vendorId, priceBreak.minQty);
       } else if (productItem.badgeUpExceptionPercentage > 0 && _.isEqual(productItem.badgeIndicator, "BADGE_ONLY") && activeNonBadgedVendorList!.length > 0) {
+        if (priceBreak.minQty != 1) {
+          activeNonBadgedVendorList = activeNonBadgedVendorList.filter((x) => x.vendorId != $.VENDOR_ID);
+        }
         const lowestVendorPrice = _.first(activeNonBadgedVendorList).priceBreaks.find((x: any) => x.minQty == priceBreak.minQty && x.active == true)?.unitPrice;
         const suggestedPrice = await filterMapper.addPercentage(lowestVendorPrice, productItem.badgeUpExceptionPercentage);
-        const model = new RepriceModel(sourceId, refProduct, productItem.productName, suggestedPrice, true, false, [], RepriceRenewedMessageEnum.BADGE_UP_EXCEPTION);
-        model.updateLowest(_.first(activeNonBadgedVendorList).vendorName, lowestVendorPrice);
-        model.updateTriggeredBy(_.first(activeNonBadgedVendorList).vendorName, _.first(activeNonBadgedVendorList).vendorId, 1);
-        return model;
+        repriceModel.repriceDetails!.newPrice = suggestedPrice;
+        repriceModel.repriceDetails!.isRepriced = true;
+        repriceModel.repriceDetails!.explained = RepriceRenewedMessageEnum.BADGE_UP_EXCEPTION;
+        repriceModel.updateLowest(_.first(activeNonBadgedVendorList).vendorName, lowestVendorPrice);
+        repriceModel.updateTriggeredBy(_.first(activeNonBadgedVendorList).vendorName, _.first(activeNonBadgedVendorList).vendorId, 1);
+        return repriceModel;
       } else {
         repriceModel.repriceDetails!.newPrice = maxPrice;
         repriceModel.repriceDetails!.isRepriced = true;

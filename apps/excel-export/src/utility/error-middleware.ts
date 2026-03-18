@@ -1,18 +1,14 @@
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import { applicationConfig } from "./config";
+import logger from "./logger";
 
-export const errorMiddleware = (
-  err: any,
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): void => {
-  console.error("=== ERROR MIDDLEWARE ===");
+export const errorMiddleware = (err: any, req: Request, res: Response, next: NextFunction): void => {
+  logger.error("=== ERROR MIDDLEWARE ===");
   if (err && err.stack) {
-    console.error(err.stack);
+    logger.error(err.stack);
   } else {
-    console.error(err);
+    logger.error(err);
   }
 
   if (res.headersSent) {

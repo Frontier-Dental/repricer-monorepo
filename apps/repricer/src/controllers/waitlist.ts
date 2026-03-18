@@ -1,15 +1,9 @@
 import { Request, Response } from "express";
-import {
-  BulkDeleteWaitlistItems,
-  DeleteWaitlistItem,
-  GetWaitlistItems,
-} from "../services/mysql-v2";
+import { BulkDeleteWaitlistItems, DeleteWaitlistItem, GetWaitlistItems } from "../services/mysql-v2";
 
 export async function getWaitlistItems(req: Request, res: Response) {
   const page = req.query.page ? parseInt(req.query.page as string) : 1;
-  const pageSize = req.query.pageSize
-    ? parseInt(req.query.pageSize as string)
-    : 10;
+  const pageSize = req.query.pageSize ? parseInt(req.query.pageSize as string) : 10;
   const offset = (page - 1) * pageSize;
   const sort = req.query.sort ? (req.query.sort as string) : "created_at DESC";
   const status = req.query.status ? (req.query.status as string) : null;
@@ -42,8 +36,7 @@ export async function getWaitlistItems(req: Request, res: Response) {
       userRole: (req as any).session?.users_id?.userRole || "",
     });
   } catch (error) {
-    console.error("Error in getWaitlistItems", error);
-    res.status(500).json({ error: "Internal server error" });
+    throw error;
   }
 }
 
@@ -53,8 +46,7 @@ export async function deleteWaitlistItem(req: Request, res: Response) {
     const waitlistItem = await DeleteWaitlistItem(id);
     res.json(waitlistItem);
   } catch (error) {
-    console.error("Error in deleteWaitlistItem", error);
-    res.status(500).json({ error: "Internal server error" });
+    throw error;
   }
 }
 
@@ -64,7 +56,6 @@ export async function bulkDeleteWaitlistItems(req: Request, res: Response) {
     const waitlistItems = await BulkDeleteWaitlistItems(ids);
     res.json(waitlistItems);
   } catch (error) {
-    console.error("Error in bulkDeleteWaitlistItems", error);
-    res.status(500).json({ error: "Internal server error" });
+    throw error;
   }
 }
