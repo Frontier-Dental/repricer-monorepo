@@ -25,6 +25,11 @@ interface ScrapingAntError extends Error {
 
 export async function scrapingAntFetchData(url: string, proxyDetailsResponse: ProxyDetailsResponse, seqString: string | null, retryCount = 0): Promise<any> {
   try {
+    // TESTING: Force error to test proxy switch functionality
+    const testError: any = new Error("TESTING: Forced error for proxy switch testing");
+    testError.response = { statusCode: 500 };
+    throw testError;
+
     logger.info(`SCRAPE STARTED : ScrapingAnt : ${url} || ${seqString} || ${new Date()} || ${retryCount}`);
 
     const { responseContent, timeTaken } = await scrapingAntFetch(url, proxyDetailsResponse.userName);

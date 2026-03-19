@@ -144,12 +144,15 @@ export async function UpdateProxyDetailsByCronId(cronId: any, proxyProvider: any
   const cacheClient = CacheClient.getInstance(GetCacheClientOptions(applicationConfig));
   await cacheClient.delete(CacheKey.CRON_SETTINGS_LIST);
   await cacheClient.delete(CacheKey.CRON_SETTINGS_FULL_LIST);
+  await cacheClient.delete(CacheKey.SLOW_CRON_DETAILS);
+  await cacheClient.delete(CacheKey.SCRAPE_CRON_DETAILS);
   await cacheClient.disconnect();
 }
 
 export async function GetLinkedCronSettingsByProviderId(proxyProviderId: number) {
-  const cronSettingsDetails = await GetFullCronSettingsList();
-  return cronSettingsDetails?.filter((c: any) => c.ProxyProvider === proxyProviderId);
+  const [fullCronSettings, slowCronSettings, scrapeCronSettings] = await Promise.all([GetFullCronSettingsList(), GetSlowCronDetails(), GetScrapeCronDetails()]);
+  const allCronSettings = _.concat(fullCronSettings || [], slowCronSettings || [], scrapeCronSettings || []);
+  return allCronSettings.filter((c: any) => c.ProxyProvider === proxyProviderId);
 }
 
 export async function GetSlowCronDetails(ignoreCache = false) {

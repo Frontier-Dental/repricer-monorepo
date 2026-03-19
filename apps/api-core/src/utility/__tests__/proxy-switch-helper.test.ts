@@ -440,7 +440,7 @@ describe("proxy-switch-helper", () => {
       ];
 
       mockedSqlV2Service.GetProxyFailureDetails.mockResolvedValue(mockProxyFailureDetails as any);
-      mockedSqlV2Service.GetLinkedCronSettingsByProviderId.mockResolvedValue(null);
+      mockedSqlV2Service.GetLinkedCronSettingsByProviderId.mockResolvedValue([]);
 
       await SwitchProxy();
 

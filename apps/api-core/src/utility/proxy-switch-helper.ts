@@ -92,9 +92,17 @@ export const SwitchProxy = async (): Promise<void> => {
         }
 
         if (payloadForEmail && payloadForEmail.length > 0) {
+          logger.info(`PROXY SWITCH EMAIL PAYLOAD: ${JSON.stringify(payloadForEmail, null, 2)}`);
           await sqlV2Service.ResetProxyFailureDetails(record.proxyProvider, "SYSTEM");
           logger.info(`Reset failure counter for ProxyProvider ${record.providerName} after switch`);
           // TODO: Re-enable email notifications when notifier service is available
+
+          try {
+            await axiosHelper.native_get(applicationConfig.REPRICER_UI_CACHE_CLEAR!);
+            logger.info(`Cleared UI cache after proxy switch for ${record.providerName}`);
+          } catch (cacheError) {
+            logger.error(`Failed to clear UI cache after proxy switch: ${cacheError}`);
+          }
         }
       }
     }
@@ -142,12 +150,6 @@ async function updateProxyForCron(listOfCrons: CronSettings[], existingProxyProv
       };
       payloadForEmail = cronInfo;
     }
-
-    try {
-      await axiosHelper.native_get(applicationConfig.REPRICER_UI_CACHE_CLEAR!);
-    } catch (cacheError) {
-      logger.error(`Failed to clear UI cache after proxy switch: ${cacheError}`);
-    }
   }
 
   return payloadForEmail;
@@ -170,6 +172,7 @@ async function executeProxySwitch(cronDetails: CronSettings): Promise<CronInfo |
 
   if (cronDetails.AlternateProxyProvider && cronDetails.AlternateProxyProvider.length > 0) {
     const existingProxyProvider = cronDetails.ProxyProvider;
+    console.log("existingProxyProvider", existingProxyProvider);
     const existingAlternateProxyDetails = cronDetails.AlternateProxyProvider.find((x) => x.ProxyProvider == existingProxyProvider);
 
     if (existingAlternateProxyDetails) {

@@ -25,6 +25,11 @@ axiosRetry(axios, {
 
 export async function getScrappingResponse(_url: string, proxyDetailsResponse: any, seqString: any, retryCount = 0): Promise<any> {
   try {
+    // TESTING: Force error to test proxy switch functionality
+    const testError: any = new Error("TESTING: Forced error for proxy switch testing");
+    testError.response = { status: 500 };
+    throw testError;
+
     const formatResponse = applicationConfig.FORMAT_RESPONSE_CUSTOM;
     logger.info(`SCRAPE STARTED : SmartProxy - Web : ${_url} || ${seqString}`);
     var startTime = process.hrtime();

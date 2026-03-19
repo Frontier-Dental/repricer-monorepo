@@ -18,6 +18,11 @@ interface BrightDataError extends Error {
 
 export async function fetchData(url: string, proxyDetails: any, retryCount = 0): Promise<any> {
   try {
+    // TESTING: Force error to test proxy switch functionality
+    const testError: any = new Error("TESTING: Forced error for proxy switch testing");
+    testError.response = { statusCode: 500 };
+    throw testError;
+
     logger.info(`SCRAPE STARTED : BrightData : ${url} || ${new Date()} || retry count : ${retryCount}`);
 
     const { responseContent, timeTaken } = await callBrightData(url, proxyDetails);
@@ -113,6 +118,10 @@ async function handleRetry(error: any, retryCount: number, url: string, proxyDet
     logger.info(`REPRICER CORE | BRIGHTDATA | : ERROR (WITH RETRY) : ${error} `);
 
     logger.info(`REPRICER CORE | RETRY ATTEMPT : ${retryCount + 1} at ${new Date()}`, `REPRICER CORE | BRIGHTDATA`);
+
+    if (retryCount > 1) {
+      await proxySwitchHelper.SwitchProxy();
+    }
 
     await delay(applicationConfig.RETRY_INTERVAL);
     return await fetchData(url, proxyDetails, retryCount + 1);
