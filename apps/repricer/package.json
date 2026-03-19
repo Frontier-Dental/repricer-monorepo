@@ -9,7 +9,9 @@
     "start": "node dist/server.js",
     "lint:ejs": "ejslint views",
     "format": "prettier --write \"**/*.{js,json,css,sql}\"",
-    "debug": "cross-env NODE_OPTIONS=--inspect ts-node src/server.ts"
+    "debug": "cross-env NODE_OPTIONS=--inspect ts-node src/server.ts",
+    "test": "NODE_OPTIONS='--unhandled-rejections=warn' jest",
+    "test:coverage": "NODE_OPTIONS='--unhandled-rejections=warn' jest --coverage"
   },
   "author": "Repricer",
   "license": "ISC",
